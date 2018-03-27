@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -48,6 +49,8 @@ import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
+
+import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
 
 abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
     protected SwipeMenuRecyclerView mServerList;
