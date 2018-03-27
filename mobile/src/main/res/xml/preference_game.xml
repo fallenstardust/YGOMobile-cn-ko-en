@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/settings_game">
+        <Preference
+            android:key="pref_key_game_res_path"
+            android:persistent="true"
+            android:title="@string/settings_game_res_path"/>
+        <EditTextPreference
+            android:key="game_version"
+            android:persistent="true"
+            android:title="@string/game_version"
+            />
+        <ListPreference
+            android:entries="@array/opengl_version"
+            android:entryValues="@array/opengl_version_value"
+            android:key="pref_key_game_ogles_config"
+            android:persistent="true"
+            android:title="@string/settings_game_opengl"/>
+        <ListPreference
+            android:entries="@array/card_quality"
+            android:entryValues="@array/card_quality_value"
+            android:key="pref_key_game_image_quality"
+            android:persistent="true"
+            android:title="@string/settings_game_card_quality"/>
+        <CheckBoxPreference
+            android:key="pref_settings_only_game"
+            android:persistent="true"
+            android:summary="@string/only_game_tip"
+            android:title="@string/settings_pref_settings_only_game"/>
+        <CheckBoxPreference
+            android:key="pref_settings_read_ex"
+            android:persistent="true"
+            android:title="@string/title_use_ex"/>
+        <CheckBoxPreference
+            android:key="pref_key_game_sound_effect"
+            android:persistent="true"
+            android:title="@string/settings_game_enable_sound_effect"/>
+        <CheckBoxPreference
+            android:key="pref_key_game_screen_orientation"
+            android:persistent="true"
+            android:title="@string/settings_game_screen_orientation"/>
+        <CheckBoxPreference
+            android:key="pref_key_game_font_antialias"
+            android:persistent="true"
+            android:summary="@string/settings_game_font_antialias_summary"
+            android:title="@string/settings_game_font_antialias"/>
+        <CheckBoxPreference
+            android:key="pref_key_immersive_mode"
+            android:persistent="true"
+            android:title="@string/settings_game_immersive_mode"/>
+        <CheckBoxPreference
+            android:key="pref_key_game_lab_pendulum_scale"
+            android:persistent="true"
+            android:title="@string/settings_game_lab_pendulum_scale"/>
+        <!--<CheckBoxPreference
+            android:key="pref_settings_deck_manager_v2"
+            android:persistent="true"
+            android:title="@string/deck_manager_v2"
+            />-->
+        <!--  <CheckBoxPreference
+            android:key="pref_key_sensor_refresh"
+            android:persistent="true"
+            android:title="@string/settings_game_sensor_refresh"/>
+      <CheckBoxPreference
+            android:key="pref_key_deck_delete_dialog"
+            android:persistent="true"
+            android:summary="@string/settings_deck_delete_dialog_desc"
+            android:title="@string/settings_deck_delete_dialog"/>
+
+       <EditTextPreference
+            android:key="pref_settings_font_size"
+            android:persistent="true"
+            android:title="@string/set_font_size"/>-->
+
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_category_diy">
+        <Preference
+            android:key="pref_key_game_font_name"
+            android:persistent="true"
+            android:title="@string/settings_game_font_name"/>
+
+        <Preference
+            android:key="settings_game_diy_card_cover"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_card_back"/>
+
+        <Preference
+            android:key="settings_game_diy_card_bg"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_cover"/>
+        <!--<CheckBoxPreference
+            android:key="settings_game_diy_card_db"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_card_db"/>-->
+    </PreferenceCategory>
+
+</PreferenceScreen>

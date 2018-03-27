@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="@dimen/label_width_middle"
+            android:layout_height="wrap_content"
+            android:text="@string/server_name"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/gold" />
+
+        <EditText
+            android:id="@+id/server_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/must_info"
+            android:maxLines="1"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/holo_blue_bright" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="@dimen/label_width_middle"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="@string/server_ip"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/gold" />
+
+            <EditText
+                android:id="@+id/text_ip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/must_info"
+                android:inputType="textNoSuggestions"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/holo_blue_bright" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="85dp"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="41dp"
+                android:layout_height="wrap_content"
+                android:text="@string/server_port"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/gold" />
+
+            <EditText
+                android:id="@+id/text_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:digits="1234567890"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="0"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/holo_blue_bright" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="@dimen/label_width_middle"
+            android:layout_height="wrap_content"
+            android:text="@string/server_user"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/gold" />
+
+        <EditText
+            android:id="@+id/text_player"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:inputType="textNoSuggestions"
+            android:hint="@string/must_info"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@android:color/holo_green_light" />
+    </LinearLayout>
+<!--
+    <LinearLayout
+        android:id="@+id/layout_more"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="@dimen/label_width_middle"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/server_user_pwd"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
+
+        <EditText
+            android:id="@+id/text_player_pwd"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            tools:text="123456"/>
+    </LinearLayout>-->
+</LinearLayout>

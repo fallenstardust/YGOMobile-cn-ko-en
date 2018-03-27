@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="0dp" >
+    <ToggleButton
+        android:id="@+id/overlay_ignore"
+        android:layout_width="@dimen/chain_control_button_width"
+        android:layout_height="@dimen/chain_control_button_height"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/overlay_rect"
+        android:textSize="12sp"
+        android:clickable="true"
+        android:textOn="@string/ignore_chain"
+        android:textOff="@string/ignore_chain"
+        android:textColor="@color/text_color_list"
+        android:gravity="center" >
+    </ToggleButton>
+    <ToggleButton
+        android:id="@+id/overlay_react"
+        android:layout_width="@dimen/chain_control_button_width"
+        android:layout_height="@dimen/chain_control_button_height"
+        android:layout_marginTop="@dimen/chain_control_margin"
+        android:layout_below="@id/overlay_ignore"
+        android:background="@drawable/overlay_rect"
+        android:textSize="12sp"
+        android:clickable="true"
+        android:textOn="@string/react_chain"
+        android:textOff="@string/react_chain"
+        android:textColor="@color/text_color_list"
+        android:gravity="center" >
+    </ToggleButton>
+</RelativeLayout>

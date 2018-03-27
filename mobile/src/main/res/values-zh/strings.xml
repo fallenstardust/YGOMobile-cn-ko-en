@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="StringFormatInvalid"
+    >
+    <string name="app_name">YGOMobile</string>
+    <string name="action_settings">设置</string>
+    <string name="action_game">启动游戏</string>
+    <string name="action_about">关于</string>
+    <string name="dont_start_game">无法启动游戏</string>
+    <!-- check -->
+    <string name="check_res">检查资源</string>
+    <string name="check_things">检查%s ...</string>
+    <string name="core_config">游戏核心</string>
+    <string name="tip_new_deck">新卡组</string>
+    <string name="cards_cdb">数据库</string>
+    <string name="scripts">脚本</string>
+    <string name="images">图片</string>
+    <string name="single_lua">残局文件</string>
+    <string name="font_files">字体文件</string>
+    <string name="game_skins">皮肤文件</string>
+    <string name="coping_pendulum_image">复制灵摆数字图片</string>
+    <string name="dialog_select_font">请选择一个字体文件</string>
+    <string name="dialog_select_image">请选择一张图片</string>
+    <string name="dialog_select_database">请选择一个数据库文件</string>
+    <string name="copy_databse">复制数据库中</string>
+    <string name="card_cover">卡片背面</string>
+    <string name="game_bg">游戏背景</string>
+    <string name="action_add_server">添加服务器</string>
+    <string name="no_find_file_selectotr">没有找到文件选择器</string>
+    <string name="no_find_image_selector">没有找到图片选择器</string>
+    <string name="no_find_image_cutor">没有找到裁剪工具</string>
+    <string name="help">教程</string>
+    <string name="settings">设置</string>
+    <string name="quit">退出</string>
+    <string name="quit_tip">退出游戏?</string>
+    <string name="back_tip">请再按一次返回键退出</string>
+    <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
+    <!-- settings -->
+    <string name="settings_about">关于</string>
+    <string name="settings_about_sub_about">关于</string>
+    <string name="settings_game_enable_sound_effect">启用游戏音效</string>
+    <string name="settings_game_screen_orientation">游戏横屏锁定</string>
+    <string name="settings_game_font_antialias">字体抗锯齿</string>
+    <string name="settings_game_lab_pendulum_scale">灵摆数字图片</string>
+    <string name="settings_game_font_antialias_summary">禁用字体抗锯齿可以提升帧数</string>
+    <string name="settings_about_author_pref">作者</string>
+    <string name="settings_about_version_pref">版本</string>
+    <string name="settings_about_check_update">检查更新</string>
+    <string name="settings_about_change_log">更新日志</string>
+    <string name="settings_game_card_quality">游戏图片质量</string>
+    <string name="settings_game_font_name">游戏字体</string>
+    <string name="settings_game_res_path">游戏目录</string>
+    <string name="settings_game_core_version">游戏核心</string>
+    <string name="settings_category_diy">自定义</string>
+    <string name="settings_game">游戏设置</string>
+    <string name="settings_game_diy_cover">游戏背景</string>
+    <string name="settings_game_diy_card_back">卡片背面</string>
+    <string name="settings_game_diy_card_db">使用自定义数据库</string>
+    <string name="settings_game_immersive_mode">在游戏隐藏虚拟键盘</string>
+    <string name="settings_game_opengl">OpenGL</string>
+    <string name="restart_app">请重启本应用</string>
+    <string-array name="opengl_version">
+        <item>OpenGL ES 1.X</item>
+        <item>OpenGL ES 2.0 fixed shaders</item>
+        <item>OpenGL ES 2.0 builtin shaders</item>
+    </string-array>
+    <string-array name="card_quality">
+        <item>低</item>
+        <item>高</item>
+    </string-array>
+    <!-- settings -->
+    <string name="server_name">服务器:</string>
+    <string name="server_ip">主机信息:</string>
+    <string name="server_user">用户:</string>
+    <string name="server_room_name">房间名:</string>
+    <string name="server_port">端口:</string>
+    <string name="server_room_pwd">密码:</string>
+    <string name="server_user_pwd">密码:</string>
+    <string name="server_info_edit">服务器信息编辑</string>
+    <string name="save">保存</string>
+    <string name="must_info">必填</string>
+    <string name="server_is_exist">服务器信息已经存在！</string>
+    <string name="server_info_error">服务器信息填写错误</string>
+    <string name="card_search">卡片搜索</string>
+    <string name="deck_manager">卡组编辑</string>
+    <string name="search">搜索</string>
+    <string name="search_open">选择卡片过滤条件</string>
+    <string name="search_close">关闭</string>
+    <string name="reset">重置</string>
+    <string name="hit_keyword1">关键词1</string>
+    <string name="hit_keyword2">关键词2</string>
+    <string name="hit_atk">ATK</string>
+    <string name="hit_def">DEF</string>
+    <string name="label_race">种族</string>
+    <string name="label_ot">专属</string>
+    <string name="label_limit">不限制</string>
+    <string name="label_limitlist">禁卡表</string>
+    <string name="label_type">卡片类型</string>
+    <string name="label_set">字段</string>
+    <string name="label_level">星/标数</string>
+    <string name="label_attr">属性</string>
+    <string name="label_category">效果分类</string>
+    <string name="linkmarker">连接标记</string>>
+    <string name="searching">读取中</string>
+    <string name="card_faq">在线调整</string>
+    <string name="no_webbrowser">没有安装浏览器</string>
+    <string name="load_game">启动游戏中</string>
+
+    <string name="last_path">上一级目录</string>
+    <string name="create_folder">新建文件夹</string>
+    <string name="intpu_name">输入文件名</string>
+    <string name="the_name_is_folder">当前文件名是个文件夹</string>
+    <string name="tab_search">搜索</string>
+    <string name="tab_result">列表</string>
+    <string name="tab_manager">管理</string>
+    <string name="deck_main" formatted="false">主卡组:%d   怪兽:%d 魔法:%d 陷阱:%d</string>
+    <string name="deck_extra" formatted="false">额外卡组:%d   融合:%d 同调:%d 超量:%d 连接:%d</string>
+    <string name="deck_side" formatted="false">副卡组:%d   怪兽:%d 魔法:%d 陷阱:%d</string>
+    <string name="card_result">卡片列表</string>
+    <string name="unsort">打乱</string>
+    <string name="sort">排序</string>
+    <string name="card_add_main">+主卡组</string>
+    <string name="card_add_side">+副卡组</string>
+    <string name="new_deck">新建</string>
+    <string name="rename_deck">重命名</string>
+    <string name="delete_deck">删除</string>
+    <string name="save_deck">保存</string>
+    <string name="deck_list">卡组列表</string>
+    <string name="loading">加载中..."</string>
+    <string name="tip">提示</string>
+    <string name="question">询问</string>
+    <string name="question_delete_deck">删除卡组?</string>
+    <string name="noname">未命名</string>
+    <string name="menu">菜单</string>
+    <string name="save_tip_ok">保存卡组成功</string>
+    <string name="save_tip_fail">保存卡组失败</string>
+    <string name="add_card_tip_ok">添加卡片成功</string>
+    <string name="add_card_tip_fail">添加卡片失败</string>
+    <string name="tip_card_max" formatted="false">卡片最大数量:%d</string>
+    <string name="file_exist">文件已经存在</string>
+    <string name="share_deck">分享卡组</string>
+    <string name="no_share_app">没有找到分享应用</string>
+    <string name="intput_room_name">输入密码（可留空加入）</string>
+    <string name="join_game">进入游戏</string>
+    <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
+    <string name="label_pendulum">灵摆刻度</string>
+    <string name="all">全卡表</string>
+    <string name="donation">捐助</string>
+    <string name="refresh">刷新</string>
+    <string name="quit_deck_tip">退出卡组编辑?</string>
+    <string name="deck_delete_text">拖到这里删除</string>
+    <string name="question_keep_cur_deck">保留当前卡牌？</string>
+    <string name="check_choose_file" formatted="false">确定选择这个 %s ？</string>
+    <string name="settings_deck_delete_dialog">删除卡片对话框</string>
+    <string name="settings_deck_delete_dialog_desc">在卡组编辑，直接显示删除对话框</string>
+    <string name="delete_card" formatted="false">删除卡片 %s ?</string>
+    <string name="clear_deck">清空</string>
+    <string name="question_clear_deck">清空当前卡组?</string>
+    <string name="delete_server_info">删除当前服务器信息？</string>
+    <string name="exit_edit_mode">退出编辑模式</string>
+    <string name="logo_text">Into the Master Vrains！</string>
+    <string name="start_game_error">启动游戏失败</string>
+    <string name="set_font_size">游戏内字体大小</string>
+    <string name="copy_to_clipbroad">已经复制到粘贴板</string>
+    <string name="deck_share_head">卡组分享来源YGOMobile</string>
+    <string name="deck_share_fail">卡组分享失败</string>
+    <string name="choose_game_path">选择游戏目录</string>
+    <string name="download_home">网盘下载</string>
+    <string name="reset_game_res">重置资源</string>
+    <string name="downloading_images">上次任务正在停止，请稍后再试</string>
+    <string name="download_image_progress" formatted="false">正在下载卡图 %d/%d</string>
+    <string name="download_image_error" formatted="false">共 %d 张图片下载失败</string>
+    <string name="downloading_images_ok">图片下载完成</string>
+    <string name="tip_istunning">游戏已运行</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+    <string name="mycard">萌卡平台</string>
+    <string name="arena">决斗数据库</string>
+    <string name="mc_home">大厅</string>
+    <string name="bbs">社区</string>
+    <string name="settings_pref_settings_only_game">直接启动游戏</string>
+    <string name="only_game_tip">取消设置，只能清空应用的数据，或者重装</string>
+    <string name="title_use_ex">使用额外卡库</string>
+    <string name="tip_network_image">服务器爆炸了</string>
+    <string name="game_version">游戏版本</string>
+    <string name="error_game_ver">错误格式！应为0x开头如:0x1342(显示1.034.2)</string>
+    <string name="tip_no_netwrok">请确认已经连接网络</string>
+    <string name="message">"复制数据包中..."</string>
+    <string name="ex_pack">扩展卡包</string>
+    <string name="deck_manager_v2">组卡器V2</string>
+    <string name="reset_game_ver_fail">重置游戏版本失败</string>
+    <string name="deck_name">卡组</string>
+    <string name="save_quit">保存并退出</string>
+    <string name="tip_reset_game_res">游戏数据检查完成</string>
+</resources>

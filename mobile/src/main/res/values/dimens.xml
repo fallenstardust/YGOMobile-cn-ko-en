@@ -1,0 +1,52 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="label_width_small_32dp">32dp</dimen>
+    <dimen name="label_width_small">40dp</dimen>
+    <dimen name="label_width_50dp">50dp</dimen>
+    <dimen name="label_width_middle">60dp</dimen>
+    <dimen name="label_width">75dp</dimen>
+    <dimen name="label_height">32dp</dimen>
+    <dimen name="title_height_small">38dp</dimen>
+    <dimen name="title_height">55dp</dimen>
+    <dimen name="item_height2">70dp</dimen>
+    <dimen name="item_height">48dp</dimen>
+    <dimen name="button_width_small">40dp</dimen>
+    <dimen name="button_width">80dp</dimen>
+    <dimen name="card_small_width">66dp</dimen>
+    <dimen name="card_small_height">90dp</dimen>
+    <dimen name="card_width_middle">118dp</dimen>
+    <dimen name="card_height_middle">169dp</dimen>
+    <dimen name="card_width">177dp</dimen>
+    <dimen name="card_height">254dp</dimen>
+    <dimen name="card_width2">145dp</dimen>
+    <dimen name="card_height2">210dp</dimen>
+    <dimen name="card_desc_height">140dp</dimen>
+    <dimen name="right_size">20dp</dimen>
+    <dimen name="right_size2">14dp</dimen>
+    <dimen name="card_def_width">44dp</dimen>
+    <dimen name="card_def_height">64dp</dimen>
+    <dimen name="deck_label_left">4dp</dimen>
+    <dimen name="deck_label_height">24dp</dimen>
+    <dimen name="deck_label_text">6sp</dimen>
+    <dimen name="card_padding">1dp</dimen>
+    <dimen name="padding">4dp</dimen>
+    <dimen name="padding2">8dp</dimen>
+    <dimen name="list_height">240dp</dimen>
+    <dimen name="nav_head_height">150dp</dimen>
+    <dimen name="nav_icon_width">100dp</dimen>
+    <dimen name="nav_icon_height">100dp</dimen>
+    <dimen name="logo_size">160dp</dimen>
+    <dimen name="cardinfo_title_height">58dp</dimen>
+
+    <dimen name="drag_rect">4dp</dimen>
+
+    <dimen name="item_menu_width">80dp</dimen>
+    <dimen name="item_menu_height">80dp</dimen>
+    <dimen name="brower_arrow_width">20dp</dimen>
+    <dimen name="brower_arrow_height">150dp</dimen>
+    <dimen name="menu_text_size">6dp</dimen>
+    <dimen name="menu_text_top">-5dp</dimen>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:background="@drawable/bg3">
+
+    <com.tubb.smrv.SwipeMenuRecyclerView
+        android:id="@+id/list_server"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none"/>
+
+    <com.nightonke.boommenu.BoomMenuButton
+        android:id="@+id/bmb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|left"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/buttonfunction"
+        app:bmb_buttonEnum="textOutsideCircle"
+        app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
+        app:bmb_dimColor="#90000000"
+        app:bmb_normalColor="@android:color/transparent"
+        app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            app:srcCompat="@drawable/bottom_1" />
+    </com.nightonke.boommenu.BoomMenuButton>
+</FrameLayout>

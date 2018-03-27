@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/room_name"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/item_height"
+        android:gravity="top|left"
+        android:hint="@string/intput_room_name"
+        android:textColorHint="@color/gray"
+        android:inputType="textNoSuggestions"
+        android:imeOptions="actionDone"
+        android:singleLine="true"
+        android:textColor="@color/holo_blue_bright" />
+
+    <ListView
+        android:id="@+id/room_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

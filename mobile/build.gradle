@@ -1,0 +1,89 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        applicationId "cn.garymb.ygomobile"
+        minSdkVersion 16
+        targetSdkVersion 22
+        versionCode 310701
+        versionName "3.1.7"
+        vectorDrawables.useSupportLibrary = true
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    productFlavors {
+        core {
+            applicationIdSuffix ""
+        }
+        mycard {
+
+        }
+    }
+    buildTypes {
+        debug {
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            assets.srcDirs = ['assets']
+        }
+    }
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'armeabi-v7a'
+            universalApk false
+        }
+    }
+    lintOptions {
+        ignoreWarnings true
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile project(':libcore')
+    compile 'org.jdeferred:jdeferred-android-aar:1.2.4'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.github.chrisbanes.photoview:library:1.2.4'
+    //
+    compile 'com.android.support:support-annotations:' + rootProject.ext.supportVersion
+    compile 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion
+    compile 'com.android.support:design:' + rootProject.ext.supportVersion
+    compile 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
+    compile 'com.android.support:support-vector-drawable:' + rootProject.ext.supportVersion
+    //
+    compile 'org.greenrobot:eventbus:3.0.0'
+    compile 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
+    //
+    mycardCompile(name: 'xwalk_core_library-22.52.561.4', ext: 'aar')
+    compile 'com.nightonke:boommenu:2.1.0'
+}

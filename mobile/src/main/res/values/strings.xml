@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="StringFormatInvalid"
+    >
+    <string name="app_name">YGOMobile</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_game">Start game</string>
+    <string name="action_about">About</string>
+    <string name="action_add_server">Add Server</string>
+    <string name="dont_start_game">don\'t start game</string>
+    <!-- check -->
+    <string name="check_res">Check Resources</string>
+    <string name="check_things">Check %s ...</string>
+    <string name="core_config">Core Config</string>
+    <string name="tip_new_deck">New Decks</string>
+    <string name="cards_cdb">cards.cdb</string>
+    <string name="scripts">scripts</string>
+    <string name="images">images</string>
+    <string name="single_lua">single files</string>
+    <string name="font_files">font files</string>
+    <string name="game_skins">skin files</string>
+    <string name="coping_pendulum_image">Coping pendulum image</string>
+    <string name="dialog_select_font">Select a font file</string>
+    <string name="dialog_select_image">Select a iamge</string>
+    <string name="dialog_select_database">Select a databse file</string>
+    <string name="copy_databse">copying databse</string>
+    <string name="card_cover">Card Cover</string>
+    <string name="game_bg">Game Background</string>
+    <string name="no_find_image_selector">no find image selector</string>
+    <string name="no_find_file_selectotr">no find file selector</string>
+    <string name="no_find_image_cutor">no find image cutor</string>
+    <string name="help">Help</string>
+    <string name="settings">Settings</string>
+    <string name="quit">Quit</string>
+    <string name="quit_tip">Quit app?</string>
+    <string name="last_path">Last Folder</string>
+    <string name="create_folder">New Folder</string>
+    <string name="intpu_name">Input name</string>
+    <string name="tab_search">Search</string>
+    <string name="tab_result">Result</string>
+    <string name="tab_manager">Deck</string>
+    <string name="the_name_is_folder">this name is folder</string>
+    <string name="back_tip">Press back key again to exit.</string>
+    <string name="string_help_text">The current application lacks the necessary permissions. \n
+        please click Settings - permissions - open the required permissions.</string>
+    <!-- settings -->
+    <string name="settings_about">About</string>
+    <string name="settings_about_sub_about">About</string>
+    <string name="settings_game_enable_sound_effect">Enable sound effect</string>
+    <string name="settings_game_screen_orientation">Lock screen in duel</string>
+    <string name="settings_game_font_antialias">Font antialias</string>
+    <string name="settings_game_lab_pendulum_scale">Pendulum Scale Images</string>
+    <string name="settings_game_font_antialias_summary">Disable this option can increase the frame rate</string>
+    <string name="settings_about_author_pref">Author</string>
+    <string name="settings_about_version_pref">Version</string>
+    <string name="donation">Donation</string>
+    <string name="settings_about_check_update">Check update</string>
+    <string name="settings_about_change_log">Change log</string>
+    <string name="settings_game_card_quality">Card texture quality</string>
+    <string name="settings_game_font_name">Game Font</string>
+    <string name="settings_game">Game Settings</string>
+    <string name="settings_game_res_path">Game path</string>
+    <string name="settings_game_core_version">Game Core Version</string>
+    <string name="settings_category_diy">DIY</string>
+    <string name="settings_game_diy_cover">Game Background</string>
+    <string name="settings_game_diy_card_back">Card Cover</string>
+    <string name="settings_game_diy_card_db">Use your own card database</string>
+    <string name="settings_game_immersive_mode">Immersive Mode</string>
+    <string name="settings_game_opengl">OpenGL</string>
+    <string name="settings_author" translatable="false">菜菜、暗星</string>
+    <string name="restart_app">"Please restart app！"</string>
+    <string-array name="opengl_version">
+        <item>OpenGL ES 1.X</item>
+        <item>OpenGL ES 2.0 fixed shaders</item>
+        <item>OpenGL ES 2.0 builtin shaders</item>
+    </string-array>
+    <string-array name="card_quality">
+        <item>Speed</item>
+        <item>Quality</item>
+    </string-array>
+    <!-- settings -->
+
+    <string name="server_name">Server:</string>
+    <string name="server_ip">Host:</string>
+    <string name="server_user">User:</string>
+    <string name="server_room_name">Room Name:</string>
+    <string name="server_port">Port:</string>
+    <string name="server_room_pwd">Password:</string>
+    <string name="server_user_pwd">Password:</string>
+    <string name="server_info_edit">Server Info Edit</string>
+    <string name="save">Save</string>
+    <string name="must_info">must info</string>
+    <string name="server_is_exist">the server is exist</string>
+    <string name="server_info_error">server info is bad.</string>
+    <string name="card_search">Card Search</string>
+    <string name="deck_manager">Deck Manager</string>
+    <string name="search">Search</string>
+    <string name="search_open">Select card options</string>
+    <string name="search_close">close card options</string>
+    <string name="hit_keyword1">prefix word</string>
+    <string name="hit_keyword2">suffix word</string>
+    <string name="hit_atk">ATK</string>
+    <string name="hit_def">DEF</string>
+    <string name="reset">Reset</string>
+    <string name="label_race">Race</string>
+    <string name="label_ot">Rule</string>
+    <string name="label_limit">Limit Type</string>
+    <string name="label_limitlist">Limit List</string>
+    <string name="label_type">Card Type</string>
+    <string name="label_set">Card Set</string>
+    <string name="label_level">Lv/Rk/Lmk</string>
+    <string name="label_attr">Attribute</string>
+    <string name="linkmarker">LINKMARKER</string>>
+    <string name="label_category">Category</string>
+    <string name="searching">Search Cards</string>
+    <string name="card_faq">FAQ</string>
+    <string name="no_webbrowser">No web browser</string>
+    <string name="load_game">loading game</string>
+    <string name="new_deck">New</string>
+    <string name="rename_deck">Rename</string>
+    <string name="delete_deck">Delete</string>
+    <string name="save_deck">Save Deck</string>
+    <string name="deck_list">Deck List</string>
+    <string name="card_add_main">+Main Deck</string>
+    <string name="card_add_side">+Side Deck</string>
+    <string name="deck_main" formatted="false">Main:%d  Monster:%d Spell:%d Trap:%d</string>
+    <string name="deck_extra" formatted="false">Extra:%d  Fusion:%d Synchro:%d Xyx:%d Link:%d</string>
+    <string name="deck_side" formatted="false">Side:%d  Monster:%d Spell:%d Trap:%d</string>
+    <string name="card_result">Cards List</string>
+    <string name="unsort">Unsort</string>
+    <string name="sort">Sort</string>
+    <string name="loading">loading..."</string>
+    <string name="question">Question</string>
+    <string name="question_delete_deck">delete this deck?</string>
+    <string name="noname">noname</string>
+    <string name="menu">Options</string>
+    <string name="save_tip_ok">save deck ok</string>
+    <string name="save_tip_fail">save deck fail</string>
+    <string name="add_card_tip_ok">add card ok</string>
+    <string name="add_card_tip_fail">add card fail</string>
+    <string name="tip_card_max" formatted="false">card max count:%d</string>
+
+    <string name="file_exist">file is exist</string>
+    <string name="share_deck">Share Deck</string>
+    <string name="no_share_app">no find share app</string>
+    <string name="intput_room_name">Input room name</string>
+    <string name="join_game">Join game</string>
+    <string name="settings_game_sensor_refresh">Sensor Refresh Game</string>
+    <string name="label_pendulum">Pendulum scale</string>
+    <string name="all">All</string>
+    <string name="refresh">Refresh</string>
+    <string name="quit_deck_tip">Quit deck editor?</string>
+    <string name="deck_delete_text">Drag here to delete</string>
+    <string name="question_keep_cur_deck">keep current cards?</string>
+    <string name="check_choose_file" formatted="false">Determine the choose %s ？</string>
+    <string name="settings_deck_delete_dialog">Delete Card use dialog</string>
+    <string name="settings_deck_delete_dialog_desc">show delete card dialog in deck editor</string>
+    <string name="delete_card" formatted="false">Delete %s ?</string>
+    <string name="clear_deck">Clear</string>
+    <string name="question_clear_deck">clear this deck?</string>
+    <string name="delete_server_info">delete this server info?</string>
+    <string name="exit_edit_mode">Exit Edit Mode</string>
+    <string name="logo_text">Thank you all for your support.</string>
+    <string name="start_game_error">Join game fail</string>
+    <string name="set_font_size">In game font size</string>
+    <string name="copy_to_clipbroad">Copy to clipbroad</string>
+    <string name="deck_share_head">share deck by ygomobile.</string>
+    <string name="deck_share_fail">share deck fail</string>
+    <string name="choose_game_path">choose game folder</string>
+    <string name="download_home">NetDisk Page</string>
+    <string name="reset_game_res">Reset Resources</string>
+    <string name="downloading_images">Downloading images</string>
+    <string name="download_image_progress" formatted="false">Downloading card image %d/%d</string>
+    <string name="download_image_error" formatted="false">Download fail %d</string>
+    <string name="downloading_images_ok">Download images ok</string>
+    <string name="tip_istunning">YGOPro is Running</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="mycard">MyCard</string>
+    <string name="arena">Duelist DataBase</string>
+    <string name="mc_home">Home</string>
+    <string name="bbs">Community</string>
+    <string name="settings_pref_settings_only_game">Only start game</string>
+    <string name="only_game_tip">reset this setting, need clean data of app</string>
+    <string name="title_use_ex">Use Expansions</string>
+    <string name="tip_network_image">image server is close</string>
+    <string name="game_version">Game Version</string>
+    <string name="tip">Info</string>
+    <string name="error_game_ver">Wrong！be right as "0x1342"(as 1.034.2)</string>
+    <string name="tip_no_netwrok">please confirm net works</string>
+    <string name="message">Copying datas...</string>
+    <string name="ex_pack">Extend cards</string>
+    <string name="deck_manager_v2">Deck Manager V2</string>
+    <string name="reset_game_ver_fail">reset game version fail</string>
+    <string name="deck_name">卡组</string>
+    <string name="save_quit">Save and quit</string>
+    <string name="tip_reset_game_res">Reset game resources completed</string>
+</resources>

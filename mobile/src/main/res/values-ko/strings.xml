@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="StringFormatInvalid"
+    >
+    <string name="app_name">YGOMobile</string>
+    <string name="action_settings">설정</string>
+    <string name="action_game">게임 시작</string>
+    <string name="action_about">정보</string>
+    <string name="dont_start_game">게임을 시작하지 마세요.</string>
+    <!-- check -->
+    <string name="check_res">Check Resources</string>
+    <string name="check_things">Check %s ...</string>
+    <string name="core_config">Core Config</string>
+    <string name="tip_new_deck">새로운 덱</string>
+    <string name="cards_cdb">cards.cdb</string>
+    <string name="scripts">scripts</string>
+    <string name="images">이미지</string>
+    <string name="single_lua">single files</string>
+    <string name="font_files">폰트 파일</string>
+    <string name="game_skins">스킨 파일</string>
+    <string name="coping_pendulum_image">Coping pendulum image</string>
+    <string name="dialog_select_font">font파일을 선택하세요.</string>
+    <string name="dialog_select_image">이미지를 선택하세요.</string>
+    <string name="dialog_select_database">cdb파일을 선택하세요.</string>
+    <string name="copy_databse">copying databse</string>
+    <string name="card_cover">카드 커버</string>
+    <string name="game_bg">게임 배경 이미지</string>
+    <string name="action_add_server">서버 추가</string>
+    <string name="no_find_file_selectotr">no find file selector</string>
+    <string name="no_find_image_selector">no find image selector</string>
+    <string name="no_find_image_cutor">no find image cutor</string>
+    <string name="help">도움말</string>
+    <string name="settings">설정</string>
+    <string name="quit">나가기</string>
+    <string name="quit_tip">앱을 나가겠습니까??</string>
+    <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다.</string>
+    <string name="string_help_text">현재 응용 프로그램에 필요한 권한이 없습니다. 
+	설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
+    <!-- settings -->
+    <string name="settings_about">정보</string>
+    <string name="settings_about_sub_about">정보</string>
+    <string name="settings_game_enable_sound_effect">사운드 효과 사용</string>
+    <string name="settings_game_screen_orientation">듀얼중 화면 고정</string>
+    <string name="settings_game_font_antialias">폰트안티앨러싱</string>
+    <string name="settings_game_lab_pendulum_scale">P스캐일 효과 이미지</string>
+    <string name="settings_game_font_antialias_summary">이 옵션을 비활성화시 속도가 소폭 증가할 수 있습니다.</string>
+    <string name="settings_about_author_pref">젝자자</string>
+    <string name="settings_about_version_pref">Version</string>
+    <string name="settings_about_check_update">업데이트 확인</string>
+    <string name="settings_about_change_log">패치 기록</string>
+    <string name="settings_game_card_quality">카드텍스쳐품질</string>
+    <string name="settings_game_font_name">게임폰트</string>
+    <string name="settings_game_res_path">게임경로</string>
+    <string name="settings_game_core_version">게임코어버전</string>
+    <string name="settings_category_diy">DIY</string>
+    <string name="settings_game">게임설정</string>
+    <string name="settings_game_diy_cover">배경이미지</string>
+    <string name="settings_game_diy_card_back">카드커버</string>
+    <string name="settings_game_diy_card_db">커스텀cdb사용</string>
+    <string name="settings_game_immersive_mode">몰입모드</string>
+    <string name="settings_game_opengl">OpenGL</string>
+    <string name="restart_app">앱을 다시 시작하세요.</string>
+    <string-array name="opengl_version">
+        <item>OpenGL ES 1.X</item>
+        <item>OpenGL ES 2.0 fixed shaders</item>
+        <item>OpenGL ES 2.0 builtin shaders</item>
+    </string-array>
+    <string-array name="card_quality">
+        <item>낮음</item>
+        <item>높음</item>
+    </string-array>
+    <!-- settings -->
+    <string name="server_name">서버이름:</string>
+    <string name="server_ip">Host(IP):</string>
+    <string name="server_user">닉네임:</string>
+    <string name="server_room_name">방코드:</string>
+    <string name="server_port">Port:</string>
+    <string name="server_room_pwd">비밀번호:</string>
+    <string name="server_user_pwd">비밀번호:</string>
+    <string name="server_info_edit">서버수정</string>
+    <string name="save">저장</string>
+    <string name="must_info">필수정보</string>
+    <string name="server_is_exist">이미 존재하는 서버 입니다.</string>
+    <string name="server_info_error">적절하지 않는 서버정보</string>
+    <string name="card_search">카드검색</string>
+    <string name="deck_manager">덱관리자</string>
+    <string name="search">검색</string>
+    <string name="search_open">카드옵션 선택</string>
+    <string name="search_close">카드옵션 닫기</string>
+    <string name="reset">초기화</string>
+    <string name="hit_keyword1">검색어 1</string>
+    <string name="hit_keyword2">검색어 2</string>
+    <string name="hit_atk">ATK</string>
+    <string name="hit_def">DEF</string>
+    <string name="label_race">종족</string>
+    <string name="label_ot">룰</string>
+    <string name="label_limit">금제유형</string>
+    <string name="label_limitlist">금제목록</string>
+    <string name="label_type">카드종류</string>
+    <string name="label_set">카드군</string>
+    <string name="label_level">레벨/랭크/링크</string>
+    <string name="label_attr">속성</string>
+    <string name="label_category">카테고리</string>
+    <string name="linkmarker">링크마커</string>>
+    <string name="searching">카드검색</string>
+    <string name="card_faq">뽜큐</string>
+    <string name="no_webbrowser">웹브라우저를 사용하지 않습니다.</string>
+    <string name="load_game">로딩중...</string>
+
+    <string name="last_path">최근경로</string>
+    <string name="create_folder">폴더생성</string>
+    <string name="intpu_name">닉네임을 입력하세요.</string>
+    <string name="the_name_is_folder">방 코드를 입력하세요.(미 입력시 랜덤대전)</string>
+    <string name="tab_search">검색</string>
+    <string name="tab_result">결과</string>
+    <string name="tab_manager">덱</string>
+    <string name="deck_main" formatted="false">메인:%d 몬스터:%d 마법:%d 함정:%d</string>
+    <string name="deck_extra" formatted="false">엑스트라:%d 융합:%d 싱크로:%d 엑시즈:%d</string>
+    <string name="deck_side" formatted="false">사이드:%d 몬스터:%d 마법:%d 함정:%d</string>
+    <string name="card_result">카드 리스트</string>
+    <string name="unsort">랜덤정렬</string>
+    <string name="sort">정렬</string>
+    <string name="card_add_main">+메인덱</string>
+    <string name="card_add_side">+사이드덱</string>
+    <string name="new_deck">새로운 덱</string>
+    <string name="rename_deck">이름변경</string>
+    <string name="delete_deck">삭제</string>
+    <string name="save_deck">덱저장</string>
+    <string name="deck_list">덱 리스트</string>
+    <string name="loading">로딩중..."</string>
+    <string name="tip">정보</string>
+    <string name="question">질문</string>
+    <string name="question_delete_deck">덱을 삭제하겠습니까?</string>
+    <string name="noname">이름없음</string>
+    <string name="menu">옵션</string>
+    <string name="save_tip_ok">덱저장 확인</string>
+    <string name="save_tip_fail">덱저장 실패</string>
+    <string name="add_card_tip_ok">카드추가성공</string>
+    <string name="add_card_tip_fail">카드추가실패</string>
+    <string name="tip_card_max" formatted="false">카드 최대 수:%d</string>
+    <string name="file_exist">파일확인</string>
+    <string name="share_deck">덱공유</string>
+    <string name="no_share_app">공유할 앱을 찾지못했습니다.</string>
+    <string name="intput_room_name">방 코드를 입력하세요.(미 입력시 랜덤대전)</string>
+    <string name="join_game">게임입장</string>
+    <string name="settings_game_sensor_refresh">센서 새로고침</string>
+    <string name="label_pendulum">p스캐일</string>
+    <string name="all">모두보기</string>
+    <string name="donation">기부</string>
+    <string name="refresh">새로고침</string>
+    <string name="quit_deck_tip">덱관리자를 나가겠습니까?</string>
+    <string name="deck_delete_text">삭제하려면 여기로 드래그하십시오.</string>
+    <string name="question_keep_cur_deck">현재 카드를 유지하겠습니까?</string>
+    <string name="check_choose_file" formatted="false">%s 을(를) 선택 하시겠습니까?</string>
+    <string name="settings_deck_delete_dialog">카드 기록 삭제</string>
+    <string name="settings_deck_delete_dialog_desc">show delete card dialog in deck editor</string>
+    <string name="delete_card" formatted="false">s 을(를) 삭제하겠습니까?</string>
+    <string name="clear_deck">덱 최기화</string>
+    <string name="question_clear_deck">덱을 초기화 하겠습니까?</string>
+    <string name="delete_server_info">서버정보를 삭제하겠습니까?</string>
+    <string name="exit_edit_mode">수정모드 나가기</string>
+    <string name="logo_text">한섭을 쓰자!</string>
+    <string name="start_game_error">게임입장 실패</string>
+    <string name="set_font_size">폰트크기</string>
+    <string name="copy_to_clipbroad">클립보드에 복사</string>
+    <string name="deck_share_head">덱을 ygomobile로 공유</string>
+    <string name="deck_share_fail">덱공유 실패</string>
+    <string name="choose_game_path">게임경로를 선택하세요.</string>
+    <string name="download_home">NetDisk Page</string>
+    <string name="reset_game_res">Reset Resources</string>
+    <string name="downloading_images">Downloading images</string>
+    <string name="download_image_progress" formatted="false">Downloading card image %d/%d</string>
+    <string name="download_image_error" formatted="false">Download fail %d</string>
+    <string name="downloading_images_ok">Download images ok</string>
+    <string name="tip_istunning">ygopro실행중...</string>
+    <string name="edit">수정</string>
+    <string name="delete">삭제</string>
+    <string name="mycard">MYcard</string>
+    <string name="arena">듀얼리스트db</string>
+    <string name="mc_home">홈화면</string>
+    <string name="bbs">커뮤니티</string>
+    <string name="settings_pref_settings_only_game">앱 실행시 YGOCORE 바로 실행(설정하지마십시오)</string>
+    <string name="only_game_tip">앱의 초기화를 위해 설정을 초기화 해야합니다.</string>
+    <string name="title_use_ex">확장팩 사용</string>
+    <string name="tip_network_image">image server is close</string>
+    <string name="game_version">게임버전</string>
+    <string name="error_game_ver">버전을 맞추어주세요. 0x1342(= 1.034.2)</string>
+    <string name="tip_no_netwrok">>please confirm net works</string>
+    <string name="message">"패킷복사..."</string>
+    <string name="ex_pack">확장팩 카드</string>
+    <string name="deck_manager_v2">덱관리자v2</string>
+    <string name="reset_game_ver_fail">게임을 초기화하지 못했습니다.</string>
+    <string name="deck_name">덱이름</string>
+    <string name="save_quit">저장하고 종료하십시오.</string>
+    <string name="tip_reset_game_res">게임 리소스대이터 리셋 완료.</string>
+</resources>
