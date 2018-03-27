@@ -4,30 +4,23 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>娱乐决斗与宇宙首发群452384460</name>
-        <ip>s1.ygo233.com</ip>
-        <port>233</port>
+        <name>YGOPRO 한국서버</name>
+        <ip>cygopro.fun25.co.kr</ip>
+        <port>17225</port>
         <keep>true</keep>
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>233正式服务器</name>
+        <name>YGOPRO 중국서버</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
     </server>
     <server>
-        <player-name>fresh chicken</player-name>
-        <name>233在线人机练习</name>
+        <player-name>fresh_meat</player-name>
+        <name>YGOPRO WindBot Online</name>
         <ip>s1.ygo233.com</ip>
         <port>9999</port>
-        <keep>true</keep>
-    </server>
-    <server>
-        <player-name>Knight of Hanoi</player-name>
-        <name>C萌约战</name>
-        <ip>120.24.169.252</ip>
-        <port>233</port>
         <keep>true</keep>
     </server>
 </servers>
