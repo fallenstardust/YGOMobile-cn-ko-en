@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := lua5.2
+LOCAL_MODULE    := lua5.3
 LOCAL_SRC_FILES := lapi.c \
                    lauxlib.c \
                    lbaselib.c \
@@ -33,10 +33,13 @@ LOCAL_SRC_FILES := lapi.c \
                    ltable.c \
                    ltablib.c \
                    ltm.c \
+                   lua.c \
+                   luac.c \
                    lundump.c \
+                   lutf8lib.c \
                    lvm.c \
                    lzio.c
                    
-LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -DLUA_COMPAT_ALL -D"getlocaledecpoint()='.'" -Wno-psabi
+LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -DLUA_COMPAT_5_2 -D"getlocaledecpoint()='.'" -Wno-psabi
 include $(BUILD_STATIC_LIBRARY)
 
