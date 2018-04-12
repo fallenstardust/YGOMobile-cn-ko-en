@@ -124,7 +124,8 @@ bool Game::Initialize() {
 	yScale = 1.0;
 #endif
 	LoadConfig();
-	linePattern = 0x0f0f;
+	linePatternD3D = 0;
+	linePatternGL = 0x0f0f;
 	waitFrame = 0;
 	signalFrame = 0;
 	showcard = 0;
@@ -1266,14 +1267,8 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
-#ifdef _IRR_ANDROID_PLATFORM_
-		linePattern = (linePattern + 1) % 30;
-#else
-		if(gameConf.use_d3d)
-			linePattern = (linePattern + 1) % 30;
-		else
-			linePattern = (linePattern << 1) | (linePattern >> 15);
-#endif
+		linePatternD3D = (linePatternD3D + 1) % 30;
+		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
 		atkdy = (float)sin(atkframe);
 		driver->beginScene(true, true, SColor(0, 0, 0, 0));

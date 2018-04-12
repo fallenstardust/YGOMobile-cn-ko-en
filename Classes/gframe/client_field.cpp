@@ -420,6 +420,9 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 					selectable_cards[i]->sequence + 1);
 			mainGame->stCardPos[i]->setText(formatBuffer);
 			// color
+			if (selectable_cards[i]->is_selected)
+				mainGame->stCardPos[i]->setBackgroundColor(0xffa2d8f4);
+			else {
 			if(conti_selecting)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 			else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
@@ -440,6 +443,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 					mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 				else
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+				}
 			}
 		} else {
 			if(sort_list[i]) {

@@ -6,7 +6,7 @@ project "ygopro"
     files { "**.cpp", "**.cc", "**.c", "**.h" }
     excludes "lzma/**"
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "Irrlicht", "freetype", "sqlite3", "lua" , "event"}
+    links { "ocgcore", "clzma", "Irrlicht", "freetype", "sqlite3", "lua" , "event" }
 
     configuration "windows"
         files "ygopro.rc"
