@@ -7,6 +7,15 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
+        ndk {
+            moduleName "YGOMobile"
+            abiFilters "armeabi-v7a", "x86"
+        }
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path "jni/Android.mk"
+        }
     }
     sourceSets{
         main{
