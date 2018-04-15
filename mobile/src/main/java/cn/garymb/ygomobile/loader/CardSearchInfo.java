@@ -106,7 +106,7 @@ class CardSearchInfo {
         }
 
         if (pscale != -1) {
-            if (!((card.Level >> 16 & 255) == pscale || (card.Level >> 24 & 255) == pscale)) {
+            if (!card.isType(CardType.Pendulum) || card.LScale != pscale && card.RScale != pscale) {
                 return false;
             }
         }
