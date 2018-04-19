@@ -304,7 +304,7 @@ class DeckDrager {
         int right = to - DeckItem.SideStart;
         int sidecount = deckAdapater.getSideCount();
         int maincount = deckAdapater.getMainCount();
-        if (right > sidecount) {
+        if (right >= sidecount) {
             right = sidecount - 1;
         }
         //交换
