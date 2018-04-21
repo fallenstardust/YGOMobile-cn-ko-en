@@ -146,7 +146,7 @@
     <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
     <string name="label_pendulum">灵摆刻度</string>
     <string name="all">全卡表</string>
-    <string name="donation">捐助</string>
+    <string name="donation">支持我们</string>
     <string name="refresh">刷新</string>
     <string name="quit_deck_tip">退出卡组编辑?</string>
     <string name="deck_delete_text">拖到这里删除</string>
