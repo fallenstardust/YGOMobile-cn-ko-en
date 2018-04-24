@@ -433,24 +433,23 @@ public class AppsSettings {
         }
         return v;
     }
-
-    public int resetGameVersion() {
-        int version = GameConfig.getVersion();
-        if (getIntSettings(Constants.PREF_GAME_VERSION, 0) == 0) {
-            //用户没设置过版本号
-            return version;
-        }
-        saveIntSettings(Constants.PREF_GAME_VERSION, GameConfig.getVersion());
-        return version;
-    }
-
-    public int getGameVersion() {
-        return getIntSettings(Constants.PREF_GAME_VERSION, GameConfig.getVersion());
-    }
-
-    public void setGameVersion(int v) {
-        saveIntSettings(Constants.PREF_GAME_VERSION, v);
-    }
+    /* public int resetGameVersion() {
+   *   int version = GameConfig.getVersion();
+   *    if (getIntSettings(Constants.PREF_GAME_VERSION, 0) == 0) {
+   *        //用户没设置过版本号
+   *        return version;
+   *    }
+   *    saveIntSettings(Constants.PREF_GAME_VERSION, GameConfig.getVersion());
+   *    return version;
+   * }
+   *
+   *  public int getGameVersion() {
+   *     return getIntSettings(Constants.PREF_GAME_VERSION, GameConfig.getVersion());
+   *}
+   *
+   * public void setGameVersion(int v) {
+   *    saveIntSettings(Constants.PREF_GAME_VERSION, v);
+    }*/
 
     public String getVersionString(int value) {
         int last = (value & 0xf);
@@ -459,7 +458,7 @@ public class AppsSettings {
         return String.format("%X.%03X.%X", b, m, last);
     }
 
-    public int getVersionValue(String str) {
+   /* public int getVersionValue(String str) {
         str = str.trim().toLowerCase(Locale.US);
         int v = -1;
         if(str.contains(".")){
@@ -485,7 +484,7 @@ public class AppsSettings {
             }
         }
         return v;
-    }
+    }*/
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {

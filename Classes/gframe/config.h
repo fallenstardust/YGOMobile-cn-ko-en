@@ -2,9 +2,6 @@
 #define __CONFIG_H
 
 #pragma once
-
-#define DEF_PRO_VERSION 0x1343
-
 #ifndef __GAME_CONFIG
 #define _IRR_STATIC_LIB_
 #define IRR_COMPILE_WITH_DX9_DEV_PACK
@@ -112,7 +109,7 @@ using namespace io;
 using namespace gui;
 using namespace os;
 
-extern unsigned short PRO_VERSION;
+extern const unsigned short PRO_VERSION;
 extern int enable_log;
 extern bool exit_on_return;
 extern bool bot_mode;

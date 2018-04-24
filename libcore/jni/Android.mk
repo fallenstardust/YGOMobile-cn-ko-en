@@ -7,12 +7,6 @@ IRRLICHT_PROJECT_PATH := $(LOCAL_PATH)
 #include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := game_version
-LOCAL_SRC_FILES := $(LOCAL_PATH)/jni/version.cpp
-include $(BUILD_SHARED_LIBRARY)
-
-
-include $(CLEAR_VARS)
 
 LOCAL_MODULE := YGOMobile
 

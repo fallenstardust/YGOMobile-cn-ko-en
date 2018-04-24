@@ -79,7 +79,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
-        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
+//        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -108,7 +108,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public boolean onPreferenceChange(Preference preference, Object value) {
         super.onPreferenceChange(preference, value);
         if (!isInit) {
-            if (PREF_GAME_VERSION.equals(preference.getKey())) {
+            /*if (PREF_GAME_VERSION.equals(preference.getKey())) {
                 int v = AppsSettings.get().getVersionValue(value.toString());
                 if (v > 0 && v <= AppsSettings.get().getVersionValue("0xF99F")) {
                     mSettings.setGameVersion(v);
@@ -122,7 +122,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     }
                     return false;
                 }
-            }
+            }*/
             if (PREF_FONT_SIZE.equals(preference.getKey())) {
                 int size = Constants.DEF_PREF_FONT_SIZE;
                 try {

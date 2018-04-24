@@ -6,7 +6,7 @@ import java.util.Locale;
 
 public class A {
 
-    @Test
+    /*@Test
     public void testVersion() {
         System.out.println(getVersionString(0x233E));
         System.out.println(getVersionString(0xF99F));
@@ -15,7 +15,7 @@ public class A {
         System.out.println(getVersionValue("1.034.00"));
         System.out.println(getVersionValue("1.034.0"));
         System.out.println(getVersionString(4928));
-    }
+    }*/
 
     public String getVersionString(int value) {
         int last = (value & 0xf);
@@ -24,7 +24,7 @@ public class A {
         return String.format("%X.%03X.%X", b, m, last);
     }
 
-    public int getVersionValue(String str) {
+    /*public int getVersionValue(String str) {
         str = str.trim().toLowerCase(Locale.US);
         int v = -1;
         if(str.contains(".")){
@@ -50,5 +50,5 @@ public class A {
             }
         }
         return v;
-    }
+    }*/
 }

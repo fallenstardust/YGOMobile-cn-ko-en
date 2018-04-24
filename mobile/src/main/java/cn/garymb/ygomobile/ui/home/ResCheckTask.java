@@ -115,11 +115,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     AppsSettings.get().setUseExtraCards(false);
                 }
             }
-            if (needsUpdate) {
-                if(AppsSettings.get().resetGameVersion() == 0){
-                    VUiKit.show(mContext, mContext.getString(R.string.reset_game_ver_fail));
-                }
-            }
+       /*     if (needsUpdate) {
+        *        if(AppsSettings.get().resetGameVersion() == 0){
+        *            VUiKit.show(mContext, mContext.getString(R.string.reset_game_ver_fail));
+        *        }
+        *    }*/
             //设置字体
             new ConfigManager(mSettings.getSystemConfig()).setFontSize(mSettings.getFontSize());
 //            copyCoreConfig(new File(mSettings.getResourcePath(), GameSettings.CORE_CONFIG_PATH).getAbsolutePath());
