@@ -359,7 +359,11 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     protected <T extends View> T findViewById(int id) {
-        return (T) view.findViewById(id);
+        T v = view.findViewById(id);
+        if (v instanceof Spinner) {
+            ((Spinner) v).setPopupBackgroundResource(R.color.colorPrimary);
+        }
+        return v;
     }
 
     /*public void showDeckList() {
