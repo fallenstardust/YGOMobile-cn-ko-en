@@ -1833,6 +1833,11 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				u32 pos = mainGame->scrCardText->getPos();
 				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->textFont, mainGame->showingtext, pos);
 				return true;
+				break;
+			}
+			}
+			break;
+		}
 		case irr::gui::EGET_EDITBOX_ENTER: {
 			switch(id) {
 			case EDITBOX_CHAT: {
