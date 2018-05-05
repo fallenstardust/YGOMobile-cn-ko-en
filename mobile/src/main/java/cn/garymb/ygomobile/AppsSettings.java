@@ -35,6 +35,7 @@ import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 
 public class AppsSettings {
     private static AppsSettings sAppsSettings;

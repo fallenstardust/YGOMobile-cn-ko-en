@@ -56,6 +56,7 @@ public:
 	static int32 card_get_mutual_linked_group_count(lua_State *L);
 	static int32 card_get_mutual_linked_zone(lua_State *L);
 	static int32 card_is_link_state(lua_State *L);
+	static int32 card_is_extra_link_state(lua_State *L);
 	static int32 card_get_column_group(lua_State *L);
 	static int32 card_get_column_group_count(lua_State *L);
 	static int32 card_get_column_zone(lua_State *L);
@@ -353,6 +354,7 @@ public:
 	static int32 group_equal(lua_State *L);
 	static int32 group_is_contains(lua_State *L);
 	static int32 group_search_card(lua_State *L);
+	static int32 group_get_bin_class_count(lua_State *L);
 
 	//Duel functions
 	static int32 duel_enable_global_flag(lua_State *L);
@@ -567,6 +569,13 @@ public:
 	static int32 duel_venom_swamp_check(lua_State *L);
 	static int32 duel_swap_deck_and_grave(lua_State *L);
 	static int32 duel_majestic_copy(lua_State *L);
+
+	//group metamethods
+	//__len is in the group lib, which is same as group_get_count
+	static int32 group_meta_add(lua_State *L);
+	static int32 group_meta_sub(lua_State *L);
+	static int32 group_meta_band(lua_State *L);
+	static int32 group_meta_bxor(lua_State *L);
 
 	//preload
 	static int32 debug_message(lua_State *L);

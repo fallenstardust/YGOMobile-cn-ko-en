@@ -141,7 +141,7 @@
     <string name="file_exist">文件已经存在</string>
     <string name="share_deck">分享卡组</string>
     <string name="no_share_app">没有找到分享应用</string>
-    <string name="intput_room_name">输入密码（可留空加入）</string>
+    <string name="intput_room_name">输入密码（可不填）</string>
     <string name="join_game">进入游戏</string>
     <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
     <string name="label_pendulum">灵摆刻度</string>
@@ -159,7 +159,7 @@
     <string name="question_clear_deck">清空当前卡组?</string>
     <string name="delete_server_info">删除当前服务器信息？</string>
     <string name="exit_edit_mode">退出编辑模式</string>
-    <string name="logo_text">Into the Master Vrains！</string>
+    <string name="logo_text">感谢您对我们的支持</string>
     <string name="start_game_error">启动游戏失败</string>
     <string name="set_font_size">游戏内字体大小</string>
     <string name="copy_to_clipbroad">已经复制到粘贴板</string>

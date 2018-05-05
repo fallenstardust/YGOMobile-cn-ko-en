@@ -9,7 +9,7 @@ android {
         targetSdkVersion 21
        /* ndk {
             moduleName "YGOMobile"
-            abiFilters "armeabi-v7a"//,"x86"
+            abiFilters "armeabi-v7a","x86"
         }
     }
     externalNativeBuild {

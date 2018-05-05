@@ -3,6 +3,8 @@ package cn.garymb.ygomobile.ui.preference.fragments;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
+import com.qihoo.appstore.common.updatesdk.lib.UpdateHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,9 +36,14 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.ConfigManager;
 
+import static android.R.attr.key;
+import static android.R.attr.packageNames;
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
+import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
+import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_MANAGER_V2;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
@@ -80,6 +88,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
+        bind(PREF_CHANGE_LOG,SystemUtils.getVersionName(getActivity()));
+        bind(PREF_CHECK_UPDATE,getString(R.string.settings_about_author_pref)+" : "+getString(R.string.settings_author));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -152,6 +162,18 @@ public class SettingFragment extends PreferenceFragmentPlus {
     @Override
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
+        if (PREF_CHANGE_LOG.equals(preference.getKey())) {
+            new DialogPlus(getActivity())
+                    .setTitleText(getString(R.string.settings_about_change_log))
+                    .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
+                    .show();
+        }
+        if (PREF_CHECK_UPDATE.equals(preference.getKey())) {
+            UpdateHelper.getInstance().init(getContext(), Color.parseColor("#0A93DB"));
+            UpdateHelper.getInstance().setDebugMode(false);
+            UpdateHelper.getInstance().manualUpdate("cn.garymb.ygomobile");
+
+        }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
             setPendlumScale(checkBoxPreference.isChecked());
@@ -310,5 +332,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
             IOUtils.delete(file);
         }
     }
+
 }
 

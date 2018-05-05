@@ -54,6 +54,7 @@ static const struct luaL_Reg cardlib[] = {
 	{ "GetMutualLinkedGroupCount", scriptlib::card_get_mutual_linked_group_count },
 	{ "GetMutualLinkedZone", scriptlib::card_get_mutual_linked_zone },
 	{ "IsLinkState", scriptlib::card_is_link_state },
+	{ "IsExtraLinkState", scriptlib::card_is_extra_link_state },
 	{ "GetColumnGroup", scriptlib::card_get_column_group },
 	{ "GetColumnGroupCount", scriptlib::card_get_column_group_count },
 	{ "GetColumnZone", scriptlib::card_get_column_zone },
@@ -356,6 +357,12 @@ static const struct luaL_Reg grouplib[] = {
 	{ "Equal", scriptlib::group_equal },
 	{ "IsContains", scriptlib::group_is_contains },
 	{ "SearchCard", scriptlib::group_search_card },
+	{ "GetBinClassCount", scriptlib::group_get_bin_class_count },
+	{ "__add", scriptlib::group_meta_add },
+	{ "__bor", scriptlib::group_meta_add },
+	{ "__sub", scriptlib::group_meta_sub },
+	{ "__band", scriptlib::group_meta_band },
+	{ "__bxor", scriptlib::group_meta_bxor },
 	{ NULL, NULL }
 };
 

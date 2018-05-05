@@ -1826,6 +1826,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				int sel = mainGame->lstLog->getSelected();
 				if(sel != -1 && (int)mainGame->logParam.size() >= sel && mainGame->logParam[sel]) {
 					mainGame->wInfos->setActiveTab(0);
+					mainGame->ShowCardInfo(mainGame->logParam[sel]);
 				}
 				return true;
 				break;

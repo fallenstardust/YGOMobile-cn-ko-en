@@ -65,6 +65,7 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+import static cn.garymb.ygomobile.lite.R.id.toolbar;
 
 class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, ItemTouchHelper2.OnDragListner {
     private RecyclerView mRecyclerView;
@@ -84,6 +85,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDeckSpinner = $(R.id.toolbar_list);
+        mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mLimitSpinner = $(R.id.sp_limit_list);
         mRecyclerView = $(R.id.grid_cards);
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), 0, mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
@@ -215,9 +217,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     @Override
-    public void onDragEnd() {
-
-    }
+    public void onDragEnd() {}
 
     private void loadDeck(File file) {
         loadDeck(file, false);

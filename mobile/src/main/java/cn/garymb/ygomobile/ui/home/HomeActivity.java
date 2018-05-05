@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -14,14 +13,18 @@ import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.base.bj.trpayjar.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.qihoo.appstore.common.updatesdk.lib.UpdateHelper;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -50,12 +53,12 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 
-import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
-
 abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
     protected SwipeMenuRecyclerView mServerList;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
+
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,6 +80,10 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
+        //trpay
+        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","baidu");
+        //autoupadte checking
+        checkForceUpdateSilent();
     }
 
     @Override
@@ -141,10 +148,26 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
     private boolean doMenu(int id) {
         switch (id) {
             case R.id.nav_donation: {
-//                AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+
+                final  DialogPlus dialog = new DialogPlus(getContext());
+                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
+                dialog.setTitle(R.string.logo_text);
+                dialog.show();
+                View viewDialog= dialog.getContentView();
+                Button btnalipay= viewDialog.findViewById(R.id.button_alipay);
+                Button btnwechat= viewDialog.findViewById(R.id.button_wechat);
+
+                btnalipay.setOnClickListener((v) -> {
+                    AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+                    dialog.dismiss();
 //                Intent intent = new Intent(this, AboutActivity.class);
- //               startActivity(intent);
-               startActivity(new Intent (Intent.ACTION_VIEW, Uri.parse(ALIPAY_URL)));
+                    //               startActivity(intent);
+                });
+                btnwechat.setOnClickListener((v) -> {
+                    AlipayPayUtils.inputMoney(HomeActivity.this);
+                    dialog.dismiss();
+                });
+
             }
             break;
             case R.id.action_game:
@@ -227,8 +250,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
             editText.setText(name);
 //                joinGame(serverInfo, name);
         });
-        editText.setOnEditorActionListener((v, actionId,
-                                            event) -> {
+        editText.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 builder.dismiss();
                 String name = editText.getText().toString();
@@ -336,4 +358,12 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         menuButton.addBuilder(builder);
         mMenuIds.put(mMenuIds.size(), menuId);
     }
+
+    private void checkForceUpdateSilent() {
+        UpdateHelper.getInstance().init(getApplicationContext(), Color.parseColor("#0A93DB"));
+        UpdateHelper.getInstance().setDebugMode(false);
+        long intervalMillis = 0 * 1000L;
+        UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+    }
+
 }
