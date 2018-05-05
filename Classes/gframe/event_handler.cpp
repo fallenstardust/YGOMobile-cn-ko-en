@@ -472,6 +472,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					list_command = COMMAND_SPSUMMON;
 					mainGame->wCardSelect->setText(dataManager.GetSysString(509));
 					ShowSelectCard();
+					select_ready = false;
 					ShowCancelOrFinishButton(1);
 				}
 				break;
@@ -965,18 +966,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case EDITBOX_ANCARD: {
 				UpdateDeclarableCode(true);
-				break;
-			}
-			case EDITBOX_CHAT: {
-				if(mainGame->dInfo.isReplay)
-					break;
-				const wchar_t* input = mainGame->ebChatInput->getText();
-				if(input[0]) {
-					unsigned short msgbuf[256];
-					int len = BufferIO::CopyWStr(input, msgbuf, 256);
-					DuelClient::SendBufferToServer(CTOS_CHAT, msgbuf, (len + 1) * sizeof(short));
-					mainGame->ebChatInput->setText(L"");
-				}
 				break;
 			}
 			}
@@ -1844,6 +1833,19 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				u32 pos = mainGame->scrCardText->getPos();
 				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->textFont, mainGame->showingtext, pos);
 				return true;
+		case irr::gui::EGET_EDITBOX_ENTER: {
+			switch(id) {
+			case EDITBOX_CHAT: {
+				if(mainGame->dInfo.isReplay)
+					break;
+				const wchar_t* input = mainGame->ebChatInput->getText();
+				if(input[0]) {
+					unsigned short msgbuf[256];
+					int len = BufferIO::CopyWStr(input, msgbuf, 256);
+					DuelClient::SendBufferToServer(CTOS_CHAT, msgbuf, (len + 1) * sizeof(short));
+					mainGame->ebChatInput->setText(L"");
+					return true;
+				}
 				break;
 			}
 			}
