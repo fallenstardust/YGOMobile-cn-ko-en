@@ -115,8 +115,6 @@ void DeckBuilder::Terminate() {
 		mainGame->device->closeDevice();
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
-	if(mainGame->dField.OnCommonEvent(event))
-		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
 	irr::SEvent transferEvent;
 	if (irr::android::TouchEventTransferAndroid::OnTransferDeckEdit(event)) {

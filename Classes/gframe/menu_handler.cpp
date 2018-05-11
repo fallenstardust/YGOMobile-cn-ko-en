@@ -31,6 +31,8 @@ void UpdateDeck() {
 	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
 }
 bool MenuHandler::OnEvent(const irr::SEvent& event) {
+    if(mainGame->dField.OnCommonEvent(event))
+		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
 	irr::SEvent transferEvent;
 	if (irr::android::TouchEventTransferAndroid::OnTransferCommon(event, false)) {
