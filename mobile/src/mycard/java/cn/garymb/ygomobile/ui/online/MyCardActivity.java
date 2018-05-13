@@ -167,6 +167,9 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             case R.id.action_bbs:
                 mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
                 break;
+            case android.R.id.action_chat:
+                startActivity(new Intent(context,SplashActivity.class));
+                break;
             default:
                 return false;
         }

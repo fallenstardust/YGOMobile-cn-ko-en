@@ -180,6 +180,8 @@
     <string name="mycard">MyCard</string>
     <string name="arena">Duelist DataBase</string>
     <string name="mc_home">Home</string>
+    <string name="mc_chat">Chat</string>
+    <string name="send">Send</string>
     <string name="bbs">Community</string>
     <string name="settings_pref_settings_only_game">Only start game</string>
     <string name="only_game_tip">reset this setting, need clean data of app</string>

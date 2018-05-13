@@ -66,6 +66,8 @@ public class MyCard {
         mDefWebViewClient = new DefWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                UserManagement.setUserName(mUser.username);
+                UserManagement.setUserPassword(mUser.external_id+"");
                 if (url.startsWith(return_sso_url)) {
                     String sso = Uri.parse(url).getQueryParameter("sso");
                     String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);

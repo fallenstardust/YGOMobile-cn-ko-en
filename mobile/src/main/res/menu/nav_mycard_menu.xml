@@ -6,6 +6,10 @@
         android:title="@string/mc_home"
         />
     <item
+        android:id="@+id/action_chat"
+        android:icon="?android:attr/textSelectHandleLeft"
+        android:title="@string/mc_chat" />
+    <item
         android:id="@+id/action_bbs"
         android:icon="@drawable/ic_forum"
         android:title="@string/bbs"
