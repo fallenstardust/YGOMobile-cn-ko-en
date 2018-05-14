@@ -8,7 +8,7 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 32010513
+        versionCode 32010514
         versionName "3.2.1"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
@@ -87,7 +87,7 @@ dependencies {
     implementation 'org.igniterealtime.smack:smack-im:4.2.0'
     implementation 'org.igniterealtime.smack:smack-resolver-minidns:4.2.0'
     implementation 'org.igniterealtime.smack:smack-sasl-provided:4.2.0'
-    //implementation 'xpp3:xpp3:1.1.4c'
+    implementation 'xpp3:xpp3:1.1.4c'
     implementation 'org.jxmpp:jxmpp-core:0.5.0'
     implementation 'org.jxmpp:jxmpp-jid:0.5.0'
     implementation 'org.jxmpp:jxmpp-util-cache:0.5.0'
