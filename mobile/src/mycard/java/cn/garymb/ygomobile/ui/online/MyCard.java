@@ -26,6 +26,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
+import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
 
 import static junit.framework.Assert.assertEquals;
 

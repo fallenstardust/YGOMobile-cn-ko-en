@@ -1,6 +1,4 @@
 package cn.garymb.ygomobile.ui.online.mcchat.management;
-import android.content.*;
-import cn.garymb.ygomobile.ui.online.mcchat.*;
 
 public class UserManagement
 {

@@ -31,6 +31,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.online.mcchat.SplashActivity;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -167,7 +168,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             case R.id.action_bbs:
                 mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
                 break;
-            case android.R.id.action_chat:
+            case R.id.action_chat:
                 startActivity(new Intent(context,SplashActivity.class));
                 break;
             default:

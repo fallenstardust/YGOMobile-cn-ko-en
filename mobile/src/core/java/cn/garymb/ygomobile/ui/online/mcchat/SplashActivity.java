@@ -7,6 +7,7 @@ import android.widget.*;
 import android.view.*;
 import android.view.View.*;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.online.MyCardActivity;
 import cn.garymb.ygomobile.ui.online.mcchat.util.*;
 import cn.garymb.ygomobile.ui.online.mcchat.management.*;
@@ -24,7 +25,7 @@ public class SplashActivity extends Activity
 	{
 		// TODO: Implement this method
 		super.onCreate(savedInstanceState);
-		setContentView(layout.activity_splash);
+		setContentView(R.layout.activity_splash);
 		
 		initView();
 		/*String name=getIntent().getStringExtra("name");
