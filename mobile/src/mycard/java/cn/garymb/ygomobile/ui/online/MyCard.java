@@ -67,8 +67,6 @@ public class MyCard {
         mDefWebViewClient = new DefWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                UserManagement.setUserName(mUser.username);
-                UserManagement.setUserPassword(mUser.external_id+"");
                 if (url.startsWith(return_sso_url)) {
                     String sso = Uri.parse(url).getQueryParameter("sso");
                     String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
@@ -80,6 +78,8 @@ public class MyCard {
                     mUser.avatar_url = info.getQueryParameter("avatar_url");
                     mUser.admin = info.getBooleanQueryParameter("admin", false);
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
+					UserManagement.setUserName(mUser.username);
+					UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;
                     if (getMyCardListener() != null) {
                         getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
