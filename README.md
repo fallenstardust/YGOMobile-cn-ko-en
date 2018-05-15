@@ -1,3 +1,5 @@
+# License
+GPL
 # YGOMobile
 Android编译环境
 ---------------------

@@ -26,7 +26,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
-import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
+//import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -78,8 +78,8 @@ public class MyCard {
                     mUser.avatar_url = info.getQueryParameter("avatar_url");
                     mUser.admin = info.getBooleanQueryParameter("admin", false);
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
-					UserManagement.setUserName(mUser.username);
-					UserManagement.setUserPassword(mUser.external_id+"");
+					//UserManagement.setUserName(mUser.username);
+					//UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;
                     if (getMyCardListener() != null) {
                         getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);

@@ -179,6 +179,8 @@
     <string name="mycard">MYcard</string>
     <string name="arena">듀얼리스트db</string>
     <string name="mc_home">홈화면</string>
+    <string name="mc_chat">채팅</string>
+    <string name="send">보내기</string>
     <string name="bbs">커뮤니티</string>
     <string name="settings_pref_settings_only_game">앱 실행시 YGOCORE 바로 실행(설정하지마십시오)</string>
     <string name="only_game_tip">앱의 초기화를 위해 설정을 초기화 해야합니다.</string>

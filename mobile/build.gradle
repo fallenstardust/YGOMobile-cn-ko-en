@@ -79,7 +79,7 @@ dependencies {
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
     //
     mycardImplementation(name: 'xwalk_core_library-22.52.561.4', ext: 'aar')
-    implementation 'org.igniterealtime.smack:smack-android-extensions:4.2.0'
+    /*implementation 'org.igniterealtime.smack:smack-android-extensions:4.2.0'
     implementation 'org.igniterealtime.smack:smack-tcp:4.2.0'
     implementation 'org.igniterealtime.smack:smack-android:4.2.0'
     implementation 'org.igniterealtime.smack:smack-core:4.2.0'
@@ -87,7 +87,7 @@ dependencies {
     implementation 'org.igniterealtime.smack:smack-im:4.2.0'
     implementation 'org.igniterealtime.smack:smack-resolver-minidns:4.2.0'
     implementation 'org.igniterealtime.smack:smack-sasl-provided:4.2.0'
-    implementation 'xpp3:xpp3:1.1.4c'
+    //implementation 'xpp3:xpp3:1.1.4c'
     implementation 'org.jxmpp:jxmpp-core:0.5.0'
     implementation 'org.jxmpp:jxmpp-jid:0.5.0'
     implementation 'org.jxmpp:jxmpp-util-cache:0.5.0'
@@ -97,7 +97,7 @@ dependencies {
     implementation 'de.measite.minidns:minidns-dnssec:0.2.4'
     implementation 'de.measite.minidns:minidns-iterative-resolver:0.2.4'
 
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'com.github.bumptech.glide:glide:3.7.0'*/
     //
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
