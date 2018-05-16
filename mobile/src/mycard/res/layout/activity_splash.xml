@@ -5,7 +5,8 @@
 	android:layout_height="fill_parent"
 	android:orientation="horizontal"
 	android:gravity="center"
-	android:id="@+id/sp_li">
+	android:id="@+id/sp_li"
+	android:background="@color/white">
 
 	<ProgressBar
 		android:layout_height="wrap_content"
@@ -15,7 +16,8 @@
 	<TextView
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
-		android:text="登录中,请稍等"
+		android:text="@string/logining_in"
+		android:textColor="@color/dark_purple"
 		android:textSize="18sp"
 		android:id="@+id/sp_tv"/>
 

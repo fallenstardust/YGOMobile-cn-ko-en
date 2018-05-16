@@ -5,7 +5,7 @@
 	android:layout_height="wrap_content"
 	android:background="#00000000">
 
-	<com.mcchat.feihua.view.YuanImage
+	<cn.garymb.ygomobile.ui.online.mcchat.view.YuanImage
 		android:layout_height="35dp"
 		android:layout_width="35dp"
 		android:id="@+id/ic_avatar"

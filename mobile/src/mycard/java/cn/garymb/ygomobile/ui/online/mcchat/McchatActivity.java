@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.online.mcchat;
 
 import android.app.*;
 import android.os.*;
-import android.util.*;
 
 import org.jivesoftware.smack.packet.Message;
 import android.widget.*;
@@ -109,15 +108,14 @@ public class McchatActivity extends Activity implements ChatListener
 				{
 					String message=main_send_message.getText().toString().trim();
 					if(message.equals("")){
-						Util.show("发送内容不能为空");
+						Util.show(getString(R.string.noting_to_send));
 					}else{
 					try
 					{
 						su.sendMessage(message);
 						main_send_message.setText("");
 					}catch (Exception e){
-						Util.show("发送失败");
-						Log.e("错误","错误为"+e);
+						Util.show(getString(R.string.sending_failed));
 					}
 					}
 					// TODO: Implement this method

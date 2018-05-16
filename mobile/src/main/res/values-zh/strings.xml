@@ -178,6 +178,8 @@
     <string name="mycard">萌卡平台</string>
     <string name="arena">决斗数据库</string>
     <string name="mc_chat">聊天室</string>
+    <string name="noting_to_send">发送内容不能为空</string>
+    <string name="sending_failed">发送失败</string>
     <string name="send">发送</string>
     <string name="mc_home">大厅</string>
     <string name="bbs">社区</string>
