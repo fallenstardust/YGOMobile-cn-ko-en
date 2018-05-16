@@ -61,7 +61,11 @@ android {
             dirs 'libs'
         }
     }
-
+/*configurations {
+    all {
+        exclude group: 'xpp3', module: 'xpp3'
+    }
+}*/
 dependencies {
     implementation 'junit:junit:4.12'
     implementation project(':libcore')
@@ -79,7 +83,7 @@ dependencies {
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
     //
     mycardImplementation(name: 'xwalk_core_library-22.52.561.4', ext: 'aar')
-    implementation 'org.igniterealtime.smack:smack-android-extensions:4.2.0'
+    /*implementation 'org.igniterealtime.smack:smack-android-extensions:4.2.0'
     implementation 'org.igniterealtime.smack:smack-tcp:4.2.0'
     implementation 'org.igniterealtime.smack:smack-android:4.2.0'
     implementation 'org.igniterealtime.smack:smack-core:4.2.0'
@@ -97,7 +101,7 @@ dependencies {
     implementation 'de.measite.minidns:minidns-dnssec:0.2.4'
     implementation 'de.measite.minidns:minidns-iterative-resolver:0.2.4'
 
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'com.github.bumptech.glide:glide:3.7.0'*/
     //
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])

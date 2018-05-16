@@ -79,6 +79,7 @@ public class MyCard {
                     mUser.admin = info.getBooleanQueryParameter("admin", false);
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
                     lastModified.edit().putString("user_external_id", mUser.external_id+"").apply();
+                    lastModified.edit().putString("user_name", mUser.username).apply();
 					//UserManagement.setUserName(mUser.username);
 					//UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;
