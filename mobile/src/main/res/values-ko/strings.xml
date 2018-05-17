@@ -180,11 +180,11 @@
     <string name="arena">듀얼리스트db</string>
     <string name="mc_home">홈화면</string>
     <string name="mc_chat">채팅룸</string>
-    <string name="noting_to_send">发送内容不能为空</string>
-    <string name="sending_failed">发送失败</string>
-    <string name="logining_in">로그인 중</string>
-    <string name="logining_failed">Logining failed,please try again</string>
-    <string name="failed_reason">Logining failed because of</string>
+    <string name="noting_to_send">전송할 수 없습니다.</string>
+    <string name="sending_failed">전송 실패</string>
+    <string name="logining_in">로그인중</string>
+    <string name="logining_failed">로그인 실패, 다시 시도 하십시오</string>
+    <string name="failed_reason">해당 사유로 로그인을 할 수 없습니다</string>
     <string name="send">보내기</string>
     <string name="bbs">커뮤니티</string>
     <string name="settings_pref_settings_only_game">앱 실행시 YGOCORE 바로 실행(설정하지마십시오)</string>
