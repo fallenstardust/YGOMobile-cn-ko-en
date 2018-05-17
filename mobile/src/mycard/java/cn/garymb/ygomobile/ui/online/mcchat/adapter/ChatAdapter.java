@@ -74,8 +74,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
             @Override
             public boolean onLongClick(View p1) {
-                Util.fzMessage(cm.getMessage());
-                Util.show("已复制到剪贴板");
+                Util.fzMessage(context,cm.getMessage());
+                Util.show(context,"已复制到剪贴板");
                 // TODO: Implement this method
                 return true;
             }

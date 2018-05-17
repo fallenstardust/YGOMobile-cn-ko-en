@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.online.mcchat;
 import android.app.*;
 import android.os.*;
 import android.content.*;
-import android.util.*;
 import android.widget.*;
 import android.view.*;
 import android.view.View.*;
@@ -108,7 +107,6 @@ public class SplashActivity extends Activity
 			{			
 				su.login(name, password);			
 			}catch (Exception e){
-				Log.e("登录失败","登录失败"+e);
 				Message me=new Message();
 				me.obj=e;
 				me.what=0;
@@ -132,8 +130,8 @@ public class SplashActivity extends Activity
 				case 0:
 					su.setIsConnected(false);
 					sp_jz.setVisibility(View.GONE);
-					sp_tv.setText("登录失败,点击重新登录");
-					Util.show("登录失败,原因为"+msg.obj);
+					sp_tv.setText(getString(R.string.logining_failed));
+					Util.show(SplashActivity.this,getString(R.string.failed_reason)+msg.obj);
 					break;
 				case 1:
 					startActivity(new Intent(SplashActivity.this,McchatActivity.class));
@@ -142,15 +140,15 @@ public class SplashActivity extends Activity
 				case 2:
 					su.setIsListener(false);
 					sp_jz.setVisibility(View.GONE);
-					sp_tv.setText("加入聊天室失败,点击重新加入");
+					sp_tv.setText(getString(R.string.logining_failed));
 					break;
 				case 3:
 					sp_jz.setVisibility(View.VISIBLE);
-					sp_tv.setText("正在加入聊天室,请稍等");
+					sp_tv.setText(getString(R.string.logining_in));
 					break;
 				case 4:
 					sp_jz.setVisibility(View.VISIBLE);
-					sp_tv.setText("登录中,请稍等");
+					sp_tv.setText(getString(R.string.logining_in));
 					break;
 				case 5:
 					/*sp_jz.setVisibility(View.GONE);

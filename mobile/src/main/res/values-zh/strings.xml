@@ -180,6 +180,9 @@
     <string name="mc_chat">聊天室</string>
     <string name="noting_to_send">发送内容不能为空</string>
     <string name="sending_failed">发送失败</string>
+    <string name="logining_in">登录中，请稍候...</string>
+    <string name="logining_failed">登陆失败，请点击重试</string>
+    <string name="failed_reason">登录失败，原因是</string>
     <string name="send">发送</string>
     <string name="mc_home">大厅</string>
     <string name="bbs">社区</string>
