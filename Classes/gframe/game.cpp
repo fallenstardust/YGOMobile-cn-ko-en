@@ -1612,7 +1612,7 @@ void Game::LoadConfig() {
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
 	gameConf.defaultOT = android::getIntSetting(appMain, "defaultOT", 1);
 	//TEST BOT MODE
-	gameConf.enable_bot_mode = 0;
+	gameConf.enable_bot_mode = 1;
 }
 
 void Game::SaveConfig() {
