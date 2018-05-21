@@ -328,6 +328,24 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					NetServer::StopServer();
 					break;
 				}
+#elif defined(_IRR_ANDROID_PLATFORM_)
+				char args[512];
+				char arg1[512];
+				BufferIO::EncodeUTF8(mainGame->botInfo[sel].command, arg1);
+				char arg2[32];
+				arg2[0]=0;
+				if(mainGame->chkBotHand->isChecked())
+					sprintf(arg2, " Hand=1");
+				char arg3[32];
+				sprintf(arg3, " Port=%d", mainGame->gameConf.serverport);
+				sprintf(args, "%s%s%s", arg1, arg2, arg3);
+				android::runWindbot(mainGame->appMain, args);
+				if(!NetServer::StartServer(mainGame->gameConf.serverport))
+					break;
+				if(!DuelClient::StartClient(0x7f000001, mainGame->gameConf.serverport)) {
+					NetServer::StopServer();
+					break;
+				}
 #else
 				if(fork() == 0) {
 					usleep(100000);

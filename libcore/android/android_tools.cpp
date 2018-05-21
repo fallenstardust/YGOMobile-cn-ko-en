@@ -981,5 +981,31 @@ bool android_deck_delete(const char* deck_name) {
 	return status == 0;
 }
 
+void runWindbot(ANDROID_APP app, const char* args) {
+	if (!app || !app->activity || !app->activity->vm)
+		return;
+	JNIEnv* jni = 0;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return;
+	// Retrieves NativeActivity.
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+			"getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID runWindbotMethod = jni->GetMethodID(classApp, "runWindbot",
+			"(Ljava/lang/String;)V");
+	jstring argsstring = jni->NewStringUTF(args);
+	jni->CallVoidMethod(application, runWindbotMethod, argsstring);
+	if (argsstring) {
+		jni->DeleteLocalRef(argsstring);
+	}
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+}
+
 } // namespace android
 } // namespace irr

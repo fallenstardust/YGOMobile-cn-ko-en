@@ -53,6 +53,9 @@ android {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
     }
+    aaptOptions {
+        noCompress 'dll'
+    }
     buildToolsVersion '27.0.3'
 }
 
@@ -76,6 +79,8 @@ dependencies {
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
+    //
+    implementation(name: 'libWindbot', ext: 'aar')
     //
     mycardImplementation(name: 'xwalk_core_library-22.52.561.4', ext: 'aar')
     implementation 'com.nightonke:boommenu:2.1.0'
