@@ -12,6 +12,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -84,12 +85,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
         //windbot
-        //WindBot.initAndroid(getPackageResourcePath(),);
-        WindBot.initAndroid("data/data/cn.garymb.ygomobile/file","data/data/cn.garymb.ygomobile/file/cards.cdb");
-        MessageReceiver mReceiver = new MessageReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("RUN_WINDBOT");
-        getContext().registerReceiver(mReceiver, filter);
+        checkWindbot();
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
@@ -388,6 +384,14 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().setDebugMode(false);
         long intervalMillis = 0 * 1000L;
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+    }
+
+    public void checkWindbot(){
+        WindBot.initAndroid("/storage/emulated/0/ygocore/deck","data/data/cn.garymb.ygomobile/databases/cards.cdb");
+        MessageReceiver mReceiver = new MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        getContext().registerReceiver(mReceiver, filter);
     }
 
 }

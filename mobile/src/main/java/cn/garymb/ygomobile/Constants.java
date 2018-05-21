@@ -50,7 +50,7 @@ public interface Constants {
     String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";
     String DEFAULT_FONT_NAME = "ygo.ttf";
     String DATABASE_NAME = "cards.cdb";
-    String WINDBOT ="windbot";
+    String WINDBOT_PATH="windbot";
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";

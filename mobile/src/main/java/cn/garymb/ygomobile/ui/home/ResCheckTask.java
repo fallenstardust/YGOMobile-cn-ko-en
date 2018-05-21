@@ -148,11 +148,14 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
             copyCdbFile(needsUpdate);
-            copyWindbotFloder(needsUpdate);
             if (isNewVersion) {
                 if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                     setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
+                            resPath, needsUpdate);
+                }
+                if (IOUtils.hasAssets(mContext, getDatapath(Constants.WINDBOT_PATH))) {
+                    IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                             resPath, needsUpdate);
                 }
             }
@@ -169,20 +172,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         return ERROR_NONE;
     }
 
-    void copyWindbotFloder(boolean needsUpdate)throws IOException{
-        File WindbotFile = new File(mSettings.getDataBasePath(), Constants.WINDBOT);
-        boolean copyWindbotFile = true;
-        if (WindbotFile.exists()) {
-            copyWindbotFile = false;
-            if (needsUpdate) {
-                copyWindbotFile = true;
-                WindbotFile.delete();
-            }
-        }
-        if (copyWindbotFile){
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT), mSettings.getDataBasePath(), needsUpdate);
-        }
-    }
 
     void copyCdbFile(boolean needsUpdate) throws IOException {
         File dbFile = new File(mSettings.getDataBasePath(), Constants.DATABASE_NAME);
