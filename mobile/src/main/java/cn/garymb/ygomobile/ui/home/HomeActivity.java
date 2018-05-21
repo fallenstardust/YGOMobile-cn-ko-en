@@ -35,6 +35,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -83,7 +84,8 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
         //windbot
-        WindBot.initAndroid("/storage/emulated/0/ygocore", "/storage/emulated/0/ygocore/cards.cdb");
+        //WindBot.initAndroid(getPackageResourcePath(),);
+        WindBot.initAndroid("data/data/cn.garymb.ygomobile/file","data/data/cn.garymb.ygomobile/file/cards.cdb");
         MessageReceiver mReceiver = new MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");

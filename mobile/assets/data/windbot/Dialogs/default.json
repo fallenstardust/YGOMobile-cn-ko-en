@@ -1,0 +1,68 @@
+{
+  "welcome": [
+    "Hi, I'm WindBot."
+  ],
+  "deckerror": [
+    "Sorry, it seems that I have too much {0} in my deck."
+  ],
+  "duelstart": [
+    "It's time to duel!",
+    "Good luck, and have fun!"
+  ],
+  "newturn": [
+    "It's my turn! Draw!",
+    "My turn. Draw!",
+    "I draw!"
+  ],
+  "endturn": [
+    "I end my turn.",
+    "My turn is over.",
+    "It's your turn."
+  ],
+  "directattack": [
+    "{0}, direct attack!",
+    "{0}, attack them directly!",
+    "You're defenseless. Attack, {0}!",
+    "{0}, attack their life points!",
+    "{0}, attack their life points directly!",
+    "{0}, unleash your power!",
+    "My {0} will decimate your life points!",
+    "Behold the power of my {0}!",
+    "You can't stop me! {0}, attack!"
+  ],
+  "attack": [
+    "{0}, attack their {1}!",
+    "{0}, destroy their {1}!",
+    "My {0} will annihilate your {1}!",
+    "Your {1} is no match for my {0}!",
+    "{0}, unleash your power on their {1}!"
+  ],
+  "ondirectattack": [
+    "Argh...!",
+    "Just {0}...",
+    "You think that's enough to defeat me?",
+    "It's just a scratch!"
+  ],
+  "facedownmonstername": "monster",
+  "activate": [
+    "I activate {0}!",
+    "I'll use {0}."
+  ],
+  "summon": [
+    "I summon {0}!",
+    "Come on, {0}!",
+    "Appear, {0}!",
+    "{0}, show yourself!"
+  ],
+  "setmonster": [
+    "I set a monster face-down.",
+    "Whatever could this monster be?",
+    "Attack this monster, I dare you!"
+  ],
+  "chaining": [
+    "Not so fast! I activate {0}!",
+    "Before you do that, I'll chain {0}!",
+    "Nice try, but I have {0}!",
+    "Didn't expect {0}, did you?"
+  ]
+}
