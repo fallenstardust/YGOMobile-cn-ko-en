@@ -28,6 +28,7 @@ import ocgcore.ConfigManager;
 import ocgcore.handler.CardManager;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private static final String TAG = "ResCheckTask";
@@ -157,18 +158,21 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                             resPath, needsUpdate);
                 }
-            if(needsUpdate) {
-                    IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                            new File(resPath, Constants.WINDBOT_PATH).getAbsolutePath(), needsUpdate);
-                }      
-			//初始化windbot		
-            checkWindbot();
+            //if (needsUpdate) {
+                File filesDir = mContext.getFilesDir();
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
+                            filesDir.getPath(), needsUpdate);
+             //   }
 
             if (needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.ex_pack)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_EXPANSIONS),
                         mSettings.getExpansionsPath().getAbsolutePath(), true, needsUpdate);
             }
+
+            //checkWindbot();
+
+
         } catch (Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
@@ -179,7 +183,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
 
     void copyCdbFile(boolean needsUpdate) throws IOException {
-        File dbFile = new File(mSettings.getDataBasePath(), Constants.DATABASE_NAME);
+        File dbFile = new File(mSettings.getDataBasePath(), DATABASE_NAME);
         boolean copyDb = true;
         if (dbFile.exists()) {
             copyDb = false;
@@ -189,7 +193,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
         }
         if (copyDb) {
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
 //            doSomeTrickOnDatabase(dbFile.getAbsolutePath());
         }
     }
@@ -319,7 +323,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     public void checkWindbot(){
-        WindBot.initAndroid("/storage/emulated/0/ygocore/deck","/storage/emulated/0/ygocore/cards.cdb");
+        Log.i("路径", mContext.getFilesDir().getPath());
+        Log.i("路径2", mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
+        WindBot.initAndroid(mContext.getFilesDir().getPath(),mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
         ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
