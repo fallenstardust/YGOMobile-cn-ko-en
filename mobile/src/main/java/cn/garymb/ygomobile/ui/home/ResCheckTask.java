@@ -1,6 +1,9 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -17,10 +20,10 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
+import libwindbot.windbot.WindBot;
 import ocgcore.ConfigManager;
 import ocgcore.handler.CardManager;
 
@@ -148,7 +151,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
             copyCdbFile(needsUpdate);
-            if (isNewVersion) {
+           
                 if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                     setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
@@ -157,8 +160,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 if (IOUtils.hasAssets(mContext, getDatapath(Constants.WINDBOT_PATH))) {
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                             resPath, needsUpdate);
-                }
-            }
+                }      
+			//初始化windbot		
+            checkWindbot();
+
             if (needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.ex_pack)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_EXPANSIONS),
@@ -313,4 +318,21 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         void onResCheckFinished(int result, boolean isNewVersion);
     }
 
+    public void checkWindbot(){
+        WindBot.initAndroid("/storage/emulated/0/ygocore/deck","data/data/cn.garymb.ygomobile/databases/cards.cdb");
+        ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        mContext.registerReceiver(mReceiver, filter);
+    }
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args=intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    };
 }
