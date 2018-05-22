@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.home;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,6 +12,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -58,6 +60,8 @@ import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import libwindbot.windbot.WindBot;
 
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+
 abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
     protected SwipeMenuRecyclerView mServerList;
     private ServerListAdapter mServerListAdapter;
@@ -89,6 +93,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","YGOMobile");
         //autoupadte checking
         checkForceUpdateSilent();
+        checkWindbot();
     }
 
     @Override
@@ -380,6 +385,13 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().setDebugMode(false);
         long intervalMillis = 0 * 1000L;
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+    }
+    public void checkWindbot(){
+        WindBot.initAndroid(this.getFilesDir().getPath(),AppsSettings.get().getDataBasePath()+"/"+ DATABASE_NAME);
+        HomeActivity.MessageReceiver mReceiver = new HomeActivity.MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        getContext().registerReceiver(mReceiver, filter);
     }
 
 }
