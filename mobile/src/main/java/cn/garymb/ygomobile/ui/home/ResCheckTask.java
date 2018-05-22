@@ -157,9 +157,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                             resPath, needsUpdate);
                 }
-                if (IOUtils.hasAssets(mContext, getDatapath(Constants.WINDBOT_PATH))) {
+            if(needsUpdate) {
                     IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                            resPath, needsUpdate);
+                            new File(resPath, Constants.WINDBOT_PATH).getAbsolutePath(), needsUpdate);
                 }      
 			//初始化windbot		
             checkWindbot();
@@ -319,7 +319,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     public void checkWindbot(){
-        WindBot.initAndroid("/storage/emulated/0/ygocore/deck","data/data/cn.garymb.ygomobile/databases/cards.cdb");
+        WindBot.initAndroid("/storage/emulated/0/ygocore/deck","/storage/emulated/0/ygocore/cards.cdb");
         ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
