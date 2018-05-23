@@ -170,6 +170,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_EXPANSIONS),
                         mSettings.getExpansionsPath().getAbsolutePath(), true, needsUpdate);
             }
+
+            //checkWindbot();
             han.sendEmptyMessage(0);
 
         } catch (Exception e) {
@@ -301,7 +303,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             //替换换行符
             File stringfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
+            File botfile = new File(AppsSettings.get().getResourcePath(), Constants.BOT_CONF);
             fixString(stringfile.getAbsolutePath());
+            fixString(botfile.getAbsolutePath());
             return ERROR_NONE;
         } catch (IOException e) {
             if (Constants.DEBUG)
@@ -321,17 +325,36 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         void onResCheckFinished(int result, boolean isNewVersion);
     }
 
-
+    public void checkWindbot(){
+        Log.i("路径", mContext.getFilesDir().getPath());
+        Log.i("路径2", mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
+        WindBot.initAndroid(mContext.getFilesDir().getPath(),mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
+        ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        mContext.registerReceiver(mReceiver, filter);
+    }
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args=intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    };
     
     Handler han=new Handler(){
 
 		@Override
-		public void handleMessage(Message msg) {
+		public void handleMessage(Message msg)
+		{
+			// TODO: Implement this method
 			super.handleMessage(msg);
 			switch(msg.what){
 			    case 0:
-			        Log.i("运行了没？","运行了");
-			    //checkWindbot();
+			    checkWindbot();
 			    break;
 			}
     }

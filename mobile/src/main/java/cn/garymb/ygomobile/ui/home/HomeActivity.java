@@ -31,7 +31,6 @@ import com.nightonke.boommenu.BoomMenuButton;
 import com.qihoo.appstore.common.updatesdk.lib.UpdateHelper;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
-import org.chromium.mojo.bindings.MessageReceiver;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -46,7 +45,6 @@ import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.AboutActivity;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
@@ -59,8 +57,6 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import libwindbot.windbot.WindBot;
-
-import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
     protected SwipeMenuRecyclerView mServerList;
@@ -93,7 +89,6 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","YGOMobile");
         //autoupadte checking
         checkForceUpdateSilent();
-        checkWindbot();
     }
 
     @Override
@@ -101,17 +96,6 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         super.onDestroy();
         EventBus.getDefault().unregister(this);
     }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args=intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    };
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
@@ -385,13 +369,6 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().setDebugMode(false);
         long intervalMillis = 0 * 1000L;
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
-    }
-    public void checkWindbot(){
-        WindBot.initAndroid(this.getFilesDir().getPath(),AppsSettings.get().getDataBasePath()+"/"+ DATABASE_NAME);
-        HomeActivity.MessageReceiver mReceiver = new HomeActivity.MessageReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("RUN_WINDBOT");
-        getContext().registerReceiver(mReceiver, filter);
     }
 
 }
