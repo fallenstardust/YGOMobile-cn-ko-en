@@ -51,7 +51,7 @@ public interface Constants {
     String DEFAULT_FONT_NAME = "ygo.ttf";
     String DATABASE_NAME = "cards.cdb";
     String BOT_CONF = "bot.conf";
-    String WINDBOT_PATH="windbot";
+    String WINDBOT_PATH = "windbot";
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";
