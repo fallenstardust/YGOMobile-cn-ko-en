@@ -9,6 +9,13 @@ import android.widget.*;
 import java.util.*;
 import android.support.v7.widget.*;
 
+import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
+
+
 public class ServiceDuelAssistant extends Service
 {
 	private LinearLayout mFloatLayout;
@@ -87,20 +94,18 @@ public class ServiceDuelAssistant extends Service
 
 					@Override
 					public void run() {
-						// TODO Auto-generated method stub
 						if (isdis) {
 							isdis = false;
 							mWindowManager.removeView(mFloatLayout);
 						}
 					}
-				}, 2000);
+				}, 3000);
 
 			ds_qx.setOnClickListener(new OnClickListener(){
 
 					@Override
 					public void onClick(View p1) {
 						disJoinDialog();
-						// TODO: Implement this method
 					}
 				});
 			ds_join.setOnClickListener(new OnClickListener(){
@@ -111,14 +116,24 @@ public class ServiceDuelAssistant extends Service
 							isdis = false;
 							mWindowManager.removeView(mFloatLayout);				
 						}
-						IntentUtil.duelIntent(ServiceDuelAssistant.this, SharedPreferenceUtil.getDuelIp(), SharedPreferenceUtil.getDuelPort(), SharedPreferenceUtil.getDuelName(), password);
-						// TODO: Implement this method
+						ServerInfo serverInfo=new ServerListAdapter(ServiceDuelAssistant.this).getItem(0);
+
+						duelIntent(ServiceDuelAssistant.this,serverInfo.getServerAddr(),serverInfo.getPort(),serverInfo.getPlayerName(),password);
 					}
 				});
 
+	}
 
-
-		// TODO: Implement this method
+	//决斗跳转
+	public static void duelIntent(Context context,String ip, int dk, String name, String password){
+		Intent intent1=new Intent("ygomobile.intent.action.GAME");
+		intent1.putExtra("host", ip);
+		intent1.putExtra("port", dk);
+		intent1.putExtra("user", name);
+		intent1.putExtra("room", password);
+		intent1.setPackage("cn.garymb.ygomobile");
+		intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		context.startActivity(intent1);
 	}
 	
 	private void disJoinDialog() {

@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;

@@ -6,15 +6,6 @@
 	android:orientation="vertical"
 	android:background="#00000000">
 
-	<android.support.v7.widget.CardView
-		xmlns:app="http://schemas.android.com/apk/res-auto"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		app:cardCornerRadius="@dimen/dialog_corner_radius"
-		app:elevation="15dp"
-		app:cardBackgroundColor="@color/colorDialogBackground"
-		android:layout_margin="10dp">
-
 		<LinearLayout
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -39,7 +30,7 @@
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:text="加入"
+					android:text="@string/join_game"
 					android:layout_weight="1"
 					android:id="@+id/ds_join"/>
 
@@ -48,15 +39,13 @@
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:text="关闭"
+					android:text="@string/search_close"
 					android:layout_weight="1"
 					android:id="@+id/ds_qx"/>
 
 			</LinearLayout>
 
 		</LinearLayout>
-
-	</android.support.v7.widget.CardView>
 
 </LinearLayout>
 
