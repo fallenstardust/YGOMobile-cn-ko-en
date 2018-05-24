@@ -1,9 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,7 +9,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -35,7 +31,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.io.File;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -54,9 +49,9 @@ import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.online.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
-import libwindbot.windbot.WindBot;
 
 abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
     protected SwipeMenuRecyclerView mServerList;
@@ -89,6 +84,8 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","YGOMobile");
         //autoupadte checking
         checkForceUpdateSilent();
+        //ServiceDuelAssistant
+        startService(new Intent(this,ServiceDuelAssistant.class));
     }
 
     @Override
