@@ -54,7 +54,7 @@ android {
         exclude 'META-INF/LICENSE'
     }
     aaptOptions {
-        noCompress 'dll'
+        noCompress 'dll',"config"
     }
     buildToolsVersion '27.0.3'
 }

@@ -151,6 +151,8 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"/>
+        <service
+            android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"/>
 
         <activity
             android:name="com.base.bj.trpayjar.TrPayAcitivity"
