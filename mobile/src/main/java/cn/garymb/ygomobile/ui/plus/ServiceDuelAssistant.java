@@ -6,12 +6,6 @@ import android.os.*;
 import android.view.*;
 import android.view.View.*;
 import android.widget.*;
-import com.feihua.dialogutils.util.*;
-import com.ourygo.cardutils.bean.*;
-import com.ourygo.duelassistant.*;
-import com.ourygo.duelassistant.adapter.*;
-import com.ourygo.duelassistant.service.*;
-import com.ourygo.duelassistant.utils.*;
 import java.util.*;
 import android.support.v7.widget.*;
 
@@ -83,7 +77,6 @@ public class ServiceDuelAssistant extends Service
 	}
 	
 	private void joinRoom(String ss, int start) {
-		if (DAUtils.isygo(this)) {		
 			final String password = ss.substring(start, ss.length());
 			ds_text.setText("加入房间\"" + password + "\"");
 			ds_join.setText("加入");
@@ -124,7 +117,7 @@ public class ServiceDuelAssistant extends Service
 				});
 
 
-		}
+
 		// TODO: Implement this method
 	}
 	
