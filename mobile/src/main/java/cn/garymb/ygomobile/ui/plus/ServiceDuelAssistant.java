@@ -6,14 +6,25 @@ import android.os.*;
 import android.view.*;
 import android.view.View.*;
 import android.widget.*;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.*;
 import android.support.v7.widget.*;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
+import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.XmlUtils;
+
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 
 public class ServiceDuelAssistant extends Service
@@ -116,12 +127,47 @@ public class ServiceDuelAssistant extends Service
 							isdis = false;
 							mWindowManager.removeView(mFloatLayout);				
 						}
-						ServerInfo serverInfo=new ServerListAdapter(ServiceDuelAssistant.this).getItem(0);
+						ServerListAdapter mServerListAdapter=new ServerListAdapter(ServiceDuelAssistant.this);
 
-						duelIntent(ServiceDuelAssistant.this,serverInfo.getServerAddr(),serverInfo.getPort(),serverInfo.getPlayerName(),password);
+						ServerListManager mServerListManager = new ServerListManager(ServiceDuelAssistant.this, mServerListAdapter);
+						mServerListManager.syncLoadData();
+
+						File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
+						VUiKit.defer().when(() -> {
+							ServerList assetList = readList(ServiceDuelAssistant.this.getAssets().open(ASSET_SERVER_LIST));
+							ServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
+							if (fileList == null) {
+								return assetList;
+							}
+							if (fileList.getVercode() < assetList.getVercode()) {
+								xmlFile.delete();
+								return assetList;
+							}
+							return fileList;
+						}).done((list) -> {
+							if (list != null) {
+
+								ServerInfo serverInfo=list.getServerInfoList().get(0);
+
+								duelIntent(ServiceDuelAssistant.this,serverInfo.getServerAddr(),serverInfo.getPort(),serverInfo.getPlayerName(),password);
+
+							}
+						});
+
 					}
 				});
 
+	}
+	private ServerList readList(InputStream in) {
+		ServerList list = null;
+		try {
+			list = XmlUtils.get().getObject(ServerList.class, in);
+		} catch (Exception e) {
+
+		} finally {
+			IOUtils.close(in);
+		}
+		return list;
 	}
 
 	//决斗跳转

@@ -4,21 +4,22 @@
 	android:layout_height="wrap_content"
 	android:layout_width="match_parent"
 	android:orientation="vertical"
-	android:background="#00000000">
+	android:background="#00FFFFFF">
 
 		<LinearLayout
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical"
-			android:gravity="center_horizontal">
+			android:gravity="center_horizontal"
+			android:background="@drawable/window">
 
 			<TextView
+				android:textColor="@color/gold"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="Text"
 				android:layout_margin="10dp"
-				android:id="@+id/ds_text"
-				android:textColor="#000000"/>
+				android:id="@+id/ds_text" />
 
 			<LinearLayout
 				android:layout_height="wrap_content"
@@ -26,22 +27,26 @@
 				android:orientation="horizontal">
 
 				<Button
-					android:textColor="@color/colorPrimary"
+					android:textColor="@color/white"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:text="@string/join_game"
 					android:layout_weight="1"
-					android:id="@+id/ds_join"/>
+					android:id="@+id/ds_join" />
 
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_margin="20dp" />
 				<Button
-					android:textColor="@color/colorPrimary"
+					android:textColor="@color/white"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:text="@string/search_close"
 					android:layout_weight="1"
-					android:id="@+id/ds_qx"/>
+					android:id="@+id/ds_qx" />
 
 			</LinearLayout>
 
