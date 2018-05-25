@@ -37,6 +37,8 @@
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다.</string>
     <string name="string_help_text">현재 응용 프로그램에 필요한 권한이 없습니다. 
 	설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
+    <string name="join_helper_tip">원하는 서버의 위치를 첫 번째 위치로 드래그하여 수정할 수 있습니다.
+        \n해당 방법으로 수정하면 연결시 첫 번째 위치의 서버에 연결됩니다.</string>
     <!-- settings -->
     <string name="settings_about">정보</string>
     <string name="settings_about_sub_about">정보</string>

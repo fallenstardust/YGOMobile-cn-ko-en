@@ -200,5 +200,6 @@
     <string name="deck_name">卡组</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
-    <string name="join_helper_tip">你可以把偏好的服务器拖到置顶\n那么快捷加房时候就会加入置顶的服务器</string>
+    <string name="join_helper_tip">你可以把偏好的服务器拖到置顶
+        \n那么快捷加房时候就会加入置顶的服务器</string>
 </resources>

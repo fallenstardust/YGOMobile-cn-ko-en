@@ -203,5 +203,6 @@
     <string name="deck_name">卡组</string>
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
-    <string name="join_helper_tip">you can move your favourite sever on top\n then join helper will acquiescently start in it</string>
+    <string name="join_helper_tip">you can move your favourite sever on top
+        \n then join helper will acquiescently start in it</string>
 </resources>
