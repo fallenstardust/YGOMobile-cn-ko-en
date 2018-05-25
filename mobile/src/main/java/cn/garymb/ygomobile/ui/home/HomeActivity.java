@@ -103,6 +103,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
             dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
             dialogPlus.setLeftButtonListener((dialog, which) -> {
                 mServerListManager.delete(event.position);
+                mServerListAdapter.notifyDataSetChanged();
                 dialog.dismiss();
             });
             dialogPlus.setCancelable(false);

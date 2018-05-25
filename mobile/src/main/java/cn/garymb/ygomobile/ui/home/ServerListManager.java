@@ -163,6 +163,7 @@ public class ServerListManager {
                 super.onSelectedChanged(viewHolder, actionState);
                 if (mChanged && actionState == ItemTouchHelper.ACTION_STATE_IDLE) {
                     saveItems();
+                    mAdapter.notifyDataSetChanged();
                 }
                 mChanged = false;
             }

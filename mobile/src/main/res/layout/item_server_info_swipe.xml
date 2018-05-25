@@ -71,6 +71,7 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Title"
                     android:textColor="@color/brightgreen"
                     tools:text="233正式服务器"/>
+
             </LinearLayout>
 
             <LinearLayout
@@ -155,6 +156,14 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/holo_blue_bright"
                     tools:text="player"/>
+
+                <ImageView
+                    android:id="@+id/iv_fond"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginRight="20dp"
+                    android:gravity="center"
+                    android:background="@drawable/buttonfunction"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

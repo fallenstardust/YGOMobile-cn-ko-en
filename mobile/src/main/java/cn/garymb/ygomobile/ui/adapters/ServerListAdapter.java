@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
 
 import org.greenrobot.eventbus.EventBus;
@@ -9,6 +10,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.ui.home.ServerInfoViewHolder;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
 public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, ServerInfoViewHolder> {
     public ServerListAdapter(Context context) {
@@ -27,6 +29,18 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, Serve
         holder.serverIp.setText(item.getServerAddr());
         holder.userName.setText(item.getPlayerName());
         holder.serverPort.setText(String.valueOf(item.getPort()));
+        if(position==0){
+            holder.iv_fond.setVisibility(View.VISIBLE);
+            holder.iv_fond.setOnClickListener((v) -> {
+                DialogPlus builder = new DialogPlus(getContext());
+                builder.setMessage(R.string.join_helper_tip);
+                builder.show();
+            });
+
+
+        }else{
+            holder.iv_fond.setVisibility(View.GONE);
+        }
         bindMenu(holder, position);
     }
 
