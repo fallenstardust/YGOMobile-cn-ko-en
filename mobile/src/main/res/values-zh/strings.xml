@@ -142,6 +142,8 @@
     <string name="share_deck">分享卡组</string>
     <string name="no_share_app">没有找到分享应用</string>
     <string name="intput_room_name">输入密码（可不填）</string>
+    <string name="join">加入</string>
+    <string name="quick_join">加入房间\"</string>
     <string name="join_game">进入游戏</string>
     <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
     <string name="label_pendulum">灵摆刻度</string>
@@ -201,5 +203,8 @@
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
     <string name="join_helper_tip">你可以把偏好的服务器拖到置顶
-        \n那么快捷加房时候就会加入置顶的服务器</string>
+        \n那么快捷加房时候就会加入置顶的服务器
+        \n使用此功能须开启本软件悬浮窗
+        \n并确保本软件后台运行中</string>
+    <string name="OpenTIP">快捷加房使用方法</string>
 </resources>

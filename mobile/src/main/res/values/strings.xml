@@ -145,6 +145,8 @@
     <string name="share_deck">Share Deck</string>
     <string name="no_share_app">no find share app</string>
     <string name="intput_room_name">Input room name</string>
+    <string name="join">join</string>
+    <string name="quick_join">join game\"</string>
     <string name="join_game">Join game</string>
     <string name="settings_game_sensor_refresh">Sensor Refresh Game</string>
     <string name="label_pendulum">Pendulum scale</string>
@@ -204,5 +206,8 @@
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
     <string name="join_helper_tip">you can move your favourite sever on top
-        \n then join helper will acquiescently start in it</string>
+        \n then join helper will acquiescently start in it
+        \n pls open the "SYSTEM ALERT WINDOW" permission
+        \n and keep the soft run in the background</string>
+    <string name="OpenTIP">about Quick Join in Game</string>
 </resources>

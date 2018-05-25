@@ -35,7 +35,7 @@ public class ServiceDuelAssistant extends Service
 	
 	//是否可以移除悬浮窗上面的视图
 	private boolean isdis=false;
-	String[] passwordPrefix={"M,","T,","PR,","M#","T#","PR#","S#"};
+	String[] passwordPrefix={"M,","T,","PR,","AI,","M#","T#","PR#","S#","AI#"};
 	
 	//private List<Card> lc;
 	
@@ -97,8 +97,8 @@ public class ServiceDuelAssistant extends Service
 	private void joinRoom(String ss, int start) {
 			final String password = ss.substring(start, ss.length());
 			ds_text.setText("加入房间\"" + password + "\"");
-			ds_join.setText("加入");
-			ds_qx.setText("关闭");
+			ds_join.setText(R.string.join);
+			ds_qx.setText(R.string.search_close);
 			disJoinDialog();
 			showJoinDialog();
 			new Handler().postDelayed(new Runnable() {

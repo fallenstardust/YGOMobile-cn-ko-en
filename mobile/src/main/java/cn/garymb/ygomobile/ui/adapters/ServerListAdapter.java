@@ -29,17 +29,16 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, Serve
         holder.serverIp.setText(item.getServerAddr());
         holder.userName.setText(item.getPlayerName());
         holder.serverPort.setText(String.valueOf(item.getPort()));
+        holder.iv_fond.setOnClickListener((v) -> {
+            DialogPlus builder = new DialogPlus(getContext());
+            builder.setTitle(R.string.OpenTIP);
+            builder.setMessage(R.string.join_helper_tip);
+            builder.show();
+        });
         if(position==0){
-            holder.iv_fond.setVisibility(View.VISIBLE);
-            holder.iv_fond.setOnClickListener((v) -> {
-                DialogPlus builder = new DialogPlus(getContext());
-                builder.setMessage(R.string.join_helper_tip);
-                builder.show();
-            });
-
-
+            holder.iv_fond.setBackgroundResource(R.drawable.cube);
         }else{
-            holder.iv_fond.setVisibility(View.GONE);
+            holder.iv_fond.setBackgroundResource(R.drawable.cube2);
         }
         bindMenu(holder, position);
     }

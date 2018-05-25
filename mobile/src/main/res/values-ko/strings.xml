@@ -37,8 +37,6 @@
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다.</string>
     <string name="string_help_text">현재 응용 프로그램에 필요한 권한이 없습니다. 
 	설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
-    <string name="join_helper_tip">원하는 서버의 위치를 첫 번째 위치로 드래그하여 수정할 수 있습니다.
-        \n해당 방법으로 수정하면 연결시 첫 번째 위치의 서버에 연결됩니다.</string>
     <!-- settings -->
     <string name="settings_about">정보</string>
     <string name="settings_about_sub_about">정보</string>
@@ -145,6 +143,8 @@
     <string name="share_deck">덱공유</string>
     <string name="no_share_app">공유할 앱을 찾지못했습니다.</string>
     <string name="intput_room_name">방 코드를 입력하세요.(미 입력시 랜덤대전)</string>
+    <string name="join">가입</string>
+    <string name="quick_join">게임입장\"</string>
     <string name="join_game">게임입장</string>
     <string name="settings_game_sensor_refresh">센서 새로고침</string>
     <string name="label_pendulum">p스캐일</string>
@@ -203,4 +203,9 @@
     <string name="deck_name">덱이름</string>
     <string name="save_quit">저장하고 종료하십시오.</string>
     <string name="tip_reset_game_res">게임 리소스대이터 리셋 완료.</string>
+    <string name="join_helper_tip">서버의 우선 순위를 위로 드래그하여 수정할 수 있습니다.
+        \n사용자 지역에 적합한 ping이 낮은 서버를 추가합니다.
+        \n이 기능을 사용하여 소프트웨어 일시 중지 창을 엽니다.
+        \n그후 소프트웨어가 백그라운드로 구동되고 있는지 확인하십시오.</string>
+    <string name="OpenTIP">빠른 사용법</string>
 </resources>
