@@ -206,8 +206,9 @@
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
     <string name="join_helper_tip">you can move your favourite sever on top
-        \n then join helper will acquiescently start in it
-        \n pls open the "SYSTEM ALERT WINDOW" permission
-        \n and keep the soft run in the background</string>
+        \nthen join helper will acquiescently start in it
+        \npls click to APP permission to find me and open the "Pop-ups"
+        \nand keep the soft run in the background</string>
     <string name="OpenTIP">about Quick Join in Game</string>
+    <string name="Open_Alert_Window">To Open Pop-ups</string>
 </resources>

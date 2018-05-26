@@ -208,4 +208,5 @@
         \n이 기능을 사용하여 소프트웨어 일시 중지 창을 엽니다.
         \n그후 소프트웨어가 백그라운드로 구동되고 있는지 확인하십시오.</string>
     <string name="OpenTIP">빠른 사용법</string>
+    <string name="Open_Alert_Window">열기 정지된창</string>
 </resources>

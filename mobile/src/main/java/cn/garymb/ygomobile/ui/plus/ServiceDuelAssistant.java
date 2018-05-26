@@ -96,7 +96,7 @@ public class ServiceDuelAssistant extends Service
 	
 	private void joinRoom(String ss, int start) {
 			final String password = ss.substring(start, ss.length());
-			ds_text.setText("加入房间\"" + password + "\"");
+			ds_text.setText(getString(R.string.quick_join) + password + "\"");
 			ds_join.setText(R.string.join);
 			ds_qx.setText(R.string.search_close);
 			disJoinDialog();

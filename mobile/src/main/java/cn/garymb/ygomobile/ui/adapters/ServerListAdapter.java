@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -33,6 +35,11 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, Serve
             DialogPlus builder = new DialogPlus(getContext());
             builder.setTitle(R.string.OpenTIP);
             builder.setMessage(R.string.join_helper_tip);
+            builder.setLeftButtonText(R.string.Open_Alert_Window);
+            builder.setLeftButtonListener((dlg, s) -> {
+                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+                dlg.dismiss();
+                    });
             builder.show();
         });
         if(position==0){

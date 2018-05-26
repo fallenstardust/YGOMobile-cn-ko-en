@@ -202,9 +202,10 @@
     <string name="deck_name">卡组</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
-    <string name="join_helper_tip">你可以把偏好的服务器拖到置顶
-        \n那么快捷加房时候就会加入置顶的服务器
+    <string name="join_helper_tip">你可以把常约战的服务器拖到第一位
+        \n之后快捷加房时就会加入置顶的服务器
         \n使用此功能须开启本软件悬浮窗
         \n并确保本软件后台运行中</string>
     <string name="OpenTIP">快捷加房使用方法</string>
+    <string name="Open_Alert_Window">去打开悬浮窗</string>
 </resources>
