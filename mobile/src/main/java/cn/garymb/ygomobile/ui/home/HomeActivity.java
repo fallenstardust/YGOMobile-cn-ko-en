@@ -89,8 +89,9 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         checkForceUpdateSilent();
         //ServiceDuelAssistant
         startService(new Intent(this,ServiceDuelAssistant.class));
-        ObjectAnimator nope = shake(R.id.cube);
-        nope.start();
+        //shake cube
+        ObjectAnimator shake = shake($(R.id.cube));
+        shake.start();
     }
 
     @Override
@@ -374,9 +375,9 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
     }
 
-    public static ObjectAnimator animator(View view) {
+    private static ObjectAnimator shake(View view) {
+        // 8dp 左右抖动的幅度
         int delta = view.getResources().getDimensionPixelOffset(R.dimen.spacing_medium);
-
         PropertyValuesHolder pvhTranslateY = PropertyValuesHolder.ofKeyframe(View.TRANSLATION_Y,
                 Keyframe.ofFloat(0f, 0),
                 Keyframe.ofFloat(.10f, -delta),
@@ -387,8 +388,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
                 Keyframe.ofFloat(.90f, delta),
                 Keyframe.ofFloat(1f, 0f)
         );
-        return ObjectAnimator.ofPropertyValuesHolder(view, pvhTranslateY).
-                setDuration(500);
+        return ObjectAnimator.ofPropertyValuesHolder(view, pvhTranslateY).setDuration(500);
     }
 
 }
