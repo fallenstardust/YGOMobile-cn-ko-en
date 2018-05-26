@@ -29,9 +29,10 @@
         app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
 
         <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:id="@+id/cube"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_gravity="center"
-            app:srcCompat="@drawable/bottom_1" />
+            app:srcCompat="@drawable/cube" />
     </com.nightonke.boommenu.BoomMenuButton>
 </FrameLayout>

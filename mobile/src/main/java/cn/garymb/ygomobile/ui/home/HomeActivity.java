@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.animation.Keyframe;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -86,6 +89,8 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         checkForceUpdateSilent();
         //ServiceDuelAssistant
         startService(new Intent(this,ServiceDuelAssistant.class));
+        ObjectAnimator nope = shake(R.id.cube);
+        nope.start();
     }
 
     @Override
@@ -367,6 +372,23 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().setDebugMode(false);
         long intervalMillis = 0 * 1000L;
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+    }
+
+    public static ObjectAnimator animator(View view) {
+        int delta = view.getResources().getDimensionPixelOffset(R.dimen.spacing_medium);
+
+        PropertyValuesHolder pvhTranslateY = PropertyValuesHolder.ofKeyframe(View.TRANSLATION_Y,
+                Keyframe.ofFloat(0f, 0),
+                Keyframe.ofFloat(.10f, -delta),
+                Keyframe.ofFloat(.26f, delta),
+                Keyframe.ofFloat(.42f, -delta),
+                Keyframe.ofFloat(.58f, delta),
+                Keyframe.ofFloat(.74f, -delta),
+                Keyframe.ofFloat(.90f, delta),
+                Keyframe.ofFloat(1f, 0f)
+        );
+        return ObjectAnimator.ofPropertyValuesHolder(view, pvhTranslateY).
+                setDuration(500);
     }
 
 }
