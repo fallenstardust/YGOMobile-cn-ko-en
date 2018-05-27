@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +18,8 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -61,6 +64,8 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
 
+    Button JoinQQGroup;
+
 
 
     @Override
@@ -83,15 +88,14 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
+        AnimationShake();
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","YGOMobile");
         //autoupadte checking
         checkForceUpdateSilent();
         //ServiceDuelAssistant
         startService(new Intent(this,ServiceDuelAssistant.class));
-        //shake cube
-        ObjectAnimator shake = shake($(R.id.cube));
-        shake.start();
+        BtnJoinQQGroup();
     }
 
     @Override
@@ -112,7 +116,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
                 mServerListAdapter.notifyDataSetChanged();
                 dialog.dismiss();
             });
-            dialogPlus.setCancelable(false);
+            dialogPlus.setCancelable(true);
             dialogPlus.setOnCloseLinster(null);
             dialogPlus.show();
         } else if (event.join) {
@@ -375,20 +379,28 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
     }
 
-    private static ObjectAnimator shake(View view) {
-        // 8dp 左右抖动的幅度
-        int delta = view.getResources().getDimensionPixelOffset(R.dimen.spacing_medium);
-        PropertyValuesHolder pvhTranslateY = PropertyValuesHolder.ofKeyframe(View.TRANSLATION_Y,
-                Keyframe.ofFloat(0f, 0),
-                Keyframe.ofFloat(.10f, -delta),
-                Keyframe.ofFloat(.26f, delta),
-                Keyframe.ofFloat(.42f, -delta),
-                Keyframe.ofFloat(.58f, delta),
-                Keyframe.ofFloat(.74f, -delta),
-                Keyframe.ofFloat(.90f, delta),
-                Keyframe.ofFloat(1f, 0f)
-        );
-        return ObjectAnimator.ofPropertyValuesHolder(view, pvhTranslateY).setDuration(500);
+    public void AnimationShake(){
+        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
+        findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
     }
 
+    public void BtnJoinQQGroup() {
+        $(R.id.btn_join_qq_group).setOnClickListener((v) -> {
+            String key ="dRkD2L9QgYiYmQoqJUgkR4QUth9UhuT4";
+            joinQQGroup(key);
+        });
+    }
+    public boolean joinQQGroup(String key) {
+        //
+        Intent intent = new Intent();
+        intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));
+        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面    //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            // 未安装手Q或安装的版本不支持
+            return false;
+        }
+    }
 }

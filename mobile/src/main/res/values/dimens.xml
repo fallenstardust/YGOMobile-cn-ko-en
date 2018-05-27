@@ -49,5 +49,4 @@
     <dimen name="brower_arrow_height">150dp</dimen>
     <dimen name="menu_text_size">6dp</dimen>
     <dimen name="menu_text_top">-5dp</dimen>
-    <dimen name="spacing_medium">1dp</dimen>
 </resources>

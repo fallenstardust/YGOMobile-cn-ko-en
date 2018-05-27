@@ -13,6 +13,13 @@
         android:background="@drawable/bg3"
         tools:openDrawer="left">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:orientation="vertical">
+        </LinearLayout>
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -64,20 +71,21 @@
                 <com.nightonke.boommenu.BoomMenuButton
                     android:id="@+id/bmb"
                     android:layout_width="60dp"
-                    android:layout_height="60dp"
+                    android:layout_height="48dp"
                     android:layout_gravity="center_vertical"
                     android:background="@drawable/buttonfunction"
                     app:bmb_buttonEnum="textOutsideCircle"
                     app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
-                    app:bmb_dimColor="#90000000"
+                    app:bmb_dimColor="#80000000"
                     app:bmb_normalColor="@android:color/transparent"
                     app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:id="@+id/cube2"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
                         android:layout_gravity="center"
-                        app:srcCompat="@drawable/bottom_1"/>
+                        app:srcCompat="@drawable/cube" />
                 </com.nightonke.boommenu.BoomMenuButton>
             </LinearLayout>
         </FrameLayout>

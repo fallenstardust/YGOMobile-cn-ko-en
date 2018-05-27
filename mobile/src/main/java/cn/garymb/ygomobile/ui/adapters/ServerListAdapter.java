@@ -39,7 +39,7 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, Serve
             builder.setLeftButtonListener((dlg, s) -> {
                 getContext().startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
                 dlg.dismiss();
-                    });
+            });
             builder.show();
         });
         if(position==0){

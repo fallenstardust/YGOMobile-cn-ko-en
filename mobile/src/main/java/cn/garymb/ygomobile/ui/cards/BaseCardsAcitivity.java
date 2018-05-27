@@ -8,6 +8,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import com.bumptech.glide.Glide;
 
@@ -39,6 +41,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deck_cards);
+        AnimationShake2();
         mImageLoader = ImageLoader.get(this);
         mDrawerlayout = $(R.id.drawer_layout);
 
@@ -135,6 +138,11 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
     @Override
     public void onResetSearch() {
 
+    }
+
+    public void AnimationShake2(){
+        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
+        findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }
 
     protected void hideDrawers() {
