@@ -5,7 +5,7 @@
     >
     <string name="app_name">YGOMobile</string>
     <string name="action_settings">设置</string>
-    <string name="action_game">启动游戏</string>
+    <string name="action_game">单人游戏</string>
     <string name="action_about">关于</string>
     <string name="dont_start_game">无法启动游戏</string>
     <!-- check -->

@@ -5,7 +5,7 @@
     >
     <string name="app_name">YGOMobile</string>
     <string name="action_settings">설정</string>
-    <string name="action_game">게임 시작</string>
+    <string name="action_game">독신자 게임</string>
     <string name="action_about">정보</string>
     <string name="dont_start_game">게임을 시작하지 마세요.</string>
     <!-- check -->
