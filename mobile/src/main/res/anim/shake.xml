@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:fromYDelta="0"
-    android:toYDelta="10"
-    android:duration="30000"
+    android:toYDelta="8"
+    android:duration="50000"
     android:interpolator="@anim/cycle" />

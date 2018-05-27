@@ -2,13 +2,13 @@
 <servers>
     <version>2</version>
 
-    <server>
+    <!--server>
         <player-name>Knight of Hanoi</player-name>
         <name>娱乐决斗与宇宙首发群452384460</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
-    </server>
+    </server-->
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>233正式服务器</name>
