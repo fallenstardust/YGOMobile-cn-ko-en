@@ -32,8 +32,15 @@ class CardSearchInfo {
             return false;
         }
         if (!TextUtils.isEmpty(word)) {
+            while(word.length()!=0){
+                if(word.startsWith("0")){
+                    word=word.substring(1,word.length());
+                }else{
+                    break;
+                }
+            }
             if (!((card.Name != null && card.Name.contains(word))
-                    || (card.Desc != null && card.Desc.contains(word))||(card.Code != 0 && card.Code==Integer.parseInt(word)))) {
+                    || (card.Desc != null && card.Desc.contains(word))||(card.Code != 0 && (card.Code+"").equals(word)))) {
                 return false;
             }
         } else if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
