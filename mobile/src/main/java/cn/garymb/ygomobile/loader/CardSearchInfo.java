@@ -33,7 +33,7 @@ class CardSearchInfo {
         }
         if (!TextUtils.isEmpty(word)) {
             if (!((card.Name != null && card.Name.contains(word))
-                    || (card.Desc != null && card.Desc.contains(word)))) {
+                    || (card.Desc != null && card.Desc.contains(word))||(card.Code != 0 && card.Code==Integer.parseInt(word)))) {
                 return false;
             }
         } else if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
