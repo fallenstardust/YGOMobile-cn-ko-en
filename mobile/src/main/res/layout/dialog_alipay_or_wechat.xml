@@ -26,5 +26,16 @@
             android:layout_height="50dp"
             android:background="@drawable/wechat" />
 
+        <TextView
+            android:layout_width="@dimen/label_width_middle"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/gold" />
+
+        <Button
+            android:id="@+id/button_paypal"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/paypal" />
     </LinearLayout>
 </LinearLayout>

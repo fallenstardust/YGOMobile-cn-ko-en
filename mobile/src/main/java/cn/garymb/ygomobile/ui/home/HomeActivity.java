@@ -155,13 +155,14 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         switch (id) {
             case R.id.nav_donation: {
 
-                final  DialogPlus dialog = new DialogPlus(getContext());
+                final DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setContentView(R.layout.dialog_alipay_or_wechat);
                 dialog.setTitle(R.string.logo_text);
                 dialog.show();
-                View viewDialog= dialog.getContentView();
-                Button btnalipay= viewDialog.findViewById(R.id.button_alipay);
-                Button btnwechat= viewDialog.findViewById(R.id.button_wechat);
+                View viewDialog = dialog.getContentView();
+                Button btnalipay = viewDialog.findViewById(R.id.button_alipay);
+                Button btnwechat = viewDialog.findViewById(R.id.button_wechat);
+                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
 
                 btnalipay.setOnClickListener((v) -> {
                     AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
@@ -173,7 +174,12 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
                     AlipayPayUtils.inputMoney(HomeActivity.this);
                     dialog.dismiss();
                 });
-
+                btnpaypal.setOnClickListener((v) -> {
+                    Uri uri = Uri.parse("https://www.paypal.me/YGOmobile3");
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(intent);
+                    dialog.dismiss();
+                });
             }
             break;
             case R.id.action_game:
