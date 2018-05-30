@@ -118,7 +118,6 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
-    String DOWNLOAD_HOME = "http://pan.baidu.com/s/1o7RMcMA";
     String URL_HELP = "http://www.jianshu.com/p/a43f5d951a25";
     String WIKI_SEARCH_URL = "http://www.ourocg.cn/S.aspx?key=";
 
@@ -152,8 +151,10 @@ public interface Constants {
      */
     String ACTION_OPEN_GAME = "ygomobile.intent.action.GAME";
     String ACTION_RELOAD = "ygomobile.intent.action.RELOAD";
-    String IMAGE_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/%s.jpg";
-    String IMAGE_FIELD_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/field/%s.png";
+    String IMAGE_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/%s.jpg";
+    String IMAGE_FIELD_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/field/%s.jpg";
+    //String IMAGE_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/%s.jpg";
+    //String IMAGE_FIELD_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/field/%s.png";
     String IMAGE_URL_EX = ".jpg";
     String IMAGE_FIELD_URL_EX = ".png";
     /**
