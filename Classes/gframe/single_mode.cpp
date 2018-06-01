@@ -56,12 +56,19 @@ int SingleMode::SinglePlayThread(void* param) {
 	mainGame->dInfo.turn = 0;
 	char filename[256];
 	size_t slen = 0;
+	if(open_file) {
+		open_file = false;
+		slen = BufferIO::EncodeUTF8(open_file_name, filename);
 		if(!preload_script(pduel, filename, slen)) {
 			wchar_t fname[256];
-			myswprintf(fname, L"./single/%ls");
+			myswprintf(fname, L"./single/%ls", open_file_name);
+			slen = BufferIO::EncodeUTF8(fname, filename);
 			if(!preload_script(pduel, filename, slen))
 				slen = 0;
+		}
+	} else {
 		const wchar_t* name = mainGame->lstSinglePlayList->getListItem(mainGame->lstSinglePlayList->getSelected());
+		wchar_t fname[256];
 		myswprintf(fname, L"./single/%ls", name);
 		slen = BufferIO::EncodeUTF8(fname, filename);
 		if(!preload_script(pduel, filename, slen))
@@ -411,6 +418,7 @@ bool SingleMode::SinglePlayAnalyze(char* msg, unsigned int len) {
 			break;
 		}
 		case MSG_SHUFFLE_SET_CARD: {
+			pbuf++;
 			count = BufferIO::ReadInt8(pbuf);
 			pbuf += count * 8;
 			DuelClient::ClientAnalyze(offset, pbuf - offset);

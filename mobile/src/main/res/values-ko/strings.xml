@@ -180,7 +180,6 @@
     <string name="delete">삭제</string>
     <string name="mycard">MYcard</string>
     <string name="arena">듀얼리스트db</string>
-    <string name="mc_home">홈화면</string>
     <string name="mc_chat">채팅룸</string>
     <string name="noting_to_send">전송할 수 없습니다.</string>
     <string name="sending_failed">전송 실패</string>
@@ -188,6 +187,7 @@
     <string name="logining_failed">로그인 실패, 다시 시도 하십시오</string>
     <string name="failed_reason">해당 사유로 로그인을 할 수 없습니다</string>
     <string name="send">보내기</string>
+    <string name="mc_home">홈화면</string>
     <string name="bbs">커뮤니티</string>
     <string name="settings_pref_settings_only_game">앱 실행시 YGOCORE 바로 실행(설정하지마십시오)</string>
     <string name="only_game_tip">앱의 초기화를 위해 설정을 초기화 해야합니다.</string>
