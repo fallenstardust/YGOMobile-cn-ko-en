@@ -16,13 +16,12 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import org.xwalk.core.XWalkSettings;
-import org.xwalk.core.XWalkUIClient;
-import org.xwalk.core.XWalkView;
+import com.tencent.smtt.sdk.*;
 
 import java.text.MessageFormat;
 
@@ -32,6 +31,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.online.mcchat.SplashActivity;
+import cn.garymb.ygomobile.ui.plus.X5WebView;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -40,6 +40,8 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
     protected DrawerLayout mDrawerlayout;
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
+
+    private ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +58,8 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mMyCard = new MyCard(this);
         mWebViewPlus = $(R.id.webbrowser);
         mDrawerlayout = $(R.id.drawer_layout);
+        mProgressBar = $(R.id.progressBar);
+        mProgressBar.setMax(100);
 
         NavigationView navigationView = $(R.id.nav_main);
         navigationView.setNavigationItemSelectedListener(this);
@@ -63,9 +67,9 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mHeadView = (ImageView) navHead.findViewById(R.id.img_head);
         mNameView = (TextView) navHead.findViewById(R.id.tv_name);
         mStatusView = (TextView) navHead.findViewById(R.id.tv_dp);
-        mWebViewPlus.enableHtml5();
+        //mWebViewPlus.enableHtml5();
 
-        XWalkSettings settings = mWebViewPlus.getSettings();
+        WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
                 " YGOMobile/{0} ({1} {2,number,#})",
                 BuildConfig.VERSION_NAME,
@@ -73,7 +77,23 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 BuildConfig.VERSION_CODE
         ));
 
-        mWebViewPlus.setUIClient(new XWalkUIClient(mWebViewPlus) {
+        mWebViewPlus.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress == 100) {
+                    mProgressBar.setVisibility(View.GONE);
+                } else {
+                    if (View.GONE == mProgressBar.getVisibility()) {
+                        mProgressBar.setVisibility(View.VISIBLE);
+                    }
+                    mProgressBar.setProgress(newProgress);
+                }
+                super.onProgressChanged(view, newProgress);
+            }
+        });
+
+
+        /*mWebViewPlus.setUIClient(new XWalkUIClient(mWebViewPlus) {
             @Override
             public void onReceivedTitle(XWalkView view, String title) {
                 super.onReceivedTitle(view, title);
@@ -81,12 +101,12 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             }
 
             @Override
-            public boolean onConsoleMessage(XWalkView view, String message, int lineNumber, String sourceId, ConsoleMessageType messageType) {
+            public boolean onConsoleMessage(X5WebView view, String message, int lineNumber, String sourceId, ConsoleMessageType messageType) {
                 if (BuildConfig.DEBUG)
                     Log.i("webview", sourceId + ":" + lineNumber + "\n" + message);
                 return super.onConsoleMessage(view, message, lineNumber, sourceId, messageType);
             }
-        });
+        });*/
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
     }
@@ -104,7 +124,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         }
     }
 
-    @Override
+    /*@Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (mWebViewPlus != null) {
             mWebViewPlus.onActivityResult(requestCode, resultCode, data);
@@ -117,7 +137,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         if (mWebViewPlus != null) {
             mWebViewPlus.onNewIntent(intent);
         }
-    }
+    }*/
 
     @Override
     public void onBackPressed() {
@@ -133,7 +153,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
     @Override
     protected void onDestroy() {
         mWebViewPlus.stopLoading();
-        mWebViewPlus.onDestroy();
+        //mWebViewPlus.onDestroy();
         YGOStarter.onDestroy(this);
         super.onDestroy();
     }
@@ -238,5 +258,9 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             return true;
         }
         return false;
+    }
+
+    public void ProgressBar(){
+
     }
 }

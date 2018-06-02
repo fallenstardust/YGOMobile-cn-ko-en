@@ -10,15 +10,26 @@
     android:fitsSystemWindows="true"
     tools:openDrawer="left">
 
-    <FrameLayout
+
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <cn.garymb.ygomobile.ui.online.MyCardWebView
             android:id="@+id/webbrowser"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </FrameLayout>
+            android:layout_height="match_parent" >
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </cn.garymb.ygomobile.ui.online.MyCardWebView>
+
+    </RelativeLayout>
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_main"
@@ -30,4 +41,7 @@
         app:itemIconTint="@color/gold"
         app:itemTextColor="@color/mediumPurple"
         app:menu="@menu/nav_mycard_menu" />
+
+
+
 </android.support.v4.widget.DrawerLayout>

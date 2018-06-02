@@ -3,10 +3,10 @@ package cn.garymb.ygomobile.ui.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import cn.garymb.ygomobile.ui.plus.XWebView;
+import cn.garymb.ygomobile.ui.plus.X5WebView;
 
 
-public class WebViewPlus extends XWebView {
+public class WebViewPlus extends X5WebView {
     public WebViewPlus(Context context) {
         super(context);
     }

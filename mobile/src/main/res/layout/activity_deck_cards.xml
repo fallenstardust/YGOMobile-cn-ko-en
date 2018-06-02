@@ -81,7 +81,6 @@
                     app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
 
                     <ImageView
-                        android:id="@+id/cube2"
                         android:layout_width="35dp"
                         android:layout_height="35dp"
                         android:layout_gravity="center"

@@ -1867,6 +1867,9 @@ void Game::CloseDuelWindow() {
 	wReplaySave->setVisible(false);
 	stHintMsg->setVisible(false);
 	btnSideOK->setVisible(false);
+	btnSideShuffle->setVisible(false);
+	btnSideSort->setVisible(false);
+	btnSideReload->setVisible(false);
 	btnLeaveGame->setVisible(false);
 	btnSpectatorSwap->setVisible(false);
 	btnChainIgnore->setVisible(false);

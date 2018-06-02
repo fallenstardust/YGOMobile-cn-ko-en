@@ -1,7 +1,7 @@
 package cn.garymb.ygomobile.ui.plus;
 
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import com.tencent.smtt.sdk.WebView;
+import com.tencent.smtt.sdk.WebViewClient;
 
 public class DefWebViewClient extends WebViewClient {
     @Override

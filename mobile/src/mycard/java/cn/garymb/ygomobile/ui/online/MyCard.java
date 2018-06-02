@@ -9,7 +9,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
-import android.webkit.WebView;
+import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
 
@@ -26,7 +26,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
-import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
+
+import com.tencent.smtt.sdk.*;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -191,40 +192,40 @@ public class MyCard {
             mListener = listener;
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void edit_deck() {
             activity.startActivity(new Intent(activity, DeckManagerActivity.class));
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void watch_replay() {
             if (mListener != null) {
                 activity.runOnUiThread(mListener::watchReplay);
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void puzzle_mode() {
             if (mListener != null) {
                 activity.runOnUiThread(mListener::puzzleMode);
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void openDrawer() {
             if (mListener != null) {
                 activity.runOnUiThread(mListener::openDrawer);
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void backHome() {
             if (mListener != null) {
                 activity.runOnUiThread(mListener::backHome);
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void share(String text) {
             if (mListener != null) {
                 activity.runOnUiThread(() -> {
@@ -233,14 +234,14 @@ public class MyCard {
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void closeDrawer() {
             if (mListener != null) {
                 activity.runOnUiThread(mListener::closeDrawer);
             }
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void join(String host, int port, String name, String room) {
             try {
                 final YGOGameOptions options = new YGOGameOptions();
@@ -266,7 +267,7 @@ public class MyCard {
         * return: 文件名数组的 JSON 字符串
         * 失败抛异常或返回空数组
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public String readdir(String path) {
             File file = new File(settings.getResourcePath(), path);
             String[] result = file.list();
@@ -279,7 +280,7 @@ public class MyCard {
         * return: 文件内容的 base64
         * 读取失败抛异常
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public String readFile(String path) throws IOException {
             File file = new File(settings.getResourcePath(), path);
             byte[] result = new byte[(int) file.length()];
@@ -295,7 +296,7 @@ public class MyCard {
         * data: 文件内容的 base64
         * 写入失败抛异常
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void writeFile(String path, String data) throws IOException {
             File file = new File(settings.getResourcePath(), path);
             FileOutputStream stream = new FileOutputStream(file);
@@ -307,7 +308,7 @@ public class MyCard {
         * 删除文件
         * 删除失败返回 false
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public boolean unlink(String path) {
             File file = new File(settings.getResourcePath(), path);
             lastModified.edit().remove(path).apply();
@@ -320,13 +321,13 @@ public class MyCard {
         * return: 修改时间
         * 文件不存在返回 0
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public long getFileLastModified(String path) {
             File file = new File(settings.getResourcePath(), path);
             return getWrappedLastModified(path, file.lastModified());
         }
 
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void updateUser(String name, String headurl, String status) {
             if (mListener != null) {
                 mUser.name = name;
@@ -345,7 +346,7 @@ public class MyCard {
         * path: 文件绝对路径
         * time: 时间
         */
-        @org.xwalk.core.JavascriptInterface
+        @JavascriptInterface
         public void setFileLastModified(String path, long time) {
             File file = new File(settings.getResourcePath(), path);
             if (file.setLastModified(time)) {

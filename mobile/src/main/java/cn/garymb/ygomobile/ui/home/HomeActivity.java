@@ -372,10 +372,11 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
     }
 
     private void checkForceUpdateSilent() {
-        UpdateHelper.getInstance().init(getApplicationContext(), Color.parseColor("#0A93DB"));
+        UpdateHelper.getInstance().init(getContext(), Color.parseColor("#0A93DB"));
         UpdateHelper.getInstance().setDebugMode(false);
-        long intervalMillis = 0 * 1000L;
-        UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+        UpdateHelper.getInstance().manualUpdate(getPackageName());
+        /*long intervalMillis = 0 * 1000L;
+        UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);*/
     }
 
     public void AnimationShake(){

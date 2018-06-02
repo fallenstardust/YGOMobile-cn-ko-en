@@ -26,7 +26,7 @@ public class WebActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         enableBackHome();
         mWebViewPlus = $(R.id.webbrowser);
-        mWebViewPlus.enableHtml5();
+        /*mWebViewPlus.enableHtml5();
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
             @Override
             public void onReceivedTitle(WebView view, String title) {
@@ -37,7 +37,7 @@ public class WebActivity extends BaseActivity {
                     setTitle(title);
                 }
             }
-        });
+        });*/
         if (doIntent(getIntent())) {
             mWebViewPlus.loadUrl(mUrl);
         }
@@ -93,14 +93,14 @@ public class WebActivity extends BaseActivity {
     @Override
     protected void onResume() {
         mWebViewPlus.resumeTimers();
-        mWebViewPlus.onShow();
+        //mWebViewPlus.onShow();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mWebViewPlus.pauseTimers();
-        mWebViewPlus.onHide();
+        //mWebViewPlus.onHide();
         super.onPause();
     }
 
@@ -109,7 +109,7 @@ public class WebActivity extends BaseActivity {
         mWebViewPlus.stopLoading();
         mWebViewPlus.setWebChromeClient(null);
         mWebViewPlus.setWebViewClient(null);
-        mWebViewPlus.onDestroy();
+        //mWebViewPlus.onDestroy();
         super.onDestroy();
     }
 

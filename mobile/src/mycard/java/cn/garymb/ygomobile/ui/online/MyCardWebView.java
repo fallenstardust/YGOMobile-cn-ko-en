@@ -3,9 +3,9 @@ package cn.garymb.ygomobile.ui.online;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import cn.garymb.ygomobile.ui.widget.WebViewPlus;
+import cn.garymb.ygomobile.ui.plus.X5WebView;
 
-public class MyCardWebView extends WebViewPlus {
+public class MyCardWebView extends X5WebView {
     public MyCardWebView(Context context) {
         super(context);
     }
