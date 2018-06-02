@@ -25,11 +25,11 @@
             android:key="pref_key_game_image_quality"
             android:persistent="true"
             android:title="@string/settings_game_card_quality"/>
-        <CheckBoxPreference
+        <!--CheckBoxPreference
             android:key="pref_settings_only_game"
             android:persistent="true"
             android:summary="@string/only_game_tip"
-            android:title="@string/settings_pref_settings_only_game"/>
+            android:title="@string/settings_pref_settings_only_game"/-->
         <CheckBoxPreference
             android:key="pref_settings_read_ex"
             android:persistent="true"
