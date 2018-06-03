@@ -453,6 +453,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->dInfo.time_limit = pkt->info.time_limit;
 		mainGame->dInfo.time_left[0] = 0;
 		mainGame->dInfo.time_left[1] = 0;
+		mainGame->RefreshTimeDisplay();
 		mainGame->deckBuilder.filterList = 0;
 		for(auto lit = deckManager._lfList.begin(); lit != deckManager._lfList.end(); ++lit)
 			if(lit->hash == pkt->info.lflist)
@@ -570,6 +571,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->dInfo.turn = 0;
 		mainGame->dInfo.time_left[0] = 0;
 		mainGame->dInfo.time_left[1] = 0;
+		mainGame->RefreshTimeDisplay();
 		mainGame->dInfo.time_player = 2;
 		mainGame->dInfo.isReplaySwapped = false;
 		mainGame->is_building = false;
@@ -710,6 +712,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			DuelClient::SendPacketToServer(CTOS_TIME_CONFIRM);
 		mainGame->dInfo.time_player = lplayer;
 		mainGame->dInfo.time_left[lplayer] = pkt->left_time;
+		mainGame->RefreshTimeDisplay();
 		break;
 	}
 	case STOC_CHAT: {

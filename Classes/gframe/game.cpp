@@ -1367,8 +1367,10 @@ void Game::MainLoop() {
 			cur_time -= 1000;
 			timer->setTime(0);
 			if(dInfo.time_player == 0 || dInfo.time_player == 1)
-				if(dInfo.time_left[dInfo.time_player])
+				if(dInfo.time_left[dInfo.time_player]) {
 					dInfo.time_left[dInfo.time_player]--;
+					RefreshTimeDisplay();
+				}
 		}
 #ifdef _IRR_ANDROID_PLATFORM_
 		device->yield(); // probably nicer to the battery
@@ -1386,6 +1388,23 @@ void Game::MainLoop() {
 	delete soundEffectPlayer;
 	usleep(500000);
 //	device->drop();
+}
+void Game::RefreshTimeDisplay() {
+	for(int i = 0; i < 2; ++i) {
+		if(dInfo.time_left[i] && dInfo.time_limit) {
+			if(dInfo.time_left[i] >= dInfo.time_limit / 2)
+				dInfo.time_color[i] = 0xffffffff;
+			else if(dInfo.time_left[i] >= dInfo.time_limit / 3)
+				dInfo.time_color[i] = 0xffffff00;
+			else if(dInfo.time_left[i] >= dInfo.time_limit / 6)
+				dInfo.time_color[i] = 0xffff7f00;
+			else
+				dInfo.time_color[i] = 0xffff0000;
+		} else
+			dInfo.time_color[i] = 0xffffffff;
+	}
+	myswprintf(dInfo.str_time_left[0], L"%d", dInfo.time_left[0]);
+	myswprintf(dInfo.str_time_left[1], L"%d", dInfo.time_left[1]);
 }
 void Game::BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar) {
 	for(int i = 0; i < 16; ++i)
