@@ -297,6 +297,7 @@ ClientCard* ClientField::RemoveCard(int controler, int location, int sequence) {
 	}
 	}
 	pcard->location = 0;
+	RefreshCardCountDisplay();
 	return pcard;
 }
 void ClientField::UpdateCard(int controler, int location, int sequence, char* data) {
@@ -1450,10 +1451,10 @@ void ClientField::RefreshCardCountDisplay() {
 	}
 	if(mainGame->dInfo.card_count[0] > mainGame->dInfo.card_count[1]) {
 		mainGame->dInfo.card_count_color[0] = 0xffffff00;
-		mainGame->dInfo.card_count_color[1] = 0xffff7f00;
+		mainGame->dInfo.card_count_color[1] = 0xffff0000;
 	} else if(mainGame->dInfo.card_count[1] > mainGame->dInfo.card_count[0]) {
 		mainGame->dInfo.card_count_color[1] = 0xffffff00;
-		mainGame->dInfo.card_count_color[0] = 0xffff7f00;
+		mainGame->dInfo.card_count_color[0] = 0xffff0000;
 	} else {
 		mainGame->dInfo.card_count_color[0] = 0xffffffff;
 		mainGame->dInfo.card_count_color[1] = 0xffffffff;
