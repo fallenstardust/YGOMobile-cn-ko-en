@@ -587,10 +587,10 @@ void Game::DrawMisc() {
 		textFont->draw(dInfo.hostname_tag, recti(335 * mainGame->xScale, 31 * mainGame->yScale, 629 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
 	if(!dInfo.isTag || !dInfo.tag_player[1]) {
 		auto cld = textFont->getDimension(dInfo.clientname);
-		textFont->draw(dInfo.clientname, recti((986 - cld.Width) * mainGame->xScale, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.clientname, recti(986 * mainGame->xScale - cld.Width, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
 	} else {
 		auto cld = textFont->getDimension(dInfo.clientname_tag);
-		textFont->draw(dInfo.clientname_tag, recti((986 - cld.Width) * mainGame->xScale, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.clientname_tag, recti(986 * mainGame->xScale - cld.Width, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
 	}
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 10 * mainGame->yScale, 688 * mainGame->xScale, 30 * mainGame->yScale), 0x00000000, 0x00000000, 0xffffffff, 0xffffffff);
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 30 * mainGame->yScale, 688 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, 0xffffffff, 0x00000000, 0x00000000);

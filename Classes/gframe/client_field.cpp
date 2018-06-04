@@ -1451,10 +1451,10 @@ void ClientField::RefreshCardCountDisplay() {
 	}
 	if(mainGame->dInfo.card_count[0] > mainGame->dInfo.card_count[1]) {
 		mainGame->dInfo.card_count_color[0] = 0xffffff00;
-		mainGame->dInfo.card_count_color[1] = 0xffff0000;
+		mainGame->dInfo.card_count_color[1] = 0xffff2a00;
 	} else if(mainGame->dInfo.card_count[1] > mainGame->dInfo.card_count[0]) {
 		mainGame->dInfo.card_count_color[1] = 0xffffff00;
-		mainGame->dInfo.card_count_color[0] = 0xffff0000;
+		mainGame->dInfo.card_count_color[0] = 0xffff2a00;
 	} else {
 		mainGame->dInfo.card_count_color[0] = 0xffffffff;
 		mainGame->dInfo.card_count_color[1] = 0xffffffff;

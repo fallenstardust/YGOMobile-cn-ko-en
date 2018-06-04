@@ -1393,7 +1393,7 @@ void Game::RefreshTimeDisplay() {
 	for(int i = 0; i < 2; ++i) {
 		if(dInfo.time_left[i] && dInfo.time_limit) {
 			if(dInfo.time_left[i] >= dInfo.time_limit / 2)
-				dInfo.time_color[i] = 0xffffffff;
+				dInfo.time_color[i] = 0xff00ff00;
 			else if(dInfo.time_left[i] >= dInfo.time_limit / 3)
 				dInfo.time_color[i] = 0xffffff00;
 			else if(dInfo.time_left[i] >= dInfo.time_limit / 6)
