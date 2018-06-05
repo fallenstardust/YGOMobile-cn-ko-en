@@ -110,10 +110,10 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
                 holder.cardLevel.setVisibility(View.INVISIBLE);
             }
 //            holder.view_bar.setVisibility(View.VISIBLE);
-            String star = "";
-            for (int i = 0; i < item.getStar(); i++) {
+            String star = "★"+ item.getStar();
+            /*for (int i = 0; i < item.getStar(); i++) {
                 star += "★";
-            }
+            }*/
             holder.cardLevel.setText(star);
             if (item.isType(CardType.Xyz)) {
                 holder.cardLevel.setTextColor(getColor(R.color.star_rank));

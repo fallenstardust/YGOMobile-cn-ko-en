@@ -196,10 +196,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             atkdefView.setVisibility(View.VISIBLE);
             monsterlayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
-            String star = "";
-            for (int i = 0; i < cardInfo.getStar(); i++) {
+            String star = "★"+ cardInfo.getStar();
+           /* for (int i = 0; i < cardInfo.getStar(); i++) {
                 star += "★";
-            }
+            }*/
             level.setText(star);
             if (cardInfo.isType(CardType.Xyz)) {
                 level.setTextColor(context.getResources().getColor(R.color.star_rank));
