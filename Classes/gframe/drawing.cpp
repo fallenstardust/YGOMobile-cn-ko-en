@@ -550,8 +550,8 @@ void Game::DrawMisc() {
 	}
 	if(!dInfo.isReplay && dInfo.player_type < 7 && dInfo.time_limit) {
 		if(imageManager.tClock) {
-			driver->draw2DImage(imageManager.tClock, recti(577 * mainGame->xScale, 32 * mainGame->yScale, 595 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 128, 128), 0, 0, true);
-			driver->draw2DImage(imageManager.tClock, recti(695 * mainGame->xScale, 32 * mainGame->yScale, 713 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 128, 128), 0, 0, true);
+			driver->draw2DImage(imageManager.tClock, recti(577 * mainGame->xScale, 32 * mainGame->yScale, 595 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+			driver->draw2DImage(imageManager.tClock, recti(695 * mainGame->xScale, 32 * mainGame->yScale, 713 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
 		}
 		DrawShadowText(numFont, dInfo.str_time_left[0], recti(595 * mainGame->xScale, 31 * mainGame->yScale, 625 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[0], 0xff000000, true, false, 0);
 		DrawShadowText(numFont, dInfo.str_time_left[1], recti(713 * mainGame->xScale, 31 * mainGame->yScale, 743 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[1], 0xff000000, true, false, 0);
