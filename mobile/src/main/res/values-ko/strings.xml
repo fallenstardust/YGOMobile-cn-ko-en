@@ -3,13 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="StringFormatInvalid"
     >
-    <string name="app_name">YGOMobile</string>
+    <string name="app_name">YGOMobile.kor</string>
     <string name="action_settings">설정</string>
-    <string name="action_game">독신자 게임</string>
+    <string name="action_game">싱글 게임</string>
     <string name="action_about">정보</string>
     <string name="dont_start_game">게임을 시작하지 마세요.</string>
     <!-- check -->
-    <string name="check_res">Check Resources</string>
+    <string name="check_res">리소스 체크</string>
     <string name="check_things">Check %s ...</string>
     <string name="core_config">Core Config</string>
     <string name="tip_new_deck">새로운 덱</string>
@@ -35,8 +35,7 @@
     <string name="quit">나가기</string>
     <string name="quit_tip">앱을 나가겠습니까??</string>
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다.</string>
-    <string name="string_help_text">현재 응용 프로그램에 필요한 권한이 없습니다. 
-	설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
+    <string name="string_help_text">현재 응용 프로그램에 필요한 권한이 없습니다. \n설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
     <!-- settings -->
     <string name="settings_about">정보</string>
     <string name="settings_about_sub_about">정보</string>
@@ -45,7 +44,7 @@
     <string name="settings_game_font_antialias">폰트안티앨러싱</string>
     <string name="settings_game_lab_pendulum_scale">P스캐일 효과 이미지</string>
     <string name="settings_game_font_antialias_summary">이 옵션을 비활성화시 속도가 소폭 증가할 수 있습니다.</string>
-    <string name="settings_about_author_pref">젝자자</string>
+    <string name="settings_about_author_pref">제작자</string>
     <string name="settings_about_version_pref">Version</string>
     <string name="settings_about_check_update">업데이트 확인</string>
     <string name="settings_about_change_log">패치 기록</string>
@@ -158,7 +157,7 @@
     <string name="settings_deck_delete_dialog">카드 기록 삭제</string>
     <string name="settings_deck_delete_dialog_desc">show delete card dialog in deck editor</string>
     <string name="delete_card" formatted="false">s 을(를) 삭제하겠습니까?</string>
-    <string name="clear_deck">덱 최기화</string>
+    <string name="clear_deck">덱 초기화</string>
     <string name="question_clear_deck">덱을 초기화 하겠습니까?</string>
     <string name="delete_server_info">서버정보를 삭제하겠습니까?</string>
     <string name="exit_edit_mode">수정모드 나가기</string>
@@ -170,7 +169,7 @@
     <string name="deck_share_fail">덱공유 실패</string>
     <string name="choose_game_path">게임경로를 선택하세요.</string>
     <string name="download_home">NetDisk Page</string>
-    <string name="reset_game_res">Reset Resources</string>
+    <string name="reset_game_res">리소스 리셋</string>
     <string name="downloading_images">Downloading images</string>
     <string name="download_image_progress" formatted="false">Downloading card image %d/%d</string>
     <string name="download_image_error" formatted="false">Download fail %d</string>
@@ -178,7 +177,7 @@
     <string name="tip_istunning">ygopro실행중...</string>
     <string name="edit">수정</string>
     <string name="delete">삭제</string>
-    <string name="mycard">MYcard</string>
+    <string name="mycard">MYcard 레이팅</string>
     <string name="arena">듀얼리스트db</string>
     <string name="mc_chat">채팅룸</string>
     <string name="noting_to_send">전송할 수 없습니다.</string>
@@ -190,11 +189,11 @@
     <string name="mc_home">홈화면</string>
     <string name="bbs">커뮤니티</string>
     <string name="settings_pref_settings_only_game">앱 실행시 YGOCORE 바로 실행(설정하지마십시오)</string>
-    <string name="only_game_tip">앱의 초기화를 위해 설정을 초기화 해야합니다.</string>
+    <string name="only_game_tip">설정에서 앱을 초기화 하셔야 해제가 가능합니다.</string>
     <string name="title_use_ex">확장팩 사용</string>
     <string name="tip_network_image">image server is close</string>
     <string name="game_version">게임버전</string>
-    <string name="error_game_ver">버전을 맞추어주세요. 0x1342(= 1.034.2)</string>
+    <string name="error_game_ver">버전을 맞추어주세요. 0x1344(= 1.034.4)</string>
     <string name="tip_no_netwrok">>please confirm net works</string>
     <string name="message">"패킷복사..."</string>
     <string name="ex_pack">확장팩 카드</string>
@@ -205,8 +204,8 @@
     <string name="tip_reset_game_res">게임 리소스대이터 리셋 완료.</string>
     <string name="join_helper_tip">서버의 우선 순위를 위로 드래그하여 수정할 수 있습니다.
         \n사용자 지역에 적합한 ping이 낮은 서버를 추가합니다.
-        \n이 기능을 사용하여 소프트웨어 일시 중지 창을 엽니다.
-        \n그후 소프트웨어가 백그라운드로 구동되고 있는지 확인하십시오.</string>
+        \n아래의 버튼을 사용하여 "애플리케이션 관리"를 엽니다
+        \n그후 YGOMobile의 다른앱 표시 권한이 혀용되어 있는지 확인하십시오.</string>
     <string name="OpenTIP">빠른 사용법</string>
-    <string name="Open_Alert_Window">열기 정지된창</string>
+    <string name="Open_Alert_Window">애플리케이션 관리</string>
 </resources>
