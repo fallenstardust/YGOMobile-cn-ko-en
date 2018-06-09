@@ -30,7 +30,7 @@ public interface Constants {
     String PREF_LOCK_SCREEN = "pref_key_game_screen_orientation";
     boolean PREF_DEF_LOCK_SCREEN = true;
     String PREF_IMMERSIVE_MODE = "pref_key_immersive_mode";
-    boolean PREF_DEF_IMMERSIVE_MODE = true;
+    boolean PREF_DEF_IMMERSIVE_MODE = false;
     String PREF_SENSOR_REFRESH = "pref_key_sensor_refresh";
     boolean PREF_DEF_SENSOR_REFRESH = true;
     String PREF_CHANGE_LOG = "pref_key_change_log";

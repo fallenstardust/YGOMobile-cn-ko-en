@@ -159,7 +159,10 @@ public class YGOStarter {
             lasttime = System.currentTimeMillis();
             showLoadingBg(activity);
             if(!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                Toast.makeText(activity, R.string.load_game, Toast.LENGTH_SHORT).show();
+                String[] tipsList = activity.getResources().getStringArray(R.array.tips);
+                int x=(int)(Math.random() * tipsList.length);
+                String tips=tipsList[x];
+                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
             }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {
