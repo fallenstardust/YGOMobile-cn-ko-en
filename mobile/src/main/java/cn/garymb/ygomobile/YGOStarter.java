@@ -3,9 +3,11 @@ package cn.garymb.ygomobile;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v7.app.ActionBar;
@@ -30,6 +32,7 @@ import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.ToastUtil;
 
 
 public class YGOStarter {
@@ -162,7 +165,9 @@ public class YGOStarter {
                 String[] tipsList = activity.getResources().getStringArray(R.array.tips);
                 int x=(int)(Math.random() * tipsList.length);
                 String tips=tipsList[x];
-                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
+                //Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
+                ToastUtil toastUtil=new ToastUtil();
+                toastUtil.Short(activity,tips).setToastColor(Color.RED,activity.getResources().getColor(R.color.colorAccent)).show();
             }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {
