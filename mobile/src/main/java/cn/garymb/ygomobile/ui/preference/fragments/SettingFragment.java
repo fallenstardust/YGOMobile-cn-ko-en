@@ -88,7 +88,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
-        bind(PREF_CHANGE_LOG,SystemUtils.getVersionName(getActivity()));
+        bind(PREF_CHANGE_LOG,SystemUtils.getVersionName(getActivity())
+                + " (" + SystemUtils.getVersion(getActivity()) + ")");
         bind(PREF_CHECK_UPDATE,getString(R.string.settings_about_author_pref)+" : "+getString(R.string.settings_author));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
