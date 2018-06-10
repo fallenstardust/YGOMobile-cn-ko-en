@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -100,7 +99,7 @@ public class ServerListManager {
 
     public void showEditDialog(int position) {
         final boolean isAdd = position < 0;
-        final  DialogPlus dialog = new DialogPlus(getContext());
+        final DialogPlus dialog = new DialogPlus(getContext());
         dialog.setContentView(R.layout.dialog_server_edit);
         dialog.show();
         ServerInfoViewHolder editViewHolder = new ServerInfoViewHolder(dialog.getContentView());

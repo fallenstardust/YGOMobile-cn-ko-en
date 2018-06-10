@@ -120,11 +120,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     AppsSettings.get().setUseExtraCards(false);
                 }
             }
-       /*     if (needsUpdate) {
-        *        if(AppsSettings.get().resetGameVersion() == 0){
-        *            VUiKit.show(mContext, mContext.getString(R.string.reset_game_ver_fail));
-        *        }
-        *    }*/
+            /*     if (needsUpdate) {
+             *        if(AppsSettings.get().resetGameVersion() == 0){
+             *            VUiKit.show(mContext, mContext.getString(R.string.reset_game_ver_fail));
+             *        }
+             *    }*/
             //设置字体
             new ConfigManager(mSettings.getSystemConfig()).setFontSize(mSettings.getFontSize());
 //            copyCoreConfig(new File(mSettings.getResourcePath(), GameSettings.CORE_CONFIG_PATH).getAbsolutePath());
@@ -153,17 +153,17 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
             copyCdbFile(needsUpdate);
-           
-                if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
-                    setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
-                    IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
-                            resPath, needsUpdate);
-                }
+
+            if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
+                        resPath, needsUpdate);
+            }
             //if (needsUpdate) {
-                File filesDir = mContext.getFilesDir();
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                            filesDir.getPath(), needsUpdate);
-             //   }
+            File filesDir = mContext.getFilesDir();
+            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
+                    filesDir.getPath(), needsUpdate);
+            //   }
 
             if (needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.ex_pack)));
@@ -325,39 +325,41 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         void onResCheckFinished(int result, boolean isNewVersion);
     }
 
-    public void checkWindbot(){
+    public void checkWindbot() {
         Log.i("路径", mContext.getFilesDir().getPath());
-        Log.i("路径2", mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
-        WindBot.initAndroid(mContext.getFilesDir().getPath(),mSettings.getDataBasePath()+"/"+ DATABASE_NAME);
+        Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+        WindBot.initAndroid(mContext.getFilesDir().getPath(), mSettings.getDataBasePath() + "/" + DATABASE_NAME);
         ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
         mContext.registerReceiver(mReceiver, filter);
     }
+
     public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals("RUN_WINDBOT")) {
-                String args=intent.getStringExtra("args");
+                String args = intent.getStringExtra("args");
                 WindBot.runAndroid(args);
             }
         }
-    };
-    
-    Handler han=new Handler(){
-
-		@Override
-		public void handleMessage(Message msg)
-		{
-			// TODO: Implement this method
-			super.handleMessage(msg);
-			switch(msg.what){
-			    case 0:
-			    checkWindbot();
-			    break;
-			}
     }
+
+    ;
+
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO: Implement this method
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    checkWindbot();
+                    break;
+            }
+        }
     };
-    
+
 }

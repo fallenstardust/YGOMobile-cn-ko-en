@@ -3,16 +3,13 @@ package cn.garymb.ygomobile;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -26,13 +23,9 @@ import java.io.File;
 import java.util.HashMap;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 import cn.garymb.ygomobile.utils.ComponentUtils;
-import cn.garymb.ygomobile.utils.ToastUtil;
 
 
 public class YGOStarter {
@@ -117,7 +110,7 @@ public class YGOStarter {
         }
         activityShowInfo.oldRequestedOrientation = activity.getRequestedOrientation();
 //        Log.w("checker", "activityShowInfo.oldRequestedOrientation=" + activityShowInfo.oldRequestedOrientation);
-        if(activityShowInfo.oldRequestedOrientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED){
+        if (activityShowInfo.oldRequestedOrientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             activityShowInfo.oldRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
         }
         activityShowInfo.mRoot = activity.getWindow().getDecorView();
@@ -161,13 +154,11 @@ public class YGOStarter {
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
             showLoadingBg(activity);
-            if(!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
+            if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
                 String[] tipsList = activity.getResources().getStringArray(R.array.tips);
-                int x=(int)(Math.random() * tipsList.length);
-                String tips=tipsList[x];
-                //Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-                ToastUtil toastUtil=new ToastUtil();
-                toastUtil.Short(activity,tips).setToastColor(Color.RED,activity.getResources().getColor(R.color.colorAccent)).show();
+                int x = (int) (Math.random() * tipsList.length);
+                String tips = tipsList[x];
+                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
             }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {

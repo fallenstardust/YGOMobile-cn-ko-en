@@ -56,8 +56,9 @@ import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 
-abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener{
+abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
+    long exitLasttime = 0;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
 
@@ -83,11 +84,11 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
         //trpay
-        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6","YGOMobile");
+        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
         checkForceUpdateSilent();
         //ServiceDuelAssistant
-        startService(new Intent(this,ServiceDuelAssistant.class));
+        startService(new Intent(this, ServiceDuelAssistant.class));
         BtnJoinQQGroup();
     }
 
@@ -229,8 +230,6 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         }
         return true;
     }
-
-    long exitLasttime = 0;
 
     @Override
     public void onBackPressed() {
@@ -378,17 +377,18 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
     }
 
-    public void AnimationShake(){
+    public void AnimationShake() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
         findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
     }
 
     public void BtnJoinQQGroup() {
         $(R.id.btn_join_qq_group).setOnClickListener((v) -> {
-            String key ="dRkD2L9QgYiYmQoqJUgkR4QUth9UhuT4";
+            String key = "dRkD2L9QgYiYmQoqJUgkR4QUth9UhuT4";
             joinQQGroup(key);
         });
     }
+
     public boolean joinQQGroup(String key) {
         Intent intent = new Intent();
         intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));

@@ -4,6 +4,7 @@ package cn.garymb.ygomobile.utils;
 public class StringUtils {
     /**
      * 半角转全角
+     *
      * @param input String.
      * @return 全角字符串.
      */
@@ -22,6 +23,7 @@ public class StringUtils {
 
     /**
      * 全角转半角
+     *
      * @param input String.
      * @return 半角字符串
      */

@@ -18,7 +18,7 @@ public class App extends GameApplication {
 
     @Override
     public NativeInitOptions getNativeInitOptions() {
-        NativeInitOptions options= AppsSettings.get().getNativeInitOptions();
+        NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
         return options;
     }
 
@@ -88,23 +88,26 @@ public class App extends GameApplication {
     public boolean canNdkCash() {
         return false;
     }
+
     @Override
     public boolean isImmerSiveMode() {
         return AppsSettings.get().isImmerSiveMode();
     }
-    public boolean isSensorRefresh(){
+
+    public boolean isSensorRefresh() {
         return AppsSettings.get().isSensorRefresh();
     }
+
     @Override
     public float getScreenHeight() {
         return AppsSettings.get().getScreenHeight();
     }
 
     @Override
-   public void runWindbot(String args) {
+    public void runWindbot(String args) {
         Intent intent = new Intent();
         intent.putExtra("args", args);
         intent.setAction("RUN_WINDBOT");
         getBaseContext().sendBroadcast(intent);
-   }
+    }
 }

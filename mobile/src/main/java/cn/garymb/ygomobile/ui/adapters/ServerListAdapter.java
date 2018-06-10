@@ -3,14 +3,13 @@ package cn.garymb.ygomobile.ui.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.provider.Settings;
-import android.view.View;
 import android.view.ViewGroup;
 
 import org.greenrobot.eventbus.EventBus;
 
 import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ServerInfoViewHolder;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
@@ -42,9 +41,9 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, Serve
             });
             builder.show();
         });
-        if(position==0){
+        if (position == 0) {
             holder.iv_fond.setBackgroundResource(R.drawable.cube);
-        }else{
+        } else {
             holder.iv_fond.setBackgroundResource(R.drawable.cube2);
         }
         bindMenu(holder, position);

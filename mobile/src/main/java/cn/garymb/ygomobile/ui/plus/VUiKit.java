@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.plus;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
@@ -12,8 +11,8 @@ import org.jdeferred.android.AndroidDeferredManager;
 
 /**
  * @author Lody
- *         <p>
- *         A set of tools for UI.
+ * <p>
+ * A set of tools for UI.
  */
 public class VUiKit {
     private static final AndroidDeferredManager gDM = new AndroidDeferredManager();
@@ -23,6 +22,7 @@ public class VUiKit {
     public static AndroidDeferredManager defer() {
         return gDM;
     }
+
     public static int dpToPx(Context context, int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
                 context.getResources().getDisplayMetrics());

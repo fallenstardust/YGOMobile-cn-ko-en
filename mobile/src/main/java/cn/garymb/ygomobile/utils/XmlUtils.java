@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
 
-import android.util.Log;
-
 import net.kk.xml.XmlOptions;
 import net.kk.xml.XmlReader;
 import net.kk.xml.XmlWriter;
@@ -15,8 +13,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class XmlUtils {
     public static boolean DEBUG = false;

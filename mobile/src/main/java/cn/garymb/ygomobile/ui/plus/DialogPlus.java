@@ -23,7 +23,7 @@ import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import static android.view.WindowManager.LayoutParams.FIRST_SYSTEM_WINDOW;
 
 public class DialogPlus extends Dialog {
-    public static final int TYPE_KEYGUARD           = FIRST_SYSTEM_WINDOW+4;
+    public static final int TYPE_KEYGUARD = FIRST_SYSTEM_WINDOW + 4;
     private Context context;
     private LayoutInflater mLayoutInflater;
     private View mView;
@@ -163,7 +163,7 @@ public class DialogPlus extends Dialog {
     @Override
     public void setCancelable(boolean flag) {
         super.setCancelable(flag);
-        if(!flag){
+        if (!flag) {
             closeView.setVisibility(View.INVISIBLE);
         }
     }
@@ -183,7 +183,7 @@ public class DialogPlus extends Dialog {
     @Override
     public void setTitle(@Nullable CharSequence title) {
         setTitleText(title == null ? null : title.toString());
-        if(TextUtils.isEmpty(title)){
+        if (TextUtils.isEmpty(title)) {
             hideTitleBar();
         }
     }

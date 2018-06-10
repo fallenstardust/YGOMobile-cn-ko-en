@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="opengl_version_value"  translatable="false">
+    <string-array name="opengl_version_value" translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
     </string-array>
-    <string-array name="card_quality_value"  translatable="false">
+    <string-array name="card_quality_value" translatable="false">
         <item>0</item>
         <item>1</item>
     </string-array>
     <string-array name="tips">
-        <item>游戏王圈子不大，珍惜一起玩的人</item>
-        <item>点击卡片却偏到另一张？试试去「设置」→打勾/取消「在游戏隐藏虚拟键」</item>
-        <item>主页每个服务器按住左划就会出现「编辑」和「删除」哦</item>
-        <item>试试点击左下角浮动的「贤者之石」会有更多功能</item>
-        <item>想不联网也打人机？左下角→「单人游戏」→「人机模式」</item>
-        <item>卡图怎么没了？点击左下角→「重置资源」</item>
-        <item>卡组自己组更能享受游戏乐趣，自己组也更容易神抽哦</item>
-        <item>看到每个服务器右下的宝石了吗？点点看吧</item>
-        <item>先行卡和正式卡密码不同，打了补丁要注意区分哦</item>
-        <item>觉得遇到BUG先确定是否真的是BUG再进行反馈哈</item>
-        <item>不懂怎么更新？去设置-「检查更新」看看</item>
-        <item>不知道怎么用，可以点开左下-「教程」查看使用方法</item>
-        <item>维护开发不容易，欢迎前往左下角→「支持我们」留下您的心意</item>
-        <item>没有所谓的“大师规则4”只有「新大师规则」哦</item>
-        <item>录像出错就删了吧，暂时还没有解决办法</item>
+        <item>상대에 대한 예의를 지켜 게임을 즐기십시오.</item>
+        <item>설정에서 가상키를 끄고 킬 수 있습니다.</item>
+        <item>메인화면의 각 서버들은 좌측으로 밀어줄 경우 수정과 삭제가 가능합니다.</item>
+        <item>좌측 하단의 마크를 눌러줄 경우 더 많은 설정들을 확인할 수 있습니다.</item>
+        <item>ai대전을 원할 경우 각 서버의 비밀번호에 ai를 입력후 참여 하십시오.</item>
+        <item>이미지 파일이 없어졌을 경우 리소스 리셋 기능을 사용하십시오.</item>
+        <item>주변에서 같이 게임을 즐길 오프라인 친구들을 찾아 그룹을 만들어 보세요.</item>
+        <item>서버들의 오른쪽에 있는 마크를 통해 서버 우선순위를 확인할 수 있습니다.</item>
+        <item>몇몇 특수한 카드들을 제외하고 8자리 코드번호를 초과하는 카드들은 프리릴리즈 카드로, 프리릴리즈카드를 허용하는 서버 에서만 사용이 가능합니다.</item>
+        <item>bug제보를 하기 전에 게임 진행 상황을 살펴보십시오. bug가 아닐 수 있습니다.</item>
+        <item>최신버전은 유무는 실탄은땅콩님에게 문의하십시오.</item>
+        <item>좌측 하단의 도움말을 통해 사용법을 알 수 있습니다.</item>
+        <item>앱의 유지 보수를 위해 많은 시간과 노력이 필요합니다. 좌측하단의 마크를 통해 기부를 해주시면 감사하겠습니다.</item>
+        <item>"마스터룰4"가 아니라 "뉴마스터룰"입니다.</item>
+        <item>리플레이 오류는 보통 서버와 클라이언트의 스크립트 차이로 발생하며 마땅한 해결법은 아직 없습니다. 가능한 클라우드 리플레이를 이용해주십시오. </item>
     </string-array>
 </resources>

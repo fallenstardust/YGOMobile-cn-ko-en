@@ -161,21 +161,21 @@ public class Deck implements Parcelable {
     }
 
     public void addMain(Integer id) {
-        if(mainlist.size()>=Constants.DECK_MAIN_MAX){
+        if (mainlist.size() >= Constants.DECK_MAIN_MAX) {
             return;
         }
         mainlist.add(id);
     }
 
     public void addExtra(Integer id) {
-        if(extraList.size()>=Constants.DECK_EXTRA_MAX){
+        if (extraList.size() >= Constants.DECK_EXTRA_MAX) {
             return;
         }
         extraList.add(id);
     }
 
     public void addSide(Integer id) {
-        if(sideList.size()>=Constants.DECK_SIDE_MAX){
+        if (sideList.size() >= Constants.DECK_SIDE_MAX) {
             return;
         }
         sideList.add(id);

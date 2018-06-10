@@ -7,7 +7,7 @@ import java.util.List;
 @XmlElement("servers")
 public class ServerList {
     @XmlElement("version")
-    private int vercode=0;
+    private int vercode = 0;
     @XmlElement("server")
     private List<ServerInfo> mServerInfoList;
 
@@ -19,9 +19,9 @@ public class ServerList {
         return vercode;
     }
 
-    public ServerList(int version,List<ServerInfo> serverInfoList) {
+    public ServerList(int version, List<ServerInfo> serverInfoList) {
         mServerInfoList = serverInfoList;
-        this.vercode =version;
+        this.vercode = version;
     }
 
     public List<ServerInfo> getServerInfoList() {

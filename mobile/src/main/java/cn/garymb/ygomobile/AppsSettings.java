@@ -13,11 +13,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import cn.garymb.ygomobile.core.GameConfig;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.handler.CardManager;
@@ -35,7 +33,6 @@ import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
-import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 
 public class AppsSettings {
     private static AppsSettings sAppsSettings;
@@ -171,7 +168,7 @@ public class AppsSettings {
                         Arrays.sort(cdbs, (file, t1) -> {
                             return file.getName().compareTo(t1.getName());
                         });
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         //
                     }
                     for (File file : cdbs) {

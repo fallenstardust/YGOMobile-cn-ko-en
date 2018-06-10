@@ -11,6 +11,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
+import com.tencent.smtt.sdk.WebView;
+
 import org.json.JSONArray;
 
 import java.io.BufferedInputStream;
@@ -26,8 +28,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
-
-import com.tencent.smtt.sdk.*;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -79,10 +79,10 @@ public class MyCard {
                     mUser.avatar_url = info.getQueryParameter("avatar_url");
                     mUser.admin = info.getBooleanQueryParameter("admin", false);
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
-                    lastModified.edit().putString("user_external_id", mUser.external_id+"").apply();
+                    lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
                     lastModified.edit().putString("user_name", mUser.username).apply();
-					//UserManagement.setUserName(mUser.username);
-					//UserManagement.setUserPassword(mUser.external_id+"");
+                    //UserManagement.setUserName(mUser.username);
+                    //UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;
                     if (getMyCardListener() != null) {
                         getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
@@ -262,11 +262,11 @@ public class MyCard {
         }
 
         /*
-        * 列目录
-        * path: 文件夹路径
-        * return: 文件名数组的 JSON 字符串
-        * 失败抛异常或返回空数组
-        */
+         * 列目录
+         * path: 文件夹路径
+         * return: 文件名数组的 JSON 字符串
+         * 失败抛异常或返回空数组
+         */
         @JavascriptInterface
         public String readdir(String path) {
             File file = new File(settings.getResourcePath(), path);
@@ -275,11 +275,11 @@ public class MyCard {
         }
 
         /*
-        * 读取文件内容
-        * path: 文件绝对路径
-        * return: 文件内容的 base64
-        * 读取失败抛异常
-        */
+         * 读取文件内容
+         * path: 文件绝对路径
+         * return: 文件内容的 base64
+         * 读取失败抛异常
+         */
         @JavascriptInterface
         public String readFile(String path) throws IOException {
             File file = new File(settings.getResourcePath(), path);
@@ -291,11 +291,11 @@ public class MyCard {
         }
 
         /*
-        * 写入内容到指定文件
-        * path: 文件路径
-        * data: 文件内容的 base64
-        * 写入失败抛异常
-        */
+         * 写入内容到指定文件
+         * path: 文件路径
+         * data: 文件内容的 base64
+         * 写入失败抛异常
+         */
         @JavascriptInterface
         public void writeFile(String path, String data) throws IOException {
             File file = new File(settings.getResourcePath(), path);
@@ -305,9 +305,9 @@ public class MyCard {
         }
 
         /*
-        * 删除文件
-        * 删除失败返回 false
-        */
+         * 删除文件
+         * 删除失败返回 false
+         */
         @JavascriptInterface
         public boolean unlink(String path) {
             File file = new File(settings.getResourcePath(), path);
@@ -316,11 +316,11 @@ public class MyCard {
         }
 
         /*
-        * 获取文件修改时间
-        * path: 文件绝对路径
-        * return: 修改时间
-        * 文件不存在返回 0
-        */
+         * 获取文件修改时间
+         * path: 文件绝对路径
+         * return: 修改时间
+         * 文件不存在返回 0
+         */
         @JavascriptInterface
         public long getFileLastModified(String path) {
             File file = new File(settings.getResourcePath(), path);
@@ -342,10 +342,10 @@ public class MyCard {
         }
 
         /*
-        * 设置文件修改时间
-        * path: 文件绝对路径
-        * time: 时间
-        */
+         * 设置文件修改时间
+         * path: 文件绝对路径
+         * time: 时间
+         */
         @JavascriptInterface
         public void setFileLastModified(String path, long time) {
             File file = new File(settings.getResourcePath(), path);

@@ -1,11 +1,6 @@
 package cn.garymb.ygomobile.ui.plus;
 
-import android.util.Log;
-
-import com.tencent.smtt.export.external.interfaces.ConsoleMessage;
 import com.tencent.smtt.sdk.WebChromeClient;
-
-import cn.garymb.ygomobile.lite.BuildConfig;
 
 public class DefWebChromeClient extends WebChromeClient {
   /* @Override

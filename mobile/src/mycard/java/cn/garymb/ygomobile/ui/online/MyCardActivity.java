@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,8 +19,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-
-import com.tencent.smtt.sdk.*;
+import com.tencent.smtt.sdk.WebChromeClient;
+import com.tencent.smtt.sdk.WebSettings;
+import com.tencent.smtt.sdk.WebView;
 
 import java.text.MessageFormat;
 
@@ -31,7 +31,6 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.online.mcchat.SplashActivity;
-import cn.garymb.ygomobile.ui.plus.X5WebView;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -189,7 +188,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
                 break;
             case R.id.action_chat:
-                startActivity(new Intent(MyCardActivity.this,SplashActivity.class));
+                startActivity(new Intent(MyCardActivity.this, SplashActivity.class));
                 break;
             default:
                 return false;
@@ -200,7 +199,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
     @Override
     public void onLogin(String name, String icon, String statu) {
 
-        if(!TextUtils.isEmpty(icon)){
+        if (!TextUtils.isEmpty(icon)) {
             Glide.with(this).load(Uri.parse(icon)).into(mHeadView);
         }
         mNameView.setText(name);
@@ -260,7 +259,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         return false;
     }
 
-    public void ProgressBar(){
+    public void ProgressBar() {
 
     }
 }

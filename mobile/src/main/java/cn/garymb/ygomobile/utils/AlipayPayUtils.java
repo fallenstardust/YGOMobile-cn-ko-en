@@ -24,19 +24,19 @@ public class AlipayPayUtils {
     /***
      *支付宝
      */
-        public static boolean openAlipayPayPage(Context context, String qrcode) {
-            try {
-                qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
-                } catch (Exception e) {
-            }
-            try {
-                final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
-                openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
-                return true;
-                } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return false;
+    public static boolean openAlipayPayPage(Context context, String qrcode) {
+        try {
+            qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
+        } catch (Exception e) {
+        }
+        try {
+            final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
+            openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private static void openUri(Context context, String s) {
@@ -48,7 +48,7 @@ public class AlipayPayUtils {
     /***
      *微信支付（图灵trpay）
      */
-    public static void inputMoney(Activity activity){
+    public static void inputMoney(Activity activity) {
         DialogPlus dialog = new DialogPlus(activity);
         dialog.setTitle("输入微信捐赠金额(元)");
         EditText editText = new EditText(activity);
@@ -61,12 +61,12 @@ public class AlipayPayUtils {
             dlg.dismiss();
         });
         dialog.setLeftButtonListener((dlg, s) -> {
-            String message=editText.getText().toString().trim();
-            if(!message.equals("")){
+            String message = editText.getText().toString().trim();
+            if (!message.equals("")) {
                 long money = Long.parseLong(message);
-                if(money!=0){
+                if (money != 0) {
                     money = money * 100;
-                    WeChatPay(activity,money);
+                    WeChatPay(activity, money);
                     dlg.dismiss();
                 }
             }
@@ -74,16 +74,16 @@ public class AlipayPayUtils {
     }
 
 
-    public static void WeChatPay(Activity activity,Long money){
-        String id = UUID.randomUUID()+"";
+    public static void WeChatPay(Activity activity, Long money) {
+        String id = UUID.randomUUID() + "";
         String notifyurl = "192.168.1.1";
-        TrPay.getInstance(activity).callWxPay("感谢您对YGOMobile的支持", id, money, "",notifyurl, AlipayPayUtils.getIMEI(activity), new PayResultListener() {
-        public void onPayFinish(Context context, String outtradeno, int resultCode, String resultString, int payType, Long amount, String tradename){
-            if (resultCode == TrPayResult.RESULT_CODE_SUCC.getId()) {
-            } else if (resultCode == TrPayResult.RESULT_CODE_FAIL.getId()) {
+        TrPay.getInstance(activity).callWxPay("感谢您对YGOMobile的支持", id, money, "", notifyurl, AlipayPayUtils.getIMEI(activity), new PayResultListener() {
+            public void onPayFinish(Context context, String outtradeno, int resultCode, String resultString, int payType, Long amount, String tradename) {
+                if (resultCode == TrPayResult.RESULT_CODE_SUCC.getId()) {
+                } else if (resultCode == TrPayResult.RESULT_CODE_FAIL.getId()) {
+                }
             }
-        }
-    });
+        });
     }
 
     public static String getIMEI(Context context) {
@@ -91,5 +91,5 @@ public class AlipayPayUtils {
         String imei = telephonyManager.getDeviceId();
 
         return imei;
-        }
+    }
 }

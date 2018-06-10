@@ -10,9 +10,9 @@ import android.widget.Toast;
 import java.io.File;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
@@ -54,7 +54,7 @@ public class GameUriManager {
                 Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
                 activity.finish();
             }
-        }else{
+        } else {
             return false;
         }
         return true;

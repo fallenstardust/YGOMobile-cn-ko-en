@@ -20,7 +20,6 @@ import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
@@ -355,7 +354,7 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
             }
             String jpg = new File(picsPath, code + Constants.IMAGE_URL_EX).getAbsolutePath();
             String jpgUrl = String.format(Constants.IMAGE_URL, code + "");
-            mCardStatus.add(new Item(jpgUrl, jpg,code, false));
+            mCardStatus.add(new Item(jpgUrl, jpg, code, false));
         }
         mCount = mCardStatus.size();
     }
