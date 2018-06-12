@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -28,6 +29,7 @@ import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.qihoo.appstore.common.updatesdk.lib.UpdateHelper;
+import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -83,6 +85,23 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
+
+        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
+            @Override
+            public void onViewInitFinished(boolean arg0) {
+                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
+                if(arg0){
+                    Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(getActivity(), "失败", Toast.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onCoreInitFinished() { }
+        };
+        //x5内核初始化接口
+        QbSdk.initX5Environment(this,  cb);
+
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
