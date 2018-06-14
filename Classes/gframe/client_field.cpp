@@ -304,6 +304,7 @@ void ClientField::UpdateCard(int controler, int location, int sequence, char* da
 	ClientCard* pcard = GetCard(controler, location, sequence);
 	if(pcard)
 		pcard->UpdateInfo(data + 4);
+	RefreshCardCountDisplay();
 }
 void ClientField::UpdateFieldCard(int controler, int location, char* data) {
 	std::vector<ClientCard*>* lst = 0;
@@ -339,6 +340,7 @@ void ClientField::UpdateFieldCard(int controler, int location, char* data) {
 			(*cit)->UpdateInfo(data);
 		data += len - 4;
 	}
+	RefreshCardCountDisplay();
 }
 void ClientField::ClearCommandFlag() {
 	for(auto cit = activatable_cards.begin(); cit != activatable_cards.end(); ++cit)
@@ -654,6 +656,7 @@ void ClientField::ReplaySwap() {
 	std::swap(mainGame->dInfo.strLP[0], mainGame->dInfo.strLP[1]);
 	std::swap(mainGame->dInfo.hostname, mainGame->dInfo.clientname);
 	std::swap(mainGame->dInfo.hostname_tag, mainGame->dInfo.clientname_tag);
+	RefreshCardCountDisplay();
 	for(auto chit = chains.begin(); chit != chains.end(); ++chit) {
 		chit->controler = 1 - chit->controler;
 		GetChainLocation(chit->controler, chit->location, chit->sequence, &chit->chain_pos);

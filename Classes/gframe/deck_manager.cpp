@@ -8,7 +8,7 @@ namespace ygo {
 
 DeckManager deckManager;
 
-void DeckManager::LoadLFList(const char* path) {
+void DeckManager::LoadLFList(const char* path, bool load_none) {
 	LFList* cur = NULL;
 	FILE* fp = fopen(path, "r");
 	char linebuf[256];
@@ -53,6 +53,23 @@ void DeckManager::LoadLFList(const char* path) {
 	nolimit.hash = 0;
 	nolimit.content = new std::unordered_map<int, int>;
 	_lfList.push_back(nolimit);
+}
+bool DeckManager::RenameDeck(const wchar_t* oldname, const wchar_t* newname) {
+	wchar_t oldfname[256];
+	wchar_t newfname[256];
+	myswprintf(oldfname, L"./deck/%ls.ydk", oldname);
+	myswprintf(newfname, L"./deck/%ls.ydk", newname);
+#ifdef WIN32
+	BOOL result = MoveFileW(oldfname, newfname);
+	return !!result;
+#else
+	char oldfilefn[256];
+	char newfilefn[256];
+	BufferIO::EncodeUTF8(oldfname, oldfilefn);
+	BufferIO::EncodeUTF8(newfname, newfilefn);
+	int result = rename(oldfilefn, newfilefn);
+	return result == 0;
+#endif
 }
 wchar_t* DeckManager::GetLFListName(int lfhash) {
 	for(size_t i = 0; i < _lfList.size(); ++i) {

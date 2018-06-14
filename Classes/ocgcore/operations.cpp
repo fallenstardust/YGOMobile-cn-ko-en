@@ -156,7 +156,7 @@ void field::special_summon_rule(uint32 sumplayer, card* target, uint32 summon_ty
 }
 void field::special_summon(card_set* target, uint32 sumtype, uint32 sumplayer, uint32 playerid, uint32 nocheck, uint32 nolimit, uint32 positions, uint32 zone) {
 	if((positions & POS_FACEDOWN) && is_player_affected_by_effect(sumplayer, EFFECT_DEVINE_LIGHT))
-		positions = (positions & POS_FACEUP) | (positions >> 1);
+		positions = (positions & POS_FACEUP) | ((positions & POS_FACEDOWN) >> 1);
 	for(auto cit = target->begin(); cit != target->end(); ++cit) {
 		card* pcard = *cit;
 		pcard->temp.reason = pcard->current.reason;
@@ -175,7 +175,7 @@ void field::special_summon(card_set* target, uint32 sumtype, uint32 sumplayer, u
 }
 void field::special_summon_step(card* target, uint32 sumtype, uint32 sumplayer, uint32 playerid, uint32 nocheck, uint32 nolimit, uint32 positions, uint32 zone) {
 	if((positions & POS_FACEDOWN) && is_player_affected_by_effect(sumplayer, EFFECT_DEVINE_LIGHT))
-		positions = (positions & POS_FACEUP) | (positions >> 1);
+		positions = (positions & POS_FACEUP) | ((positions & POS_FACEDOWN) >> 1);
 	target->temp.reason = target->current.reason;
 	target->temp.reason_effect = target->current.reason_effect;
 	target->temp.reason_player = target->current.reason_player;
@@ -1838,9 +1838,7 @@ int32 field::summon(uint16 step, uint8 sumplayer, card* target, effect* proc, ui
 		return FALSE;
 	}
 	case 11: {
-		uint8 targetplayer = target->current.controler;
-		if(target->owner != targetplayer)
-			set_control(target, targetplayer, 0, 0);
+		set_control(target, target->current.controler, 0, 0);
 		core.phase_action = TRUE;
 		target->current.reason = REASON_SUMMON;
 		target->summon_player = sumplayer;
@@ -2282,9 +2280,7 @@ int32 field::mset(uint16 step, uint8 setplayer, card* target, effect* proc, uint
 		return FALSE;
 	}
 	case 9: {
-		uint8 targetplayer = target->current.controler;
-		if(target->owner != targetplayer)
-			set_control(target, targetplayer, 0, 0);
+		set_control(target, target->current.controler, 0, 0);
 		core.phase_action = TRUE;
 		core.normalsummon_state_count[setplayer]++;
 		check_card_counter(target, 2, setplayer);
@@ -2564,9 +2560,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		return FALSE;
 	}
 	case 5: {
-		uint8 targetplayer = target->current.controler;
-		if(target->owner != targetplayer)
-			set_control(target, targetplayer, 0, 0);
+		set_control(target, target->current.controler, 0, 0);
 		core.phase_action = TRUE;
 		target->current.reason_effect = core.units.begin()->peffect;
 		core.summoning_card = target;
@@ -2759,8 +2753,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		pduel->write_buffer8(pcard->current.location);
 		pduel->write_buffer8(pcard->current.sequence);
 		pduel->write_buffer8(pcard->current.position);
-		if(pcard->owner != pcard->current.controler)
-			set_control(pcard, pcard->current.controler, 0, 0);
+		set_control(pcard, pcard->current.controler, 0, 0);
 		if(pgroup->it != pgroup->container.end())
 			core.units.begin()->step = 22;
 		return FALSE;
@@ -2928,8 +2921,7 @@ int32 field::special_summon_step(uint16 step, group* targets, card* target, uint
 	}
 	case 3: {
 		returns.ivalue[0] = TRUE;
-		if(target->owner != target->current.controler)
-			set_control(target, target->current.controler, 0, 0);
+		set_control(target, target->current.controler, 0, 0);
 		target->set_status(STATUS_SPSUMMON_STEP, TRUE);
 		return TRUE;
 	}
@@ -3656,6 +3648,12 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 				pcard->sendto_param.location = redirect;
 				pcard->sendto_param.sequence = redirect_seq;
 				dest = redirect;
+				if(dest == LOCATION_REMOVED) {
+					if(pcard->sendto_param.position & POS_FACEDOWN_ATTACK)
+						pcard->sendto_param.position = (pcard->sendto_param.position & ~POS_FACEDOWN_ATTACK) | POS_FACEUP_ATTACK;
+					if(pcard->sendto_param.position & POS_FACEDOWN_DEFENSE)
+						pcard->sendto_param.position = (pcard->sendto_param.position & ~POS_FACEDOWN_DEFENSE) | POS_FACEUP_DEFENSE;
+				}
 			}
 			redirect = pcard->destination_redirect(dest, pcard->current.reason);
 			if(redirect) {
