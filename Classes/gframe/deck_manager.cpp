@@ -277,4 +277,13 @@ bool DeckManager::DeleteDeck(Deck& deck, const wchar_t* name) {
 	return result == 0;
 #endif
 }
+int DeckManager::TypeCount(std::vector<code_pointer> list, unsigned int ctype) {
+	int res = 0;
+	for(size_t i = 0; i < list.size(); ++i) {
+		code_pointer cur = list[i];
+		if(cur->second.type & ctype)
+			res++;
+	}
+	return res;
+}
 }

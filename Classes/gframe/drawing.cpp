@@ -1169,9 +1169,27 @@ void Game::DrawDeckBd() {
 	textFont->draw(dataManager.GetSysString(1330), recti(315 * mainGame->xScale, 137 * mainGame->yScale, 410 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.main.size()], recti(379 * mainGame->xScale, 137 * mainGame->yScale, 439 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.main.size()], recti(380 * mainGame->xScale, 138 * mainGame->yScale, 440 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
-	driver->draw2DRectangle(recti(310 * mainGame->xScale, 160 * mainGame->yScale, 797 * mainGame->xScale, 436 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+    driver->draw2DRectangle(recti(310 * mainGame->xScale, 160 * mainGame->yScale, 797 * mainGame->xScale, 436 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 159 * mainGame->yScale, 797 * mainGame->xScale, 436 * mainGame->yScale));
-	int lx;
+	//type count 2DRectangle
+	driver->draw2DRectangle(recti(555 * mainGame->xScale, 137 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(554 * mainGame->xScale, 136 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale));
+	//monster count
+	textFont->draw(dataManager.GetSysString(1312), recti(557 * mainGame->xScale, 136 * mainGame->yScale, 612 * mainGame->xScale, 156 * mainGame->yScale), 0xfffa5b00, false, true);
+	textFont->draw(dataManager.GetSysString(1312), recti(556 * mainGame->xScale, 137 * mainGame->yScale, 611 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)], recti(612 * mainGame->xScale, 137 * mainGame->yScale, 637 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)], recti(611 * mainGame->xScale, 138 * mainGame->yScale, 636 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+	//spell count
+	textFont->draw(dataManager.GetSysString(1313), recti(637 * mainGame->xScale, 136 * mainGame->yScale, 692 * mainGame->xScale, 156 * mainGame->yScale), 0xff00fa99, false, true);
+	textFont->draw(dataManager.GetSysString(1313), recti(636 * mainGame->xScale, 137 * mainGame->yScale, 691 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_SPELL)], recti(692 * mainGame->xScale, 137 * mainGame->yScale, 717 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_SPELL)], recti(691 * mainGame->xScale, 138 * mainGame->yScale, 716 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+    //trap count
+	textFont->draw(dataManager.GetSysString(1314), recti(720 * mainGame->xScale, 136 * mainGame->yScale, 740 * mainGame->xScale, 156 * mainGame->yScale), 0xfff41898, false, true);
+	textFont->draw(dataManager.GetSysString(1314), recti(719 * mainGame->xScale, 137 * mainGame->yScale, 739 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)], recti(770 * mainGame->xScale, 137 * mainGame->yScale, 790 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
+	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)], recti(769 * mainGame->xScale, 138 * mainGame->yScale, 789 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+    int lx;
 	float dx;
 	if(deckManager.current_deck.main.size() <= 40) {
 		dx = 436.0f / 9;
@@ -1188,6 +1206,10 @@ void Game::DrawDeckBd() {
 	//extra deck
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 440 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 439 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale));
+	//type count 2DRectangle
+	driver->draw2DRectangle(recti(610 * mainGame->xScale, 440 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(609 * mainGame->xScale, 439 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale));
+	
 	textFont->draw(dataManager.GetSysString(1331), recti(314 * mainGame->xScale, 439 * mainGame->yScale, 409 * mainGame->xScale, 459 * mainGame->yScale), 0xff000000, false, true);
 	textFont->draw(dataManager.GetSysString(1331), recti(315 * mainGame->xScale, 440 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale), 0xffffffff, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.extra.size()], recti(379 * mainGame->xScale, 440 * mainGame->yScale, 439 * mainGame->xScale, 460 * mainGame->yScale), 0xff000000, false, true);
@@ -1205,6 +1227,10 @@ void Game::DrawDeckBd() {
 	//side deck
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 537 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 536 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale));
+	//type count 2DRectangle
+	driver->draw2DRectangle(recti(610 * mainGame->xScale, 537 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(609 * mainGame->xScale, 536 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale));
+	
 	textFont->draw(dataManager.GetSysString(1332), recti(314 * mainGame->xScale, 536 * mainGame->yScale, 409 * mainGame->xScale, 556 * mainGame->yScale), 0xff000000, false, true);
 	textFont->draw(dataManager.GetSysString(1332), recti(315 * mainGame->xScale, 537 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale), 0xffffffff, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.side.size()], recti(379 * mainGame->xScale, 537 * mainGame->yScale, 439 * mainGame->xScale, 557 * mainGame->yScale), 0xff000000, false, true);

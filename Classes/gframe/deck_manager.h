@@ -45,6 +45,7 @@ public:
 	bool SaveDeck(Deck& deck, const wchar_t* name);
 	bool DeleteDeck(Deck& deck, const wchar_t* name);
 	static bool RenameDeck(const wchar_t* oldname, const wchar_t* newname);
+	int TypeCount(std::vector<code_pointer> list, unsigned int ctype);
 };
 
 extern DeckManager deckManager;

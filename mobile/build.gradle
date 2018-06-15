@@ -13,7 +13,7 @@ android {
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
-            abiFilters "armeabi-v7a"
+            abiFilters "armeabi","armeabi-v7a"
         }
     }
     compileOptions {
