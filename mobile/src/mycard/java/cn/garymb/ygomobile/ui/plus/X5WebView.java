@@ -1,62 +1,63 @@
 package cn.garymb.ygomobile.ui.plus;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Canvas;
-import android.util.AttributeSet;
-import android.view.View;
-
-import com.tencent.smtt.sdk.WebSettings;
-import com.tencent.smtt.sdk.WebView;
-import com.tencent.smtt.sdk.WebViewClient;
+import android.annotation.*;
+import android.content.*;
+import android.graphics.*;
+import android.os.*;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
+import com.tencent.smtt.sdk.*;
 
 public class X5WebView extends WebView {
-    private WebViewClient client = new WebViewClient() {
-        /**
-         * 防止加载网页时调起系统浏览器
-         */
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            view.loadUrl(url);
-            return true;
-        }
-    };
+	private WebViewClient client = new WebViewClient() {
+		/**
+		 * 防止加载网页时调起系统浏览器
+		 */
+		public boolean shouldOverrideUrlLoading(WebView view, String url) {
+			view.loadUrl(url);
+			return true;
+		}
+	};
 
-    @SuppressLint("SetJavaScriptEnabled")
-    public X5WebView(Context arg0, AttributeSet arg1) {
-        super(arg0, arg1);
-        this.setWebViewClient(client);
-        // this.setWebChromeClient(chromeClient);
-        // WebStorage webStorage = WebStorage.getInstance();
-        initWebViewSettings();
-        this.getView().setClickable(true);
-    }
+	@SuppressLint("SetJavaScriptEnabled")
+	public X5WebView(Context arg0, AttributeSet arg1) {
+		super(arg0, arg1);
+		this.setWebViewClient(client);
+		// this.setWebChromeClient(chromeClient);
+		// WebStorage webStorage = WebStorage.getInstance();
+		initWebViewSettings();
+		this.getView().setClickable(true);
+	}
 
-    private void initWebViewSettings() {
-        WebSettings webSetting = this.getSettings();
-        webSetting.setJavaScriptEnabled(true);
-        webSetting.setJavaScriptCanOpenWindowsAutomatically(true);
-        webSetting.setAllowFileAccess(true);
-        //webSetting.setLayoutAlgorithm(LayoutAlgorithm.NARROW_COLUMNS);
-        webSetting.setSupportZoom(true);
-        webSetting.setBuiltInZoomControls(true);
-        webSetting.setUseWideViewPort(true);
-        webSetting.setSupportMultipleWindows(false);
-        // webSetting.setLoadWithOverviewMode(true);
-        webSetting.setAppCacheEnabled(true);
-        // webSetting.setDatabaseEnabled(true);
-        webSetting.setDomStorageEnabled(true);
-        webSetting.setGeolocationEnabled(true);
-        webSetting.setAppCacheMaxSize(Long.MAX_VALUE);
-        // webSetting.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
-        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
-        // webSetting.setRenderPriority(WebSettings.RenderPriority.HIGH);
-        webSetting.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webSetting.setDatabaseEnabled(true);
-        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
-    }
+	private void initWebViewSettings() {
+		WebSettings webSetting = this.getSettings();
+		webSetting.setJavaScriptEnabled(true);
+		webSetting.setJavaScriptCanOpenWindowsAutomatically(true);
+		webSetting.setAllowFileAccess(true);
+		//webSetting.setLayoutAlgorithm(LayoutAlgorithm.NARROW_COLUMNS);
+		webSetting.setSupportZoom(true);
+		webSetting.setBuiltInZoomControls(true);
+		webSetting.setUseWideViewPort(true);
+		//禁止多窗口
+		webSetting.setSupportMultipleWindows(false);
+		// webSetting.setLoadWithOverviewMode(true);
+		webSetting.setAppCacheEnabled(true);
+		// webSetting.setDatabaseEnabled(true);
+		webSetting.setDomStorageEnabled(true);
+		webSetting.setGeolocationEnabled(true);
+		webSetting.setAppCacheMaxSize(Long.MAX_VALUE);
+		// webSetting.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
+		webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
+		// webSetting.setRenderPriority(WebSettings.RenderPriority.HIGH);
+		webSetting.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
-    @Override
-    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+		// this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
+		// settings 的设计
+	}
+
+	@Override
+	protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
 		/*boolean ret = super.drawChild(canvas, child, drawingTime);
 		canvas.save();
 		Paint paint = new Paint();
@@ -78,13 +79,13 @@ public class X5WebView extends WebView {
 		canvas.drawText(Build.MODEL, 10, 200, paint);
 		canvas.restore();
 		return ret;*/
-        return super.drawChild(canvas, child, drawingTime);
-    }
+		return super.drawChild(canvas,child,drawingTime);
+	}
 
-    public X5WebView(Context arg0) {
-        super(arg0);
-        setBackgroundColor(85621);
-    }
+	public X5WebView(Context arg0) {
+		super(arg0);
+		setBackgroundColor(85621);
+	}
 
 }
 
