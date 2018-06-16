@@ -54,6 +54,13 @@ public class X5WebView extends WebView {
 
 		// this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
 		// settings 的设计
+        webSetting.setSaveFormData(true);
+        webSetting.setDatabaseEnabled(true);
+        webSetting.setJavaScriptCanOpenWindowsAutomatically(true);
+        setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
+        setHorizontalScrollBarEnabled(false);
+        webSetting.setAllowContentAccess(true);
+        webSetting.setMixedContentMode(WebSettings.LOAD_NORMAL);
 	}
 
 	@Override

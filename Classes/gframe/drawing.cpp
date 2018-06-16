@@ -1172,23 +1172,17 @@ void Game::DrawDeckBd() {
     driver->draw2DRectangle(recti(310 * mainGame->xScale, 160 * mainGame->yScale, 797 * mainGame->xScale, 436 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 159 * mainGame->yScale, 797 * mainGame->xScale, 436 * mainGame->yScale));
 	//type count 2DRectangle
-	driver->draw2DRectangle(recti(555 * mainGame->xScale, 137 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(recti(554 * mainGame->xScale, 136 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale));
+	driver->draw2DRectangle(recti(638 * mainGame->xScale, 137 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(637 * mainGame->xScale, 136 * mainGame->yScale, 797 * mainGame->xScale, 157 * mainGame->yScale));
 	//monster count
-	textFont->draw(dataManager.GetSysString(1312), recti(557 * mainGame->xScale, 136 * mainGame->yScale, 612 * mainGame->xScale, 156 * mainGame->yScale), 0xfffa5b00, false, true);
-	textFont->draw(dataManager.GetSysString(1312), recti(556 * mainGame->xScale, 137 * mainGame->yScale, 611 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)], recti(612 * mainGame->xScale, 137 * mainGame->yScale, 637 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)], recti(611 * mainGame->xScale, 138 * mainGame->yScale, 636 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+	driver->draw2DImage(imageManager.tMonster, recti(645 * mainGame->xScale, 136 * mainGame->yScale, 665 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)], recti(670 * mainGame->xScale, 137 * mainGame->yScale, 690 * mainGame->xScale, 157 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	//spell count
-	textFont->draw(dataManager.GetSysString(1313), recti(637 * mainGame->xScale, 136 * mainGame->yScale, 692 * mainGame->xScale, 156 * mainGame->yScale), 0xff00fa99, false, true);
-	textFont->draw(dataManager.GetSysString(1313), recti(636 * mainGame->xScale, 137 * mainGame->yScale, 691 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_SPELL)], recti(692 * mainGame->xScale, 137 * mainGame->yScale, 717 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_SPELL)], recti(691 * mainGame->xScale, 138 * mainGame->yScale, 716 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+	driver->draw2DImage(imageManager.tSpell, recti(695 * mainGame->xScale, 136 * mainGame->yScale, 715 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_SPELL)], recti(720 * mainGame->xScale, 138 * mainGame->yScale, 740 * mainGame->xScale, 158 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
     //trap count
-	textFont->draw(dataManager.GetSysString(1314), recti(720 * mainGame->xScale, 136 * mainGame->yScale, 740 * mainGame->xScale, 156 * mainGame->yScale), 0xfff41898, false, true);
-	textFont->draw(dataManager.GetSysString(1314), recti(719 * mainGame->xScale, 137 * mainGame->yScale, 739 * mainGame->xScale, 157 * mainGame->yScale), 0xffffffff, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)], recti(770 * mainGame->xScale, 137 * mainGame->yScale, 790 * mainGame->xScale, 157 * mainGame->yScale), 0xff000000, false, true);
-	numFont->draw(dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)], recti(769 * mainGame->xScale, 138 * mainGame->yScale, 789 * mainGame->xScale, 158 * mainGame->yScale), 0xffffffff, false, true);
+	driver->draw2DImage(imageManager.tTrap, recti(745 * mainGame->xScale, 136 * mainGame->yScale, 765 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)], recti(770 * mainGame->xScale, 137 * mainGame->yScale, 790 * mainGame->xScale, 157 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
     int lx;
 	float dx;
 	if(deckManager.current_deck.main.size() <= 40) {
@@ -1206,16 +1200,27 @@ void Game::DrawDeckBd() {
 	//extra deck
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 440 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 439 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale));
-	//type count 2DRectangle
-	driver->draw2DRectangle(recti(610 * mainGame->xScale, 440 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(recti(609 * mainGame->xScale, 439 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale));
-	
 	textFont->draw(dataManager.GetSysString(1331), recti(314 * mainGame->xScale, 439 * mainGame->yScale, 409 * mainGame->xScale, 459 * mainGame->yScale), 0xff000000, false, true);
 	textFont->draw(dataManager.GetSysString(1331), recti(315 * mainGame->xScale, 440 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale), 0xffffffff, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.extra.size()], recti(379 * mainGame->xScale, 440 * mainGame->yScale, 439 * mainGame->xScale, 460 * mainGame->yScale), 0xff000000, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.extra.size()], recti(380 * mainGame->xScale, 441 * mainGame->yScale, 440 * mainGame->xScale, 461 * mainGame->yScale), 0xffffffff, false, true);
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 463 * mainGame->yScale, 797 * mainGame->xScale, 533 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 462 * mainGame->yScale, 797 * mainGame->xScale, 533 * mainGame->yScale));
+	//type count 2DRectangle
+	driver->draw2DRectangle(recti(582 * mainGame->xScale, 440 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(581 * mainGame->xScale, 439 * mainGame->yScale, 797 * mainGame->xScale, 460 * mainGame->yScale));
+	//fusion count
+	driver->draw2DImage(imageManager.tFusion, recti(595 * mainGame->xScale, 440 * mainGame->yScale, 615 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.extra, TYPE_FUSION)], recti(620 * mainGame->xScale, 440 * mainGame->yScale, 640 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	//synchro count
+	driver->draw2DImage(imageManager.tSynchro, recti(645 * mainGame->xScale, 440 * mainGame->yScale, 665 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.extra, TYPE_SYNCHRO)], recti(670 * mainGame->xScale, 440 * mainGame->yScale, 690 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	//XYZ count
+	driver->draw2DImage(imageManager.tXyz, recti(695 * mainGame->xScale, 440 * mainGame->yScale, 715 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.extra, TYPE_XYZ)], recti(720 * mainGame->xScale, 440 * mainGame->yScale, 740 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	//link count
+	driver->draw2DImage(imageManager.tLink, recti(745 * mainGame->xScale, 440 * mainGame->yScale, 765 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.extra, TYPE_LINK)], recti(770 * mainGame->xScale, 440 * mainGame->yScale, 790 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	if(deckManager.current_deck.extra.size() <= 10)
 		dx = 436.0f / 9;
 	else dx = 436.0f / (deckManager.current_deck.extra.size() - 1);
@@ -1227,16 +1232,24 @@ void Game::DrawDeckBd() {
 	//side deck
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 537 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 536 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale));
-	//type count 2DRectangle
-	driver->draw2DRectangle(recti(610 * mainGame->xScale, 537 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(recti(609 * mainGame->xScale, 536 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale));
-	
 	textFont->draw(dataManager.GetSysString(1332), recti(314 * mainGame->xScale, 536 * mainGame->yScale, 409 * mainGame->xScale, 556 * mainGame->yScale), 0xff000000, false, true);
 	textFont->draw(dataManager.GetSysString(1332), recti(315 * mainGame->xScale, 537 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale), 0xffffffff, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.side.size()], recti(379 * mainGame->xScale, 537 * mainGame->yScale, 439 * mainGame->xScale, 557 * mainGame->yScale), 0xff000000, false, true);
 	numFont->draw(dataManager.numStrings[deckManager.current_deck.side.size()], recti(380 * mainGame->xScale, 538 * mainGame->yScale, 440 * mainGame->xScale, 558 * mainGame->yScale), 0xffffffff, false, true);
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 560 * mainGame->yScale, 797 * mainGame->xScale, 630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 559 * mainGame->yScale, 797 * mainGame->xScale, 630 * mainGame->yScale));
+	//type count 2DRectangle
+	driver->draw2DRectangle(recti(638 * mainGame->xScale, 537 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(recti(637 * mainGame->xScale, 536 * mainGame->yScale, 797 * mainGame->xScale, 557 * mainGame->yScale));
+	//monster count
+	driver->draw2DImage(imageManager.tMonster, recti(645 * mainGame->xScale, 537 * mainGame->yScale, 665 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.side, TYPE_MONSTER)], recti(670 * mainGame->xScale, 537 * mainGame->yScale, 690 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	//spell count
+	driver->draw2DImage(imageManager.tSpell, recti(695 * mainGame->xScale, 537 * mainGame->yScale, 715 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.side, TYPE_SPELL)], recti(720 * mainGame->xScale, 537 * mainGame->yScale, 740 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+    //trap count
+	driver->draw2DImage(imageManager.tTrap, recti(745 * mainGame->xScale, 537 * mainGame->yScale, 765 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+	DrawShadowText(numFont, dataManager.numStrings[deckManager.TypeCount(deckManager.current_deck.side, TYPE_TRAP)], recti(770 * mainGame->xScale, 537 * mainGame->yScale, 790 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	if(deckManager.current_deck.side.size() <= 10)
 		dx = 436.0f / 9;
 	else dx = 436.0f / (deckManager.current_deck.side.size() - 1);
