@@ -208,4 +208,6 @@
         \n그후 YGOMobile의 다른앱 표시 권한이 혀용되어 있는지 확인하십시오.</string>
     <string name="OpenTIP">빠른 사용법</string>
     <string name="Open_Alert_Window">애플리케이션 관리</string>
+    <string name="Function_Menu">특징 메뉴</string>
+    <string name="Join_QQ">QQ Group</string>
 </resources>

@@ -925,7 +925,8 @@ unsigned char* android_script_reader(const char* script_name, int* slen) {
 		fclose(fp);
 		*slen = len;
 		return script_buffer;
-	} else if (typeDir == "script") {
+	//} else if (typeDir == "script") {
+	} else {
 		//try to find in directory based script.
 		if (access(script_name, F_OK) != -1) {
 			FILE *fp;
@@ -962,9 +963,9 @@ unsigned char* android_script_reader(const char* script_name, int* slen) {
 				return script_buffer;
 			}
 		}
-	} else {
-		LOGW("read %s failed: unknown script source", script_name);
-		return 0;
+	//} else {
+	//	LOGW("read %s failed: unknown script source", script_name);
+	//	return 0;
 	}
 }
 

@@ -50,11 +50,13 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
     private int mError = 0;
 
     File mPicsPath;
+    File mPicsExPath;
 
     public ImageUpdater(BaseActivity context) {
         mContext = context;
         mCardLoader = new CardLoader(context);
         mPicsPath = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH);
+        mPicsExPath = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH);
     }
 
     public boolean isRunning() {
@@ -165,6 +167,10 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
             for (String ex : Constants.IMAGE_EX) {
                 File file = new File(mPicsPath, name + ex);
                 if (file.exists()) {
+                    return true;
+                }
+                File fileex = new File(mPicsExPath, name + ex);
+                if (fileex.exists()) {
                     return true;
                 }
             }

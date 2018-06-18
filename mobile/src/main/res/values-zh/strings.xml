@@ -208,4 +208,6 @@
         \n并确保本软件后台运行中</string>
     <string name="OpenTIP">快捷加房使用方法</string>
     <string name="Open_Alert_Window">去打开悬浮窗</string>
+    <string name="Function_Menu">功能菜单</string>
+    <string name="Join_QQ">水友群</string>
 </resources>

@@ -48,6 +48,8 @@ void DeckManager::LoadLFList(const char* path, bool load_none) {
 		}
 		fclose(fp);
 	}
+	if(!load_none)
+		return;
 	LFList nolimit;
 	myswprintf(nolimit.listName, L"N/A");
 	nolimit.hash = 0;

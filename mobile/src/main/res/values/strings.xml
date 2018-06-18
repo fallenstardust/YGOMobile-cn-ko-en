@@ -211,4 +211,6 @@
         \nand keep the soft run in the background</string>
     <string name="OpenTIP">about Quick Join in Game</string>
     <string name="Open_Alert_Window">To Open Pop-ups</string>
+    <string name="Function_Menu">MENU</string>
+    <string name="Join_QQ">QQ Group</string>
 </resources>

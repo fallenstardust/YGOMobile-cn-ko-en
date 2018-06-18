@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -108,7 +107,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         checkForceUpdateSilent();
         //ServiceDuelAssistant
         startService(new Intent(this, ServiceDuelAssistant.class));
-        BtnJoinQQGroup();
+        StartMycard();
     }
 
     @Override
@@ -232,10 +231,9 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
             case R.id.action_deck_manager:
                 startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
                 break;
-            case R.id.action_mycard:
-                if (Constants.SHOW_MYCARD) {
-                    startActivity(new Intent(this, MyCardActivity.class));
-                }
+            case R.id.action_join_qq_group:
+                String key = "dRkD2L9QgYiYmQoqJUgkR4QUth9UhuT4";
+                joinQQGroup(key);
                 break;
             case R.id.action_help: {
                 WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
@@ -355,12 +353,12 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
 
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
-        addMenuButton(mMenuIds, menu, R.id.action_game, R.string.action_game, R.drawable.start);
+        addMenuButton(mMenuIds, menu, R.id.action_join_qq_group, R.string.Join_QQ, R.drawable.joinqqgroup);
         addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.tab_search, R.drawable.search);
         addMenuButton(mMenuIds, menu, R.id.action_deck_manager, R.string.deck_manager, R.drawable.deck);
 
         addMenuButton(mMenuIds, menu, R.id.action_add_server, R.string.action_add_server, R.drawable.addsever);
-        addMenuButton(mMenuIds, menu, R.id.action_mycard, R.string.mycard, R.drawable.mycard);
+        addMenuButton(mMenuIds, menu, R.id.action_game, R.string.action_game, R.drawable.start);
         addMenuButton(mMenuIds, menu, R.id.action_help, R.string.help, R.drawable.help);
 
         addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.downloadimages);
@@ -401,10 +399,11 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
     }
 
-    public void BtnJoinQQGroup() {
-        $(R.id.btn_join_qq_group).setOnClickListener((v) -> {
-            String key = "dRkD2L9QgYiYmQoqJUgkR4QUth9UhuT4";
-            joinQQGroup(key);
+    public void StartMycard() {
+        $(R.id.btn_mycard).setOnClickListener((v) -> {
+            if (Constants.SHOW_MYCARD) {
+                startActivity(new Intent(this, MyCardActivity.class));
+            }
         });
     }
 

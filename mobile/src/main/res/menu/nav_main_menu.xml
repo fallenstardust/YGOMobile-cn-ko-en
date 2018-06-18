@@ -15,7 +15,7 @@
         android:icon="@drawable/ic_add"
         android:title="@string/action_add_server"/>
     <item
-        android:id="@+id/action_mycard"
+        android:id="@+id/action_join_qq_group"
         android:icon="@drawable/ic_home_black"
         android:title="@string/mycard"/>
     <item
