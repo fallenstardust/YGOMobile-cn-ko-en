@@ -18,7 +18,7 @@ public interface Constants {
     int PREF_DEF_IMAGE_QUALITY = 1;
     String PREF_GAME_FONT = "pref_key_game_font_name";
     String PREF_USE_EXTRA_CARD_CARDS = "settings_game_diy_card_db";
-    boolean PREF_DEF_USE_EXTRA_CARD_CARDS = false;
+    boolean PREF_DEF_USE_EXTRA_CARD_CARDS = true;
     String PREF_FONT_ANTIALIAS = "pref_key_game_font_antialias";
     boolean PREF_DEF_FONT_ANTIALIAS = true;
     String PREF_OPENGL_VERSION = "pref_key_game_ogles_config";
