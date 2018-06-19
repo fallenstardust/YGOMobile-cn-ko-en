@@ -22,7 +22,7 @@
             <shape>
                 <gradient
                     android:endColor="@color/dark_purple"
-                    android:startColor="@color/dark_purple"/>
+                    android:startColor="@color/mediumPurpleLight"/>
             </shape>
         </clip>
     </item>
