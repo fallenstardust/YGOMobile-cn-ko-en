@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.webkit.JavascriptInterface;
 
 import com.tencent.smtt.sdk.WebView;
@@ -60,6 +61,7 @@ public class MyCard {
         void share(String text);
 
         void onHome();
+
     }
 
     public MyCard(Activity context) {

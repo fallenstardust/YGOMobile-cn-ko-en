@@ -79,7 +79,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mWebViewPlus.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                if (newProgress == 100) {
+                if (newProgress == 100 ) {
                     mProgressBar.setVisibility(View.GONE);
                 } else {
                     if (View.GONE == mProgressBar.getVisibility()) {
