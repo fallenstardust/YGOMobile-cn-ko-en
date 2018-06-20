@@ -36,7 +36,7 @@ public class MyCard {
 
     private static final String mHomeUrl = "https://mycard.moe/mobile/";
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
-    private static final String mCommunityUrl = "https://ygobbs.com/";
+    private static final String mCommunityUrl = "https://ygobbs.com/login";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
