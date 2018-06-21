@@ -210,4 +210,5 @@
     <string name="Open_Alert_Window">去打开悬浮窗</string>
     <string name="Function_Menu">功能菜单</string>
     <string name="Join_QQ">水友群</string>
+    <string name="donatefor">您的捐赠将用于维持自动更新费用，收集更新资料、修图后期以及购买适配机型等</string>
 </resources>
