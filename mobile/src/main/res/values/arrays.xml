@@ -27,5 +27,7 @@
         <item>you can click card image on left top to clean the black bar in words while dueling</item>
         <item>others' Good deck not always be good for you, try to Build your own style</item>
         <item>Keep playing and learning, you'll be strong soon.even beginner and returner</item>
+        <item>Long-pressing the card you wanna delete in vertical deck editor</item>
+        <item>Long-pressing the password record, it'll be deleted</item>
     </string-array>
 </resources>
