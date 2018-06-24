@@ -39,7 +39,20 @@ public class ServiceDuelAssistant extends Service {
 
     //是否可以移除悬浮窗上面的视图
     private boolean isdis = false;
-    String[] passwordPrefix = {"M,", "T,", "PR,", "AI,", "LF2,","M#", "T#", "PR#", "S#", "AI#","LF2#"};
+    String[] passwordPrefix = {
+            "M,", "m,",
+            "T,", "t,",
+            "PR,","pr,",
+            "AI,", "ai,",
+            "LF2,", "lf2,",
+            "M#", "m#",
+            "T#", "t#",
+            "PR#", "pr#",
+            "S#", "s#",
+            "AI#", "ai#",
+            "LF2#", "lf2#",
+            "R#","r#"
+    };
 
     //private List<Card> lc;
 
