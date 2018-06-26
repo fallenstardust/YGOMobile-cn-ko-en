@@ -3894,8 +3894,6 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 					pduel->write_buffer32(ptop->data.code | 0x80000000);
 			}
 		}
-		for(auto iter = param->leave.begin(); iter != param->leave.end(); ++iter)
-			raise_single_event(*iter, 0, EVENT_LEAVE_FIELD, (*iter)->current.reason_effect, (*iter)->current.reason, (*iter)->current.reason_player, 0, 0);
 		for(auto iter = param->discard.begin(); iter != param->discard.end(); ++iter)
 			raise_single_event(*iter, 0, EVENT_DISCARD, (*iter)->current.reason_effect, (*iter)->current.reason, (*iter)->current.reason_player, 0, 0);
 		if((core.global_flag & GLOBALFLAG_DETACH_EVENT) && param->detach.size()) {
@@ -3905,8 +3903,6 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 			}
 		}
 		process_single_event();
-		if(param->leave.size())
-			raise_event(&param->leave, EVENT_LEAVE_FIELD, reason_effect, reason, reason_player, 0, 0);
 		if(param->discard.size())
 			raise_event(&param->discard, EVENT_DISCARD, reason_effect, reason, reason_player, 0, 0);
 		if((core.global_flag & GLOBALFLAG_DETACH_EVENT) && param->detach.size())
@@ -3919,6 +3915,10 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 		exargs* param = (exargs*)targets;
 		core.units.begin()->ptarget = param->targets;
 		targets = param->targets;
+		for(auto iter = param->leave.begin(); iter != param->leave.end(); ++iter)
+			raise_single_event(*iter, 0, EVENT_LEAVE_FIELD, (*iter)->current.reason_effect, (*iter)->current.reason, (*iter)->current.reason_player, 0, 0);
+		if(param->leave.size())
+			raise_event(&param->leave, EVENT_LEAVE_FIELD, reason_effect, reason, reason_player, 0, 0);
 		delete param;
 		uint8 nloc;
 		card_set tohand, todeck, tograve, remove, released, destroyed, retgrave;
@@ -4185,21 +4185,13 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 			}
 			if(ct <= 0)
 				return TRUE;
-			bool zone_selected = false;
-			uint32 seq = 0;
-			for(uint32 i = 0; i < 8; i++) {
-				if(((1 << i) & zone) > 0) {
-					if(zone_selected) {
-						zone_selected = false;
-						break;
+			if((zone & zone - 1) == 0) {
+				for(uint8 seq = 0; seq < 8; seq++) {
+					if((1 << seq) & zone) {
+						returns.bvalue[2] = seq;
+						return FALSE;
 					}
-					zone_selected = true;
-					seq = i;
 				}
-			}
-			if(zone_selected) {
-				returns.bvalue[2] = seq;
-				return FALSE;
 			}
 			if(move_player == playerid) {
 				if(location == LOCATION_SZONE)

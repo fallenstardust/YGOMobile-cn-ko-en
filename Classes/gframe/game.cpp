@@ -823,7 +823,7 @@ bool Game::Initialize() {
 	wRenameDeck = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1367));
 	wRenameDeck->getCloseButton()->setVisible(false);
 	wRenameDeck->setVisible(false);
-	//env->addStaticText(dataManager.GetSysString(1362), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wRenameDeck);
+	env->addStaticText(dataManager.GetSysString(1366), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wRenameDeck);
 	ebREName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wRenameDeck, -1);
 	ebREName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnREYes = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wRenameDeck, BUTTON_RENAME_DECK_SAVE, dataManager.GetSysString(1341));
@@ -986,7 +986,7 @@ bool Game::Initialize() {
 	irr::gui::IGUITabControl* wSingle = env->addTabControl(rect<s32>(0 * xScale, 20 * yScale, 579 * xScale, 419 * yScale), wSinglePlay, true);
 	wSingle->setTabHeight(35 * yScale);
 	//TEST BOT MODE
-	if(gameConf.enable_bot_mode) {
+//	if(gameConf.enable_bot_mode) {
 		irr::gui::IGUITab* tabBot = wSingle->addTab(dataManager.GetSysString(1380));
 		lstBotList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabBot, LISTBOX_BOT_LIST, true, 40 * xScale);
 		lstBotList->setItemHeight(25 * yScale);
@@ -998,7 +998,7 @@ bool Game::Initialize() {
 		chkBotHand = env->addCheckBox(false, rect<s32>(360 * xScale, 170 * yScale, 560 * xScale, 190 * yScale), tabBot, -1, dataManager.GetSysString(1384));
 		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 200 * yScale, 560 * xScale, 220 * yScale), tabBot, -1, dataManager.GetSysString(1229));
 		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 230 * yScale, 560 * xScale, 250 * yScale), tabBot, -1, dataManager.GetSysString(1230));
-	} /*else { // avoid null pointer
+/*	} else { // avoid null pointer
 		btnStartBot = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnBotCancel = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnStartBot->setVisible(false);

@@ -192,6 +192,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_RENAME_DECK: {
+			    mainGame->soundEffectPlayer->doPressButton();
 				int sel = mainGame->cbDBDecks->getSelected();
 				if(sel == -1)
 					break;
@@ -205,6 +206,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_RENAME_DECK_SAVE: {
+			    mainGame->soundEffectPlayer->doSaveDeck();
 				mainGame->HideElement(mainGame->wRenameDeck);
 				if(prev_operation == BUTTON_RENAME_DECK) {
 					wchar_t newname[256];
@@ -214,8 +216,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					if(DeckManager::RenameDeck(mainGame->cbDBDecks->getItem(prev_sel), newname)) {
 						mainGame->RefreshDeck(mainGame->cbDBDecks);
+						deckManager.LoadDeck(mainGame->cbDBDecks->getItem(prev_sel));
 						mainGame->cbDBDecks->setSelected(prev_sel);
-						mainGame->stACMessage->setText(dataManager.GetSysString(1366));
+						mainGame->stACMessage->setText(dataManager.GetSysString(1335));
 					        mainGame->PopupElement(mainGame->wACMessage, 20);
 					} else {
 						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1365));
