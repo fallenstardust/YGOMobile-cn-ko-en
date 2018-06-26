@@ -50,13 +50,7 @@ public:
 	irr::video::ITexture* tRScale[14];
 	irr::video::ITexture* tLScale[14];
 	irr::video::ITexture* tClock;
-	irr::video::ITexture* tMonster;
-	irr::video::ITexture* tSpell;
-	irr::video::ITexture* tTrap;
-	irr::video::ITexture* tFusion;
-	irr::video::ITexture* tSynchro;
-	irr::video::ITexture* tXyz;
-	irr::video::ITexture* tLink;
+	irr::video::ITexture* tCardType;
 	std::list<std::string> support_types;
 };
 

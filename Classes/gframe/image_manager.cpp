@@ -29,13 +29,7 @@ bool ImageManager::Initial(const path dir) {
 	tHand[2] = driver->getTexture((dir + path("/textures/f3.jpg")).c_str());
 	tBackGround = driver->getTexture((dir + path("/textures/bg.jpg")).c_str());
 	tBackGround_menu = driver->getTexture((dir + path("/textures/bg_menu.jpg")).c_str());
-	tMonster = driver->getTexture((dir + path("/textures/card/monster.png")).c_str());
-	tSpell = driver->getTexture((dir + path("/textures/card/spell.png")).c_str());
-	tTrap = driver->getTexture((dir + path("/textures/card/trap.png")).c_str());
-	tFusion = driver->getTexture((dir + path("/textures/card/fusion.png")).c_str());
-	tSynchro = driver->getTexture((dir + path("/textures/card/synchro.png")).c_str());
-	tXyz = driver->getTexture((dir + path("/textures/card/xyz.png")).c_str());
-	tLink = driver->getTexture((dir + path("/textures/card/link.png")).c_str());
+	tCardType = driver->getTexture((dir + path("/textures/cardtype.png")).c_str());
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());

@@ -87,6 +87,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         mDeckSpinner = $(R.id.toolbar_list);
         mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mLimitSpinner = $(R.id.sp_limit_list);
+        mLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mRecyclerView = $(R.id.grid_cards);
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), 0, mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
         mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(this, mRecyclerView, getImageLoader())));

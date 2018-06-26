@@ -118,9 +118,7 @@
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/sp_limit_list"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/item_height"
-                    app:popupTheme="@style/AppTheme.PopupOverlay.Bule"
-                    />
+                    android:layout_height="@dimen/item_height" />
             </LinearLayout>
 
             <com.tubb.smrv.SwipeMenuRecyclerView
