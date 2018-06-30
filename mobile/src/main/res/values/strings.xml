@@ -96,8 +96,8 @@
     <string name="card_search">Card Search</string>
     <string name="deck_manager">Deck Manager</string>
     <string name="search">Search</string>
-    <string name="search_open">Select card options</string>
-    <string name="search_close">close card options</string>
+    <string name="search_open">Select</string>
+    <string name="search_close">Close</string>
     <string name="hit_keyword1">prefix word</string>
     <string name="hit_keyword2">suffix word</string>
     <string name="hit_atk">ATK</string>
