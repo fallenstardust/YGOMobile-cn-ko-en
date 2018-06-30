@@ -156,7 +156,6 @@ public class AppsSettings {
     }
 
     private void makeCdbList(List<String> pathList) {
-        pathList.add(getDataBaseFile().getAbsolutePath());
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
@@ -180,6 +179,7 @@ public class AppsSettings {
                 }
             }
         }
+        pathList.add(getDataBaseFile().getAbsolutePath());
     }
 
     public File getExpansionsPath() {
