@@ -518,27 +518,14 @@ void Game::DrawMisc() {
 	if(btnCancelOrFinish->isVisible())
 		DrawSelectionLine(btnCancelOrFinish, 4, 0xff00ff00);
 	//lp bar
-	if((dInfo.turn % 2 && dInfo.isFirst) || (!(dInfo.turn % 2) && !dInfo.isFirst)) {
-		driver->draw2DImage(imageManager.tLPBarFrame, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale), recti(0, 0, 305, 70), 0, 0, true);
-		driver->draw2DImage(imageManager.tLPBarFrame, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale), recti(0, 210, 305, 280), 0, 0, true);
-		//driver->draw2DRectangle(0xa0000000, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale));
-		//driver->draw2DRectangleOutline(recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale), 0xffff8080);
-	} else {
-		driver->draw2DImage(imageManager.tLPBarFrame, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale), recti(0, 70, 305, 140), 0, 0, true);
-		driver->draw2DImage(imageManager.tLPBarFrame, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale), recti(0, 140, 305, 210), 0, 0, true);
-		//driver->draw2DRectangle(0xa0000000, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale));
-		//driver->draw2DRectangleOutline(recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale), 0xffff8080);
-	}
-	driver->draw2DImage(imageManager.tAvatar[0], recti(330 * mainGame->xScale, 10 * mainGame->yScale, 398 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
-	driver->draw2DImage(imageManager.tAvatar[1], recti(922 * mainGame->xScale, 10 * mainGame->yScale, 990 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
-	driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
-	driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
+	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
+	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	if(dInfo.lp[0] >= 8000)
-		driver->draw2DImage(imageManager.tLPBar, recti(335 * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 28 * mainGame->yScale), recti(0, 0, 16, 16), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti(335 * mainGame->xScale, 12 * mainGame->yScale, (335 + 290 * dInfo.lp[0] / 8000) * mainGame->xScale, 28 * mainGame->yScale), recti(0, 0, 16, 16), 0, 0, true);
+		driver->draw2DImage(imageManager.tLPBar, recti(400 * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
+	else driver->draw2DImage(imageManager.tLPBar, recti(400 * mainGame->xScale, 12 * mainGame->yScale, (400 + 290 * dInfo.lp[0] / 8000) * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
 	if(dInfo.lp[1] >= 8000)
-		driver->draw2DImage(imageManager.tLPBar, recti(696 * mainGame->xScale, 12 * mainGame->yScale, 986 * mainGame->xScale, 28 * mainGame->yScale), recti(0, 0, 16, 16), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti((986 - 290 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 986 * mainGame->xScale, 28 * mainGame->yScale), recti(0, 0, 16, 16), 0, 0, true);
+		driver->draw2DImage(imageManager.tLPBar, recti(696 * mainGame->xScale, 12 * mainGame->yScale, 920 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
+	else driver->draw2DImage(imageManager.tLPBar, recti((920 - 290 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 920 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
 	if(lpframe) {
 		dInfo.lp[lpplayer] -= lpd;
 		myswprintf(dInfo.strLP[lpplayer], L"%d", dInfo.lp[lpplayer]);
@@ -554,6 +541,19 @@ void Game::DrawMisc() {
 			lpcFont->draw(lpcstring, recti(400 * mainGame->xScale, 162 * mainGame->yScale, 922 * mainGame->xScale, 210 * mainGame->yScale), lpccolor, true, false, 0);
 		}
 	}
+	if((dInfo.turn % 2 && dInfo.isFirst) || (!(dInfo.turn % 2) && !dInfo.isFirst)) {
+		driver->draw2DImage(imageManager.tLPBarFrame, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 305, 70), 0, 0, true);
+		driver->draw2DImage(imageManager.tLPBarFrame, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 210, 305, 280), 0, 0, true);
+		//driver->draw2DRectangle(0xa0000000, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale));
+		//driver->draw2DRectangleOutline(recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 51 * mainGame->yScale), 0xffff8080);
+	} else {
+		driver->draw2DImage(imageManager.tLPBarFrame, recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 70, 305, 140), 0, 0, true);
+		driver->draw2DImage(imageManager.tLPBarFrame, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 140, 305, 210), 0, 0, true);
+		//driver->draw2DRectangle(0xa0000000, recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale));
+		//driver->draw2DRectangleOutline(recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 51 * mainGame->yScale), 0xffff8080);
+	}
+	driver->draw2DImage(imageManager.tAvatar[0], recti(330 * mainGame->xScale, 10 * mainGame->yScale, 398 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
+	driver->draw2DImage(imageManager.tAvatar[1], recti(922 * mainGame->xScale, 10 * mainGame->yScale, 990 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
 	if(!dInfo.isReplay && dInfo.player_type < 7 && dInfo.time_limit) {
 		if(imageManager.tClock) {
 			driver->draw2DImage(imageManager.tClock, recti(577 * mainGame->xScale, 32 * mainGame->yScale, 595 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
@@ -582,21 +582,21 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_card_count[0], recti(600 * mainGame->xScale, 31 * mainGame->yScale, 625 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
 		DrawShadowText(numFont, dInfo.str_card_count[1], recti(710 * mainGame->xScale, 31 * mainGame->yScale, 735 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 	}
-	numFont->draw(dInfo.strLP[0], recti(330 * mainGame->xScale, 11 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), 0xff000000, true, false, 0);
-	numFont->draw(dInfo.strLP[0], recti(330 * mainGame->xScale, 12 * mainGame->yScale, 631 * mainGame->xScale, 30 * mainGame->yScale), 0xffffff00, true, false, 0);
-	numFont->draw(dInfo.strLP[1], recti(691 * mainGame->xScale, 11 * mainGame->yScale, 990 * mainGame->xScale, 30 * mainGame->yScale), 0xff000000, true, false, 0);
-	numFont->draw(dInfo.strLP[1], recti(691 * mainGame->xScale, 12 * mainGame->yScale, 992 * mainGame->xScale, 30 * mainGame->yScale), 0xffffff00, true, false, 0);
+	numFont->draw(dInfo.strLP[0], recti(380 * mainGame->xScale, 21 * mainGame->yScale, 679 * mainGame->xScale, 40 * mainGame->yScale), 0xff000000, true, false, 0);
+	numFont->draw(dInfo.strLP[0], recti(380 * mainGame->xScale, 22 * mainGame->yScale, 681 * mainGame->xScale, 40 * mainGame->yScale), 0xffffff00, true, false, 0);
+	numFont->draw(dInfo.strLP[1], recti(641 * mainGame->xScale, 21 * mainGame->yScale, 940 * mainGame->xScale, 40 * mainGame->yScale), 0xff000000, true, false, 0);
+	numFont->draw(dInfo.strLP[1], recti(641 * mainGame->xScale, 22 * mainGame->yScale, 942 * mainGame->xScale, 40 * mainGame->yScale), 0xffffff00, true, false, 0);
 
 	if(!dInfo.isTag || !dInfo.tag_player[0])
-		textFont->draw(dInfo.hostname, recti(335 * mainGame->xScale, 31 * mainGame->yScale, 629 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.hostname, recti(400 * mainGame->xScale, 49 * mainGame->yScale, 629 * mainGame->xScale, 68 * mainGame->yScale), 0xffffffff, false, false, 0);
 	else
-		textFont->draw(dInfo.hostname_tag, recti(335 * mainGame->xScale, 31 * mainGame->yScale, 629 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.hostname_tag, recti(400 * mainGame->xScale, 49 * mainGame->yScale, 629 * mainGame->xScale, 68 * mainGame->yScale), 0xffffffff, false, false, 0);
 	if(!dInfo.isTag || !dInfo.tag_player[1]) {
 		auto cld = textFont->getDimension(dInfo.clientname);
-		textFont->draw(dInfo.clientname, recti(986 * mainGame->xScale - cld.Width, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.clientname, recti(920 * mainGame->xScale - cld.Width, 49 * mainGame->yScale, 986 * mainGame->xScale, 68 * mainGame->yScale), 0xffffffff, false, false, 0);
 	} else {
 		auto cld = textFont->getDimension(dInfo.clientname_tag);
-		textFont->draw(dInfo.clientname_tag, recti(986 * mainGame->xScale - cld.Width, 31 * mainGame->yScale, 986 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, false, false, 0);
+		textFont->draw(dInfo.clientname_tag, recti(920 * mainGame->xScale - cld.Width, 491 * mainGame->yScale, 986 * mainGame->xScale, 68 * mainGame->yScale), 0xffffffff, false, false, 0);
 	}
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 10 * mainGame->yScale, 688 * mainGame->xScale, 30 * mainGame->yScale), 0x00000000, 0x00000000, 0xffffffff, 0xffffffff);
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 30 * mainGame->yScale, 688 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, 0xffffffff, 0x00000000, 0x00000000);
