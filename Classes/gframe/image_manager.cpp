@@ -30,6 +30,9 @@ bool ImageManager::Initial(const path dir) {
 	tBackGround = driver->getTexture((dir + path("/textures/bg.jpg")).c_str());
 	tBackGround_menu = driver->getTexture((dir + path("/textures/bg_menu.jpg")).c_str());
 	tCardType = driver->getTexture((dir + path("/textures/cardtype.png")).c_str());
+	tAvatar[0] = driver->getTexture((dir + path("/textures/me.jpg")).c_str());
+	tAvatar[1] = driver->getTexture((dir + path("/textures/opponent.jpg")).c_str());
+	tLPBarFrame = driver->getTexture((dir + path("/textures/lpbarf.png")).c_str());
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
