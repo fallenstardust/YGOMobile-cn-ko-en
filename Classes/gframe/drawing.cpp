@@ -522,10 +522,10 @@ void Game::DrawMisc() {
 	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	if(dInfo.lp[0] >= 8000)
 		driver->draw2DImage(imageManager.tLPBar, recti(400 * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti(400 * mainGame->xScale, 12 * mainGame->yScale, (400 + 290 * dInfo.lp[0] / 8000) * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
+	else driver->draw2DImage(imageManager.tLPBar, recti(400 * mainGame->xScale, 12 * mainGame->yScale, (400 + 225 * dInfo.lp[0] / 8000) * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
 	if(dInfo.lp[1] >= 8000)
 		driver->draw2DImage(imageManager.tLPBar, recti(696 * mainGame->xScale, 12 * mainGame->yScale, 920 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti((920 - 290 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 920 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
+	else driver->draw2DImage(imageManager.tLPBar, recti((920 - 225 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 920 * mainGame->xScale, 56 * mainGame->yScale), recti(0, 0, 44, 44), 0, 0, true);
 	if(lpframe) {
 		dInfo.lp[lpplayer] -= lpd;
 		myswprintf(dInfo.strLP[lpplayer], L"%d", dInfo.lp[lpplayer]);
@@ -540,7 +540,8 @@ void Game::DrawMisc() {
 			lpcFont->draw(lpcstring, recti(400 * mainGame->xScale, 160 * mainGame->yScale, 920 * mainGame->xScale, 210 * mainGame->yScale), lpccolor | 0x00ffffff, true, false, 0);
 			lpcFont->draw(lpcstring, recti(400 * mainGame->xScale, 162 * mainGame->yScale, 922 * mainGame->xScale, 210 * mainGame->yScale), lpccolor, true, false, 0);
 		}
-	}
+	
+	//avatar image
 	driver->draw2DImage(imageManager.tAvatar[0], recti(330 * mainGame->xScale, 10 * mainGame->yScale, 398 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
 	driver->draw2DImage(imageManager.tAvatar[1], recti(922 * mainGame->xScale, 10 * mainGame->yScale, 990 * mainGame->xScale, 78 * mainGame->yScale), recti(0, 0, 68, 68), 0, 0, true);
 	if((dInfo.turn % 2 && dInfo.isFirst) || (!(dInfo.turn % 2) && !dInfo.isFirst)) {
