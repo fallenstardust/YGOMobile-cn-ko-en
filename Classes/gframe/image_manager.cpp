@@ -16,7 +16,7 @@ bool ImageManager::Initial(const path dir) {
 	tChain = driver->getTexture((dir + path("/textures/chain.png")).c_str());
 	tNegated = driver->getTexture((dir + path("/textures/negated.png")).c_str());
 	tNumber = driver->getTexture((dir + path("/textures/number.png")).c_str());
-	tLPBar = driver->getTexture((dir + path("/textures/lp.png")).c_str());
+	tLPBar = driver->getTexture((dir + path("/textures/lp2.png")).c_str());
 	tLPFrame = driver->getTexture((dir + path("/textures/lpf.png")).c_str());
 	tMask = driver->getTexture((dir + path("/textures/mask.png")).c_str());
 	tEquip = driver->getTexture((dir + path("/textures/equip.png")).c_str());
