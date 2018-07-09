@@ -558,17 +558,17 @@ void Game::DrawMisc() {
 	//Time Display
 	if(!dInfo.isReplay && dInfo.player_type < 7 && dInfo.time_limit) {
 		if(imageManager.tClock) {
-			driver->draw2DImage(imageManager.tClock, recti(577 * mainGame->xScale, 32 * mainGame->yScale, 595 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
-			driver->draw2DImage(imageManager.tClock, recti(695 * mainGame->xScale, 32 * mainGame->yScale, 713 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+			driver->draw2DImage(imageManager.tClock, recti(577 * mainGame->xScale, 50 * mainGame->yScale, 595 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
+			driver->draw2DImage(imageManager.tClock, recti(695 * mainGame->xScale, 50 * mainGame->yScale, 713 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 0, 34, 34), 0, 0, true);
 		}
-		DrawShadowText(numFont, dInfo.str_time_left[0], recti(595 * mainGame->xScale, 31 * mainGame->yScale, 625 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_time_left[1], recti(713 * mainGame->xScale, 31 * mainGame->yScale, 743 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[1], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_time_left[0], recti(595 * mainGame->xScale, 49 * mainGame->yScale, 625 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[0], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_time_left[1], recti(713 * mainGame->xScale, 49 * mainGame->yScale, 743 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.time_color[1], 0xff000000, true, false, 0);
 
-		driver->draw2DImage(imageManager.tCover[0], recti(537 * mainGame->xScale, 30 * mainGame->yScale, 550 * mainGame->xScale, 50 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[1], recti(745 * mainGame->xScale, 30 * mainGame->yScale, 758 * mainGame->xScale, 50 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[0], recti(537 * mainGame->xScale, 51 * mainGame->yScale, 550 * mainGame->xScale, 70 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[1], recti(745 * mainGame->xScale, 51 * mainGame->yScale, 758 * mainGame->xScale, 70 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
 
-		DrawShadowText(numFont, dInfo.str_card_count[0], recti(550 * mainGame->xScale, 31 * mainGame->yScale, 575 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_card_count[1], recti(757 * mainGame->xScale, 31 * mainGame->yScale, 782 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_card_count[0], recti(550 * mainGame->xScale, 49 * mainGame->yScale, 575 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_card_count[1], recti(757 * mainGame->xScale, 49 * mainGame->yScale, 782 * mainGame->xScale, 68 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 		
 		/*
 		driver->draw2DRectangle(recti(525 * mainGame->xScale, 34 * mainGame->yScale, (525 + dInfo.time_left[0] * 100 / dInfo.time_limit) * mainGame->xScale, 44 * mainGame->yScale), 0xa0e0e0e0, 0xa0e0e0e0, 0xa0c0c0c0, 0xa0c0c0c0);
@@ -578,11 +578,11 @@ void Game::DrawMisc() {
 		*/
 	}
 	else {
-		driver->draw2DImage(imageManager.tCover[0], recti(588 * mainGame->xScale, 30 * mainGame->yScale, 601 * mainGame->xScale, 50 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[1], recti(697 * mainGame->xScale, 30 * mainGame->yScale, 710 * mainGame->xScale, 50 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[0], recti(588 * mainGame->xScale, 49 * mainGame->yScale, 601 * mainGame->xScale, 68 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[1], recti(697 * mainGame->xScale, 49 * mainGame->yScale, 710 * mainGame->xScale, 68 * mainGame->yScale), rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
 
-		DrawShadowText(numFont, dInfo.str_card_count[0], recti(600 * mainGame->xScale, 31 * mainGame->yScale, 625 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_card_count[1], recti(710 * mainGame->xScale, 31 * mainGame->yScale, 735 * mainGame->xScale, 50 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_card_count[0], recti(600 * mainGame->xScale, 51 * mainGame->yScale, 625 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
+		DrawShadowText(numFont, dInfo.str_card_count[1], recti(710 * mainGame->xScale, 51 * mainGame->yScale, 735 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 	}
 	numFont->draw(dInfo.strLP[0], recti(365 * mainGame->xScale, 21 * mainGame->yScale, 674 * mainGame->xScale, 40 * mainGame->yScale), 0xff000000, true, false, 0);
 	numFont->draw(dInfo.strLP[0], recti(365 * mainGame->xScale, 22 * mainGame->yScale, 676 * mainGame->xScale, 40 * mainGame->yScale), 0xffffff00, true, false, 0);
