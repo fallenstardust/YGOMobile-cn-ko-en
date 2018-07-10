@@ -1965,9 +1965,7 @@ int32 card::replace_effect(uint32 code, uint32 reset, uint32 count) {
 	}
 	return pduel->game_field->infos.copy_id - 1;
 }
-// add EFFECT_SET_CONTROL
 void card::reset(uint32 id, uint32 reset_type) {
-	effect* peffect;
 	if (reset_type != RESET_EVENT && reset_type != RESET_PHASE && reset_type != RESET_CODE && reset_type != RESET_COPY && reset_type != RESET_CARD)
 		return;
 	if (reset_type == RESET_EVENT) {
@@ -2002,7 +2000,7 @@ void card::reset(uint32 id, uint32 reset_type) {
 				pcard->effect_target_owner.erase(this);
 				for(auto it = pcard->single_effect.begin(); it != pcard->single_effect.end();) {
 					auto rm = it++;
-					peffect = rm->second;
+					effect* peffect = rm->second;
 					if((peffect->owner == this) && peffect->is_flag(EFFECT_FLAG_OWNER_RELATE))
 						pcard->remove_effect(peffect, rm);
 				}
@@ -2052,7 +2050,7 @@ void card::reset(uint32 id, uint32 reset_type) {
 	}
 	for (auto i = indexer.begin(); i != indexer.end();) {
 		auto rm = i++;
-		peffect = rm->first;
+		effect* peffect = rm->first;
 		auto it = rm->second;
 		if (peffect->reset(id, reset_type))
 			remove_effect(peffect, it);
@@ -2203,6 +2201,8 @@ int32 card::destination_redirect(uint8 destination, uint32 reason) {
 		if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(current.controler, this))
 			return redirect;
 		if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(current.controler, this))
+			return redirect;
+		if((redirect & LOCATION_GRAVE) && !is_affected_by_effect(EFFECT_CANNOT_TO_GRAVE) && pduel->game_field->is_player_can_send_to_grave(current.controler, this))
 			return redirect;
 	}
 	return 0;
@@ -3331,6 +3331,28 @@ int32 card::is_removeable_as_cost(uint8 playerid) {
 	if(redirect) dest = redirect;
 	sendto_param = op_param;
 	if(dest != LOCATION_REMOVED)
+		return FALSE;
+	return TRUE;
+}
+int32 card::is_attack_decreasable_as_cost(uint8 playerid, int32 val) {
+	if(!(data.type & TYPE_MONSTER) && !(get_type() & TYPE_MONSTER))
+		return FALSE;
+	if(!(current.location & LOCATION_MZONE) || is_position(POS_FACEDOWN))
+		return FALSE;
+	if(is_affected_by_effect(EFFECT_SET_ATTACK_FINAL) || is_affected_by_effect(EFFECT_REVERSE_UPDATE))
+		return FALSE;
+	if(val && get_attack() < val)
+		return FALSE;
+	return TRUE;
+}
+int32 card::is_defense_decreasable_as_cost(uint8 playerid, int32 val) {
+	if(!(data.type & TYPE_MONSTER) && !(get_type() & TYPE_MONSTER))
+		return FALSE;
+	if(!(current.location & LOCATION_MZONE) || is_position(POS_FACEDOWN) || (data.type & TYPE_LINK))
+		return FALSE;
+	if(is_affected_by_effect(EFFECT_SET_DEFENSE_FINAL) || is_affected_by_effect(EFFECT_REVERSE_UPDATE))
+		return FALSE;
+	if(val && get_defense() < val)
 		return FALSE;
 	return TRUE;
 }
