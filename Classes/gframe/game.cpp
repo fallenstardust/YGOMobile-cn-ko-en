@@ -740,7 +740,7 @@ bool Game::Initialize() {
 		chkRace[i] = env->addCheckBox(false, rect<s32>((10 + (i % 4) * 90) * xScale, (25 + (i / 4) * 25) * yScale, (100 + (i % 4) * 90) * xScale, (50 + (i / 4) * 25) * yScale),
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
-	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 60 * yScale, 820 * xScale, 90 * yScale), true, false, 0, -1, false);
+	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
 	stHintMsg->setBackgroundColor(0x6011113d);
 	stHintMsg->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stHintMsg->setVisible(false);

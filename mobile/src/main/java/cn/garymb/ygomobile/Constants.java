@@ -70,7 +70,10 @@ public interface Constants {
     String CORE_SCRIPTS_ZIP = "scripts.zip";
     String CORE_PICS_ZIP = "pics.zip";
     String CORE_SKIN_COVER = "cover.jpg";
+    String CORE_SKIN_COVER2 = "cover2.jpg";
     String CORE_SKIN_BG = "bg.jpg";
+    String CORE_SKIN_AVATAR_ME = "me.jpg";
+    String CORE_SKIN_AVATAR_OPPONENT = "me.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
