@@ -44,6 +44,7 @@ public interface Constants {
     boolean PREF_DEF_DECK_DELETE_DILAOG = true;
 
     String SETTINGS_COVER = "settings_game_diy_card_cover";
+    String SETTINGS_COVER2 = "settings_game_diy_card_cover2";
     String SETTINGS_CARD_BG = "settings_game_diy_card_bg";
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
@@ -73,7 +74,7 @@ public interface Constants {
     String CORE_SKIN_COVER2 = "cover2.jpg";
     String CORE_SKIN_BG = "bg.jpg";
     String CORE_SKIN_AVATAR_ME = "me.jpg";
-    String CORE_SKIN_AVATAR_OPPONENT = "me.jpg";
+    String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};

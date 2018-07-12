@@ -12,7 +12,9 @@ import android.preference.Preference;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -182,6 +184,20 @@ public class SettingFragment extends PreferenceFragmentPlus {
             //选择ttf字体文件，保存
             showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_font));
         } else if (SETTINGS_COVER.equals(key)) {
+            final DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setContentView(R.layout.dialog_cover_select);
+            dialog.setTitle(R.string.card_cover);
+            dialog.show();
+            View viewDialog = dialog.getContentView();
+            Button cover1 = viewDialog.findViewById(R.id.button_cover1);
+            String cover1_img = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
+            Button cover2 = viewDialog.findViewById(R.id.button_cover2);
+            cover1.setOnClickListener((v) -> {
+
+            });
+            cover2.setOnClickListener((v) -> {
+
+            });
             //显示图片对话框？
             String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
             showImageDialog(preference, getString(R.string.card_cover),
