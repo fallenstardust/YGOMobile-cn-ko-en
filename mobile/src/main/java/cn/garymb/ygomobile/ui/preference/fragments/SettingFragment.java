@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.preference.fragments;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -189,20 +190,24 @@ public class SettingFragment extends PreferenceFragmentPlus {
             dialog.setTitle(R.string.card_cover);
             dialog.show();
             View viewDialog = dialog.getContentView();
-            Button cover1 = viewDialog.findViewById(R.id.button_cover1);
-            String cover1_img = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-            Button cover2 = viewDialog.findViewById(R.id.button_cover2);
+            ImageView cover1 = viewDialog.findViewById(R.id.cover1);
+            ImageView cover2 = viewDialog.findViewById(R.id.cover2);
+            setImage(getAbsolutePath(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER),cover1);
+            
             cover1.setOnClickListener((v) -> {
-
+                //显示图片对话框？
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.card_cover),
+                        outFile,
+                        true, Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1]);
             });
             cover2.setOnClickListener((v) -> {
-
+                //显示图片对话框？
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.card_cover),
+                        outFile,
+                        true, Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1]);
             });
-            //显示图片对话框？
-            String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-            showImageDialog(preference, getString(R.string.card_cover),
-                    outFile,
-                    true, Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1]);
         } else if (SETTINGS_CARD_BG.equals(key)) {
             //显示图片对话框？
             String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
@@ -262,26 +267,26 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
     private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
         int width = getResources().getDisplayMetrics().widthPixels;
-        DialogPlus builder = new DialogPlus(getActivity());
+        //DialogPlus builder = new DialogPlus(getActivity());
         final ImageView imageView = new ImageView(getActivity());
         FrameLayout frameLayout = new FrameLayout(getActivity());
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        builder.setTitle(title);
+        //builder.setTitle(title);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         frameLayout.addView(imageView, layoutParams);
-        builder.setContentView(frameLayout);
-        builder.setLeftButtonText(R.string.settings);
-        builder.setLeftButtonListener((dlg, s) -> {
+       // builder.setContentView(frameLayout);
+        //builder.setLeftButtonText(R.string.settings);
+        //builder.setLeftButtonListener((dlg, s) -> {
             showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile,
                     isJpeg, outWidth, outHeight);
-            dlg.dismiss();
-        });
+            //dlg.dismiss();
+       // });
 //        builder.setOnCancelListener((dlg) -> {
 //            BitmapUtil.destroy(imageView.getDrawable());
 //        });
-        builder.show();
+        //builder.show();
         File img = new File(outFile);
         if (img.exists()) {
             Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
@@ -289,6 +294,14 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .override(outWidth, outHeight)
                     .into(imageView);
         }
+    }
+
+    public void setImage(String path,ImageView imageView){
+        //图片显示代码
+        Glide.with(this).load(path)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .override(Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1])
+                .into(imageView);
     }
 
     private void copyDataBase(Preference preference, String file) {
