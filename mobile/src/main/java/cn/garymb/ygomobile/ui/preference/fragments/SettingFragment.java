@@ -192,8 +192,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView cover1 = viewDialog.findViewById(R.id.cover1);
             ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            setImage(getAbsolutePath(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER),cover1);
-            
+            setImage(getDatapath(mSettings.getCoreSkinPath()+Constants.CORE_SKIN_COVER),cover1);
+            setImage(getDatapath(mSettings.getCoreSkinPath()+Constants.CORE_SKIN_COVER2),cover2);
             cover1.setOnClickListener((v) -> {
                 //显示图片对话框？
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
