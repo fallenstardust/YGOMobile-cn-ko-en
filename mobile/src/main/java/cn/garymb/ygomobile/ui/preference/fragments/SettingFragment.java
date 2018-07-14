@@ -45,6 +45,8 @@ import ocgcore.ConfigManager;
 import static android.R.attr.key;
 import static android.R.attr.packageNames;
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
+import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
+import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
@@ -185,6 +187,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             //选择ttf字体文件，保存
             showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_font));
         } else if (SETTINGS_COVER.equals(key)) {
+            //显示卡背图片对话框
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setContentView(R.layout.dialog_cover_select);
             dialog.setTitle(R.string.card_cover);
@@ -192,26 +195,60 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView cover1 = viewDialog.findViewById(R.id.cover1);
             ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            setImage(getDatapath(mSettings.getCoreSkinPath()+Constants.CORE_SKIN_COVER),cover1);
-            setImage(getDatapath(mSettings.getCoreSkinPath()+Constants.CORE_SKIN_COVER2),cover2);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0],CORE_SKIN_CARD_COVER_SIZE[1],cover1);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0],CORE_SKIN_CARD_COVER_SIZE[1],cover2);
             cover1.setOnClickListener((v) -> {
-                //显示图片对话框？
+                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
                 showImageDialog(preference, getString(R.string.card_cover),
                         outFile,
-                        true, Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1]);
+                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
+                dialog.dismiss();
             });
             cover2.setOnClickListener((v) -> {
-                //显示图片对话框？
+                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
                 showImageDialog(preference, getString(R.string.card_cover),
                         outFile,
-                        true, Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1]);
+                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
+                dialog.dismiss();
             });
         } else if (SETTINGS_CARD_BG.equals(key)) {
-            //显示图片对话框？
-            String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
-            showImageDialog(preference, getString(R.string.game_bg), outFile, true, Constants.CORE_SKIN_BG_SIZE[0], Constants.CORE_SKIN_BG_SIZE[1]);
+            final DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setContentView(R.layout.dialog_bg_select);
+            dialog.setTitle(R.string.game_bg);
+            dialog.show();
+            View viewDialog = dialog.getContentView();
+            ImageView bg = viewDialog.findViewById(R.id.bg);
+            ImageView bg_menu = viewDialog.findViewById(R.id.bg_menu);
+            ImageView bg_deck = viewDialog.findViewById(R.id.bg_deck);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg_menu);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg_deck);
+            bg.setOnClickListener((v) -> {
+                //打开系统文件相册
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.bg),
+                        outFile,
+                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
+                dialog.dismiss();
+            });
+            bg_menu.setOnClickListener((v) -> {
+                //打开系统文件相册
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.bg_menu),
+                        outFile,
+                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
+                dialog.dismiss();
+            });
+            bg_deck.setOnClickListener((v) -> {
+                //打开系统文件相册
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.bg_deck),
+                        outFile,
+                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
+                dialog.dismiss();
+            });
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
             if (checkBoxPreference.isChecked()) {
@@ -296,12 +333,14 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
     }
 
-    public void setImage(String path,ImageView imageView){
-        //图片显示代码
-        Glide.with(this).load(path)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .override(Constants.CORE_SKIN_CARD_COVER_SIZE[0], Constants.CORE_SKIN_CARD_COVER_SIZE[1])
-                .into(imageView);
+    public void setImage(String outFile,int outWidth,int outHeight,ImageView imageView){
+        File img = new File(outFile);
+        if (img.exists()) {
+            Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .override(outWidth, outHeight)
+                    .into(imageView);
+        }
     }
 
     private void copyDataBase(Preference preference, String file) {

@@ -73,6 +73,8 @@ public interface Constants {
     String CORE_SKIN_COVER = "cover.jpg";
     String CORE_SKIN_COVER2 = "cover2.jpg";
     String CORE_SKIN_BG = "bg.jpg";
+    String CORE_SKIN_BG_MENU = "bg_menu.jpg";
+    String CORE_SKIN_BG_DECK = "bg_deck.jpg";
     String CORE_SKIN_AVATAR_ME = "me.jpg";
     String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";

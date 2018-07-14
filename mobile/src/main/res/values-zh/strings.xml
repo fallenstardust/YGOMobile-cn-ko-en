@@ -26,6 +26,9 @@
     <string name="copy_databse">复制数据库中</string>
     <string name="card_cover">卡片背面</string>
     <string name="game_bg">游戏背景</string>
+    <string name="bg">决斗背景</string>
+    <string name="bg_menu">菜单背景</string>
+    <string name="bg_deck">卡组背景</string>
     <string name="action_add_server">添加服务器</string>
     <string name="no_find_file_selectotr">没有找到文件选择器</string>
     <string name="no_find_image_selector">没有找到图片选择器</string>
