@@ -215,4 +215,6 @@
     <string name="Join_QQ">水友群</string>
     <string name="donatefor">您的捐赠将用于维持自动更新费用，收集更新资料、修图后期以及购买适配机型等</string>
     <string name="coverSelect">点击相应卡背选择文件</string>
+    <string name="bgSelect">点击相应背景选择文件</string>
+    <string name="avatarSelect">点击相应头像选择文件</string>
 </resources>

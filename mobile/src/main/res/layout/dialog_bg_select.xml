@@ -17,8 +17,8 @@
 
         <ImageView
             android:id="@+id/bg"
-            android:layout_width="320dp"
-            android:layout_height="180dp" />
+            android:layout_width="240dp"
+            android:layout_height="135dp" />
 
         <TextView
             android:layout_width="@dimen/label_width_middle"
@@ -27,8 +27,8 @@
 
         <ImageView
             android:id="@+id/bg_menu"
-            android:layout_width="320dp"
-            android:layout_height="180dp" />
+            android:layout_width="240dp"
+            android:layout_height="135dp" />
 
         <TextView
             android:layout_width="@dimen/label_width_middle"
@@ -37,8 +37,14 @@
 
         <ImageView
             android:id="@+id/bg_deck"
-            android:layout_width="320dp"
-            android:layout_height="180dp" />
-
+            android:layout_width="240dp"
+            android:layout_height="135dp" />
     </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:paddingTop="20dp"
+        android:text="@string/bgSelect"
+        android:textSize="25px" />
 </LinearLayout>

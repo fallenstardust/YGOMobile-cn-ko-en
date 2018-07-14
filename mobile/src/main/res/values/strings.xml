@@ -27,6 +27,9 @@
     <string name="copy_databse">copying databse</string>
     <string name="card_cover">Card Cover</string>
     <string name="game_bg">Game Background</string>
+    <string name="bg">Duel Background</string>
+    <string name="bg_menu">Menu Background</string>
+    <string name="bg_deck">Deck Background</string>
     <string name="no_find_image_selector">no find image selector</string>
     <string name="no_find_file_selectotr">no find file selector</string>
     <string name="no_find_image_cutor">no find image cutor</string>
@@ -215,4 +218,6 @@
     <string name="Join_QQ">QQ Group</string>
     <string name="donatefor">your donation will be used for keeping severs updating, buying card to get artworks and purchasing new phone to adapt</string>
     <string name="coverSelect">click covers and select files</string>
+    <string name="bgSelect">click background and select files</string>
+    <string name="avatarSelect">click avatar and select files</string>
 </resources>
