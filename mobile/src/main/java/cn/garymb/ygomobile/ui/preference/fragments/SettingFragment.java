@@ -45,6 +45,7 @@ import ocgcore.ConfigManager;
 import static android.R.attr.key;
 import static android.R.attr.packageNames;
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
+import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
@@ -66,6 +67,7 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_SOUND_EFFECT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
+import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
@@ -113,6 +115,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
         bind(PREF_DECK_DELETE_DILAOG, mSettings.isDialogDelete());
         //bind(PREF_USE_EXTRA_CARD_CARDS, mSettings.isUseExtraCards());
+        bind(SETTINGS_AVATAR, new File(mSettings.getCoreSkinPath(),Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath());
         bind(SETTINGS_COVER, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath());
         bind(SETTINGS_CARD_BG, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
@@ -186,7 +189,34 @@ public class SettingFragment extends PreferenceFragmentPlus {
         } else if (PREF_GAME_FONT.equals(key)) {
             //选择ttf字体文件，保存
             showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_font));
-        } else if (SETTINGS_COVER.equals(key)) {
+        } else if (SETTINGS_AVATAR.equals(key)) {
+            final DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setContentView(R.layout.dialog_avatar_select);
+            dialog.setTitle(R.string.settings_game_avatar);
+            dialog.show();
+            //显示头像图片对话框
+            View viewDialog = dialog.getContentView();
+            ImageView avatar1 = viewDialog.findViewById(R.id.me);
+            ImageView avatar2 = viewDialog.findViewById(R.id.opponent);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1],avatar1);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1],avatar2);
+            avatar1.setOnClickListener((v) -> {
+                //打开系统文件相册
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.settings_game_avatar),
+                        outFile,
+                        true, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1]);
+                dialog.dismiss();
+            });
+            avatar2.setOnClickListener((v) -> {
+                //打开系统文件相册
+                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
+                showImageDialog(preference, getString(R.string.settings_game_avatar),
+                        outFile,
+                        true, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1]);
+                dialog.dismiss();
+            });
+        }else if (SETTINGS_COVER.equals(key)) {
             //显示卡背图片对话框
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setContentView(R.layout.dialog_cover_select);
@@ -214,6 +244,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 dialog.dismiss();
             });
         } else if (SETTINGS_CARD_BG.equals(key)) {
+            //显示背景图片对话框
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setContentView(R.layout.dialog_bg_select);
             dialog.setTitle(R.string.game_bg);

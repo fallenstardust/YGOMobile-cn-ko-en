@@ -83,6 +83,11 @@
             android:title="@string/settings_game_font_name"/>
 
         <Preference
+            android:key="settings_game_avatar"
+           android:persistent="true"
+            android:title="@string/settings_game_avatar"/>
+
+        <Preference
             android:key="settings_game_diy_card_cover"
             android:persistent="true"
             android:title="@string/settings_game_diy_card_back"/>

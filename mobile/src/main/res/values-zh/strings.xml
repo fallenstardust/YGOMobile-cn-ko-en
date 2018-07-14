@@ -62,6 +62,7 @@
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
     <string name="settings_game_immersive_mode">在游戏隐藏虚拟键盘</string>
     <string name="settings_game_opengl">OpenGL</string>
+    <string name="settings_game_avatar">头像图片</string>
     <string name="restart_app">请重启本应用</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
