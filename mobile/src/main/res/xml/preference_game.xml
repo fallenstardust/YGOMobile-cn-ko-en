@@ -77,10 +77,6 @@
 
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_category_diy">
-        <Preference
-            android:key="pref_key_game_font_name"
-            android:persistent="true"
-            android:title="@string/settings_game_font_name"/>
 
         <Preference
             android:key="settings_game_avatar"
@@ -96,6 +92,12 @@
             android:key="settings_game_diy_card_bg"
             android:persistent="true"
             android:title="@string/settings_game_diy_cover"/>
+
+        <Preference
+            android:key="pref_key_game_font_name"
+            android:persistent="true"
+            android:title="@string/settings_game_font_name"/>
+
         <!--<CheckBoxPreference
             android:key="settings_game_diy_card_db"
             android:persistent="true"

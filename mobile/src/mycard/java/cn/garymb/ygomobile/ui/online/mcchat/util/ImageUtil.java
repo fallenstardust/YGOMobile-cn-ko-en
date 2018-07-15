@@ -1,7 +1,7 @@
 package cn.garymb.ygomobile.ui.online.mcchat.util;
+import android.net.Uri;
 import android.widget.*;
 import com.bumptech.glide.*;
-import android.net.*;
 import android.content.*;
 import com.bumptech.glide.load.engine.*;
 

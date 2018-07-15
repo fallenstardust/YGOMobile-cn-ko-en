@@ -313,7 +313,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         String key = preference.getKey();
         if (Constants.DEBUG)
             Log.i("kk", "onChooseFileOk:" + key + ",file=" + file);
-        if (SETTINGS_COVER.equals(key) || SETTINGS_CARD_BG.equals(key)) {
+        if (SETTINGS_AVATAR.equals(key) || SETTINGS_COVER.equals(key) || SETTINGS_CARD_BG.equals(key)) {
             super.onChooseFileOk(preference, file);
             onPreferenceClick(preference);
         } else if (PREF_GAME_PATH.equalsIgnoreCase(preference.getKey())) {

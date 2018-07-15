@@ -74,6 +74,7 @@ public class ServiceManagement
 			.setXmppDomain("mycard.moe")
 			.setKeystoreType(null)
 			.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+				.setHost("chat.mycard.moe")
 			.build();
 			con= new XMPPTCPConnection(config);
 		return con;
