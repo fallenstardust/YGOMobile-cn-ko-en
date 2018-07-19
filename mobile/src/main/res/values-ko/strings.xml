@@ -62,6 +62,7 @@
     <string name="settings_game_diy_card_db">커스텀cdb사용</string>
     <string name="settings_game_immersive_mode">몰입모드</string>
     <string name="settings_game_opengl">OpenGL</string>
+    <string name="avatar_img">프로필 이미지</string>
     <string name="restart_app">앱을 다시 시작하세요.</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
