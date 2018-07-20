@@ -2170,11 +2170,11 @@ int32 card::leave_field_redirect(uint32 reason) {
 	filter_effect(EFFECT_LEAVE_FIELD_REDIRECT, &es);
 	for(int32 i = 0; i < es.size(); ++i) {
 		redirect = es[i]->get_value(this, 0);
-		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(current.controler, this))
+		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(es[i]->get_handler_player(), this))
 			return redirect;
-		else if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(current.controler, this))
+		else if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(es[i]->get_handler_player(), this))
 			return redirect;
-		else if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(current.controler, this))
+		else if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this))
 			return redirect;
 	}
 	return 0;
@@ -2196,13 +2196,13 @@ int32 card::destination_redirect(uint8 destination, uint32 reason) {
 		return 0;
 	for(int32 i = 0; i < es.size(); ++i) {
 		redirect = es[i]->get_value(this, 0);
-		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(current.controler, this))
+		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(es[i]->get_handler_player(), this))
 			return redirect;
-		if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(current.controler, this))
+		if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(es[i]->get_handler_player(), this))
 			return redirect;
-		if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(current.controler, this))
+		if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this))
 			return redirect;
-		if((redirect & LOCATION_GRAVE) && !is_affected_by_effect(EFFECT_CANNOT_TO_GRAVE) && pduel->game_field->is_player_can_send_to_grave(current.controler, this))
+		if((redirect & LOCATION_GRAVE) && !is_affected_by_effect(EFFECT_CANNOT_TO_GRAVE) && pduel->game_field->is_player_can_send_to_grave(es[i]->get_handler_player(), this))
 			return redirect;
 	}
 	return 0;
@@ -3410,9 +3410,11 @@ int32 card::is_capable_send_to_grave(uint8 playerid) {
 int32 card::is_capable_send_to_hand(uint8 playerid) {
 	if(is_status(STATUS_LEAVE_CONFIRMED))
 		return FALSE;
-	if((current.location == LOCATION_EXTRA) && (data.type & (TYPE_FUSION + TYPE_SYNCHRO + TYPE_XYZ + TYPE_LINK)))
+	if((current.location == LOCATION_EXTRA) && is_extra_deck_monster())
 		return FALSE;
 	if(is_affected_by_effect(EFFECT_CANNOT_TO_HAND))
+		return FALSE;
+	if(is_extra_deck_monster() && !is_capable_send_to_deck(playerid))
 		return FALSE;
 	if(!pduel->game_field->is_player_can_send_to_hand(playerid, this))
 		return FALSE;
@@ -3421,7 +3423,7 @@ int32 card::is_capable_send_to_hand(uint8 playerid) {
 int32 card::is_capable_send_to_deck(uint8 playerid) {
 	if(is_status(STATUS_LEAVE_CONFIRMED))
 		return FALSE;
-	if((current.location == LOCATION_EXTRA) && (data.type & (TYPE_FUSION + TYPE_SYNCHRO + TYPE_XYZ + TYPE_LINK)))
+	if((current.location == LOCATION_EXTRA) && is_extra_deck_monster())
 		return FALSE;
 	if(is_affected_by_effect(EFFECT_CANNOT_TO_DECK))
 		return FALSE;
@@ -3430,7 +3432,7 @@ int32 card::is_capable_send_to_deck(uint8 playerid) {
 	return TRUE;
 }
 int32 card::is_capable_send_to_extra(uint8 playerid) {
-	if(!(data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_PENDULUM | TYPE_LINK)))
+	if(!is_extra_deck_monster() && !(data.type & TYPE_PENDULUM))
 		return FALSE;
 	if(is_affected_by_effect(EFFECT_CANNOT_TO_DECK))
 		return FALSE;
@@ -3468,7 +3470,7 @@ int32 card::is_capable_cost_to_grave(uint8 playerid) {
 int32 card::is_capable_cost_to_hand(uint8 playerid) {
 	uint32 redirect = 0;
 	uint32 dest = LOCATION_HAND;
-	if(data.type & (TYPE_TOKEN | TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
+	if(data.type & (TYPE_TOKEN) || is_extra_deck_monster())
 		return FALSE;
 	if(current.location == LOCATION_HAND)
 		return FALSE;
@@ -3491,7 +3493,7 @@ int32 card::is_capable_cost_to_hand(uint8 playerid) {
 int32 card::is_capable_cost_to_deck(uint8 playerid) {
 	uint32 redirect = 0;
 	uint32 dest = LOCATION_DECK;
-	if(data.type & (TYPE_TOKEN | TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
+	if(data.type & (TYPE_TOKEN) || is_extra_deck_monster())
 		return FALSE;
 	if(current.location == LOCATION_DECK)
 		return FALSE;
@@ -3514,7 +3516,7 @@ int32 card::is_capable_cost_to_deck(uint8 playerid) {
 int32 card::is_capable_cost_to_extra(uint8 playerid) {
 	uint32 redirect = 0;
 	uint32 dest = LOCATION_DECK;
-	if(!(data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
+	if(!is_extra_deck_monster())
 		return FALSE;
 	if(current.location == LOCATION_EXTRA)
 		return FALSE;
