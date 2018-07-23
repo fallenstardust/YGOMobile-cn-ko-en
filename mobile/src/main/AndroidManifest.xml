@@ -191,28 +191,6 @@
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
 
-        <activity
-            android:name="com.qihoo.appstore.common.updatesdk.lib.UpdateTipDialogActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
-
-        <service
-            android:name="com.qihoo.appstore.updatelib.CheckUpdateService"
-            android:exported="false" />
-
-        <provider
-            android:name="com.qihoo.appstore.updatelib.UpdateProvider"
-            android:authorities="cn.garymb.ygomobile"
-            android:grantUriPermissions="true"
-            android:exported="false">
-        <meta-data
-            android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/update_apk_path" />
-    </provider>
-
-
     </application>
 
 </manifest>
