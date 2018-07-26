@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
     <uses-permission android:name="android.permission.GET_TASKS"/>
@@ -190,29 +191,14 @@
             android:screenOrientation="behind"
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
-
-        <activity
-            android:name="com.qihoo.appstore.common.updatesdk.lib.UpdateTipDialogActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
-
-        <service
-            android:name="com.qihoo.appstore.updatelib.CheckUpdateService"
-            android:exported="false" />
-
         <provider
-            android:name="com.qihoo.appstore.updatelib.UpdateProvider"
-            android:authorities="cn.garymb.ygomobile"
-            android:grantUriPermissions="true"
-            android:exported="false">
+            android:name="com.pgyersdk.PgyerProvider"
+            android:authorities="${applicationId}.com.pgyer.provider"
+            android:exported="false"/>
         <meta-data
-            android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/update_apk_path" />
-    </provider>
-
-
+            android:name="PGYER_APPID"
+            android:value="dd147e8542b85a64111d98290892d8bd" >
+        </meta-data>
     </application>
 
 </manifest>

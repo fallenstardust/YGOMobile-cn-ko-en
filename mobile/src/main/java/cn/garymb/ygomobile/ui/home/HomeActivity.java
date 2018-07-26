@@ -10,6 +10,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -27,7 +28,10 @@ import com.base.bj.trpayjar.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.qihoo.appstore.common.updatesdk.lib.UpdateHelper;
+import com.pgyersdk.update.DownloadFileListener;
+import com.pgyersdk.update.PgyUpdateManager;
+import com.pgyersdk.update.UpdateManagerListener;
+import com.pgyersdk.update.javabean.AppBean;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -387,11 +391,12 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mMenuIds.put(mMenuIds.size(), menuId);
     }
 
-    private void checkForceUpdateSilent() {
-        UpdateHelper.getInstance().init(getContext(), Color.parseColor("#0A93DB"));
-        UpdateHelper.getInstance().setDebugMode(false);
-        long intervalMillis = 0 * 1000L;
-        UpdateHelper.getInstance().autoUpdate(getPackageName(), false, intervalMillis);
+    public void checkForceUpdateSilent() {
+        new PgyUpdateManager.Builder()
+                .setForced(false)                //设置是否强制更新
+                .setUserCanRetry(false)         //失败后是否提示重新下载
+                .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk
+                .register();
     }
 
     public void AnimationShake() {
