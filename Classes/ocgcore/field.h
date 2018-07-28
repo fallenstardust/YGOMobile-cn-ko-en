@@ -374,7 +374,7 @@ public:
 	void get_linked_cards(uint8 self, uint8 s, uint8 o, card_set* cset);
 	int32 check_extra_link(int32 playerid);
 	int32 check_extra_link(int32 playerid, card* pcard, int32 sequence);
-	void get_cards_in_zone(card_set* cset, uint32 zone, int32 playerid, int32 location);
+	void get_cards_in_zone(card_set* cset, uint32 zone, int32 playerid, int32 location = 0xc);
 	void shuffle(uint8 playerid, uint8 location);
 	void reset_sequence(uint8 playerid, uint8 location);
 	void swap_deck_and_grave(uint8 playerid);
@@ -609,6 +609,8 @@ public:
 #define CHAIN_HAND_EFFECT		0x04
 #define CHAIN_CONTINUOUS_CARD	0x08
 #define CHAIN_ACTIVATING		0x10
+#define CHAIN_HAND_TRIGGER		0x20
+#define CHAIN_DECK_EFFECT		0x40
 #define CHAININFO_CHAIN_COUNT			0x01
 #define CHAININFO_TRIGGERING_EFFECT		0x02
 #define CHAININFO_TRIGGERING_PLAYER		0x04
