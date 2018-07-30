@@ -133,6 +133,15 @@ class CardSearchInfo {
                 }
             }
 
+            if(types.length == 2){
+                if(types[0] == types[1]){
+                    long type = types[0];
+                    if ((card.Type & type) != type) {
+                        return false;
+                    }
+                }
+            }
+
             for (long type : types) {
                 if (type > 0) {
                     if (st) {
