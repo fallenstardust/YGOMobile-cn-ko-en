@@ -328,7 +328,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public void checkWindbot() {
         Log.i("路径", mContext.getFilesDir().getPath());
         Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
-        WindBot.initAndroid(mContext.getFilesDir().getPath(), mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+        try {
+            WindBot.initAndroid(mContext.getFilesDir().getPath(), mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+        }catch (Throwable e){
+            e.printStackTrace();
+        }
         ResCheckTask.MessageReceiver mReceiver = new ResCheckTask.MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
@@ -345,8 +349,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
         }
     }
-
-    ;
 
     Handler han = new Handler() {
 
