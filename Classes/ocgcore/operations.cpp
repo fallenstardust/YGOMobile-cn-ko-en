@@ -29,7 +29,7 @@ int32 field::negate_chain(uint8 chaincount) {
 		}
 		pduel->write_buffer8(MSG_CHAIN_NEGATED);
 		pduel->write_buffer8(chaincount);
-		if(pchain.triggering_effect->is_flag(EFFECT_FLAG2_NAGA))
+		if(pchain.flag & CHAIN_DECK_EFFECT)
 			return FALSE;
 		return TRUE;
 	}
@@ -48,7 +48,7 @@ int32 field::disable_chain(uint8 chaincount) {
 		core.current_chain[chaincount - 1].disable_player = core.reason_player;
 		pduel->write_buffer8(MSG_CHAIN_DISABLED);
 		pduel->write_buffer8(chaincount);
-		if(pchain.triggering_effect->is_flag(EFFECT_FLAG2_NAGA))
+		if(pchain.flag & CHAIN_DECK_EFFECT)
 			return FALSE;
 		return TRUE;
 	}
@@ -3984,12 +3984,14 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 		}
 		for(auto cit = param->targets->container.begin(); cit != param->targets->container.end(); ++cit) {
 			card* pcard = *cit;
+			if(!(pcard->data.type & TYPE_TOKEN))
+				pcard->enable_field_effect(true);
 			uint8 nloc = pcard->current.location;
 			if(nloc == LOCATION_HAND)
 				pcard->reset(RESET_TOHAND, RESET_EVENT);
-			else if(nloc == LOCATION_DECK || nloc == LOCATION_EXTRA)
+			if(nloc == LOCATION_DECK || nloc == LOCATION_EXTRA)
 				pcard->reset(RESET_TODECK, RESET_EVENT);
-			else if(nloc == LOCATION_GRAVE)
+			if(nloc == LOCATION_GRAVE)
 				pcard->reset(RESET_TOGRAVE, RESET_EVENT);
 			if(nloc == LOCATION_REMOVED || ((pcard->data.type & TYPE_TOKEN) && pcard->sendto_param.location == LOCATION_REMOVED)) {
 				if(pcard->current.reason & REASON_TEMPORARY)
@@ -4036,22 +4038,21 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 				}
 			}
 			pcard->clear_card_target();
-			if(!(pcard->data.type & TYPE_TOKEN)) {
-				pcard->enable_field_effect(true);
-				if(nloc == LOCATION_HAND) {
-					tohand.insert(pcard);
-					raise_single_event(pcard, 0, EVENT_TO_HAND, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-				} else if(nloc == LOCATION_DECK || nloc == LOCATION_EXTRA) {
-					todeck.insert(pcard);
-					raise_single_event(pcard, 0, EVENT_TO_DECK, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-				} else if(nloc == LOCATION_GRAVE) {
-					if(pcard->current.reason & REASON_RETURN) {
-						retgrave.insert(pcard);
-						raise_single_event(pcard, 0, EVENT_RETURN_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-					} else {
-						tograve.insert(pcard);
-						raise_single_event(pcard, 0, EVENT_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-					}
+			if(nloc == LOCATION_HAND) {
+				tohand.insert(pcard);
+				raise_single_event(pcard, 0, EVENT_TO_HAND, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
+			}
+			if(nloc == LOCATION_DECK || nloc == LOCATION_EXTRA) {
+				todeck.insert(pcard);
+				raise_single_event(pcard, 0, EVENT_TO_DECK, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
+			}
+			if(nloc == LOCATION_GRAVE) {
+				if(pcard->current.reason & REASON_RETURN) {
+					retgrave.insert(pcard);
+					raise_single_event(pcard, 0, EVENT_RETURN_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
+				} else {
+					tograve.insert(pcard);
+					raise_single_event(pcard, 0, EVENT_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
 				}
 			}
 			if(nloc == LOCATION_REMOVED || ((pcard->data.type & TYPE_TOKEN) && pcard->sendto_param.location == LOCATION_REMOVED)) {
@@ -4328,6 +4329,7 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 						&& !(peffect && (peffect->value & TYPE_TRAP)) && ret != 2)
 					resetflag |= RESET_MSCHANGE;
 				target->reset(resetflag, RESET_EVENT);
+				target->clear_card_target();
 			}
 			if(!(target->current.location & LOCATION_ONFIELD))
 				target->clear_relate_effect();
@@ -4404,7 +4406,6 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 		}
 		if((target->previous.location == LOCATION_SZONE) && target->equiping_target)
 			target->unequip();
-		target->clear_card_target();
 		if(target->current.location == LOCATION_MZONE) {
 			effect_set eset;
 			filter_player_effect(0, EFFECT_MUST_USE_MZONE, &eset, FALSE);
@@ -5066,7 +5067,7 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 		}
 		card_set linked_cards;
 		uint32 linked_zone = core.duel_rule >= 4 ? get_linked_zone(playerid) | (1u << 5) | (1u << 6) : 0x1f;
-		get_cards_in_zone(&linked_cards, linked_zone, playerid, LOCATION_MZONE);
+		get_cards_in_zone(&linked_cards, linked_zone & 0xffff, playerid, LOCATION_MZONE);
 		if(linked_cards.find(tuner) != linked_cards.end())
 			ct++;
 		if(smat && linked_cards.find(smat) != linked_cards.end())
@@ -5295,7 +5296,7 @@ int32 field::select_xyz_material(int16 step, uint8 playerid, uint32 lv, card* sc
 		card_set linked_cards;
 		if(ct <= 0) {
 			uint32 linked_zone = core.duel_rule >= 4 ? get_linked_zone(playerid) | (1u << 5) | (1u << 6) : 0x1f;
-			get_cards_in_zone(&linked_cards, linked_zone, playerid, LOCATION_MZONE);
+			get_cards_in_zone(&linked_cards, linked_zone & 0xffff, playerid, LOCATION_MZONE);
 		}
 		for(auto mit = core.operated_set.begin(); mit != core.operated_set.end(); ++mit) {
 			card* pcard = *mit;
@@ -5381,7 +5382,7 @@ int32 field::select_xyz_material(int16 step, uint8 playerid, uint32 lv, card* sc
 		}
 		card_set linked_cards;
 		uint32 linked_zone = core.duel_rule >= 4 ? get_linked_zone(playerid) | (1u << 5) | (1u << 6) : 0x1f;
-		get_cards_in_zone(&linked_cards, linked_zone, playerid, LOCATION_MZONE);
+		get_cards_in_zone(&linked_cards, linked_zone & 0xffff, playerid, LOCATION_MZONE);
 		int32 ft = ct + std::count_if(core.operated_set.begin(), core.operated_set.end(),
 			[=](card* pcard) { return linked_cards.find(pcard) != linked_cards.end(); });
 		if(ft > 0) {
@@ -5564,7 +5565,7 @@ int32 field::select_xyz_material(int16 step, uint8 playerid, uint32 lv, card* sc
 			return FALSE;
 		card_set linked_cards;
 		uint32 linked_zone = core.duel_rule >= 4 ? get_linked_zone(playerid) | (1u << 5) | (1u << 6) : 0x1f;
-		get_cards_in_zone(&linked_cards, linked_zone, playerid, LOCATION_MZONE);
+		get_cards_in_zone(&linked_cards, linked_zone & 0xffff, playerid, LOCATION_MZONE);
 		int32 ft = ct + std::count_if(core.operated_set.begin(), core.operated_set.end(),
 			[=](card* pcard) { return linked_cards.find(pcard) != linked_cards.end(); });
 		if(ft > 0)
