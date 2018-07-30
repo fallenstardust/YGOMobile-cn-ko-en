@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.loader;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.List;
 
@@ -32,15 +31,12 @@ class CardSearchInfo {
             return false;
         }
         if (!TextUtils.isEmpty(word)) {
-            while(word.length()!=0){
-                if(word.startsWith("0")){
-                    word=word.substring(1,word.length());
-                }else{
-                    break;
-                }
-            }
-            if (!((card.Name != null && card.Name.contains(word))
-                    || (card.Desc != null && card.Desc.contains(word))||(card.Code != 0 && (card.Code+"").equals(word)))) {
+            if(TextUtils.isDigitsOnly(word)){
+                //code
+                long code = Long.parseLong(word);
+                return card.Code == code || card.Alias == code;
+            }else if (!((card.Name != null && card.Name.contains(word))
+                    || (card.Desc != null && card.Desc.contains(word)))) {
                 return false;
             }
         } else if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
