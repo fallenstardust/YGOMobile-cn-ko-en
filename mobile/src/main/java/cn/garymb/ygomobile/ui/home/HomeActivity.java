@@ -358,7 +358,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
         addMenuButton(mMenuIds, menu, R.id.action_join_qq_group, R.string.Join_QQ, R.drawable.joinqqgroup);
-        addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.tab_search, R.drawable.search);
+        addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.card_search, R.drawable.search);
         addMenuButton(mMenuIds, menu, R.id.action_deck_manager, R.string.deck_manager, R.drawable.deck);
 
         addMenuButton(mMenuIds, menu, R.id.action_add_server, R.string.action_add_server, R.drawable.addsever);
