@@ -126,20 +126,10 @@ class CardSearchInfo {
         }
         if (types.length > 0) {
             boolean st = false;
-            boolean effect = false;
             for (long cardType : types) {
                 if (cardType == CardType.Spell.value() || cardType == CardType.Trap.value()) {
                     st = true;
                     break;
-                }else if(cardType == CardType.Effect.value()){
-                    effect = true;
-                    break;
-                }
-            }
-
-            if(effect){
-                if (!card.isType(CardType.Effect)) {
-                    return false;
                 }
             }
 
@@ -166,6 +156,18 @@ class CardSearchInfo {
                     if ((card.Type & type) != type) {
                         return false;
                     }
+                    //如果是效果怪兽
+                    if((card.Type & CardType.Effect.value()) == CardType.Effect.value()){
+                        //如果是融合/同调/超量/连接
+                        if((card.Type & CardType.Fusion.value())== CardType.Fusion.value()
+                                ||(card.Type & CardType.Ritual.value()) == CardType.Ritual.value()
+                                ||(card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
+                                ||(card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
+                                ||(card.Type &CardType.Link.value()) == CardType.Link.value()
+                                )
+                            return false;
+                    }
+
                 }
             }
         }

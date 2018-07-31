@@ -17,6 +17,7 @@ public enum CardType {
     Tuner(0x1000),
     Flip(0x200000),
     Toon(0x400000),
+    Sp_Summon(0x2000000),
 
     QuickPlay(0x10000),
     Continuous(0x20000),
