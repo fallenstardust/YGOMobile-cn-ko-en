@@ -126,19 +126,20 @@ class CardSearchInfo {
         }
         if (types.length > 0) {
             boolean st = false;
+            boolean effect = false;
             for (long cardType : types) {
                 if (cardType == CardType.Spell.value() || cardType == CardType.Trap.value()) {
                     st = true;
                     break;
+                }else if(cardType == CardType.Effect.value()){
+                    effect = true;
+                    break;
                 }
             }
 
-            if(types.length == 2){
-                if(types[0] == types[1]){
-                    long type = types[0];
-                    if ((card.Type & type) != type) {
-                        return false;
-                    }
+            if(effect){
+                if (!card.isType(CardType.Effect)) {
+                    return false;
                 }
             }
 
