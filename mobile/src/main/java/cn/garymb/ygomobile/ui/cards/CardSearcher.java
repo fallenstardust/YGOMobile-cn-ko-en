@@ -69,7 +69,7 @@ public class CardSearcher implements View.OnClickListener {
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
 
-    final String[] BtnVals = new String[8];
+    final String[] BtnVals = new String[9];
     int lineKey;
 
     public CardSearcher(View view, ICardLoader dataLoader) {
@@ -141,6 +141,28 @@ public class CardSearcher implements View.OnClickListener {
                         R.id.button_8,
                         R.id.button_9,
                 };
+                int[] enImgs=new int[]{
+                        R.drawable.left_bottom_1,
+                        R.drawable.bottom_1,
+                        R.drawable.right_bottom_1,
+                        R.drawable.left_1,
+                        0,
+                        R.drawable.right_1,
+                        R.drawable.left_top_1,
+                        R.drawable.top_1,
+                        R.drawable.right_top_1,
+                };
+                int[] disImgs=new int[]{
+                        R.drawable.left_bottom_0,
+                        R.drawable.bottom_0,
+                        R.drawable.right_bottom_0,
+                        R.drawable.left_0,
+                        0,
+                        R.drawable.right_0,
+                        R.drawable.left_top_0,
+                        R.drawable.top_0,
+                        R.drawable.right_top_0,
+                };
                 for (int i = 0; i < ids.length; i++) {
                     final int index = i;
                     viewDialog.findViewById(ids[index]).setOnClickListener((btn) -> {
@@ -148,13 +170,15 @@ public class CardSearcher implements View.OnClickListener {
                             String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
                                     + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
                             lineKey = Integer.parseInt(mLinkStr, 2);
-                            builder.dismiss();
+                            if(builder.isShowing()) {
+                                builder.dismiss();
+                            }
                         }else {
                             if ("0".equals(BtnVals[index])) {
-                                btn.setBackgroundResource(R.drawable.left_bottom_1);
+                                btn.setBackgroundResource(enImgs[index]);
                                 BtnVals[index] = "1";
                             } else {
-                                btn.setBackgroundResource(R.drawable.left_bottom_0);
+                                btn.setBackgroundResource(disImgs[index]);
                                 BtnVals[index] = "0";
                             }
                         }

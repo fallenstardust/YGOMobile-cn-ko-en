@@ -83,7 +83,7 @@ dependencies {
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
     //
     implementation(name: 'libWindbot', ext: 'aar')
-    //mycardImplementation(name: 'xwalk_core_library-22.52.561.4', ext: 'aar')
+
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
