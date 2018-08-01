@@ -11,7 +11,7 @@ class CardSearchInfo {
     //名字或者描述
     String word, prefixWord, suffixWord;
     int attribute;
-    int level, ot, pscale=-1;
+    int level, ot, pscale = -1;
     long race, category;
     String atk, def;
     int linkKey;
@@ -31,11 +31,11 @@ class CardSearchInfo {
             return false;
         }
         if (!TextUtils.isEmpty(word)) {
-            if(TextUtils.isDigitsOnly(word)){
+            if (TextUtils.isDigitsOnly(word)) {
                 //code
                 long code = Long.parseLong(word);
                 return card.Code == code || card.Alias == code;
-            }else if (!((card.Name != null && card.Name.contains(word))
+            } else if (!((card.Name != null && card.Name.contains(word))
                     || (card.Desc != null && card.Desc.contains(word)))) {
                 return false;
             }
@@ -157,15 +157,17 @@ class CardSearchInfo {
                         return false;
                     }
                     //如果是效果怪兽
-                    if((card.Type & CardType.Effect.value()) == CardType.Effect.value()){
-                        //如果是融合/仪式/同调/超量/连接
-                        if((card.Type & CardType.Fusion.value())== CardType.Fusion.value()
-                                ||(card.Type & CardType.Ritual.value()) == CardType.Ritual.value()
-                                ||(card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
-                                ||(card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
-                                ||(card.Type &CardType.Link.value()) == CardType.Link.value()
-                                )
-                            return false;
+                    if (type == CardType.Effect.value()) {
+                        if ((card.Type & CardType.Effect.value()) == CardType.Effect.value()) {
+                            //如果是融合/仪式/同调/超量/连接
+                            if ((card.Type & CardType.Fusion.value()) == CardType.Fusion.value()
+                                    || (card.Type & CardType.Ritual.value()) == CardType.Ritual.value()
+                                    || (card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
+                                    || (card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
+                                    || (card.Type & CardType.Link.value()) == CardType.Link.value()
+                                    )
+                                return false;
+                        }
                     }
 
                 }
