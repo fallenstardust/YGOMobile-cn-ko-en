@@ -218,4 +218,5 @@
     <string name="coverSelect">点击相应卡背选择文件</string>
     <string name="bgSelect">点击相应背景选择文件</string>
     <string name="avatarSelect">点击相应头像选择文件</string>
+    <string name="ClickLinkArrows">点亮箭头</string>
 </resources>

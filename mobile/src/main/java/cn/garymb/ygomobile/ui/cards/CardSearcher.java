@@ -1,11 +1,9 @@
 package cn.garymb.ygomobile.ui.cards;
 
 
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.KeyEvent;
@@ -27,6 +25,7 @@ import cn.garymb.ygomobile.loader.ICardLoader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import ocgcore.data.CardSet;
 import ocgcore.data.LimitList;
 import ocgcore.LimitManager;
@@ -126,10 +125,10 @@ public class CardSearcher implements View.OnClickListener {
                 for (int i = 0; i < BtnVals.length; i++) {
                     BtnVals[i] = "0";
                 }
-                Dialog builder = new Dialog(v.getContext());
-                builder.show();
-                LayoutInflater inflater = LayoutInflater.from(v.getContext());
-                View viewDialog = inflater.inflate(R.layout.item_linkmarker, null);
+                DialogPlus viewDialog = new DialogPlus(mContext);
+                viewDialog.setContentView(R.layout.item_linkmarker);
+                viewDialog.setTitle(R.string.ClickLinkArrows);
+                viewDialog.show();
                 int[] ids = new int[]{
                         R.id.button_1,
                         R.id.button_2,
@@ -141,7 +140,7 @@ public class CardSearcher implements View.OnClickListener {
                         R.id.button_8,
                         R.id.button_9,
                 };
-                int[] enImgs=new int[]{
+                int[] enImgs = new int[]{
                         R.drawable.left_bottom_1,
                         R.drawable.bottom_1,
                         R.drawable.right_bottom_1,
@@ -152,7 +151,7 @@ public class CardSearcher implements View.OnClickListener {
                         R.drawable.top_1,
                         R.drawable.right_top_1,
                 };
-                int[] disImgs=new int[]{
+                int[] disImgs = new int[]{
                         R.drawable.left_bottom_0,
                         R.drawable.bottom_0,
                         R.drawable.right_bottom_0,
@@ -170,8 +169,8 @@ public class CardSearcher implements View.OnClickListener {
                             String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
                                     + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
                             lineKey = Integer.parseInt(mLinkStr, 2);
-                            if(builder.isShowing()) {
-                                builder.dismiss();
+                            if(viewDialog.isShowing()) {
+                                viewDialog.dismiss();
                             }
                         }else {
                             if ("0".equals(BtnVals[index])) {
@@ -184,8 +183,6 @@ public class CardSearcher implements View.OnClickListener {
                         }
                     });
                 }
-                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(600, 600);
-                builder.setContentView(viewDialog, layoutParams);
             }
 
         });

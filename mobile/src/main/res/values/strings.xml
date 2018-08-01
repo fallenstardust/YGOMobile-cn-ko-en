@@ -221,4 +221,5 @@
     <string name="coverSelect">click covers and select files</string>
     <string name="bgSelect">click background and select files</string>
     <string name="avatarSelect">click avatar and select files</string>
-</resources>
+    <string name="ClickLinkArrows">click link arrows</string>
+    </resources>
