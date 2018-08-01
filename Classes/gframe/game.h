@@ -641,6 +641,8 @@ extern Game* mainGame;
 
 #define DEFAULT_DUEL_RULE			4
 
+#define CARD_ARTWORK_VERSIONS_OFFSET	10
+
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000
 #endif

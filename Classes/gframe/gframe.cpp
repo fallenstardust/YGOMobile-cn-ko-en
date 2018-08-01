@@ -59,7 +59,8 @@ int main(int argc, char* argv[]) {
 				event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
 				ygo::mainGame->device->postEventFromUser(event);
 		} else if(!strcmp(argv[i], "-j")) { // Join host
-				ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+		        event.GUIEvent.Caller = ygo::mainGame->btnDeckEdit;
+		//		ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 				ygo::mainGame->device->postEventFromUser(event);
 		} else if(!strcmp(argv[i], "-r")) { // Replay
 				event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;

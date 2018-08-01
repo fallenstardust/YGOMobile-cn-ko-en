@@ -1305,7 +1305,7 @@ void Game::MainLoop() {
 			driver->draw2DImage(imageManager.tBackGround, recti(0 * xScale, 0 * yScale, 1280 * xScale, 720 * yScale), recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
 #endif
 		gMutex.Lock();
-		if(dInfo.isStarted || dInfo.isReplaySkiping) {
+		if(dInfo.isStarted) {
 			DrawBackImage(imageManager.tBackGround);
 			DrawBackGround();
 			DrawCards();
@@ -1725,7 +1725,7 @@ void Game::ShowCardInfo(int code) {
 		memset(&cd, 0, sizeof(CardData));
 	imgCard->setImage(imageManager.GetTexture(code));
 	imgCard->setScaleImage(true);
-	if(cd.alias != 0 && (cd.alias - code < 10 || code - cd.alias < 10))
+	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
 	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	stName->setText(formatBuffer);
