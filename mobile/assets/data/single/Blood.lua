@@ -1,6 +1,6 @@
 --test
 Debug.SetAIName("命运英雄 血魔-D")
-Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI)
+Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI,4)
 Debug.SetPlayerInfo(0,100,0,0)
 Debug.SetPlayerInfo(1,8000,0,0)
 local c=Debug.AddCard(48333324,1,1,LOCATION_EXTRA,0,POS_FACEUP_ATTACK) --源数

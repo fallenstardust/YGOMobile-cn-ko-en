@@ -1,6 +1,6 @@
 
 Debug.SetAIName("暗黒界の戦士達")
-Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI)
+Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI,4)
 
 Debug.SetPlayerInfo(0,600,0,0)
 Debug.SetPlayerInfo(1,7000,0,0)
