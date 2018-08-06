@@ -3,11 +3,11 @@
 #include "materials.h"
 #include "image_manager.h"
 #include "single_mode.h"
-#include "../ocgcore/field.h"
-#include "../ocgcore/duel.h"
+#include "../ocgcore/common.h"
 #include "game.h"
 #include "replay.h"
 #include "replay_mode.h"
+#include <algorithm>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/android_tools.h>
 #endif

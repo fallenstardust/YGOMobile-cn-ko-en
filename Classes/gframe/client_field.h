@@ -4,6 +4,7 @@
 #include "config.h"
 #include <vector>
 #include <set>
+#include <map>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #endif
