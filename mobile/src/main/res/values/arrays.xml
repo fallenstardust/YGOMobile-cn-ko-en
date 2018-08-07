@@ -29,5 +29,6 @@
         <item>Keep playing and learning, you will be stronger soon.even you are beginner and returner</item>
         <item>Long-pressing the card you wanna delete in vertical deck editor</item>
         <item>Long-pressing the password record, it'll be deleted</item>
+        <item>If change avatars(cover or bg)  failed, try to find artworks in “gallery” or "file manager"</item>
     </string-array>
 </resources>
