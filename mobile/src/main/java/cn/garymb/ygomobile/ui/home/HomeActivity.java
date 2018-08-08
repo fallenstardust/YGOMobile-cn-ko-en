@@ -10,7 +10,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -28,10 +27,7 @@ import com.base.bj.trpayjar.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.pgyersdk.update.DownloadFileListener;
 import com.pgyersdk.update.PgyUpdateManager;
-import com.pgyersdk.update.UpdateManagerListener;
-import com.pgyersdk.update.javabean.AppBean;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -93,17 +89,19 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
             @Override
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
-                if(arg0){
-                  //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
-                }else{
+                if (arg0) {
+                    //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
+                } else {
                     Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
                 }
             }
+
             @Override
-            public void onCoreInitFinished() { }
+            public void onCoreInitFinished() {
+            }
         };
         //x5内核初始化接口
-        QbSdk.initX5Environment(this,  cb);
+        QbSdk.initX5Environment(this, cb);
 
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");

@@ -222,4 +222,5 @@
     <string name="bgSelect">click background and select files</string>
     <string name="avatarSelect">click avatar and select files</string>
     <string name="ClickLinkArrows">click link arrows</string>
+    <string name="Already_Lastest">Already be the Lastest Version</string>
     </resources>
