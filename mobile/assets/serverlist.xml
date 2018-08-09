@@ -26,7 +26,7 @@
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>阔以Shi正式卡服</name>
-        <ip>koishi.ygopro.cn</ip>
+        <ip>sekka.ygopro.cn</ip>
         <port>7210</port>
         <keep>true</keep>
     </server>
