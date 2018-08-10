@@ -21,18 +21,15 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     productFlavors {
-        en{
+        en {
             applicationId "cn.garymb.ygomobile.EN"
             versionName "EN3.3.3"
-            assets.srcDirs = ['assets_en']
+            //assets.srcDirs = ['assets_en']
         }
-        ko{
+        ko {
             applicationId "cn.garymb.ygomobile.ko"
             versionName "KO3.3.3"
-            assets.srcDirs = ['assets_ko']
-        }
-        core {
-            applicationIdSuffix ""
+            //assets.srcDirs = ['assets_ko']
         }
         mycard {
         }
