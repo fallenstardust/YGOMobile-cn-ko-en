@@ -609,45 +609,9 @@ bool Game::Initialize() {
 	btnOptionOK = env->addButton(rect<s32>(130 * xScale, 115 * yScale, 260 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_OK, dataManager.GetSysString(1211));
 	btnOptionp = env->addButton(rect<s32>(20 * xScale, 115 * yScale, 100 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_PREV, L"<<<");
 	btnOptionn = env->addButton(rect<s32>(290 * xScale, 115 * yScale, 370 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_NEXT, L">>>");
-#else
-	wFTSelect = env->addWindow(rect<s32>(550 * xScale, 240 * yScale, 780 * xScale, 340 * yScale), false, L"");
-	wFTSelect->getCloseButton()->setVisible(false);
-	wFTSelect->setVisible(false);
-	btnFirst = env->addButton(rect<s32>(10 * xScale, 30 * yScale, 220 * xScale, 55 * yScale), wFTSelect, BUTTON_FIRST, dataManager.GetSysString(100));
-	btnSecond = env->addButton(rect<s32>(10 * xScale, 60 * yScale, 220 * xScale, 85 * yScale), wFTSelect, BUTTON_SECOND, dataManager.GetSysString(101));
-
-	wMessage = env->addWindow(rect<s32>(490 * xScale, 200 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1216));
-	wMessage->getCloseButton()->setVisible(false);
-	wMessage->setVisible(false);
-	stMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wMessage, -1, false);
-	stMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 105 * yScale, 220 * xScale, 130 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
-	//auto fade message (310)
-	wACMessage = env->addWindow(rect<s32>(490 * xScale, 240 * yScale, 840 * xScale, 300 * yScale), false, L"");
-	wACMessage->getCloseButton()->setVisible(false);
-	wACMessage->setVisible(false);
-	wACMessage->setDrawBackground(false);
-	stACMessage = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 350 * xScale, 60 * yScale), true, true, wACMessage, -1, true);
-	stACMessage->setBackgroundColor(0x6011113d);
-	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	//yes/no (310)
-	wQuery = env->addWindow(rect<s32>(490 * xScale, 200 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(560));
-	wQuery->getCloseButton()->setVisible(false);
-	wQuery->setVisible(false);
-	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wQuery, -1, false);
-	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnYes = env->addButton(rect<s32>(100 * xScale, 105 * yScale, 150 * xScale, 130 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
-	btnNo = env->addButton(rect<s32>(200 * xScale, 105 * yScale, 250 * xScale, 130 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
-
-	//options (310)
-	wOptions = env->addWindow(rect<s32>(490 * xScale, 200 * yScale, 840 * xScale, 340 * yScale), false, L"");
-	wOptions->getCloseButton()->setVisible(false);
-	wOptions->setVisible(false);
-	stOptions =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wOptions, -1, false);
-	stOptions->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnOptionOK = env->addButton(rect<s32>(130 * xScale, 105 * yScale, 220 * xScale, 130 * yScale), wOptions, BUTTON_OPTION_OK, dataManager.GetSysString(1211));
-	btnOptionp = env->addButton(rect<s32>(20 * xScale, 105 * yScale, 60 * xScale, 130 * yScale), wOptions, BUTTON_OPTION_PREV, L"<<<");
-	btnOptionn = env->addButton(rect<s32>(290 * xScale, 105 * yScale, 330 * xScale, 130 * yScale), wOptions, BUTTON_OPTION_NEXT, L">>>");
+    for(int i = 0; i < 5; ++i) {
+		btnOption[i] = env->addButton(rect<s32>(10 * xScale, (30 + 40 * i) * yScale, 340 * xScale, (60 + 40 * i) * yScale), wOptions, BUTTON_OPTION_0 + i, L"");
+	}
 #endif
 	//pos select
 	wPosSelect = env->addWindow(rect<s32>(340 * xScale, 200 * yScale, 935 * xScale, 410 * yScale), false, dataManager.GetSysString(561));
@@ -668,8 +632,6 @@ bool Game::Initialize() {
 	//card select
 #ifdef _IRR_ANDROID_PLATFORM_
 	wCardSelect = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 1000 * xScale, 430 * yScale), false, L"");
-#else
-	wCardSelect = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 1000 * xScale, 400 * yScale), false, L"");
 #endif
 	wCardSelect->getCloseButton()->setVisible(false);
 	wCardSelect->setVisible(false);

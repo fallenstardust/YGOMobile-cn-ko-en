@@ -1323,21 +1323,8 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->dField.select_options.clear();
 		for (int i = 0; i < count; ++i)
 			mainGame->dField.select_options.push_back(BufferIO::ReadInt32(pbuf));
-		mainGame->gMutex.Lock();
-		mainGame->SetStaticText(mainGame->stOptions, 310 * mainGame->xScale, mainGame->textFont,
-		                        (wchar_t*)dataManager.GetDesc(mainGame->dField.select_options[0]));
-		mainGame->btnOptionp->setVisible(false);
-		if(count > 1)
-			mainGame->btnOptionn->setVisible(true);
-		else mainGame->btnOptionn->setVisible(false);
-		mainGame->dField.selected_option = 0;
-		if(select_hint)
-			myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
-		else myswprintf(textBuffer, dataManager.GetSysString(555));
+		mainGame->dField.ShowSelectOption(select_hint);
 		select_hint = 0;
-		mainGame->wOptions->setText(textBuffer);
-		mainGame->PopupElement(mainGame->wOptions);
-		mainGame->gMutex.Unlock();
 		return false;
 	}
 	case MSG_SELECT_CARD: {
@@ -3406,13 +3393,13 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		list<IGUIElement*> children = mainGame->wANAttribute->getChildren();
 		int count = children.size();
 		int i = 0;
-		int filter = 0x1;//属性种族宣言fixme
+		int filter = 0x1;
 		list<IGUIElement*>::Iterator current = children.begin();
 		contents = (char **) malloc(count * sizeof(char *));
 		do {
 			if ((*current)->getType() == EGUIET_CHECK_BOX) {
 				content = (char *) malloc(256 * 4);
-				if (filter & available) {//属性种族宣言fixme
+				if (filter & available) {
 				BufferIO::EncodeUTF8(((IGUICheckBox*) (*current))->getText(),
 						content);
 				}
