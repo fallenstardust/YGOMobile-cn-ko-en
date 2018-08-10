@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <cn.garymb.ygomobile.ui.online.MyCardWebView
+        <cn.garymb.ygomobile.ui.mycard.MyCardWebView
             android:id="@+id/webbrowser"
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
@@ -28,7 +28,7 @@
                 android:layout_height="5px"
                 />
 
-        </cn.garymb.ygomobile.ui.online.MyCardWebView>
+        </cn.garymb.ygomobile.ui.mycard.MyCardWebView>
 
     </RelativeLayout>
 

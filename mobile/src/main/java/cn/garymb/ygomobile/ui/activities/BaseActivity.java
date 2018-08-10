@@ -16,12 +16,10 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
+
 
 public class BaseActivity extends AppCompatActivity {
     private final static int REQUEST_PERMISSIONS = 0x1000 + 1;
