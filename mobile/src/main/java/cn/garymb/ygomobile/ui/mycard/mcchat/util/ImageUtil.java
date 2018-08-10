@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.online.mcchat.util;
+package cn.garymb.ygomobile.ui.mycard.mcchat.util;
 import android.net.Uri;
 import android.widget.*;
 import com.bumptech.glide.*;

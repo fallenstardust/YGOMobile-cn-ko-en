@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.online;
+package cn.garymb.ygomobile.ui.mycard;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
-import android.view.View;
 import android.webkit.JavascriptInterface;
 
 import com.tencent.smtt.sdk.WebView;

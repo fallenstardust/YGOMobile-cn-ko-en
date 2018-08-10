@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.online.mcchat;
+package cn.garymb.ygomobile.ui.mycard.mcchat;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,10 +14,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.online.MyCardActivity;
-import cn.garymb.ygomobile.ui.online.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.online.mcchat.util.Util;
+import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 
 public class SplashActivity extends Activity {
 

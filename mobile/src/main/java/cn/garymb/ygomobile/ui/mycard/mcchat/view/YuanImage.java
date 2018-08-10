@@ -1,6 +1,6 @@
-package cn.garymb.ygomobile.ui.online.mcchat.view;
+package cn.garymb.ygomobile.ui.mycard.mcchat.view;
+
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -12,15 +12,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.widget.ImageView;
 
 
 /*
  * 圆形ImageView
  */
 public class YuanImage extends android.support.v7.widget.AppCompatImageView {
-   
+
     private Context mContext;
     // 控件默认长、宽
     private int defaultWidth = 0;
@@ -43,7 +41,7 @@ public class YuanImage extends android.support.v7.widget.AppCompatImageView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Drawable drawable = getDrawable() ; 
+        Drawable drawable = getDrawable();
         if (drawable == null) {
             return;
         }
@@ -68,6 +66,7 @@ public class YuanImage extends android.support.v7.widget.AppCompatImageView {
 
     /**
      * 获取裁剪后的圆形图片
+     *
      * @param radius 半径
      */
     public Bitmap getCroppedRoundBitmap(Bitmap bmp, int radius) {
@@ -89,31 +88,31 @@ public class YuanImage extends android.support.v7.widget.AppCompatImageView {
             squareWidth = squareHeight = bmpHeight;
             x = (bmpWidth - bmpHeight) / 2;
             y = 0;
-            squareBitmap = Bitmap.createBitmap(bmp, x, y, squareWidth,squareHeight);
+            squareBitmap = Bitmap.createBitmap(bmp, x, y, squareWidth, squareHeight);
         } else {
             squareBitmap = bmp;
         }
         if (squareBitmap.getWidth() != diameter || squareBitmap.getHeight() != diameter) {
-            scaledSrcBmp = Bitmap.createScaledBitmap(squareBitmap, diameter,diameter, true);
+            scaledSrcBmp = Bitmap.createScaledBitmap(squareBitmap, diameter, diameter, true);
         } else {
             scaledSrcBmp = squareBitmap;
         }
         Bitmap output = Bitmap.createBitmap(scaledSrcBmp.getWidth(),
-                                            scaledSrcBmp.getHeight(), 
-                                            Config.ARGB_8888);
+                scaledSrcBmp.getHeight(),
+                Config.ARGB_8888);
         Canvas canvas = new Canvas(output);
 
         Paint paint = new Paint();
-        Rect rect = new Rect(0, 0, scaledSrcBmp.getWidth(),scaledSrcBmp.getHeight());
+        Rect rect = new Rect(0, 0, scaledSrcBmp.getWidth(), scaledSrcBmp.getHeight());
 
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
         paint.setDither(true);
         canvas.drawARGB(0, 0, 0, 0);
         canvas.drawCircle(scaledSrcBmp.getWidth() / 2,
-                          scaledSrcBmp.getHeight() / 2, 
-                          scaledSrcBmp.getWidth() / 2,
-                          paint);
+                scaledSrcBmp.getHeight() / 2,
+                scaledSrcBmp.getWidth() / 2,
+                paint);
         paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
         canvas.drawBitmap(scaledSrcBmp, rect, rect, paint);
         bmp = null;

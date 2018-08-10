@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.online;
+package cn.garymb.ygomobile.ui.mycard;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -30,7 +30,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.online.mcchat.SplashActivity;
+import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 

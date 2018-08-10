@@ -27,11 +27,11 @@ android {
             //assets.srcDirs = ['assets_en']
         }
         ko {
-            applicationId "cn.garymb.ygomobile.ko"
+            applicationId "cn.garymb.ygomobile.KO"
             versionName "KO3.3.3"
             //assets.srcDirs = ['assets_ko']
         }
-        mycard {
+        cn {
         }
     }
     buildTypes {

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.online.mcchat;
+package cn.garymb.ygomobile.ui.mycard.mcchat;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -14,10 +14,10 @@ import android.widget.TextView;
 import org.jivesoftware.smack.packet.Message;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.online.mcchat.adapter.ChatAdapter;
-import cn.garymb.ygomobile.ui.online.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.online.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.online.mcchat.util.Util;
+import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 
 public class McchatActivity extends Activity implements ChatListener {
 

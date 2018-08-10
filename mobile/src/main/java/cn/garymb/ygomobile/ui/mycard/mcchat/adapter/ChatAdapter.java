@@ -1,19 +1,25 @@
-package cn.garymb.ygomobile.ui.online.mcchat.adapter;
+package cn.garymb.ygomobile.ui.mycard.mcchat.adapter;
 
-import android.content.*;
-import android.support.v7.widget.*;
-import android.view.*;
-import android.widget.*;
-import android.view.View.*;
+import android.app.Activity;
+import android.content.Context;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import java.util.*;
+import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.online.mcchat.*;
-import cn.garymb.ygomobile.ui.online.mcchat.util.*;
-import cn.garymb.ygomobile.ui.online.mcchat.management.*;
+import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 
-import android.app.*;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private List<ChatMessage> data;
@@ -74,8 +80,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
             @Override
             public boolean onLongClick(View p1) {
-                Util.fzMessage(context,cm.getMessage());
-                Util.show(context,"已复制到剪贴板");
+                Util.fzMessage(context, cm.getMessage());
+                Util.show(context, "已复制到剪贴板");
                 // TODO: Implement this method
                 return true;
             }

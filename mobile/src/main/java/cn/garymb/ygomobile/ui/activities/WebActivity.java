@@ -6,11 +6,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.webkit.WebView;
-
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 
 public class WebActivity extends BaseActivity {
