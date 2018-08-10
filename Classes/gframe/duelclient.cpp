@@ -2349,7 +2349,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		int cs = BufferIO::ReadInt8(pbuf);
 		int cp = BufferIO::ReadInt8(pbuf);
 		int reason = BufferIO::ReadInt32(pbuf);
-		if (reason &= REASON_DESTROY) {
+		if (!mainGame->dInfo.isReplaySkiping && reason & REASON_DESTROY && pl != cl) {
 			mainGame->soundEffectPlayer->doDestroyEffect();
 		}
 		if (pl == 0) {
@@ -3353,13 +3353,13 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		list<IGUIElement*> children = mainGame->wANRace->getChildren();
 		int count = children.size();
 		int i = 0;
-		int filter = 0x1;//ÊôÐÔÖÖ×åÐûÑÔfixme
+		int filter = 0x1;//å±žæ€§ç§æ—å®£è¨€fixme
 		list<IGUIElement*>::Iterator current = children.begin();
 		contents = (char **) malloc(count * sizeof(char *));
 		do {
 			if ((*current)->getType() == EGUIET_CHECK_BOX) {
 				content = (char *) malloc(256 * 4);
-				if (filter & available) {//ÊôÐÔÖÖ×åÐûÑÔfixme
+				if (filter & available) {//å±žæ€§ç§æ—å®£è¨€fixme
 				BufferIO::EncodeUTF8(((IGUICheckBox*) (*current))->getText(),
 						content);
 				}
@@ -3406,13 +3406,13 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		list<IGUIElement*> children = mainGame->wANAttribute->getChildren();
 		int count = children.size();
 		int i = 0;
-		int filter = 0x1;//ÊôÐÔÖÖ×åÐûÑÔfixme
+		int filter = 0x1;//å±žæ€§ç§æ—å®£è¨€fixme
 		list<IGUIElement*>::Iterator current = children.begin();
 		contents = (char **) malloc(count * sizeof(char *));
 		do {
 			if ((*current)->getType() == EGUIET_CHECK_BOX) {
 				content = (char *) malloc(256 * 4);
-				if (filter & available) {//ÊôÐÔÖÖ×åÐûÑÔfixme
+				if (filter & available) {//å±žæ€§ç§æ—å®£è¨€fixme
 				BufferIO::EncodeUTF8(((IGUICheckBox*) (*current))->getText(),
 						content);
 				}
