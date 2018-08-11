@@ -21,17 +21,12 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     productFlavors {
+        cn {}
         en {
-            applicationId "cn.garymb.ygomobile.EN"
-            versionName "EN3.3.4"
-            //assets.srcDirs = ['assets_en']
+            applicationIdSuffix ".EN"
         }
         ko {
-            applicationId "cn.garymb.ygomobile.KO"
-            versionName "KO3.3.4"
-            //assets.srcDirs = ['assets_ko']
-        }
-        cn {
+            applicationIdSuffix ".KO"
         }
     }
     buildTypes {
@@ -50,6 +45,13 @@ android {
         main {
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
+        }
+        cn {}
+        en {
+            assets.srcDirs = ['assets_en']
+        }
+        ko {
+            assets.srcDirs = ['assets_ko']
         }
     }
     lintOptions {

@@ -1,0 +1,41 @@
+{
+  "welcome": [
+    "안녕하세요. 저는 AI 입니다.",
+    "AI 기능은 테스트 중이며, 해당 문제에 맞게 피드백을 주시면 되겠습니다.",
+    "난 모케모케란 말이다……"
+  ],
+  "deckerror": [
+    "죄송하지만 {0}이(가) 맞지 않습니다."
+  ],
+  "duelstart": [
+    "모케에에에에에에!"
+  ],
+  "newturn": [
+    ""
+  ],
+  "endturn": [
+    ""
+  ],
+  "directattack": [
+    ""
+  ],
+  "attack": [
+    ""
+  ],
+  "ondirectattack": [
+    "뿌우우우우우!"
+  ],
+  "facedownmonstername": "몬스터",
+  "activate": [
+    "{0} 발동!"
+  ],
+  "summon": [
+    ""
+  ],
+  "setmonster": [
+    ""
+  ],
+  "chaining": [
+    ""
+  ]
+}
