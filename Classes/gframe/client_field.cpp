@@ -619,7 +619,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(i < count);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		int newheight = 30 + 40 * count;
+		int newheight = (30 + 40 * count) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
@@ -634,7 +634,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 140;
+		pos.LowerRightCorner.Y = ((pos.UpperLeftCorner.Y / mainGame->yScale) + 140) * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
 	}
 	if(select_hint)
