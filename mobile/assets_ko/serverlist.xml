@@ -18,7 +18,7 @@
     </server>
     <server>
         <player-name>fresh_meat</player-name>
-        <name>YGOPRO WindBot Online</name>
+        <name>YGOPRO WindBot O/T Prerelease Online</name>
         <ip>s1.ygo233.com</ip>
         <port>9999</port>
         <keep>true</keep>
