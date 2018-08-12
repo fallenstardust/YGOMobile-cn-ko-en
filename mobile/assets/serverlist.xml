@@ -9,13 +9,13 @@
         <port>233</port>
         <keep>true</keep>
     </server>
-    <server>
+    <!--server>
         <player-name>Knight of Hanoi</player-name>
         <name>233在线OT混先行卡AI练习</name>
         <ip>s1.ygo233.com</ip>
         <port>9999</port>
         <keep>true</keep>
-    </server>
+    </server-->
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>C萌约战</name>
