@@ -1547,6 +1547,15 @@ void SingleDuel::RefreshSingle(int player, int location, int sequence, int flag)
 			NetServer::ReSendToPlayer(*pit);
 	}
 }
+byte* SingleDuel::ScriptReaderEx(const char* script_name, int* slen) {
+	char sname[256] = "./expansions";
+	strcat(sname, script_name + 1);//default script name: ./script/c%d.lua
+	byte* buffer = default_script_reader(sname, slen);
+	if(buffer)
+		return buffer;
+	else
+		return default_script_reader(script_name, slen);
+}
 int SingleDuel::MessageHandler(long fduel, int type) {
 	if(!enable_log)
 		return 0;

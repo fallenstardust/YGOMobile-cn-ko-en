@@ -744,14 +744,10 @@ int32 interpreter::load_card_script(uint32 code) {
 		lua_pushstring(current_state, "__index");
 		lua_pushvalue(current_state, -2);
 		lua_rawset(current_state, -3);
-		//load extra scripts
-		sprintf(script_name, "./expansions/script/c%d.lua", code);
-		if (!load_script(script_name)) {
-			sprintf(script_name, "./script/c%d.lua", code);
-	 		if (!load_script(script_name)) {
-	 			return OPERATION_FAIL;
- 			}
-  		}
+		sprintf(script_name, "./script/c%d.lua", code);
+		if(!load_script(script_name)) {
+			return OPERATION_FAIL;
+		}
 	}
 	return OPERATION_SUCCESS;
 }
@@ -1178,6 +1174,14 @@ int32 interpreter::clone_function_ref(int32 func_ref) {
 	lua_rawgeti(current_state, LUA_REGISTRYINDEX, func_ref);
 	int32 ref = luaL_ref(current_state, LUA_REGISTRYINDEX);
 	return ref;
+}
+void* interpreter::get_ref_object(int32 ref_handler) {
+	if(ref_handler == 0)
+		return nullptr;
+	lua_rawgeti(current_state, LUA_REGISTRYINDEX, ref_handler);
+	void* p = *(void**)lua_touserdata(current_state, -1);
+	lua_pop(current_state, 1);
+	return p;
 }
 //Convert a pointer to a lua value, +1 -0
 void interpreter::card2value(lua_State* L, card* pcard) {
