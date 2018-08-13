@@ -634,7 +634,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		pos.LowerRightCorner.Y = ((pos.UpperLeftCorner.Y / mainGame->yScale) + 140) * mainGame->yScale;
+		pos.LowerRightCorner.Y = ((pos.UpperLeftCorner.Y / mainGame->yScale) + 180) * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
 	}
 	if(select_hint)
