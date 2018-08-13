@@ -65,13 +65,13 @@ int ReplayMode::ReplayThread(void* param) {
 	mainGame->dInfo.tag_player[1] = false;
 	if(mainGame->dInfo.isSingleMode) {
 #ifdef _IRR_ANDROID_PLATFORM_
-	set_script_reader(irr::android::android_script_reader);
+	set_script_reader((script_reader)SingleMode::ScriptReaderEx);
 #endif
 		set_card_reader((card_reader)DataManager::CardReader);
 		set_message_handler((message_handler)MessageHandler);
 	} else {
 #ifdef _IRR_ANDROID_PLATFORM_
-	set_script_reader(irr::android::android_script_reader);
+	set_script_reader((script_reader)ScriptReaderEx);
 #endif
 		set_card_reader((card_reader)DataManager::CardReader);
 		set_message_handler((message_handler)MessageHandler);
@@ -938,6 +938,15 @@ void ReplayMode::ReplayReload() {
 	mainGame->dField.UpdateFieldCard(mainGame->LocalPlayer(0), LOCATION_REMOVED, (char*)queryBuffer);
 	/*len = */query_field_card(pduel, 1, LOCATION_REMOVED, flag, queryBuffer, 0);
 	mainGame->dField.UpdateFieldCard(mainGame->LocalPlayer(1), LOCATION_REMOVED, (char*)queryBuffer);
+}
+byte* ReplayMode::ScriptReaderEx(const char* script_name, int* slen) {
+	char sname[256] = "./expansions";
+	strcat(sname, script_name + 1);//default script name: ./script/c%d.lua
+	byte* buffer = irr::android::android_script_reader(sname, slen);
+	if(buffer)
+		return buffer;
+	else
+		return irr::android::android_script_reader(script_name, slen);
 }
 int ReplayMode::MessageHandler(long fduel, int type) {
 	if(!enable_log)
