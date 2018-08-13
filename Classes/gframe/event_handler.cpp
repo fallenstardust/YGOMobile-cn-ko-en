@@ -868,7 +868,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					else if(conti_selecting)
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
-						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[0]);
+						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler]);
 					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->xScale, 55 * mainGame->xScale, (30 + 120 + i * 125)  * mainGame->xScale, 225  * mainGame->yScale));
 					// text
 					wchar_t formatBuffer[2048];
@@ -929,7 +929,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(display_cards[i + pos]->code)
 						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTexture(display_cards[i + pos]->code));
 					else
-						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[0]);
+						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler]);
 					mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((30 + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
 					wchar_t formatBuffer[2048];
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
@@ -993,7 +993,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->ShowCardInfo(mcard->code);
 				} else {
 					mainGame->imgCard->setScaleImage(true);
-					mainGame->imgCard->setImage(imageManager.tCover[0]);
+					mainGame->imgCard->setImage(imageManager.tCover[mcard->controler]);
 					mainGame->stName->setText(L"");
 					mainGame->stInfo->setText(L"");
 					mainGame->stDataInfo->setText(L"");
@@ -1008,7 +1008,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				if(mcard->code) {
 					mainGame->ShowCardInfo(mcard->code);
 				} else {
-					mainGame->imgCard->setImage(imageManager.tCover[0]);
+					mainGame->imgCard->setImage(imageManager.tCover[mcard->controler]);
 					mainGame->stName->setText(L"");
 					mainGame->stInfo->setText(L"");
 					mainGame->stDataInfo->setText(L"");
@@ -1592,7 +1592,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						}
 					} else {
 						should_show_tip = false;
-						mainGame->imgCard->setImage(imageManager.tCover[0]);
+						mainGame->imgCard->setImage(imageManager.tCover[mcard->controler]);
 						mainGame->imgCard->setScaleImage(true);
 						mainGame->stName->setText(L"");
 						mainGame->stInfo->setText(L"");
