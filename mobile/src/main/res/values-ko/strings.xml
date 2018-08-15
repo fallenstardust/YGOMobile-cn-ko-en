@@ -90,7 +90,7 @@
     <string name="deck_manager">덱관리자</string>
     <string name="search">검색</string>
     <string name="search_open">카드옵션 선택</string>
-    <string name="search_close">카드옵션 닫기</string>
+    <string name="search_close">닫기</string>
     <string name="reset">초기화</string>
     <string name="hit_keyword1">검색어 1</string>
     <string name="hit_keyword2">검색어 2</string>
@@ -146,7 +146,7 @@
     <string name="share_deck">덱공유</string>
     <string name="no_share_app">공유할 앱을 찾지못했습니다.</string>
     <string name="intput_room_name">방 코드를 입력하세요.(미 입력시 랜덤대전)</string>
-    <string name="join">가입</string>
+    <string name="join">입장</string>
     <string name="quick_join">게임입장\"</string>
     <string name="join_game">게임입장</string>
     <string name="settings_game_sensor_refresh">센서 새로고침</string>
@@ -212,7 +212,7 @@
         \n그후 YGOMobile의 다른앱 표시 권한이 혀용되어 있는지 확인하십시오.</string>
     <string name="OpenTIP">빠른 사용법</string>
     <string name="Open_Alert_Window">애플리케이션 관리</string>
-    <string name="Function_Menu">특징 메뉴</string>
+    <string name="Function_Menu">메뉴</string>
     <string name="Join_QQ">QQ Group</string>
     <string name="donatefor">기부를 통해 자동갱신 서버 비용을 지출하고 업데이트된 자료와 이미지를 정리하고 최신 디바이스에 대한 호환성있는 제작을 위해 디바이스들을 구입하는 것에 도움을 주실 수 있습니다.</string>
     <string name="coverSelect">카드 커버로 사용할 이미지를 선택하세요.</string>
