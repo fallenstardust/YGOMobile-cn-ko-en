@@ -194,7 +194,7 @@ public class ServiceDuelAssistant extends Service {
         intent1.putExtra("port", dk);
         intent1.putExtra("user", name);
         intent1.putExtra("room", password);
-        intent1.setPackage("cn.garymb.ygomobile");
+        //intent1.setPackage("cn.garymb.ygomobile");
         intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent1);
     }
