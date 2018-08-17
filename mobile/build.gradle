@@ -21,12 +21,16 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     productFlavors {
-        cn {}
+        cn {
+            manifestPlaceholders=[PGYER_APPID:"dd147e8542b85a64111d98290892d8bd"]
+        }
         en {
             applicationIdSuffix ".EN"
+            manifestPlaceholders=[PGYER_APPID:"242ad8311ed1c943f48cfc8238d06210"]
         }
         ko {
             applicationIdSuffix ".KO"
+            manifestPlaceholders=[PGYER_APPID:"8e985218b1f02bda5fa456557c886f54"]
         }
     }
     buildTypes {
