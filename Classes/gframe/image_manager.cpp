@@ -179,8 +179,8 @@ irr::video::ITexture* ImageManager::GetTextureFromFile(char* file, s32 width, s3
 irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(code == 0)
 		return tUnknown;
-	int width = CARD_IMG_WIDTH * mainGame->xScale;
-	int height = CARD_IMG_HEIGHT * mainGame->yScale;
+	int width = CARD_IMG_WIDTH;
+	int height = CARD_IMG_HEIGHT;
 	auto tit = tMap.find(code);
 	if(tit == tMap.end()) {
 		char file[256];
@@ -262,18 +262,18 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(tit == tFields.end()) {
 		char file[256];
 		sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-		irr::video::ITexture* img = GetTextureFromFile(file, 512 * mainGame->xScale, 512 * mainGame->yScale);
+		irr::video::ITexture* img = GetTextureFromFile(file, 512, 512);
 		if(img == NULL) {
 			sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = GetTextureFromFile(file, 512 * mainGame->xScale, 512 * mainGame->yScale);
+			img = GetTextureFromFile(file, 512, 512);
 		}
 		if(img == NULL) {
 			sprintf(file,  "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = GetTextureFromFile(file, 512 * mainGame->xScale, 512 * mainGame->yScale);
+			img = GetTextureFromFile(file, 512, 512);
 		}
 		if(img == NULL) {
 			sprintf(file, "pics/field/%d.jpg", code);
-			img = GetTextureFromFile(file, 512 * mainGame->xScale, 512 * mainGame->yScale);
+			img = GetTextureFromFile(file, 512, 512);
 			if(img == NULL) {
 				tFields[code] = NULL;
 				return NULL;
