@@ -31,7 +31,7 @@ class CardSearchInfo {
             return false;
         }
         if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word)) {
+            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
                 //code
                 long code = Long.parseLong(word);
                 return card.Code == code || card.Alias == code;
