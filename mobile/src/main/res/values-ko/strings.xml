@@ -60,7 +60,7 @@
     <string name="settings_game_diy_cover">배경이미지</string>
     <string name="settings_game_diy_card_back">카드커버</string>
     <string name="settings_game_diy_card_db">커스텀cdb사용</string>
-    <string name="settings_game_immersive_mode">몰입모드</string>
+    <string name="settings_game_immersive_mode">해상도 최적화</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="avatar_img">프로필 이미지</string>
     <string name="restart_app">앱을 다시 시작하세요.</string>
@@ -220,4 +220,5 @@
     <string name="avatarSelect">아바타로 사용할 이미지를 선택하세요.</string>
     <string name="ClickLinkArrows">활성화된 링크마커</string>
     <string name="Already_Lastest">이미 최신 버전입니다.</string>
+    <string name="about_immersive_mode">16:9 화면 비율이 아닌 휴대전화 또는 터치 포인트가 어긋나는 경우 설정하십시오.</string>
 </resources>

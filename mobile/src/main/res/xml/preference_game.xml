@@ -50,6 +50,7 @@
         <CheckBoxPreference
             android:key="pref_key_immersive_mode"
             android:persistent="true"
+            android:summary="@string/about_immersive_mode"
             android:title="@string/settings_game_immersive_mode"/>
         <CheckBoxPreference
             android:key="pref_key_game_lab_pendulum_scale"

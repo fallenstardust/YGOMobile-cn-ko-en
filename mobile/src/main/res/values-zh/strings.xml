@@ -60,7 +60,7 @@
     <string name="settings_game_diy_cover">游戏背景</string>
     <string name="settings_game_diy_card_back">卡片背面</string>
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
-    <string name="settings_game_immersive_mode">在游戏隐藏虚拟键盘</string>
+    <string name="settings_game_immersive_mode">适配非16:9分辨率的屏幕</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">头像图片</string>
     <string name="restart_app">请重启本应用</string>
@@ -220,4 +220,5 @@
     <string name="avatarSelect">点击相应头像选择文件</string>
     <string name="ClickLinkArrows">点亮箭头</string>
     <string name="Already_Lastest">已经是最新版本</string>
+    <string name="about_immersive_mode">开关它来适配非16:9的分辨率屏幕，有的机型需要先在系统设置开启全屏应用</string>
 </resources>

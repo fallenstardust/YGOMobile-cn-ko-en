@@ -69,7 +69,7 @@
     <string name="settings_game_diy_cover">Game Background</string>
     <string name="settings_game_diy_card_back">Card Cover</string>
     <string name="settings_game_diy_card_db">Use your own card database</string>
-    <string name="settings_game_immersive_mode">Immersive Mode</string>
+    <string name="settings_game_immersive_mode">Optimize not 16:9 resolution</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Game Avatar</string>
     <string name="settings_author" translatable="false">菜菜、暗星</string>
@@ -223,4 +223,5 @@
     <string name="avatarSelect">click avatar and select files</string>
     <string name="ClickLinkArrows">click link arrows</string>
     <string name="Already_Lastest">Already be the Lastest Version</string>
+    <string name="about_immersive_mode">switch it to optimize the screen resolution which isnot 16:9</string>
     </resources>
