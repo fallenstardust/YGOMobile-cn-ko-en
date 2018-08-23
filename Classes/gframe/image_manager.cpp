@@ -82,7 +82,7 @@ void ImageManager::RemoveTexture(int code) {
 			driver->removeTexture(tit->second);
 		tMap.erase(tit);
 	}
-}
+}/*
 // function by Warr1024, from https://github.com/minetest/minetest/issues/2419 , modified
 void imageScaleNNAA(irr::video::IImage *src, irr::video::IImage *dest) {
 	double sx, sy, minsx, maxsx, minsy, maxsy, area, ra, ga, ba, aa, pw, ph, pa;
@@ -175,23 +175,24 @@ irr::video::ITexture* ImageManager::GetTextureFromFile(char* file, s32 width, s3
 	//} else {
 	//	return driver->getTexture(file);
 	//}
-}
+}*/
 irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(code == 0)
 		return tUnknown;
-	int width = CARD_IMG_WIDTH;
-	int height = CARD_IMG_HEIGHT;
+//	int width = CARD_IMG_WIDTH;
+//	int height = CARD_IMG_HEIGHT;
 	auto tit = tMap.find(code);
 	if(tit == tMap.end()) {
 		char file[256];
-		char file_img[256];
+//		char file_img[256];
 		sprintf(file, "expansions/pics/%d.jpg", code);
 		irr::video::ITexture* img = NULL;
 		std::list<std::string>::iterator iter;
 		for (iter = support_types.begin(); iter != support_types.end(); ++iter) {	
 			sprintf(file, "/expansions/pics/%d.%s", code, iter->c_str());
-			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
-			img = GetTextureFromFile(file_img, width, height);
+			img = driver->getTexture(image_work_path + path(file));
+//			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
+//			img = GetTextureFromFile(file_img, width, height);
 			if (img != NULL) {
 				break;
 			}
@@ -199,7 +200,8 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		if(img == NULL) {
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
 				sprintf(file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
-				img = GetTextureFromFile(file, width, height);
+				img = driver->getTexture(file);
+//				img = GetTextureFromFile(file, width, height);
 				if (img != NULL) {
 					break;
 				}
@@ -262,18 +264,22 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(tit == tFields.end()) {
 		char file[256];
 		sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-		irr::video::ITexture* img = GetTextureFromFile(file, 512, 512);
+		irr::video::ITexture* img = driver->getTexture(file);
+//		irr::video::ITexture* img = GetTextureFromFile(file, 512, 512);
 		if(img == NULL) {
 			sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = GetTextureFromFile(file, 512, 512);
+			img = driver->getTexture(file);
+//			img = GetTextureFromFile(file, 512, 512);
 		}
 		if(img == NULL) {
 			sprintf(file,  "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = GetTextureFromFile(file, 512, 512);
+			img = driver->getTexture(file);
+//			img = GetTextureFromFile(file, 512, 512);
 		}
 		if(img == NULL) {
 			sprintf(file, "pics/field/%d.jpg", code);
-			img = GetTextureFromFile(file, 512, 512);
+			img = driver->getTexture(file);
+//			img = GetTextureFromFile(file, 512, 512);
 			if(img == NULL) {
 				tFields[code] = NULL;
 				return NULL;
