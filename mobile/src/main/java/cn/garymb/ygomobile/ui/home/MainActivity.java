@@ -1,12 +1,17 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.FileNotFoundException;
@@ -26,9 +31,11 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import libwindbot.windbot.WindBot;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_PICS_ZIP;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_GAME_DIR;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
@@ -42,6 +49,8 @@ public class MainActivity extends HomeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
+        //checkWindbot();
+        han.sendEmptyMessage(0);
         mImageUpdater = new ImageUpdater(this);
         //资源复制
         checkResourceDownload((error, isNew) -> {
@@ -87,6 +96,7 @@ public class MainActivity extends HomeActivity {
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
+        unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -152,4 +162,44 @@ public class MainActivity extends HomeActivity {
 /*        checkResourceDownload((result, isNewVersion) -> {
             Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
         });*/
+
+
+
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args = intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    }
+
+    public void checkWindbot() {
+        try {
+            WindBot.initAndroid(getFilesDir().getPath(), AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
+        }catch (Throwable e){
+            e.printStackTrace();
+        }
+        MessageReceiver mReceiver = new MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        registerReceiver(mReceiver, filter);
+    }
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO: Implement this method
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    checkWindbot();
+                    break;
+            }
+        }
+    };
+
 }
