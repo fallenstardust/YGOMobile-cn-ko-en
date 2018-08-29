@@ -44,6 +44,7 @@ public class MainActivity extends HomeActivity {
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
+    MessageReceiver mReceiver = new MessageReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,7 +184,6 @@ public class MainActivity extends HomeActivity {
         }catch (Throwable e){
             e.printStackTrace();
         }
-        MessageReceiver mReceiver = new MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
         registerReceiver(mReceiver, filter);
