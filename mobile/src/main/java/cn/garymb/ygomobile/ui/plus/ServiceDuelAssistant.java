@@ -82,7 +82,6 @@ public class ServiceDuelAssistant extends Service {
         createFloatView();
         cm.addPrimaryClipChangedListener(new ClipboardManager.OnPrimaryClipChangedListener() {
 
-
             @Override
             public void onPrimaryClipChanged() {
                 ClipData clipData = cm.getPrimaryClip();
