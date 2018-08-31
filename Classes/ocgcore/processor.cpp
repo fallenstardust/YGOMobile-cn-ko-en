@@ -674,9 +674,8 @@ int32 field::process() {
 			it->step++;
 		} else {
 			group* pgroup = pduel->new_group();
-			card* pcard;
 			for(int32 i = 0; i < returns.bvalue[0]; ++i) {
-				pcard = core.select_cards[returns.bvalue[i + 1]];
+				card* pcard = core.select_cards[returns.bvalue[i + 1]];
 				pgroup->container.insert(pcard);
 			}
 			pduel->lua->add_param(pgroup, PARAM_TYPE_GROUP);
@@ -719,9 +718,8 @@ int32 field::process() {
 			it->step++;
 		} else {
 			group* pgroup = pduel->new_group();
-			card* pcard;
 			for(int32 i = 0; i < returns.bvalue[0]; ++i) {
-				pcard = core.select_cards[returns.bvalue[i + 1]];
+				card* pcard = core.select_cards[returns.bvalue[i + 1]];
 				pgroup->container.insert(pcard);
 			}
 			pduel->lua->add_param(pgroup, PARAM_TYPE_GROUP);
@@ -735,9 +733,8 @@ int32 field::process() {
 			it->step++;
 		} else {
 			group* pgroup = pduel->new_group();
-			card* pcard;
 			for(int32 i = 0; i < returns.bvalue[0]; ++i) {
-				pcard = core.select_cards[returns.bvalue[i + 1]];
+				card* pcard = core.select_cards[returns.bvalue[i + 1]];
 				pgroup->container.insert(pcard);
 			}
 			pduel->lua->add_param(pgroup, PARAM_TYPE_GROUP);
@@ -852,11 +849,11 @@ int32 field::process() {
 			int32 playerid = it->arg1;
 			int32 count = it->arg3;
 			int32 dfflag = 0;
-			uint8 p, l, s, pa = 0;
+			uint8 pa = 0;
 			for(int32 i = 0; i < count; ++i) {
-				p = returns.bvalue[pa];
-				l = returns.bvalue[pa + 1];
-				s = returns.bvalue[pa + 2];
+				uint8 p = returns.bvalue[pa];
+				uint8 l = returns.bvalue[pa + 1];
+				uint8 s = returns.bvalue[pa + 2];
 				dfflag |= 0x1u << (s + (p == playerid ? 0 : 16) + (l == LOCATION_MZONE ? 0 : 8));
 				pa += 3;
 			}
@@ -1007,9 +1004,8 @@ int32 field::process() {
 			it->step++;
 		} else if(it->step == 1) {
 			card_set cset;
-			card* pcard;
 			for(int32 i = 0; i < returns.bvalue[0]; ++i) {
-				pcard = core.select_cards[returns.bvalue[i + 1]];
+				card* pcard = core.select_cards[returns.bvalue[i + 1]];
 				cset.insert(pcard);
 			}
 			if(cset.size())
@@ -1050,7 +1046,7 @@ int32 field::process() {
 				for(i = 0; i < count; ++i)
 					player[target_player].list_main.pop_back();
 				for(i = 0; i < count; ++i)
-					tc[(int32)returns.bvalue[i]] = core.select_cards[i];
+					tc[(uint8)returns.bvalue[i]] = core.select_cards[i];
 				for(i = 0; i < count; ++i) {
 					player[target_player].list_main.push_back(tc[count - i - 1]);
 					tc[count - i - 1]->current.sequence = player[target_player].list_main.size() - 1;
@@ -3095,7 +3091,8 @@ int32 field::process_battle_command(uint16 step) {
 		return FALSE;
 	}
 	case 9: {
-		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_BP) || core.attack_rollback) {
+		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_BP)
+			|| core.attacker->is_status(STATUS_ATTACK_CANCELED) || core.attack_rollback) {
 			core.units.begin()->step = 10;
 			return FALSE;
 		}
@@ -3126,17 +3123,12 @@ int32 field::process_battle_command(uint16 step) {
 			core.attacker->set_status(STATUS_ATTACK_CANCELED, TRUE);
 		}
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_BP)
-			|| !core.attacker->is_capable_attack() || core.attacker->is_status(STATUS_ATTACK_CANCELED)
-			|| core.attacker->current.controler != core.attacker->attack_controler
-			|| core.attacker->fieldid_r != core.pre_field[0]) {
+			|| core.attacker->is_status(STATUS_ATTACK_CANCELED)) {
 			core.units.begin()->step = 12;
 			return FALSE;
 		}
-		uint8 rollback = core.attack_rollback;
-		if(!confirm_attack_target())
-			rollback = TRUE;
 		// go to damage step
-		if(!rollback) {
+		if(!core.attack_rollback) {
 			core.attacker->announce_count++;
 			core.attacker->announced_cards.addcard(core.attack_target);
 			attack_all_target_check();
@@ -5327,8 +5319,14 @@ int32 field::adjust_step(uint16 step) {
 		card* attacker = core.attacker;
 		if(!attacker)
 			return FALSE;
-		if(attacker->is_affected_by_effect(EFFECT_CANNOT_ATTACK))
+		if(attacker->is_status(STATUS_ATTACK_CANCELED))
+			return FALSE;
+		if(!core.attacker->is_capable_attack()
+			|| core.attacker->current.controler != core.attacker->attack_controler
+			|| core.attacker->fieldid_r != core.pre_field[0]) {
 			attacker->set_status(STATUS_ATTACK_CANCELED, TRUE);
+			return FALSE;
+		}
 		if(core.attack_rollback)
 			return FALSE;
 		std::set<uint16> fidset;
@@ -5336,7 +5334,7 @@ int32 field::adjust_step(uint16 step) {
 			if(pcard)
 				fidset.insert(pcard->fieldid_r);
 		}
-		if(fidset != core.opp_mzone)
+		if(fidset != core.opp_mzone || !confirm_attack_target())
 			core.attack_rollback = TRUE;
 		return FALSE;
 	}

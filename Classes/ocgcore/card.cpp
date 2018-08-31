@@ -243,7 +243,7 @@ uint32 card::get_infos(byte* buf, int32 query_flag, int32 use_cache) {
 #else
 	*(uint32*)(buf + 4) = query_flag;
 #endif
-	return (byte*)p - buf;
+	return (uint32)((byte*)p - buf);
 }
 uint32 card::get_info_location() {
 	if(overlay_target) {

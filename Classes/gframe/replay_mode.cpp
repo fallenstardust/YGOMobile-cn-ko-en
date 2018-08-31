@@ -64,15 +64,11 @@ int ReplayMode::ReplayThread(void* param) {
 	mainGame->dInfo.tag_player[0] = false;
 	mainGame->dInfo.tag_player[1] = false;
 	if(mainGame->dInfo.isSingleMode) {
-#ifdef _IRR_ANDROID_PLATFORM_
-	set_script_reader((script_reader)SingleMode::ScriptReaderEx);
-#endif
+		set_script_reader((script_reader)SingleMode::ScriptReaderEx);
 		set_card_reader((card_reader)DataManager::CardReader);
 		set_message_handler((message_handler)MessageHandler);
 	} else {
-#ifdef _IRR_ANDROID_PLATFORM_
-	set_script_reader((script_reader)ScriptReaderEx);
-#endif
+		set_script_reader((script_reader)ScriptReaderEx);
 		set_card_reader((card_reader)DataManager::CardReader);
 		set_message_handler((message_handler)MessageHandler);
 	}
