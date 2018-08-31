@@ -179,6 +179,8 @@ public class MainActivity extends HomeActivity {
     }
 
     public void checkWindbot() {
+        Log.i("路径", getFilesDir().getPath());
+        Log.i("路径2", AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
         try {
             WindBot.initAndroid(getFilesDir().getPath(), AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
         }catch (Throwable e){
