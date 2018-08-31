@@ -55,17 +55,12 @@ int SingleMode::SinglePlayThread(void* param) {
 	mainGame->dInfo.turn = 0;
 	char filename[256];
 	size_t slen = 0;
-		if(!preload_script(pduel, filename, slen)) {
-			wchar_t fname[256];
-			myswprintf(fname, L"./single/%ls");
-			if(!preload_script(pduel, filename, slen))
-				slen = 0;
-		const wchar_t* name = mainGame->lstSinglePlayList->getListItem(mainGame->lstSinglePlayList->getSelected());
-		myswprintf(fname, L"./single/%ls", name);
-		slen = BufferIO::EncodeUTF8(fname, filename);
-		if(!preload_script(pduel, filename, slen))
-			slen = 0;
-	}
+	const wchar_t* name = mainGame->lstSinglePlayList->getListItem(mainGame->lstSinglePlayList->getSelected());
+	wchar_t fname[256];
+	myswprintf(fname, L"./single/%ls", name);
+	slen = BufferIO::EncodeUTF8(fname, filename);
+	if(!preload_script(pduel, filename, slen))
+		slen = 0;
 	if(slen == 0) {
 		end_duel(pduel);
 		return 0;
