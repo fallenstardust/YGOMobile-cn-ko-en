@@ -1,23 +1,13 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-import android.widget.Toast;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -31,27 +21,20 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
-import libwindbot.windbot.WindBot;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
-import static cn.garymb.ygomobile.Constants.CORE_PICS_ZIP;
-import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.Constants.PREF_DEF_GAME_DIR;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class MainActivity extends HomeActivity {
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
-    MessageReceiver mReceiver = new MessageReceiver();
+    ResCheckTask mResCheckTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
-        //checkWindbot();
-        han.sendEmptyMessage(0);
         mImageUpdater = new ImageUpdater(this);
         //资源复制
         checkResourceDownload((error, isNew) -> {
@@ -61,7 +44,7 @@ public class MainActivity extends HomeActivity {
                 enableStart = true;
             }
             if (isNew) {
-                if(!getGameUriManager().doIntent(getIntent())) {
+                if (!getGameUriManager().doIntent(getIntent())) {
                     new DialogPlus(this)
                             .setTitleText(getString(R.string.settings_about_change_log))
                             .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
@@ -97,7 +80,8 @@ public class MainActivity extends HomeActivity {
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        unregisterReceiver(mReceiver);
+        mResCheckTask.unregisterMReceiver();
+
     }
 
     @Override
@@ -126,11 +110,11 @@ public class MainActivity extends HomeActivity {
 
     @Override
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
-        ResCheckTask task = new ResCheckTask(this, listener);
+        mResCheckTask = new ResCheckTask(this, listener);
         if (Build.VERSION.SDK_INT >= 11) {
-            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
-            task.execute();
+            mResCheckTask.execute();
         }
     }
 
@@ -145,9 +129,9 @@ public class MainActivity extends HomeActivity {
 
     @Override
     public void updateImages() {
-        DialogPlus dialog  = DialogPlus.show(this, null, getString(R.string.message));
+        DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
         dialog.show();
-        VUiKit.defer().when(()->{
+        VUiKit.defer().when(() -> {
             if (IOUtils.hasAssets(this, ResCheckTask.getDatapath(Constants.CORE_PICS_ZIP))) {
                 try {
                     IOUtils.copyFilesFromAssets(this, ResCheckTask.getDatapath(Constants.CORE_PICS_ZIP),
@@ -156,52 +140,11 @@ public class MainActivity extends HomeActivity {
                     e.printStackTrace();
                 }
             }
-        }).done((rs)->{
+        }).done((rs) -> {
             dialog.dismiss();
         });
     }
 /*        checkResourceDownload((result, isNewVersion) -> {
             Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
         });*/
-
-
-
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    }
-
-    public void checkWindbot() {
-        Log.i("路径", getFilesDir().getPath());
-        Log.i("路径2", AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
-        try {
-            WindBot.initAndroid(getFilesDir().getPath(), AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
-        }catch (Throwable e){
-            e.printStackTrace();
-        }
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("RUN_WINDBOT");
-        registerReceiver(mReceiver, filter);
-    }
-    Handler han = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            // TODO: Implement this method
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    checkWindbot();
-                    break;
-            }
-        }
-    };
-
 }

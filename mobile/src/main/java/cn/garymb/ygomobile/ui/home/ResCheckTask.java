@@ -44,6 +44,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private DialogPlus dialog = null;
     private Handler handler;
     private boolean isNewVersion;
+    MessageReceiver mReceiver = new MessageReceiver();
 
     @SuppressWarnings("deprecation")
     public ResCheckTask(Context context, ResCheckListener listener) {
@@ -170,6 +171,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_EXPANSIONS),
                         mSettings.getExpansionsPath().getAbsolutePath(), true, needsUpdate);
             }
+
+            //checkWindbot();
+            han.sendEmptyMessage(0);
+
         } catch (Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
@@ -320,4 +325,49 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public interface ResCheckListener {
         void onResCheckFinished(int result, boolean isNewVersion);
     }
+
+    public void unregisterMReceiver(){
+        mContext.unregisterReceiver(mReceiver);
+    }
+
+    public void checkWindbot() {
+        Log.i("路径", mContext.getFilesDir().getPath());
+        Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+        try {
+            WindBot.initAndroid(mContext.getFilesDir().getPath(), mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+        }catch (Throwable e){
+            e.printStackTrace();
+        }
+        MessageReceiver mReceiver = new MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("RUN_WINDBOT");
+        mContext.registerReceiver(mReceiver, filter);
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args = intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    }
+
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO: Implement this method
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    checkWindbot();
+                    break;
+            }
+        }
+    };
+
+
 }
