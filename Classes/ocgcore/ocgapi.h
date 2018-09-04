@@ -10,7 +10,6 @@
 
 #include "common.h"
 #ifdef WIN32
-#include <windows.h>
 #define DECL_DLLEXPORT __declspec(dllexport)
 #else
 #define DECL_DLLEXPORT
@@ -50,7 +49,7 @@ extern "C" DECL_DLLEXPORT int32 query_field_card(ptr pduel, uint8 playerid, uint
 extern "C" DECL_DLLEXPORT int32 query_field_info(ptr pduel, byte* buf);
 extern "C" DECL_DLLEXPORT void set_responsei(ptr pduel, int32 value);
 extern "C" DECL_DLLEXPORT void set_responseb(ptr pduel, byte* buf);
-extern "C" DECL_DLLEXPORT int32 preload_script(ptr pduel, char* script, int32 len);
+extern "C" DECL_DLLEXPORT int32 preload_script(ptr pduel, const char* script, int32 len);
 byte* default_script_reader(const char* script_name, int* len);
 uint32 default_card_reader(uint32 code, card_data* data);
 uint32 default_message_handler(void* pduel, uint32 msg_type);

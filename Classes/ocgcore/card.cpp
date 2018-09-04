@@ -185,18 +185,18 @@ uint32 card::get_infos(byte* buf, int32 query_flag, int32 use_cache) {
 	}
 	if(query_flag & QUERY_TARGET_CARD) {
 		*p++ = effect_target_cards.size();
-		for(auto cit = effect_target_cards.begin(); cit != effect_target_cards.end(); ++cit)
-			*p++ = (*cit)->get_info_location();
+		for(auto& pcard : effect_target_cards)
+			*p++ = pcard->get_info_location();
 	}
 	if(query_flag & QUERY_OVERLAY_CARD) {
 		*p++ = xyz_materials.size();
-		for(auto clit = xyz_materials.begin(); clit != xyz_materials.end(); ++clit)
-			*p++ = (*clit)->data.code;
+		for(auto& xcard : xyz_materials)
+			*p++ = xcard->data.code;
 	}
 	if(query_flag & QUERY_COUNTERS) {
 		*p++ = counters.size();
-		for(auto cmit = counters.begin(); cmit != counters.end(); ++cmit)
-			*p++ = cmit->first + ((cmit->second[0] + cmit->second[1]) << 16);
+		for(const auto& cmit : counters)
+			*p++ = cmit.first + ((cmit.second[0] + cmit.second[1]) << 16);
 	}
 	if(query_flag & QUERY_OWNER)
 		*p++ = owner;
@@ -1499,8 +1499,8 @@ void card::equip(card *target, uint32 send_msg) {
 		return;
 	target->equiping_cards.insert(this);
 	equiping_target = target;
-	for (auto it = equip_effect.begin(); it != equip_effect.end(); ++it) {
-		if (it->second->is_disable_related())
+	for (auto& it : equip_effect) {
+		if (it.second->is_disable_related())
 			pduel->game_field->add_to_disable_check_list(equiping_target);
 	}
 	if(send_msg) {
@@ -1513,8 +1513,8 @@ void card::equip(card *target, uint32 send_msg) {
 void card::unequip() {
 	if (!equiping_target)
 		return;
-	for (auto it = equip_effect.begin(); it != equip_effect.end(); ++it) {
-		if (it->second->is_disable_related())
+	for (auto& it : equip_effect) {
+		if (it.second->is_disable_related())
 			pduel->game_field->add_to_disable_check_list(equiping_target);
 	}
 	equiping_target->equiping_cards.erase(this);
@@ -1524,16 +1524,16 @@ void card::unequip() {
 }
 int32 card::get_union_count() {
 	int32 count = 0;
-	for(auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		if(((*cit)->data.type & TYPE_UNION) && (*cit)->is_affected_by_effect(EFFECT_UNION_STATUS))
+	for(auto& pcard : equiping_cards) {
+		if((pcard->data.type & TYPE_UNION) && pcard->is_affected_by_effect(EFFECT_UNION_STATUS))
 			count++;
 	}
 	return count;
 }
 int32 card::get_old_union_count() {
 	int32 count = 0;
-	for(auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		if(((*cit)->data.type & TYPE_UNION) && (*cit)->is_affected_by_effect(EFFECT_OLDUNION_STATUS))
+	for(auto& pcard : equiping_cards) {
+		if((pcard->data.type & TYPE_UNION) && pcard->is_affected_by_effect(EFFECT_OLDUNION_STATUS))
 			count++;
 	}
 	return count;
@@ -1553,17 +1553,17 @@ void card::xyz_overlay(card_set* materials) {
 		xyz_add(pcard, &des);
 	} else {
 		field::card_vector cv;
-		for(auto cit = materials->begin(); cit != materials->end(); ++cit)
-			cv.push_back(*cit);
+		for(auto& pcard : *materials)
+			cv.push_back(pcard);
 		std::sort(cv.begin(), cv.end(), card::card_operation_sort);
-		for(auto cvit = cv.begin(); cvit != cv.end(); ++cvit) {
-			(*cvit)->reset(RESET_LEAVE + RESET_OVERLAY, RESET_EVENT);
-			if((*cvit)->unique_code)
-				pduel->game_field->remove_unique_card(*cvit);
-			if((*cvit)->equiping_target)
-				(*cvit)->unequip();
-			(*cvit)->clear_card_target();
-			xyz_add(*cvit, &des);
+		for(auto& pcard : cv) {
+			pcard->reset(RESET_LEAVE + RESET_OVERLAY, RESET_EVENT);
+			if(pcard->unique_code)
+				pduel->game_field->remove_unique_card(pcard);
+			if(pcard->equiping_target)
+				pcard->unequip();
+			pcard->clear_card_target();
+			xyz_add(pcard, &des);
 		}
 	}
 	if(des.size())
@@ -1600,8 +1600,8 @@ void card::xyz_add(card* mat, card_set* des) {
 	mat->current.location = LOCATION_OVERLAY;
 	mat->current.sequence = xyz_materials.size() - 1;
 	mat->current.reason = REASON_XYZ + REASON_MATERIAL;
-	for(auto eit = mat->xmaterial_effect.begin(); eit != mat->xmaterial_effect.end(); ++eit) {
-		effect* peffect = eit->second;
+	for(auto& eit : mat->xmaterial_effect) {
+		effect* peffect = eit.second;
 		if(peffect->type & EFFECT_TYPE_FIELD)
 			pduel->game_field->add_effect(peffect);
 	}
@@ -1620,8 +1620,8 @@ void card::xyz_remove(card* mat) {
 	mat->overlay_target = 0;
 	for(auto clit = xyz_materials.begin(); clit != xyz_materials.end(); ++clit)
 		(*clit)->current.sequence = clit - xyz_materials.begin();
-	for(auto eit = mat->xmaterial_effect.begin(); eit != mat->xmaterial_effect.end(); ++eit) {
-		effect* peffect = eit->second;
+	for(auto& eit : mat->xmaterial_effect) {
+		effect* peffect = eit.second;
 		if(peffect->type & EFFECT_TYPE_FIELD)
 			pduel->game_field->remove_effect(peffect);
 	}
@@ -1629,10 +1629,10 @@ void card::xyz_remove(card* mat) {
 void card::apply_field_effect() {
 	if (current.controler == PLAYER_NONE)
 		return;
-	for (auto it = field_effect.begin(); it != field_effect.end(); ++it) {
-		if (it->second->in_range(this)
-				|| ((it->second->range & LOCATION_HAND) && (it->second->type & EFFECT_TYPE_TRIGGER_O) && !(it->second->code & EVENT_PHASE))) {
-			pduel->game_field->add_effect(it->second);
+	for (auto& it : field_effect) {
+		if (it.second->in_range(this)
+				|| ((it.second->range & LOCATION_HAND) && (it.second->type & EFFECT_TYPE_TRIGGER_O) && !(it.second->code & EVENT_PHASE))) {
+			pduel->game_field->add_effect(it.second);
 		}
 	}
 	if(unique_code && (current.location & unique_location))
@@ -1643,10 +1643,10 @@ void card::apply_field_effect() {
 void card::cancel_field_effect() {
 	if (current.controler == PLAYER_NONE)
 		return;
-	for (auto it = field_effect.begin(); it != field_effect.end(); ++it) {
-		if (it->second->in_range(this)
-				|| ((it->second->range & LOCATION_HAND) && (it->second->type & EFFECT_TYPE_TRIGGER_O) && !(it->second->code & EVENT_PHASE))) {
-			pduel->game_field->remove_effect(it->second);
+	for (auto& it : field_effect) {
+		if (it.second->in_range(this)
+				|| ((it.second->range & LOCATION_HAND) && (it.second->type & EFFECT_TYPE_TRIGGER_O) && !(it.second->code & EVENT_PHASE))) {
+			pduel->game_field->remove_effect(it.second);
 		}
 	}
 	if(unique_code && (current.location & unique_location))
@@ -1663,17 +1663,17 @@ void card::enable_field_effect(bool enabled) {
 	refresh_disable_status();
 	if (enabled) {
 		set_status(STATUS_EFFECT_ENABLED, TRUE);
-		for (auto it = single_effect.begin(); it != single_effect.end(); ++it) {
-			if (it->second->is_flag(EFFECT_FLAG_SINGLE_RANGE) && it->second->in_range(this))
-				it->second->id = pduel->game_field->infos.field_id++;
+		for (auto& it : single_effect) {
+			if (it.second->is_flag(EFFECT_FLAG_SINGLE_RANGE) && it.second->in_range(this))
+				it.second->id = pduel->game_field->infos.field_id++;
 		}
-		for (auto it = field_effect.begin(); it != field_effect.end(); ++it) {
-			if (it->second->in_range(this))
-				it->second->id = pduel->game_field->infos.field_id++;
+		for (auto& it : field_effect) {
+			if (it.second->in_range(this))
+				it.second->id = pduel->game_field->infos.field_id++;
 		}
 		if(current.location == LOCATION_SZONE) {
-			for (auto it = equip_effect.begin(); it != equip_effect.end(); ++it)
-				it->second->id = pduel->game_field->infos.field_id++;
+			for (auto& it : equip_effect)
+				it.second->id = pduel->game_field->infos.field_id++;
 		}
 		if (get_status(STATUS_DISABLED))
 			reset(RESET_DISABLE, RESET_EVENT);
@@ -1834,7 +1834,7 @@ void card::remove_effect(effect* peffect, effect_container::iterator it) {
 		if (!(data.type & TYPE_NORMAL) || (data.type & TYPE_PENDULUM)) {
 			set_status(STATUS_INITIALIZING, TRUE);
 			pduel->lua->add_param(this, PARAM_TYPE_CARD);
-			pduel->lua->call_card_function(this, (char*) "initial_effect", 1, 0);
+			pduel->lua->call_card_function(this, "initial_effect", 1, 0);
 			set_status(STATUS_INITIALIZING, FALSE);
 		}
 	}
@@ -1883,13 +1883,13 @@ int32 card::copy_effect(uint32 code, uint32 reset, uint32 count) {
 	pduel->game_field->core.copy_reset = reset;
 	pduel->game_field->core.copy_reset_count = count;
 	pduel->lua->add_param(this, PARAM_TYPE_CARD);
-	pduel->lua->call_code_function(code, (char*) "initial_effect", 1, 0);
+	pduel->lua->call_code_function(code, "initial_effect", 1, 0);
 	pduel->game_field->infos.copy_id++;
 	set_status(STATUS_COPYING_EFFECT, FALSE);
 	pduel->game_field->core.copy_reset = cr;
 	pduel->game_field->core.copy_reset_count = crc;
-	for(auto eit = pduel->uncopy.begin(); eit != pduel->uncopy.end(); ++eit)
-		pduel->delete_effect(*eit);
+	for(auto& peffect : pduel->uncopy)
+		pduel->delete_effect(peffect);
 	pduel->uncopy.clear();
 	if(!(data.type & TYPE_EFFECT)) {
 		effect* peffect = pduel->new_effect();
@@ -1926,14 +1926,14 @@ int32 card::replace_effect(uint32 code, uint32 reset, uint32 count) {
 	pduel->game_field->core.copy_reset_count = count;
 	set_status(STATUS_INITIALIZING | STATUS_COPYING_EFFECT, TRUE);
 	pduel->lua->add_param(this, PARAM_TYPE_CARD);
-	pduel->lua->call_code_function(code, (char*) "initial_effect", 1, 0);
+	pduel->lua->call_code_function(code, "initial_effect", 1, 0);
 	set_status(STATUS_INITIALIZING | STATUS_COPYING_EFFECT, FALSE);
 	pduel->game_field->infos.copy_id++;
 	pduel->game_field->core.copy_reset = cr;
 	pduel->game_field->core.copy_reset_count = crc;
 	set_status(STATUS_EFFECT_REPLACED, TRUE);
-	for(auto eit = pduel->uncopy.begin(); eit != pduel->uncopy.end(); ++eit)
-		pduel->delete_effect(*eit);
+	for(auto& peffect : pduel->uncopy)
+		pduel->delete_effect(peffect);
 	pduel->uncopy.clear();
 	if(!(data.type & TYPE_EFFECT)) {
 		effect* peffect = pduel->new_effect();
@@ -2031,8 +2031,8 @@ void card::reset(uint32 id, uint32 reset_type) {
 	}
 }
 void card::reset_effect_count() {
-	for (auto i = indexer.begin(); i != indexer.end(); ++i) {
-		effect* peffect = i->first;
+	for (auto& i : indexer) {
+		effect* peffect = i.first;
 		if (peffect->is_flag(EFFECT_FLAG_COUNT_LIMIT))
 			peffect->recharge();
 	}
@@ -2121,8 +2121,8 @@ void card::create_relation(effect* peffect) {
 	relate_effect.emplace(peffect, (uint16)0);
 }
 int32 card::is_has_relation(effect* peffect) {
-	for(auto it = relate_effect.begin(); it != relate_effect.end(); ++it) {
-		if(it->first == peffect)
+	for(auto& it : relate_effect) {
+		if(it.first == peffect)
 			return TRUE;
 	}
 	return FALSE;
@@ -2291,8 +2291,8 @@ void card::set_material(card_set* materials) {
 		return;
 	}
 	material_cards = *materials;
-	for(auto cit = material_cards.begin(); cit != material_cards.end(); ++cit)
-		(*cit)->current.reason_card = this;
+	for(auto& pcard : material_cards)
+		pcard->current.reason_card = this;
 	effect_set eset;
 	filter_effect(EFFECT_MATERIAL_CHECK, &eset);
 	for(int32 i = 0; i < eset.size(); ++i) {
@@ -2317,10 +2317,9 @@ void card::cancel_card_target(card* pcard) {
 	}
 }
 void card::clear_card_target() {
-	for(auto cit = effect_target_owner.begin(); cit != effect_target_owner.end(); ++cit)
-		(*cit)->effect_target_cards.erase(this);
-	for(auto cit = effect_target_cards.begin(); cit != effect_target_cards.end(); ++cit) {
-		card* pcard = *cit;
+	for(auto& pcard : effect_target_owner)
+		pcard->effect_target_cards.erase(this);
+	for(auto& pcard : effect_target_cards) {
 		pcard->effect_target_owner.erase(this);
 		for(auto it = pcard->single_effect.begin(); it != pcard->single_effect.end();) {
 			auto rm = it++;
@@ -2340,16 +2339,16 @@ void card::filter_effect(int32 code, effect_set* eset, uint8 sort) {
 		if (peffect->is_available() && (!peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE) || is_affect_by_effect(peffect)))
 			eset->add_item(peffect);
 	}
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		rg = (*cit)->equip_effect.equal_range(code);
+	for (auto& pcard : equiping_cards) {
+		rg = pcard->equip_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->is_available() && is_affect_by_effect(peffect))
 				eset->add_item(peffect);
 		}
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		rg = (*cit)->xmaterial_effect.equal_range(code);
+	for (auto& pcard : xyz_materials) {
+		rg = pcard->xmaterial_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2383,13 +2382,13 @@ void card::filter_single_continuous_effect(int32 code, effect_set* eset, uint8 s
 	auto rg = single_effect.equal_range(code);
 	for (; rg.first != rg.second; ++rg.first)
 		eset->add_item(rg.first->second);
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		rg = (*cit)->equip_effect.equal_range(code);
+	for (auto& pcard : equiping_cards) {
+		rg = pcard->equip_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first)
 			eset->add_item(rg.first->second);
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		rg = (*cit)->xmaterial_effect.equal_range(code);
+	for (auto& pcard : xyz_materials) {
+		rg = pcard->xmaterial_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			effect* peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2410,16 +2409,16 @@ void card::filter_immune_effect() {
 		if (peffect->is_available())
 			immune_effect.add_item(peffect);
 	}
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		rg = (*cit)->equip_effect.equal_range(EFFECT_IMMUNE_EFFECT);
+	for (auto& pcard : equiping_cards) {
+		rg = pcard->equip_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->is_available())
 				immune_effect.add_item(peffect);
 		}
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		rg = (*cit)->xmaterial_effect.equal_range(EFFECT_IMMUNE_EFFECT);
+	for (auto& pcard : xyz_materials) {
+		rg = pcard->xmaterial_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2440,8 +2439,8 @@ void card::filter_immune_effect() {
 // 1. put all cards in the target of peffect into effects.disable_check_set, effects.disable_check_list
 // 2. add equiping_target of peffect into effects.disable_check_set, effects.disable_check_list
 void card::filter_disable_related_cards() {
-	for (auto it = indexer.begin(); it != indexer.end(); ++it) {
-		effect* peffect = it->first;
+	for (auto& it : indexer) {
+		effect* peffect = it.first;
 		if (peffect->is_disable_related()) {
 			if (peffect->type & EFFECT_TYPE_FIELD)
 				pduel->game_field->update_disable_check_list(peffect);
@@ -2684,16 +2683,16 @@ effect* card::is_affected_by_effect(int32 code) {
 		if (peffect->is_available() && (!peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE) || is_affect_by_effect(peffect)))
 			return peffect;
 	}
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		rg = (*cit)->equip_effect.equal_range(code);
+	for (auto& pcard : equiping_cards) {
+		rg = pcard->equip_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->is_available() && is_affect_by_effect(peffect))
 				return peffect;
 		}
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		rg = (*cit)->xmaterial_effect.equal_range(code);
+	for (auto& pcard : xyz_materials) {
+		rg = pcard->xmaterial_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2720,16 +2719,16 @@ effect* card::is_affected_by_effect(int32 code, card* target) {
 		        && peffect->get_value(target))
 			return peffect;
 	}
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		rg = (*cit)->equip_effect.equal_range(code);
+	for (auto& pcard : equiping_cards) {
+		rg = pcard->equip_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->is_available() && is_affect_by_effect(peffect) && peffect->get_value(target))
 				return peffect;
 		}
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		rg = (*cit)->xmaterial_effect.equal_range(code);
+	for (auto& pcard : xyz_materials) {
+		rg = pcard->xmaterial_effect.equal_range(code);
 		for (; rg.first != rg.second; ++rg.first) {
 			peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2749,16 +2748,16 @@ effect* card::is_affected_by_effect(int32 code, card* target) {
 }
 effect* card::check_control_effect() {
 	effect* ret_effect = 0;
-	for (auto cit = equiping_cards.begin(); cit != equiping_cards.end(); ++cit) {
-		auto rg = (*cit)->equip_effect.equal_range(EFFECT_SET_CONTROL);
+	for (auto& pcard : equiping_cards) {
+		auto rg = pcard->equip_effect.equal_range(EFFECT_SET_CONTROL);
 		for (; rg.first != rg.second; ++rg.first) {
 			effect* peffect = rg.first->second;
 			if(!ret_effect || peffect->id > ret_effect->id)
 				ret_effect = peffect;
 		}
 	}
-	for (auto cit = xyz_materials.begin(); cit != xyz_materials.end(); ++cit) {
-		auto rg = (*cit)->xmaterial_effect.equal_range(EFFECT_SET_CONTROL);
+	for (auto& pcard : xyz_materials) {
+		auto rg = pcard->xmaterial_effect.equal_range(EFFECT_SET_CONTROL);
 		for (; rg.first != rg.second; ++rg.first) {
 			effect* peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
@@ -2834,16 +2833,14 @@ void card::get_unique_target(card_set* cset, int32 controler, card* icard) {
 			continue;
 		const auto& player = pduel->game_field->player[controler ^ p];
 		if(unique_location & LOCATION_MZONE) {
-			for(auto cit = player.list_mzone.begin(); cit != player.list_mzone.end(); ++cit) {
-				card* pcard = *cit;
+			for(auto& pcard : player.list_mzone) {
 				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && !pcard->get_status(STATUS_BATTLE_DESTROYED | STATUS_SPSUMMON_STEP)
 					&& check_unique_code(pcard))
 					cset->insert(pcard);
 			}
 		}
 		if(unique_location & LOCATION_SZONE) {
-			for(auto cit = player.list_szone.begin(); cit != player.list_szone.end(); ++cit) {
-				card* pcard = *cit;
+			for(auto& pcard : player.list_szone) {
 				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && check_unique_code(pcard))
 					cset->insert(pcard);
 			}
