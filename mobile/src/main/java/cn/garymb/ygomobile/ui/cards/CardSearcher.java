@@ -368,7 +368,7 @@ public class CardSearcher implements View.OnClickListener {
 
     private void initLevelSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (int i = 0; i <= 13; i++) {
+        for (int i = 0; i <= 12; i++) {
             if (i == 0) {
                 items.add(new SimpleSpinnerItem(i, getString(R.string.label_level)));
             } else {
