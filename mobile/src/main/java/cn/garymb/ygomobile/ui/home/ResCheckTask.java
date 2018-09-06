@@ -29,6 +29,7 @@ import ocgcore.ConfigManager;
 import ocgcore.handler.CardManager;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
@@ -334,7 +335,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         Log.i("路径", mContext.getFilesDir().getPath());
         Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
         try {
-            WindBot.initAndroid(mContext.getFilesDir().getPath(), mSettings.getDataBasePath() + "/" + DATABASE_NAME);
+            WindBot.initAndroid(mContext.getFilesDir().getPath(),
+                    mSettings.getDataBasePath() + "/" + DATABASE_NAME,
+                    mSettings.getResourcePath() +"/"+ CORE_BOT_CONF_PATH);
         }catch (Throwable e){
             e.printStackTrace();
         }
