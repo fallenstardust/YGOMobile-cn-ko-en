@@ -807,8 +807,9 @@ bool Game::Initialize() {
 	btnDeleteReplay = env->addButton(rect<s32>(360 * xScale, 320 * yScale, 460 * xScale, 360 * yScale), wReplay, BUTTON_DELETE_REPLAY, dataManager.GetSysString(1361));
 	btnRenameReplay = env->addButton(rect<s32>(360 * xScale, 370 * yScale, 460 * xScale, 410 * yScale), wReplay, BUTTON_RENAME_REPLAY, dataManager.GetSysString(1362));
 	btnReplayCancel = env->addButton(rect<s32>(470 * xScale, 370 * yScale, 570 * xScale, 410 * yScale), wReplay, BUTTON_CANCEL_REPLAY, dataManager.GetSysString(1347));
+	btnExportDeck = env->addButton(rect<s32>(470 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1369));
 	env->addStaticText(dataManager.GetSysString(1349), rect<s32>(360 * xScale, 30 * yScale, 570 * xScale, 50 * yScale), false, true, wReplay);
-	stReplayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 315 * yScale), false, true, wReplay);
+	stReplayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 295 * yScale), false, true, wReplay);
 	env->addStaticText(dataManager.GetSysString(1353), rect<s32>(360 * xScale, 240 * yScale, 570 * xScale, 260 * yScale), false, true, wReplay);
 
 	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(360 * xScale, 275 * yScale, 460 * xScale, 295 * yScale), wReplay, -1);
