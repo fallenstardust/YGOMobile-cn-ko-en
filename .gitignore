@@ -48,6 +48,7 @@ libYGOMobile.so
 /mobile/assets/*.cdb
 /mobile/assets_ko/data/*.cdb
 /mobile/assets_en/data/*.cdb
+/mobile/libs/*.aar
 /*.zip
 /*.cdb
 /mobile/assets/data/textures/Thumbs.db

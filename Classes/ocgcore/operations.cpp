@@ -4279,14 +4279,13 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 			}
 			if(!(target->current.location & LOCATION_ONFIELD))
 				target->clear_relate_effect();
-		} else {
-			if(target->turnid != infos.turn_id) {
-				target->set_status(STATUS_SUMMON_TURN, FALSE);
-				target->set_status(STATUS_FLIP_SUMMON_TURN, FALSE);
-				target->set_status(STATUS_SPSUMMON_TURN, FALSE);
-				target->set_status(STATUS_SET_TURN, FALSE);
-				target->set_status(STATUS_FORM_CHANGED, FALSE);
-			}
+		}
+		if(ret != 1 || target->turnid != infos.turn_id) {
+			target->set_status(STATUS_SUMMON_TURN, FALSE);
+			target->set_status(STATUS_FLIP_SUMMON_TURN, FALSE);
+			target->set_status(STATUS_SPSUMMON_TURN, FALSE);
+			target->set_status(STATUS_SET_TURN, FALSE);
+			target->set_status(STATUS_FORM_CHANGED, FALSE);
 		}
 		target->temp.sequence = seq;
 		if(location != LOCATION_MZONE) {
@@ -4464,6 +4463,7 @@ int32 field::change_position(uint16 step, group * targets, effect * reason_effec
 					pcard->clear_card_target();
 					pcard->set_status(STATUS_SET_TURN, TRUE);
 					pcard->enable_field_effect(false);
+					pcard->previous.location = 0;
 					pcard->summon_info &= 0xdf00ffff;
 					if((pcard->summon_info & SUMMON_TYPE_PENDULUM) == SUMMON_TYPE_PENDULUM)
 						pcard->summon_info &= 0xf000ffff;
