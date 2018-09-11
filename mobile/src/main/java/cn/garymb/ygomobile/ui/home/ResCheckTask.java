@@ -327,21 +327,16 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         void onResCheckFinished(int result, boolean isNewVersion);
     }
 
-    public void unregisterMReceiver(){
-        mContext.unregisterReceiver(mReceiver);
-    }
-
     public void checkWindbot() {
         Log.i("路径", mContext.getFilesDir().getPath());
         Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
         try {
             WindBot.initAndroid(mContext.getFilesDir().getPath(),
                     mSettings.getDataBasePath() + "/" + DATABASE_NAME,
-                    mSettings.getResourcePath() +"/"+ CORE_BOT_CONF_PATH);
-        }catch (Throwable e){
+                    mSettings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);
+        } catch (Throwable e) {
             e.printStackTrace();
         }
-        MessageReceiver mReceiver = new MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
         mContext.registerReceiver(mReceiver, filter);
@@ -356,6 +351,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 WindBot.runAndroid(args);
             }
         }
+    }
+
+    public void unregisterMReceiver() {
+        mContext.unregisterReceiver(mReceiver);
     }
 
     Handler han = new Handler() {
