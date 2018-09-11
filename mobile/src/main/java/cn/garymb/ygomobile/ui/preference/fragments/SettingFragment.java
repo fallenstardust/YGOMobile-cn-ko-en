@@ -178,7 +178,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .setForced(true)                //设置是否强制更新,非自定义回调更新接口此方法有用
                     .setUserCanRetry(true)         //失败后是否提示重新下载，非自定义下载 apk 回调此方法有用
                     .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk， 默认为true
-                    .setUpdateManagerListener(new UpdateManagerListener() {
+                 /*   .setUpdateManagerListener(new UpdateManagerListener() {
                         @Override
                         public void onNoUpdateAvailable() {
                             Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
@@ -192,7 +192,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         @Override
                         public void checkUpdateFailed(Exception e) {
                         }
-                    })
+                    })*/
                     .register();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {

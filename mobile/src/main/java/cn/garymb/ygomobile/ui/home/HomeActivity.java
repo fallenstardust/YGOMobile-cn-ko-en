@@ -106,7 +106,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
-        checkForceUpdateSilent();
+        checkPgyerUpdateSilent();
         //ServiceDuelAssistant
         startService(new Intent(this, ServiceDuelAssistant.class));
         StartMycard();
@@ -389,7 +389,7 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mMenuIds.put(mMenuIds.size(), menuId);
     }
 
-    public void checkForceUpdateSilent() {
+    public void checkPgyerUpdateSilent() {
         new PgyUpdateManager.Builder()
                 .setForced(false)                //设置是否强制更新
                 .setUserCanRetry(false)         //失败后是否提示重新下载
