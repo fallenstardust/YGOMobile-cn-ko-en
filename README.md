@@ -29,6 +29,9 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
     mobile\assets\data\cards.cdb
     mobile\assets\data\scripts.zip
     mobile\assets\data\fonts\ygo.ttf
+    mobile\libs\libWindbot.aar
+    最新Libwindbot.aar获取：
+    https://github.com/mercury233/libWindbot/releases
 
 2.编译ygo的so
 -------------------------
