@@ -518,7 +518,7 @@ bool Game::Initialize() {
 		btnOption[i] = env->addButton(rect<s32>(10 * xScale, (30 + 60 * i) * yScale, 380 * xScale, (80 + 60 * i) * yScale), wOptions, BUTTON_OPTION_0 + i, L"");
 	}
 #endif
-	//pos select
+	//pos selectimgCard->setScaleImage(true);
 	wPosSelect = env->addWindow(rect<s32>(340 * xScale, 200 * yScale, 935 * xScale, 410 * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
@@ -565,14 +565,14 @@ bool Game::Initialize() {
 	btnDisplayOK = env->addButton(rect<s32>(300 * xScale, 265 * yScale, 380 * xScale, 290 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
 #endif
 	//announce number
-	wANNumber = env->addWindow(rect<s32>(550 * xScale, 200 * yScale, 780 * xScale, 295 * yScale), false, L"");
+	wANNumber = env->addWindow(rect<s32>(550 * xScale, 200 * yScale, 780 * xScale, 355 * yScale), false, L"");
 	wANNumber->getCloseButton()->setVisible(false);
 	wANNumber->setVisible(false);
 #ifdef _IRR_ANDROID_PLATFORM_
-	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(40 * xScale, 30 * yScale, 190 * xScale, 50 * yScale), wANNumber, -1);
+	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(40 * xScale, 30 * yScale, 190 * xScale, 65 * yScale), wANNumber, -1);
 #endif
 	cbANNumber->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnANNumberOK = env->addButton(rect<s32>(80 * xScale, 60 * yScale, 150 * xScale, 85 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
+	btnANNumberOK = env->addButton(rect<s32>(70 * xScale, 95 * yScale, 160 * xScale, 145 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
 	//announce card
 	wANCard = env->addWindow(rect<s32>(400 * xScale, 100 * yScale, 800 * xScale, 400 * yScale), false, L"");
 	wANCard->getCloseButton()->setVisible(false);
@@ -585,18 +585,18 @@ bool Game::Initialize() {
 //dont merge
 	btnANCardOK = env->addButton(rect<s32>(140 * xScale, 260 * yScale, 270 * xScale, 295 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
 	//announce attribute
-	wANAttribute = env->addWindow(rect<s32>(500 * xScale, 200 * yScale, 750 * xScale, 380 * yScale), false, dataManager.GetSysString(562));
+	wANAttribute = env->addWindow(rect<s32>(450 * xScale, 200 * yScale, 800 * xScale, 360 * yScale), false, dataManager.GetSysString(562));
 	wANAttribute->getCloseButton()->setVisible(false);
 	wANAttribute->setVisible(false);
 	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
-		chkAttribute[i] = env->addCheckBox(false, rect<s32>((10 + (i % 4) * 80) * xScale, (50 + (i / 4) * 55) * yScale, (90 + (i % 4) * 80) * xScale, (75 + (i / 4) * 55) * yScale),
+		chkAttribute[i] = env->addCheckBox(false, rect<s32>((20 + (i % 4) * 80) * xScale, (50 + (i / 4) * 55) * yScale, (100 + (i % 4) * 80) * xScale, (75 + (i / 4) * 55) * yScale),
 		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter));
 	//announce race
 	wANRace = env->addWindow(rect<s32>(480 * xScale, 100 * yScale, 850 * xScale, 530 * yScale), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
 	wANRace->setVisible(false);
 	for(int filter = 0x1, i = 0; i < 25; filter <<= 1, ++i)
-		chkRace[i] = env->addCheckBox(false, rect<s32>((10 + (i % 4) * 90) * xScale, (50 + (i / 4) * 55) * yScale, (100 + (i % 4) * 90) * xScale, (75 + (i / 4) * 55) * yScale),
+		chkRace[i] = env->addCheckBox(false, rect<s32>((15 + (i % 4) * 90) * xScale, (50 + (i / 4) * 55) * yScale, (105 + (i % 4) * 90) * xScale, (75 + (i / 4) * 55) * yScale),
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
@@ -613,16 +613,16 @@ bool Game::Initialize() {
 	wCmdMenu->setVisible(false);
 	wCmdMenu->getCloseButton()->setVisible(false);
 #ifdef _IRR_ANDROID_PLATFORM_
-	btnActivate = env->addButton(rect<s32>(1 * xScale, 1 * yScale, 99 * xScale, 40 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1150));
-	btnSummon = env->addButton(rect<s32>(1 * xScale, 41 * yScale, 99 * xScale, 81 * yScale), wCmdMenu, BUTTON_CMD_SUMMON, dataManager.GetSysString(1151));
-	btnSPSummon = env->addButton(rect<s32>(1 * xScale, 82 * yScale, 99 * xScale, 122 * yScale), wCmdMenu, BUTTON_CMD_SPSUMMON, dataManager.GetSysString(1152));
-	btnMSet = env->addButton(rect<s32>(1 * xScale, 123 * yScale, 99 * xScale, 164 * yScale), wCmdMenu, BUTTON_CMD_MSET, dataManager.GetSysString(1153));
-	btnSSet = env->addButton(rect<s32>(1 * xScale, 165 * yScale, 99 * xScale, 205 * yScale), wCmdMenu, BUTTON_CMD_SSET, dataManager.GetSysString(1153));
-	btnRepos = env->addButton(rect<s32>(1 * xScale, 206 * yScale, 99 * xScale, 246 * yScale), wCmdMenu, BUTTON_CMD_REPOS, dataManager.GetSysString(1154));
-	btnAttack = env->addButton(rect<s32>(1 * xScale, 247 * yScale, 99 * xScale, 288 * yScale), wCmdMenu, BUTTON_CMD_ATTACK, dataManager.GetSysString(1157));
-	btnShowList = env->addButton(rect<s32>(1 * xScale, 289 * yScale, 99 * xScale, 329 * yScale), wCmdMenu, BUTTON_CMD_SHOWLIST, dataManager.GetSysString(1158));
-	btnOperation = env->addButton(rect<s32>(1 * xScale, 169 * yScale, 100 * xScale, 209 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1161));
-	btnReset = env->addButton(rect<s32>(1 * xScale, 190 * yScale , 99 * xScale, 210 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
+	btnActivate = env->addButton(rect<s32>(1 * xScale, 1 * yScale, 105 * xScale, 51 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1150));
+	btnSummon = env->addButton(rect<s32>(1 * xScale, 52 * yScale, 105 * xScale, 102 * yScale), wCmdMenu, BUTTON_CMD_SUMMON, dataManager.GetSysString(1151));
+	btnSPSummon = env->addButton(rect<s32>(1 * xScale, 103 * yScale, 105 * xScale, 153 * yScale), wCmdMenu, BUTTON_CMD_SPSUMMON, dataManager.GetSysString(1152));
+	btnMSet = env->addButton(rect<s32>(1 * xScale, 154 * yScale, 105 * xScale, 204 * yScale), wCmdMenu, BUTTON_CMD_MSET, dataManager.GetSysString(1153));
+	btnSSet = env->addButton(rect<s32>(1 * xScale, 205 * yScale, 105 * xScale, 255 * yScale), wCmdMenu, BUTTON_CMD_SSET, dataManager.GetSysString(1153));
+	btnRepos = env->addButton(rect<s32>(1 * xScale, 256 * yScale, 105 * xScale, 306 * yScale), wCmdMenu, BUTTON_CMD_REPOS, dataManager.GetSysString(1154));
+	btnAttack = env->addButton(rect<s32>(1 * xScale, 307 * yScale, 105 * xScale, 357 * yScale), wCmdMenu, BUTTON_CMD_ATTACK, dataManager.GetSysString(1157));
+	btnShowList = env->addButton(rect<s32>(1 * xScale, 358 * yScale, 105 * xScale, 408 * yScale), wCmdMenu, BUTTON_CMD_SHOWLIST, dataManager.GetSysString(1158));
+	btnOperation = env->addButton(rect<s32>(1 * xScale, 409 * yScale, 105 * xScale, 459 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1161));
+	btnReset = env->addButton(rect<s32>(1 * xScale, 460 * yScale , 105 * xScale, 510 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
 #endif
 	//deck edit
 	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 8 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
@@ -824,14 +824,14 @@ bool Game::Initialize() {
 		irr::gui::IGUITab* tabBot = wSingle->addTab(dataManager.GetSysString(1380));
 		lstBotList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabBot, LISTBOX_BOT_LIST, true, 40 * xScale);
 		lstBotList->setItemHeight(25 * yScale);
-		btnStartBot = env->addButton(rect<s32>(460 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), tabBot, BUTTON_BOT_START, dataManager.GetSysString(1211));
-		btnBotCancel = env->addButton(rect<s32>(460 * xScale, 320 * yScale, 570 * xScale, 360 * yScale), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
+		btnStartBot = env->addButton(rect<s32>(460 * xScale, 260 * yScale, 570 * xScale, 300 * yScale), tabBot, BUTTON_BOT_START, dataManager.GetSysString(1211));
+		btnBotCancel = env->addButton(rect<s32>(460 * xScale, 310 * yScale, 570 * xScale, 350 * yScale), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
 		env->addStaticText(dataManager.GetSysString(1382), rect<s32>(360 * xScale, 10 * yScale, 550 * xScale, 30 * yScale), false, true, tabBot);
 		stBotInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 40 * yScale, 560 * xScale, 160 * yScale), false, true, tabBot);
-		chkBotOldRule = env->addCheckBox(false, rect<s32>(360 * xScale, 140 * yScale, 560 * xScale, 160 * yScale), tabBot, CHECKBOX_BOT_OLD_RULE, dataManager.GetSysString(1383));
-		chkBotHand = env->addCheckBox(false, rect<s32>(360 * xScale, 170 * yScale, 560 * xScale, 190 * yScale), tabBot, -1, dataManager.GetSysString(1384));
-		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 200 * yScale, 560 * xScale, 220 * yScale), tabBot, -1, dataManager.GetSysString(1229));
-		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 230 * yScale, 560 * xScale, 250 * yScale), tabBot, -1, dataManager.GetSysString(1230));
+		chkBotOldRule = env->addCheckBox(false, rect<s32>(360 * xScale, 100 * yScale, 560 * xScale, 130 * yScale), tabBot, CHECKBOX_BOT_OLD_RULE, dataManager.GetSysString(1383));
+		chkBotHand = env->addCheckBox(false, rect<s32>(360 * xScale, 140 * yScale, 560 * xScale, 170 * yScale), tabBot, -1, dataManager.GetSysString(1384));
+		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 180 * yScale, 560 * xScale, 210 * yScale), tabBot, -1, dataManager.GetSysString(1229));
+		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 220 * yScale, 560 * xScale, 250 * yScale), tabBot, -1, dataManager.GetSysString(1230));
 	} else { // avoid null pointer
 		btnStartBot = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnBotCancel = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
@@ -840,12 +840,12 @@ bool Game::Initialize() {
 	}
 	//SINGLE MODE	
 	irr::gui::IGUITab* tabSingle = wSingle->addTab(dataManager.GetSysString(1381));
-	lstSinglePlayList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabSingle, LISTBOX_SINGLEPLAY_LIST, true, 40 * xScale);
-	lstSinglePlayList->setItemHeight(25 * yScale);
-	btnLoadSinglePlay = env->addButton(rect<s32>(460 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), tabSingle, BUTTON_LOAD_SINGLEPLAY, dataManager.GetSysString(1211));
-	btnSinglePlayCancel = env->addButton(rect<s32>(460 * xScale, 320 * yScale, 570 * xScale, 360 * yScale),tabSingle, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
 	env->addStaticText(dataManager.GetSysString(1352), rect<s32>(360 * xScale, 30 * yScale, 570 * xScale, 50 * yScale), false, true, tabSingle);
 	stSinglePlayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 295 * yScale), false, true, tabSingle);
+	lstSinglePlayList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabSingle, LISTBOX_SINGLEPLAY_LIST, true, 40 * xScale);
+	lstSinglePlayList->setItemHeight(25 * yScale);
+	btnLoadSinglePlay = env->addButton(rect<s32>(460 * xScale, 260 * yScale, 570 * xScale, 300 * yScale), tabSingle, BUTTON_LOAD_SINGLEPLAY, dataManager.GetSysString(1211));
+	btnSinglePlayCancel = env->addButton(rect<s32>(460 * xScale, 310 * yScale, 570 * xScale, 350 * yScale),tabSingle, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
 	//replay save
 	wReplaySave = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1340));
 	wReplaySave->getCloseButton()->setVisible(false);
