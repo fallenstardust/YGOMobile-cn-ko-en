@@ -50,6 +50,7 @@ int SingleMode::SinglePlayThread(void* param) {
 	myswprintf(mainGame->dInfo.strLP[1], L"%d", mainGame->dInfo.lp[1]);
 	BufferIO::CopyWStr(mainGame->ebNickName->getText(), mainGame->dInfo.hostname, 20);
 	mainGame->dInfo.clientname[0] = 0;
+	mainGame->dInfo.player_type = 0;
 	mainGame->dInfo.turn = 0;
 	char filename[256];
 	size_t slen = 0;
@@ -57,7 +58,7 @@ int SingleMode::SinglePlayThread(void* param) {
 	wchar_t fname[256];
 	myswprintf(fname, L"./single/%ls", name);
 	slen = BufferIO::EncodeUTF8(fname, filename);
-	if(!preload_script(pduel, filename, slen))
+		if(!preload_script(pduel, filename, 0))
 		slen = 0;
 	if(slen == 0) {
 		end_duel(pduel);
