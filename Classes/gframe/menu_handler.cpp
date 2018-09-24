@@ -31,7 +31,7 @@ void UpdateDeck() {
 	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
 }
 bool MenuHandler::OnEvent(const irr::SEvent& event) {
-    if(mainGame->dField.OnCommonEvent(event))
+	if(mainGame->dField.OnCommonEvent(event))
 		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
 	irr::SEvent transferEvent;
@@ -393,7 +393,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(mainGame->cbDBDecks->getSelected() != -1)
 					deckManager.LoadDeck(mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
 					mainGame->ebDeckname->setText(L"");
-				
 				mainGame->HideElement(mainGame->wMainMenu);
 				mainGame->deckBuilder.Initialize();
 				break;

@@ -215,11 +215,11 @@ void field::destroy(card_set* targets, effect* reason_effect, uint32 reason, uin
 			pcard->current.reason_player = reason_player;
 		}
 		uint32 p = playerid;
-		if(!(destination & (LOCATION_HAND + LOCATION_DECK + LOCATION_REMOVED)))
+		if(!(destination & (LOCATION_HAND | LOCATION_DECK | LOCATION_REMOVED)))
 			destination = LOCATION_GRAVE;
 		if(destination && p == PLAYER_NONE)
 			p = pcard->owner;
-		if(destination & (LOCATION_GRAVE + LOCATION_REMOVED))
+		if(destination & (LOCATION_GRAVE | LOCATION_REMOVED))
 			p = pcard->owner;
 		pcard->set_status(STATUS_DESTROY_CONFIRMED, TRUE);
 		pcard->sendto_param.set(p, POS_FACEUP, destination, sequence);
@@ -269,7 +269,7 @@ void field::send_to(card_set* targets, effect* reason_effect, uint32 reason, uin
 		// send to hand from deck and playerid not given => send to the hand of controler
 		if(p == PLAYER_NONE && (destination & LOCATION_HAND) && (pcard->current.location & LOCATION_DECK) && pcard->current.controler == reason_player)
 			p = reason_player;
-		if(destination & (LOCATION_GRAVE + LOCATION_REMOVED) || p == PLAYER_NONE)
+		if(destination & (LOCATION_GRAVE | LOCATION_REMOVED) || p == PLAYER_NONE)
 			p = pcard->owner;
 		uint32 pos = position;
 		if(destination != LOCATION_REMOVED)
@@ -288,7 +288,7 @@ void field::send_to(card* target, effect* reason_effect, uint32 reason, uint32 r
 	send_to(&tset, reason_effect, reason, reason_player, playerid, destination, sequence, position);
 }
 void field::move_to_field(card* target, uint32 move_player, uint32 playerid, uint32 destination, uint32 positions, uint32 enable, uint32 ret, uint32 is_equip, uint32 zone) {
-	if(!(destination & (LOCATION_MZONE + LOCATION_SZONE)) || !positions)
+	if(!(destination & LOCATION_ONFIELD) || !positions)
 		return;
 	if(destination == target->current.location && playerid == target->current.controler)
 		return;
@@ -4280,7 +4280,7 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 			if(!(target->current.location & LOCATION_ONFIELD))
 				target->clear_relate_effect();
 		}
-		if(ret != 1 && location != target->current.location
+		if(ret == 0 && location != target->current.location
 			|| ret == 1 && target->turnid != infos.turn_id) {
 			target->set_status(STATUS_SUMMON_TURN, FALSE);
 			target->set_status(STATUS_FLIP_SUMMON_TURN, FALSE);
@@ -4372,6 +4372,32 @@ int32 field::move_to_field(uint16 step, card* target, uint32 enable, uint32 ret,
 					value = value >> 16;
 				if(value & (0x1 << target->current.sequence)) {
 					peffect->dec_count();
+				}
+			}
+			effect* teffect;
+			if(teffect = target->is_affected_by_effect(EFFECT_PRE_MONSTER)) {
+				uint32 type = teffect->value;
+				if(type & TYPE_TRAP)
+					type |= TYPE_TRAPMONSTER | target->data.type;
+				target->reset(EFFECT_PRE_MONSTER, RESET_CODE);
+				effect* peffect = pduel->new_effect();
+				peffect->owner = target;
+				peffect->type = EFFECT_TYPE_SINGLE;
+				peffect->code = EFFECT_CHANGE_TYPE;
+				peffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE;
+				peffect->reset_flag = RESET_EVENT + 0x1fc0000;
+				peffect->value = TYPE_MONSTER | type;
+				target->add_effect(peffect);
+				if(type & TYPE_TRAPMONSTER) {
+					peffect = pduel->new_effect();
+					peffect->owner = target;
+					peffect->type = EFFECT_TYPE_FIELD;
+					peffect->range = LOCATION_MZONE;
+					peffect->code = EFFECT_USE_EXTRA_SZONE;
+					peffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE;
+					peffect->reset_flag = RESET_EVENT + 0x1fe0000;
+					peffect->value = 1 + (0x10000 << target->previous.sequence);
+					target->add_effect(peffect);
 				}
 			}
 		}
