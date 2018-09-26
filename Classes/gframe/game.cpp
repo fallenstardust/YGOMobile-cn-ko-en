@@ -447,6 +447,9 @@ bool Game::Initialize() {
 	posY += 60;
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 25 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
+	posY += 60;
+ 	chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 25 * yScale), tabHelper, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
+ 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
 	//system
 	irr::gui::IGUITab* tabSystem = wInfos->addTab(dataManager.GetSysString(1273));
 	posY = 20 * xScale;
@@ -1377,6 +1380,7 @@ void Game::LoadConfig() {
 	gameConf.defaultOT = android::getIntSetting(appMain, "defaultOT", 1);
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
+	gameConf.quick_animation = 0;
 }
 
 void Game::SaveConfig() {
@@ -1438,6 +1442,12 @@ void Game::SaveConfig() {
 		gameConf.auto_search_limit = cur;
 		 android::saveIntSetting(appMain, "auto_search_limit", gameConf.auto_search_limit);
 	}
+
+	cur = chkQuickAnimation->isChecked()?1:0;
+    if(cur != gameConf.quick_animation){
+        gameConf.quick_animation = cur;
+         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
+    }
 
 //gameConf.defaultOT = defaultOT->isChecked()?1:0;
 //    android::saveIntSetting(appMain, "defaultOT", gameConf.defaultOT);
