@@ -1044,7 +1044,7 @@ void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	FadingUnit fu;
 	fu.fadingSize = win->getRelativePosition();
 	for(auto fit = fadingList.begin(); fit != fadingList.end(); ++fit)
-		if(win == fit->guiFading)
+		if(win == fit->guiFading && win != wOptions) // the size of wOptions is always setted by ClientField::ShowSelectOption before showing it
 			fu.fadingSize = fit->fadingSize;
 	irr::core::position2di center = fu.fadingSize.getCenter();
 	fu.fadingDiff.X = fu.fadingSize.getWidth() / 10;
@@ -1336,68 +1336,6 @@ void Game::DrawDeckBd() {
 				mywcscat(textBuffer, L"[Custom]");
 			textFont->draw(textBuffer, recti(904 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), 0xff000000, false, false);
 			textFont->draw(textBuffer, recti(905 * mainGame->xScale, (209 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), 0xffffffff, false, false);
-		}
-	}
-#else
-	for(size_t i = 0; i < 7 && i + mainGame->scrFilter->getPos() < deckBuilder.results.size(); ++i) {
-		code_pointer ptr = deckBuilder.results[i + mainGame->scrFilter->getPos()];
-		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
-			driver->draw2DRectangle(0x80000000, recti(806, 164 + i * 66, 1019, 230 + i * 66));
-		DrawThumb(ptr, position2di(810, 165 + i * 66), deckBuilder.filterList);
-		if(ptr->second.type & TYPE_MONSTER) {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			textFont->draw(textBuffer, recti(859, 164 + i * 66, 955, 185 + i * 66), 0xff000000, false, false);
-			textFont->draw(textBuffer, recti(860, 165 + i * 66, 955, 185 + i * 66), 0xffffffff, false, false);
-			if(!(ptr->second.type & TYPE_LINK)) {
-				wchar_t* form = L"\u2605";
-				if(ptr->second.type & TYPE_XYZ) form = L"\u2606";
-				myswprintf(textBuffer, L"%ls/%ls %ls%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), form, ptr->second.level);
-				textFont->draw(textBuffer, recti(859, 186 + i * 66, 955, 207 + i * 66), 0xff000000, false, false);
-				textFont->draw(textBuffer, recti(860, 187 + i * 66, 955, 207 + i * 66), 0xffffffff, false, false);
-				if(ptr->second.attack < 0 && ptr->second.defense < 0)
-					myswprintf(textBuffer, L"?/?");
-				else if(ptr->second.attack < 0)
-					myswprintf(textBuffer, L"?/%d", ptr->second.defense);
-				else if(ptr->second.defense < 0)
-					myswprintf(textBuffer, L"%d/?", ptr->second.attack);
-				else myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
-			} else {
-				myswprintf(textBuffer, L"%ls/%ls LINK-%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), ptr->second.level);
-				textFont->draw(textBuffer, recti(859, 186 + i * 66, 955, 207 + i * 66), 0xff000000, false, false);
-				textFont->draw(textBuffer, recti(860, 187 + i * 66, 955, 207 + i * 66), 0xffffffff, false, false);
-				if(ptr->second.attack < 0)
-					myswprintf(textBuffer, L"?/-");
-				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
-			}
-			if(ptr->second.type & TYPE_PENDULUM) {
-				wchar_t scaleBuffer[16];
-				myswprintf(scaleBuffer, L" %d/%d", ptr->second.lscale, ptr->second.rscale);
-				wcscat(textBuffer, scaleBuffer);
-			}
-			if((ptr->second.ot & 0x3) == 1)
-				wcscat(textBuffer, L" [OCG]");
-			else if((ptr->second.ot & 0x3) == 2)
-				wcscat(textBuffer, L" [TCG]");
-			else if((ptr->second.ot & 0x7) == 4)
-				wcscat(textBuffer, L" [Custom]");
-			textFont->draw(textBuffer, recti(859, 208 + i * 66, 955, 229 + i * 66), 0xff000000, false, false);
-			textFont->draw(textBuffer, recti(860, 209 + i * 66, 955, 229 + i * 66), 0xffffffff, false, false);
-		} else {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			textFont->draw(textBuffer, recti(859, 164 + i * 66, 955, 185 + i * 66), 0xff000000, false, false);
-			textFont->draw(textBuffer, recti(860, 165 + i * 66, 955, 185 + i * 66), 0xffffffff, false, false);
-			const wchar_t* ptype = dataManager.FormatType(ptr->second.type);
-			textFont->draw(ptype, recti(859, 186 + i * 66, 955, 207 + i * 66), 0xff000000, false, false);
-			textFont->draw(ptype, recti(860, 187 + i * 66, 955, 207 + i * 66), 0xffffffff, false, false);
-			textBuffer[0] = 0;
-			if((ptr->second.ot & 0x3) == 1)
-				wcscat(textBuffer, L"[OCG]");
-			else if((ptr->second.ot & 0x3) == 2)
-				wcscat(textBuffer, L"[TCG]");
-			else if((ptr->second.ot & 0x7) == 4)
-				wcscat(textBuffer, L"[Custom]");
-			textFont->draw(textBuffer, recti(859, 208 + i * 66, 955, 229 + i * 66), 0xff000000, false, false);
-			textFont->draw(textBuffer, recti(860, 209 + i * 66, 955, 229 + i * 66), 0xffffffff, false, false);
 		}
 	}
 #endif
