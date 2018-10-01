@@ -85,7 +85,13 @@ public class ServiceDuelAssistant extends Service {
             @Override
             public void onPrimaryClipChanged() {
                 ClipData clipData = cm.getPrimaryClip();
-                final String ss = clipData.getItemAt(0).getText().toString();
+                CharSequence  cs = clipData.getItemAt(0).getText();
+                final String ss;
+                if(cs != null){
+                    ss = cs.toString();
+                }else{
+                    ss = "";
+                }
 					/*final int ssi=ss.indexOf("卡查");
 					if (ssi != -1) {
 						cxCard(ss, ssi);
@@ -102,7 +108,6 @@ public class ServiceDuelAssistant extends Service {
                 if (start != -1) {
                     joinRoom(ss, start);
                 }
-                //}
             }
 
 
