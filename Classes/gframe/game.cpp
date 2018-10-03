@@ -447,12 +447,7 @@ bool Game::Initialize() {
 	posY += 60;
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
-	posY += 60;
-    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1279));
-    chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
-	posY += 60;
- 	chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
- 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
+
 	//system
 	irr::gui::IGUITab* tabSystem = wInfos->addTab(dataManager.GetSysString(1273));
 	posY = 20 * xScale;
@@ -467,6 +462,12 @@ bool Game::Initialize() {
 	posY += 60;
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
+	posY += 60;
+    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1279));
+    chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
+    posY += 60;
+    chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
+    chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
 	//
 	wHand = env->addWindow(rect<s32>(500 * xScale, 450 * yScale, 825 * xScale, 605 * yScale), false, L"");
 	wHand->getCloseButton()->setVisible(false);
