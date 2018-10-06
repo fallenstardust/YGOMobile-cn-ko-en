@@ -17,6 +17,9 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.ourygo.oy.base.listener.OnYGOServerListQueryListener;
+import com.ourygo.oy.util.YGOUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -154,43 +157,20 @@ public class ServiceDuelAssistant extends Service {
                 ServerListManager mServerListManager = new ServerListManager(ServiceDuelAssistant.this, mServerListAdapter);
                 mServerListManager.syncLoadData();
 
-                File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
-                VUiKit.defer().when(() -> {
-                    ServerList assetList = readList(ServiceDuelAssistant.this.getAssets().open(ASSET_SERVER_LIST));
-                    ServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
-                    if (fileList == null) {
-                        return assetList;
-                    }
-                    if (fileList.getVercode() < assetList.getVercode()) {
-                        xmlFile.delete();
-                        return assetList;
-                    }
-                    return fileList;
-                }).done((list) -> {
-                    if (list != null) {
-
-                        ServerInfo serverInfo = list.getServerInfoList().get(0);
+                YGOUtil.getYGOServerList(new OnYGOServerListQueryListener() {
+                    @Override
+                    public void onYGOServerListQuery(ServerList serverList) {
+                        ServerInfo serverInfo = serverList.getServerInfoList().get(0);
 
                         duelIntent(ServiceDuelAssistant.this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
 
                     }
                 });
 
+
             }
         });
 
-    }
-
-    private ServerList readList(InputStream in) {
-        ServerList list = null;
-        try {
-            list = XmlUtils.get().getObject(ServerList.class, in);
-        } catch (Exception e) {
-
-        } finally {
-            IOUtils.close(in);
-        }
-        return list;
     }
 
     //决斗跳转

@@ -6,15 +6,20 @@
     <color name="star_rank">#a89e9e</color>
     <color name="black">#000000</color>
     <color name="blackLinght">#AA000000</color>
-    <color name="colorPrimary">#3F51B5</color>
+
     <color name="colorNavy">#0A032D</color>
     <color name="mediumPurpleLight">#775AC7</color>
     <color name="mediumPurple">#673AB7</color>
     <color name="mediumPurpleDark">#572AA7</color>
-    <color name="colorPrimaryDark">#2f41a5</color>
+
     <color name="gold">#b8be35</color>
-    <color name="colorAccent">#EF3934</color>
-    <color name="colorAccentDark">#CF3934</color>
+
+    <color name="colorAccent">#008cf9</color>
+    <color name="colorAccentDark">#008cf9</color>
+    <color name="colorPrimary">#008cf9</color>
+    <color name="colorPrimaryDark">#008cf9</color>
+    <color name="windowBackgroud">#ECEFF1</color>
+
     <color name="item_title">@color/gold</color>
     <color name="item_bg">#65ffffff</color>
     <color name="item_bg2">#70ffffff</color>

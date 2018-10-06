@@ -6,10 +6,10 @@
             android:key="pref_key_game_res_path"
             android:persistent="true"
             android:title="@string/settings_game_res_path" />
-        <Preference
-            android:key="pref_key_about_check_update"
-            android:persistent="true"
-            android:title="@string/settings_about_check_update"/>
+        <!--<Preference-->
+            <!--android:key="pref_key_about_check_update"-->
+            <!--android:persistent="true"-->
+            <!--android:title="@string/settings_about_check_update"/>-->
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log"/>

@@ -29,6 +29,7 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.recyclerview.R;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.helper.ItemTouchUIUtilImpl;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.OnItemTouchListener;
 import android.support.v7.widget.RecyclerView.ViewHolder;
@@ -1425,11 +1426,13 @@ public class ItemTouchHelper2 extends RecyclerView.ItemDecoration
 
         static {
             if (Build.VERSION.SDK_INT >= 21) {
-                sUICallback = new ItemTouchUIUtilImpl.Lollipop();
-            } else if (Build.VERSION.SDK_INT >= 11) {
-                sUICallback = new ItemTouchUIUtilImpl.Honeycomb();
-            } else {
-                sUICallback = new ItemTouchUIUtilImpl.Gingerbread();
+                sUICallback = new ItemTouchUIUtilImpl.Api21Impl();
+            }
+//            else if (Build.VERSION.SDK_INT >= 11) {
+//                sUICallback = new ItemTouchUIUtilImpl.BaseImpl();
+//            }
+            else {
+                sUICallback = new ItemTouchUIUtilImpl.BaseImpl();
             }
         }
 

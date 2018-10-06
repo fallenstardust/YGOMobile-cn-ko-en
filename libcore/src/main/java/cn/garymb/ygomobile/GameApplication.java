@@ -18,7 +18,6 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 public abstract class GameApplication extends Application implements IrrlichtBridge.IrrlichtApplication {
     private SoundPool mSoundEffectPool;
     private Map<String, Integer> mSoundIdMap;
-
     private static GameApplication sGameApplication;
 
     @Override

@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 22
         versionCode 330601002
-        versionName "3.3.6"
+        versionName "@string/app_version_name"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
@@ -83,12 +83,10 @@ dependencies {
     implementation 'org.jdeferred:jdeferred-android-aar:1.2.4'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'com.github.chrisbanes.photoview:library:1.2.4'
-    //
-    implementation 'com.android.support:support-annotations:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:design:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:support-vector-drawable:' + rootProject.ext.supportVersion
+
+    //dialog库
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.7.4'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
