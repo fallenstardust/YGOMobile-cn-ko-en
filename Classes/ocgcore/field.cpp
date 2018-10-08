@@ -2433,7 +2433,7 @@ int32 field::check_tuner_material(card* pcard, card* tuner, int32 findex1, int32
 	if(smat) {
 		if(pcheck)
 			pcheck->get_value(smat);
-		if(!smat->is_position(POS_FACEUP) || !smat->is_can_be_synchro_material(pcard, tuner) || !pduel->lua->check_matching(smat, findex2, 0)) {
+		if(!smat->is_position(POS_FACEUP) || !smat->is_can_be_synchro_material(pcard, tuner) || !pduel->lua->check_matching(smat, findex2, 1)) {
 			pduel->restore_assumes();
 			return FALSE;
 		}
@@ -2479,7 +2479,7 @@ int32 field::check_tuner_material(card* pcard, card* tuner, int32 findex1, int32
 				pcheck->get_value(pm);
 			if(pm->current.location == LOCATION_MZONE && !pm->is_position(POS_FACEUP))
 				continue;
-			if(!pduel->lua->check_matching(pm, findex2, 0))
+			if(!pduel->lua->check_matching(pm, findex2, 1))
 				continue;
 			nsyn.push_back(pm);
 			pm->sum_param = pm->get_synchro_level(pcard);
@@ -2505,7 +2505,7 @@ int32 field::check_tuner_material(card* pcard, card* tuner, int32 findex1, int32
 				pcheck->get_value(pm);
 			if(pm->current.location == LOCATION_MZONE && !pm->is_position(POS_FACEUP))
 				continue;
-			if(!pduel->lua->check_matching(pm, findex2, 0))
+			if(!pduel->lua->check_matching(pm, findex2, 1))
 				continue;
 			nsyn.push_back(pm);
 			pm->sum_param = pm->get_synchro_level(pcard);

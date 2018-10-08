@@ -46,7 +46,7 @@ public class ServiceDuelAssistant extends Service {
     String[] passwordPrefix = {
             "M,", "m,",
             "T,", "t,",
-            "PR,","pr,",
+            "PR,", "pr,",
             "AI,", "ai,",
             "LF2,", "lf2,",
             "M#", "m#",
@@ -55,7 +55,7 @@ public class ServiceDuelAssistant extends Service {
             "S#", "s#",
             "AI#", "ai#",
             "LF2#", "lf2#",
-            "R#","r#"
+            "R#", "r#"
     };
 
     //private List<Card> lc;
@@ -88,11 +88,11 @@ public class ServiceDuelAssistant extends Service {
             @Override
             public void onPrimaryClipChanged() {
                 ClipData clipData = cm.getPrimaryClip();
-                CharSequence  cs = clipData.getItemAt(0).getText();
+                CharSequence cs = clipData.getItemAt(0).getText();
                 final String ss;
-                if(cs != null){
+                if (cs != null) {
                     ss = cs.toString();
-                }else{
+                } else {
                     ss = "";
                 }
 					/*final int ssi=ss.indexOf("卡查");
