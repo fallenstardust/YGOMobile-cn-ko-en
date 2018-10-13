@@ -10,6 +10,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -27,7 +28,10 @@ import com.base.bj.trpayjar.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.pgyersdk.update.DownloadFileListener;
 import com.pgyersdk.update.PgyUpdateManager;
+import com.pgyersdk.update.UpdateManagerListener;
+import com.pgyersdk.update.javabean.AppBean;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -389,11 +393,62 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mMenuIds.put(mMenuIds.size(), menuId);
     }
 
-    public void checkPgyerUpdateSilent() {
+    public static void checkPgyerUpdateSilent() {
+        //蒲公英自动检查更新
         new PgyUpdateManager.Builder()
-                .setForced(false)                //设置是否强制更新
-                .setUserCanRetry(false)         //失败后是否提示重新下载
-                .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk
+                .setForced(true)
+                .setUserCanRetry(false)
+                .setDeleteHistroyApk(false)
+                .setUpdateManagerListener(new UpdateManagerListener() {
+                    @Override
+                    public void onNoUpdateAvailable() {
+                        Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                    }
+                    @Override
+                    public void onUpdateAvailable(AppBean appBean) {
+                        final String versionName,updateMessage;
+                        versionName = appBean.getVersionName();
+                        updateMessage = appBean.getReleaseNote();
+                        DialogPlus builder = new DialogPlus(getContext());
+                        builder.setTitle("发现新版本"+versionName);
+                        builder.setMessage(updateMessage);
+                        builder.setRightButtonText("下载");
+                        builder.setRightButtonListener((dlg, i) -> {
+                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
+                            dlg.dismiss();
+                        });
+                        builder.show();
+                    }
+
+                    @Override
+                    public void checkUpdateFailed(Exception e) {
+                        //更新检测失败回调
+                        //更新拒绝（应用被下架，过期，不在安装有效期，下载次数用尽）以及无网络情况会调用此接口
+                        Log.e("pgyer", "check update failed ", e);
+                    }
+                })
+                //注意 ：
+                //下载方法调用 PgyUpdateManager.downLoadApk(appBean.getDownloadURL()); 此回调才有效
+                //此方法是方便用户自己实现下载进度和状态的 UI 提供的回调
+                //想要使用蒲公英的默认下载进度的UI则不设置此方法
+                .setDownloadFileListener(new DownloadFileListener() {
+                    @Override
+                    public void downloadFailed() {
+                        //下载失败
+                        Log.e("pgyer", "download apk failed");
+                    }
+
+                    @Override
+                    public void downloadSuccessful(Uri uri) {
+                        Log.e("pgyer", "download apk failed");
+                        // 使用蒲公英提供的安装方法提示用户 安装apk
+                        PgyUpdateManager.installApk(uri);
+                    }
+
+                    @Override
+                    public void onProgressUpdate(Integer... integers) {
+                        Log.e("pgyer", "update download apk progress" + integers);
+                    }})
                 .register();
     }
 

@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -20,9 +22,11 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
+import com.pgyersdk.update.DownloadFileListener;
 import com.pgyersdk.update.PgyUpdateManager;
 import com.pgyersdk.update.UpdateManagerListener;
 import com.pgyersdk.update.javabean.AppBean;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +36,7 @@ import java.io.InputStream;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -173,27 +178,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_CHECK_UPDATE.equals(preference.getKey())) {
-            new PgyUpdateManager
-                    .Builder()
-                    .setForced(true)                //设置是否强制更新,非自定义回调更新接口此方法有用
-                    .setUserCanRetry(true)         //失败后是否提示重新下载，非自定义下载 apk 回调此方法有用
-                    .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk， 默认为true
-                    .setUpdateManagerListener(new UpdateManagerListener() {
-                        @Override
-                        public void onNoUpdateAvailable() {
-                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onUpdateAvailable(AppBean appBean) {
-                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
-                        }
-
-                        @Override
-                        public void checkUpdateFailed(Exception e) {
-                        }
-                    })
-                    .register();
+            HomeActivity.checkPgyerUpdateSilent();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
