@@ -76,6 +76,18 @@
 
         </LinearLayout>
 
+
+        <ProgressBar
+            android:id="@+id/pb2"
+            style="@style/StyleProgressBarMini"
+            android:layout_width="match_parent"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_height="50px"
+            android:visibility="gone"
+            android:background="@color/colorAccent"
+            tools:visibility="visible"/>
+
+
         <LinearLayout
             android:id="@+id/layout_button"
             android:layout_width="match_parent"

@@ -221,4 +221,6 @@
     <string name="ClickLinkArrows">点亮箭头</string>
     <string name="Already_Lastest">已经是最新版本</string>
     <string name="about_immersive_mode">开关它来适配非16:9的分辨率屏幕，有的机型需要先在系统设置开启全屏应用</string>
+    <string name="OK">确定</string>
+    <string name="Cancel">取消</string>
 </resources>
