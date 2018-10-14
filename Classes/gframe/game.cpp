@@ -195,6 +195,8 @@ bool Game::Initialize() {
 	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.numfont, (int)48 * yScale, isAntialias, true);
 	guiFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	textFont = guiFont;
+	if(!numFont || !textFont)
+		return false;
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
 	device->setResizable(false);

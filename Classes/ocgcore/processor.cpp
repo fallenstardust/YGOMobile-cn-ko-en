@@ -310,22 +310,22 @@ int32 field::process() {
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_DESTROY_STEP: {
-		if(destroy(it->step, it->ptarget, (card*)it->ptr1, it->arg2))
+	case PROCESSOR_DESTROY_REPLACE: {
+		if(destroy_replace(it->step, it->ptarget, (card*)it->ptr1, it->arg2))
 			core.units.pop_front();
 		else
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_RELEASE_STEP: {
-		if (release(it->step, it->ptarget, (card*)it->ptr1))
+	case PROCESSOR_RELEASE_REPLACE: {
+		if (release_replace(it->step, it->ptarget, (card*)it->ptr1))
 			core.units.pop_front();
 		else
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_SENDTO_STEP: {
-		if (send_to(it->step, it->ptarget, (card*)it->ptr1))
+	case PROCESSOR_SENDTO_REPLACE: {
+		if (send_replace(it->step, it->ptarget, (card*)it->ptr1))
 			core.units.pop_front();
 		else
 			it->step++;
@@ -1879,7 +1879,7 @@ int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_free
 					newchain.triggering_effect = peffect;
 					newchain.set_triggering_place(phandler);
 					newchain.triggering_player = infos.turn_player;
-					core.select_chains.push_back(newchain);
+					core.tmp_chains.push_back(newchain);
 				}
 			}
 		}
@@ -2038,6 +2038,8 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 	}
 	case 2: {
 		chain newchain;
+		if(core.tmp_chains.size())
+			core.select_chains.swap(core.tmp_chains);
 		for(auto evit = core.point_event.begin(); evit != core.instant_event.end(); ++evit) {
 			if(evit == core.point_event.end())
 				evit = core.instant_event.begin();
