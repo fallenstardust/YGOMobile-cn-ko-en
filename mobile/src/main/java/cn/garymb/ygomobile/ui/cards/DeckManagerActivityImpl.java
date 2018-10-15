@@ -10,7 +10,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
-import android.support.v7.widget.helper.ItemTouchHelper2;
+import android.support.v7.widget.helper.ItemTouchHelperPlus;
+import android.support.v7.widget.helper.OnItemDragListener;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -65,9 +66,8 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
-import static cn.garymb.ygomobile.lite.R.id.toolbar;
 
-class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, ItemTouchHelper2.OnDragListner {
+class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener {
     private RecyclerView mRecyclerView;
     private DeckAdapater mDeckAdapater;
     private AppsSettings mSettings = AppsSettings.get();
@@ -93,8 +93,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(this, mRecyclerView, getImageLoader())));
         mRecyclerView.setLayoutManager(new DeckLayoutManager(this, Constants.DECK_WIDTH_COUNT));
         mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater);
-        mDeckItemTouchHelper.setOnDragListner(this);
-        ItemTouchHelper2 touchHelper = new ItemTouchHelper2(this, mDeckItemTouchHelper);
+        ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(this, mDeckItemTouchHelper);
+        touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
@@ -218,7 +218,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     @Override
-    public void onDragEnd() {}
+    public void onDragEnd() {
+    }
 
     private void loadDeck(File file) {
         loadDeck(file, false);

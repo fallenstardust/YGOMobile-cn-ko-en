@@ -223,6 +223,7 @@
     <string name="avatarSelect">click avatar and select files</string>
     <string name="ClickLinkArrows">click link arrows</string>
     <string name="Already_Lastest">Already be the Lastest Version</string>
+    <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
     <string name="about_immersive_mode">switch it to optimize the screen resolution which isnot 16:9</string>
     <string name="OK">OK</string>
     <string name="Cancel">Cancel</string>

@@ -670,8 +670,8 @@ public class ItemTouchHelper2 extends RecyclerView.ItemDecoration
                         targetTranslateX - currentTranslateX, targetTranslateY - currentTranslateY);
                 rv.setDuration(duration);
                 if (mCallback.canAnimation(mRecyclerView, prevSelected)) {
-                mRecoverAnimations.add(rv);
-                rv.start();
+                    mRecoverAnimations.add(rv);
+                    rv.start();
                 } else {
                     rv.onAnimationEnd(null);
                 }

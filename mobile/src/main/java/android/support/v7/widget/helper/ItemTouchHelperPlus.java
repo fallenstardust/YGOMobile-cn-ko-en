@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,8 +35,9 @@ public class ItemTouchHelperPlus extends ItemTouchHelper {
 
     public ItemTouchHelperPlus(Context context, ItemTouchHelperPlus.Callback callback) {
         super(callback);
-        mCallback2 = callback;
         mContext = context;
+        mCallback2 = callback;
+        mCallback2.setItemTouchHelper(this);
     }
 
     public void setItemDragListener(OnItemDragListener itemDragListener) {
@@ -63,19 +63,48 @@ public class ItemTouchHelperPlus extends ItemTouchHelper {
         return mContext;
     }
 
+    private int mActionState;
+    private float mSelectedStartX, mSelectedStartY;
+    private RecyclerView.ViewHolder mSelected;
+
+    private int getActionState(){
+        return mActionState;
+    }
+
+    public float getSelectedStartX() {
+        return mSelectedStartX;
+    }
+
+    public float getSelectedStartY() {
+        return mSelectedStartY;
+    }
+
+    @Override
+    void select(@Nullable RecyclerView.ViewHolder selected, int actionState) {
+        super.select(selected, actionState);
+        if (selected != this.mSelected || actionState != mActionState) {
+            mActionState = actionState;
+            if (selected != null) {
+                mSelectedStartX = (float)selected.itemView.getLeft();
+                mSelectedStartY = (float)selected.itemView.getTop();
+                mSelected = selected;
+            }
+        }
+    }
+
     @Override
     void moveIfNecessary(RecyclerView.ViewHolder viewHolder) {
         super.moveIfNecessary(viewHolder);
         if (mRecyclerView.isLayoutRequested()) {
             return;
         }
-        if (mActionState != ACTION_STATE_DRAG) {
+        if (getActionState() != ACTION_STATE_DRAG) {
             return;
         }
 
         final float threshold = mCallback.getMoveThreshold(viewHolder);
-        final int x = (int) (mSelectedStartX + mDx);
-        final int y = (int) (mSelectedStartY + mDy);
+        final int x = (int) (getSelectedStartX() + mDx);
+        final int y = (int) (getSelectedStartY() + mDy);
         if (Math.abs(y - viewHolder.itemView.getTop()) < viewHolder.itemView.getHeight() * threshold
                 && Math.abs(x - viewHolder.itemView.getLeft())
                 < viewHolder.itemView.getWidth() * threshold) {
@@ -166,17 +195,12 @@ public class ItemTouchHelperPlus extends ItemTouchHelper {
             @Override
             public void run() {
                 if (System.currentTimeMillis() - longPressTime >= mLongTime) {
-                    if (DEBUG)
-                        Log.i(TAG, "enter delete");
                     mLongPressMode = true;
                     if (!isLongPressCancel) {
                         if (getOnDragListener() != null && mSelectId >= 0) {
                             getOnDragListener().onDragLongPress(mSelectId);
                         }
                     }
-                } else {
-                    if (DEBUG)
-                        Log.i(TAG, "no enter long press " + (System.currentTimeMillis() - longPressTime));
                 }
             }
         };
@@ -185,8 +209,6 @@ public class ItemTouchHelperPlus extends ItemTouchHelper {
             if (!isLongPressMode() && !isLongPressCancel) {
                 isLongPressCancel = true;
                 endLongPressMode();
-                if (DEBUG)
-                    Log.w("kk", "cancel enter long press");
             }
         }
 
@@ -246,10 +268,6 @@ public class ItemTouchHelperPlus extends ItemTouchHelper {
                         mInitialTouchX = x;
                         mInitialTouchY = y;
                         mDx = mDy = 0f;
-                        if (DEBUG) {
-                            Log.d(TAG,
-                                    "onlong press: x:" + mInitialTouchX + ",y:" + mInitialTouchY);
-                        }
                         if (mCallback.isLongPressDragEnabled()) {
                             select(vh, ACTION_STATE_DRAG);
                         }
