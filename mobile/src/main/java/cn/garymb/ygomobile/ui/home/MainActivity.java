@@ -1,11 +1,16 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.view.WindowManager;
 
 import java.io.IOException;
 
@@ -24,19 +29,43 @@ import cn.garymb.ygomobile.utils.NetUtils;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
+import static cn.garymb.ygomobile.ui.home.ResCheckTask.*;
 
-public class MainActivity extends HomeActivity {
+public class MainActivity extends HomeActivity{
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
     ResCheckTask mResCheckTask;
+    private final String[] PERMISSIONS ={
+//            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
+       //动态权限
+        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        for(int i=0;i<permissions.length;i++){
+            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+                showToast(R.string.tip_no_permission);
+                break;
+            }
+        }
         //资源复制
+        checkRes();
+    }
+
+    private void checkRes() {
         checkResourceDownload((error, isNew) -> {
             if (error < 0) {
                 enableStart = false;
@@ -109,12 +138,12 @@ public class MainActivity extends HomeActivity {
     }
 
     @Override
-    protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
-        mResCheckTask = new ResCheckTask(this, listener);
+    protected void checkResourceDownload(ResCheckListener listener) {
+        ResCheckTask task = new ResCheckTask(this, listener);
         if (Build.VERSION.SDK_INT >= 11) {
-            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
-            mResCheckTask.execute();
+            task.execute();
         }
     }
 
@@ -132,9 +161,9 @@ public class MainActivity extends HomeActivity {
         DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
         dialog.show();
         VUiKit.defer().when(() -> {
-            if (IOUtils.hasAssets(this, ResCheckTask.getDatapath(Constants.CORE_PICS_ZIP))) {
+            if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
                 try {
-                    IOUtils.copyFilesFromAssets(this, ResCheckTask.getDatapath(Constants.CORE_PICS_ZIP),
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
                             AppsSettings.get().getResourcePath(), true);
                 } catch (IOException e) {
                     e.printStackTrace();
