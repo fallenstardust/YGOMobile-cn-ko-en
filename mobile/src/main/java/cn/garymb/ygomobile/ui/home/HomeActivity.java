@@ -396,6 +396,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public static void checkPgyerUpdateSilent(Context context) {
+    final DialogPlus builder = new DialogPlus(context);;
         //蒲公英自动检查更新
         new PgyUpdateManager.Builder()
                 .setForced(true)
@@ -411,7 +412,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         final String versionName,updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
-                        DialogPlus builder = new DialogPlus(context);
+                        
                         builder.setTitle("发现新版本"+versionName);
                         builder.setMessage(updateMessage);
                         builder.setRightButtonText("下载");
@@ -434,16 +435,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     public void downloadFailed() {
                         //下载失败
                         Log.e("pgyer", "download apk failed");
+                        //下载失败,关闭对话框
                     }
 
                     @Override
                     public void downloadSuccessful(Uri uri) {
+                    //下载成功,关闭对话框
                         PgyUpdateManager.installApk(uri);
                     }
 
                     @Override
                     public void onProgressUpdate(Integer... integers) {
-                        //DialogPlus.mProgressBar2.setProgress(integers);
+                        builder.getProgressBar2().setProgress(integers[0]);
                         Log.e("pgyer", "update download apk progress" + integers);
                     }})
                 .register();

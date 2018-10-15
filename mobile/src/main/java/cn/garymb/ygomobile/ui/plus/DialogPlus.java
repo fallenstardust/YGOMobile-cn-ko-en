@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
@@ -38,7 +39,7 @@ public class DialogPlus extends Dialog {
     private String mUrl, mHtml;
     private View mCancelLayout, mButtonLayout, mTitleLayout;
     private View mProgressBar;
-    public View mProgressBar2;
+    public ProgressBar mProgressBar2;
     private WebViewPlus mWebView;
     private final GestureDetector mGestureDetector;
     private GestureDetector.OnGestureListener mOnGestureListener;
@@ -189,6 +190,10 @@ public class DialogPlus extends Dialog {
         }
         return this;
     }
+    public ProgressBar getProgressBar2(){
+        return mProgressBar2;
+    }
+
 
     @Override
     public void setTitle(@Nullable CharSequence title) {
