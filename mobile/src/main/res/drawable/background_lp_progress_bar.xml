@@ -12,7 +12,7 @@
         <item
             android:id="@android:id/progress" >
             <clip
-                android:drawable="@drawable/veil">
+                android:drawable="@drawable/veil2">
             </clip>
         </item>
 </layer-list>

@@ -412,10 +412,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         final String versionName,updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
-                        
-                        builder.setTitle("发现新版本"+versionName);
+                        builder.setTitle(R.string.Update_Found + versionName);
                         builder.setMessage(updateMessage);
-                        builder.setRightButtonText("下载");
+                        builder.setRightButtonText(R.string.Download);
                         builder.setRightButtonListener((dlg, i) -> {
                             builder.showProgressBar2();
                             builder.hideButton();
@@ -427,27 +426,27 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
                     @Override
                     public void checkUpdateFailed(Exception e) {
-                        Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
+                        context.startActivity(intent);
                     }
                 })
                 .setDownloadFileListener(new DownloadFileListener() {
                     @Override
                     public void downloadFailed() {
-                        //下载失败
-                        Log.e("pgyer", "download apk failed");
-                        //下载失败,关闭对话框
+                        builder.dismiss();
                     }
 
                     @Override
                     public void downloadSuccessful(Uri uri) {
-                    //下载成功,关闭对话框
+                        builder.dismiss();
                         PgyUpdateManager.installApk(uri);
                     }
 
                     @Override
                     public void onProgressUpdate(Integer... integers) {
                         builder.getProgressBar2().setProgress(integers[0]);
-                        Log.e("pgyer", "update download apk progress" + integers);
                     }})
                 .register();
     }
