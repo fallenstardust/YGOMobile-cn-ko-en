@@ -418,6 +418,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         builder.setRightButtonListener((dlg, i) -> {
                             builder.showProgressBar2();
                             builder.hideButton();
+                            builder.setTitle(R.string.Downloading);
                             PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
                         });
 

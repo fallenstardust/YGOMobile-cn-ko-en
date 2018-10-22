@@ -226,5 +226,6 @@
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
     <string name="about_immersive_mode">switch it to optimize the screen resolution which isnot 16:9</string>
     <string name="Download">Download</string>
-    <string name="Update_Found">Found New Version:</string>
+    <string name="Downloading">Now Downloading</string>
+    <string name="Update_Found">Found New Version</string>
     </resources>
