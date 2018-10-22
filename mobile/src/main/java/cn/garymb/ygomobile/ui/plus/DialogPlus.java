@@ -190,7 +190,8 @@ public class DialogPlus extends Dialog {
         }
         return this;
     }
-    public ProgressBar getProgressBar2(){
+
+    public ProgressBar getProgressBar2() {
         return mProgressBar2;
     }
 
