@@ -223,6 +223,6 @@
     <string name="Already_Lastest">이미 최신 버전입니다.</string>
     <string name="about_immersive_mode">16:9 화면 비율이 아닌 휴대전화 또는 터치 포인트가 어긋나는 경우 설정하십시오.</string>
     <string name="Download">다운로드</string>
-    <string name="Downloading">다운로드 중 기다려주십시오</string>
+    <string name="Downloading">다운로드 중입니다. 잠시 기다려 주십시오.</string>
     <string name="Update_Found">새로운 버전</string>
 </resources>
