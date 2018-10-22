@@ -412,7 +412,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         final String versionName,updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
-                        builder.setTitle(R.string.Update_Found);
+                        builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
                         builder.setMessage(updateMessage);
                         builder.setRightButtonText(R.string.Download);
                         builder.setRightButtonListener((dlg, i) -> {
