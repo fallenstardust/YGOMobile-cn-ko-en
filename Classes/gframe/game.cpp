@@ -25,7 +25,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1345;
+const unsigned short PRO_VERSION = 0x1346;
 
 namespace ygo {
 
@@ -901,7 +901,7 @@ bool Game::Initialize() {
 	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
 	//tip
-	stTip = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
+	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
 	stTip->setBackgroundColor(0xc011113d);
 	stTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stTip->setVisible(false);
