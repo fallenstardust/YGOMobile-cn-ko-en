@@ -3,9 +3,9 @@ package net.kk.xml;
 import net.kk.xml.adapter.XmlConstructorAdapter;
 import net.kk.xml.adapter.XmlTextAdapter;
 import net.kk.xml.annotations.XmlAttribute;
+import net.kk.xml.annotations.XmlElement;
 import net.kk.xml.annotations.XmlElementText;
 import net.kk.xml.bean.TagObject;
-import net.kk.xml.annotations.XmlElement;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;

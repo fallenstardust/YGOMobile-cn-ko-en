@@ -1,9 +1,9 @@
 package net.kk.xml;
 
 import net.kk.xml.annotations.XmlAttribute;
-import net.kk.xml.annotations.XmlIgnore;
-import net.kk.xml.annotations.XmlElementText;
 import net.kk.xml.annotations.XmlElement;
+import net.kk.xml.annotations.XmlElementText;
+import net.kk.xml.annotations.XmlIgnore;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

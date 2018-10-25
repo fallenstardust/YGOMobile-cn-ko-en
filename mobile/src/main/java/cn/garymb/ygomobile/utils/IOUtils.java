@@ -4,8 +4,8 @@ package cn.garymb.ygomobile.utils;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
-import android.util.Log;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.Closeable;
 import java.io.File;
@@ -22,6 +22,7 @@ public class IOUtils {
     private static final String TAG = "ioUtils";
 
     public static void close(Closeable closeable) {
+        Log.i("关了没","closeable的值"+ closeable);
         if (closeable != null) {
             try {
                 closeable.close();

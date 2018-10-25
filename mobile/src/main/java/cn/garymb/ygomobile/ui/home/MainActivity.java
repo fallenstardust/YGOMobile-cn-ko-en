@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.view.WindowManager;
 
 import java.io.IOException;
 
@@ -29,7 +28,8 @@ import cn.garymb.ygomobile.utils.NetUtils;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.*;
+import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
+import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class MainActivity extends HomeActivity{
     private GameUriManager mGameUriManager;

@@ -1,6 +1,5 @@
 package ocgcore;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -12,11 +11,10 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.MD5Util;
 import ocgcore.data.LimitList;
 
-import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_CUSTOM_LIMIT_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 
 public class LimitManager {
     private static LimitManager sManager = new LimitManager();

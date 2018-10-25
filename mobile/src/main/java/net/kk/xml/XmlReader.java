@@ -1,8 +1,8 @@
 package net.kk.xml;
 
-import net.kk.xml.bean.AttributeObject;
 import net.kk.xml.adapter.XmlTextAdapter;
 import net.kk.xml.annotations.XmlElement;
+import net.kk.xml.bean.AttributeObject;
 import net.kk.xml.bean.TagObject;
 
 import org.xmlpull.v1.XmlPullParser;

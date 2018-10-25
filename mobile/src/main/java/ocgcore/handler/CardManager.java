@@ -56,6 +56,7 @@ public class CardManager {
                 });
                 //读取全部卡片
                 if (files != null) {
+                    Log.i("数量","数量" + files.length);
                     for (File file : files) {
                         final String path = file.getAbsolutePath();
                         String md5 = MD5Util.getFileMD5(path);
