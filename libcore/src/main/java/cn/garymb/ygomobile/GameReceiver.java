@@ -3,7 +3,6 @@ package cn.garymb.ygomobile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 

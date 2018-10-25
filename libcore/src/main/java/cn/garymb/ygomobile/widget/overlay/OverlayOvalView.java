@@ -19,7 +19,6 @@ import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
 
-
 import cn.garymb.ygomobile.lib.R;
 
 public class OverlayOvalView extends OverlayView implements View.OnClickListener {

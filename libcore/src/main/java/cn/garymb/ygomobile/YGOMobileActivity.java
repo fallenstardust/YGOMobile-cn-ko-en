@@ -6,7 +6,6 @@
  */
 package cn.garymb.ygomobile;
 
-import android.app.ActivityManager;
 import android.app.NativeActivity;
 import android.content.Context;
 import android.content.Intent;
