@@ -160,9 +160,9 @@ public class YGOStarter {
                 int x = (int) (Math.random() * tipsList.length);
                 String tips = tipsList[x];
                 Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-            } else {
-                options = null;
-            }
+//            } else {
+//               options = null;
+           }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {
                 intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);

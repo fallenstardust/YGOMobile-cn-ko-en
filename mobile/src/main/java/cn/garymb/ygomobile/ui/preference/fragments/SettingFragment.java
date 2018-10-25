@@ -44,6 +44,7 @@ import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.ConfigManager;
+import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
@@ -95,9 +96,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
-        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity())
+        bind(PREF_CHANGE_LOG,SystemUtils.getVersionName(getActivity())
                 + "(" + SystemUtils.getVersion(getActivity()) + ")");
-        bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
+        bind(PREF_CHECK_UPDATE,getString(R.string.settings_about_author_pref)+" : "+getString(R.string.settings_author));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -115,7 +116,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
         bind(PREF_DECK_DELETE_DILAOG, mSettings.isDialogDelete());
         //bind(PREF_USE_EXTRA_CARD_CARDS, mSettings.isUseExtraCards());
-        bind(SETTINGS_AVATAR, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath());
+        bind(SETTINGS_AVATAR, new File(mSettings.getCoreSkinPath(),Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath());
         bind(SETTINGS_COVER, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath());
         bind(SETTINGS_CARD_BG, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
@@ -149,7 +150,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 } catch (Exception e) {
 
                 }
-                new ConfigManager(mSettings.getSystemConfig()).setFontSize(size);
+                ConfigManager configManager = DataManager.openConfig(mSettings.getSystemConfig());
+                configManager.setFontSize(size);
+                configManager.close();
             }
             if (preference instanceof CheckBoxPreference) {
                 CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
@@ -195,14 +198,14 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView avatar1 = viewDialog.findViewById(R.id.me);
             ImageView avatar2 = viewDialog.findViewById(R.id.opponent);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1],avatar1);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1],avatar2);
             avatar1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
                 showImageDialog(preference, getString(R.string.settings_game_avatar),
                         outFile,
-                        true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                        true, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
             avatar2.setOnClickListener((v) -> {
@@ -210,10 +213,10 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
                 showImageDialog(preference, getString(R.string.settings_game_avatar),
                         outFile,
-                        true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                        true, CORE_SKIN_AVATAR_SIZE[0],CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
-        } else if (SETTINGS_COVER.equals(key)) {
+        }else if (SETTINGS_COVER.equals(key)) {
             //显示卡背图片对话框
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setContentView(R.layout.dialog_cover_select);
@@ -222,8 +225,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView cover1 = viewDialog.findViewById(R.id.cover1);
             ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0],CORE_SKIN_CARD_COVER_SIZE[1],cover1);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0],CORE_SKIN_CARD_COVER_SIZE[1],cover2);
             cover1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
@@ -250,9 +253,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ImageView bg = viewDialog.findViewById(R.id.bg);
             ImageView bg_menu = viewDialog.findViewById(R.id.bg_menu);
             ImageView bg_deck = viewDialog.findViewById(R.id.bg_deck);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg_menu);
+            setImage(mSettings.getCoreSkinPath()+ "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1],bg_deck);
             bg.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
@@ -341,13 +344,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         frameLayout.addView(imageView, layoutParams);
-        // builder.setContentView(frameLayout);
+       // builder.setContentView(frameLayout);
         //builder.setLeftButtonText(R.string.settings);
         //builder.setLeftButtonListener((dlg, s) -> {
-        showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile,
-                isJpeg, outWidth, outHeight);
-        //dlg.dismiss();
-        // });
+            showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile,
+                    isJpeg, outWidth, outHeight);
+            //dlg.dismiss();
+       // });
 //        builder.setOnCancelListener((dlg) -> {
 //            BitmapUtil.destroy(imageView.getDrawable());
 //        });
@@ -361,7 +364,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
     }
 
-    public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
+    public void setImage(String outFile,int outWidth,int outHeight,ImageView imageView){
         File img = new File(outFile);
         if (img.exists()) {
             Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))

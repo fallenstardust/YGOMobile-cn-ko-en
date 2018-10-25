@@ -9,14 +9,15 @@ DataManager dataManager;
 
 bool DataManager::LoadDB(const char* file) {
 	sqlite3* pDB;
-	if(sqlite3_open_v2(file, &pDB, SQLITE_OPEN_READONLY, 0) != SQLITE_OK)
-		return Error(pDB);
+	int err = 0;
+	if((err = sqlite3_open_v2(file, &pDB, SQLITE_OPEN_READONLY, 0)) != SQLITE_OK)
+		return Error(pDB, NULL, err);
 	sqlite3_stmt* pStmt;
 	const char* sql_2 = "select datas._id, ot, alias, setcode, type, atk, def, level, race, attribute, category, texts.* from datas,texts where datas._id = texts._id;";
 	const char* sql = "select datas.id, ot, alias, setcode, type, atk, def, level, race, attribute, category, texts.* from datas,texts where datas.id = texts.id;";
-	if(sqlite3_prepare_v2(pDB, sql, -1, &pStmt, 0) != SQLITE_OK){
-		if(sqlite3_prepare_v2(pDB,sql_2, -1, &pStmt, 0) != SQLITE_OK){
-		    return Error(pDB);
+	if((err = sqlite3_prepare_v2(pDB, sql, -1, &pStmt, 0)) != SQLITE_OK){
+		if((err = sqlite3_prepare_v2(pDB,sql_2, -1, &pStmt, 0)) != SQLITE_OK){
+		    return Error(pDB, NULL, err);
 		}
 	}
 	CardDataC cd;
@@ -102,10 +103,15 @@ bool DataManager::LoadStrings(const char* file) {
 		myswprintf(numStrings[i], L"%d", i);
 	return true;
 }
-bool DataManager::Error(sqlite3* pDB, sqlite3_stmt* pStmt) {
-	BufferIO::DecodeUTF8(sqlite3_errmsg(pDB), strBuffer);
+bool DataManager::Error(sqlite3* pDB, sqlite3_stmt* pStmt, int errNo) {
+	const char* msg = sqlite3_errmsg(pDB);
+	BufferIO::DecodeUTF8(msg, strBuffer);
 	if(pStmt)
 		sqlite3_finalize(pStmt);
+	int len = strlen(msg);
+	char buff[len+32];
+	sprintf(buff, "cdb Error code=%d,msg=%s", errNo, msg);
+	os::Printer::log(buff);
 	sqlite3_close(pDB);
 	return false;
 }

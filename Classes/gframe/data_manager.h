@@ -17,7 +17,7 @@ public:
 	DataManager(): _datas(8192), _strings(8192) {}
 	bool LoadDB(const char* file);
 	bool LoadStrings(const char* file);
-	bool Error(sqlite3* pDB, sqlite3_stmt* pStmt = 0);
+	bool Error(sqlite3* pDB, sqlite3_stmt* pStmt = 0, int err=0);
 	bool GetData(int code, CardData* pData);
 	code_pointer GetCodePointer(int code);
 	bool GetString(int code, CardString* pStr);

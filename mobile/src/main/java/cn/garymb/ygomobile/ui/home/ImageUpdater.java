@@ -26,6 +26,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
+import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
@@ -35,7 +36,6 @@ import ocgcore.enums.CardType;
 
 public class ImageUpdater implements DialogInterface.OnCancelListener {
     private BaseActivity mContext;
-    private CardLoader mCardLoader;
     private final static int SubThreads = 4;
     private int mDownloading = 0;
     private final List<Item> mCardStatus = new ArrayList<>();
@@ -54,7 +54,6 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
 
     public ImageUpdater(BaseActivity context) {
         mContext = context;
-        mCardLoader = new CardLoader(context);
         mPicsPath = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH);
         mPicsExPath = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH);
     }
@@ -339,10 +338,7 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
     }
 
     private void loadCardsLocked() {
-        if (!mCardLoader.isOpen()) {
-            mCardLoader.openDb();
-        }
-        SparseArray<Card> cards = mCardLoader.readAllCardCodes();
+        SparseArray<Card> cards = DataManager.get().getCardManager().getAllCards();
         mCardStatus.clear();
         mPicsPath = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH);
         File picsPath = mPicsPath;
