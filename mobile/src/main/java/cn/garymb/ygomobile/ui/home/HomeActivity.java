@@ -116,7 +116,14 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
         } else {
-            startService(new Intent(this, ServiceDuelAssistant.class));
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+            } else {
+                startService(new Intent(this, ServiceDuelAssistant.class));
+            }
+
+
         }
         //萌卡
         StartMycard();

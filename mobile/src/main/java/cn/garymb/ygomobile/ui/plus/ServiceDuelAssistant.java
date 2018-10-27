@@ -79,9 +79,8 @@ public class ServiceDuelAssistant extends Service {
         // TODO: Implement this method
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1,new Notification());
+            startForeground(233,new Notification());//这个id不要和应用内的其他通知id一样，不行就写 Integer.MAX_VALUE        //context.startForeground(SERVICE_ID, builder.getNotification());
         }
-
         //lc = new ArrayList<Card>();
         //cladp = new CardListRecyclerViewAdapter(this, lc);
         //	du = DialogUtils.getdx(this);
