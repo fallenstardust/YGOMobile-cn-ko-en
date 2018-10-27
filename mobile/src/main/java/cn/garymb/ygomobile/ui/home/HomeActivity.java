@@ -113,17 +113,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //autoupadte checking
         checkPgyerUpdateSilent(getContext());
         //ServiceDuelAssistant
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+            startForegroundService(new Intent(this, ServiceDuelAssistant.class));
         } else {
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(new Intent(this, ServiceDuelAssistant.class));
-            } else {
-                startService(new Intent(this, ServiceDuelAssistant.class));
-            }
-
-
+            startService(new Intent(this, ServiceDuelAssistant.class));
         }
         //萌卡
         StartMycard();
@@ -407,7 +401,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public static void checkPgyerUpdateSilent(Context context) {
-    final DialogPlus builder = new DialogPlus(context);;
+        final DialogPlus builder = new DialogPlus(context);
+        ;
         //蒲公英自动检查更新
         new PgyUpdateManager.Builder()
                 .setForced(true)
@@ -418,9 +413,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     public void onNoUpdateAvailable() {
                         Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
                     }
+
                     @Override
                     public void onUpdateAvailable(AppBean appBean) {
-                        final String versionName,updateMessage;
+                        final String versionName, updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
                         builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
@@ -459,7 +455,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     @Override
                     public void onProgressUpdate(Integer... integers) {
                         builder.getProgressBar2().setProgress(integers[0]);
-                    }})
+                    }
+                })
                 .register();
     }
 
