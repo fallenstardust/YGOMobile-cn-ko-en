@@ -141,11 +141,11 @@ public class MainActivity extends HomeActivity{
 
     @Override
     protected void checkResourceDownload(ResCheckListener listener) {
-        ResCheckTask task = new ResCheckTask(this, listener);
+        mResCheckTask = new ResCheckTask(this, listener);
         if (Build.VERSION.SDK_INT >= 11) {
-            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
-            task.execute();
+            mResCheckTask.execute();
         }
     }
 
