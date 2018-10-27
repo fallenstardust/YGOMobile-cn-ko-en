@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -112,7 +113,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //autoupadte checking
         checkPgyerUpdateSilent(getContext());
         //ServiceDuelAssistant
-        startService(new Intent(this, ServiceDuelAssistant.class));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+        } else {
+            startService(new Intent(this, ServiceDuelAssistant.class));
+        }
+        //萌卡
         StartMycard();
     }
 

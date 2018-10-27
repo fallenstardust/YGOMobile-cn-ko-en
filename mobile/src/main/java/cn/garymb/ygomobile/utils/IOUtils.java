@@ -22,7 +22,6 @@ public class IOUtils {
     private static final String TAG = "ioUtils";
 
     public static void close(Closeable closeable) {
-        Log.i("关了没","closeable的值"+ closeable);
         if (closeable != null) {
             try {
                 closeable.close();

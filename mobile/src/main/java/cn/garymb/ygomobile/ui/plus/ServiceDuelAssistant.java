@@ -1,11 +1,13 @@
 package cn.garymb.ygomobile.ui.plus;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.view.Gravity;
@@ -73,6 +75,9 @@ public class ServiceDuelAssistant extends Service {
     public void onCreate() {
         // TODO: Implement this method
         super.onCreate();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForeground(1,new Notification());
+        }
 
         //lc = new ArrayList<Card>();
         //cladp = new CardListRecyclerViewAdapter(this, lc);
