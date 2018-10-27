@@ -16,11 +16,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import java.io.File;
 
-import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 
 
 public class FileActivity extends BaseActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener

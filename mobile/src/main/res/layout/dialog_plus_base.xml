@@ -60,6 +60,7 @@
                 android:visibility="gone"
                 tools:visibility="visible"/>
 
+
             <TextView
                 android:id="@+id/text"
                 android:layout_width="match_parent"
@@ -75,6 +76,18 @@
                 tools:visibility="visible"/>
 
         </LinearLayout>
+
+
+        <ProgressBar
+            android:id="@+id/pb2"
+            android:progressDrawable="@drawable/background_lp_progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_height="100px"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
 
         <LinearLayout
             android:id="@+id/layout_button"

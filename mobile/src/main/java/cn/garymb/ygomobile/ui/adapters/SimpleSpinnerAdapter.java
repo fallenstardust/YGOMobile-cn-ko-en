@@ -64,6 +64,17 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
         return null;
     }
 
+    public static String getSelectText(Spinner spinner) {
+        if (spinner.getCount() > 0) {
+            Object item = spinner.getSelectedItem();
+            if (item != null && item instanceof SimpleSpinnerItem) {
+                SimpleSpinnerItem spItem = (SimpleSpinnerItem) item;
+                return spItem.text;
+            }
+        }
+        return null;
+    }
+
     public static long getSelect(Spinner spinner) {
         if (spinner.getCount() > 0) {
             Object item = spinner.getSelectedItem();

@@ -310,22 +310,22 @@ int32 field::process() {
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_DESTROY_STEP: {
-		if(destroy(it->step, it->ptarget, (card*)it->ptr1, it->arg2))
+	case PROCESSOR_DESTROY_REPLACE: {
+		if(destroy_replace(it->step, it->ptarget, (card*)it->ptr1, it->arg2))
 			core.units.pop_front();
 		else
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_RELEASE_STEP: {
-		if (release(it->step, it->ptarget, (card*)it->ptr1))
+	case PROCESSOR_RELEASE_REPLACE: {
+		if (release_replace(it->step, it->ptarget, (card*)it->ptr1))
 			core.units.pop_front();
 		else
 			it->step++;
 		return pduel->bufferlen;
 	}
-	case PROCESSOR_SENDTO_STEP: {
-		if (send_to(it->step, it->ptarget, (card*)it->ptr1))
+	case PROCESSOR_SENDTO_REPLACE: {
+		if (send_replace(it->step, it->ptarget, (card*)it->ptr1))
 			core.units.pop_front();
 		else
 			it->step++;
@@ -771,8 +771,6 @@ int32 field::process() {
 					if((returns.bvalue[0] > 0) && peffect->is_flag(EFFECT_FLAG_CARD_TARGET)) {
 						for(int32 i = 0; i < returns.bvalue[0]; ++i) {
 							card* pcard = core.select_cards[returns.bvalue[i + 1]];
-							if(pcard->current.location & 0x30)
-								move_card(pcard->current.controler, pcard, pcard->current.location, 0);
 							pduel->write_buffer8(MSG_BECOME_TARGET);
 							pduel->write_buffer8(1);
 							pduel->write_buffer32(pcard->get_info_location());
@@ -1250,7 +1248,6 @@ int32 field::execute_target(uint16 step, effect * triggering_effect, uint8 trigg
 	}
 	return FALSE;
 }
-// add events to core.queue_event
 void field::raise_event(card* event_card, uint32 event_code, effect* reason_effect, uint32 reason, uint8 reason_player, uint8 event_player, uint32 event_value) {
 	tevent new_event;
 	new_event.trigger_card = 0;
@@ -1285,7 +1282,6 @@ void field::raise_event(card_set* event_cards, uint32 event_code, effect* reason
 	new_event.event_value = event_value;
 	core.queue_event.push_back(new_event);
 }
-// add events to core.single_event
 void field::raise_single_event(card* trigger_card, card_set* event_cards, uint32 event_code, effect * reason_effect, uint32 reason, uint8 reason_player, uint8 event_player, uint32 event_value) {
 	tevent new_event;
 	new_event.trigger_card = trigger_card;
@@ -1303,7 +1299,6 @@ void field::raise_single_event(card* trigger_card, card_set* event_cards, uint32
 	new_event.event_value = event_value;
 	core.single_event.push_back(new_event);
 }
-// called by Duel.CheckEvent()
 int32 field::check_event(uint32 code, tevent * pe) {
 	for(const auto& ev : core.point_event) {
 		if(ev.event_code == code) {
@@ -1321,7 +1316,6 @@ int32 field::check_event(uint32 code, tevent * pe) {
 	}
 	return FALSE;
 }
-// called by Duel.CheckActivateEffect()
 int32 field::check_event_c(effect* peffect, uint8 playerid, int32 neglect_con, int32 neglect_cost, int32 copy_info, tevent* pe) {
 	if(peffect->code == EVENT_FREE_CHAIN) {
 		return peffect->is_activate_ready(playerid, nil_event, neglect_con, neglect_cost, FALSE);
@@ -1650,8 +1644,6 @@ int32 field::process_phase_event(int16 step, int32 phase) {
 	}
 	return TRUE;
 }
-// move the events from core.instant_event to core.point_event
-// skip_trigger = lower byte of arg1, skip_freechain = higher byte of arg1, skip_new = arg2
 int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_freechain, int32 skip_new) {
 	switch(step) {
 	case 0: {
@@ -1879,7 +1871,7 @@ int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_free
 					newchain.triggering_effect = peffect;
 					newchain.set_triggering_place(phandler);
 					newchain.triggering_player = infos.turn_player;
-					core.select_chains.push_back(newchain);
+					core.tmp_chains.push_back(newchain);
 				}
 			}
 		}
@@ -2038,6 +2030,8 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 	}
 	case 2: {
 		chain newchain;
+		if(core.tmp_chains.size())
+			core.select_chains.swap(core.tmp_chains);
 		for(auto evit = core.point_event.begin(); evit != core.instant_event.end(); ++evit) {
 			if(evit == core.point_event.end())
 				evit = core.instant_event.begin();
@@ -2213,7 +2207,6 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 	}
 	return TRUE;
 }
-// classify core.queue_event, process continuous effects, and move them to core.instant_event
 int32 field::process_instant_event() {
 	if (core.queue_event.size() == 0)
 		return TRUE;
@@ -3636,10 +3629,11 @@ int32 field::process_battle_command(uint16 step) {
 	}
 	return TRUE;
 }
-// perform damage calculation by an effect
 int32 field::process_damage_step(uint16 step, uint32 new_attack) {
 	switch(step) {
 	case 0: {
+		if(core.effect_damage_step && !new_attack)
+			return TRUE;
 		core.effect_damage_step = 1;
 		card* tmp = core.attacker;
 		core.attacker = (card*)core.units.begin()->peffect;
@@ -3675,8 +3669,7 @@ int32 field::process_damage_step(uint16 step, uint32 new_attack) {
 				change_position(core.attack_target, 0, PLAYER_NONE, core.attack_target->current.position >> 1, 0, TRUE);
 				adjust_all();
 			}
-		}
-		else
+		} else
 			core.pre_field[1] = 0;
 		return FALSE;
 	}
@@ -4251,8 +4244,6 @@ int32 field::add_chain(uint16 step) {
 				change_position(phandler, 0, phandler->current.controler, POS_FACEUP, 0);
 			}
 		}
-		if(phandler->current.location & (LOCATION_GRAVE | LOCATION_REMOVED))
-			move_card(phandler->current.controler, phandler, phandler->current.location, 0);
 		return FALSE;
 	}
 	case 1: {
@@ -4821,14 +4812,10 @@ int32 field::break_effect() {
 	adjust_instant();
 	return 0;
 }
-// adjust, type 1
-// adjust disable, self_destroy
 void field::adjust_instant() {
 	adjust_disable_check_list();
 	adjust_self_destroy_set();
 }
-// adjust, type 2 (including adjust_instant())
-// adjust win, disable, control, self_destroy, equip, position, trap_monster
 void field::adjust_all() {
 	core.readjust_map.clear();
 	add_process(PROCESSOR_ADJUST, 0, 0, 0, 0, 0);
@@ -4874,8 +4861,8 @@ int32 field::refresh_location_info(uint16 step) {
 		player[0].disabled_location = 0;
 		player[1].disabled_location = 0;
 		core.disfield_effects.clear();
-		core.extram_effects.clear();
-		core.extras_effects.clear();
+		core.extra_mzone_effects.clear();
+		core.extra_szone_effects.clear();
 		filter_field_effect(EFFECT_DISABLE_FIELD, &eset);
 		for (int32 i = 0; i < eset.size(); ++i) {
 			uint32 value = eset[i]->get_value();
@@ -4892,7 +4879,7 @@ int32 field::refresh_location_info(uint16 step) {
 			uint32 value = eset[i]->get_value();
 			player[p].disabled_location |= (value >> 16) & 0x1f;
 			if((uint32)field_used_count[(value >> 16) & 0x1f] < (value & 0xffff))
-				core.extram_effects.add_item(eset[i]);
+				core.extra_mzone_effects.add_item(eset[i]);
 		}
 		eset.clear();
 		filter_field_effect(EFFECT_USE_EXTRA_SZONE, &eset);
@@ -4901,12 +4888,12 @@ int32 field::refresh_location_info(uint16 step) {
 			uint32 value = eset[i]->get_value();
 			player[p].disabled_location |= (value >> 8) & 0x1f00;
 			if((uint32)field_used_count[(value >> 16) & 0x1f] < (value & 0xffff))
-				core.extras_effects.add_item(eset[i]);
+				core.extra_szone_effects.add_item(eset[i]);
 		}
 		return FALSE;
 	}
 	case 1: {
-		if(core.disfield_effects.count == 0) {
+		if(core.disfield_effects.size() == 0) {
 			core.units.begin()->step = 2;
 			return FALSE;
 		}
@@ -4939,14 +4926,13 @@ int32 field::refresh_location_info(uint16 step) {
 		return FALSE;
 	}
 	case 3: {
-		// If the blocking number is not reached, we should block more slots.
-		if(core.extram_effects.count == 0) {
+		if(core.extra_mzone_effects.size() == 0) {
 			core.units.begin()->step = 4;
 			return FALSE;
 		}
-		effect* peffect = core.extram_effects[0];
+		effect* peffect = core.extra_mzone_effects[0];
 		core.units.begin()->peffect = peffect;
-		core.extram_effects.remove_item(0);
+		core.extra_mzone_effects.remove_item(0);
 		uint32 p = peffect->get_handler_player();
 		uint32 mzone_flag = (player[p].disabled_location | player[p].used_location) & 0x1f;
 		if(mzone_flag == 0x1f) {
@@ -4979,14 +4965,13 @@ int32 field::refresh_location_info(uint16 step) {
 		return FALSE;
 	}
 	case 5: {
-		// EFFECT_USE_EXTRA_SZONE version
-		if(core.extras_effects.count == 0) {
+		if(core.extra_szone_effects.size() == 0) {
 			core.units.begin()->step = 6;
 			return FALSE;
 		}
-		effect* peffect = core.extras_effects[0];
+		effect* peffect = core.extra_szone_effects[0];
 		core.units.begin()->peffect = peffect;
-		core.extras_effects.remove_item(0);
+		core.extra_szone_effects.remove_item(0);
 		uint32 p = peffect->get_handler_player();
 		uint32 szone_flag = ((player[p].disabled_location | player[p].used_location) >> 8) & 0x1f;
 		if(szone_flag == 0x1f) {
@@ -5031,7 +5016,6 @@ int32 field::refresh_location_info(uint16 step) {
 	}
 	return TRUE;
 }
-// adjust_all() goes here
 int32 field::adjust_step(uint16 step) {
 	switch(step) {
 	case 0: {

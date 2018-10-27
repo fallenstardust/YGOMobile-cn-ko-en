@@ -4,8 +4,8 @@ package cn.garymb.ygomobile.utils;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
-import android.util.Log;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.Closeable;
 import java.io.File;

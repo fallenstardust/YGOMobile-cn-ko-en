@@ -5,7 +5,6 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ToggleButton;
 
-
 import cn.garymb.ygomobile.lib.R;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView.OnDuelOptionsSelectListener;
 

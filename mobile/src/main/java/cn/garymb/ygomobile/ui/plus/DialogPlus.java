@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
@@ -38,6 +39,7 @@ public class DialogPlus extends Dialog {
     private String mUrl, mHtml;
     private View mCancelLayout, mButtonLayout, mTitleLayout;
     private View mProgressBar;
+    public ProgressBar mProgressBar2;
     private WebViewPlus mWebView;
     private final GestureDetector mGestureDetector;
     private GestureDetector.OnGestureListener mOnGestureListener;
@@ -64,6 +66,7 @@ public class DialogPlus extends Dialog {
         mButtonLayout = $(R.id.layout_button);
         mTitleLayout = $(R.id.layout_title);
         mProgressBar = $(R.id.pb1);
+        mProgressBar2 = $(R.id.pb2);
         setOnCloseLinster((dlg) -> {
             dlg.dismiss();
         });
@@ -155,6 +158,7 @@ public class DialogPlus extends Dialog {
         dialog.setOnCancelListener(cancelListener);
         dialog.hideButton();
         dialog.showProgressBar();
+        dialog.showProgressBar2();
 //        dialog.getWindow().setType(TYPE_KEYGUARD);
         dialog.show();
         return dialog;
@@ -179,6 +183,18 @@ public class DialogPlus extends Dialog {
         }
         return this;
     }
+
+    public DialogPlus showProgressBar2() {
+        if (mProgressBar2 != null) {
+            mProgressBar2.setVisibility(View.VISIBLE);
+        }
+        return this;
+    }
+
+    public ProgressBar getProgressBar2() {
+        return mProgressBar2;
+    }
+
 
     @Override
     public void setTitle(@Nullable CharSequence title) {

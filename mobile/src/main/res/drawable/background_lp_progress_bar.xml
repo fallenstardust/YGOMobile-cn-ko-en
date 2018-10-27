@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+        <!--item
+            android:id="@android:id/background"
+            android:drawable="@color/colorPrimary">
+        </item-->
+
+        <!--  设置进度条颜色  -->
+        <item
+            android:id="@android:id/progress" >
+            <clip
+                android:drawable="@drawable/veil2">
+            </clip>
+        </item>
+</layer-list>

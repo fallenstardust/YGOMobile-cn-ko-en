@@ -45,7 +45,11 @@ int main(int argc, char* argv[]) {
 			MultiByteToWideChar(CP_ACP, 0, &argv[i][2], -1, fname, 260);
 			char fname2[260];
 			BufferIO::EncodeUTF8(fname, fname2);
-			ygo::dataManager.LoadDB(fname2);
+			if(ygo::dataManager.LoadDB(fname2)){
+				os::Printer::log("add cdb ok ", fname2);
+			}else{
+				os::Printer::log("add cdb fail ", fname2);
+			}
 #else
 			ygo::dataManager.LoadDB(&argv[i][2]);
 #endif

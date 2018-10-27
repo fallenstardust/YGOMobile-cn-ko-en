@@ -69,9 +69,8 @@ android {
     aaptOptions {
         noCompress 'dll',"config"
     }
-    buildToolsVersion '28.0.2'
+//    buildToolsVersion '28.0.2'
 }
-
     repositories {
         flatDir {
             dirs 'libs'

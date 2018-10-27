@@ -2,9 +2,11 @@ package ocgcore;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
@@ -13,13 +15,18 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.utils.IOUtils;
 
-public class ConfigManager {
+public class ConfigManager implements Closeable {
 
     private final List<String> mLines = new ArrayList<>();
     private File file;
 
-    public ConfigManager(File file) {
+    ConfigManager(File file) {
         this.file = file;
+    }
+
+    @Override
+    public void close(){
+        mLines.clear();
     }
 
     public void read() {
@@ -74,7 +81,7 @@ public class ConfigManager {
             IOUtils.close(outputStream);
         }
         if (ok) {
-            if(file.exists()) {
+            if (file.exists()) {
                 file.delete();
             }
             tmp.renameTo(file);

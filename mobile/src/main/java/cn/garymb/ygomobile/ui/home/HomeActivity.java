@@ -1,8 +1,10 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -27,7 +29,10 @@ import com.base.bj.trpayjar.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.pgyersdk.update.DownloadFileListener;
 import com.pgyersdk.update.PgyUpdateManager;
+import com.pgyersdk.update.UpdateManagerListener;
+import com.pgyersdk.update.javabean.AppBean;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -57,7 +62,7 @@ import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 
-abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
+public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
     private ServerListAdapter mServerListAdapter;
@@ -106,9 +111,14 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
-        checkPgyerUpdateSilent();
+        checkPgyerUpdateSilent(getContext());
         //ServiceDuelAssistant
-        startService(new Intent(this, ServiceDuelAssistant.class));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+        } else {
+            startService(new Intent(this, ServiceDuelAssistant.class));
+        }
+        //萌卡
         StartMycard();
     }
 
@@ -389,11 +399,60 @@ abstract class HomeActivity extends BaseActivity implements NavigationView.OnNav
         mMenuIds.put(mMenuIds.size(), menuId);
     }
 
-    public void checkPgyerUpdateSilent() {
+    public static void checkPgyerUpdateSilent(Context context) {
+    final DialogPlus builder = new DialogPlus(context);;
+        //蒲公英自动检查更新
         new PgyUpdateManager.Builder()
-                .setForced(false)                //设置是否强制更新
-                .setUserCanRetry(false)         //失败后是否提示重新下载
-                .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk
+                .setForced(true)
+                .setUserCanRetry(false)
+                .setDeleteHistroyApk(false)
+                .setUpdateManagerListener(new UpdateManagerListener() {
+                    @Override
+                    public void onNoUpdateAvailable() {
+                        Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                    }
+                    @Override
+                    public void onUpdateAvailable(AppBean appBean) {
+                        final String versionName,updateMessage;
+                        versionName = appBean.getVersionName();
+                        updateMessage = appBean.getReleaseNote();
+                        builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
+                        builder.setMessage(updateMessage);
+                        builder.setRightButtonText(R.string.Download);
+                        builder.setRightButtonListener((dlg, i) -> {
+                            builder.showProgressBar2();
+                            builder.hideButton();
+                            builder.setTitle(R.string.Downloading);
+                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
+                        });
+
+                        builder.show();
+                    }
+
+                    @Override
+                    public void checkUpdateFailed(Exception e) {
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
+                        context.startActivity(intent);
+                    }
+                })
+                .setDownloadFileListener(new DownloadFileListener() {
+                    @Override
+                    public void downloadFailed() {
+                        builder.dismiss();
+                    }
+
+                    @Override
+                    public void downloadSuccessful(Uri uri) {
+                        builder.dismiss();
+                        PgyUpdateManager.installApk(uri);
+                    }
+
+                    @Override
+                    public void onProgressUpdate(Integer... integers) {
+                        builder.getProgressBar2().setProgress(integers[0]);
+                    }})
                 .register();
     }
 

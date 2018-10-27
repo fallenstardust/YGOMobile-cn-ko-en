@@ -1,9 +1,5 @@
 package tests;
 
-import org.junit.Test;
-
-import java.util.Locale;
-
 public class A {
 
     /*@Test

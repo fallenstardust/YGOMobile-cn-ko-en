@@ -10,7 +10,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
-import android.support.v7.widget.helper.ItemTouchHelper2;
+import android.support.v7.widget.helper.ItemTouchHelperPlus;
+import android.support.v7.widget.helper.OnItemDragListener;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,6 +59,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
+import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -65,9 +67,8 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
-import static cn.garymb.ygomobile.lite.R.id.toolbar;
 
-class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, ItemTouchHelper2.OnDragListner {
+class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener {
     private RecyclerView mRecyclerView;
     private DeckAdapater mDeckAdapater;
     private AppsSettings mSettings = AppsSettings.get();
@@ -93,8 +94,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(this, mRecyclerView, getImageLoader())));
         mRecyclerView.setLayoutManager(new DeckLayoutManager(this, Constants.DECK_WIDTH_COUNT));
         mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater);
-        mDeckItemTouchHelper.setOnDragListner(this);
-        ItemTouchHelper2 touchHelper = new ItemTouchHelper2(this, mDeckItemTouchHelper);
+        ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(this, mDeckItemTouchHelper);
+        touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
@@ -128,12 +129,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         //
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            StringManager.get().load();//loadFile(stringfile.getAbsolutePath());
-            LimitManager.get().load();//loadFile(stringfile.getAbsolutePath());
-            if (mLimitManager.getCount() > 1) {
-                mCardLoader.setLimitList(mLimitManager.getLimit(1));
+            DataManager.get().load(false);
+            if (mLimitManager.getCount() > 0) {
+                mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
-            mCardLoader.openDb();
             File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
             if (!TextUtils.isEmpty(mPreLoad)) {
                 file = new File(mPreLoad);
@@ -218,7 +217,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     @Override
-    public void onDragEnd() {}
+    public void onDragEnd() {
+    }
 
     private void loadDeck(File file) {
         loadDeck(file, false);
@@ -746,21 +746,17 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //        }
     private void initLimitListSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        List<LimitList> limitLists = mLimitManager.getLimitLists();
+        List<String> limitLists = mLimitManager.getLimitNames();
         int index = -1;
         int count = mLimitManager.getCount();
         LimitList cur = mLimitList;
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         for (int i = 0; i < count; i++) {
-            LimitList list = limitLists.get(i);
-            if (i == 0) {
-                items.add(new SimpleSpinnerItem(i, getString(R.string.label_limitlist)));
-            } else {
-                items.add(new SimpleSpinnerItem(i, list.getName()));
-            }
-            if (cur != null) {
-                if (TextUtils.equals(cur.getName(), list.getName())) {
-                    index = i;
-                }
+            int j = i + 1;
+            String name = limitLists.get(i);
+            items.add(new SimpleSpinnerItem(j, name));
+            if (cur != null && TextUtils.equals(cur.getName(), name)) {
+                index = j;
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(this);
@@ -773,7 +769,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                setLimitList(mLimitManager.getLimit(position));
+                setLimitList(mLimitManager.getLimit(SimpleSpinnerAdapter.getSelectText(spinner)));
             }
 
             @Override

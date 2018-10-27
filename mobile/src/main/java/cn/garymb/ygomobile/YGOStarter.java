@@ -155,11 +155,14 @@ public class YGOStarter {
             lasttime = System.currentTimeMillis();
             showLoadingBg(activity);
             if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
+                //random tips
                 String[] tipsList = activity.getResources().getStringArray(R.array.tips);
                 int x = (int) (Math.random() * tipsList.length);
                 String tips = tipsList[x];
                 Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-            }
+//            } else {
+//               options = null;
+           }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {
                 intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);

@@ -110,9 +110,6 @@ field::field(duel* pduel) {
 	memset(&returns, 0, sizeof(return_value));
 #endif
 }
-field::~field() {
-
-}
 void field::reload_field_info() {
 	pduel->write_buffer8(MSG_RELOAD_FIELD);
 	pduel->write_buffer8(core.duel_rule);

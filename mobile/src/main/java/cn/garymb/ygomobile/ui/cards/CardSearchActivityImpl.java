@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.DrawerLayout;
@@ -30,6 +29,7 @@ import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -42,8 +42,8 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     protected CardListAdapter mCardListAdapater;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
-    protected StringManager mStringManager = StringManager.get();
-    protected LimitManager mLimitManager = LimitManager.get();
+    protected StringManager mStringManager = DataManager.get().getStringManager();
+    protected LimitManager mLimitManager = DataManager.get().getLimitManager();
     private ImageLoader mImageLoader;
 
     @Override
@@ -76,12 +76,10 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         setListeners();
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            StringManager.get().load();//loadFile(stringfile.getAbsolutePath());
-            LimitManager.get().load();//loadFile(stringfile.getAbsolutePath());
-            if (mLimitManager.getCount() > 1) {
-                mCardLoader.setLimitList(mLimitManager.getLimit(1));
+            DataManager.get().load(false);
+            if (mLimitManager.getCount() > 0) {
+                mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
-            mCardLoader.openDb();
         }).done((rs) -> {
             dlg.dismiss();
             isLoad = true;
@@ -113,7 +111,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                 super.onScrollStateChanged(recyclerView, newState);
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
-                        if(!isFinishing()) {
+                        if (!isFinishing()) {
                             Glide.with(getContext()).resumeRequests();
                         }
                         break;
@@ -121,7 +119,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                         Glide.with(getContext()).pauseRequests();
                         break;
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        if(!isFinishing()) {
+                        if (!isFinishing()) {
                             Glide.with(getContext()).resumeRequests();
                         }
                         break;
@@ -258,13 +256,13 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                 mDialog.setView(mCardDetail.getView());
                 mDialog.hideButton();
                 mDialog.hideTitleBar();
-                mDialog.setOnGestureListener(new AOnGestureListener(){
+                mDialog.setOnGestureListener(new AOnGestureListener() {
                     @Override
                     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                        if(isLeftFling(e1, e2, velocityX, velocityY)){
+                        if (isLeftFling(e1, e2, velocityX, velocityY)) {
                             mCardDetail.onNextCard();
                             return true;
-                        }else if(isRightFling(e1, e2, velocityX, velocityY)){
+                        } else if (isRightFling(e1, e2, velocityX, velocityY)) {
                             mCardDetail.onPreCard();
                             return true;
                         }

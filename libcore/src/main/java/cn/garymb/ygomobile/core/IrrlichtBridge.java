@@ -7,7 +7,6 @@
 package cn.garymb.ygomobile.core;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.util.Log;
 

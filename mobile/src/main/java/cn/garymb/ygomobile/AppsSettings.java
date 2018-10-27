@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Environment;
@@ -18,7 +19,7 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.SystemUtils;
-import ocgcore.handler.CardManager;
+import ocgcore.CardManager;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
@@ -171,10 +172,11 @@ public class AppsSettings {
                         //
                     }
                     for (File file : cdbs) {
-                        if (CardManager.checkDataBase(file)) {
+                        Log.i("合法的数据库才会加载","菜菜辛苦了");
+                        //if (CardManager.checkDataBase(file)) {
                             //合法数据库才会加载
                             pathList.add(file.getAbsolutePath());
-                        }
+                        //}
                     }
                 }
             }
@@ -315,8 +317,9 @@ public class AppsSettings {
     /***
      * 内置数据库文件夹
      */
+    @SuppressLint("WrongConstant")
     public String getDataBaseDefault() {
-        return context.getDatabasePath("test.db").getParent();
+        return context.getDir("game", Context.MODE_MULTI_PROCESS).getPath();
     }
 
     /***
