@@ -4,8 +4,8 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 22
+        minSdkVersion 16
+        targetSdkVersion 21
         flavorDimensions "versionCode"
        /* ndk {
             moduleName "YGOMobile"

@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 21
         versionCode 330701025
         versionName "3.3.7"
         flavorDimensions "versionCode"
