@@ -37,6 +37,7 @@ public class CardManager {
 
     @WorkerThread
     public void loadCards() {
+        cardDataHashMap.clear();
         int count = readAllCards(AppsSettings.get().getDataBaseFile(), cardDataHashMap);
         Log.i("Irrlicht", "load defualt cdb:" + count);
         if (AppsSettings.get().isReadExpansions()) {

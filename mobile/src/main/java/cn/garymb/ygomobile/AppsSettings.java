@@ -20,6 +20,7 @@ import java.util.Locale;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.CardManager;
+import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
@@ -302,7 +303,9 @@ public class AppsSettings {
         if (isUseExtraCards()) {
             return getResourcePath();
         } else {
-            return getDataBaseDefault();
+            //返回游戏根目录，即ygocore文件夹
+            return getResourcePath();
+           // return getDataBaseDefault();
         }
     }
 
@@ -323,7 +326,7 @@ public class AppsSettings {
     }
 
     /***
-     * 使用外置数据库文件夹
+     * 是否使用额外卡库
      */
     public boolean isUseExtraCards() {
         return mSharedPreferences.getBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, Constants.PREF_DEF_USE_EXTRA_CARD_CARDS);
@@ -334,7 +337,7 @@ public class AppsSettings {
     }
 
     /***
-     * 使用外置数据库文件夹
+     * 设置是否使用额外卡库
      */
     public void setUseExtraCards(boolean useExtraCards) {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
