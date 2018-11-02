@@ -408,11 +408,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 .setDeleteHistroyApk(false)
                 .setUpdateManagerListener(new UpdateManagerListener() {
                     @Override
-                    public void onNoUpdateAvailable() {
-                        if (isToastNoUpdata) {
-                            Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                    public void onNoUpdateAvailable() { }
                     @Override
                     public void onUpdateAvailable(AppBean appBean) {
                         final String versionName,updateMessage;
@@ -432,12 +428,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     }
 
                     @Override
-                    public void checkUpdateFailed(Exception e) {
-                        Intent intent = new Intent();
-                        intent.setAction(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
-                        context.startActivity(intent);
-                    }
+                    public void checkUpdateFailed(Exception e) { }
                 })
                 .setDownloadFileListener(new DownloadFileListener() {
                     @Override
