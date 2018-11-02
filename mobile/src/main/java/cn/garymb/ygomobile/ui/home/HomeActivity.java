@@ -422,6 +422,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     @Override
                     public void onNoUpdateAvailable() {
                         if (isToastNoUpdata){
+                            builder.dismiss();
                             Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -430,6 +431,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         final String versionName,updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
+                        builder.hideProgressBar();
+                        builder.showTitleBar();
                         builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
                         builder.setMessage(updateMessage);
                         builder.setRightButtonText(R.string.Download);

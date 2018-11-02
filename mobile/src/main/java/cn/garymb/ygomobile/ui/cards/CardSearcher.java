@@ -491,6 +491,14 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
+    public void search(String message){
+        if (TextUtils.isEmpty(message)){
+            message="";
+        }
+        prefixWord.setText(message);
+        search();
+    }
+
     private void search() {
         if (dataLoader != null) {
             dataLoader.search(text(prefixWord), text(suffixWord), getSelect(attributeSpinner)

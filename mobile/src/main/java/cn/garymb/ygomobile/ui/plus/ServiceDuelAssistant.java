@@ -10,6 +10,8 @@ import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +30,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
+import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
@@ -36,6 +39,11 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 
 public class ServiceDuelAssistant extends Service {
+
+    public static String cardSearchMessage;
+    //卡查关键字
+    private String[] cardSearchKey = new String[]{"c#", "C#"};
+
     private LinearLayout mFloatLayout;
     private TextView ds_text;
     private Button ds_join, ds_qx;
@@ -76,7 +84,7 @@ public class ServiceDuelAssistant extends Service {
         // TODO: Implement this method
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1,new Notification());
+            startForeground(1, new Notification());
         }
 
         //lc = new ArrayList<Card>();
@@ -91,27 +99,40 @@ public class ServiceDuelAssistant extends Service {
             public void onPrimaryClipChanged() {
                 ClipData clipData = cm.getPrimaryClip();
                 CharSequence cs = clipData.getItemAt(0).getText();
-                final String ss;
+                final String clipMessage;
                 if (cs != null) {
-                    ss = cs.toString();
+                    clipMessage = cs.toString();
                 } else {
-                    ss = "";
+                    clipMessage = null;
                 }
-					/*final int ssi=ss.indexOf("卡查");
-					if (ssi != -1) {
-						cxCard(ss, ssi);
-					} else {*/
+
+                //如果复制的内容为空则不执行下面的代码
+                if (TextUtils.isEmpty(clipMessage)) {
+                    return;
+                }
                 int start = -1;
 
                 for (String st : passwordPrefix) {
-                    start = ss.indexOf(st);
+                    start = clipMessage.indexOf(st);
                     if (start != -1) {
                         break;
                     }
                 }
 
                 if (start != -1) {
-                    joinRoom(ss, start);
+                    joinRoom(clipMessage, start);
+                } else {
+                    for (String s : cardSearchKey) {
+                        int cardSearchStart=clipMessage.indexOf(s);
+                        if ( cardSearchStart!= -1) {
+                            //卡查内容
+                            cardSearchMessage=clipMessage.substring(cardSearchStart+s.length(),clipMessage.length());
+                            Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE,cardSearchMessage);
+                            startActivity(intent);
+                        }
+                    }
                 }
             }
 
