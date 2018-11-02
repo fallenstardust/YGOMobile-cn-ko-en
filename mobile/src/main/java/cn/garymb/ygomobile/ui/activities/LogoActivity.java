@@ -9,8 +9,8 @@ import android.widget.Toast;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.lite.BuildConfig;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 
 public class LogoActivity extends Activity {
     Handler handler;

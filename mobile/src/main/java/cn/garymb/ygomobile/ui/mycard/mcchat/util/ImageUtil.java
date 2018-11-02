@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat.util;
+
+import android.content.Context;
 import android.net.Uri;
-import android.widget.*;
-import com.bumptech.glide.*;
-import android.content.*;
-import com.bumptech.glide.load.engine.*;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import cn.garymb.ygomobile.lite.R;
 
