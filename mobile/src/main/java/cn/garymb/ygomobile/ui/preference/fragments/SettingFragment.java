@@ -185,61 +185,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
         }
-        if (PREF_CHECK_UPDATE.equals(preference.getKey())) {
-            final DialogPlus builder = new DialogPlus(getContext());;
-            //蒲公英自动检查更新
-            new PgyUpdateManager.Builder()
-                    .setForced(true)
-                    .setUserCanRetry(false)
-                    .setDeleteHistroyApk(false)
-                    .setUpdateManagerListener(new UpdateManagerListener() {
-                        @Override
-                        public void onNoUpdateAvailable() {
-                                Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-                        @Override
-                        public void onUpdateAvailable(AppBean appBean) {
-                            final String versionName,updateMessage;
-                            versionName = appBean.getVersionName();
-                            updateMessage = appBean.getReleaseNote();
-                            builder.setTitle(getContext().getResources().getString(R.string.Update_Found) + versionName);
-                            builder.setMessage(updateMessage);
-                            builder.setRightButtonText(R.string.Download);
-                            builder.setRightButtonListener((dlg, i) -> {
-                                builder.showProgressBar2();
-                                builder.hideButton();
-                                builder.setTitle(R.string.Downloading);
-                                PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
-                            });
-
-                            builder.show();
-                        }
-
-                        @Override
-                        public void checkUpdateFailed(Exception e) {
-                            Intent intent = new Intent();
-                            intent.setAction(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
-                            getContext().startActivity(intent);
-                        }
-                    })
-                    .setDownloadFileListener(new DownloadFileListener() {
-                        @Override
-                        public void downloadFailed() {
-                            builder.dismiss();
-                        }
-
-                        @Override
-                        public void downloadSuccessful(Uri uri) {
-                            builder.dismiss();
-                            PgyUpdateManager.installApk(uri);
-                        }
-
-                        @Override
-                        public void onProgressUpdate(Integer... integers) {
-                            builder.getProgressBar2().setProgress(integers[0]);
-                        }})
-                    .register();
+        if (PREF_CHECK_UPDATE.equals(key)) {
+           HomeActivity.checkPgyerUpdateSilent(getActivity(),true,true,true);
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
