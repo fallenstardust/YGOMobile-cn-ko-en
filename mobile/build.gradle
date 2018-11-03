@@ -82,14 +82,13 @@ dependencies {
     implementation 'org.jdeferred:jdeferred-android-aar:1.2.4'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'com.github.chrisbanes.photoview:library:1.2.4'
-
     //dialog库
     implementation 'com.github.feihuaduo:DialogUtils:1.8.7.4'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
-    //
+    //ai
     implementation(name: 'libWindbot', ext: 'aar')
 
     implementation 'com.nightonke:boommenu:2.1.0'

@@ -381,7 +381,7 @@ bool Game::Initialize() {
 
 	//img
 	wCardImg = env->addStaticText(L"", rect<s32>(1 * xScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * xScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
-	wCardImg->setBackgroundColor(0x6011113d);
+	wCardImg->setBackgroundColor(0xffe6f3fd);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(rect<s32>(10 * xScale, 9 * yScale, (10 + CARD_IMG_WIDTH) * xScale, (9 + CARD_IMG_HEIGHT) * yScale), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
@@ -501,7 +501,7 @@ bool Game::Initialize() {
 	wACMessage->setVisible(false);
 	wACMessage->setDrawBackground(false);
 	stACMessage = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 350 * xScale, 60 * yScale), true, true, wACMessage, -1, true);
-	stACMessage->setBackgroundColor(0x6011113d);
+	stACMessage->setBackgroundColor(0xffe6f3fd);
 	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	//yes/no (310)
 	wQuery = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
@@ -606,11 +606,11 @@ bool Game::Initialize() {
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
-	stHintMsg->setBackgroundColor(0x6011113d);
+	stHintMsg->setBackgroundColor(0xffe6f3fd);
 	stHintMsg->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stHintMsg->setVisible(false);
 	stTip = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
-	stTip->setBackgroundColor(0x6011113d);
+	stTip->setBackgroundColor(0xffe6f3fd);
 	stTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stTip->setVisible(false);
 	//cmd menu
@@ -907,7 +907,7 @@ bool Game::Initialize() {
 	stTip->setVisible(false);
 	//tip for cards in select / display list
 	stCardListTip = env->addStaticText(L"", rect<s32>(0, 0, 150, 150), false, true, wCardSelect, TEXT_CARD_LIST_TIP, true);
- 	stCardListTip->setBackgroundColor(0x6011113d);
+ 	stCardListTip->setBackgroundColor(0xffe6f3fd);
 	stCardListTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stCardListTip->setVisible(false);
 	device->setEventReceiver(&menuHandler);
@@ -917,7 +917,8 @@ bool Game::Initialize() {
 	env->setFocus(wMainMenu);
 	for (u32 i = 0; i < EGDC_COUNT; ++i) {
 		SColor col = env->getSkin()->getColor((EGUI_DEFAULT_COLOR)i);
-		col.setAlpha(200);
+		//todo ygocolor 主面板透明度
+		col.setAlpha(240);
 		env->getSkin()->setColor((EGUI_DEFAULT_COLOR)i, col);
 	}
 #ifdef _IRR_ANDROID_PLATFORM_

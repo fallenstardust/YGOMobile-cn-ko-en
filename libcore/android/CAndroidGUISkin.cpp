@@ -87,31 +87,32 @@ CAndroidGUISkin::CAndroidGUISkin(EGUI_SKIN_TYPE type,
 	} else {
 		//0x80a6a8af
 		Colors[EGDC_3D_DARK_SHADOW] = 0xff090229;//左侧卡图背景底色
-		//Colors[EGDC_3D_FACE]			=	0xc0c9ccd4;		// tab background
-		Colors[EGDC_3D_FACE] = 0x6011113d; //主面板颜色
-		Colors[EGDC_3D_SHADOW] = 0xff090229; // 主面板左上高光,效果描述框下半部过渡色
-		Colors[EGDC_3D_HIGH_LIGHT] = 0x60045f6a;//布局高光线,窗体内层色
-		Colors[EGDC_3D_LIGHT] = 0xffa2d8f4;//按钮下侧和右侧的颜色
-		Colors[EGDC_ACTIVE_BORDER] = 0x8011113d; // 窗体标题栏色
-		Colors[EGDC_ACTIVE_CAPTION] = 0xffffffff;//窗体标题字色
-		Colors[EGDC_APP_WORKSPACE] = 0x00ff0000; // unused
-		Colors[EGDC_BUTTON_TEXT] = 0xffffffff;//主要界面的字
-		Colors[EGDC_GRAY_TEXT] = 0x3c999999;//选项不可用时的字
-		Colors[EGDC_HIGH_LIGHT] = 0xffa2d8f4;//被选中的字的背景色
-		Colors[EGDC_HIGH_LIGHT_TEXT] = 0x6011113d;//被选中高亮时的字色
-		Colors[EGDC_INACTIVE_BORDER] = 0x10000000;//窗体失去焦点时的标题栏底色
-		Colors[EGDC_INACTIVE_CAPTION] = 0xffff0000;//窗体失去焦点时的标题栏字色
-		Colors[EGDC_TOOLTIP] = 0x60ff0000;//
-		Colors[EGDC_TOOLTIP_BACKGROUND] = 0x6011113d;//
-		Colors[EGDC_SCROLLBAR] = 0xffa2d8f4;//滚动条底色
-		Colors[EGDC_WINDOW] = 0xff000039;//可动窗体的颜色ff002755-ff00011e
-		Colors[EGDC_WINDOW_SYMBOL] = 0xff00ffff;//打勾等的颜色
-		Colors[EGDC_ICON] = 0xffff0000;
-		Colors[EGDC_ICON_HIGH_LIGHT] = 0xffff0000;
-		Colors[EGDC_GRAY_WINDOW_SYMBOL] = 0xffb7b7f5;//不可动的打勾（对手准备.）
-		Colors[EGDC_EDITABLE] = 0x60045f6a;//输入框可用时的颜色
-		Colors[EGDC_GRAY_EDITABLE] = 0xff5a5a5a;//输入框不可用时的颜色
-		Colors[EGDC_FOCUSED_EDITABLE] = 0xffffffff;//输入状态的框色
+        		//Colors[EGDC_3D_FACE]			=	0xc0c9ccd4;		// tab background
+        		Colors[EGDC_3D_FACE] = 0xffe6f3fd; //主面板颜色。。。
+        		Colors[EGDC_3D_SHADOW] = 0xFFCCEDFF; // 主面板左上高光,效果描述框下半部过渡色
+        		Colors[EGDC_3D_HIGH_LIGHT] = 0xffe6f3fd;//布局高光线,窗体内层色
+        		Colors[EGDC_3D_LIGHT] = 0xFF3CADE7;//按钮下侧和右侧的颜色
+        		Colors[EGDC_ACTIVE_BORDER] = 0x88A9B9C9; // 窗体标题栏色
+        		Colors[EGDC_ACTIVE_CAPTION] = 0xff000000;//窗体标题字色。。。
+        		Colors[EGDC_APP_WORKSPACE] = 0xff000000; // unused
+        		Colors[EGDC_BUTTON_TEXT] = 0xff000000;//主要界面的字。。。
+        		Colors[EGDC_GRAY_TEXT] = 0x3c999999;//选项不可用时的字
+        		Colors[EGDC_HIGH_LIGHT] = 0xffA9B9C9;//被选中的字的背景色
+        		Colors[EGDC_HIGH_LIGHT_TEXT] = 0xff000000;//被选中高亮时的字色。。。
+        		Colors[EGDC_INACTIVE_BORDER] = 0x10d0d0d0;//窗体失去焦点时的标题栏底色
+        		Colors[EGDC_INACTIVE_CAPTION] = 0xffffffff;//窗体失去焦点时的标题栏字色
+        		Colors[EGDC_TOOLTIP] = 0x60000000;//
+        		Colors[EGDC_TOOLTIP_BACKGROUND] = 0xffe6f3fd;//。。。
+        		Colors[EGDC_SCROLLBAR] = 0xffF7F7F7;//滚动条底色
+        		Colors[EGDC_WINDOW] = 0xffe6f3fd;//可动窗体的颜色
+        		Colors[EGDC_WINDOW_SYMBOL] = 0xff000000;//打勾的颜色
+        		Colors[EGDC_ICON] = 0xffff0000;
+        		Colors[EGDC_ICON_HIGH_LIGHT] = 0xffff0000;
+        		Colors[EGDC_GRAY_WINDOW_SYMBOL] = 0xffD0D0D0;//不可动的打勾（对手准备.）
+        		Colors[EGDC_EDITABLE] = 0xFFF7F7F7;//输入框可用时的颜色
+        		Colors[EGDC_GRAY_EDITABLE] = 0xffA9B9C9;//输入框不可用时的颜色
+        		Colors[EGDC_FOCUSED_EDITABLE] = 0xFFCECDCD;//输入状态的框色。。。
+
 
 		Sizes[EGDS_SCROLLBAR_SIZE] = 14;
 		Sizes[EGDS_MENU_HEIGHT] = 48;

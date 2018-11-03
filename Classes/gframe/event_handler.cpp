@@ -688,7 +688,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						else mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff56649f);
 					} else {
 						command_card->is_selected = true;
-						mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0x6011113d);
+						mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xffe6f3fd);
 						selected_cards.push_back(command_card);
 					}
 					int sel = selected_cards.size();
@@ -896,7 +896,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						if(selectable_cards[i + pos]->owner != selectable_cards[i + pos]->overlayTarget->controler)
 							mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
+							mainGame->stCardPos[i]->setBackgroundColor(0xffe6f3fd);
 						else if(selectable_cards[i + pos]->overlayTarget->controler)
 							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 						else
@@ -905,14 +905,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						if(selectable_cards[i + pos]->position & POS_FACEDOWN)
 							mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
+							mainGame->stCardPos[i]->setBackgroundColor(0xffe6f3fd);
 						else if(selectable_cards[i + pos]->controler)
 							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 						else
 							mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 					} else {
 						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
+							mainGame->stCardPos[i]->setBackgroundColor(0xffe6f3fd);
 						else if(selectable_cards[i + pos]->controler)
 							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 						else
