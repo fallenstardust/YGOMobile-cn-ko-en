@@ -228,4 +228,9 @@
     <string name="Download">Download</string>
     <string name="Downloading">Now Downloading</string>
     <string name="Update_Found">Found New Version</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Cancel</string>
+    <string name="Checking_Update">Now Checking Update</string>
+    <string name="Checking_Update_Failed">Checking Update Failed</string>
+    <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
     </resources>

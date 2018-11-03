@@ -225,4 +225,9 @@
     <string name="Download">下载</string>
     <string name="Downloading">下载中，请稍候</string>
     <string name="Update_Found">发现新版本</string>
+    <string name="OK">确定</string>
+    <string name="Cancel">取消</string>
+    <string name="Checking_Update">检查更新中，请稍候</string>
+    <string name="Checking_Update_Failed">检查更新失败</string>
+    <string name="Ask_to_Change_Other_Way">，是否跳转到备用下载方式？</string>
 </resources>
