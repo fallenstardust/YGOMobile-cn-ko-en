@@ -454,7 +454,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                             builder.showTitleBar();
                             builder.setTitle(context.getResources().getString(R.string.Checking_Update_Failed));
                             builder.setMessage(e.getMessage()
-                                            + context.getResources().getString(R.string.Ask_to_Change_Other_Way));
+                                    + context.getResources().getString(R.string.Ask_to_Change_Other_Way));
                             builder.setLeftButtonText(R.string.Cancel);
                             builder.setRightButtonText(R.string.OK);
                             builder.setRightButtonListener(new DialogInterface.OnClickListener() {

@@ -491,9 +491,9 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
-    public void search(String message){
-        if (TextUtils.isEmpty(message)){
-            message="";
+    public void search(String message) {
+        if (TextUtils.isEmpty(message)) {
+            message = "";
         }
         prefixWord.setText(message);
         search();

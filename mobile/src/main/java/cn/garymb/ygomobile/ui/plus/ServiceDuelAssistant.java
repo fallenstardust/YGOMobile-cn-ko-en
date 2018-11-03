@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,13 +122,13 @@ public class ServiceDuelAssistant extends Service {
                     joinRoom(clipMessage, start);
                 } else {
                     for (String s : cardSearchKey) {
-                        int cardSearchStart=clipMessage.indexOf(s);
-                        if ( cardSearchStart!= -1) {
+                        int cardSearchStart = clipMessage.indexOf(s);
+                        if (cardSearchStart != -1) {
                             //卡查内容
-                            cardSearchMessage=clipMessage.substring(cardSearchStart+s.length(),clipMessage.length());
+                            cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
                             Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE,cardSearchMessage);
+                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
                             startActivity(intent);
                         }
                     }
