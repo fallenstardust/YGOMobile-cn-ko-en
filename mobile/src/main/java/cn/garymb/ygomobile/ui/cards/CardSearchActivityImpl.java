@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.DrawerLayout;
@@ -8,6 +9,8 @@ import android.support.v7.widget.FastScrollLinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +31,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -36,6 +40,7 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
 class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack {
+
     protected DrawerLayout mDrawerlayout;
     private RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -46,10 +51,17 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     protected LimitManager mLimitManager = DataManager.get().getLimitManager();
     private ImageLoader mImageLoader;
 
+    private String intentSearchMessage;
+    private boolean isFirstCardSearch=true;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+
+        if(TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))){
+            ServiceDuelAssistant.cardSearchMessage="";
+        }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
         enableBackHome();
@@ -85,7 +97,23 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             isLoad = true;
             mCardLoader.loadData();
             mCardSelector.initItems();
+            intentSearch();
+            isFirstCardSearch=false;
         });
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (!isFirstCardSearch){
+            intentSearch();
+        }
+    }
+
+
+    private void intentSearch(){
+//        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
+        mCardSelector.search(ServiceDuelAssistant.cardSearchMessage);
     }
 
     protected void setListeners() {

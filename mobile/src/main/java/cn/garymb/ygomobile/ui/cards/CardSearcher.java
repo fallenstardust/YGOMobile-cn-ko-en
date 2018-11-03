@@ -18,7 +18,6 @@ import android.widget.TextView.OnEditorActionListener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
@@ -26,8 +25,8 @@ import cn.garymb.ygomobile.loader.ICardLoader;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import ocgcore.LimitManager;
 import ocgcore.DataManager;
+import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.CardSet;
 import ocgcore.data.LimitList;
@@ -490,6 +489,14 @@ public class CardSearcher implements View.OnClickListener {
         } else if (v == resetButton) {
             resetAll();
         }
+    }
+
+    public void search(String message){
+        if (TextUtils.isEmpty(message)){
+            message="";
+        }
+        prefixWord.setText(message);
+        search();
     }
 
     private void search() {

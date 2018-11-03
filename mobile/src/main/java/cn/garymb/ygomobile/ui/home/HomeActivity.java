@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -111,11 +112,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
-        checkPgyerUpdateSilent(getContext());
+        checkPgyerUpdateSilent(getContext(),false,false,false);
         //ServiceDuelAssistant
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+            this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
         } else {
             startService(new Intent(this, ServiceDuelAssistant.class));
         }
@@ -400,9 +400,19 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         mMenuIds.put(mMenuIds.size(), menuId);
     }
 
-    public static void checkPgyerUpdateSilent(Context context) {
-        final DialogPlus builder = new DialogPlus(context);
-        ;
+    /*
+    *isToastCheckUpdateing  是否提示正在检查更新
+    *isToastNoUpdata  没有更新是否提示
+    * isErrorIntent  检查更新失败是否跳转下载地址
+     */
+    public static void checkPgyerUpdateSilent(Context context,boolean isToastCheckUpdateing,boolean isToastNoUpdata,boolean isErrorIntent) {
+    final DialogPlus builder = new DialogPlus(context);
+    if (isToastCheckUpdateing) {
+        builder.showProgressBar();
+        builder.hideTitleBar();
+        builder.setMessage("检查更新中，请稍等");
+        builder.show();
+    }
         //蒲公英自动检查更新
         new PgyUpdateManager.Builder()
                 .setForced(true)
@@ -411,14 +421,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 .setUpdateManagerListener(new UpdateManagerListener() {
                     @Override
                     public void onNoUpdateAvailable() {
-                        Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        if (isToastNoUpdata){
+                            builder.dismiss();
+                            Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        }
                     }
-
                     @Override
                     public void onUpdateAvailable(AppBean appBean) {
-                        final String versionName, updateMessage;
+                        final String versionName,updateMessage;
                         versionName = appBean.getVersionName();
                         updateMessage = appBean.getReleaseNote();
+                        builder.hideProgressBar();
+                        builder.showTitleBar();
                         builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
                         builder.setMessage(updateMessage);
                         builder.setRightButtonText(R.string.Download);
@@ -434,10 +448,31 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
                     @Override
                     public void checkUpdateFailed(Exception e) {
-                        Intent intent = new Intent();
-                        intent.setAction(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
-                        context.startActivity(intent);
+                        if (isErrorIntent) {
+                            builder.hideProgressBar();
+                            builder.showTitleBar();
+                            builder.setTitleText("检查更新失败");
+                            builder.setMessage("检查更新失败，原因为：“"+e.getMessage()+"”\n是否跳转到官方下载地址下载？");
+                            builder.setLeftButtonText("去吧");
+                            builder.setRightButtonText("取消");
+                            builder.setRightButtonListener(new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                            builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Intent.ACTION_VIEW);
+                                    intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
+                                    context.startActivity(intent);
+                                    dialog.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
                     }
                 })
                 .setDownloadFileListener(new DownloadFileListener() {
@@ -455,8 +490,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     @Override
                     public void onProgressUpdate(Integer... integers) {
                         builder.getProgressBar2().setProgress(integers[0]);
-                    }
-                })
+                    }})
                 .register();
     }
 

@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatDelegate;
 
-import ocgcore.DataManager;
-
 public class App extends GameApplication {
 
     @Override

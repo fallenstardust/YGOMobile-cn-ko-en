@@ -157,6 +157,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
             if (preference instanceof CheckBoxPreference) {
                 CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
                 mSharedPreferences.edit().putBoolean(preference.getKey(), checkBoxPreference.isChecked()).apply();
+                //如果事设置额外卡库的选项
+                if (preference.getKey().equals(PREF_READ_EX)){
+                    //设置使用额外卡库后重新加载卡片数据
+                    DataManager.get().load(true);
+                }
                 return true;
             }
             boolean rs = super.onPreferenceChange(preference, value);
@@ -180,8 +185,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
         }
-        if (PREF_CHECK_UPDATE.equals(preference.getKey())) {
-            HomeActivity.checkPgyerUpdateSilent(getContext());
+        if (PREF_CHECK_UPDATE.equals(key)) {
+           HomeActivity.checkPgyerUpdateSilent(getActivity(),true,true,true);
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;

@@ -165,6 +165,12 @@ public class MainActivity extends HomeActivity{
                 try {
                     IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
                             AppsSettings.get().getResourcePath(), true);
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
+                            AppsSettings.get().getResourcePath(), true);
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
+                            AppsSettings.get().getResourcePath(), true);
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
+                            AppsSettings.get().getResourcePath(), true);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

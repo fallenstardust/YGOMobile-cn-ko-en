@@ -10,11 +10,11 @@ import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
 import org.greenrobot.eventbus.EventBus;
 
+import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;

@@ -7,8 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 
 class DeckViewHolder extends RecyclerView.ViewHolder {
     private long mCardType;

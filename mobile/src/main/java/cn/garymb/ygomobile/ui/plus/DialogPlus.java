@@ -88,6 +88,14 @@ public class DialogPlus extends Dialog {
         return this;
     }
 
+    //显示标题栏
+    public DialogPlus showTitleBar() {
+        if (mTitleLayout != null) {
+            mTitleLayout.setVisibility(View.VISIBLE);
+        }
+        return this;
+    }
+
     public DialogPlus hideTitleBar() {
         if (mTitleLayout != null) {
             mTitleLayout.setVisibility(View.GONE);
@@ -180,6 +188,13 @@ public class DialogPlus extends Dialog {
     public DialogPlus showProgressBar() {
         if (mProgressBar != null) {
             mProgressBar.setVisibility(View.VISIBLE);
+        }
+        return this;
+    }
+
+    public DialogPlus hideProgressBar() {
+        if (mProgressBar != null) {
+            mProgressBar.setVisibility(View.GONE);
         }
         return this;
     }

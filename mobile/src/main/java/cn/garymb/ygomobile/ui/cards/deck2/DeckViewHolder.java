@@ -8,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.ImageLoader;
 import ocgcore.data.Card;
 
 

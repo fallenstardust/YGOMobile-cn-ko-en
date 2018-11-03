@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.widget;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.LinearLayout;
 
 import cn.garymb.ygomobile.bean.DeckInfo;

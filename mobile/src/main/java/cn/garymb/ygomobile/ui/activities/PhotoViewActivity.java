@@ -8,8 +8,8 @@ import android.text.TextUtils;
 
 import java.io.IOException;
 
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import uk.co.senab.photoview.PhotoView;
 
 
