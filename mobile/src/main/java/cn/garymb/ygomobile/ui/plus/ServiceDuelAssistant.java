@@ -41,7 +41,7 @@ public class ServiceDuelAssistant extends Service {
 
     public static String cardSearchMessage;
     //卡查关键字
-    private String[] cardSearchKey = new String[]{"c#", "C#"};
+    private String[] cardSearchKey = new String[]{"?", "？"};
 
     private LinearLayout mFloatLayout;
     private TextView ds_text;

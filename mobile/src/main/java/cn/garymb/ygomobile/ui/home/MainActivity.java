@@ -36,23 +36,25 @@ public class MainActivity extends HomeActivity{
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
     ResCheckTask mResCheckTask;
-    private final String[] PERMISSIONS ={
+ /*   private final String[] PERMISSIONS ={
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-    };
+    };*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
+        //资源复制
+        checkRes();
        //动态权限
-        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+     //   ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
     }
 
-    @Override
+    /*@Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         for(int i=0;i<permissions.length;i++){
@@ -63,7 +65,7 @@ public class MainActivity extends HomeActivity{
         }
         //资源复制
         checkRes();
-    }
+    }*/
 
     private void checkRes() {
         checkResourceDownload((error, isNew) -> {
@@ -110,7 +112,6 @@ public class MainActivity extends HomeActivity{
         YGOStarter.onDestroy(this);
         super.onDestroy();
         mResCheckTask.unregisterMReceiver();
-
     }
 
     @Override
