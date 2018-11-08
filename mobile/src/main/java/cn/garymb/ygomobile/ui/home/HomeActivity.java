@@ -127,6 +127,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     protected void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
+        Intent duelAssistantServiceIntent = new Intent(this, ServiceDuelAssistant.class);
+        stopService(duelAssistantServiceIntent);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
