@@ -53,12 +53,12 @@ public class ServiceDuelAssistant extends Service {
 
 
     public static String cardSearchMessage;
-    //卡查关键字
-    private String[] cardSearchKey = new String[]{"?", "？"};
 
     private LinearLayout mFloatLayout;
     private TextView ds_text;
     private Button ds_join, ds_qx;
+    //卡查关键字
+    private String[] cardSearchKey = new String[]{"?", "？"};
 
     //是否可以移除悬浮窗上面的视图
     private boolean isdis = false;
@@ -214,6 +214,10 @@ public class ServiceDuelAssistant extends Service {
                         if (cardSearchStart != -1) {
                             //卡查内容
                             cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
+                            //如果复制的文本里带？号后面没有内容则不跳转
+                            if (TextUtils.isEmpty(cardSearchMessage)) {
+                                return;
+                            }
                             Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
