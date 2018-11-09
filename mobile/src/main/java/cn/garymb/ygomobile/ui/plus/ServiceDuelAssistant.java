@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.plus;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -11,6 +13,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,11 +21,13 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
@@ -30,6 +35,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
@@ -38,6 +44,13 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 
 public class ServiceDuelAssistant extends Service {
+
+    private final static String TAG = ServiceDuelAssistant.class.getSimpleName();
+    private final static String DUEL_ASSISTANT_SERVICE_ACTION = "YGOMOBILE:ACTION_DUEL_ASSISTANT_SERVICE";
+    private final static String CMD_NAME = "CMD";
+    private final static String CMD_START_GAME = "CMD : START GAME";
+    private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
+
 
     public static String cardSearchMessage;
     //卡查关键字
@@ -78,12 +91,87 @@ public class ServiceDuelAssistant extends Service {
         return null;
     }
 
+    private void collapseStatusBar() {
+        try {
+            @SuppressLint("WrongConstant") Object statusBarManager = getSystemService("statusbar");
+            if (null == statusBarManager) {
+                return;
+            }
+            Class<?> clazz = statusBarManager.getClass();
+            if (null == clazz) {
+                return;
+            }
+
+            Method methodCollapse;
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
+                methodCollapse = clazz.getMethod("collapse");
+            } else {
+                methodCollapse = clazz.getMethod("collapsePanels");
+            }
+            if (null == methodCollapse) {
+                return;
+            }
+            methodCollapse.invoke(statusBarManager);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String action = intent.getAction();
+        Log.d(TAG,"rev action:" + action);
+        if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {
+            String cmd = intent.getStringExtra(CMD_NAME);
+            Log.d(TAG,"rev cmd:" + cmd);
+
+            if (null == cmd) {
+                Log.e(TAG,"cmd null");
+            } else {
+                switch (cmd) {
+                    case CMD_STOP_SERVICE:
+                        stopSelf();
+                        break;
+
+                    case CMD_START_GAME:
+                        startActivity(new Intent(this,MainActivity.class));
+                        break;
+
+                    default:
+                        Log.e(TAG, "unknown cmd:" + cmd);
+                        break;
+
+                }
+                collapseStatusBar();
+            }
+        }
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
     @Override
     public void onCreate() {
         // TODO: Implement this method
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1, new Notification());
+            RemoteViews remoteViews = new RemoteViews(getPackageName(),R.layout.notification_view_duel_assistant);
+            Intent intent = new Intent(this,this.getClass());
+            intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
+            PendingIntent pendingIntent;
+
+            intent.putExtra(CMD_NAME,CMD_START_GAME);
+            pendingIntent = PendingIntent.getService(this,1,intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant,pendingIntent);
+
+            intent.putExtra(CMD_NAME,CMD_STOP_SERVICE);
+            pendingIntent = PendingIntent.getService(this,2,intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViews.setOnClickPendingIntent(R.id.buttonStopService,pendingIntent);
+
+
+            Notification.Builder builder = new Notification.Builder(this);
+            builder.setSmallIcon(R.drawable.ic_icon);
+            builder.setCustomContentView(remoteViews);
+            startForeground(1, builder.build());
         }
 
         //lc = new ArrayList<Card>();
