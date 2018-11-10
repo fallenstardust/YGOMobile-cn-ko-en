@@ -134,7 +134,9 @@ public class ServiceDuelAssistant extends Service {
                         break;
 
                     case CMD_START_GAME:
-                        startActivity(new Intent(this,MainActivity.class));
+                        Intent intent2 = new Intent(ServiceDuelAssistant.this, MainActivity.class);
+                        intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent2);
                         break;
 
                     default:
