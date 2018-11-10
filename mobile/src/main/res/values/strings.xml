@@ -233,4 +233,6 @@
     <string name="Checking_Update">Now Checking Update</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
     <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
+    <string name="DuelAssistant">DuelAssiatant is On</string>
+    <string name="About_DuelAssistant">Service for getting Keywords from Clipboard</string>
     </resources>

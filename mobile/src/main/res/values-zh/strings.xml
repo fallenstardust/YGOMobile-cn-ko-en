@@ -230,4 +230,6 @@
     <string name="Checking_Update">检查更新中，请稍候</string>
     <string name="Checking_Update_Failed">检查更新失败</string>
     <string name="Ask_to_Change_Other_Way">，是否跳转到备用下载方式？</string>
+    <string name="DuelAssistant">决斗助手启用中</string>
+    <string name="About_DuelAssistant">用于快速查卡与约战加房的服务</string>
 </resources>
