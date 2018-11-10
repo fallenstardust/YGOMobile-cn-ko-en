@@ -120,13 +120,13 @@ public class ServiceDuelAssistant extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
-        Log.d(TAG,"rev action:" + action);
+        Log.d(TAG, "rev action:" + action);
         if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {
             String cmd = intent.getStringExtra(CMD_NAME);
-            Log.d(TAG,"rev cmd:" + cmd);
+            Log.d(TAG, "rev cmd:" + cmd);
 
             if (null == cmd) {
-                Log.e(TAG,"cmd null");
+                Log.e(TAG, "cmd null");
             } else {
                 switch (cmd) {
                     case CMD_STOP_SERVICE:
@@ -156,18 +156,18 @@ public class ServiceDuelAssistant extends Service {
         // TODO: Implement this method
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            RemoteViews remoteViews = new RemoteViews(getPackageName(),R.layout.notification_view_duel_assistant);
-            Intent intent = new Intent(this,this.getClass());
+            RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_view_duel_assistant);
+            Intent intent = new Intent(this, this.getClass());
             intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
             PendingIntent pendingIntent;
 
-            intent.putExtra(CMD_NAME,CMD_START_GAME);
-            pendingIntent = PendingIntent.getService(this,1,intent,PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant,pendingIntent);
+            intent.putExtra(CMD_NAME, CMD_START_GAME);
+            pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant, pendingIntent);
 
-            intent.putExtra(CMD_NAME,CMD_STOP_SERVICE);
-            pendingIntent = PendingIntent.getService(this,2,intent,PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.buttonStopService,pendingIntent);
+            intent.putExtra(CMD_NAME, CMD_STOP_SERVICE);
+            pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
 
 
             Notification.Builder builder = new Notification.Builder(this);
