@@ -230,4 +230,6 @@
     <string name="Checking_Update">업데이트 확인중</string>
     <string name="Checking_Update_Failed">업데이트 확인 실패</string>
     <string name="Ask_to_Change_Other_Way">\, 다른 방법으로 변경을 원하십니까</string>
+    <string name="DuelAssistant">빠른 방 입장 기능이 사용중 입니다.</string>
+    <string name="About_DuelAssistant">코드 번호를 복사할 경우 빠른 방 입장 기능을 사용이 가능합니다.</string>
 </resources>
