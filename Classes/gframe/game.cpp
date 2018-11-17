@@ -1516,7 +1516,7 @@ void Game::ClearCardInfo(int player) {
 	stText->setText(L"");
 	scrCardText->setVisible(false);
 }
-void Game::AddChatMsg(wchar_t* msg, int player) {
+void Game::AddChatMsg(const wchar_t* msg, int player) {
 	for(int i = 7; i > 0; --i) {
 		chatMsg[i] = chatMsg[i - 1];
 		chatTiming[i] = chatTiming[i - 1];
@@ -1563,24 +1563,28 @@ void Game::ClearChatMsg() {
 		chatTiming[i] = 0;
 	}
 }
-void Game::AddDebugMsg(char* msg)
-{
+void Game::AddDebugMsg(const char* msg) {
 	if (enable_log & 0x1) {
 		wchar_t wbuf[1024];
 		BufferIO::DecodeUTF8(msg, wbuf);
 		AddChatMsg(wbuf, 9);
 	}
 	if (enable_log & 0x2) {
-		FILE* fp = fopen("error.log", "at");
-		if (!fp)
-			return;
-		time_t nowtime = time(NULL);
-		struct tm *localedtime = localtime(&nowtime);
-		char timebuf[40];
-		strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
-		fprintf(fp, "[%s][Script Error]: %s\n", timebuf, msg);
-		fclose(fp);
+		char msgbuf[1040];
+		sprintf(msgbuf, "[Script Error]: %s", msg);
+		ErrorLog(msgbuf);
 	}
+}
+void Game::ErrorLog(const char* msg) {
+	FILE* fp = fopen("error.log", "at");
+	if(!fp)
+		return;
+	time_t nowtime = time(NULL);
+	tm* localedtime = localtime(&nowtime);
+	char timebuf[40];
+	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
+	fprintf(fp, "[%s]%s\n", timebuf, msg);
+	fclose(fp);
 }
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
