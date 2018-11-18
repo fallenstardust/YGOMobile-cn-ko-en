@@ -1799,7 +1799,7 @@ int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_free
 			core.units.begin()->step = 5;
 			return FALSE;
 		} else if(core.select_chains.size() == 1 && !core.current_chain.size()) {
-			add_process(PROCESSOR_SELECT_EFFECTYN, 0, 0, (group*)core.select_chains[0].triggering_effect->get_handler(), core.current_player, 0);
+			add_process(PROCESSOR_SELECT_EFFECTYN, 0, 0, (group*)core.select_chains[0].triggering_effect->get_handler(), core.current_player, 221);
 			return FALSE;
 		} else {
 			add_process(PROCESSOR_SELECT_CHAIN, 0, 0, 0, core.current_player, 0x7f);
@@ -4208,6 +4208,8 @@ int32 field::add_chain(uint16 step) {
 			} else if(phandler->current.location == LOCATION_SZONE) {
 				if((phandler->data.type & TYPE_TRAP) && phandler->get_status(STATUS_SET_TURN))
 					ecode = EFFECT_TRAP_ACT_IN_SET_TURN;
+				if((phandler->data.type & TYPE_SPELL) && (phandler->data.type & TYPE_QUICKPLAY) && phandler->get_status(STATUS_SET_TURN))
+					ecode = EFFECT_QP_ACT_IN_SET_TURN;
 			}
 			if(ecode) {
 				eset.clear();
