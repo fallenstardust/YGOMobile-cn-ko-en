@@ -52,7 +52,7 @@ public class ServiceDuelAssistant extends Service {
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
 
 
-    public static String cardSearchMessage;
+    public static String cardSearchMessage="";
 
     private LinearLayout mFloatLayout;
     private TextView ds_text;
