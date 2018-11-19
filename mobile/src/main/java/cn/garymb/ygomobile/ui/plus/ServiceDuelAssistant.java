@@ -71,6 +71,8 @@ public class ServiceDuelAssistant extends Service {
             "M#", "m#",
             "T#", "t#",
             "PR#", "pr#",
+            "NC#","nc#",
+            "NS#","ns#",
             "S#", "s#",
             "AI#", "ai#",
             "LF2#", "lf2#",
