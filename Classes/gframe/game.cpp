@@ -25,7 +25,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1346;
+const unsigned short PRO_VERSION = 0x1347;
 
 namespace ygo {
 
@@ -1386,12 +1386,12 @@ void Game::LoadConfig() {
 	gameConf.chkHideSetname = android::getIntSetting(appMain, "chkHideSetname", 0);
 	gameConf.control_mode = android::getIntSetting(appMain, "control_mode", 0);
 	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
-	gameConf.separate_clear_button = android::getIntSetting(appMain, "separate_clear_button", 1);
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
-	gameConf.chkAutoSaveReplay = android::getIntSetting(appMain, "chkAutoSaveReplay", 0);
+	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	//defult Setting without checked
+	gameConf.separate_clear_button = 1;
 	gameConf.search_multiple_keywords = 1;
 	gameConf.defaultOT = 1;
 	gameConf.auto_search_limit = 1;
@@ -1421,8 +1421,8 @@ void Game::SaveConfig() {
 		android::saveIntSetting(appMain, "chkHideSetname", gameConf.chkHideSetname);
 	gameConf.chkIgnoreDeckChanges = chkIgnoreDeckChanges->isChecked() ? 1 : 0;
 		android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
-	gameConf.chkAutoSaveReplay = chkAutoSaveReplay->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "chkAutoSaveReplay", gameConf.chkAutoSaveReplay);
+	gameConf.auto_save_replay = chkAutoSaveReplay->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "auto_save_replay", gameConf.auto_save_replay);
 	gameConf.draw_field_spell = chkDrawFieldSpell->isChecked() ? 1 : 0;
         android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
