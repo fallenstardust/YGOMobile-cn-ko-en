@@ -11,6 +11,13 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>Szefo server (Links +TCG)</name>
+        <ip>szefoserver.ddns.net</ip>
+        <port>7210</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>Mercury233 OCG</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
