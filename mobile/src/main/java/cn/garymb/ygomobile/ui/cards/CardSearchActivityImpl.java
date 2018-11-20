@@ -53,6 +53,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
 
     private String intentSearchMessage;
     private boolean isFirstCardSearch=true;
+    private String currentCardSearchMessage="";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,7 +106,8 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch){
+        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)){
+            currentCardSearchMessage=ServiceDuelAssistant.cardSearchMessage;
             intentSearch();
         }
     }

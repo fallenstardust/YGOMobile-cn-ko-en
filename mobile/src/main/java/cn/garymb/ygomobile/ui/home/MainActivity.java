@@ -49,10 +49,10 @@ public class MainActivity extends HomeActivity{
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
         //资源复制
-        checkRes();
+        //checkRes();
        //动态权限
      //   ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
-    }
+    //}
 
     /*@Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -67,7 +67,7 @@ public class MainActivity extends HomeActivity{
         checkRes();
     }*/
 
-    private void checkRes() {
+    //private void checkRes() {
         checkResourceDownload((error, isNew) -> {
             if (error < 0) {
                 enableStart = false;

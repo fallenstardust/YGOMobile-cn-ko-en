@@ -25,7 +25,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1346;
+const unsigned short PRO_VERSION = 0x1347;
 
 namespace ygo {
 
@@ -465,6 +465,9 @@ bool Game::Initialize() {
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
 	posY += 60;
+	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1366));
+	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
+	posY += 60;
     chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1279));
     chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
     posY += 60;
@@ -675,7 +678,7 @@ bool Game::Initialize() {
 	wRenameDeck = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1367));
 	wRenameDeck->getCloseButton()->setVisible(false);
 	wRenameDeck->setVisible(false);
-	env->addStaticText(dataManager.GetSysString(1366), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wRenameDeck);
+	env->addStaticText(dataManager.GetSysString(1499), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wRenameDeck);
 	ebREName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wRenameDeck, -1);
 	ebREName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnREYes = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wRenameDeck, BUTTON_RENAME_DECK_SAVE, dataManager.GetSysString(1341));
@@ -1377,17 +1380,20 @@ void Game::LoadConfig() {
 	gameConf.chkRandomPos = android::getIntSetting(appMain, "chkRandomPos", 0);
 	gameConf.chkAutoChain = android::getIntSetting(appMain, "chkAutoChain", 0);
 	gameConf.chkWaitChain = android::getIntSetting(appMain, "chkWaitChain", 0);
-	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 0);
-	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	//system
 	gameConf.chkIgnore1 = android::getIntSetting(appMain, "chkIgnore1", 0);
 	gameConf.chkIgnore2 = android::getIntSetting(appMain, "chkIgnore2", 0);
 	gameConf.chkHideSetname = android::getIntSetting(appMain, "chkHideSetname", 0);
 	gameConf.control_mode = android::getIntSetting(appMain, "control_mode", 0);
 	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
-	gameConf.separate_clear_button = android::getIntSetting(appMain, "separate_clear_button", 1);
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
-	gameConf.defaultOT = android::getIntSetting(appMain, "defaultOT", 1);
+	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
+	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 0);
+	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
+	//defult Setting without checked
+	gameConf.separate_clear_button = 1;
+	gameConf.search_multiple_keywords = 1;
+	gameConf.defaultOT = 1;
 	gameConf.auto_search_limit = 1;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
@@ -1405,10 +1411,6 @@ void Game::SaveConfig() {
 		android::saveIntSetting(appMain, "chkAutoChain", gameConf.chkAutoChain);
     gameConf.chkWaitChain = chkWaitChain->isChecked() ? 1 : 0;
     	android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
-    gameConf.draw_field_spell = chkDrawFieldSpell->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
-    gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 
 	//system
 	gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
@@ -1419,6 +1421,12 @@ void Game::SaveConfig() {
 		android::saveIntSetting(appMain, "chkHideSetname", gameConf.chkHideSetname);
 	gameConf.chkIgnoreDeckChanges = chkIgnoreDeckChanges->isChecked() ? 1 : 0;
 		android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
+	gameConf.auto_save_replay = chkAutoSaveReplay->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "auto_save_replay", gameConf.auto_save_replay);
+	gameConf.draw_field_spell = chkDrawFieldSpell->isChecked() ? 1 : 0;
+        android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
+    gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
+        android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 
 //gameConf.defaultOT = defaultOT->isChecked()?1:0;
 //    android::saveIntSetting(appMain, "defaultOT", gameConf.defaultOT);

@@ -4,7 +4,6 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://jitpack.io" }
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
         google()
     }
     dependencies {
@@ -14,9 +13,9 @@ buildscript {
 }
 
 ext {
-    compileSdkVersion = 27
-//    buildToolsVersion = compileSdkVersion+".0.0"
-    supportVersion = compileSdkVersion+".1.0"
+    compileSdkVersion = 26
+    buildToolsVersion = compileSdkVersion+".0.0"
+    supportVersion = compileSdkVersion+".0.0-alpha1"
 }
 
 allprojects {
@@ -25,7 +24,6 @@ allprojects {
         google()
         maven { url "https://jitpack.io" }
         maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/'}
     }
 }
 
