@@ -1388,7 +1388,6 @@ void Game::LoadConfig() {
 	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
-	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	//defult Setting without checked
 	gameConf.separate_clear_button = 1;
