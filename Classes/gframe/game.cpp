@@ -1427,15 +1427,8 @@ void Game::SaveConfig() {
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 
-//gameConf.defaultOT = defaultOT->isChecked()?1:0;
-//    android::saveIntSetting(appMain, "defaultOT", gameConf.defaultOT);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
-//gameConf.separate_clear_button = separate_clear_button->isChecked()?1:0;
-//	  android::saveIntSetting(appMain, "separate_clear_button", gameConf.separate_clear_button);
-//TEST BOT MODE
-//gameConf.enable_bot_mode = enable_bot_mode->isChecked()?1:0;
-//	  android::saveIntSetting(appMain, "enable_bot_mode", gameConf.enable_bot_mode);
 }
 
 void Game::ShowCardInfo(int code) {

@@ -11,7 +11,7 @@
     </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
         <item>Duel is One Thing, Kind is Everything</item>
-        <item>someting wrong while playing in Ygopro? try to go to「Setting」→check/cancel「Immersive Mode」</item>
+        <item>Offset in Ygopro? try to go to「Setting」→check「Optimize not 16:9 resolution」</item>
         <item>you can Move Left every Severlist in Homepage to find「Edit」and「Delete」</item>
         <item>Try to click the bottom-left ball to get more functions</item>
         <item>you can start 「Single Game」→「Bot Mode」to play with Local Windbot</item>
