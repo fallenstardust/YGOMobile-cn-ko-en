@@ -74,7 +74,7 @@ public class AppsSettings {
         } else {
             display.getMetrics(dm);
         }
-        int realHeight = dm.heightPixels;
+        int realHeight = dm.widthPixels;
         return realHeight;
     }
 
@@ -87,9 +87,9 @@ public class AppsSettings {
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
                 if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
-                    mScreenHeight = height;
+                    mScreenHeight = getRealHeight(context);
                 } else {
-                    mScreenWidth = height;
+                    mScreenWidth = getRealHeight(context);
                 }
             }
         }
