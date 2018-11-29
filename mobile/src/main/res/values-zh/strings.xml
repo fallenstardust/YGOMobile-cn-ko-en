@@ -232,7 +232,7 @@
     <string name="Ask_to_Change_Other_Way">，是否跳转到备用下载方式？</string>
     <string name="DuelAssistant">决斗助手启用中</string>
     <string name="About_DuelAssistant">用于快速查卡与约战加房的服务</string>
-    <string name="ocgrule">学习大师规则</string>
+    <string name="masterrule">学习大师规则</string>
     <string name="tutorial">查看软件教程</string>
     <string name="about_help">点击您想要了解的内容</string>
 </resources>

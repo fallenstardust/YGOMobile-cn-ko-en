@@ -232,7 +232,7 @@
     <string name="Ask_to_Change_Other_Way">\, 다른 방법으로 변경을 원하십니까</string>
     <string name="DuelAssistant">빠른 방 입장 기능이 사용중 입니다.</string>
     <string name="About_DuelAssistant">코드 번호를 복사할 경우 빠른 방 입장 기능을 사용이 가능합니다.</string>
-    <string name="ocgrule">마스터즈 룰</string>
+    <string name="masterrule">마스터즈 룰</string>
     <string name="tutorial">가이드 북 보기</string>
-    <string name="about_help">알고 싶은 것을 클릭하십시오.</string>
+    <string name="about_help">원하는 내용을 클릭합니다.</string>
 </resources>

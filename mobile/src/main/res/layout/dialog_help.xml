@@ -1,5 +1,4 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -7,23 +6,54 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/ocgrule"
-            android:layout_width="50dp"
-            android:layout_height="50dp" />
+        <LinearLayout
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/masterrule"
+                android:layout_width="@dimen/label_width_middle"
+                android:layout_height="@dimen/label_width_middle"
+                android:layout_gravity="center"
+                android:background="@drawable/masterrule" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/masterrule"
+                android:textSize="25px"/>
+        </LinearLayout>
 
         <TextView
             android:layout_width="@dimen/label_width_middle"
             android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/tutorial"
-            android:layout_width="50dp"
-            android:layout_height="50dp" />
+        <LinearLayout
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <Button
+                android:id="@+id/tutorial"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:background="@drawable/tutorial" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:text="@string/tutorial"
+                android:textSize="25px"/>
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
