@@ -237,4 +237,5 @@
     <string name="About_DuelAssistant">Service for getting Keywords from Clipboard</string>
     <string name="ocgrule">Master Rule</string>
     <string name="tutorial">Soft Tutorial</string>
+    <string name="about_help">Click button which you want to know</string>
     </resources>
