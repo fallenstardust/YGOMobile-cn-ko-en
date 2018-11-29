@@ -235,4 +235,6 @@
     <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
     <string name="DuelAssistant">DuelAssiatant is On</string>
     <string name="About_DuelAssistant">Service for getting Keywords from Clipboard</string>
+    <string name="ocgrule">Master Rule</string>
+    <string name="tutorial">Soft Tutorial</string>
     </resources>
