@@ -249,7 +249,22 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 joinQQGroup(key);
                 break;
             case R.id.action_help: {
-                WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
+                final DialogPlus dialog = new DialogPlus(getContext());
+                dialog.setContentView(R.layout.dialog_help);
+                dialog.show();
+                View viewDialog = dialog.getContentView();
+                Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
+                Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
+
+                btnMasterRule.setOnClickListener((v) -> {
+                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                    dialog.dismiss();
+                });
+                btnTutorial.setOnClickListener((v) -> {
+                    WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
+                    dialog.dismiss();
+                });
+
             }
             break;
             case R.id.action_reset_game_res:
