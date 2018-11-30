@@ -18,9 +18,9 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>KOISHI TCG</name>
-        <ip>119.23.146.219</ip>
-        <port>1311</port>
+        <name>Szefo server (Links +TCG)</name>
+        <ip>szefoserver.ddns.net</ip>
+        <port>7210</port>
         <keep>true</keep>
     </server>
 </servers>
