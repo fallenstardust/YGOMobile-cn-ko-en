@@ -25,7 +25,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1347;
+const unsigned short PRO_VERSION = 0x1348;
 
 namespace ygo {
 
@@ -195,8 +195,9 @@ bool Game::Initialize() {
 	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.numfont, (int)48 * yScale, isAntialias, true);
 	guiFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	textFont = guiFont;
-	if(!numFont || !textFont)
-		return false;
+	if(!numFont || !textFont) {
+	  os::Printer::log("add font fail ");
+	}
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
 	device->setResizable(false);
@@ -506,7 +507,7 @@ bool Game::Initialize() {
 	stACMessage = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 350 * xScale, 60 * yScale), true, true, wACMessage, -1, true);
 	stACMessage->setBackgroundColor(0x6011113d);
 	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	//yes/no (310)
+	//yes/no (370)
 	wQuery = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
 	wQuery->getCloseButton()->setVisible(false);
 	wQuery->setVisible(false);
