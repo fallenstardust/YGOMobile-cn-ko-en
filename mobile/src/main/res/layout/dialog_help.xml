@@ -24,10 +24,11 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_gravity="bottom|center_horizontal"
                 android:gravity="center"
+                android:paddingTop="10dp"
                 android:text="@string/masterrule"
-                android:textSize="25px"/>
+                android:textSize="10sp" />
         </LinearLayout>
 
         <TextView
@@ -49,10 +50,11 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
                 android:gravity="center"
-                android:layout_gravity="center"
+                android:paddingTop="10dp"
                 android:text="@string/tutorial"
-                android:textSize="25px"/>
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -62,5 +64,5 @@
         android:gravity="center"
         android:paddingTop="20dp"
         android:text="@string/about_help"
-        android:textSize="25px" />
+        android:textSize="10sp" />
 </LinearLayout>
