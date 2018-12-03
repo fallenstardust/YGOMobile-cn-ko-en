@@ -3,10 +3,13 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import org.json.JSONArray;
 
@@ -19,8 +22,6 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.SystemUtils;
-import ocgcore.CardManager;
-import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
@@ -64,6 +65,19 @@ public class AppsSettings {
         update(context);
     }
 
+    public static int getRealHeight(Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        DisplayMetrics dm = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            display.getRealMetrics(dm);
+        } else {
+            display.getMetrics(dm);
+        }
+        int realHeight = dm.widthPixels;
+        return realHeight;
+    }
+
     public void update(Context context) {
         mDensity = context.getResources().getDisplayMetrics().density;
         mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
@@ -73,12 +87,14 @@ public class AppsSettings {
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
                 if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
-                    mScreenHeight = height;
+                    mScreenHeight = getRealHeight(context);
                 } else {
-                    mScreenWidth = height;
+                    mScreenWidth = getRealHeight(context);
                 }
             }
         }
+        Log.i("屏幕不算虚拟键", "" + mScreenHeight);
+        Log.i("屏幕总宽", "" + getRealHeight(context));
     }
 
     public int getAppVersion() {
@@ -173,10 +189,10 @@ public class AppsSettings {
                         //
                     }
                     for (File file : cdbs) {
-                        Log.i("合法的数据库才会加载","菜菜辛苦了");
+                        Log.i("合法的数据库才会加载", "菜菜辛苦了");
                         //if (CardManager.checkDataBase(file)) {
-                            //合法数据库才会加载
-                            pathList.add(file.getAbsolutePath());
+                        //合法数据库才会加载
+                        pathList.add(file.getAbsolutePath());
                         //}
                     }
                 }
@@ -305,7 +321,7 @@ public class AppsSettings {
         } else {
             //返回游戏根目录，即ygocore文件夹
             return getResourcePath();
-           // return getDataBaseDefault();
+            // return getDataBaseDefault();
         }
     }
 

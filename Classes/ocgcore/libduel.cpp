@@ -1051,7 +1051,7 @@ int32 scriptlib::duel_is_environment(lua_State *L) {
 			}
 		}
 		if(playerid == 1 || playerid == PLAYER_ALL) {
-			for(auto& pcard : pduel->game_field->player[0].list_szone) {
+			for(auto& pcard : pduel->game_field->player[1].list_szone) {
 				if(pcard && pcard->is_position(POS_FACEUP) && pcard->get_status(STATUS_EFFECT_ENABLED) && code == pcard->get_code())
 					ret = 1;
 			}
@@ -1065,7 +1065,7 @@ int32 scriptlib::duel_is_environment(lua_State *L) {
 			}
 		}
 		if(playerid == 1 || playerid == PLAYER_ALL) {
-			for(auto& pcard : pduel->game_field->player[0].list_mzone) {
+			for(auto& pcard : pduel->game_field->player[1].list_mzone) {
 				if(pcard && pcard->is_position(POS_FACEUP) && pcard->get_status(STATUS_EFFECT_ENABLED) && code == pcard->get_code())
 					ret = 1;
 			}
@@ -1115,7 +1115,7 @@ int32 scriptlib::duel_damage(lua_State *L) {
 	uint32 playerid = lua_tointeger(L, 1);
 	if(playerid != 0 && playerid != 1)
 		return 0;
-	int32 amount = lua_tointeger(L, 2);
+	int32 amount = std::round(lua_tonumber(L, 2));
 	if(amount < 0)
 		amount = 0;
 	uint32 reason = lua_tointeger(L, 3);
@@ -1133,7 +1133,7 @@ int32 scriptlib::duel_recover(lua_State *L) {
 	uint32 playerid = lua_tointeger(L, 1);
 	if(playerid != 0 && playerid != 1)
 		return 0;
-	int32 amount = lua_tointeger(L, 2);
+	int32 amount = std::round(lua_tonumber(L, 2));
 	if(amount < 0)
 		amount = 0;
 	uint32 reason = lua_tointeger(L, 3);
@@ -2797,6 +2797,15 @@ int32 scriptlib::duel_set_must_select_cards(lua_State *L) {
 	} else
 		luaL_error(L, "Parameter %d should be \"Card\" or \"Group\".", 1);
 	return 0;
+}
+int32 scriptlib::duel_grab_must_select_cards(lua_State *L) {
+	duel* pduel = interpreter::get_duel_info(L);
+	group* pgroup = pduel->new_group();
+	if(pduel->game_field->core.must_select_cards.size())
+		pgroup->container.insert(pduel->game_field->core.must_select_cards.begin(), pduel->game_field->core.must_select_cards.end());
+	pduel->game_field->core.must_select_cards.clear();
+	interpreter::group2value(L, pgroup);
+	return 1;
 }
 int32 scriptlib::duel_set_target_card(lua_State *L) {
 	check_action_permission(L);

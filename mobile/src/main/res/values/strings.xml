@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="StringFormatInvalid"
-    >
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="app_name">YGOMobile</string>
     <string name="app_version_name">0.1</string>
     <string name="start_exception">Start Exception</string>
@@ -238,4 +235,9 @@
     <string name="Checking_Update">Now Checking Update</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
     <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
-    </resources>
+    <string name="DuelAssistant">DuelAssiatant is On</string>
+    <string name="About_DuelAssistant">Service for getting Keywords from Clipboard</string>
+    <string name="masterrule">Master Rule</string>
+    <string name="tutorial">Soft Tutorial</string>
+    <string name="about_help">Click button which you want to know</string>
+</resources>

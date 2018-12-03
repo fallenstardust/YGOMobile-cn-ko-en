@@ -1,15 +1,20 @@
 package cn.garymb.ygomobile.ui.home;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationManagerCompat;
 
 import java.io.IOException;
 
@@ -25,6 +30,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import cn.garymb.ygomobile.utils.PermissionUtil;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
@@ -39,6 +45,7 @@ public class MainActivity extends HomeActivity{
     private final String[] PERMISSIONS ={
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.SYSTEM_ALERT_WINDOW,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
     };
@@ -52,12 +59,13 @@ public class MainActivity extends HomeActivity{
         ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
     }
 
+    @SuppressLint("StringFormatMatches")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         for(int i=0;i<permissions.length;i++){
             if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-                showToast(R.string.tip_no_permission);
+                showToast(getString(R.string.tip_no_permission,permissions[i]));
                 break;
             }
         }
@@ -74,7 +82,7 @@ public class MainActivity extends HomeActivity{
             }
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
-                    new DialogPlus(this)
+                   DialogPlus dialog= new DialogPlus(this)
                             .setTitleText(getString(R.string.settings_about_change_log))
                             .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                             .hideButton()
@@ -86,12 +94,21 @@ public class MainActivity extends HomeActivity{
                                         mImageUpdater.start();
                                     }
                                 }
-                            })
-                            .show();
+                            });
+                   dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                       @Override
+                       public void onDismiss(DialogInterface dialogInterface) {
+                           PermissionUtil.isServicePermission(MainActivity.this,true);
+
+                   }
+                   });
+                   dialog.show();
                 }
             } else {
+                PermissionUtil.isServicePermission(MainActivity.this,true);
                 getGameUriManager().doIntent(getIntent());
             }
+
         });
     }
 
@@ -110,7 +127,6 @@ public class MainActivity extends HomeActivity{
         YGOStarter.onDestroy(this);
         super.onDestroy();
         mResCheckTask.unregisterMReceiver();
-
     }
 
     @Override

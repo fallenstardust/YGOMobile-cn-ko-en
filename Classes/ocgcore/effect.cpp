@@ -206,10 +206,6 @@ int32 effect::is_activateable(uint8 playerid, const tevent& e, int32 neglect_con
 					return FALSE;
 				if(handler->equiping_target)
 					return FALSE;
-				if(handler->get_status(STATUS_SET_TURN)) {
-					if((handler->data.type & TYPE_SPELL) && (handler->data.type & TYPE_QUICKPLAY))
-						return FALSE;
-				}
 				if(!(handler->data.type & (TYPE_FIELD | TYPE_PENDULUM)) && is_flag(EFFECT_FLAG_LIMIT_ZONE) && !(zone & (1u << handler->current.sequence)))
 					return FALSE;
 			} else {
@@ -237,6 +233,8 @@ int32 effect::is_activateable(uint8 playerid, const tevent& e, int32 neglect_con
 			} else if(handler->current.location == LOCATION_SZONE) {
 				if((handler->data.type & TYPE_TRAP) && handler->get_status(STATUS_SET_TURN))
 					ecode = EFFECT_TRAP_ACT_IN_SET_TURN;
+				if((handler->data.type & TYPE_SPELL) && (handler->data.type & TYPE_QUICKPLAY) && handler->get_status(STATUS_SET_TURN))
+					ecode = EFFECT_QP_ACT_IN_SET_TURN;
 			}
 			if(ecode) {
 				bool available = false;
@@ -596,7 +594,8 @@ void effect::dec_count(uint32 playerid) {
 		return;
 	if(count_limit == 0)
 		return;
-	count_limit -= 1;
+	if(count_code == 0 || is_flag(EFFECT_FLAG_NO_TURN_RESET))
+		count_limit -= 1;
 	if(count_code) {
 		uint32 code = count_code & 0xfffffff;
 		if(code == 1)
