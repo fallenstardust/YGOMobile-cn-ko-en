@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -7,12 +9,15 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -44,6 +49,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
@@ -119,6 +125,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         } else {
             startService(new Intent(this, ServiceDuelAssistant.class));
         }
+
         //萌卡
         StartMycard();
     }

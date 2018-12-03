@@ -2,16 +2,21 @@ package cn.garymb.ygomobile.ui.plus;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -35,9 +40,11 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.PermissionUtil;
 import cn.garymb.ygomobile.utils.XmlUtils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
@@ -52,13 +59,14 @@ public class ServiceDuelAssistant extends Service {
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
 
 
-    public static String cardSearchMessage="";
+    public static String cardSearchMessage = "";
 
     private LinearLayout mFloatLayout;
     private TextView ds_text;
     private Button ds_join, ds_qx;
     //卡查关键字
     private String[] cardSearchKey = new String[]{"?", "？"};
+
 
     //是否可以移除悬浮窗上面的视图
     private boolean isdis = false;
@@ -71,7 +79,7 @@ public class ServiceDuelAssistant extends Service {
             "M#", "m#",
             "T#", "t#",
             "PR#", "pr#",
-            "NS#","ns#",
+            "NS#", "ns#",
             "S#", "s#",
             "AI#", "ai#",
             "LF2#", "lf2#",
@@ -157,24 +165,27 @@ public class ServiceDuelAssistant extends Service {
         // TODO: Implement this method
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_view_duel_assistant);
-            Intent intent = new Intent(this, this.getClass());
-            intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
-            PendingIntent pendingIntent;
 
-            intent.putExtra(CMD_NAME, CMD_START_GAME);
-            pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant, pendingIntent);
+            if (PermissionUtil.isNotificationListenerEnabled(this)) {
+                RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_view_duel_assistant);
+                Intent intent = new Intent(this, this.getClass());
+                intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
+                PendingIntent pendingIntent;
 
-            intent.putExtra(CMD_NAME, CMD_STOP_SERVICE);
-            pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
+                intent.putExtra(CMD_NAME, CMD_START_GAME);
+                pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant, pendingIntent);
+
+                intent.putExtra(CMD_NAME, CMD_STOP_SERVICE);
+                pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
 
 
-            Notification.Builder builder = new Notification.Builder(this);
-            builder.setSmallIcon(R.drawable.ic_icon);
-            builder.setCustomContentView(remoteViews);
-            startForeground(1, builder.build());
+                Notification.Builder builder = new Notification.Builder(this, "决斗助手状态");
+                builder.setSmallIcon(R.drawable.ic_icon);
+                builder.setCustomContentView(remoteViews);
+                startForeground(1, builder.build());
+            }
         }
 
         //lc = new ArrayList<Card>();
@@ -210,6 +221,9 @@ public class ServiceDuelAssistant extends Service {
                 }
 
                 if (start != -1) {
+
+                    //如果有悬浮窗权限再显示
+                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this,false))
                     joinRoom(clipMessage, start);
                 } else {
                     for (String s : cardSearchKey) {

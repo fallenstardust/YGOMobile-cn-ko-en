@@ -1,7 +1,9 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -111,7 +113,6 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             intentSearch();
         }
     }
-
 
     private void intentSearch(){
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
