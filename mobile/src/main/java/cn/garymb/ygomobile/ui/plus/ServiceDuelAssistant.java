@@ -2,21 +2,18 @@ package cn.garymb.ygomobile.ui.plus;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.Settings;
-import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,7 +37,6 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -53,6 +49,8 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 public class ServiceDuelAssistant extends Service {
 
     private final static String TAG = ServiceDuelAssistant.class.getSimpleName();
+    private static final String CHANNEL_ID = "YGOMobile";
+    private static final String CHANNEL_NAME = "Duel_Assistant";
     private final static String DUEL_ASSISTANT_SERVICE_ACTION = "YGOMOBILE:ACTION_DUEL_ASSISTANT_SERVICE";
     private final static String CMD_NAME = "CMD";
     private final static String CMD_START_GAME = "CMD : START GAME";
@@ -180,8 +178,13 @@ public class ServiceDuelAssistant extends Service {
                 pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                 remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
 
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_HIGH);
 
-                Notification.Builder builder = new Notification.Builder(this, "决斗助手状态");
+                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                manager.createNotificationChannel(channel);
+
+                Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
                 builder.setSmallIcon(R.drawable.ic_icon);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
@@ -223,8 +226,8 @@ public class ServiceDuelAssistant extends Service {
                 if (start != -1) {
 
                     //如果有悬浮窗权限再显示
-                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this,false))
-                    joinRoom(clipMessage, start);
+                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
+                        joinRoom(clipMessage, start);
                 } else {
                     for (String s : cardSearchKey) {
                         int cardSearchStart = clipMessage.indexOf(s);
