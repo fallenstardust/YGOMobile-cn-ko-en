@@ -9,9 +9,11 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.GET_TASKS"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
@@ -167,8 +169,11 @@
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"/>
         <service
-            android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"/>
+            android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
+            android:priority="1000"/>
 
+    <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
+    <!--android:priority="1000"-->
         <activity
             android:name="com.base.bj.trpayjar.TrPayAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
