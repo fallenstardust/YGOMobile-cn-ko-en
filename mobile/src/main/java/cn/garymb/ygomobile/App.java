@@ -12,6 +12,11 @@ public class App extends GameApplication {
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
+        if (AppsSettings.get().isSoundEffect()) {
+            initSoundEffectPool();
+           setInitSoundEffectPool(true);
+        }
+
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
     }

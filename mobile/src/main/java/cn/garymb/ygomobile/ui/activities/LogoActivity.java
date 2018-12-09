@@ -37,7 +37,7 @@ public class LogoActivity extends Activity {
                     finish();
                 }
             };
-            handler.postDelayed(runnable, 1500);
+            handler.postDelayed(runnable, 1000);
             Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
         }
     }

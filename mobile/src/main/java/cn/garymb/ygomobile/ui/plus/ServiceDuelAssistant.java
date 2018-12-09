@@ -222,6 +222,8 @@ public class ServiceDuelAssistant extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent==null)
+            return super.onStartCommand(intent,flags,startId);
         String action = intent.getAction();
         Log.d(TAG, "rev action:" + action);
         if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {

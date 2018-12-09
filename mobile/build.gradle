@@ -86,8 +86,6 @@ dependencies {
     implementation 'com.android.support:design:' + rootProject.ext.supportVersion
 
     implementation 'org.jdeferred:jdeferred-android-aar:1.2.4'
-    implementation 'org.jdeferred:jdeferred-android-aar:1.2.4'
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation('com.github.chrisbanes.photoview:library:1.2.4') {
         implementation 'com.github.chrisbanes.photoview:library:1.2.4'
