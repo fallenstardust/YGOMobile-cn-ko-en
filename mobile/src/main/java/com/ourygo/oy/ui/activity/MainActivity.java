@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 
 import com.ourygo.oy.ui.fragment.YGOServerFragemnt;
 import com.ourygo.oy.util.OYUtil;
@@ -18,13 +19,16 @@ public class MainActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
+    private static final String TAG="TIME-MainActivity";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mian_oy);
 
+        Log.e(TAG,"1");
         initView();
+        Log.e(TAG,"2");
     }
 
     private void initView() {

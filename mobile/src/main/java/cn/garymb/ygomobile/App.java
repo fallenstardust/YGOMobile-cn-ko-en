@@ -4,14 +4,20 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatDelegate;
+import android.util.Log;
 
 public class App extends GameApplication {
+
+    private static final String TAG="TIME-App";
 
     @Override
     public void onCreate() {
         super.onCreate();
+
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        Log.e(TAG,"2");
         AppsSettings.init(this);
+        Log.e(TAG,"3");
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
     }
