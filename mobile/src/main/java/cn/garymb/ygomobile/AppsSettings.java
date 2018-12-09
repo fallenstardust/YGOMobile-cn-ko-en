@@ -119,7 +119,7 @@ public class AppsSettings {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.i("机横屏height", "" + height);
+                Log.i("机横屏height1", "" + height);
                 if(dm.widthPixels / dm.heightPixels > 16/9 ) {
                     height = height - getStatusBarHeight(context);
                 }
