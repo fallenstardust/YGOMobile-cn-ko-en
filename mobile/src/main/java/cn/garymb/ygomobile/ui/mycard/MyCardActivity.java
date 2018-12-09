@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.mycard;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -19,10 +22,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
+import java.io.File;
 import java.text.MessageFormat;
 
 import cn.garymb.ygomobile.YGOStarter;
@@ -30,10 +35,12 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
+    private static final int FILECHOOSER_RESULTCODE = 10;
     private MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
     protected DrawerLayout mDrawerlayout;
@@ -41,6 +48,8 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
     private TextView mNameView, mStatusView;
 
     private ProgressBar mProgressBar;
+    private ValueCallback<Uri> uploadMessage;
+    private ValueCallback<Uri[]> mUploadCallbackAboveL;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,6 +98,57 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 }
                 super.onProgressChanged(view, newProgress);
             }
+
+            @Override
+            public void openFileChooser(ValueCallback<Uri> valueCallback, String acceptType, String capture) {
+                uploadMessage = valueCallback;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("*/*");
+                startActivityForResult( Intent.createChooser( i, "File Browser" ), FILECHOOSER_RESULTCODE );
+
+            }
+
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> valueCallback, FileChooserParams fileChooserParams) {
+                mUploadCallbackAboveL = valueCallback;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("*/*");
+                startActivityForResult(
+                        Intent.createChooser(i, "File Browser"),
+                        FILECHOOSER_RESULTCODE);
+
+                return true;
+            }
+
+            // Android > 4.1.1 调用这个方法
+//            public void openFileChooser(ValueCallback<Uri> uploadMsg,
+//                                        String acceptType, String capture) {
+//                mUploadMessage = uploadMsg;
+//                choosePicture();
+//
+//                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+//                i.addCategory(Intent.CATEGORY_OPENABLE);
+//                i.setType("*/*");
+//                startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+//
+//            }
+//
+//            // 3.0 + 调用这个方法
+//            public void openFileChooser(ValueCallback<Uri> uploadMsg,
+//                                        String acceptType) {
+//                mUploadMessage = uploadMsg;
+//                choosePicture();
+//
+//            }
+//
+//            // Android < 3.0 调用这个方法
+//            public void openFileChooser(ValueCallback<Uri> uploadMsg) {
+//                mUploadMessage = uploadMsg;
+//                choosePicture();
+//            }
+
         });
 
 
@@ -122,6 +182,49 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             finish();
         }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILECHOOSER_RESULTCODE) {
+            if (null == uploadMessage && null == mUploadCallbackAboveL) return;
+            Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
+            if (mUploadCallbackAboveL != null) {
+                onActivityResultAboveL(requestCode, resultCode, data);
+            } else if (uploadMessage != null) {
+                uploadMessage.onReceiveValue(result);
+                uploadMessage = null;
+            }
+        }
+    }
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void onActivityResultAboveL(int requestCode, int resultCode, Intent data) {
+        if (requestCode != FILECHOOSER_RESULTCODE
+                || mUploadCallbackAboveL == null) {
+            return;
+        }
+        Uri[] results = null;
+        if (resultCode == Activity.RESULT_OK) {
+            if (data == null) {
+            } else {
+                String dataString = data.getDataString();
+                ClipData clipData = data.getClipData();
+                if (clipData != null) {
+                    results = new Uri[clipData.getItemCount()];
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item = clipData.getItemAt(i);
+                        results[i] = item.getUri();
+                    }
+                }
+                if (dataString != null)
+                    results = new Uri[]{Uri.parse(dataString)};
+            }
+        }
+        mUploadCallbackAboveL.onReceiveValue(results);
+        mUploadCallbackAboveL = null;
+        return;
+    }
+
 
     /*@Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

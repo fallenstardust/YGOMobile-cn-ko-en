@@ -109,6 +109,13 @@ public class ServiceDuelAssistant extends Service {
         startClipboardListener();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //关闭悬浮窗时的声明
+        stopForeground(true);
+    }
+
     private void startClipboardListener() {
         final ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm == null)
@@ -209,16 +216,15 @@ public class ServiceDuelAssistant extends Service {
                 builder.setSmallIcon(R.drawable.ic_icon);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
+            }else {
+                //如果没有通知权限则关闭服务
+                stopForeground(true);
+                stopService(new Intent(ServiceDuelAssistant.this,ServiceDuelAssistant.class));
             }
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //关闭悬浮窗时的声明
-        stopForeground(true);
-    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
