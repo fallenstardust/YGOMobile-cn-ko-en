@@ -253,6 +253,13 @@ public class ServiceDuelAssistant extends Service {
 
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //关闭悬浮窗时的声明
+        stopForeground(true);
+    }
+
     private void joinRoom(String ss, int start) {
         final String password = ss.substring(start, ss.length());
         ds_text.setText(getString(R.string.quick_join) + password + "\"");
@@ -368,6 +375,14 @@ public class ServiceDuelAssistant extends Service {
         //实现悬浮窗到状态栏
         wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                 WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+        //安卓7.0要求
+        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
+            wmParams.type=WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
+        //安卓8.0要求
+        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            wmParams.type=WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        }
         //调整悬浮窗显示的停靠位置为左侧置顶
         wmParams.gravity = Gravity.LEFT | Gravity.TOP;
         // 以屏幕左上角为原点，设置x、y初始值，相对于gravity
