@@ -63,7 +63,7 @@ public class ServiceDuelAssistant extends Service {
     //加房关键字
     public static final String[] passwordPrefix = {
             "M,", "m,",
-            "T,", "t,",
+            "T,",
             "PR,", "pr,",
             "AI,", "ai,",
             "LF2,", "lf2,",

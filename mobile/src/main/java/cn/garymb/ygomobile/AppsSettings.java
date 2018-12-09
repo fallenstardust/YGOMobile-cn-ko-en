@@ -3,13 +3,10 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import org.json.JSONArray;
 
@@ -39,11 +36,18 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 
 public class AppsSettings {
+    private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mScreenHeight, mScreenWidth, mDensity;
-    private static final String PREF_VERSION = "app_version";
+
+    private AppsSettings(Context context) {
+        this.context = context;
+        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
+        mSharedPreferences.setAutoSave(true);
+        update(context);
+    }
 
     public static void init(Context context) {
         if (sAppsSettings == null) {
@@ -53,36 +57,6 @@ public class AppsSettings {
 
     public static AppsSettings get() {
         return sAppsSettings;
-    }
-
-    public File getSystemConfig() {
-        return new File(getResourcePath(), CORE_SYSTEM_PATH);
-    }
-
-    private AppsSettings(Context context) {
-        this.context = context;
-        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
-        mSharedPreferences.setAutoSave(true);
-        update(context);
-    }
-
-    //检测是否存在刘海屏
-    public static boolean hasNotchInScreen(Context context) {
-        boolean ret = false;
-        try {
-            ClassLoader cl = context.getClassLoader();
-            Class HwNotchSizeUtil = cl.loadClass("com.huawei.android.util.HwNotchSizeUtil");
-            Method get = HwNotchSizeUtil.getMethod("hasNotchInScreen");
-            ret = (boolean) get.invoke(HwNotchSizeUtil);
-        } catch (ClassNotFoundException e) {
-            Log.e("test", "hasNotchInScreen ClassNotFoundException");
-        } catch (NoSuchMethodException e) {
-            Log.e("test", "hasNotchInScreen NoSuchMethodException");
-        } catch (Exception e) {
-            Log.e("test", "hasNotchInScreen Exception");
-        } finally {
-            return ret;
-        }
     }
 
     //获取刘海屏的参数
@@ -104,6 +78,25 @@ public class AppsSettings {
         }
     }
 
+    //检测是否存在刘海屏
+    public static boolean hasNotchInScreen(Context context) {
+        boolean ret = false;
+        try {
+            ClassLoader cl = context.getClassLoader();
+            Class HwNotchSizeUtil = cl.loadClass("com.huawei.android.util.HwNotchSizeUtil");
+            Method get = HwNotchSizeUtil.getMethod("hasNotchInScreen");
+            ret = (boolean) get.invoke(HwNotchSizeUtil);
+        } catch (ClassNotFoundException e) {
+            Log.e("test", "hasNotchInScreen ClassNotFoundException");
+        } catch (NoSuchMethodException e) {
+            Log.e("test", "hasNotchInScreen NoSuchMethodException");
+        } catch (Exception e) {
+            Log.e("test", "hasNotchInScreen Exception");
+        } finally {
+            return ret;
+        }
+    }
+
     //获取系统状态栏高度
     public static int getStatusBarHeight(Context context) {
         int StatusBarHeight = 0;
@@ -114,6 +107,10 @@ public class AppsSettings {
         return StatusBarHeight;
     }
 
+    public File getSystemConfig() {
+        return new File(getResourcePath(), CORE_SYSTEM_PATH);
+    }
+
     public void update(Context context) {
         mDensity = context.getResources().getDisplayMetrics().density;
         mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
@@ -122,6 +119,10 @@ public class AppsSettings {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
+                Log.i("机横屏height", "" + height);
+                if(dm.widthPixels / dm.heightPixels > 16/9 ) {
+                    height = height - getStatusBarHeight(context);
+                }
                 if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
                     mScreenHeight = height;
                 } else {
@@ -129,10 +130,11 @@ public class AppsSettings {
                 }
             }
         }
-        if (!hasNotchInScreen(context)) {
-
-        }
-        Log.i("屏幕不算虚拟键", "" + mScreenHeight);
+        Log.i("机屏幕高度", "" + mScreenHeight);
+        Log.i("机屏幕宽度", "" + mScreenWidth);
+        Log.i("机刘海高度", "" + getNotchSize(context));
+        Log.i("机状态栏高度", "" + getStatusBarHeight(context));
+        Log.i("机是否存在刘海",""+ hasNotchInScreen(context));
     }
 
     public int getAppVersion() {
@@ -386,10 +388,6 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, Constants.PREF_DEF_USE_EXTRA_CARD_CARDS);
     }
 
-    public String getCoreSkinPath() {
-        return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
-    }
-
     /***
      * 设置是否使用额外卡库
      */
@@ -397,11 +395,8 @@ public class AppsSettings {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
     }
 
-    /***
-     * 字体路径
-     */
-    public void setFontPath(String font) {
-        mSharedPreferences.putString(Constants.PREF_GAME_FONT, font);
+    public String getCoreSkinPath() {
+        return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
     }
 
     /***
@@ -409,6 +404,13 @@ public class AppsSettings {
      */
     public String getFontPath() {
         return mSharedPreferences.getString(Constants.PREF_GAME_FONT, getFontDefault());
+    }
+
+    /***
+     * 字体路径
+     */
+    public void setFontPath(String font) {
+        mSharedPreferences.putString(Constants.PREF_GAME_FONT, font);
     }
 
     /**
@@ -461,19 +463,19 @@ public class AppsSettings {
     /***
      * 最后卡组名
      */
+    public String getLastDeck() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+    }
+
+    /***
+     * 最后卡组名
+     */
     public void setLastDeck(String name) {
         if (TextUtils.equals(name, getCurLastDeck())) {
             //一样
             return;
         }
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, name);
-    }
-
-    /***
-     * 最后卡组名
-     */
-    public String getLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     public String getCurLastDeck() {
