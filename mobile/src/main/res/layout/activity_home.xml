@@ -48,7 +48,7 @@
                 <ImageView
                     android:id="@+id/cube"
                     android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_height="41dp"
                     android:layout_gravity="center"
                     app:srcCompat="@drawable/cube" />
             </com.nightonke.boommenu.BoomMenuButton>

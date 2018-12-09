@@ -400,6 +400,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         addMenuButton(mMenuIds, menu, R.id.action_settings, R.string.settings, R.drawable.setting);
         addMenuButton(mMenuIds, menu, R.id.nav_donation, R.string.donation, R.drawable.about);
 
+        //设置展开或隐藏的延时。 默认值为 800ms。
+        menu.setDuration(220);
+        //设置每两个子按钮之间动画的延时（ms为单位）。 比如，如果延时设为0，那么所有子按钮都会同时展开或隐藏，默认值为100ms。
+        menu.setDelay(20);
+
         menu.setOnBoomListener(new DefaultOnBoomListener() {
             @Override
             public void onClicked(int index, BoomButton boomButton) {

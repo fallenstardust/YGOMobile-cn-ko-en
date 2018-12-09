@@ -20,12 +20,13 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     private Map<String, Integer> mSoundIdMap;
 
     private static GameApplication sGameApplication;
+    private boolean isInitSoundEffectPool=false;
 
     @Override
     public void onCreate() {
         super.onCreate();
         sGameApplication = this;
-        initSoundEffectPool();
+//        initSoundEffectPool();
     }
 
     public static GameApplication get() {
@@ -43,8 +44,16 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         mSoundEffectPool.release();
     }
 
+    public boolean isInitSoundEffectPool() {
+        return isInitSoundEffectPool;
+    }
+
+    protected void setInitSoundEffectPool(boolean initSoundEffectPool) {
+        isInitSoundEffectPool = initSoundEffectPool;
+    }
+
     @SuppressWarnings("deprecation")
-    protected void initSoundEffectPool() {
+    public void initSoundEffectPool() {
         mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
         AssetManager am = getAssets();
         String[] sounds;

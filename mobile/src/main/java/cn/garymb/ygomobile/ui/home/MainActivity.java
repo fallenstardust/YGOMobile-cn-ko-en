@@ -59,16 +59,16 @@ public class MainActivity extends HomeActivity{
         ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
     }
 
-    @SuppressLint("StringFormatMatches")
+    @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        for(int i=0;i<permissions.length;i++){
-            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-                showToast(getString(R.string.tip_no_permission,permissions[i]));
-                break;
-            }
-        }
+//        for(int i=0;i<permissions.length;i++){
+//            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+//                showToast(getString(R.string.tip_no_permission,permissions[i]));
+//                break;
+//            }
+//        }
         //资源复制
         checkRes();
     }
