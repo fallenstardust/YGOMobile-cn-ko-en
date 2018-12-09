@@ -61,7 +61,7 @@ public class ServerListManager {
         });
     }
 
-    private ServerList readList(InputStream in) {
+    public static ServerList readList(InputStream in) {
         ServerList list = null;
         try {
             list = XmlUtils.get().getObject(ServerList.class, in);

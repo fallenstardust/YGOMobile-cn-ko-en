@@ -48,27 +48,20 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 public class ServiceDuelAssistant extends Service {
 
-    private final static String TAG = ServiceDuelAssistant.class.getSimpleName();
+    private final static String TAG = "ServiceDuelAssistant";
     private static final String CHANNEL_ID = "YGOMobile";
     private static final String CHANNEL_NAME = "Duel_Assistant";
     private final static String DUEL_ASSISTANT_SERVICE_ACTION = "YGOMOBILE:ACTION_DUEL_ASSISTANT_SERVICE";
     private final static String CMD_NAME = "CMD";
     private final static String CMD_START_GAME = "CMD : START GAME";
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
+    //悬浮窗显示的时间
+    private static final int TIME_DIS_WINDOW = 3000;
 
-
-    public static String cardSearchMessage = "";
-
-    private LinearLayout mFloatLayout;
-    private TextView ds_text;
-    private Button ds_join, ds_qx;
     //卡查关键字
-    private String[] cardSearchKey = new String[]{"?", "？"};
-
-
-    //是否可以移除悬浮窗上面的视图
-    private boolean isdis = false;
-    String[] passwordPrefix = {
+    public static final String[] cardSearchKey = new String[]{"?", "？"};
+    //加房关键字
+    public static final String[] passwordPrefix = {
             "M,", "m,",
             "T,", "t,",
             "PR,", "pr,",
@@ -84,13 +77,19 @@ public class ServiceDuelAssistant extends Service {
             "R#", "r#"
     };
 
-    //private List<Card> lc;
+    //卡查内容
+    public static String cardSearchMessage = "";
+
+    //悬浮窗布局View
+    private View mFloatLayout;
+    private TextView tv_message;
+    private Button bt_join, bt_close;
+
+    //是否可以移除悬浮窗上面的视图
+    private boolean isdis = false;
 
     private WindowManager.LayoutParams wmParams;
     private WindowManager mWindowManager;
-
-    //private CardListRecyclerViewAdapter cladp;
-    //private DialogUtils du;
 
     @Override
     public IBinder onBind(Intent p1) {
@@ -98,30 +97,127 @@ public class ServiceDuelAssistant extends Service {
         return null;
     }
 
-    private void collapseStatusBar() {
-        try {
-            @SuppressLint("WrongConstant") Object statusBarManager = getSystemService("statusbar");
-            if (null == statusBarManager) {
-                return;
-            }
-            Class<?> clazz = statusBarManager.getClass();
-            if (null == clazz) {
-                return;
-            }
+    @Override
+    public void onCreate() {
+        // TODO: Implement this method
+        super.onCreate();
+        //开启服务
+        startForeground();
+        //初始化加房布局
+        createFloatView();
+        //开启剪贴板监听
+        startClipboardListener();
+    }
 
-            Method methodCollapse;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
-                methodCollapse = clazz.getMethod("collapse");
-            } else {
-                methodCollapse = clazz.getMethod("collapsePanels");
+    private void startClipboardListener() {
+        final ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm == null)
+            return;
+        cm.addPrimaryClipChangedListener(new ClipboardManager.OnPrimaryClipChangedListener() {
+
+            @Override
+            public void onPrimaryClipChanged() {
+                ClipData clipData = cm.getPrimaryClip();
+                if (clipData == null)
+                    return;
+                CharSequence cs = clipData.getItemAt(0).getText();
+                final String clipMessage;
+                if (cs != null) {
+                    clipMessage = cs.toString();
+                } else {
+                    clipMessage = null;
+                }
+
+                //如果复制的内容为空则不执行下面的代码
+                if (TextUtils.isEmpty(clipMessage)) {
+                    return;
+                }
+                //如果复制的内容是多行不执行
+                if (clipMessage.contains("\n"))
+                    return;
+                int start = -1;
+                int end = -1;
+                String passwordPrefixKey = null;
+                for (String s : passwordPrefix) {
+                    start = clipMessage.indexOf(s);
+                    passwordPrefixKey = s;
+                    if(start != -1) {
+                        break;
+                    }
+                }
+
+                if (start != -1) {
+                    //如果密码含有空格，则以空格结尾
+                    end = clipMessage.indexOf(" ", start);
+                    //如果不含有空格则取片尾所有
+                    if (end == -1) {
+                        end = clipMessage.length();
+                    }else {
+                        //如果只有密码前缀而没有密码内容则不跳转
+                        if (end-start==passwordPrefixKey.length())
+                            return;
+                    }
+                    //如果有悬浮窗权限再显示
+                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
+                        joinRoom(clipMessage, start, end);
+                } else {
+                    for (String s : cardSearchKey) {
+                        int cardSearchStart = clipMessage.indexOf(s);
+                        if (cardSearchStart != -1) {
+                            //卡查内容
+                            cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
+                            //如果复制的文本里带？号后面没有内容则不跳转
+                            if (TextUtils.isEmpty(cardSearchMessage)) {
+                                return;
+                            }
+                            Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
+                            startActivity(intent);
+                        }
+                    }
+                }
             }
-            if (null == methodCollapse) {
-                return;
+        });
+    }
+
+    private void startForeground() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            if (PermissionUtil.isNotificationListenerEnabled(this)) {
+                RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_view_duel_assistant);
+                Intent intent = new Intent(this, this.getClass());
+                intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
+                PendingIntent pendingIntent;
+
+                intent.putExtra(CMD_NAME, CMD_START_GAME);
+                pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant, pendingIntent);
+
+                intent.putExtra(CMD_NAME, CMD_STOP_SERVICE);
+                pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
+
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_HIGH);
+
+                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                manager.createNotificationChannel(channel);
+
+                Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
+                builder.setSmallIcon(R.drawable.ic_icon);
+                builder.setCustomContentView(remoteViews);
+                startForeground(1, builder.build());
             }
-            methodCollapse.invoke(statusBarManager);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //关闭悬浮窗时的声明
+        stopForeground(true);
     }
 
     @Override
@@ -158,134 +254,55 @@ public class ServiceDuelAssistant extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    @Override
-    public void onCreate() {
-        // TODO: Implement this method
-        super.onCreate();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            if (PermissionUtil.isNotificationListenerEnabled(this)) {
-                RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_view_duel_assistant);
-                Intent intent = new Intent(this, this.getClass());
-                intent.setAction(DUEL_ASSISTANT_SERVICE_ACTION);
-                PendingIntent pendingIntent;
-
-                intent.putExtra(CMD_NAME, CMD_START_GAME);
-                pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                remoteViews.setOnClickPendingIntent(R.id.notification_view_duel_assistant, pendingIntent);
-
-                intent.putExtra(CMD_NAME, CMD_STOP_SERVICE);
-                pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
-
-                NotificationChannel channel = new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,
-                        NotificationManager.IMPORTANCE_HIGH);
-
-                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                manager.createNotificationChannel(channel);
-
-                Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
-                builder.setSmallIcon(R.drawable.ic_icon);
-                builder.setCustomContentView(remoteViews);
-                startForeground(1, builder.build());
+    private void collapseStatusBar() {
+        try {
+            @SuppressLint("WrongConstant") Object statusBarManager = getSystemService("statusbar");
+            if (null == statusBarManager) {
+                return;
             }
+            Class<?> clazz = statusBarManager.getClass();
+            if (null == clazz) {
+                return;
+            }
+
+            Method methodCollapse;
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
+                methodCollapse = clazz.getMethod("collapse");
+            } else {
+                methodCollapse = clazz.getMethod("collapsePanels");
+            }
+            if (null == methodCollapse) {
+                return;
+            }
+            methodCollapse.invoke(statusBarManager);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        //lc = new ArrayList<Card>();
-        //cladp = new CardListRecyclerViewAdapter(this, lc);
-        //	du = DialogUtils.getdx(this);
-
-        final ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        createFloatView();
-        cm.addPrimaryClipChangedListener(new ClipboardManager.OnPrimaryClipChangedListener() {
-
-            @Override
-            public void onPrimaryClipChanged() {
-                ClipData clipData = cm.getPrimaryClip();
-                CharSequence cs = clipData.getItemAt(0).getText();
-                final String clipMessage;
-                if (cs != null) {
-                    clipMessage = cs.toString();
-                } else {
-                    clipMessage = null;
-                }
-
-                //如果复制的内容为空则不执行下面的代码
-                if (TextUtils.isEmpty(clipMessage)) {
-                    return;
-                }
-                int start = -1;
-
-                for (String st : passwordPrefix) {
-                    start = clipMessage.indexOf(st);
-                    if (start != -1) {
-                        break;
-                    }
-                }
-
-                if (start != -1) {
-
-                    //如果有悬浮窗权限再显示
-                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
-                        joinRoom(clipMessage, start);
-                } else {
-                    for (String s : cardSearchKey) {
-                        int cardSearchStart = clipMessage.indexOf(s);
-                        if (cardSearchStart != -1) {
-                            //卡查内容
-                            cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
-                            //如果复制的文本里带？号后面没有内容则不跳转
-                            if (TextUtils.isEmpty(cardSearchMessage)) {
-                                return;
-                            }
-                            Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
-                            startActivity(intent);
-                        }
-                    }
-                }
-            }
-
-
-        });
-
-
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //关闭悬浮窗时的声明
-        stopForeground(true);
-    }
-
-    private void joinRoom(String ss, int start) {
+    private void joinRoom(String ss, int start, int end) {
         final String password = ss.substring(start, ss.length());
-        ds_text.setText(getString(R.string.quick_join) + password + "\"");
-        ds_join.setText(R.string.join);
-        ds_qx.setText(R.string.search_close);
+        tv_message.setText(getString(R.string.quick_join) + password + "\"");
+        bt_join.setText(R.string.join);
+        bt_close.setText(R.string.search_close);
         disJoinDialog();
         showJoinDialog();
-        new Handler().postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                if (isdis) {
-                    isdis = false;
-                    mWindowManager.removeView(mFloatLayout);
-                }
+        new Handler().postDelayed(() -> {
+            if (isdis) {
+                isdis = false;
+                mWindowManager.removeView(mFloatLayout);
             }
-        }, 3000);
+        }, TIME_DIS_WINDOW);
 
-        ds_qx.setOnClickListener(new OnClickListener() {
+        bt_close.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View p1) {
                 disJoinDialog();
             }
         });
-        ds_join.setOnClickListener(new OnClickListener() {
+        bt_join.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View p1) {
@@ -300,8 +317,8 @@ public class ServiceDuelAssistant extends Service {
 
                 File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
                 VUiKit.defer().when(() -> {
-                    ServerList assetList = readList(ServiceDuelAssistant.this.getAssets().open(ASSET_SERVER_LIST));
-                    ServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
+                    ServerList assetList = ServerListManager.readList(ServiceDuelAssistant.this.getAssets().open(ASSET_SERVER_LIST));
+                    ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
                     if (fileList == null) {
                         return assetList;
                     }
@@ -323,18 +340,6 @@ public class ServiceDuelAssistant extends Service {
             }
         });
 
-    }
-
-    private ServerList readList(InputStream in) {
-        ServerList list = null;
-        try {
-            list = XmlUtils.get().getObject(ServerList.class, in);
-        } catch (Exception e) {
-
-        } finally {
-            IOUtils.close(in);
-        }
-        return list;
     }
 
     //决斗跳转
@@ -366,7 +371,7 @@ public class ServiceDuelAssistant extends Service {
     private void createFloatView() {
         wmParams = new WindowManager.LayoutParams();
         //获取的是WindowManagerImpl.CompatModeWrapper
-        mWindowManager = (WindowManager) getApplication().getSystemService(getApplication().WINDOW_SERVICE);
+        mWindowManager = (WindowManager) getApplication().getSystemService(WINDOW_SERVICE);
         //设置window type
         wmParams.type = android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
         //设置背景透明
@@ -376,67 +381,27 @@ public class ServiceDuelAssistant extends Service {
         wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                 WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
         //安卓7.0要求
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
-            wmParams.type=WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
         }
         //安卓8.0要求
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
-            wmParams.type=WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         }
         //调整悬浮窗显示的停靠位置为左侧置顶
-        wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+        wmParams.gravity = Gravity.START | Gravity.TOP;
         // 以屏幕左上角为原点，设置x、y初始值，相对于gravity
         wmParams.x = 0;
         wmParams.y = 0;
         //设置悬浮窗口长宽数据
         wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
         wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        LayoutInflater inflater = LayoutInflater.from(this);
         //获取浮动窗口视图所在布局
-        mFloatLayout = (LinearLayout) inflater.inflate(R.layout.duel_assistant_service, null);
+        mFloatLayout = LayoutInflater.from(this).inflate(R.layout.duel_assistant_service, null);
         //添加mFloatLayout
-        ds_join = mFloatLayout.findViewById(R.id.ds_join);
-        ds_text = mFloatLayout.findViewById(R.id.ds_text);
-        ds_qx = mFloatLayout.findViewById(R.id.ds_qx);
+        bt_join = mFloatLayout.findViewById(R.id.bt_join);
+        tv_message = mFloatLayout.findViewById(R.id.tv_message);
+        bt_close = mFloatLayout.findViewById(R.id.bt_close);
     }
-	
-	/*private void cxCard(String ss, int ssi) {
-	 final String card=ss.substring(ssi + 2, ss.length());
 
-	 if (isdis) {
-	 mWindowManager.removeView(mFloatLayout);	
-	 }
-	 ds_join.setText("查询");
-	 ds_text.setText("查询卡片\"" + card + "\"");
-	 ds_join.setOnClickListener(new OnClickListener(){
-
-	 @Override
-	 public void onClick(View p1) {
-
-	 lc.clear();
-	 for (Card c:DACardUtils.cardQuery(card)) {
-	 lc.add(c);
-	 }
-	 cladp.notifyDataSetChanged();
-	 LinearLayoutManager llm=new LinearLayoutManager(ServiceDuelAssistant.this);
-	 du.dialogRec("\"" + card + "\"的搜索结果", cladp, llm);
-	 // TODO: Implement this method
-	 }
-	 });
-	 mWindowManager.addView(mFloatLayout, wmParams);		
-	 isdis = true;
-	 new Handler().postDelayed(new Runnable() {
-
-	 @Override
-	 public void run() {
-	 // TODO Auto-generated method stub
-	 if (isdis) {
-	 isdis = false;
-	 mWindowManager.removeView(mFloatLayout);
-	 }
-	 }
-	 }, 2000);
-	 // TODO: Implement this method
-	 }*/
 }
