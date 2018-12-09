@@ -88,8 +88,10 @@ CAndroidGUISkin::CAndroidGUISkin(EGUI_SKIN_TYPE type,
 		//0x80a6a8af
 		Colors[EGDC_3D_DARK_SHADOW] = 0xff090229;//左侧卡图背景底色
         		//Colors[EGDC_3D_FACE]			=	0xc0c9ccd4;		// tab background
+        		//todo ygocolor ygo主色
         		Colors[EGDC_3D_FACE] = 0xffe6f3fd; //主面板颜色。。。
         		Colors[EGDC_3D_SHADOW] = 0xFFCCEDFF; // 主面板左上高光,效果描述框下半部过渡色
+        		//todo ygocolor ygo主色
         		Colors[EGDC_3D_HIGH_LIGHT] = 0xffe6f3fd;//布局高光线,窗体内层色
         		Colors[EGDC_3D_LIGHT] = 0xFF3CADE7;//按钮下侧和右侧的颜色
         		Colors[EGDC_ACTIVE_BORDER] = 0x88A9B9C9; // 窗体标题栏色
@@ -102,8 +104,10 @@ CAndroidGUISkin::CAndroidGUISkin(EGUI_SKIN_TYPE type,
         		Colors[EGDC_INACTIVE_BORDER] = 0x10d0d0d0;//窗体失去焦点时的标题栏底色
         		Colors[EGDC_INACTIVE_CAPTION] = 0xffffffff;//窗体失去焦点时的标题栏字色
         		Colors[EGDC_TOOLTIP] = 0x60000000;//
+        		//todo ygocolor ygo主色
         		Colors[EGDC_TOOLTIP_BACKGROUND] = 0xffe6f3fd;//。。。
         		Colors[EGDC_SCROLLBAR] = 0xffF7F7F7;//滚动条底色
+        		//todo ygocolor ygo主色
         		Colors[EGDC_WINDOW] = 0xffe6f3fd;//可动窗体的颜色
         		Colors[EGDC_WINDOW_SYMBOL] = 0xff000000;//打勾的颜色
         		Colors[EGDC_ICON] = 0xffff0000;
