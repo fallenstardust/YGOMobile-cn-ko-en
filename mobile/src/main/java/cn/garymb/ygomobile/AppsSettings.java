@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
@@ -119,10 +120,12 @@ public class AppsSettings {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.i("机横屏height1", "" + height);
-                if(dm.widthPixels / dm.heightPixels > 16/9 ) {
-                    height = height - getStatusBarHeight(context);
-                }
+                Log.i("机横屏height1", "横屏" + height);
+//                if(dm.widthPixels / dm.heightPixels !=9/16 ) {
+//                    height = height - getStatusBarHeight(context);
+//                }
+                if (ScreenUtil.isNotchInScreen((Activity) context)&&ScreenUtil.getNotchHeight((Activity)context)!=0)
+                    height = height - ScreenUtil.getNotchHeight((Activity)context);
                 if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
                     mScreenHeight = height;
                 } else {
@@ -132,7 +135,8 @@ public class AppsSettings {
         }
         Log.i("机屏幕高度", "" + mScreenHeight);
         Log.i("机屏幕宽度", "" + mScreenWidth);
-        Log.i("机刘海高度", "" + getNotchSize(context));
+        for(int i:getNotchSize(context))
+        Log.i("机刘海高度", "刘海高度" +i );
         Log.i("机状态栏高度", "" + getStatusBarHeight(context));
         Log.i("机是否存在刘海",""+ hasNotchInScreen(context));
     }

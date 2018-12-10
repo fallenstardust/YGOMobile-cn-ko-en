@@ -5,7 +5,7 @@ android {
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 21
+        targetSdkVersion 28
         flavorDimensions "versionCode"
        /* ndk {
             moduleName "YGOMobile"
