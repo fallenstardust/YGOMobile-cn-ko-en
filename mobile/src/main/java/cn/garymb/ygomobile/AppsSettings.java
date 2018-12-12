@@ -116,22 +116,37 @@ public class AppsSettings {
         mDensity = context.getResources().getDisplayMetrics().density;
         mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
         mScreenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
         if (isImmerSiveMode() && context instanceof Activity) {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                ScreenUtil.findNotchInformation(((Activity) context), new ScreenUtil.FindNotchInformation() {
-                    @Override
-                    public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
-                        if (isNotch)
-                            mScreenHeight-=notchHeight;
-                    }
-                });
-                if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
+                Log.e("YGOMobile","原始高"+mScreenHeight);
+                Log.e("YGOMobile","原始宽"+mScreenWidth);
+                Log.e("YGOMobile","界面高"+dm.heightPixels);
+                Log.e("YGOMobile","界面宽"+dm.widthPixels);
+
+
+                if (mScreenHeight> mScreenWidth) {
                     mScreenHeight = height;
                 } else {
                     mScreenWidth = height;
                 }
+                ScreenUtil.findNotchInformation(((Activity) context), new ScreenUtil.FindNotchInformation() {
+                    @Override
+                    public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+                        int height = Math.max(dm.widthPixels, dm.heightPixels);
+                        if (isNotch)
+                            height-=notchHeight;
+                        if (mScreenHeight> mScreenWidth) {
+                            mScreenHeight = height;
+                        } else {
+                            mScreenWidth = height;
+                        }
+
+                    }
+                });
+
             }
         }
         Log.i("机屏幕高度", "" + mScreenHeight);
