@@ -6,8 +6,8 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
-import android.view.Display;
 import android.view.DisplayCutout;
+import android.view.View;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,52 +21,75 @@ public class ScreenUtil {
     public static final int VIVO_FILLET = 0x00000008;//是否有圆角
 
 
-    //是否是刘海屏
-    public static boolean isNotchInScreen(Activity activity) {
-        if (!(isNotchOPPO(activity) || isNotchVivo(activity) || isNotchHuawei(activity))||isNotchXiaomi(activity)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-                return isNotchP(activity);
-            else
-                return false;
-        }
-        return true;
+    public static final int NOTCH_TYPE_PHONE_VIVO = 0;
+    public static final int NOTCH_TYPE_PHONE_OPPO = 1;
+    public static final int NOTCH_TYPE_PHONE_HUAWEI = 2;
+    public static final int NOTCH_TYPE_PHONE_XIAOMI = 3;
+    public static final int NOTCH_TYPE_PHONE_ANDROID_P = 4;
+    public static final int NOTCH_TYPE_PHONE_OTHER = 5;
+
+    public static interface FindNotchInformation {
+        void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
     }
 
-    //获取刘海高度
-    public static int getNotchHeight(Activity activity) {
-        int NotchHeight=0;
-        if ((NotchHeight=getNotchHeightOPPO(activity))!=0)
-            return NotchHeight;
-        if ((NotchHeight=getNotchHeightVivo(activity))!=0)
-            return NotchHeight;
-        if ((NotchHeight=getNotchHeightHuawei(activity))!=0)
-            return NotchHeight;
-        if ((NotchHeight=getNotchHeightXiaomi(activity))!=0)
-            return NotchHeight;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            if ((NotchHeight=getNotchHeightP(activity))!=0)
-                return NotchHeight;
+
+    //是否是刘海屏
+    public static void findNotchInformation(Activity activity, FindNotchInformation findNotchInformation) {
+
+        if (isNotchVivo(activity)) {
+            findNotchInformation.onNotchInformation(true, getNotchHeightVivo(activity), NOTCH_TYPE_PHONE_VIVO);
+        } else if (isNotchOPPO(activity)) {
+            findNotchInformation.onNotchInformation(true, getNotchHeightOPPO(activity), NOTCH_TYPE_PHONE_OPPO);
+        } else if (isNotchHuawei(activity)) {
+            findNotchInformation.onNotchInformation(true, getNotchHeightHuawei(activity), NOTCH_TYPE_PHONE_HUAWEI);
+        } else if (isNotchXiaomi(activity)) {
+            findNotchInformation.onNotchInformation(true, getNotchHeightXiaomi(activity), NOTCH_TYPE_PHONE_XIAOMI);
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                findNotchPInformation(activity, findNotchInformation);
+            } else {
+                findNotchInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_OTHER);
+            }
         }
-        return 0;
     }
 
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public static int getNotchHeightP(Activity activity) {
-        DisplayCutout displayCutout = getDisplayCutout(activity);
-        if (displayCutout == null)
-            return 0;
-        return displayCutout.getSafeInsetTop();
-//        Log.e("TAG", "安全区域距离屏幕左边的距离 SafeInsetLeft:" + displayCutout.getSafeInsetLeft());
-//        Log.e("TAG", "安全区域距离屏幕右部的距离 SafeInsetRight:" + displayCutout.getSafeInsetRight());
-//        Log.e("TAG", "安全区域距离屏幕顶部的距离 SafeInsetTop:" + displayCutout.getSafeInsetTop());
-//        Log.e("TAG", "安全区域距离屏幕底部的距离 SafeInsetBottom:" + displayCutout.getSafeInsetBottom());
+    public static void findNotchPInformation(Activity activity, final FindNotchInformation findNotchPInformation) {
 
+        final View decorView = activity.getWindow().getDecorView();
 
+        decorView.post(new Runnable() {
+            @Override
+            public void run() {
+                DisplayCutout cutout = decorView.getRootWindowInsets().getDisplayCutout();
+                if (cutout == null) {
+                    findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
+                } else {
+                    List<Rect> rects = cutout.getBoundingRects();
+                    if (rects == null || rects.size() == 0) {
+                        findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
+                    } else {
+                        findNotchPInformation.onNotchInformation(true, cutout.getSafeInsetTop(), NOTCH_TYPE_PHONE_ANDROID_P);
+                        //刘海的数量可以是多个
+//                        for (Rect rect : rects) {
+//                            Log.e(TAG, "cutout.getSafeInsetTop():" + cutout.getSafeInsetTop()
+//                                    + ", cutout.getSafeInsetBottom():" + cutout.getSafeInsetBottom()
+//                                    + ", cutout.getSafeInsetLeft():" + cutout.getSafeInsetLeft()
+//                                    + ", cutout.getSafeInsetRight():" + cutout.getSafeInsetRight()
+//                                    + ", cutout.rects:" + rect
+//                            );
+//                        }
+                    }
+                }
+            }
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     public static DisplayCutout getDisplayCutout(Activity activity) {
+
+
         return activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
     }
 
@@ -74,8 +97,8 @@ public class ScreenUtil {
     //小米的状态栏高度会略高于刘海屏的高度，因此可以通过获取状态栏的高度来间接避开刘海屏
     public static int getNotchHeightXiaomi(Activity activity) {
         if (isNotchXiaomi(activity))
-            return 0;
-        return getStatusBarHeight(activity);
+            return getStatusBarHeight(activity);
+        return 0;
     }
 
     //获取状态栏高度
@@ -132,23 +155,24 @@ public class ScreenUtil {
         }
     }
 
-    public static boolean isNotchXiaomi(Activity activity){
-        return getInt("ro.miui.notch",activity)==1;
+    public static boolean isNotchXiaomi(Activity activity) {
+        return getInt("ro.miui.notch", activity) == 1;
     }
 
     /**
      * 小米刘海屏判断.
+     *
      * @return 0 if it is not notch ; return 1 means notch
      * @throws IllegalArgumentException if the key exceeds 32 characters
      */
-    public static int getInt(String key,Activity activity) {
+    public static int getInt(String key, Activity activity) {
         int result = 0;
-        if (ROMUtil.isXiaomi()){
+        if (ROMUtil.isXiaomi()) {
             try {
                 ClassLoader classLoader = activity.getClassLoader();
                 @SuppressWarnings("rawtypes")
                 Class SystemProperties = classLoader.loadClass("android.os.SystemProperties");
-                //参数类型
+//参数类型
                 @SuppressWarnings("rawtypes")
                 Class[] paramTypes = new Class[2];
                 paramTypes[0] = String.class;
@@ -175,23 +199,23 @@ public class ScreenUtil {
         return result;
     }
 
-    //其他安卓p的机子是否有刘海
-    @RequiresApi(api = Build.VERSION_CODES.P)
-    public static boolean isNotchP(Activity activity) {
-        DisplayCutout displayCutout = getDisplayCutout(activity);
-        if (displayCutout == null)
-            return false;
-        List<Rect> rects = displayCutout.getBoundingRects();
-        return rects == null || rects.size() == 0;
-//        if (rects == null || rects.size() == 0) {
-//            Log.e("TAG", "不是刘海屏");
-//        } else {
-//            Log.e("TAG", "刘海屏数量:" + rects.size());
-//            for (Rect rect : rects) {
-//                Log.e("TAG", "刘海屏区域：" + rect);
-//            }
-//        }
-    }
+//    //其他安卓p的机子是否有刘海
+//    @RequiresApi(api = Build.VERSION_CODES.P)
+//    public static boolean isNotchP(Activity activity) {
+//        DisplayCutout displayCutout = getDisplayCutout(activity);
+//        if (displayCutout == null)
+//            return false;
+//        List<Rect> rects = displayCutout.getBoundingRects();
+//        return rects == null || rects.size() == 0;
+////        if (rects == null || rects.size() == 0) {
+////            Log.e("TAG", "不是刘海屏");
+////        } else {
+////            Log.e("TAG", "刘海屏数量:" + rects.size());
+////            for (Rect rect : rects) {
+////                Log.e("TAG", "刘海屏区域：" + rect);
+////            }
+////        }
+//    }
 
 
     //获取oppo刘海高度
@@ -221,7 +245,7 @@ public class ScreenUtil {
     }
 
     //获取华为刘海尺寸：width、height
-    //int[0]值为刘海宽度 int[1]值为刘海高度
+//int[0]值为刘海宽度 int[1]值为刘海高度
     public static int[] getNotchSizeAtHuawei(Context context) {
         int[] ret = new int[]{0, 0};
         try {

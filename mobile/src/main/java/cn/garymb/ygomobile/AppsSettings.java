@@ -120,12 +120,13 @@ public class AppsSettings {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.i("机横屏height1", "横屏" + height);
-//                if(dm.widthPixels / dm.heightPixels !=9/16 ) {
-//                    height = height - getStatusBarHeight(context);
-//                }
-                if (ScreenUtil.isNotchInScreen((Activity) context)&&ScreenUtil.getNotchHeight((Activity)context)!=0)
-                    height = height - ScreenUtil.getNotchHeight((Activity)context);
+                ScreenUtil.findNotchInformation(((Activity) context), new ScreenUtil.FindNotchInformation() {
+                    @Override
+                    public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+                        if (isNotch)
+                            mScreenHeight-=notchHeight;
+                    }
+                });
                 if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
                     mScreenHeight = height;
                 } else {
@@ -135,10 +136,10 @@ public class AppsSettings {
         }
         Log.i("机屏幕高度", "" + mScreenHeight);
         Log.i("机屏幕宽度", "" + mScreenWidth);
-        for(int i:getNotchSize(context))
-        Log.i("机刘海高度", "刘海高度" +i );
+        for (int i : getNotchSize(context))
+            Log.i("机刘海高度", "刘海高度" + i);
         Log.i("机状态栏高度", "" + getStatusBarHeight(context));
-        Log.i("机是否存在刘海",""+ hasNotchInScreen(context));
+        Log.i("机是否存在刘海", "" + hasNotchInScreen(context));
     }
 
     public int getAppVersion() {
