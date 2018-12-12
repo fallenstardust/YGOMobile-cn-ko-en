@@ -28,6 +28,7 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -57,6 +58,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -411,6 +413,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 doMenu(mMenuIds.get(index));
             }
         });
+
     }
 
     private void addMenuButton(SparseArray<Integer> mMenuIds, BoomMenuButton menuButton, int menuId, int stringId, int image) {
@@ -526,7 +529,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     public void AnimationShake() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
-        findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
+        ImageView iv=findViewById(R.id.cube);
+        iv.startAnimation(shake); //给组件播放动画效果
+        iv.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startActivity(new Intent(HomeActivity.this,FileLogActivity.class));
+                return true;
+            }
+        });
     }
 
     public void StartMycard() {

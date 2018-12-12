@@ -169,6 +169,7 @@
             android:label="@string/app_name"/>
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"/>
+        <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity"/>
         <service
             android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
             android:priority="1000"/>

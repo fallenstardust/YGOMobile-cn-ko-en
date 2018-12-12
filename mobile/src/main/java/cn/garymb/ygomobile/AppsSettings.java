@@ -12,6 +12,7 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
@@ -121,27 +123,48 @@ public class AppsSettings {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.e("YGOMobile","原始高"+mScreenHeight);
+                try {
+                    FileLogUtil.writeAndTime("原始长"+mScreenHeight);
+                    FileLogUtil.writeAndTime("原始宽"+mScreenWidth);
+                    FileLogUtil.writeAndTime("界面长"+dm.heightPixels);
+                    FileLogUtil.writeAndTime("界面宽"+dm.widthPixels);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Log.e("YGOMobile","原始长"+mScreenHeight);
                 Log.e("YGOMobile","原始宽"+mScreenWidth);
-                Log.e("YGOMobile","界面高"+dm.heightPixels);
+                Log.e("YGOMobile","界面长"+dm.heightPixels);
                 Log.e("YGOMobile","界面宽"+dm.widthPixels);
 
 
-                if (mScreenHeight> mScreenWidth) {
-                    mScreenHeight = height;
-                } else {
-                    mScreenWidth = height;
-                }
+//                if (mScreenHeight> mScreenWidth) {
+//                    mScreenHeight = height;
+//                } else {
+//                    mScreenWidth = height;
+//                }
                 ScreenUtil.findNotchInformation(((Activity) context), new ScreenUtil.FindNotchInformation() {
                     @Override
                     public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
                         int height = Math.max(dm.widthPixels, dm.heightPixels);
-                        if (isNotch)
+                        if (isNotch) {
+                            try {
+                                FileLogUtil.writeAndTime("刘海高"+notchHeight);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                             height-=notchHeight;
+                        }
+
                         if (mScreenHeight> mScreenWidth) {
                             mScreenHeight = height;
                         } else {
                             mScreenWidth = height;
+                        }
+                        try {
+                            FileLogUtil.writeAndTime("转换后长"+mScreenHeight);
+                            FileLogUtil.writeAndTime("转换后宽"+mScreenWidth);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
 
                     }
