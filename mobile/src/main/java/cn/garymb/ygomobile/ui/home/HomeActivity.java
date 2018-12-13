@@ -28,6 +28,7 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -57,6 +58,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -411,6 +413,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 doMenu(mMenuIds.get(index));
             }
         });
+
     }
 
     private void addMenuButton(SparseArray<Integer> mMenuIds, BoomMenuButton menuButton, int menuId, int stringId, int image) {
@@ -530,9 +533,17 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public void StartMycard() {
-        $(R.id.btn_mycard).setOnClickListener((v) -> {
+        ImageView iv_mc = $(R.id.btn_mycard);
+        iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
                 startActivity(new Intent(this, MyCardActivity.class));
+            }
+        });
+        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
+                return true;
             }
         });
     }

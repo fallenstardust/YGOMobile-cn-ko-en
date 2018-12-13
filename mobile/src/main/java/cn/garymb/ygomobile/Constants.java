@@ -65,6 +65,7 @@ public interface Constants {
     String CORE_EXPANSIONS = "expansions";
     String CORE_SINGLE_PATH = "single";
     String CORE_IMAGE_PATH = "pics";
+    String MOBILE_LOG="log";
     String CORE_EXPANSIONS_IMAGE_PATH = "expansions/pics";
     String CORE_IMAGE_FIELD_PATH = "field";
     String CORE_SCRIPT_PATH = "script";
