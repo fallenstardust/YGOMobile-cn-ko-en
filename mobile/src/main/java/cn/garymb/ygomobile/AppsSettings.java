@@ -119,7 +119,8 @@ public class AppsSettings {
         mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
         mScreenWidth = context.getResources().getDisplayMetrics().widthPixels;
 
-        if (isImmerSiveMode() && context instanceof Activity) {
+        if (context instanceof Activity) {
+
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
@@ -131,28 +132,27 @@ public class AppsSettings {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.e("YGOMobile","原始长"+mScreenHeight);
-                Log.e("YGOMobile","原始宽"+mScreenWidth);
-                Log.e("YGOMobile","界面长"+dm.heightPixels);
-                Log.e("YGOMobile","界面宽"+dm.widthPixels);
 
-
-//                if (mScreenHeight> mScreenWidth) {
-//                    mScreenHeight = height;
-//                } else {
-//                    mScreenWidth = height;
-//                }
+                if(isImmerSiveMode())
+                    return;
                 ScreenUtil.findNotchInformation(((Activity) context), new ScreenUtil.FindNotchInformation() {
                     @Override
                     public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
                         int height = Math.max(dm.widthPixels, dm.heightPixels);
+                        try {
+                            FileLogUtil.writeAndTime("是否有刘海：  "+isNotch);
+                            FileLogUtil.writeAndTime("刘海高"+notchHeight);
+                            FileLogUtil.writeAndTime("height值：  "+height);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         if (isNotch) {
-                            try {
-                                FileLogUtil.writeAndTime("刘海高"+notchHeight);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
                             height-=notchHeight;
+                        }
+                        try {
+                            FileLogUtil.writeAndTime("处理后height值：  "+height);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
 
                         if (mScreenHeight> mScreenWidth) {
@@ -393,6 +393,13 @@ public class AppsSettings {
      */
     public String getCardImagePath() {
         return new File(getResourcePath(), Constants.CORE_IMAGE_PATH).getAbsolutePath();
+    }
+
+    /***
+     * log文件夹
+     */
+    public String getMobileLogPath() {
+        return new File(getResourcePath(), Constants.MOBILE_LOG).getAbsolutePath();
     }
 
     /***

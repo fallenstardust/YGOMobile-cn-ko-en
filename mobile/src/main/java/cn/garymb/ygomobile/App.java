@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatDelegate;
 
+import cn.garymb.ygomobile.utils.CrashHandler;
+
 public class App extends GameApplication {
 
     @Override
@@ -12,6 +14,9 @@ public class App extends GameApplication {
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
+        //初始化异常工具类
+        CrashHandler crashHandler =  CrashHandler.getInstance();
+        crashHandler.init(getApplicationContext());
         if (AppsSettings.get().isSoundEffect()) {
             initSoundEffectPool();
            setInitSoundEffectPool(true);
