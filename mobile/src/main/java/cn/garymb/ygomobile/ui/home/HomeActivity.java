@@ -529,21 +529,21 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     public void AnimationShake() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
-        ImageView iv=findViewById(R.id.cube);
-        iv.startAnimation(shake); //给组件播放动画效果
-        iv.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                startActivity(new Intent(HomeActivity.this,FileLogActivity.class));
-                return true;
-            }
-        });
+        findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
     }
 
     public void StartMycard() {
-        $(R.id.btn_mycard).setOnClickListener((v) -> {
+        ImageView iv_mc = $(R.id.btn_mycard);
+        iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
                 startActivity(new Intent(this, MyCardActivity.class));
+            }
+        });
+        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
+                return true;
             }
         });
     }
