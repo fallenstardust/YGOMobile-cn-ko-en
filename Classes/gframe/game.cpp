@@ -433,9 +433,19 @@ bool Game::Initialize() {
 	lstLog->setItemHeight(22 * yScale);
 	btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), tabLog, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
 	//helper
-	irr::gui::IGUITab* tabHelper = wInfos->addTab(dataManager.GetSysString(1298));
-	int posX = 20 * xScale;
-	int posY = 20 * yScale;
+	irr::gui::IGUITab* _tabHelper = wInfos->addTab(dataManager.GetSysString(1298));
+	_tabHelper->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
+	tabHelper = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabHelper);
+	tabHelper->setDrawTitlebar(false);
+	tabHelper->getCloseButton()->setVisible(false);
+	tabHelper->setDrawBackground(false);
+	tabHelper->setDraggable(false);
+	scrTabHelper = env->addScrollBar(false, rect<s32>(242 * xScale, 0 * yScale, 272 * xScale, 300 * yScale), _tabHelper, SCROLL_TAB_HELPER);
+	scrTabHelper->setLargeStep(1);
+	scrTabHelper->setSmallStep(1);
+	scrTabHelper->setVisible(false);
+	int posX = 0;
+	int posY = 0;
 	chkMAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1274));
 	chkMAutoPos->setChecked(gameConf.chkMAutoPos != 0);
 	posY += 60;
@@ -450,10 +460,30 @@ bool Game::Initialize() {
 	posY += 60;
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
-
+	elmTabHelperLast = chkWaitChain;
+	//show scroll
+	s32 tabHelperLastY = elmTabHelperLast->getRelativePosition().LowerRightCorner.Y;
+	s32 tabHelperHeight = 300 * yScale;
+	if(tabHelperLastY > tabHelperHeight) {
+		scrTabHelper->setMax(tabHelperLastY - tabHelperHeight + 5);
+		scrTabHelper->setPos(0);
+		scrTabHelper->setVisible(true);
+	}
+	else
+		scrTabHelper->setVisible(false);
 	//system
-	irr::gui::IGUITab* tabSystem = wInfos->addTab(dataManager.GetSysString(1273));
-	posY = 20 * xScale;
+	irr::gui::IGUITab* _tabSystem = wInfos->addTab(dataManager.GetSysString(1273));
+	_tabSystem->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
+	tabSystem = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabSystem);
+	tabSystem->setDrawTitlebar(false);
+	tabSystem->getCloseButton()->setVisible(false);
+	tabSystem->setDrawBackground(false);
+	tabSystem->setDraggable(false);
+	scrTabSystem = env->addScrollBar(false, rect<s32>(242 * xScale, 0, 272 * xScale, 300 * yScale), _tabSystem, SCROLL_TAB_SYSTEM);
+	scrTabSystem->setLargeStep(1);
+	scrTabSystem->setSmallStep(1);
+	scrTabSystem->setVisible(false);
+	posY = 0;
 	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 60;
@@ -474,6 +504,16 @@ bool Game::Initialize() {
 	posY += 60;
 	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
+	elmTabSystemLast = chkPreferExpansionScript;
+	//show scroll
+	s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
+	s32 tabSystemHeight = 300 * yScale;
+	if(tabSystemLastY > tabSystemHeight) {
+		scrTabSystem->setMax(tabSystemLastY - tabSystemHeight + 5);
+		scrTabSystem->setPos(0);
+		scrTabSystem->setVisible(true);
+	} else
+		scrTabSystem->setVisible(false);
 	//
 	wHand = env->addWindow(rect<s32>(500 * xScale, 450 * yScale, 825 * xScale, 605 * yScale), false, L"");
 	wHand->getCloseButton()->setVisible(false);
