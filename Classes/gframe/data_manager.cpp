@@ -1,4 +1,5 @@
 #include "data_manager.h"
+#include "game.h"
 #include <stdio.h>
 
 namespace ygo {
@@ -321,13 +322,21 @@ int DataManager::CardReader(int code, void* pData) {
 	return 0;
 }
 byte* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
-	char exname[256] = "./expansions";
-	strcat(exname, script_name + 1);//default script name: ./script/c%d.lua
-	byte* buffer = irr::android::android_script_reader(exname, slen);
-	if(buffer)
-		return buffer;
+	// default script name: ./script/c%d.lua
+	char first[256];
+	char second[256];
+	if(mainGame->gameConf.prefer_expansion_script) {
+		sprintf(first, "expansions/%s", script_name + 2);
+		sprintf(second, "%s", script_name + 2);
+	} else {
+		sprintf(first, "%s", script_name + 2);
+		sprintf(second, "expansions/%s", script_name + 2);
+	}
+//	byte* buffer = irr::android::android_script_reader(first, slen);
+	if(ScriptReader(first, slen))
+		return irr::android::android_script_reader(first, slen);
 	else
-		return irr::android::android_script_reader(script_name, slen);
+		return irr::android::android_script_reader(second, slen);
 }
 
 byte* DataManager::ScriptReader(const char* script_name, int* slen) {
