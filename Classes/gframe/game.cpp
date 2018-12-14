@@ -460,9 +460,6 @@ bool Game::Initialize() {
 	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
 	posY += 60;
-	chkHideSetname = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1354));
-	chkHideSetname->setChecked(gameConf.chkHideSetname != 0);
-	posY += 60;
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
 	posY += 60;
@@ -1384,13 +1381,14 @@ void Game::LoadConfig() {
 	//system
 	gameConf.chkIgnore1 = android::getIntSetting(appMain, "chkIgnore1", 0);
 	gameConf.chkIgnore2 = android::getIntSetting(appMain, "chkIgnore2", 0);
-	gameConf.chkHideSetname = android::getIntSetting(appMain, "chkHideSetname", 0);
 	gameConf.control_mode = android::getIntSetting(appMain, "control_mode", 0);
 	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	//defult Setting without checked
+    gameConf.hide_setname = 0;
+	gameConf.hide_hint_button = 0;
 	gameConf.separate_clear_button = 1;
 	gameConf.search_multiple_keywords = 1;
 	gameConf.defaultOT = 1;
@@ -1417,8 +1415,6 @@ void Game::SaveConfig() {
 		android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
 	gameConf.chkIgnore2 = chkIgnore2->isChecked() ? 1 : 0;
 		android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
-	gameConf.chkHideSetname = chkHideSetname->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkHideSetname", gameConf.chkHideSetname);
 	gameConf.chkIgnoreDeckChanges = chkIgnoreDeckChanges->isChecked() ? 1 : 0;
 		android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
 	gameConf.auto_save_replay = chkAutoSaveReplay->isChecked() ? 1 : 0;
@@ -1444,7 +1440,7 @@ void Game::ShowCardInfo(int code) {
 	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	stName->setText(formatBuffer);
 	int offset = 0;
-	if(!chkHideSetname->isChecked()) {
+	if(!gameConf.hide_setname) {
 		unsigned long long sc = cd.setcode;
 		if(cd.alias) {
 			auto aptr = dataManager._datas.find(cd.alias);
