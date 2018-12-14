@@ -130,7 +130,7 @@ public interface Constants {
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
     String URL_HELP = "http://www.jianshu.com/p/a43f5d951a25";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
-    String WIKI_SEARCH_URL = "http://www.ourocg.cn/S.aspx?key=";
+    String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";
