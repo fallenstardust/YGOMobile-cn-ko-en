@@ -27,6 +27,7 @@ import cn.garymb.ygomobile.utils.SystemUtils;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
@@ -34,6 +35,7 @@ import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
+import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
@@ -44,14 +46,14 @@ public class AppsSettings {
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mScreenHeight, mScreenWidth, mDensity;
-    public static int notchHeight;
+
 
 
     private AppsSettings(Context context) {
         this.context = context;
         mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
         mSharedPreferences.setAutoSave(true);
-        Log.e("YGOMobile", "初始化AppsSettings");
+        Log.e("YGOMobileLog", "初始化类地址:  "+ System.identityHashCode(this));
         update(context);
     }
 
@@ -63,23 +65,6 @@ public class AppsSettings {
 
     public static AppsSettings get() {
         return sAppsSettings;
-    }
-
-    //获取刘海高度
-    public int getNotchHeight() {
-        return notchHeight;
-    }
-
-    //设置刘海高度
-    public void setNotchHeight(int notchHeight) {
-
-        this.notchHeight = notchHeight;
-        try {
-            FileLogUtil.writeAndTime("设置刘海高度"+notchHeight);
-            FileLogUtil.writeAndTime("当前文件设置刘海高度"+this.notchHeight);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public File getSystemConfig() {
@@ -96,7 +81,9 @@ public class AppsSettings {
             if (dm != null) {
 
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
+                Log.e("YGOMobileLog","类地址"+System.identityHashCode(this));
 
+                int notchHeight=getNotchHeight();
 
                 try {
                     FileLogUtil.writeAndTime("是否沉浸:  " + isImmerSiveMode());
@@ -105,7 +92,6 @@ public class AppsSettings {
                     FileLogUtil.writeAndTime("界面长:  " + dm.heightPixels);
                     FileLogUtil.writeAndTime("界面宽:  " + dm.widthPixels);
                     FileLogUtil.writeAndTime("刘海长:  "+notchHeight);
-                    FileLogUtil.writeAndTime("get刘海长:  "+getNotchHeight());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -157,6 +143,14 @@ public class AppsSettings {
 
     public boolean isDialogDelete() {
         return true;// mSharedPreferences.getBoolean(PREF_DECK_DELETE_DILAOG, PREF_DEF_DECK_DELETE_DILAOG);
+    }
+
+    public int getNotchHeight() {
+        return mSharedPreferences.getInt(PREF_NOTCH_HEIGHT, DEF_PREF_NOTCH_HEIGHT);
+    }
+
+    public void setNotchHeight(int height){
+        mSharedPreferences.putInt(PREF_NOTCH_HEIGHT, height);
     }
 
     public int getFontSize() {

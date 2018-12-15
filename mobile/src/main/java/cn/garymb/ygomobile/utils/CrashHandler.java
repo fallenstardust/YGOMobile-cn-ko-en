@@ -127,7 +127,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         try {
           //  long timestamp = System.currentTimeMillis();
             String time = formatter.format(new Date());
-            String fileName ="【Demo】"  + time+/* timestamp +*/ ".log";
+            String fileName ="【YGO】"  + time+/* timestamp +*/ ".log";
             String path =  AppsSettings.get().getMobileLogPath() + "/";
             FileOutputStream fos = new FileOutputStream(path + fileName);
             fos.write(sb.toString().getBytes());

@@ -95,6 +95,8 @@ public interface Constants {
     String PREF_FONT_SIZE = "pref_settings_font_size";
     int DEF_PREF_FONT_SIZE = 14;
 
+    String PREF_NOTCH_HEIGHT="pref_notch_height";
+    int DEF_PREF_NOTCH_HEIGHT=0;
 
     String PREF_ONLY_GAME = "pref_settings_only_game";
     boolean DEF_PREF_ONLY_GAME = false;

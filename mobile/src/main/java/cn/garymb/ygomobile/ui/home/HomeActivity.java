@@ -55,6 +55,8 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.GameApplication;
+import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
@@ -135,23 +137,21 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //萌卡
         StartMycard();
         checkNotch();
-
     }
 
     //检查是否有刘海
     private void checkNotch() {
-        ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
-            @Override
-            public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
-                try {
-                    FileLogUtil.writeAndTime("检查刘海"+isNotch+"   "+notchHeight);
-                } catch (IOException e) {
-                    e.printStackTrace();
+            ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
+                @Override
+                public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+                    try {
+                        FileLogUtil.writeAndTime("检查刘海"+isNotch+"   "+notchHeight);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    AppsSettings.get().setNotchHeight(notchHeight);
                 }
-//                AppsSettings.get().setNotchHeight(notchHeight);
-                AppsSettings.notchHeight=notchHeight;
-            }
-        });
+            });
     }
 
     @Override

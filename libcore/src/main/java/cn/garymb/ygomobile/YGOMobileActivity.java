@@ -78,6 +78,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
 
+
+//    public static int notchHeight;
+
     private GameApplication app() {
         if (mApp == null) {
             synchronized (this) {
