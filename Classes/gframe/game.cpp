@@ -1429,6 +1429,7 @@ void Game::LoadConfig() {
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
+	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
 	//defult Setting without checked
     gameConf.hide_setname = 0;
 	gameConf.hide_hint_button = 0;
@@ -1466,6 +1467,8 @@ void Game::SaveConfig() {
         android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
+	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
 
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
