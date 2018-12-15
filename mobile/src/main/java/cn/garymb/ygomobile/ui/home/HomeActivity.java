@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -47,6 +48,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -70,6 +72,8 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
+import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
@@ -130,6 +134,24 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
         //萌卡
         StartMycard();
+        checkNotch();
+
+    }
+
+    //检查是否有刘海
+    private void checkNotch() {
+        ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
+            @Override
+            public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+                try {
+                    FileLogUtil.writeAndTime("检查刘海"+isNotch+"   "+notchHeight);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+//                AppsSettings.get().setNotchHeight(notchHeight);
+                AppsSettings.notchHeight=notchHeight;
+            }
+        });
     }
 
     @Override

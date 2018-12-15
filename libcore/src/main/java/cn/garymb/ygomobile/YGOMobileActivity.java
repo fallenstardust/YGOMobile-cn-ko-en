@@ -201,6 +201,7 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void fullscreen() {
+
         //如果是沉浸模式
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();

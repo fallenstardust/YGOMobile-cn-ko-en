@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.View;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -64,12 +65,28 @@ public class ScreenUtil {
             public void run() {
                 DisplayCutout cutout = decorView.getRootWindowInsets().getDisplayCutout();
                 if (cutout == null) {
+                    try {
+                        FileLogUtil.writeAndTime("Android P刘海：  cotout为空");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
+
                 } else {
                     List<Rect> rects = cutout.getBoundingRects();
                     if (rects == null || rects.size() == 0) {
+                        try {
+                            FileLogUtil.writeAndTime("Android P刘海：  rects:"+(rects==null));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
                     } else {
+                        try {
+                            FileLogUtil.writeAndTime("Android P刘海：  刘海存在，个数为"+rects.size());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         findNotchPInformation.onNotchInformation(true, cutout.getSafeInsetTop(), NOTCH_TYPE_PHONE_ANDROID_P);
                         //刘海的数量可以是多个
 //                        for (Rect rect : rects) {
