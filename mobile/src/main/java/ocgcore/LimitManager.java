@@ -58,12 +58,12 @@ public class LimitManager implements Closeable {
 
     public boolean load() {
         File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
-        boolean rs1 = loadFile(stringFile);
-        boolean rs2 = true;
+        boolean rs1 = true;
         if (AppsSettings.get().isReadExpansions()) {
-            File stringFile2 = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_CUSTOM_LIMIT_PATH);
-            rs2 = loadFile(stringFile2);
+            File stringFile2 = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_LIMIT_PATH);
+            rs1 = loadFile(stringFile2);
         }
+        boolean rs2 = loadFile(stringFile);
         return rs1 && rs2;
     }
 
