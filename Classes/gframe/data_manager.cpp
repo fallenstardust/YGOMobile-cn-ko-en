@@ -332,13 +332,17 @@ byte* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 		sprintf(first, "%s", script_name + 2);
 		sprintf(second, "expansions/%s", script_name + 2);
 	}
-//	byte* buffer = irr::android::android_script_reader(first, slen);
-	if(ScriptReader(first, slen))
-		return irr::android::android_script_reader(first, slen);
+	if(mainGame->gameConf.prefer_expansion_script) {
+		if(ScriptReader(first, slen))
+			return scriptBuffer;
+		if(ScriptReader(second, slen))
+			return scriptBuffer;
+	}
+	if(ScriptReaderZip(first, slen))
+		return scriptBuffer;
 	else
-		return irr::android::android_script_reader(second, slen);
+		return ScriptReaderZip(second, slen);
 }
-
 byte* DataManager::ScriptReader(const char* script_name, int* slen) {
 	FILE *fp;
 #ifdef _WIN32
@@ -355,6 +359,23 @@ byte* DataManager::ScriptReader(const char* script_name, int* slen) {
 	if(len >= sizeof(scriptBuffer))
 		return 0;
 	*slen = len;
+	return scriptBuffer;
+}
+byte* DataManager::ScriptReaderZip(const char* script_name, int* slen) {
+	wchar_t fname[256];
+	BufferIO::DecodeUTF8(script_name, fname);
+	IFileSystem* fs = mainGame->device->getFileSystem();
+	IReadFile* reader = fs->createAndOpenFile(fname);
+	if(reader == NULL)
+		return 0;
+	size_t size = reader->getSize();
+	if(size > sizeof(scriptBuffer)) {
+		reader->drop();
+		return 0;
+	}
+	reader->read(scriptBuffer, size);
+	reader->drop();
+	*slen = size;
 	return scriptBuffer;
 }
 

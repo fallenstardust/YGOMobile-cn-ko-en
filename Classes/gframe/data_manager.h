@@ -58,6 +58,7 @@ public:
 	static int CardReader(int, void*);
 	static byte* ScriptReaderEx(const char* script_name, int* slen);
 	static byte* ScriptReader(const char* script_name, int* slen);
+	static byte* ScriptReaderZip(const char* script_name, int* slen);
 
 };
 

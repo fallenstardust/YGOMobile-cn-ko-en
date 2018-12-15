@@ -173,8 +173,6 @@ extern void process_input(ANDROID_APP app,
 
 extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
-extern unsigned char* android_script_reader(const char* script_name, int* slen);
-
 extern bool android_deck_delete(const char* deck_name);
 
 extern void runWindbot(ANDROID_APP app, const char* args);
