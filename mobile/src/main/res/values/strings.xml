@@ -210,6 +210,8 @@
         \nthen join helper will acquiescently start in it
         \npls click to APP permission to find me and open the "Pop-ups"
         \nand keep the soft run in the background</string>
+    <string name="EXPAND_STATUS_BAR">Apply expand status bar\n then soft will work normally</string>
+    <string name="SYSTEM_ALERT_WINDOW">Apply Display over other APPs\n then soft will work normally</string>
     <string name="OpenTIP">about Quick Join in Game</string>
     <string name="Open_Alert_Window">To Open Pop-ups</string>
     <string name="Function_Menu">MENU</string>
@@ -235,4 +237,5 @@
     <string name="masterrule">Master Rule</string>
     <string name="tutorial">Soft Tutorial</string>
     <string name="about_help">Click button which you want to know</string>
+    <string name="to_open">to Open</string>
 </resources>
