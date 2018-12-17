@@ -1,11 +1,15 @@
 package cn.garymb.ygomobile.ui.preference.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -30,6 +34,7 @@ import com.pgyersdk.update.javabean.AppBean;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -72,9 +77,13 @@ import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
+import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class SettingFragment extends PreferenceFragmentPlus {
+
+    private static final int COPY_SO_OK=0;
+    private static final int COPY_SO_EXCEPTION=1;
 
     public SettingFragment() {
 
@@ -111,6 +120,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_GAME_FONT, mSettings.getFontPath());
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DECK_MANAGER_V2, mSettings.isUseDeckManagerV2());
+        bind(PERF_TEST_REPLACE_KERNEL,"替换ygopro的内核");
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -306,6 +316,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
             }
         } else if (PREF_GAME_PATH.equals(key)) {
             showFolderChooser(preference, mSettings.getResourcePath(), getString(R.string.choose_game_path));
+        }else if (PERF_TEST_REPLACE_KERNEL.equals(key)){
+            showFileChooser(preference,".so", mSettings.getResourcePath(),"内核文件选择");
         }
         return false;
     }
@@ -343,10 +355,48 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ((CheckBoxPreference) preference).setChecked(true);
             mSettings.setUseExtraCards(true);
             copyDataBase(preference, file);
-        } else {
+        } else if(PERF_TEST_REPLACE_KERNEL.equals(key)){
+            File path=App.get().getDir("lib",Context.MODE_APPEND);
+            String name="libYGOMobile.so";
+            File soFile=new File(path.getAbsolutePath(),name);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Message me=new Message();
+                    try {
+                        IOUtils.delete(soFile);
+                        IOUtils.copyFile(file,soFile.getAbsolutePath(),true);
+                        me.what=COPY_SO_OK;
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        me.what=COPY_SO_EXCEPTION;
+                        me.obj=e;
+                    }
+                    handler.sendMessage(me);
+                }
+            }).start();
+
+        }else {
             super.onChooseFileOk(preference, file);
         }
     }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler=new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case COPY_SO_OK:
+                    Toast.makeText(getActivity(),"替换成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case COPY_SO_EXCEPTION:
+                    Toast.makeText(getActivity(),"替换失败，原因为"+msg.obj, Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    };
 
     private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
         int width = getResources().getDisplayMetrics().widthPixels;

@@ -60,6 +60,8 @@
     <string name="settings_game_diy_cover">游戏背景</string>
     <string name="settings_game_diy_card_back">卡片背面</string>
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
+    <string name="settings_test_options">实验选项</string>
+    <string name="settings_test_replace_kernel">替换内核</string>
     <string name="settings_game_immersive_mode">适配非16:9分辨率的屏幕</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">头像图片</string>

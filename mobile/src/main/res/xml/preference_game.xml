@@ -105,4 +105,11 @@
             android:title="@string/settings_game_diy_card_db"/>-->
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_test_options">
+
+        <Preference
+            android:key="pref_key_test_replace_kernel"
+            android:persistent="true"
+            android:title="@string/settings_test_replace_kernel" />
+    </PreferenceCategory>
 </PreferenceScreen>
