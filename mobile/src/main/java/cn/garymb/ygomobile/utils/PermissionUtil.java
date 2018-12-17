@@ -46,7 +46,7 @@ public class PermissionUtil {
                     dialog.dismiss();
                 }
             });
-            dialog.show();
+//            dialog.show();
             return dialog;
         }
         return null;
@@ -72,7 +72,7 @@ public class PermissionUtil {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            isNotificationPermission(context);
+                            isNotificationPermission(context).show();
                         }
                     });
                     dialog.setRightButtonListener(new DialogInterface.OnClickListener() {
