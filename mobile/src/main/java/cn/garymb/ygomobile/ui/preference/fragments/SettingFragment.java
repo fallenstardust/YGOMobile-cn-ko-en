@@ -86,6 +86,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
     private static final int COPY_SO_OK = 0;
     private static final int COPY_SO_EXCEPTION = 1;
+    private static final int COPY_SO_NO_ROOT = 2;
 
     public SettingFragment() {
 
@@ -371,6 +372,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     try {
                         String cmd = "chmod -R 777 " + soFile.getAbsolutePath();
                         process = Runtime.getRuntime().exec("su"); //切换到root帐号
+                        if (process==null){
+                            me.what=COPY_SO_NO_ROOT;
+                            handler.sendMessage(me);
+                            return;
+                        }
                         os = new DataOutputStream(process.getOutputStream());
                         os.writeBytes(cmd + "\n");
                         os.writeBytes("exit\n");
@@ -395,6 +401,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                                 e.printStackTrace();
                             }
                         }
+                        if (process!=null)
                         process.destroy();
 
                     }
@@ -418,6 +425,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     break;
                 case COPY_SO_EXCEPTION:
                     Toast.makeText(getActivity(), "替换失败，原因为" + msg.obj, Toast.LENGTH_SHORT).show();
+                    break;
+                case COPY_SO_NO_ROOT:
+                    Toast.makeText(getActivity(),"没有root权限",Toast.LENGTH_SHORT).show();
                     break;
             }
         }
