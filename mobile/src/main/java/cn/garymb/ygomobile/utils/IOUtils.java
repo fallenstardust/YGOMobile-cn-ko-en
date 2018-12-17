@@ -9,6 +9,8 @@ import android.util.Log;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -226,5 +228,20 @@ public class IOUtils {
         }
         return false;
     }
+
+    public static void copyFile(String oldPath, String newPath, boolean isname) throws FileNotFoundException {
+
+        //判断复制后的路径是否含有文件名,如果没有则加上
+        if (!isname) {
+            //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
+            String abb[]=oldPath.split("/");
+            newPath = newPath + "/" + abb[abb.length - 1];
+        }
+
+        FileInputStream fis=new FileInputStream(oldPath);
+        copyToFile(fis,newPath);
+
+    }
+
 
 }

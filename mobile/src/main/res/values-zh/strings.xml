@@ -63,6 +63,8 @@
     <string name="settings_game_diy_cover">游戏背景</string>
     <string name="settings_game_diy_card_back">卡片背面</string>
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
+    <string name="settings_test_options">实验选项</string>
+    <string name="settings_test_replace_kernel">替换内核</string>
     <string name="settings_game_immersive_mode">适配非16:9分辨率的屏幕</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">头像图片</string>
@@ -213,6 +215,8 @@
         \n之后快捷加房时就会加入置顶的服务器
         \n使用此功能须开启本软件悬浮窗
         \n并确保本软件后台运行中</string>
+    <string name="EXPAND_STATUS_BAR">需要开启通知权限\n开启通知权限才能正常使用功能</string>
+    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n开启悬浮窗权限才能正常使用功能</string>
     <string name="OpenTIP">快捷加房使用方法</string>
     <string name="Open_Alert_Window">去打开悬浮窗</string>
     <string name="Function_Menu">功能菜单</string>
@@ -238,4 +242,5 @@
     <string name="masterrule">学习大师规则</string>
     <string name="tutorial">查看软件教程</string>
     <string name="about_help">点击您想要了解的内容</string>
+    <string name="to_open">去开启</string>
 </resources>

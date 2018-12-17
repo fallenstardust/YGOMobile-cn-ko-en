@@ -8,8 +8,6 @@
 namespace irr {
 namespace android {
 
-static unsigned char script_buffer[0x20000];
-
 inline static void ReadString(irr::io::path &path, char*& p) {
 	int length = BufferIO::ReadInt32(p);
 	if (length != 0) {
@@ -898,75 +896,6 @@ s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent) {
 		}
 	}
 	return Status;
-}
-
-unsigned char* android_script_reader(const char* script_name, int* slen) {
-	IFileSystem* fs = ygo::mainGame->device->getFileSystem();
-	std::string handledname = script_name;
-	if (handledname[0] == '.' && handledname[1] == '/') {
-		handledname = handledname.substr(2, handledname.length() - 2);
-	}
-	int firstSeperatorIndex = handledname.find_first_of('/');
-	std::string typeDir = handledname.substr(0, firstSeperatorIndex);
-	if (typeDir == "single") {
-		FILE *fp;
-		fp = fopen(script_name, "rb");
-		if (!fp)
-			return 0;
-		fseek(fp, 0, SEEK_END);
-		uint32 len = ftell(fp);
-		if (len > sizeof(script_buffer)) {
-			fclose(fp);
-			LOGW("read %s failed: too large file", script_name);
-			return 0;
-		}
-		fseek(fp, 0, SEEK_SET);
-		fread(script_buffer, len, 1, fp);
-		fclose(fp);
-		*slen = len;
-		return script_buffer;
-	//} else if (typeDir == "script") {
-	} else {
-		//try to find in directory based script.
-		if (access(script_name, F_OK) != -1) {
-			FILE *fp;
-			fp = fopen(script_name, "rb");
-			fseek(fp, 0, SEEK_END);
-			uint32 len = ftell(fp);
-			if (len > sizeof(script_buffer)) {
-				fclose(fp);
-				LOGW("read %s failed: too large file", script_name);
-				return 0;
-			}
-			fseek(fp, 0, SEEK_SET);
-			fread(script_buffer, len, 1, fp);
-			fclose(fp);
-			*slen = len;
-			return script_buffer;
-		} else {
-			IReadFile* file = fs->createAndOpenFile(handledname.c_str());
-			if (!file) {
-				LOGW("read %s failed: file not exist", script_name);
-				return 0;
-			}
-			if (file->getSize() > 0x20000) {
-				LOGW("read %s failed: too large file", script_name);
-				return 0;
-			}
-			*slen = file->getSize();
-			if (file->read(script_buffer, *slen) != *slen) {
-				LOGW("read %s failed: insufficient read length %d", script_name,
-						*slen);
-				*slen = 0;
-				return 0;
-			} else {
-				return script_buffer;
-			}
-		}
-	//} else {
-	//	LOGW("read %s failed: unknown script source", script_name);
-	//	return 0;
-	}
 }
 
 bool android_deck_delete(const char* deck_name) {

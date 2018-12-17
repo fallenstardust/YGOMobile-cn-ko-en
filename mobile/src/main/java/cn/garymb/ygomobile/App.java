@@ -4,20 +4,24 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatDelegate;
-import android.util.Log;
+
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class App extends GameApplication {
-
-    private static final String TAG="TIME-App";
 
     @Override
     public void onCreate() {
         super.onCreate();
-
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-        Log.e(TAG,"2");
         AppsSettings.init(this);
-        Log.e(TAG,"3");
+        //初始化异常工具类
+        CrashHandler crashHandler =  CrashHandler.getInstance();
+        crashHandler.init(getApplicationContext());
+        if (AppsSettings.get().isSoundEffect()) {
+            initSoundEffectPool();
+           setInitSoundEffectPool(true);
+        }
+
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
     }

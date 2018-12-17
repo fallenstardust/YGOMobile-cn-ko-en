@@ -52,6 +52,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         Intent intent = FileActivity.getIntent(getActivity(), title, null, defPath, false, FileOpenType.SelectFolder);
         startActivityForResult(intent, REQUEST_CHOOSE_FOLDER);
     }
+
     /***
      * @param preference
      * @param type       *\/*

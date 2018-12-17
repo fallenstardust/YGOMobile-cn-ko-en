@@ -8,7 +8,7 @@ public class FullScreenUtils {
     private boolean isFullscreen;
     private Activity activity;
     private static final int windowsFlags =
-            Build.VERSION.SDK_INT >= 19 ? (
+            Build.VERSION.SDK_INT >=Build.VERSION_CODES.KITKAT ? (
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION

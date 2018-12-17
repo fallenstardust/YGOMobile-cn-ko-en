@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -29,8 +30,16 @@ public class BaseActivity extends AppCompatActivity {
     private Toast mToast;
 
     protected String[] getPermissions() {
-        return null;
+        return PERMISSIONS;
     }
+
+    protected final String[] PERMISSIONS ={
+//            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+//            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -164,6 +173,7 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("RestrictedApi")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void startActivityForResult(Intent intent, int requestCode, @Nullable Bundle options) {
@@ -201,6 +211,7 @@ public class BaseActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
         if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
+            showToast("喵不给我权限让我怎么运行？！");
             finish();
         }
     }

@@ -9,6 +9,7 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationManagerCompat;
 
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
 public class PermissionUtil {
@@ -21,10 +22,10 @@ public class PermissionUtil {
     public static DialogPlus isNotificationPermission(Context context){
         if(!isNotificationListenerEnabled(context)){
             DialogPlus dialog = new DialogPlus(context);
-            dialog.setTitle("权限缺失提示");
-            dialog.setMessage("喵没给通知权限呢~\n开启通知权限可以快速关闭决斗助手功能");
-            dialog.setLeftButtonText("去开启");
-            dialog.setRightButtonText("取消");
+            dialog.setTitle(R.string.tip);
+            dialog.setMessage(R.string.EXPAND_STATUS_BAR);
+            dialog.setLeftButtonText(R.string.to_open);
+            dialog.setRightButtonText(R.string.Cancel);
             dialog.setLeftButtonListener(new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -45,7 +46,7 @@ public class PermissionUtil {
                     dialog.dismiss();
                 }
             });
-            dialog.show();
+//            dialog.show();
             return dialog;
         }
         return null;
@@ -57,10 +58,10 @@ public class PermissionUtil {
             if (!Settings.canDrawOverlays(context)) {
                 if (isIntentPermission) {
                     DialogPlus dialog = new DialogPlus(context);
-                    dialog.setTitle("权限缺失提示");
-                    dialog.setMessage("喵没给悬浮窗权限呢~\n开启悬浮窗权限可进行快速加入决斗房间");
-                    dialog.setLeftButtonText("去开启");
-                    dialog.setRightButtonText("取消");
+                    dialog.setTitle(R.string.tip);
+                    dialog.setMessage(R.string.SYSTEM_ALERT_WINDOW);
+                    dialog.setLeftButtonText(R.string.to_open);
+                    dialog.setRightButtonText(R.string.Cancel);
                     dialog.setLeftButtonListener(new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
@@ -71,7 +72,7 @@ public class PermissionUtil {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            isNotificationPermission(context);
+                            isNotificationPermission(context).show();
                         }
                     });
                     dialog.setRightButtonListener(new DialogInterface.OnClickListener() {

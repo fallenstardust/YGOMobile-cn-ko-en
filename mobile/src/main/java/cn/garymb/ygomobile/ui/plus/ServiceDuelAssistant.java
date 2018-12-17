@@ -63,7 +63,7 @@ public class ServiceDuelAssistant extends Service {
     //加房关键字
     public static final String[] passwordPrefix = {
             "M,", "m,",
-            "T,", "t,",
+            "T,",
             "PR,", "pr,",
             "AI,", "ai,",
             "LF2,", "lf2,",
@@ -107,6 +107,13 @@ public class ServiceDuelAssistant extends Service {
         createFloatView();
         //开启剪贴板监听
         startClipboardListener();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //关闭悬浮窗时的声明
+        stopForeground(true);
     }
 
     private void startClipboardListener() {
@@ -209,19 +216,20 @@ public class ServiceDuelAssistant extends Service {
                 builder.setSmallIcon(R.drawable.ic_icon);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
+            }else {
+                //如果没有通知权限则关闭服务
+                stopForeground(true);
+                stopService(new Intent(ServiceDuelAssistant.this,ServiceDuelAssistant.class));
             }
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //关闭悬浮窗时的声明
-        stopForeground(true);
-    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent==null)
+            return super.onStartCommand(intent,flags,startId);
         String action = intent.getAction();
         Log.d(TAG, "rev action:" + action);
         if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {

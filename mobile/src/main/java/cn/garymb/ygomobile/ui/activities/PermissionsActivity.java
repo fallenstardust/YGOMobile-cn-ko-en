@@ -16,7 +16,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 
 /**
  * 权限获取页面
@@ -51,6 +56,11 @@ public class PermissionsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
+            try {
+                FileLogUtil.writeAndTime("所有权限已获取");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             allPermissionsGranted();
         }else {
             mChecker = PermissionsChecker.getPermissionsChecker(this);
@@ -65,8 +75,18 @@ public class PermissionsActivity extends AppCompatActivity {
             String[] permissions = getPermissions();
             if (mChecker.lacksPermissions(permissions)) {
                 requestPermissions(permissions); // 请求权限
+                try {
+                    FileLogUtil.writeAndTime("onResume请求权限");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else {
                 allPermissionsGranted(); // 全部权限都已获取
+                try {
+                    FileLogUtil.writeAndTime("onResume所有权限已获取");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         } else {
             isRequireCheck = true;
@@ -101,12 +121,34 @@ public class PermissionsActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE && hasAllPermissionsGranted(grantResults)) {
+            try {
+                FileLogUtil.writeAndTime("权限请求回调：所有权限已获取");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             isRequireCheck = true;
             allPermissionsGranted();
         } else {
+            try {
+                FileLogUtil.writeAndTime("权限请求回调：权限未得到");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             isRequireCheck = false;
-            showMissingPermissionDialog();
+            showMissingPermissionDialog(getNoPermission(permissions,grantResults));
         }
+    }
+
+    //获取未同意的权限
+    private List<String> getNoPermission(String[] permissions, int[] grantResults){
+        List<String> permissionList=new ArrayList<>();
+        for (int i=0;i<grantResults.length;i++) {
+            int grantResult = grantResults[i];
+            if (grantResult == PackageManager.PERMISSION_DENIED) {
+               permissionList.add(permissions[i]);
+            }
+        }
+        return permissionList;
     }
 
     // 含有全部的权限
@@ -120,10 +162,13 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     // 显示缺失权限提示
-    private void showMissingPermissionDialog() {
+    private void showMissingPermissionDialog(List<String > permissionList) {
         AlertDialog.Builder builder = new AlertDialog.Builder(PermissionsActivity.this);
         builder.setTitle(R.string.help);
-        builder.setMessage(R.string.string_help_text);
+        String noPermission="";
+        for (String s:permissionList)
+            noPermission+="\n"+s;
+        builder.setMessage(getString(R.string.string_help_text)+noPermission);
 
         // 拒绝, 退出应用
         builder.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {

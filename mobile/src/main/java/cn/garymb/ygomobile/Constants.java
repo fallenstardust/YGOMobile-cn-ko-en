@@ -36,6 +36,7 @@ public interface Constants {
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";
+    String PERF_TEST_REPLACE_KERNEL = "pref_key_test_replace_kernel";
     int LAST_ROOM_MAX = 10;
     /***
      * 卡组编辑，长按删除对话框
@@ -65,6 +66,7 @@ public interface Constants {
     String CORE_EXPANSIONS = "expansions";
     String CORE_SINGLE_PATH = "single";
     String CORE_IMAGE_PATH = "pics";
+    String MOBILE_LOG="log";
     String CORE_EXPANSIONS_IMAGE_PATH = "expansions/pics";
     String CORE_IMAGE_FIELD_PATH = "field";
     String CORE_SCRIPT_PATH = "script";
@@ -94,6 +96,8 @@ public interface Constants {
     String PREF_FONT_SIZE = "pref_settings_font_size";
     int DEF_PREF_FONT_SIZE = 14;
 
+    String PREF_NOTCH_HEIGHT="pref_notch_height";
+    int DEF_PREF_NOTCH_HEIGHT=0;
 
     String PREF_ONLY_GAME = "pref_settings_only_game";
     boolean DEF_PREF_ONLY_GAME = false;
@@ -130,7 +134,7 @@ public interface Constants {
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
     String URL_HELP = "http://www.jianshu.com/p/a43f5d951a25";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
-    String WIKI_SEARCH_URL = "http://www.ourocg.cn/S.aspx?key=";
+    String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";

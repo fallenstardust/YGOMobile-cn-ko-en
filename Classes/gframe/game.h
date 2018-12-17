@@ -35,8 +35,8 @@ struct Config {
 	int chkWaitChain;
 	int chkIgnore1;
 	int chkIgnore2;
-	int chkHideSetname;
-	int chkHideHintButton;
+	int hide_setname;
+	int hide_hint_button;
 	int control_mode;
 	int draw_field_spell;
 	int separate_clear_button;
@@ -47,7 +47,7 @@ struct Config {
 	int enable_bot_mode;
 	int quick_animation;
 	int auto_save_replay;
-	int chkAutoSaveReplay;
+	int prefer_expansion_script;
 };
 
 struct DuelInfo {
@@ -240,19 +240,24 @@ public:
 	irr::gui::IGUIListBox* lstLog;
 	irr::gui::IGUIButton* btnClearLog;
 	irr::gui::IGUIButton* btnSaveLog;
+	irr::gui::IGUIWindow* tabHelper;
+	irr::gui::IGUIElement* elmTabHelperLast;
+	irr::gui::IGUIScrollBar* scrTabHelper;
 	irr::gui::IGUICheckBox* chkMAutoPos;
 	irr::gui::IGUICheckBox* chkSTAutoPos;
 	irr::gui::IGUICheckBox* chkRandomPos;
 	irr::gui::IGUICheckBox* chkAutoChain;
 	irr::gui::IGUICheckBox* chkWaitChain;
+	irr::gui::IGUIWindow* tabSystem;
+	irr::gui::IGUIElement* elmTabSystemLast;
+	irr::gui::IGUIScrollBar* scrTabSystem;
 	irr::gui::IGUICheckBox* chkDrawFieldSpell;
 	irr::gui::IGUICheckBox* chkQuickAnimation;
 	irr::gui::IGUICheckBox* chkAutoSaveReplay;
-	irr::gui::IGUICheckBox* chkHideSetname;
-	irr::gui::IGUICheckBox* chkHideHintButton;
 	irr::gui::IGUICheckBox* chkIgnoreDeckChanges;
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
+	irr::gui::IGUICheckBox* chkPreferExpansionScript;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -643,11 +648,14 @@ extern Game* mainGame;
 #define BUTTON_BOT_START			340
 #define LISTBOX_BOT_LIST			341
 #define CHECKBOX_BOT_OLD_RULE		342
-#define LISTBOX_SINGLEPLAY_LIST		350
-#define BUTTON_LOAD_SINGLEPLAY		351
-#define BUTTON_CANCEL_SINGLEPLAY	352
+#define LISTBOX_SINGLEPLAY_LIST		343
+#define BUTTON_LOAD_SINGLEPLAY		344
+#define BUTTON_CANCEL_SINGLEPLAY	345
+#define SCROLL_TAB_HELPER			350
+#define SCROLL_TAB_SYSTEM			351
 #define CHECKBOX_AUTO_SEARCH		360
 #define CHECKBOX_MULTI_KEYWORDS		372
+#define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DISABLE_CHAT		364
 #define CHECKBOX_DRAW_FIELD_SPELL	368
 #define CHECKBOX_QUICK_ANIMATION	369

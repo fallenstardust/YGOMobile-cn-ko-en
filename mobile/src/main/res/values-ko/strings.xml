@@ -60,6 +60,8 @@
     <string name="settings_game_diy_cover">배경이미지</string>
     <string name="settings_game_diy_card_back">카드커버</string>
     <string name="settings_game_diy_card_db">커스텀cdb사용</string>
+    <string name="settings_test_options"></string>
+    <string name="settings_test_replace_kernel"></string>
     <string name="settings_game_immersive_mode">해상도 최적화</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">프로필 이미지</string>
@@ -210,6 +212,9 @@
         \n사용자 지역에 적합한 ping이 낮은 서버를 추가합니다.
         \n아래의 버튼을 사용하여 "애플리케이션 관리"를 엽니다
         \n그후 YGOMobile의 다른앱 표시 권한이 혀용되어 있는지 확인하십시오.</string>
+    <string name="EXPAND_STATUS_BAR">알림을 켜려면 알림 권한이 필요합니다.
+        \n기능을 제대로 사용하려면 알림 권한이 필요합니다.</string>
+    <string name="SYSTEM_ALERT_WINDOW">다른 앱 위에 표시 권한이 필요합니다.\n기능을 제대로 사용하려면 다른 앱 위에 표시 권한이 필요합니다.</string>
     <string name="OpenTIP">빠른 사용법</string>
     <string name="Open_Alert_Window">애플리케이션 관리</string>
     <string name="Function_Menu">메뉴</string>
@@ -235,4 +240,5 @@
     <string name="masterrule">마스터즈 룰</string>
     <string name="tutorial">가이드 북 보기</string>
     <string name="about_help">원하는 내용을 클릭합니다.</string>
+    <string name="to_open">열기</string>
 </resources>

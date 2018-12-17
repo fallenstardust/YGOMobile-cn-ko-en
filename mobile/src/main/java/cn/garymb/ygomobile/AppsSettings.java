@@ -3,18 +3,16 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,11 +20,14 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
@@ -34,16 +35,27 @@ import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
+import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 
 public class AppsSettings {
+    private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mScreenHeight, mScreenWidth, mDensity;
-    private static final String PREF_VERSION = "app_version";
+
+
+
+    private AppsSettings(Context context) {
+        this.context = context;
+        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
+        mSharedPreferences.setAutoSave(true);
+        Log.e("YGOMobileLog", "初始化类地址:  "+ System.identityHashCode(this));
+        update(context);
+    }
 
     public static void init(Context context) {
         if (sAppsSettings == null) {
@@ -59,80 +71,53 @@ public class AppsSettings {
         return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 
-    private AppsSettings(Context context) {
-        this.context = context;
-        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
-        mSharedPreferences.setAutoSave(true);
-        update(context);
-    }
-
-    //检测是否存在刘海屏
-    public static boolean hasNotchInScreen(Context context) {
-        boolean ret = false;
-        try {
-            ClassLoader cl = context.getClassLoader();
-            Class HwNotchSizeUtil = cl.loadClass("com.huawei.android.util.HwNotchSizeUtil");
-            Method get = HwNotchSizeUtil.getMethod("hasNotchInScreen");
-            ret = (boolean) get.invoke(HwNotchSizeUtil);
-        } catch (ClassNotFoundException e) {
-            Log.e("test", "hasNotchInScreen ClassNotFoundException");
-        } catch (NoSuchMethodException e) {
-            Log.e("test", "hasNotchInScreen NoSuchMethodException");
-        } catch (Exception e) {
-            Log.e("test", "hasNotchInScreen Exception");
-        } finally {
-            return ret;
-        }
-    }
-
-    //获取刘海屏的参数
-    public static int[] getNotchSize(Context context) {
-        int[] notchSize = new int[]{0, 0};
-        try {
-            ClassLoader cl = context.getClassLoader();
-            Class HwNotchSizeUtil = cl.loadClass("com.huawei.android.util.HwNotchSizeUtil");
-            Method get = HwNotchSizeUtil.getMethod("getNotchSize");
-            notchSize = (int[]) get.invoke(HwNotchSizeUtil);
-        } catch (ClassNotFoundException e) {
-            Log.e("test", "getNotchSize ClassNotFoundException");
-        } catch (NoSuchMethodException e) {
-            Log.e("test", "getNotchSize NoSuchMethodException");
-        } catch (Exception e) {
-            Log.e("test", "getNotchSize Exception");
-        } finally {
-            return notchSize;
-        }
-    }
-
-    //获取系统状态栏高度
-    public static int getStatusBarHeight(Context context) {
-        int StatusBarHeight = 0;
-        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            StatusBarHeight = context.getResources().getDimensionPixelSize(resourceId);
-        }
-        return StatusBarHeight;
-    }
-
     public void update(Context context) {
         mDensity = context.getResources().getDisplayMetrics().density;
         mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
         mScreenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
         if (isImmerSiveMode() && context instanceof Activity) {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
             if (dm != null) {
+
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                if (mScreenHeight == Math.max(mScreenHeight, mScreenWidth)) {
+                Log.e("YGOMobileLog","类地址"+System.identityHashCode(this));
+
+                int notchHeight=getNotchHeight();
+
+                try {
+                    FileLogUtil.writeAndTime("是否沉浸:  " + isImmerSiveMode());
+                    FileLogUtil.writeAndTime("原始长:  " + mScreenHeight);
+                    FileLogUtil.writeAndTime("原始宽:  " + mScreenWidth);
+                    FileLogUtil.writeAndTime("界面长:  " + dm.heightPixels);
+                    FileLogUtil.writeAndTime("界面宽:  " + dm.widthPixels);
+                    FileLogUtil.writeAndTime("刘海长:  "+notchHeight);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                height -= notchHeight;
+
+                try {
+                    FileLogUtil.writeAndTime("处理后height值：  " + height);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (mScreenHeight > mScreenWidth) {
                     mScreenHeight = height;
                 } else {
                     mScreenWidth = height;
                 }
+                try {
+                    FileLogUtil.writeAndTime("转换后长:  " + mScreenHeight);
+                    FileLogUtil.writeAndTime("转换后宽:  " + mScreenWidth);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
-        if (!hasNotchInScreen(context)) {
-
-        }
-        Log.i("屏幕不算虚拟键", "" + mScreenHeight);
     }
 
     public int getAppVersion() {
@@ -158,6 +143,14 @@ public class AppsSettings {
 
     public boolean isDialogDelete() {
         return true;// mSharedPreferences.getBoolean(PREF_DECK_DELETE_DILAOG, PREF_DEF_DECK_DELETE_DILAOG);
+    }
+
+    public int getNotchHeight() {
+        return mSharedPreferences.getInt(PREF_NOTCH_HEIGHT, DEF_PREF_NOTCH_HEIGHT);
+    }
+
+    public void setNotchHeight(int height){
+        mSharedPreferences.putInt(PREF_NOTCH_HEIGHT, height);
     }
 
     public int getFontSize() {
@@ -351,6 +344,13 @@ public class AppsSettings {
     }
 
     /***
+     * log文件夹
+     */
+    public String getMobileLogPath() {
+        return new File(getResourcePath(), Constants.MOBILE_LOG).getAbsolutePath();
+    }
+
+    /***
      * 当前数据库文件夹
      */
     public String getDataBasePath() {
@@ -386,10 +386,6 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, Constants.PREF_DEF_USE_EXTRA_CARD_CARDS);
     }
 
-    public String getCoreSkinPath() {
-        return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
-    }
-
     /***
      * 设置是否使用额外卡库
      */
@@ -397,11 +393,8 @@ public class AppsSettings {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
     }
 
-    /***
-     * 字体路径
-     */
-    public void setFontPath(String font) {
-        mSharedPreferences.putString(Constants.PREF_GAME_FONT, font);
+    public String getCoreSkinPath() {
+        return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
     }
 
     /***
@@ -409,6 +402,13 @@ public class AppsSettings {
      */
     public String getFontPath() {
         return mSharedPreferences.getString(Constants.PREF_GAME_FONT, getFontDefault());
+    }
+
+    /***
+     * 字体路径
+     */
+    public void setFontPath(String font) {
+        mSharedPreferences.putString(Constants.PREF_GAME_FONT, font);
     }
 
     /**
@@ -461,19 +461,19 @@ public class AppsSettings {
     /***
      * 最后卡组名
      */
+    public String getLastDeck() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+    }
+
+    /***
+     * 最后卡组名
+     */
     public void setLastDeck(String name) {
         if (TextUtils.equals(name, getCurLastDeck())) {
             //一样
             return;
         }
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, name);
-    }
-
-    /***
-     * 最后卡组名
-     */
-    public String getLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     public String getCurLastDeck() {

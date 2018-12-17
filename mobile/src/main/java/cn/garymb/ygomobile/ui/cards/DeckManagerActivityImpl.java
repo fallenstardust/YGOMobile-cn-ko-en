@@ -873,6 +873,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         addMenuButton(mMenuIds, menu, R.id.action_sort, R.string.sort, R.drawable.sort);
         addMenuButton(mMenuIds, menu, R.id.action_quit, R.string.quit, R.drawable.quit);
 
+        //设置展开或隐藏的延时。 默认值为 800ms。
+        menu.setDuration(150);
+        //设置每两个子按钮之间动画的延时（ms为单位）。 比如，如果延时设为0，那么所有子按钮都会同时展开或隐藏，默认值为100ms。
+        menu.setDelay(10);
+
         menu.setOnBoomListener(new DefaultOnBoomListener() {
             @Override
             public void onClicked(int index, BoomButton boomButton) {

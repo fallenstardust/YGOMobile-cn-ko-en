@@ -1,10 +1,12 @@
 #include "data_manager.h"
+#include "game.h"
 #include <stdio.h>
 
 namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
 wchar_t DataManager::strBuffer[4096];
+byte DataManager::scriptBuffer[0x20000];
 DataManager dataManager;
 
 bool DataManager::LoadDB(const char* file) {
@@ -318,6 +320,63 @@ int DataManager::CardReader(int code, void* pData) {
 	if(!dataManager.GetData(code, (CardData*)pData))
 		memset(pData, 0, sizeof(CardData));
 	return 0;
+}
+byte* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
+	// default script name: ./script/c%d.lua
+	char first[256];
+	char second[256];
+	if(mainGame->gameConf.prefer_expansion_script) {
+		sprintf(first, "expansions/%s", script_name + 2);
+		sprintf(second, "%s", script_name + 2);
+	} else {
+		sprintf(first, "%s", script_name + 2);
+		sprintf(second, "expansions/%s", script_name + 2);
+	}
+	if(mainGame->gameConf.prefer_expansion_script) {
+		if(ScriptReader(first, slen))
+			return scriptBuffer;
+		if(ScriptReader(second, slen))
+			return scriptBuffer;
+	}
+	if(ScriptReaderZip(first, slen))
+		return scriptBuffer;
+	else
+		return ScriptReaderZip(second, slen);
+}
+byte* DataManager::ScriptReader(const char* script_name, int* slen) {
+	FILE *fp;
+#ifdef _WIN32
+	wchar_t fname[256];
+	BufferIO::DecodeUTF8(script_name, fname);
+	fp = _wfopen(fname, L"rb");
+#else
+	fp = fopen(script_name, "rb");
+#endif
+	if(!fp)
+		return 0;
+	int len = fread(scriptBuffer, 1, sizeof(scriptBuffer), fp);
+	fclose(fp);
+	if(len >= sizeof(scriptBuffer))
+		return 0;
+	*slen = len;
+	return scriptBuffer;
+}
+byte* DataManager::ScriptReaderZip(const char* script_name, int* slen) {
+	wchar_t fname[256];
+	BufferIO::DecodeUTF8(script_name, fname);
+	IFileSystem* fs = mainGame->device->getFileSystem();
+	IReadFile* reader = fs->createAndOpenFile(fname);
+	if(reader == NULL)
+		return 0;
+	size_t size = reader->getSize();
+	if(size > sizeof(scriptBuffer)) {
+		reader->drop();
+		return 0;
+	}
+	reader->read(scriptBuffer, size);
+	reader->drop();
+	*slen = size;
+	return scriptBuffer;
 }
 
 }

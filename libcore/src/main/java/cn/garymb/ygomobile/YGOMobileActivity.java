@@ -78,6 +78,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
 
+
+//    public static int notchHeight;
+
     private GameApplication app() {
         if (mApp == null) {
             synchronized (this) {
@@ -201,6 +204,8 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void fullscreen() {
+
+        //如果是沉浸模式
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
@@ -223,6 +228,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
+//        Log.e("YGOMobileActivity","窗口变化"+hasFocus);
         if (hasFocus) {
             fullscreen();
             mContentView.setHapticFeedbackEnabled(true);

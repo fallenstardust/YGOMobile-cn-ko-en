@@ -9,7 +9,7 @@
         <activity
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:clearTaskOnLaunch="true"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="keyboardHidden|screenSize"
             android:exported="true"
             android:label="YGOMobile"
             android:process=":game"

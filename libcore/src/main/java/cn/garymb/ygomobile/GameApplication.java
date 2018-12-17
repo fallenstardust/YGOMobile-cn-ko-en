@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,18 +18,15 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 public abstract class GameApplication extends Application implements IrrlichtBridge.IrrlichtApplication {
     private SoundPool mSoundEffectPool;
     private Map<String, Integer> mSoundIdMap;
-    private static GameApplication sGameApplication;
 
-    private static final String TAG="TIME-GameApplication";
+    private static GameApplication sGameApplication;
+    private boolean isInitSoundEffectPool=false;
 
     @Override
     public void onCreate() {
         super.onCreate();
         sGameApplication = this;
-        Log.e(TAG,"2");
-        //初始化ygo音效
-        initSoundEffectPool();
-        Log.e(TAG,"3");
+//        initSoundEffectPool();
     }
 
     public static GameApplication get() {
@@ -48,8 +44,16 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         mSoundEffectPool.release();
     }
 
+    public boolean isInitSoundEffectPool() {
+        return isInitSoundEffectPool;
+    }
+
+    protected void setInitSoundEffectPool(boolean initSoundEffectPool) {
+        isInitSoundEffectPool = initSoundEffectPool;
+    }
+
     @SuppressWarnings("deprecation")
-    protected void initSoundEffectPool() {
+    public void initSoundEffectPool() {
         mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
         AssetManager am = getAssets();
         String[] sounds;

@@ -56,21 +56,22 @@ public class MainActivity extends HomeActivity{
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
        //动态权限
-        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+//        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+        //资源复制
+        checkRes();
     }
 
-    @SuppressLint("StringFormatMatches")
+    @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        for(int i=0;i<permissions.length;i++){
-            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-                showToast(getString(R.string.tip_no_permission,permissions[i]));
-                break;
-            }
-        }
-        //资源复制
-        checkRes();
+//        for(int i=0;i<permissions.length;i++){
+//            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+//                showToast(getString(R.string.tip_no_permission,permissions[i]));
+//                break;
+//            }
+//        }
+
     }
 
     private void checkRes() {
@@ -126,6 +127,7 @@ public class MainActivity extends HomeActivity{
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
+        if(mResCheckTask!=null)
         mResCheckTask.unregisterMReceiver();
     }
 
