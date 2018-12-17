@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -72,7 +73,9 @@ public class PermissionUtil {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            isNotificationPermission(context).show();
+                           DialogPlus dialogPlus= isNotificationPermission(context);
+                           if (dialogPlus!=null)
+                               dialog.show();
                         }
                     });
                     dialog.setRightButtonListener(new DialogInterface.OnClickListener() {
