@@ -75,6 +75,7 @@ import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.PermissionUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -129,6 +130,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (PermissionUtil.isNotificationPermission(this)==null)
             this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
         } else {
             startService(new Intent(this, ServiceDuelAssistant.class));

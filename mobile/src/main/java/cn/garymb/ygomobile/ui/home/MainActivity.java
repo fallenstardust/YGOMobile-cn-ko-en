@@ -56,7 +56,7 @@ public class MainActivity extends HomeActivity{
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
        //动态权限
-        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+//        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})

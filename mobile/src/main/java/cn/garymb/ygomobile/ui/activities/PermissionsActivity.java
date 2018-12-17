@@ -105,7 +105,7 @@ public class PermissionsActivity extends AppCompatActivity {
             allPermissionsGranted();
         } else {
             isRequireCheck = false;
-            showMissingPermissionDialog();
+            showMissingPermissionDialog(permissions);
         }
     }
 
@@ -120,10 +120,13 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     // 显示缺失权限提示
-    private void showMissingPermissionDialog() {
+    private void showMissingPermissionDialog(String[] permissionList) {
         AlertDialog.Builder builder = new AlertDialog.Builder(PermissionsActivity.this);
         builder.setTitle(R.string.help);
-        builder.setMessage(R.string.string_help_text);
+        String noPermission="";
+        for (String s:permissionList)
+            noPermission+="\n"+s;
+        builder.setMessage(getString(R.string.string_help_text)+noPermission);
 
         // 拒绝, 退出应用
         builder.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
