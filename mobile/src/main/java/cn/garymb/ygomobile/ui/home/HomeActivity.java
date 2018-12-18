@@ -130,8 +130,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (PermissionUtil.isNotificationPermission(this)==null)
-            this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+            DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(this);
+            if (dialogPlus == null)
+                this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+            else
+                dialogPlus.show();
         } else {
             startService(new Intent(this, ServiceDuelAssistant.class));
         }
@@ -143,17 +146,17 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     //检查是否有刘海
     private void checkNotch() {
-            ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
-                @Override
-                public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
-                    try {
-                        FileLogUtil.writeAndTime("检查刘海"+isNotch+"   "+notchHeight);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    AppsSettings.get().setNotchHeight(notchHeight);
+        ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
+            @Override
+            public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+                try {
+                    FileLogUtil.writeAndTime("检查刘海" + isNotch + "   " + notchHeight);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            });
+                AppsSettings.get().setNotchHeight(notchHeight);
+            }
+        });
     }
 
     @Override

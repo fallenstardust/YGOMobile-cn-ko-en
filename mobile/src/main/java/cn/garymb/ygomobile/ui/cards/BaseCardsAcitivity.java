@@ -29,7 +29,7 @@ import ocgcore.data.Card;
 
 public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack {
     protected DrawerLayout mDrawerlayout;
-    private RecyclerView mListView;
+    protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapater;
     protected CardLoader mCardLoader;

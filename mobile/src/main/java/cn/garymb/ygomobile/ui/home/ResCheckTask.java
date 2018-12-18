@@ -275,7 +275,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 Constants.CORE_REPLAY_PATH,
                 Constants.FONT_DIRECTORY,
                 Constants.CORE_IMAGE_PATH,
-                Constants.MOBILE_LOG
+                Constants.MOBILE_LOG,
+                Constants.MOBILE_DECK_SHARE
         };
         File dirFile = null;
         for (String dir : dirs) {

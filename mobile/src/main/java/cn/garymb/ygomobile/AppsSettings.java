@@ -351,6 +351,13 @@ public class AppsSettings {
     }
 
     /***
+     * 卡组分享图片文件夹
+     */
+    public String getDeckSharePath() {
+        return new File(getResourcePath(), Constants.MOBILE_DECK_SHARE).getAbsolutePath();
+    }
+
+    /***
      * 当前数据库文件夹
      */
     public String getDataBasePath() {

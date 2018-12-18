@@ -6,11 +6,18 @@
         android:icon="@drawable/search"
         android:title="@string/search"
         app:showAsAction="always"/>
+
     <item
-        android:id="@+id/action_card_list"
+        android:id="@+id/action_share_deck"
         android:icon="@drawable/listicon"
-        android:title="@string/card_result"
+        android:title="@string/share_deck"
         app:showAsAction="always"/>
+
+    <!--<item-->
+        <!--android:id="@+id/action_card_list"-->
+        <!--android:icon="@drawable/listicon"-->
+        <!--android:title="@string/card_result"-->
+        <!--app:showAsAction="always"/>-->
     <!--<item
         android:id="@+id/action_refresh"
         android:icon="@drawable/ic_refresh"

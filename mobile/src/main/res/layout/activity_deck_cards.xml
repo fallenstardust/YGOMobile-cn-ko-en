@@ -128,7 +128,7 @@
                 android:divider="@android:color/transparent"
                 android:dividerHeight="4dp"
                 android:padding="2dp"
-                android:scrollbars="none"/>
+                android:scrollbars="none" />
         </LinearLayout>
 
         <LinearLayout
