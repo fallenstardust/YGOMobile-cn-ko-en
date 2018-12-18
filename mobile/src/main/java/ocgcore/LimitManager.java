@@ -64,6 +64,10 @@ public class LimitManager implements Closeable {
             rs1 = loadFile(stringFile2);
         }
         boolean rs2 = loadFile(stringFile);
+        LimitList blank_list = new LimitList("N/A");
+        mLimitLists.put("N/A", blank_list);
+        mLimitNames.add("N/A");
+        ++mCount;
         return rs1 && rs2;
     }
 
