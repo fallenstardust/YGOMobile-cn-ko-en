@@ -84,7 +84,7 @@
     </string-array>
     <!-- settings -->
 
-    <string name="server_name">Server:</string>
+    <string name="server_name">Name:</string>
     <string name="server_ip">Host:</string>
     <string name="server_user">User:</string>
     <string name="server_room_name">Room Name:</string>
