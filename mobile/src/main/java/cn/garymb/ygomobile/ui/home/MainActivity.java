@@ -15,6 +15,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 
 import java.io.IOException;
 
@@ -176,24 +177,34 @@ public class MainActivity extends HomeActivity{
 
     @Override
     public void updateImages() {
+        Log.e("MainActivity","重置资源");
         DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
         dialog.show();
         VUiKit.defer().when(() -> {
-            if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
+            Log.e("MainActivity","开始复制");
                 try {
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
+                    IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
+                    if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
+                        IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
+                                AppsSettings.get().getResourcePath(), true);
+                    }
+                    if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+                        IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
+                                AppsSettings.get().getResourcePath(), true);
+                    }
                     IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
                             AppsSettings.get().getResourcePath(), true);
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
+
                     IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
                             AppsSettings.get().getResourcePath(), true);
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
+                            AppsSettings.get().getCoreSkinPath(), true);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    Log.e("MainActivity","错误"+e);
                 }
-            }
         }).done((rs) -> {
+            Log.e("MainActivity","复制完毕");
             dialog.dismiss();
         });
     }

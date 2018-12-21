@@ -384,8 +384,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         process.waitFor();
 
                         IOUtils.delete(soFile);
-                        Log.e("SettingFragment", "file:  " + file);
-                        Log.e("SettingFragment", "path:  " + soFile.getAbsolutePath());
                         IOUtils.copyFile(file, soFile.getAbsolutePath(), true);
                         me.what = COPY_SO_OK;
                     } catch (Exception e) {

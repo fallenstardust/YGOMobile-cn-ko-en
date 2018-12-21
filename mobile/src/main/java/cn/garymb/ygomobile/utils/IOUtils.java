@@ -107,10 +107,6 @@ public class IOUtils {
     }
 
     public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update) throws IOException {
-        return copyFilesFromAssets(context, assets, toPath, update, true);
-    }
-
-    public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update, boolean sub) throws IOException {
         AssetManager am = context.getAssets();
         String[] files = am.list(assets);
         if (files == null) {
