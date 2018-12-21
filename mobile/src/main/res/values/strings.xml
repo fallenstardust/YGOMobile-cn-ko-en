@@ -66,8 +66,8 @@
     <string name="settings_game_diy_cover">Game Background</string>
     <string name="settings_game_diy_card_back">Card Cover</string>
     <string name="settings_game_diy_card_db">Use your own card database</string>
-    <string name="settings_test_options"></string>
-    <string name="settings_test_replace_kernel"></string>
+    <string name="settings_test_options">Lab</string>
+    <string name="settings_test_replace_kernel">Change GameCore(Needs root)</string>
     <string name="settings_game_immersive_mode">Optimize not 16:9 resolution</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Game Avatar</string>
