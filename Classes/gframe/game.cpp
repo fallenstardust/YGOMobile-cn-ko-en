@@ -1301,18 +1301,6 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbDeck) {
 }
 void Game::RefreshReplay() {
 	lstReplayList->clear();
-#ifdef _WIN32
-	WIN32_FIND_DATAW fdataw;
-	HANDLE fh = FindFirstFileW(L"./replay/*.yrp", &fdataw);
-	if(fh == INVALID_HANDLE_VALUE)
-		return;
-	do {
-		if(!(fdataw.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && Replay::CheckReplay(fdataw.cFileName)) {
-			lstReplayList->addItem(fdataw.cFileName);
-		}
-	} while(FindNextFileW(fh, &fdataw));
-	FindClose(fh);
-#else
 	DIR * dir;
 	struct dirent * dirp;
 	if((dir = opendir("./replay/")) == NULL)
@@ -1327,21 +1315,10 @@ void Game::RefreshReplay() {
 			lstReplayList->addItem(wname);
 	}
 	closedir(dir);
-#endif
 }
 void Game::RefreshSingleplay() {
 	lstSinglePlayList->clear();
-#ifdef _WIN32
-	WIN32_FIND_DATAW fdataw;
-	HANDLE fh = FindFirstFileW(L"./single/*.lua", &fdataw);
-	if(fh == INVALID_HANDLE_VALUE)
-		return;
-	do {
-		if(!(fdataw.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			lstSinglePlayList->addItem(fdataw.cFileName);
-	} while(FindNextFileW(fh, &fdataw));
-	FindClose(fh);
-#else
+	stSinglePlayInfo->setText(L"");
 	DIR * dir;
 	struct dirent * dirp;
 	if((dir = opendir("./single/")) == NULL)
@@ -1355,7 +1332,6 @@ void Game::RefreshSingleplay() {
 		lstSinglePlayList->addItem(wname);
 	}
 	closedir(dir);
-#endif
 }
 void Game::RefreshBot() {
 	if(!gameConf.enable_bot_mode)
