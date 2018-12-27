@@ -78,8 +78,8 @@
     <!-- settings -->
     <string name="server_name">名称:</string>
     <string name="server_ip">主机信息:</string>
-    <string name="server_user">用户:</string>
-    <string name="server_room_name">房间名:</string>
+    <string name="server_user">昵称:</string>
+    <string name="server_room_name">房间密码:</string>
     <string name="server_port">端口:</string>
     <string name="server_room_pwd">密码:</string>
     <string name="server_user_pwd">密码:</string>
@@ -240,4 +240,5 @@
     <string name="tutorial">查看软件教程</string>
     <string name="about_help">点击您想要了解的内容</string>
     <string name="to_open">去开启</string>
+    <string name="crashed">软件错误退出</string>
 </resources>

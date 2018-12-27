@@ -240,4 +240,5 @@
     <string name="tutorial">Soft Tutorial</string>
     <string name="about_help">Click button which you want to know</string>
     <string name="to_open">to Open</string>
+    <string name="crashed">YGOMobile Crashed！</string>
 </resources>

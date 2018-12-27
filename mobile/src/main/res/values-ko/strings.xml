@@ -241,4 +241,5 @@
     <string name="tutorial">가이드 북 보기</string>
     <string name="about_help">원하는 내용을 클릭합니다.</string>
     <string name="to_open">열기</string>
+    <string name="crashed">YGOMobile 추락 한！</string>
 </resources>
