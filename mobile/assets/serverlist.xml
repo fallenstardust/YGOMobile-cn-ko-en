@@ -18,9 +18,9 @@
     </server-->
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>C萌约战</name>
-        <ip>120.24.169.252</ip>
-        <port>233</port>
+        <name>2Pick轮抽服务器</name>
+        <ip>2pick.mycard.moe</ip>
+        <port>765</port>
         <keep>true</keep>
     </server>
 </servers>

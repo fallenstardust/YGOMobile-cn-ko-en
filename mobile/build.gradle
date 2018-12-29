@@ -101,6 +101,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //
     implementation(name: 'paysdk-release-1.2.3', ext: 'aar')
+    implementation 'com.pgyersdk:sdk:3.0.2'
 
 
 }
