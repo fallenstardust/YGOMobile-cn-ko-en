@@ -178,44 +178,25 @@
     <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
     <!--android:priority="1000"-->
         <activity
-            android:name="com.base.bj.trpayjar.TrPayAcitivity"
+            android:name="com.base.bj.paysdk.TrPayAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="behind"
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
         <activity
-            android:name="com.base.bj.trpayjar.TrPayUnionAcitivity"
+            android:name="com.base.bj.paysdk.TrPayUnionAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="false"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
         <activity
-            android:name="com.base.bj.trpayjar.TrSelectListActivity"
+            android:name="com.base.bj.paysdk.TrSelectListActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="false"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
-        <!-- alipay sdk begin -->
-        <activity
-            android:name="com.alipay.sdk.app.H5PayActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="false"
-            android:screenOrientation="behind"
-            android:windowSoftInputMode="adjustResize|stateHidden" >
-        </activity>
-        <activity
-            android:name="com.alipay.sdk.app.H5AuthActivity"
-            android:configChanges="orientation|keyboardHidden|navigation"
-            android:exported="false"
-            android:screenOrientation="behind"
-            android:windowSoftInputMode="adjustResize|stateHidden" >
-        </activity>
-        <provider
-            android:name="com.pgyersdk.PgyerProvider"
-            android:authorities="${applicationId}.com.pgyer.provider"
-            android:exported="false"/>
         <meta-data
             android:name="PGYER_APPID"
             android:value="${PGYER_APPID}" >

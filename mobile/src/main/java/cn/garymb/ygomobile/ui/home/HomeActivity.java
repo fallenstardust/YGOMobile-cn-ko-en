@@ -1,8 +1,5 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.app.Activity;
-import android.app.NotificationManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,15 +7,12 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -32,7 +26,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
-
 
 import com.base.bj.paysdk.utils.TrPay;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
@@ -53,11 +46,8 @@ import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.GameApplication;
-import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
@@ -84,6 +74,103 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     long exitLasttime = 0;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
+
+    /*
+     *isToastCheckUpdateing  是否提示正在检查更新
+     *isToastNoUpdata  没有更新是否提示
+     * isErrorIntent  检查更新失败是否跳转下载地址
+     */
+    public static void checkPgyerUpdateSilent(Context context, boolean isToastCheckUpdateing, boolean isToastNoUpdata, boolean isErrorIntent) {
+        final DialogPlus builder = new DialogPlus(context);
+        if (isToastCheckUpdateing) {
+            builder.showProgressBar();
+            builder.hideTitleBar();
+            builder.setMessage(R.string.Checking_Update);
+            builder.show();
+        }
+        //蒲公英自动检查更新
+        new PgyUpdateManager.Builder()
+                .setForced(true)
+                .setUserCanRetry(false)
+                .setDeleteHistroyApk(false)
+                .setUpdateManagerListener(new UpdateManagerListener() {
+                    @Override
+                    public void onNoUpdateAvailable() {
+                        if (isToastNoUpdata) {
+                            builder.dismiss();
+                            Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onUpdateAvailable(AppBean appBean) {
+                        final String versionName, updateMessage;
+                        versionName = appBean.getVersionName();
+                        updateMessage = appBean.getReleaseNote();
+                        builder.hideProgressBar();
+                        builder.showTitleBar();
+                        builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
+                        builder.setMessage(updateMessage);
+                        builder.setRightButtonText(R.string.Download);
+                        builder.setRightButtonListener((dlg, i) -> {
+                            builder.showProgressBar2();
+                            builder.hideButton();
+                            builder.setTitle(R.string.Downloading);
+                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
+                        });
+
+                        builder.show();
+                    }
+
+                    @Override
+                    public void checkUpdateFailed(Exception e) {
+                        if (isErrorIntent) {
+                            builder.hideProgressBar();
+                            builder.showTitleBar();
+                            builder.setTitle(context.getResources().getString(R.string.Checking_Update_Failed));
+                            builder.setMessage(e.getMessage()
+                                    + context.getResources().getString(R.string.Ask_to_Change_Other_Way));
+                            builder.setLeftButtonText(R.string.Cancel);
+                            builder.setRightButtonText(R.string.OK);
+                            builder.setRightButtonListener(new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Intent.ACTION_VIEW);
+                                    intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
+                                    context.startActivity(intent);
+                                    dialog.dismiss();
+                                }
+                            });
+                            builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
+                    }
+                })
+                .setDownloadFileListener(new DownloadFileListener() {
+                    @Override
+                    public void downloadFailed() {
+                        builder.dismiss();
+                    }
+
+                    @Override
+                    public void downloadSuccessful(Uri uri) {
+                        builder.dismiss();
+                        PgyUpdateManager.installApk(uri);
+                    }
+
+                    @Override
+                    public void onProgressUpdate(Integer... integers) {
+                        builder.getProgressBar2().setProgress(integers[0]);
+                    }
+                })
+                .register();
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -456,103 +543,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 .normalText(str);
         menuButton.addBuilder(builder);
         mMenuIds.put(mMenuIds.size(), menuId);
-    }
-
-    /*
-     *isToastCheckUpdateing  是否提示正在检查更新
-     *isToastNoUpdata  没有更新是否提示
-     * isErrorIntent  检查更新失败是否跳转下载地址
-     */
-    public static void checkPgyerUpdateSilent(Context context, boolean isToastCheckUpdateing, boolean isToastNoUpdata, boolean isErrorIntent) {
-        final DialogPlus builder = new DialogPlus(context);
-        if (isToastCheckUpdateing) {
-            builder.showProgressBar();
-            builder.hideTitleBar();
-            builder.setMessage(R.string.Checking_Update);
-            builder.show();
-        }
-        //蒲公英自动检查更新
-        new PgyUpdateManager.Builder()
-                .setForced(true)
-                .setUserCanRetry(false)
-                .setDeleteHistroyApk(false)
-                .setUpdateManagerListener(new UpdateManagerListener() {
-                    @Override
-                    public void onNoUpdateAvailable() {
-                        if (isToastNoUpdata) {
-                            builder.dismiss();
-                            Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onUpdateAvailable(AppBean appBean) {
-                        final String versionName, updateMessage;
-                        versionName = appBean.getVersionName();
-                        updateMessage = appBean.getReleaseNote();
-                        builder.hideProgressBar();
-                        builder.showTitleBar();
-                        builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
-                        builder.setMessage(updateMessage);
-                        builder.setRightButtonText(R.string.Download);
-                        builder.setRightButtonListener((dlg, i) -> {
-                            builder.showProgressBar2();
-                            builder.hideButton();
-                            builder.setTitle(R.string.Downloading);
-                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
-                        });
-
-                        builder.show();
-                    }
-
-                    @Override
-                    public void checkUpdateFailed(Exception e) {
-                        if (isErrorIntent) {
-                            builder.hideProgressBar();
-                            builder.showTitleBar();
-                            builder.setTitle(context.getResources().getString(R.string.Checking_Update_Failed));
-                            builder.setMessage(e.getMessage()
-                                    + context.getResources().getString(R.string.Ask_to_Change_Other_Way));
-                            builder.setLeftButtonText(R.string.Cancel);
-                            builder.setRightButtonText(R.string.OK);
-                            builder.setRightButtonListener(new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent();
-                                    intent.setAction(Intent.ACTION_VIEW);
-                                    intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
-                                    context.startActivity(intent);
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.show();
-                        }
-                    }
-                })
-                .setDownloadFileListener(new DownloadFileListener() {
-                    @Override
-                    public void downloadFailed() {
-                        builder.dismiss();
-                    }
-
-                    @Override
-                    public void downloadSuccessful(Uri uri) {
-                        builder.dismiss();
-                        PgyUpdateManager.installApk(uri);
-                    }
-
-                    @Override
-                    public void onProgressUpdate(Integer... integers) {
-                        builder.getProgressBar2().setProgress(integers[0]);
-                    }
-                })
-                .register();
     }
 
     public void AnimationShake() {

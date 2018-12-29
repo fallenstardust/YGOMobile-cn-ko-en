@@ -2,12 +2,9 @@ package cn.garymb.ygomobile.ui.preference.fragments;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -19,7 +16,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -27,16 +23,10 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
-import com.pgyersdk.update.DownloadFileListener;
-import com.pgyersdk.update.PgyUpdateManager;
-import com.pgyersdk.update.UpdateManagerListener;
-import com.pgyersdk.update.javabean.AppBean;
-
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -58,6 +48,7 @@ import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
+import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
@@ -79,7 +70,6 @@ import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
-import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class SettingFragment extends PreferenceFragmentPlus {
@@ -87,7 +77,26 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private static final int COPY_SO_OK = 0;
     private static final int COPY_SO_EXCEPTION = 1;
     private static final int COPY_SO_NO_ROOT = 2;
-
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case COPY_SO_OK:
+                    Toast.makeText(getActivity(), "替换成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case COPY_SO_EXCEPTION:
+                    Toast.makeText(getActivity(), "替换失败，原因为" + msg.obj, Toast.LENGTH_SHORT).show();
+                    break;
+                case COPY_SO_NO_ROOT:
+                    Toast.makeText(getActivity(), "没有root权限", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    };
+    private AppsSettings mSettings;
+    private boolean isInit = true;
     public SettingFragment() {
 
     }
@@ -96,9 +105,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
     protected SharedPreferences getSharedPreferences() {
         return AppsSettings.get().getSharedPreferences();
     }
-
-    private AppsSettings mSettings;
-    private boolean isInit = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -372,8 +378,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     try {
                         String cmd = "chmod -R 777 " + soFile.getAbsolutePath();
                         process = Runtime.getRuntime().exec("su"); //切换到root帐号
-                        if (process==null){
-                            me.what=COPY_SO_NO_ROOT;
+                        if (process == null) {
+                            me.what = COPY_SO_NO_ROOT;
                             handler.sendMessage(me);
                             return;
                         }
@@ -399,8 +405,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                                 e.printStackTrace();
                             }
                         }
-                        if (process!=null)
-                        process.destroy();
+                        if (process != null)
+                            process.destroy();
 
                     }
                     handler.sendMessage(me);
@@ -411,25 +417,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.onChooseFileOk(preference, file);
         }
     }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case COPY_SO_OK:
-                    Toast.makeText(getActivity(), "替换成功", Toast.LENGTH_SHORT).show();
-                    break;
-                case COPY_SO_EXCEPTION:
-                    Toast.makeText(getActivity(), "替换失败，原因为" + msg.obj, Toast.LENGTH_SHORT).show();
-                    break;
-                case COPY_SO_NO_ROOT:
-                    Toast.makeText(getActivity(),"没有root权限",Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    };
 
     private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
         int width = getResources().getDisplayMetrics().widthPixels;
