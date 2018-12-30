@@ -196,7 +196,7 @@
     <string name="bbs">社区</string>
     <string name="settings_pref_settings_only_game">直接启动游戏</string>
     <string name="only_game_tip">慎重勾选，清除应用数据或者重装才能恢复</string>
-    <string name="title_use_ex">使用额外卡库</string>
+    <string name="title_use_ex">启用扩展卡包</string>
     <string name="tip_network_image">服务器爆炸了</string>
     <string name="game_version">游戏版本</string>
     <string name="error_game_ver">错误格式！应为0x开头如:0x1342(显示1.034.2)</string>
