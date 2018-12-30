@@ -144,10 +144,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
-            //复制资源
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                    mSettings.getCoreSkinPath(), needsUpdate);
+            //复制贴图
+            if (needsUpdate) {
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
+                        mSettings.getCoreSkinPath(),  false);
+            }
             //复制字体
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
