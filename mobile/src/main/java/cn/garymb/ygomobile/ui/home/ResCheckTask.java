@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -144,11 +145,15 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
-            //复制贴图
-            if (needsUpdate) {
+            String[] textures1=mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
+            String[] textures2=new File(mSettings.getCoreSkinPath()).list();
+
+            //复制资源文件夹
+            //如果textures文件夹不存在/textures资源数量不够/是更新则复制
+            if (textures2==null||(textures1!=null&&textures1.length>textures2.length)||needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                        mSettings.getCoreSkinPath(),  false);
+                        mSettings.getCoreSkinPath(), needsUpdate);
             }
             //复制字体
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
@@ -161,7 +166,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         resPath, needsUpdate);
             }
             //复制数据库
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
             copyCdbFile(needsUpdate);
             //复制卡图压缩包
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
@@ -190,18 +194,16 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     void copyCdbFile(boolean needsUpdate) throws IOException {
         File dbFile = new File(mSettings.getDataBasePath(), DATABASE_NAME);
-        boolean copyDb = true;
-        if (dbFile.exists()&&dbFile.length()<1024*1024) {
-            copyDb = false;
-            if (needsUpdate) {
-                copyDb = true;
+        //如果数据库存在
+        if (dbFile.exists()) {
+            //如果是更新或者数据库大小小于1m
+            if (needsUpdate || dbFile.length() < 1024 * 1024)
                 dbFile.delete();
-            }
+            else
+                return;
         }
-        if (copyDb) {
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
-//            doSomeTrickOnDatabase(dbFile.getAbsolutePath());
-        }
+        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
+        IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
     }
 
     public static boolean checkDataBase(String path) {
