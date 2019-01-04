@@ -8,8 +8,8 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 331101230
-        versionName "3.3.11"
+        versionCode 331200104
+        versionName "3.3.12"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
@@ -100,7 +100,7 @@ dependencies {
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //
-    implementation(name: 'paysdk-release-1.2.3', ext: 'aar')
+    implementation(name: 'paysdk-release-1.2.4', ext: 'aar')
     implementation 'com.pgyersdk:sdk:3.0.2'
 
 
