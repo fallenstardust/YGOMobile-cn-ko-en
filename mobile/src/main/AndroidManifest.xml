@@ -33,7 +33,7 @@
         android:largeHeap="true"
         android:supportsRtl="false"
         android:theme="@style/AppTheme"
-        android:networkSecurityConfig="@xml/network_security_config"
+
         tools:replace="android:allowBackup,android:supportsRtl">
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
