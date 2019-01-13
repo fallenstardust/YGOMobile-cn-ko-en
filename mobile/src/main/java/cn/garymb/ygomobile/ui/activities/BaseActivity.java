@@ -23,7 +23,7 @@ import cn.garymb.ygomobile.lite.R;
 
 
 public class BaseActivity extends AppCompatActivity {
-    private final static int REQUEST_PERMISSIONS = 0x1000 + 1;
+    protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
     private boolean mExitAnim = true;
     private boolean mEnterAnim = true;
 
@@ -33,7 +33,7 @@ public class BaseActivity extends AppCompatActivity {
         return PERMISSIONS;
     }
 
-    protected final String[] PERMISSIONS ={
+    protected final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
 //            Manifest.permission.SYSTEM_ALERT_WINDOW,
@@ -56,7 +56,9 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startPermissionsActivity();
+        if (Build.VERSION.SDK_INT<Build.VERSION_CODES.M|| !startPermissionsActivity()){
+            onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
+        }
     }
 
     public Activity getActivity() {
@@ -191,10 +193,12 @@ public class BaseActivity extends AppCompatActivity {
         setActionBarTitle(getString(rid));
     }
 
-    protected void startPermissionsActivity() {
+    protected boolean startPermissionsActivity() {
         String[] PERMISSIONS = getPermissions();
-        if (PERMISSIONS == null || PERMISSIONS.length == 0) return;
+        if (PERMISSIONS == null || PERMISSIONS.length == 0)
+            return false;
         PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
+        return true;
     }
 
     @Override
