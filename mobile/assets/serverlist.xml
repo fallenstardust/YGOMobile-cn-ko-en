@@ -23,4 +23,11 @@
         <port>765</port>
         <keep>true</keep>
     </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>7210服务器</name>
+        <ip>222.73.218.25</ip>
+        <port>7210</port>
+        <keep>true</keep>
+    </server>
 </servers>
