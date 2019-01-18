@@ -69,7 +69,7 @@ android {
     aaptOptions {
         noCompress 'dll', "config"
     }
-    buildToolsVersion '28.0.3'
+//    buildToolsVersion '28.0.3'
 }
 
 repositories {
