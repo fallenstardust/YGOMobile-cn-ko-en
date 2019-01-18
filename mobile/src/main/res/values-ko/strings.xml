@@ -89,7 +89,9 @@
     <string name="server_is_exist">이미 존재하는 서버 입니다.</string>
     <string name="server_info_error">적절하지 않는 서버정보</string>
     <string name="card_search">카드검색</string>
+    <string name="card_search_exception">卡片搜索错误</string>
     <string name="deck_manager">덱관리자</string>
+    <string name="deck_manager_exception">卡组编辑错误</string>
     <string name="search">검색</string>
     <string name="search_open">카드옵션 선택</string>
     <string name="search_close">닫기</string>

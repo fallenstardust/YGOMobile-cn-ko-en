@@ -89,7 +89,9 @@
     <string name="server_is_exist">服务器信息已经存在！</string>
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
+    <string name="card_search_exception">卡片搜索错误</string>
     <string name="deck_manager">卡组编辑</string>
+    <string name="deck_manager_exception">卡组编辑错误</string>
     <string name="search">搜索</string>
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
