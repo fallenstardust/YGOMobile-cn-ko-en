@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,7 +19,7 @@ public class LogoActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_logo);
-        if(AppsSettings.get().isOnlyGame()){
+        if (AppsSettings.get().isOnlyGame()) {
             YGOStarter.startGame(this, null);
             finish();
             return;
@@ -34,11 +33,11 @@ public class LogoActivity extends BaseActivity {
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
         if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
             finish();
-        }else {
-            if(BuildConfig.DEBUG){
-                startActivity(new Intent(LogoActivity.this, MainActivity.class));
-                finish();
-            }else {
+        } else {
+         //   if (BuildConfig.DEBUG) {
+         //       startActivity(new Intent(LogoActivity.this, MainActivity.class));
+         //       finish();
+         //   } else {
                 handler = new Handler();
                 runnable = new Runnable() {
                     @Override
@@ -49,7 +48,7 @@ public class LogoActivity extends BaseActivity {
                 };
                 handler.postDelayed(runnable, 1000);
                 Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
-            }
+         //   }
         }
     }
 

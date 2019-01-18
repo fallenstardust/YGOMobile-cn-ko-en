@@ -3,18 +3,13 @@ package cn.garymb.ygomobile.ui.home;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import java.io.IOException;
@@ -38,12 +33,12 @@ import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
-public class MainActivity extends HomeActivity{
+public class MainActivity extends HomeActivity {
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
     ResCheckTask mResCheckTask;
-    private final String[] PERMISSIONS ={
+    private final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.SYSTEM_ALERT_WINDOW,
@@ -56,7 +51,7 @@ public class MainActivity extends HomeActivity{
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
-       //动态权限
+        //动态权限
 //        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
         //资源复制
         checkRes();
@@ -84,7 +79,7 @@ public class MainActivity extends HomeActivity{
             }
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
-                   DialogPlus dialog= new DialogPlus(this)
+                    DialogPlus dialog = new DialogPlus(this)
                             .setTitleText(getString(R.string.settings_about_change_log))
                             .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                             .hideButton()
@@ -97,17 +92,17 @@ public class MainActivity extends HomeActivity{
                                     }
                                 }
                             });
-                   dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                       @Override
-                       public void onDismiss(DialogInterface dialogInterface) {
-                           PermissionUtil.isServicePermission(MainActivity.this,true);
+                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialogInterface) {
+                            PermissionUtil.isServicePermission(MainActivity.this, true);
 
-                   }
-                   });
-                   dialog.show();
+                        }
+                    });
+                    dialog.show();
                 }
             } else {
-                PermissionUtil.isServicePermission(MainActivity.this,true);
+                PermissionUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
 
@@ -128,8 +123,8 @@ public class MainActivity extends HomeActivity{
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if(mResCheckTask!=null)
-        mResCheckTask.unregisterMReceiver();
+        if (mResCheckTask != null)
+            mResCheckTask.unregisterMReceiver();
     }
 
     @Override
@@ -177,35 +172,35 @@ public class MainActivity extends HomeActivity{
 
     @Override
     public void updateImages() {
-        Log.e("MainActivity","重置资源");
+        Log.e("MainActivity", "重置资源");
         DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
         dialog.show();
         VUiKit.defer().when(() -> {
-            Log.e("MainActivity","开始复制");
-                try {
-                    IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
-                    if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
-                        IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
-                                AppsSettings.get().getResourcePath(), true);
-                    }
-                    if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                        IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                                AppsSettings.get().getResourcePath(), true);
-                    }
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
+            Log.e("MainActivity", "开始复制");
+            try {
+                IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
+                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
                             AppsSettings.get().getResourcePath(), true);
-
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
-                            AppsSettings.get().getResourcePath(), true);
-                    
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
-                            AppsSettings.get().getCoreSkinPath(),  false);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.e("MainActivity","错误"+e);
                 }
+                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
+                            AppsSettings.get().getResourcePath(), true);
+                }
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
+                        AppsSettings.get().getResourcePath(), true);
+
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
+                        AppsSettings.get().getResourcePath(), true);
+
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
+                        AppsSettings.get().getCoreSkinPath(), false);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e("MainActivity", "错误" + e);
+            }
         }).done((rs) -> {
-            Log.e("MainActivity","复制完毕");
+            Log.e("MainActivity", "复制完毕");
             dialog.dismiss();
         });
     }
