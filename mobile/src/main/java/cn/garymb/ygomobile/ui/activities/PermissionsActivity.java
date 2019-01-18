@@ -42,14 +42,16 @@ public class PermissionsActivity extends AppCompatActivity {
     private boolean isRequireCheck; // 是否需要系统权限检测
 
     // 启动当前权限页面的公开接口
-    public static void startActivityForResult(Activity activity, int requestCode, String... permissions) {
-        if (permissions == null || permissions.length == 0) return;
+    public static boolean startActivityForResult(Activity activity, int requestCode, String... permissions) {
+        if (permissions == null || permissions.length == 0) return false;
         PermissionsChecker checker = PermissionsChecker.getPermissionsChecker(activity);
         if (checker.lacksPermissions(permissions)) {
             Intent intent = new Intent(activity, PermissionsActivity.class);
             intent.putExtra(EXTRA_PERMISSIONS, permissions);
             ActivityCompat.startActivityForResult(activity, intent, requestCode, null);
+            return true;
         }
+            return false;
     }
 
     @Override
