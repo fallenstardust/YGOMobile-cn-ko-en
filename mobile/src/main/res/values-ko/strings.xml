@@ -89,9 +89,7 @@
     <string name="server_is_exist">이미 존재하는 서버 입니다.</string>
     <string name="server_info_error">적절하지 않는 서버정보</string>
     <string name="card_search">카드검색</string>
-    <string name="card_search_exception">잘못된 바로 가기</string>
     <string name="deck_manager">덱관리자</string>
-    <string name="deck_manager_exception">잘못된 바로 가기</string>
     <string name="search">검색</string>
     <string name="search_open">카드옵션 선택</string>
     <string name="search_close">닫기</string>
@@ -244,4 +242,5 @@
     <string name="about_help">원하는 내용을 클릭합니다.</string>
     <string name="to_open">열기</string>
     <string name="crashed">YGOMobile 추락 한！</string>
+    <string name="invalid_shortcut">잘못된 바로 가기</string>
 </resources>

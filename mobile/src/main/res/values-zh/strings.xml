@@ -89,9 +89,7 @@
     <string name="server_is_exist">服务器信息已经存在！</string>
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
-    <string name="card_search_exception">无效快捷方式</string>
     <string name="deck_manager">卡组编辑</string>
-    <string name="deck_manager_exception">无效快捷方式</string>
     <string name="search">搜索</string>
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
@@ -243,4 +241,5 @@
     <string name="about_help">点击您想要了解的内容</string>
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
+    <string name="invalid_shortcut">无效的快捷方式</string>
 </resources>
