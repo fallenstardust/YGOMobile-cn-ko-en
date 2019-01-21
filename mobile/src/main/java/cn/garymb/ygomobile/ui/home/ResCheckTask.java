@@ -149,11 +149,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             String[] textures2=new File(mSettings.getCoreSkinPath()).list();
 
             //复制资源文件夹
-            //如果textures文件夹不存在/textures资源数量不够/是更新则复制
+            //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
             if (textures2==null||(textures1!=null&&textures1.length>textures2.length)||needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                        mSettings.getCoreSkinPath(), needsUpdate);
+                        mSettings.getCoreSkinPath(), false);
             }
             //复制字体
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
