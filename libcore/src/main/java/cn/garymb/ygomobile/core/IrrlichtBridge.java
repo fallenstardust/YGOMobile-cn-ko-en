@@ -40,17 +40,17 @@ public final class IrrlichtBridge {
     }
 
     public static int sNativeHandle;
-
+    //显示卡图
     public static native byte[] nativeBpgImage(byte[] data);
-
+    //插入文本（大概是发送消息）
     private static native void nativeInsertText(int handle, String text);
-
+    //刷新文字
     private static native void nativeRefreshTexture(int handle);
-
+    //忽略时点
     private static native void nativeIgnoreChain(int handle, boolean begin);
-
+    //强制时点
     private static native void nativeReactChain(int handle, boolean begin);
-
+    //取消连锁
     private static native void nativeCancelChain(int handle);
 
     private static native void nativeSetCheckBoxesSelection(int handle, int idx);
