@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.lite.R;
 
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public static final String TAG = "YGOMobile-Exception";
@@ -69,7 +70,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             @Override
             public void run() {
                 Looper.prepare();
-                Toast.makeText(context, "软件错误退出", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.crashed, Toast.LENGTH_LONG).show();
                 Looper.loop();
             }
         }.start();

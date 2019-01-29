@@ -5,6 +5,8 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
@@ -210,4 +212,16 @@ public class BitmapUtil {
         view.measure(widthSpec, heightSpec);
         view.layout(0, 0, w, h);
     }
+
+    public static Bitmap drawBg4Bitmap(int color, Bitmap orginBitmap) {
+        Paint paint = new Paint();
+        paint.setColor(color);
+        Bitmap bitmap = Bitmap.createBitmap(orginBitmap.getWidth(),
+                orginBitmap.getHeight(), orginBitmap.getConfig());
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawRect(0, 0, orginBitmap.getWidth(), orginBitmap.getHeight(), paint);
+        canvas.drawBitmap(orginBitmap, 0, 0, paint);
+        return bitmap;
+    }
+
 }

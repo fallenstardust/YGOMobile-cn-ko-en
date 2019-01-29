@@ -71,8 +71,8 @@
     <string name="settings_game_diy_cover">Game Background</string>
     <string name="settings_game_diy_card_back">Card Cover</string>
     <string name="settings_game_diy_card_db">Use your own card database</string>
-    <string name="settings_test_options"></string>
-    <string name="settings_test_replace_kernel"></string>
+    <string name="settings_test_options">Lab</string>
+    <string name="settings_test_replace_kernel">Change GameCore(Needs root)</string>
     <string name="settings_game_immersive_mode">Optimize not 16:9 resolution</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Game Avatar</string>
@@ -89,7 +89,7 @@
     </string-array>
     <!-- settings -->
 
-    <string name="server_name">Server:</string>
+    <string name="server_name">Name:</string>
     <string name="server_ip">Host:</string>
     <string name="server_user">User:</string>
     <string name="server_room_name">Room Name:</string>
@@ -245,4 +245,6 @@
     <string name="tutorial">Soft Tutorial</string>
     <string name="about_help">Click button which you want to know</string>
     <string name="to_open">to Open</string>
+    <string name="crashed">YGOMobile Crashed！</string>
+    <string name="invalid_shortcut">Invalid Shortcut</string>
 </resources>

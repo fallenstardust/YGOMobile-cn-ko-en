@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -21,6 +22,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
@@ -114,8 +116,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         //res
         try {
             String resPath = mSettings.getResourcePath();
+            //创建游戏目录
             IOUtils.createNoMedia(resPath);
+            //检查文件夹
             checkDirs();
+            //复制游戏配置文件
             copyCoreConfig(resPath, needsUpdate);
             if (AppsSettings.get().isUseExtraCards()) {
                 //自定义数据库无效，则用默认的
@@ -123,61 +128,54 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     AppsSettings.get().setUseExtraCards(false);
                 }
             }
-            /*     if (needsUpdate) {
-             *        if(AppsSettings.get().resetGameVersion() == 0){
-             *            VUiKit.show(mContext, mContext.getString(R.string.reset_game_ver_fail));
-             *        }
-             *    }*/
+
             //设置字体
             ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
             systemConf.setFontSize(mSettings.getFontSize());
             systemConf.close();
 
-//            copyCoreConfig(new File(mSettings.getResourcePath(), GameSettings.CORE_CONFIG_PATH).getAbsolutePath());
+            //如果是新版本
             if (needsUpdate) {
+                //复制卡组
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
-                        new File(resPath, Constants.CORE_DECK_PATH).getAbsolutePath(), needsUpdate);
-            }
-            if (needsUpdate) {
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                        mSettings.getCoreSkinPath(), false, mSettings.isPendulumScale());
-            }
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
-                    mSettings.getFontDirPath(), false);
-            if (needsUpdate) {
+                        mSettings.getDeckDir(), needsUpdate);
+                //复制残局
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
-                        new File(resPath, Constants.CORE_SINGLE_PATH).getAbsolutePath(), needsUpdate);
+                        mSettings.getSingleDir(), needsUpdate);
             }
+            String[] textures1=mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
+            String[] textures2=new File(mSettings.getCoreSkinPath()).list();
+
+            //复制资源文件夹
+            //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
+            if (textures2==null||(textures1!=null&&textures1.length>textures2.length)||needsUpdate) {
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
+                        mSettings.getCoreSkinPath(), false);
+            }
+            //复制字体
+            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
+            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
+                    mSettings.getFontDirPath(), needsUpdate);
+            //复制脚本压缩包
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
                         resPath, needsUpdate);
             }
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
+            //复制数据库
             copyCdbFile(needsUpdate);
-
+            //复制卡图压缩包
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
-            //if (needsUpdate) {
-            File filesDir = mContext.getFilesDir();
+
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    filesDir.getPath(), needsUpdate);
-            //   }
-
-            if (needsUpdate) {
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.ex_pack)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_EXPANSIONS),
-                        mSettings.getExpansionsPath().getAbsolutePath(), true, needsUpdate);
-            }
-
-            //checkWindbot();
+                    mContext.getFilesDir().getPath(), needsUpdate);
             han.sendEmptyMessage(0);
 
             loadData();
@@ -189,25 +187,23 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         return ERROR_NONE;
     }
 
-    private void loadData(){
+    private void loadData() {
         setMessage(mContext.getString(R.string.loading));
         DataManager.get().load(false);
     }
 
     void copyCdbFile(boolean needsUpdate) throws IOException {
         File dbFile = new File(mSettings.getDataBasePath(), DATABASE_NAME);
-        boolean copyDb = true;
+        //如果数据库存在
         if (dbFile.exists()) {
-            copyDb = false;
-            if (needsUpdate) {
-                copyDb = true;
+            //如果是更新或者数据库大小小于1m
+            if (needsUpdate || dbFile.length() < 1024 * 1024)
                 dbFile.delete();
-            }
+            else
+                return;
         }
-        if (copyDb) {
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
-//            doSomeTrickOnDatabase(dbFile.getAbsolutePath());
-        }
+        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
+        IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
     }
 
     public static boolean checkDataBase(String path) {
@@ -269,13 +265,27 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     private void checkDirs() {
-        String[] dirs = {Constants.CORE_SCRIPT_PATH,
+        String[] dirs = {
+                //脚本文件夹
+                Constants.CORE_SCRIPT_PATH,
+                //残局文件夹
                 Constants.CORE_SINGLE_PATH,
+                //卡组文件夹
                 Constants.CORE_DECK_PATH,
+                //录像文件夹
                 Constants.CORE_REPLAY_PATH,
+                //字体文件夹
                 Constants.FONT_DIRECTORY,
+                //资源文件夹
+                Constants.CORE_SKIN_PATH,
+                //卡图文件夹
                 Constants.CORE_IMAGE_PATH,
-                Constants.MOBILE_LOG
+                //log文件夹
+                Constants.MOBILE_LOG,
+                //卡组分享截图文件夹
+                Constants.MOBILE_DECK_SHARE,
+                //额外卡库文件夹
+                Constants.CORE_EXPANSIONS
         };
         File dirFile = null;
         for (String dir : dirs) {

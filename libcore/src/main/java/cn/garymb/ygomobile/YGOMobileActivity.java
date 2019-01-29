@@ -96,11 +96,11 @@ public class YGOMobileActivity extends NativeActivity implements
         return mApp;
     }
 
-
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
@@ -119,12 +119,14 @@ public class YGOMobileActivity extends NativeActivity implements
                 .setPackage(getPackageName()));
     }
 
+    //电池管理
     private PowerManager mPM;
     private PowerManager.WakeLock mLock;
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);

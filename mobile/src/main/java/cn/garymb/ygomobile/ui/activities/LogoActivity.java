@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,7 +11,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 
-public class LogoActivity extends Activity {
+public class LogoActivity extends BaseActivity {
     Handler handler;
     Runnable runnable;
 
@@ -20,27 +19,39 @@ public class LogoActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_logo);
-        if(AppsSettings.get().isOnlyGame()){
+        if (AppsSettings.get().isOnlyGame()) {
             YGOStarter.startGame(this, null);
             finish();
             return;
         }
-        if(BuildConfig.DEBUG){
-            startActivity(new Intent(LogoActivity.this, MainActivity.class));
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
+        if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
             finish();
-        }else {
-            handler = new Handler();
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    startActivity(new Intent(LogoActivity.this, MainActivity.class));
-                    finish();
-                }
-            };
-            handler.postDelayed(runnable, 1000);
-            Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
+        } else {
+         //   if (BuildConfig.DEBUG) {
+         //       startActivity(new Intent(LogoActivity.this, MainActivity.class));
+         //       finish();
+         //   } else {
+                handler = new Handler();
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        startActivity(new Intent(LogoActivity.this, MainActivity.class));
+                        finish();
+                    }
+                };
+                handler.postDelayed(runnable, 1000);
+                Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
+         //   }
         }
     }
+
   /*  @Override
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);

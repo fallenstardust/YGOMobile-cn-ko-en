@@ -9,9 +9,10 @@ import android.text.InputType;
 import android.view.Gravity;
 import android.widget.EditText;
 
-import com.base.bj.trpayjar.domain.TrPayResult;
-import com.base.bj.trpayjar.listener.PayResultListener;
-import com.base.bj.trpayjar.utils.TrPay;
+
+import com.base.bj.paysdk.domain.TrPayResult;
+import com.base.bj.paysdk.listener.PayResultListener;
+import com.base.bj.paysdk.utils.TrPay;
 
 import java.net.URLEncoder;
 import java.util.UUID;

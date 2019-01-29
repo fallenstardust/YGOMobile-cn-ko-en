@@ -19,11 +19,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.IOException;
+
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 
 
 public class BaseActivity extends AppCompatActivity {
-    private final static int REQUEST_PERMISSIONS = 0x1000 + 1;
+    protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
     private boolean mExitAnim = true;
     private boolean mEnterAnim = true;
 
@@ -33,7 +36,7 @@ public class BaseActivity extends AppCompatActivity {
         return PERMISSIONS;
     }
 
-    protected final String[] PERMISSIONS ={
+    protected final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
 //            Manifest.permission.SYSTEM_ALERT_WINDOW,
@@ -56,7 +59,19 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startPermissionsActivity();
+        try {
+            FileLogUtil.writeAndTime("开始显示");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (Build.VERSION.SDK_INT<Build.VERSION_CODES.M|| !startPermissionsActivity()){
+            try {
+                FileLogUtil.writeAndTime("不申请权限");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
+        }
     }
 
     public Activity getActivity() {
@@ -191,10 +206,16 @@ public class BaseActivity extends AppCompatActivity {
         setActionBarTitle(getString(rid));
     }
 
-    protected void startPermissionsActivity() {
+    protected boolean startPermissionsActivity() {
         String[] PERMISSIONS = getPermissions();
-        if (PERMISSIONS == null || PERMISSIONS.length == 0) return;
-        PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
+        if (PERMISSIONS == null || PERMISSIONS.length == 0)
+            return false;
+        try {
+            FileLogUtil.writeAndTime("申请权限");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
     }
 
     @Override
@@ -209,6 +230,11 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        try {
+            FileLogUtil.writeAndTime("resultcode值"+resultCode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
         if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
             showToast("喵不给我权限让我怎么运行？！");

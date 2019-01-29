@@ -3,10 +3,16 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.util.LruCache;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
@@ -57,6 +63,7 @@ import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import ocgcore.DataManager;
@@ -575,6 +582,9 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             case R.id.action_card_list:
                 showResult(true);
                 break;
+            case R.id.action_share_deck:
+                shareDeck();
+                break;
             case R.id.action_save:
                 if (mYdkFile == null) {
                     inputDeckName(null);
@@ -655,12 +665,37 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     private void shareDeck() {
+//        开启绘图缓存
+        mRecyclerView.setDrawingCacheEnabled(true);
+        //这个方法可调可不调，因为在getDrawingCache()里会自动判断有没有缓存有没有准备好，
+        //如果没有，会自动调用buildDrawingCache()
+        mRecyclerView.buildDrawingCache();
+        //获取绘图缓存 这里直接创建了一个新的bitmap
+        //因为我们在最后需要释放缓存资源，会释放掉缓存中创建的bitmap对象
+        Bitmap bitmap =BitmapUtil.drawBg4Bitmap(Color.parseColor("#e6f3fd"), Bitmap.createBitmap(mRecyclerView.getDrawingCache(), 0, 0, mRecyclerView.getMeasuredWidth(),
+                mRecyclerView.getMeasuredHeight()));
+
+        //清理绘图缓存，释放资源
+        mRecyclerView.destroyDrawingCache();
+//        shotRecyclerView(mRecyclerView)
+
         Deck deck = mDeckAdapater.toDeck(mYdkFile);
-        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
-        final String uriString = deck.toAppUri().toString();
-        final String httpUri = deck.toHttpUri().toString();
-        shareUrl(uriString, label);
+        String deckName=deck.getName();
+        int end=deckName.lastIndexOf(".");
+        if (end!=-1){
+            deckName=deckName.substring(0,end);
+        }
+        String savePath=new File(AppsSettings.get().getDeckSharePath(),deckName+".jpg").getAbsolutePath();
+        BitmapUtil.saveBitmap(bitmap,savePath,50);
+        ShareUtil.shareImage(DeckManagerActivityImpl.this,"卡组分享",savePath,null);
+
+
+//        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
+//        final String uriString = deck.toAppUri().toString();
+//        final String httpUri = deck.toHttpUri().toString();
+//        shareUrl(uriString, label);
     }
+
 
     private void shareUrl(String uri, String label) {
         String url = getString(R.string.deck_share_head) + "  " + uri;
@@ -861,7 +896,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
-        addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
+       // addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
+        addMenuButton(mMenuIds,menu,R.id.action_share_deck,R.string.share_deck,R.drawable.listicon);
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
 
