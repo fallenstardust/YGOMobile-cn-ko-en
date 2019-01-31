@@ -2,9 +2,9 @@ package cn.garymb.ygomobile.ui.cards;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-import android.support.v7.widget.helper.OnItemDragListener;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.OnItemDragListener;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Toast;

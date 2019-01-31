@@ -1,4 +1,4 @@
-package android.support.v7.widget;
+package androidx.recyclerview.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.lang.reflect.Field;
+
 
 public class GridLayoutManagerPlus extends GridLayoutManager {
     public GridLayoutManagerPlus(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {

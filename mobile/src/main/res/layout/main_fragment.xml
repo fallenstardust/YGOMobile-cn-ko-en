@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <com.stx.xhb.xbanner.XBanner
+        android:id="@+id/xb_banner"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        app:AutoPlayTime="3500"
+        app:isClipChildrenMode="true"
+        app:isClipChildrenModeLessThree="true"
+        app:pageChangeDuration="800"
+        app:pointsVisibility="false"
+        app:tipTextSize="12sp"
+        app:clipChildrenTopBottomMargin="0dp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin">
+
+        <com.ourygo.oy.view.OYTabLayout
+            app:tabPaddingStart="0dp"
+            android:layout_centerVertical="true"
+            android:id="@+id/tl_game_option"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:textColor="@color/colorAccent"
+            android:id="@+id/tv_add_setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_setting"
+            android:textSize="10sp" />
+    </RelativeLayout>
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/vp_game"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin">
+
+        <com.ourygo.oy.view.OYTabLayout
+            app:tabPaddingStart="0dp"
+            android:layout_centerVertical="true"
+            android:id="@+id/tl_replay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:textColor="@color/colorAccent"
+            android:id="@+id/tv_view_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/view_more"
+            android:textSize="10sp" />
+    </RelativeLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_replay"
+        android:layout_marginRight="@dimen/main_margin"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginBottom="18dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

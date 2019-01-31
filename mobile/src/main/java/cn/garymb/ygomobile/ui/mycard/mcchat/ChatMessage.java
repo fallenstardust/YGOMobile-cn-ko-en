@@ -25,7 +25,7 @@ public class ChatMessage {
     public static ChatMessage toChatMessage(Message message) {
 
         if (message.getBody() != null) {
-            String xs = message.toXML().toString();
+            String xs = message.toString();
 
             int cc = xs.indexOf("stamp='");
             if (cc != -1) {

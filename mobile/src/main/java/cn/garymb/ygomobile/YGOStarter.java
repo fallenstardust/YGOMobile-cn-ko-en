@@ -8,8 +8,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -23,6 +22,8 @@ import com.bumptech.glide.signature.StringSignature;
 import java.io.File;
 import java.util.HashMap;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;

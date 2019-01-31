@@ -1,6 +1,5 @@
 package ocgcore;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -13,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -45,7 +45,8 @@ public class LimitManager implements Closeable {
         return mLimitNames;
     }
 
-    public @NonNull LimitList getLimit(String name) {
+    public @NonNull
+    LimitList getLimit(String name) {
         return mLimitLists.get(name);
     }
 

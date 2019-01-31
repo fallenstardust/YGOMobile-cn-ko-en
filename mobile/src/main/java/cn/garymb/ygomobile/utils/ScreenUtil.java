@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+
 import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.View;
@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import androidx.annotation.RequiresApi;
 
 //屏幕工具类
 public class ScreenUtil {

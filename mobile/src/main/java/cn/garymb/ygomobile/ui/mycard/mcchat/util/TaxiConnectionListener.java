@@ -32,26 +32,6 @@ public class TaxiConnectionListener implements ConnectionListener {
         // TODO: Implement this method
     }
 
-    @Override
-    public void reconnectionSuccessful() {
-        //重新连接成功
-        Log.e("TaxiConnectionListener", "重连成功");
-        // TODO: Implement this method
-    }
-
-    @Override
-    public void reconnectingIn(int p1) {
-        //正在重连
-        Log.e("TaxiConnectionListener", "正在重连" + p1);
-        // TODO: Implement this method
-    }
-
-    @Override
-    public void reconnectionFailed(Exception p1) {
-        //重新连接失败
-        Log.e("重连失败", "失败" + p1);
-        // TODO: Implement this method
-    }
 
     private Timer tExit;
     private String username;

@@ -1,9 +1,10 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelperPlus;
-import android.support.v7.widget.helper.OnItemDragListener;
+
+import androidx.recyclerview.widget.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.OnItemDragListener;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;

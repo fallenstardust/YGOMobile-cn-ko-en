@@ -1,18 +1,16 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
-import android.support.v7.widget.helper.ItemTouchHelperPlus;
+
 import android.util.Log;
 
 import java.util.List;
 
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-
-import static android.support.v7.widget.helper.ItemTouchHelper.ACTION_STATE_DRAG;
-import static android.support.v7.widget.helper.ItemTouchHelper.ACTION_STATE_IDLE;
 
 public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback {
     private DeckDrager mDeckDrager;
@@ -104,11 +102,11 @@ public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback {
     @Override
     public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
         super.onSelectedChanged(viewHolder, actionState);
-        if (actionState == ACTION_STATE_DRAG) {
+        if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
             mDeckDrager.onDragStart();
             if (Constants.DEBUG)
                 Log.d("kk", "start drag");
-        } else if (actionState == ACTION_STATE_IDLE) {
+        } else if (actionState == ItemTouchHelper.ACTION_STATE_IDLE) {
             mDeckDrager.onDragEnd();
         }
     }

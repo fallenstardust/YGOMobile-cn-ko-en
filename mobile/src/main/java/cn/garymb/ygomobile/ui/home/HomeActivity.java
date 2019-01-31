@@ -7,11 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.NavigationView;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
+
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Gravity;
@@ -27,14 +23,10 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.base.bj.paysdk.utils.TrPay;
+import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.pgyersdk.update.DownloadFileListener;
-import com.pgyersdk.update.PgyUpdateManager;
-import com.pgyersdk.update.UpdateManagerListener;
-import com.pgyersdk.update.javabean.AppBean;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -45,6 +37,10 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.IOException;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -64,7 +60,6 @@ import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
-import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.PermissionUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
@@ -88,88 +83,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             builder.setMessage(R.string.Checking_Update);
             builder.show();
         }
-        //蒲公英自动检查更新
-        new PgyUpdateManager.Builder()
-                .setForced(true)
-                .setUserCanRetry(false)
-                .setDeleteHistroyApk(false)
-                .setUpdateManagerListener(new UpdateManagerListener() {
-                    @Override
-                    public void onNoUpdateAvailable() {
-                        if (isToastNoUpdata) {
-                            builder.dismiss();
-                            Toast.makeText(context, R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onUpdateAvailable(AppBean appBean) {
-                        final String versionName, updateMessage;
-                        versionName = appBean.getVersionName();
-                        updateMessage = appBean.getReleaseNote();
-                        builder.hideProgressBar();
-                        builder.showTitleBar();
-                        builder.setTitle(context.getResources().getString(R.string.Update_Found) + versionName);
-                        builder.setMessage(updateMessage);
-                        builder.setRightButtonText(R.string.Download);
-                        builder.setRightButtonListener((dlg, i) -> {
-                            builder.showProgressBar2();
-                            builder.hideButton();
-                            builder.setTitle(R.string.Downloading);
-                            PgyUpdateManager.downLoadApk(appBean.getDownloadURL());
-                        });
-
-                        builder.show();
-                    }
-
-                    @Override
-                    public void checkUpdateFailed(Exception e) {
-                        if (isErrorIntent) {
-                            builder.hideProgressBar();
-                            builder.showTitleBar();
-                            builder.setTitle(context.getResources().getString(R.string.Checking_Update_Failed));
-                            builder.setMessage(e.getMessage()
-                                    + context.getResources().getString(R.string.Ask_to_Change_Other_Way));
-                            builder.setLeftButtonText(R.string.Cancel);
-                            builder.setRightButtonText(R.string.OK);
-                            builder.setRightButtonListener(new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent();
-                                    intent.setAction(Intent.ACTION_VIEW);
-                                    intent.setData(Uri.parse("https://www.taptap.com/app/37972"));
-                                    context.startActivity(intent);
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.show();
-                        }
-                    }
-                })
-                .setDownloadFileListener(new DownloadFileListener() {
-                    @Override
-                    public void downloadFailed() {
-                        builder.dismiss();
-                    }
-
-                    @Override
-                    public void downloadSuccessful(Uri uri) {
-                        builder.dismiss();
-                        PgyUpdateManager.installApk(uri);
-                    }
-
-                    @Override
-                    public void onProgressUpdate(Integer... integers) {
-                        builder.getProgressBar2().setProgress(integers[0]);
-                    }
-                })
-                .register();
     }
 
     @Override
@@ -212,8 +125,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
 
-        //trpay
-        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
+
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
@@ -309,34 +221,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     private boolean doMenu(int id) {
         switch (id) {
-            case R.id.nav_donation: {
-
-                final DialogPlus dialog = new DialogPlus(getContext());
-                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
-                dialog.setTitle(R.string.logo_text);
-                dialog.show();
-                View viewDialog = dialog.getContentView();
-                Button btnalipay = viewDialog.findViewById(R.id.button_alipay);
-                Button btnwechat = viewDialog.findViewById(R.id.button_wechat);
-                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
-
-                btnalipay.setOnClickListener((v) -> {
-                    AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
-                    dialog.dismiss();
-//                Intent intent = new Intent(this, AboutActivity.class);
-                    //               startActivity(intent);
-                });
-                btnwechat.setOnClickListener((v) -> {
-                    AlipayPayUtils.inputMoney(HomeActivity.this);
-                    dialog.dismiss();
-                });
-                btnpaypal.setOnClickListener((v) -> {
-                    Uri uri = Uri.parse("https://www.paypal.me/YGOmobile3");
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                    startActivity(intent);
-                    dialog.dismiss();
-                });
-            }
+            case R.id.nav_donation:
             break;
             case R.id.action_game:
                 openGame();

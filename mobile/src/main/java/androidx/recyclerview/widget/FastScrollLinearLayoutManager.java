@@ -1,8 +1,9 @@
-package android.support.v7.widget;
+package androidx.recyclerview.widget;
 
 import android.content.Context;
 import android.graphics.PointF;
 import android.util.DisplayMetrics;
+
 
 public class FastScrollLinearLayoutManager extends LinearLayoutManager {
     public FastScrollLinearLayoutManager(Context context) {

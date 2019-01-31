@@ -14,10 +14,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.text.Spanned;
@@ -30,6 +26,10 @@ import com.feihua.dialogutils.util.DialogUtils;
 
 import java.util.List;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
 
@@ -40,7 +40,7 @@ public class OYUtil {
         activity.setSupportActionBar(toolbar);
 
         if(isBack){
-            toolbar.setNavigationIcon(android.support.v7.appcompat.R.drawable.abc_ic_ab_back_material);//  context.getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha));
+            toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material);//  context.getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha));
             toolbar.setNavigationOnClickListener(new View.OnClickListener(){
 
                 @Override
@@ -262,5 +262,22 @@ public class OYUtil {
         }
         return false;
     }
+
+    /**
+     * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
+     */
+    public static int dp2px(float dpValue) {
+        final float scale = App.get().getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    /**
+     * 根据手机的分辨率从 px(像素) 的单位 转成为 dp
+     */
+    public static int px2dp( float pxValue) {
+        final float scale = App.get().getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
+    }
+
 
 }

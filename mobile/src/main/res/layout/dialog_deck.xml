@@ -12,7 +12,7 @@
         android:textColor="@color/blackLinght"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
-    <android.support.v7.widget.AppCompatSpinner
+    <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/sp_limit_list"
         android:layout_width="match_parent"
         android:layout_height="@dimen/item_height"/>
@@ -25,7 +25,7 @@
         android:textColor="@color/blackLinght"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
-    <android.support.v7.widget.AppCompatSpinner
+    <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/sp_ydk_list"
         android:layout_width="match_parent"
         android:layout_height="@dimen/item_height"/>

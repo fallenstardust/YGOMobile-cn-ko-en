@@ -50,5 +50,8 @@
     <dimen name="menu_text_size">6dp</dimen>
     <dimen name="menu_text_top">-5dp</dimen>
 
-    <dimen name="corner_radius">5dp</dimen>
+    <dimen name="corner_radius">8dp</dimen>
+    <dimen name="main_margin">20dp</dimen>
+    
+    
 </resources>

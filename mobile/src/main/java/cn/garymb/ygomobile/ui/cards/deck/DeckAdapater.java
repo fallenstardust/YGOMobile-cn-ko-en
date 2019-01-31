@@ -1,8 +1,8 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+
 import android.content.Context;
 import android.os.SystemClock;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
@@ -28,7 +29,6 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
-
 
 public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implements CardListProvider {
     private final List<DeckItem> mItems = new ArrayList<>();

@@ -450,6 +450,11 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_GAME_PATH, path);
     }
 
+    //获取录像文件夹
+    public String getReplayReplay() {
+        return new File(getResourcePath(), Constants.CORE_REPLAY_PATH).getAbsolutePath();
+    }
+
     //获取卡组文件夹
     public String getDeckDir() {
         return new File(getResourcePath(), Constants.CORE_DECK_PATH).getAbsolutePath();

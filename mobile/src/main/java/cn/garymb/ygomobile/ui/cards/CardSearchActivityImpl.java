@@ -1,18 +1,8 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.content.Intent;
-import android.os.Build;
+
 import android.os.Bundle;
-import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.FastScrollLinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerViewItemListener;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +14,13 @@ import com.bumptech.glide.Glide;
 import java.io.IOException;
 import java.util.List;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerViewItemListener;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;

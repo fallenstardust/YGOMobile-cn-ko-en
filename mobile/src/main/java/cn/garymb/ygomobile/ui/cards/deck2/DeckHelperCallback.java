@@ -1,9 +1,10 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
-import android.support.v7.widget.helper.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.RecyclerView;
+
 
 class DeckHelperCallback extends ItemTouchHelperPlus.Callback {
     private IDeckLayout mDeckAdapter;

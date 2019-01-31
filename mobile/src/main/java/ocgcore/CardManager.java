@@ -2,13 +2,14 @@ package ocgcore;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.annotation.WorkerThread;
+
 import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.File;
 import java.io.FilenameFilter;
 
+import androidx.annotation.WorkerThread;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;

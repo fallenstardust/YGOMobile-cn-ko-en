@@ -9,11 +9,12 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+
 import android.util.Log;
 
 import java.io.IOException;
 
+import androidx.annotation.NonNull;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;

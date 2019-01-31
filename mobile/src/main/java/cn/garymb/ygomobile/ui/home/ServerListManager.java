@@ -1,8 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
+
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -13,6 +12,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;

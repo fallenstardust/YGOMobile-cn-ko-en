@@ -1,10 +1,11 @@
 package cn.garymb.ygomobile.ui.activities;
 
-import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 
+import android.os.Bundle;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.lite.R;
 
 public class DebugActivity extends BaseActivity {

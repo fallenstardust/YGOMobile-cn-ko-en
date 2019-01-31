@@ -13,11 +13,13 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.util.AttributeSet;
 
+import androidx.appcompat.widget.AppCompatImageView;
+
 
 /*
  * 圆形ImageView
  */
-public class YuanImage extends android.support.v7.widget.AppCompatImageView {
+public class YuanImage extends AppCompatImageView {
 
     private Context mContext;
     // 控件默认长、宽

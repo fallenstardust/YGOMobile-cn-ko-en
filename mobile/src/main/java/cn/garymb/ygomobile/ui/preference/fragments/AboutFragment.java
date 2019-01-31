@@ -9,7 +9,6 @@ import android.preference.Preference;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
-import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
 public class AboutFragment extends PreferenceFragmentPlus {
@@ -41,7 +40,7 @@ public class AboutFragment extends PreferenceFragmentPlus {
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         if ("pref_key_open_alipay".equals(key)) {
-            AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+
         }
         return false;
     }

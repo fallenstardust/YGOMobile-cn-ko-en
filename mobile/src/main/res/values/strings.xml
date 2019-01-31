@@ -247,4 +247,13 @@
     <string name="to_open">to Open</string>
     <string name="crashed">YGOMobile Crashed！</string>
     <string name="invalid_shortcut">Invalid Shortcut</string>
+
+    <string name="homepage">主页</string>
+    <string name="other_funstion">其他功能</string>
+    <string name="query_exception">查询失败</string>
+    <string name="add_setting">添加设置</string>
+    <string name="start_game">开始游戏</string>
+    <string name="local_duel">本地对战</string>
+    <string name="create_room_and_share">建房并分享</string>
+    <string name="view_more">查看更多</string>
 </resources>

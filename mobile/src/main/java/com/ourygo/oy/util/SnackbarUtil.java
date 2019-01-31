@@ -1,19 +1,20 @@
 package com.ourygo.oy.util;
 
-/**
- * Created by 赵晨璞 on 2016/5/1.
- */
-
 import android.graphics.Color;
-import android.support.design.widget.Snackbar;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
 
 import cn.garymb.ygomobile.lite.R;
+
+/**
+ * Created by 赵晨璞 on 2016/5/1.
+ */
+
 
 public class SnackbarUtil
  {
@@ -126,7 +127,7 @@ public class SnackbarUtil
 				setSnackbarColor(snackbar,orange);
 				break;
 			case Alert:
-				setSnackbarColor(snackbar,Color.YELLOW,red);
+				setSnackbarColor(snackbar, Color.YELLOW,red);
 				break;
 		}
 	}

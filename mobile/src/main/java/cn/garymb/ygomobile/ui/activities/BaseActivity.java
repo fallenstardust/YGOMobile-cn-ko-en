@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.activities;
 
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -9,21 +10,22 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.ourygo.oy.util.OYUtil;
+
 import java.io.IOException;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-
 
 public class BaseActivity extends AppCompatActivity {
     protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
@@ -240,6 +242,10 @@ public class BaseActivity extends AppCompatActivity {
             showToast("喵不给我权限让我怎么运行？！");
             finish();
         }
+    }
+
+    public String s(int id){
+        return OYUtil.s(id);
     }
 
     @SuppressLint("ShowToast")

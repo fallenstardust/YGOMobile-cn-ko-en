@@ -186,7 +186,7 @@
     <string name="tip_istunning">游戏已运行</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
-    <string name="mycard">萌卡平台</string>
+    <string name="mycard">MyCard</string>
     <string name="arena">决斗数据库</string>
     <string name="mc_chat">聊天室</string>
     <string name="noting_to_send">发送内容不能为空</string>
@@ -245,4 +245,14 @@
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
     <string name="invalid_shortcut">无效的快捷方式</string>
+
+    <string name="homepage">主页</string>
+    <string name="other_funstion">其他功能</string>
+    <string name="query_exception">查询失败</string>
+    <string name="add_setting">添加设置</string>
+    <string name="start_game">开始游戏</string>
+    <string name="local_duel">本地对战</string>
+    <string name="create_room_and_share">建房并分享</string>
+    <string name="view_more">查看更多</string>
+
 </resources>

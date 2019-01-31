@@ -4,9 +4,10 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
 
 import java.util.List;
+
+import androidx.annotation.RequiresApi;
 
 public class ComponentUtils {
     public static boolean isActivityRunning(Context context, ComponentName componentName) {

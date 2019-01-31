@@ -83,7 +83,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'com.github.chrisbanes.photoview:library:1.2.4'
     //dialog库
-    implementation 'com.github.feihuaduo:DialogUtils:1.8.7.4'
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.9'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
@@ -93,5 +93,14 @@ dependencies {
 
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.igniterealtime.smack:smack-android-extensions:4.3.0"
+    implementation "org.igniterealtime.smack:smack-tcp:4.3.0"
+
+    //圆形头像
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
+    implementation 'com.github.xiaohaibin:XBanner:1.6.4'
+    //http请求库
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
 
 }
