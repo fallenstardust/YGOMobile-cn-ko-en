@@ -2,11 +2,10 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="155dp"
-    android:layout_height="208dp"
+    android:layout_width="150dp"
+    android:layout_height="200dp"
     android:layout_marginTop="5dp"
     android:layout_marginRight="10dp"
-    android:layout_marginBottom="5dp"
     android:clickable="true"
     android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="@dimen/corner_radius"
@@ -80,12 +79,12 @@
     </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_create_and_share"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:layout_alignParentBottom="true"
             android:background="@color/colorAccent"
             android:gravity="center"
-            android:padding="10dp"
             android:text="@string/create_room_and_share"
             android:textColor="@color/white"
             android:textSize="12sp" />

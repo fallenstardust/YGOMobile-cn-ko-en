@@ -55,7 +55,6 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
@@ -436,19 +435,19 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public void StartMycard() {
-        ImageView iv_mc = $(R.id.btn_mycard);
-        iv_mc.setOnClickListener((v) -> {
-            if (Constants.SHOW_MYCARD) {
-                startActivity(new Intent(this, MyCardActivity.class));
-            }
-        });
-        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
-                return true;
-            }
-        });
+//        ImageView iv_mc = $(R.id.btn_mycard);
+//        iv_mc.setOnClickListener((v) -> {
+//            if (Constants.SHOW_MYCARD) {
+//                startActivity(new Intent(this, MyCardActivity.class));
+//            }
+//        });
+//        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
+//                return true;
+//            }
+//        });
     }
 
     public boolean joinQQGroup(String key) {

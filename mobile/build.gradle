@@ -5,7 +5,7 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "cn.garymb.ygomobile"
+        applicationId "cn.ourygo.ygomobile"
         minSdkVersion 16
         targetSdkVersion 22
         versionCode 330601002
@@ -15,6 +15,7 @@ android {
         ndk {
             abiFilters "armeabi-v7a"
         }
+//        ndk { abiFilters "armeabi", "armeabi-v7a", "mips" }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -93,14 +94,15 @@ dependencies {
 
     implementation 'com.nightonke:boommenu:2.1.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-
+    //smack聊天组件
     implementation "org.igniterealtime.smack:smack-android-extensions:4.3.0"
     implementation "org.igniterealtime.smack:smack-tcp:4.3.0"
 
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
+    //轮播图
     implementation 'com.github.xiaohaibin:XBanner:1.6.4'
     //http请求库
-    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
 
 }

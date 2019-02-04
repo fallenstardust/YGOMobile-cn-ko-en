@@ -15,7 +15,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.ourygo.oy.util.OYUtil;
+import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.view.OYToolbar;
 
 import java.io.IOException;
 
@@ -33,6 +34,8 @@ public class BaseActivity extends AppCompatActivity {
     private boolean mEnterAnim = true;
 
     private Toast mToast;
+
+    protected OYToolbar toolbar;
 
     protected String[] getPermissions() {
         return PERMISSIONS;
@@ -124,6 +127,18 @@ public class BaseActivity extends AppCompatActivity {
         Rect rect = new Rect();
         getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
         return rect.top;
+    }
+
+    public void initToolbar(String title){
+        if (toolbar==null)
+        toolbar=findViewById(R.id.toolbar);
+        toolbar.setTitle(title);
+    }
+
+    public void seTitle(String title){
+        if (toolbar!=null){
+            toolbar.setTitle(title);
+        }
     }
 
     protected void hideSystemNavBar() {

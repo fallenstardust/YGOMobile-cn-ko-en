@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.mycard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -11,6 +10,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
+import com.ourygo.ygomobile.util.IntentUtil;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
@@ -26,7 +26,6 @@ import java.util.Arrays;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 
 import static junit.framework.Assert.assertEquals;
@@ -195,7 +194,8 @@ public class MyCard {
 
         @JavascriptInterface
         public void edit_deck() {
-            activity.startActivity(new Intent(activity, DeckManagerActivity.class));
+//            activity.startActivity(new Intent(activity, DeckManagerActivity.class));
+            mContext.startActivity(IntentUtil.getEZIntent(mContext));
         }
 
         @JavascriptInterface

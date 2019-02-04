@@ -159,7 +159,7 @@ public class YGOStarter {
             lasttime = System.currentTimeMillis();
             Log.e("YGOStarter","设置背景前"+System.currentTimeMillis());
             //显示加载背景
-            showLoadingBg(activity);
+//            showLoadingBg(activity);
             Log.e("YGOStarter","设置背景后"+System.currentTimeMillis());
             if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
                 //random tips

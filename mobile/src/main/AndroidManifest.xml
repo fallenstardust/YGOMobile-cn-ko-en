@@ -152,16 +152,17 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"/>
-		<activity
-            android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Mycard"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+		<!--<activity-->
+            <!--android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"-->
+            <!--android:configChanges="orientation|keyboardHidden|navigation|screenSize"-->
+            <!--android:launchMode="singleTop"-->
+            <!--android:theme="@style/AppTheme.Mycard"-->
+            <!--android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>-->
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.McchatActivity"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:label="@string/app_name"/>
+        <activity android:name="com.ourygo.ygomobile.ui.activity.NewServerActivity"/>
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"/>
         <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity"/>
@@ -173,10 +174,7 @@
 
     <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
     <!--android:priority="1000"-->
-
-
-
-        <activity android:name="com.ourygo.oy.ui.activity.MainActivity">
+        <activity android:name="com.ourygo.ygomobile.ui.activity.OYMainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +15,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
@@ -114,6 +114,7 @@ public class SplashActivity extends Activity {
         // TODO: Implement this method
     }
 
+    @SuppressLint("HandlerLeak")
     Handler han = new Handler() {
 
         @Override
@@ -147,8 +148,8 @@ public class SplashActivity extends Activity {
                 case 5:
 					/*sp_jz.setVisibility(View.GONE);
 					sp_tv.setText("用户名或密码为空");*/
-                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
-                    finish();
+//                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
+//                    finish();
 
                     break;
             }

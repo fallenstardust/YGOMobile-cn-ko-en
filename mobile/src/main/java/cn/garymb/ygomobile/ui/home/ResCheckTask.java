@@ -14,6 +14,8 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.feihua.dialogutils.util.DialogUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -45,7 +47,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private AppsSettings mSettings;
     private Context mContext;
     private ResCheckListener mListener;
-    private DialogPlus dialog = null;
+    private DialogUtils dialog = null;
     private Handler handler;
     private boolean isNewVersion;
     MessageReceiver mReceiver = new MessageReceiver();
@@ -61,7 +63,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        dialog = DialogPlus.show(mContext, null, mContext.getString(R.string.check_res));
+        dialog = DialogUtils.getdx(mContext);
+        dialog.dialogj1( null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
         if (mSettings.getAppVersion() < vercode) {
             mSettings.setAppVersion(vercode);
@@ -75,9 +78,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     protected void onPostExecute(final Integer result) {
         super.onPostExecute(result);
         //关闭异常
-        if (dialog.isShowing()) {
+        if (dialog.getDialog().isShowing()) {
             try {
-                dialog.dismiss();
+                dialog.dis();
             } catch (Exception e) {
 
             }
@@ -89,7 +92,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private void setMessage(String msg) {
         handler.post(() -> {
-            dialog.setMessage(msg);
+            dialog.setToast(msg);
         });
     }
 
@@ -153,7 +156,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (textures2==null||(textures1!=null&&textures1.length>textures2.length)||needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                        mSettings.getCoreSkinPath(), false);
+                        mSettings.getCoreSkinPath(), needsUpdate);
             }
             //复制字体
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));

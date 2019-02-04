@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="StringFormatInvalid"
     >
-    <string name="app_name">YGOMobile.kor</string>
+    <string name="app_name">YGOMobile-OY.kor</string>
     <string name="action_settings">설정</string>
     <string name="action_game">싱글 게임</string>
     <string name="action_about">정보</string>
@@ -252,4 +252,12 @@
     <string name="local_duel">本地对战</string>
     <string name="create_room_and_share">建房并分享</string>
     <string name="view_more">查看更多</string>
+    <string name="copy_room">复制房间</string>
+    <string name="share_to">分享到</string>
+    <string name="no_login">未登录</string>
+    <string name="copy_ok">复制成功</string>
+    <string name="ai_duel">Ai对战</string>
+    <string name="single">残局</string>
+    <string name="ai_duel_message">本地或使用远程服务器的AI服开始人机对战</string>
+    <string name="single_message">开始残局解题或选用默认卡组练习combo</string>
 </resources>
