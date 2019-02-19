@@ -149,7 +149,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|right"
                     android:scaleType="center"
-                    app:srcCompat="@drawable/ic_control_point"/>
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_control_point" />
             </FrameLayout>
 
             <LinearLayout
