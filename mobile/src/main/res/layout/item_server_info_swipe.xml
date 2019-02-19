@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.tubb.smrv.SwipeHorizontalMenuLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<com.tubb.smrv.SwipeHorizontalMenuLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:sml="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/swipe_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    sml:sml_scroller_interpolator="@android:anim/bounce_interpolator"
+    android:paddingLeft="@dimen/padding"
+    android:paddingTop="@dimen/padding"
+    android:paddingRight="@dimen/padding"
     sml:sml_auto_open_percent="0.2"
     sml:sml_scroller_duration="250"
-    android:paddingLeft="@dimen/padding"
-    android:paddingRight="@dimen/padding"
-    android:paddingTop="@dimen/padding">
+    sml:sml_scroller_interpolator="@android:anim/bounce_interpolator">
 
     <LinearLayout
         android:id="@id/smMenuViewRight"
@@ -20,28 +19,18 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/btn_edit_delete"
-            android:layout_width="@dimen/item_menu_width"
-            android:layout_height="@dimen/item_menu_height"
-            android:layout_gravity="left|center_vertical"
-            android:background="@drawable/blue"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:gravity="center"
-            android:text="@string/edit"
-            android:textColor="@color/white"/>
-
-        <TextView
             android:id="@+id/btn_delete"
             android:layout_width="@dimen/item_menu_width"
             android:layout_height="@dimen/item_menu_height"
             android:layout_gravity="right|center_vertical"
             android:background="@drawable/red"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:text="@string/delete"
-            android:textColor="@color/white"/>
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/white" />
 
     </LinearLayout>
+
     <LinearLayout
         android:id="@id/smContentView"
         android:layout_width="match_parent"
@@ -70,7 +59,15 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Title"
                     android:textColor="@color/brightgreen"
-                    tools:text="233正式服务器"/>
+                    tools:text="233正式服务器" />
+
+                <ImageView
+                    android:id="@+id/btn_edit_delete"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginRight="20dp"
+                    android:background="@drawable/ic_edit_color"
+                    android:gravity="right" />
 
             </LinearLayout>
 
@@ -93,7 +90,7 @@
                         android:gravity="center_vertical"
                         android:text="@string/server_ip"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/item_title"/>
+                        android:textColor="@color/item_title" />
 
                     <TextView
                         android:id="@+id/text_ip"
@@ -103,7 +100,7 @@
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
-                        tools:text="127.0.0.1"/>
+                        tools:text="127.0.0.1" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -116,7 +113,7 @@
                         android:gravity="center_vertical"
                         android:text="@string/server_port"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/item_title"/>
+                        android:textColor="@color/item_title" />
 
                     <TextView
                         android:id="@+id/text_port"
@@ -127,7 +124,7 @@
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
-                        tools:text="233"/>
+                        tools:text="233" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -144,7 +141,7 @@
                     android:gravity="center_vertical"
                     android:text="@string/server_user"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/item_title"/>
+                    android:textColor="@color/item_title" />
 
                 <TextView
                     android:id="@+id/text_player"
@@ -155,14 +152,14 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/holo_blue_bright"
-                    tools:text="player"/>
+                    tools:text="player" />
 
                 <ImageView
                     android:id="@+id/iv_fond"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_marginRight="20dp"
-                    android:gravity="center"/>
+                    android:gravity="center" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
