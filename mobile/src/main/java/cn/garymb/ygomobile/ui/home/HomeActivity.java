@@ -64,6 +64,7 @@ import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
+import cn.garymb.ygomobile.ui.widget.ShiningTextView;
 import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.PermissionUtil;
@@ -72,6 +73,8 @@ import cn.garymb.ygomobile.utils.ScreenUtil;
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
+    ShiningTextView tv;
+    Shimmer shimmer;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
 
@@ -193,6 +196,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
+        tv = (ShiningTextView) findViewById(R.id.shimmer_tv);
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
@@ -548,6 +552,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     public void AnimationShake() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
         findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
+    }
+
+    public void toggleAnimation(View target) {
+        if (shimmer != null && shimmer.isAnimating()) {
+            shimmer.cancel();
+        } else {
+            shimmer = new Shimmer();
+            shimmer.start(tv);
+        }
     }
 
     public void StartMycard() {

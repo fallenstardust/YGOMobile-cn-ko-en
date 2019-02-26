@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg3"
     android:fitsSystemWindows="true"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    android:background="@drawable/bg3">
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:orientation="vertical">
-    </LinearLayout>
+        android:orientation="vertical"></LinearLayout>
 
     <com.tubb.smrv.SwipeMenuRecyclerView
         android:id="@+id/list_server"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="none"/>
+        android:scrollbars="none" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -58,7 +56,7 @@
                 android:layout_height="20dp"
                 android:gravity="bottom|center_horizontal"
                 android:text="@string/Function_Menu"
-                android:textSize="10sp"/>
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -82,7 +80,30 @@
                 android:layout_height="20dp"
                 android:gravity="bottom|center_horizontal"
                 android:text="@string/mycard"
-                android:textSize="10sp"/>
+                android:textSize="10sp" />
+        </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <Button
+            android:onClick="toggleAnimation"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:background="@drawable/start"/>
+
+        <cn.garymb.ygomobile.ui.widget.ShiningTextView
+            android:id="@+id/shimmer_tv"
+            android:layout_width="150dp"
+            android:layout_height="30dp"
+            android:text="点击返回决斗中"
+            android:textColor="#999"
+            android:textSize="20sp"
+            android:layout_gravity="center" />
+
     </LinearLayout>
     </LinearLayout>
 </FrameLayout>
