@@ -242,4 +242,5 @@
     <string name="to_open">to Open</string>
     <string name="crashed">YGOMobile Crashed！</string>
     <string name="invalid_shortcut">Invalid Shortcut</string>
+    <string name="return_to_duel">Return to Duel☞</string>
 </resources>

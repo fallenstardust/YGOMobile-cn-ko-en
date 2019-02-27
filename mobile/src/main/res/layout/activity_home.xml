@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg3"
@@ -82,28 +83,24 @@
                 android:text="@string/mycard"
                 android:textSize="10sp" />
         </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="bottom"
-        android:orientation="vertical">
 
-        <Button
-            android:onClick="toggleAnimation"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_gravity="center"
-            android:background="@drawable/start"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            android:gravity="right"
+            android:orientation="horizontal">
 
-        <cn.garymb.ygomobile.ui.widget.ShiningTextView
-            android:id="@+id/shimmer_tv"
-            android:layout_width="150dp"
-            android:layout_height="30dp"
-            android:text="点击返回决斗中"
-            android:textColor="#999"
-            android:textSize="20sp"
-            android:layout_gravity="center" />
-
-    </LinearLayout>
+            <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+                android:id="@+id/shimmer_tv"
+                android:layout_width="150dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/return_to_duel"
+                android:textColor="@color/item_title"
+                android:background="@drawable/blue"
+                android:textSize="20sp" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

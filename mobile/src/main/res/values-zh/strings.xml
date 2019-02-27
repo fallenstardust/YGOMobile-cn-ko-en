@@ -242,4 +242,5 @@
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
     <string name="invalid_shortcut">无效的快捷方式</string>
+    <string name="return_to_duel">返回决斗☞</string>
 </resources>

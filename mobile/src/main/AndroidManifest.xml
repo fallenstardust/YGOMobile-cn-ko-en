@@ -37,7 +37,7 @@
         tools:replace="android:allowBackup,android:supportsRtl">
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
-            android:excludeFromRecents="true"
+            android:excludeFromRecents="false"
             android:taskAffinity="cn.garymb.logo"
             android:theme="@style/TranslucentTheme">
             <intent-filter>
