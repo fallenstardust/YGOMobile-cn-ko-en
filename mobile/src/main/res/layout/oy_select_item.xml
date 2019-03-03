@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cv_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginRight="10dp"
+    android:clickable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/black"
+    app:cardCornerRadius="@dimen/corner_radius"
+    app:elevation="3dp">
+
+    <LinearLayout
+        android:padding="10dp"
+        android:gravity="center"
+        android:id="@+id/ll_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="60dp"
+        android:orientation="vertical">
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:textSize="12sp"
+            android:id="@+id/tv_title"
+            android:textColor="@color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginTop="20dp"
+            android:textColor="@color/colorAccent"
+            android:textSize="10sp"
+            android:maxWidth="160dp"
+            android:id="@+id/tv_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

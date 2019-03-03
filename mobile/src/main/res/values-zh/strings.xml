@@ -262,5 +262,12 @@
     <string name="single">残局</string>
     <string name="ai_duel_message">本地或使用远程服务器的AI服开始人机对战</string>
     <string name="single_message">开始残局解题或选用默认卡组练习combo</string>
+    <string name="server_select">服务器选择</string>
+    <string name="opponent_setting">对手设置</string>
+    <string name="duel_mode">对战模式</string>
+    <string name="lflist">禁限表</string>
+    <string name="duel_mode_one">单局模式</string>
+    <string name="duel_mode_match">比赛模式</string>
+    <string name="complete_setting">完成设置</string>
 
 </resources>

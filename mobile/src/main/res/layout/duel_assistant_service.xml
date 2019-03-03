@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+
+<androidx.cardview.widget.CardView
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	app:cardCornerRadius="@dimen/corner_radius"
+	app:elevation="15dp"
+	app:cardBackgroundColor="@color/colorDialogBackground">
+<LinearLayout
 	android:layout_height="wrap_content"
 	android:layout_width="match_parent"
 	android:orientation="vertical"
-	android:background="#00FFFFFF">
+	android:background="@color/white">
 
 		<LinearLayout
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical"
-			android:gravity="center_horizontal"
-			android:background="@drawable/window">
+			android:gravity="center_horizontal">
 
 			<TextView
-				android:textColor="@color/gold"
+				android:textSize="15sp"
+				android:textStyle="bold"
+				android:textColor="@color/black"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="Text"
@@ -27,7 +36,8 @@
 				android:orientation="horizontal">
 
 				<Button
-					android:textColor="@color/white"
+					android:textSize="12sp"
+					android:textColor="@color/colorAccent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
@@ -40,7 +50,8 @@
 					android:layout_width="wrap_content"
 					android:layout_margin="20dp" />
 				<Button
-					android:textColor="@color/white"
+					android:textSize="12sp"
+					android:textColor="@color/colorAccent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
@@ -57,4 +68,4 @@
 		</LinearLayout>
 
 </LinearLayout>
-
+</androidx.cardview.widget.CardView>

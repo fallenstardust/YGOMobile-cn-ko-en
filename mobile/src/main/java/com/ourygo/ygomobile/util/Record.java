@@ -6,6 +6,7 @@ public class Record {
 
     public static final String MYCARD_NEWS_URL="https://ygobbs.com/top/quarterly.json";
     public static final String MYCARD_POST_URL="https://ygobbs.com/t/";
+    public static final String YGO_LFLIST_URL="https://raw.githubusercontent.com/moecube/ygopro/server/lflist.conf";
 
     public static final String ARG_TOPIC_LIST="topic_list";
     public static final String ARG_TOPICS="topics";

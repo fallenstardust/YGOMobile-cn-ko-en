@@ -1,9 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-<include
-    layout="@layout/toolbar"/>
-    
+    <include layout="@layout/toolbar" />
+
+    <LinearLayout
+        android:layout_marginTop="28dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/TitleTextStytle"
+            android:text="@string/server_select" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginTop="10dp"
+            android:id="@+id/rv_server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginTop="30dp"
+            style="@style/TitleTextStytle"
+            android:text="@string/opponent_setting" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginTop="10dp"
+            android:id="@+id/rv_opponent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginTop="30dp"
+            style="@style/TitleTextStytle"
+            android:text="@string/duel_mode" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginTop="10dp"
+            android:id="@+id/rv_duel_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginTop="30dp"
+            style="@style/TitleTextStytle"
+            android:text="@string/lflist" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginBottom="7dp"
+            android:layout_marginTop="10dp"
+            android:id="@+id/rv_lflist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:background="@drawable/button_background"
+            android:text="@string/complete_setting"
+            android:layout_width="match_parent"
+            android:layout_height="41dp" />
+
+    </LinearLayout>
 </LinearLayout>

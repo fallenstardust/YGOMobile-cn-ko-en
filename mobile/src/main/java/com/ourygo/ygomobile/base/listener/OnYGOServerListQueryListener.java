@@ -1,7 +1,7 @@
 package com.ourygo.ygomobile.base.listener;
 
-import cn.garymb.ygomobile.bean.ServerList;
+import com.ourygo.ygomobile.bean.YGOServerList;
 
 public interface OnYGOServerListQueryListener {
-    void onYGOServerListQuery(ServerList serverList);
+    void onYGOServerListQuery(YGOServerList serverList);
 }

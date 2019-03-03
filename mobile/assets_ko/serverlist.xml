@@ -8,6 +8,9 @@
         <ip>cygopro.fun25.co.kr</ip>
         <port>17225</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
     <server>
         <player-name>신선한 고기</player-name>
@@ -15,6 +18,9 @@
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
     <server>
         <player-name>fresh_meat</player-name>
@@ -22,5 +28,8 @@
         <ip>s1.ygo233.com</ip>
         <port>9999</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
 </servers>

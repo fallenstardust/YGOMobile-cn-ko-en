@@ -13,6 +13,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.base.listener.OnYGOServerListQueryListener;
+import com.ourygo.ygomobile.bean.YGOServerList;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
@@ -47,7 +48,7 @@ public class YGOServerFragemnt extends Fragment {
     private void initServiceList() {
         YGOUtil.getYGOServerList(new OnYGOServerListQueryListener() {
             @Override
-            public void onYGOServerListQuery(ServerList serverList) {
+            public void onYGOServerListQuery(YGOServerList serverList) {
                 ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
                 rv_service_list.setAdapter(ygoServerAdp);
                 ygoServerAdp.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {

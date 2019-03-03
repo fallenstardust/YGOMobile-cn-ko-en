@@ -8,6 +8,9 @@
         <ip>ygoproes.ddns.net</ip>
         <port>8005</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
@@ -15,6 +18,9 @@
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
@@ -22,5 +28,8 @@
         <ip>szefoserver.ddns.net</ip>
         <port>7210</port>
         <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
     </server>
 </servers>
