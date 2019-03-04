@@ -36,7 +36,7 @@
         tools:replace="android:allowBackup,android:supportsRtl">
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
-            android:excludeFromRecents="true"
+            android:excludeFromRecents="false"
             android:taskAffinity="cn.garymb.logo"
             android:theme="@style/TranslucentTheme">
         </activity>
@@ -46,7 +46,6 @@
             android:excludeFromRecents="false"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
-            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:stateNotNeeded="true"
             android:theme="@style/AppTheme"

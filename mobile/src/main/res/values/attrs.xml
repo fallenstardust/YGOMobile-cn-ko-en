@@ -11,4 +11,7 @@
         <attr name="line_limit" format="integer"/>
         <attr name="line_max_count" format="integer"/>
     </declare-styleable>
+    <declare-styleable name="ShimmerView">
+        <attr name="reflectionColor" format="color"/>
+    </declare-styleable>
 </resources>

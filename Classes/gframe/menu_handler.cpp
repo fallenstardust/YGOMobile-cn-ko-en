@@ -366,7 +366,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->btnBotCancel->setEnabled(false);
 				break;
 			}
-			
 			case BUTTON_LOAD_SINGLEPLAY: {
 				mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->lstSinglePlayList->getSelected() == -1)
@@ -525,6 +524,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 						message.append(wlinebuf);
 					}
 				}
+				fclose(fp);
 				mainGame->SetStaticText(mainGame->stSinglePlayInfo, 200 * mainGame->xScale, mainGame->guiFont, message.c_str());
 				break;
 			}
