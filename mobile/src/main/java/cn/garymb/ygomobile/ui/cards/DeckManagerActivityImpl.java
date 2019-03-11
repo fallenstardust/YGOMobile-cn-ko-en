@@ -182,6 +182,18 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (getIntent().hasExtra(Intent.EXTRA_TEXT)) {
+            String path = getIntent().getStringExtra(Intent.EXTRA_TEXT);
+            if (!TextUtils.isEmpty(path)) {
+                mPreLoad = path;
+                loadDeck(new File(path));
+            }
+        }
+    }
+
+    @Override
     public void onLimitListChanged(LimitList limitList) {
 
     }

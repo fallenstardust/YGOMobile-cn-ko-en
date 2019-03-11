@@ -3,16 +3,20 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.utils.FileUtils;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
@@ -65,11 +69,35 @@ public class GameUriManager {
     }
 
     private void doUri(Uri uri) {
-        if ("file".equalsIgnoreCase(uri.getScheme())) {
+        if ("file".equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
             startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
             activity.startActivity(startdeck);
+        } else if("content".equals(uri.getScheme())) {
+            try {
+                List<String> paths = uri.getPathSegments();
+                String name = "tmp_" + System.currentTimeMillis() + ".ydk";
+                if (paths.size() > 0) {
+                    String tmp = paths.get(paths.size() - 1);
+                    if (tmp.endsWith(".ydk")) {
+                        name = tmp;
+                    }
+                }
+                File file = new File(AppsSettings.get().getDeckDir(), name);
+                ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
+                if (pfd == null) {
+                    return;
+                } else {
+                    FileUtils.copyFile(file.getAbsolutePath(), new FileOutputStream(pfd.getFileDescriptor()));
+                    pfd.close();
+                }
+                Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
+                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                activity.startActivity(startdeck);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
         } else {
             String host = uri.getHost();
             if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
