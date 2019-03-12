@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
@@ -58,6 +59,13 @@ public class DeckManagerActivity3 extends BaseActivity implements OnItemDragList
 
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
+
+        if (getIntent().hasExtra(Intent.EXTRA_TEXT)) {
+            String path = getIntent().getStringExtra(Intent.EXTRA_TEXT);
+            if (!TextUtils.isEmpty(path)) {
+                mPreLoad = path;
+            }
+        }
 
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {

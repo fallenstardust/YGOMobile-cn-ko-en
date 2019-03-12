@@ -26,6 +26,9 @@ public class DeckLoader {
         try {
             inputStream = new FileInputStream(file);
             deckInfo = readDeck(cardLoader, inputStream, limitList);
+            if(deckInfo != null){
+                deckInfo.source = file;
+            }
         } catch (Exception e) {
             Log.e("deckreader", "read 1", e);
         } finally {
@@ -34,7 +37,7 @@ public class DeckLoader {
         return deckInfo;
     }
 
-    public static DeckInfo readDeck(CardLoader cardLoader, InputStream inputStream, LimitList limitList) {
+    private static DeckInfo readDeck(CardLoader cardLoader, InputStream inputStream, LimitList limitList) {
         Deck deck = new Deck();
         SparseArray<Integer> mIds = new SparseArray<>();
         InputStreamReader in = null;

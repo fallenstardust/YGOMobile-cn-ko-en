@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.bean;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +23,8 @@ public class DeckInfo {
     private final List<Card> mainCards;
     private final List<Card> extraCards;
     private final List<Card> sideCards;
+
+    public File source;
 
     private int mainCount, extraCount, sideCount;
 

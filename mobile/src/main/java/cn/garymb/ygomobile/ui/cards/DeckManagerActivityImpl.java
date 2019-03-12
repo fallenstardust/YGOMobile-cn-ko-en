@@ -42,6 +42,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -79,6 +80,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private AppsSettings mSettings = AppsSettings.get();
     private LimitList mLimitList;
     private File mYdkFile;
+    private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private AppCompatSpinner mDeckSpinner;
     private SimpleSpinnerAdapter mSimpleSpinnerAdapter;
@@ -133,30 +135,36 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         });
         //
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
+        final File _file;
+        if (!TextUtils.isEmpty(mPreLoad)) {
+            mPreLoadFile = new File(mPreLoad);
+            _file = mPreLoadFile;
+            mPreLoad = null;
+        } else {
+            _file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
+        }
+
         VUiKit.defer().when(() -> {
             DataManager.get().load(false);
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
-            File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
-            if (!TextUtils.isEmpty(mPreLoad)) {
-                file = new File(mPreLoad);
-                mPreLoad = null;
-            }
+            File file = _file;
             if (!file.exists()) {
                 //当默认卡组不存在的时候
-                File[] files = getYdkFiles();
-                if (files != null && files.length > 0) {
-                    file = files[0];
+                List<File> files = getYdkFiles();
+                if (files != null && files.size() > 0) {
+                    file = files.get(0);
                 }
             }
             //EXTRA_DECK
             if (file == null) {
                 return new DeckInfo();
             }
+            Log.i("kk", "load ydk " + file);
             mYdkFile = file;
-            if (mCardLoader.isOpen() && file.exists()) {
-                return mDeckAdapater.read(mCardLoader, file, mLimitList);
+            if (mCardLoader.isOpen() && mYdkFile.exists()) {
+                return mDeckAdapater.read(mCardLoader, mYdkFile, mLimitList);
             } else {
                 return new DeckInfo();
             }
@@ -166,7 +174,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             mCardSelector.initItems();
             mLimitList = mCardLoader.getLimitList();
             isLoad = true;
-            setCurYdkFile(mYdkFile, false);
+            setCurYdkFile(rs.source, false);
             initLimitListSpinners(mLimitSpinner);
             initDecksListSpinners(mDeckSpinner);
             mDeckAdapater.setDeck(rs);
@@ -592,8 +600,19 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     save();
                 }
                 break;
+//            case R.id.action_save_as:
+//                if (mYdkFile == null) {
+//                    inputDeckName(null);
+//                } else {
+//                    inputDeckName(mYdkFile.getName());
+//                }
+//                break;
             case R.id.action_rename:
-                inputDeckName(null);
+                if (mYdkFile == null) {
+                    inputDeckName(null);
+                } else {
+                    inputDeckName(mYdkFile.getName());
+                }
                 break;
             case R.id.action_deck_new: {
                 final String old = mYdkFile == null ? null : mYdkFile.getAbsolutePath();
@@ -672,7 +691,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         mRecyclerView.buildDrawingCache();
         //获取绘图缓存 这里直接创建了一个新的bitmap
         //因为我们在最后需要释放缓存资源，会释放掉缓存中创建的bitmap对象
-        Bitmap bitmap =BitmapUtil.drawBg4Bitmap(Color.parseColor("#e6f3fd"), Bitmap.createBitmap(mRecyclerView.getDrawingCache(), 0, 0, mRecyclerView.getMeasuredWidth(),
+        Bitmap bitmap = BitmapUtil.drawBg4Bitmap(Color.parseColor("#e6f3fd"), Bitmap.createBitmap(mRecyclerView.getDrawingCache(), 0, 0, mRecyclerView.getMeasuredWidth(),
                 mRecyclerView.getMeasuredHeight()));
 
         //清理绘图缓存，释放资源
@@ -680,14 +699,14 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //        shotRecyclerView(mRecyclerView)
 
         Deck deck = mDeckAdapater.toDeck(mYdkFile);
-        String deckName=deck.getName();
-        int end=deckName.lastIndexOf(".");
-        if (end!=-1){
-            deckName=deckName.substring(0,end);
+        String deckName = deck.getName();
+        int end = deckName.lastIndexOf(".");
+        if (end != -1) {
+            deckName = deckName.substring(0, end);
         }
-        String savePath=new File(AppsSettings.get().getDeckSharePath(),deckName+".jpg").getAbsolutePath();
-        BitmapUtil.saveBitmap(bitmap,savePath,50);
-        ShareUtil.shareImage(DeckManagerActivityImpl.this,"卡组分享",savePath,null);
+        String savePath = new File(AppsSettings.get().getDeckSharePath(), deckName + ".jpg").getAbsolutePath();
+        BitmapUtil.saveBitmap(bitmap, savePath, 50);
+        ShareUtil.shareImage(DeckManagerActivityImpl.this, "卡组分享", savePath, null);
 
 
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
@@ -725,16 +744,32 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //        return null;
 //    }
 
-    private File[] getYdkFiles() {
+    private List<File> getYdkFiles() {
         File dir = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH);
         File[] files = dir.listFiles((file, s) -> {
             return s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX);
         });
-        return files;
+        if (files != null) {
+            List<File> list = new ArrayList<>(Arrays.asList(files));
+            if (mPreLoadFile != null) {
+                boolean hasCur = false;
+                for (File f : list) {
+                    if (TextUtils.equals(f.getAbsolutePath(), mPreLoadFile.getAbsolutePath())) {
+                        hasCur = true;
+                        break;
+                    }
+                }
+                if (!hasCur) {
+                    list.add(mPreLoadFile);
+                }
+            }
+            return list;
+        }
+        return null;
     }
 
     private void initDecksListSpinners(Spinner spinner) {
-        File[] files = getYdkFiles();
+        List<File> files = getYdkFiles();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         String name = mYdkFile != null ? mYdkFile.getName() : null;
         int index = -1;
@@ -838,9 +873,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         editText.setGravity(Gravity.TOP | Gravity.LEFT);
         editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         editText.setSingleLine();
-        if (mYdkFile != null) {
-            editText.setText(mYdkFile.getName());
-        }
         builder.setContentView(editText);
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
@@ -860,7 +892,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     showToast(R.string.file_exist, Toast.LENGTH_SHORT);
                     return;
                 }
-                if (mYdkFile != null && mYdkFile.exists()) {
+                if ( mYdkFile != null && mYdkFile.exists()) {
                     if (mYdkFile.renameTo(ydk)) {
                         mYdkFile = ydk;
                         initDecksListSpinners(mDeckSpinner);
@@ -896,8 +928,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
-       // addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
-        addMenuButton(mMenuIds,menu,R.id.action_share_deck,R.string.share_deck,R.drawable.listicon);
+        // addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
+        addMenuButton(mMenuIds, menu, R.id.action_share_deck, R.string.share_deck, R.drawable.listicon);
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
 

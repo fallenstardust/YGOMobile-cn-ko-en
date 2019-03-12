@@ -63,4 +63,21 @@ public class FileUtils {
         }
         return true;
     }
+
+    public static void copyFile(String in, FileOutputStream outputStream) {
+        FileInputStream inputStream = null;
+        byte[] data = new byte[1024 * 8];
+        try {
+            inputStream = new FileInputStream(in);
+            int len;
+            while ((len = inputStream.read(data)) != -1) {
+                outputStream.write(data, 0, len);
+            }
+        } catch (Throwable e) {
+            //
+        } finally {
+            IOUtils.close(outputStream);
+            IOUtils.close(inputStream);
+        }
+    }
 }

@@ -207,13 +207,16 @@ public class ServiceDuelAssistant extends Service {
                 remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
 
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
-                        NotificationManager.IMPORTANCE_HIGH);
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setSound(null, null);
+                channel.enableLights(false);
 
                 NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 manager.createNotificationChannel(channel);
 
                 Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
                 builder.setSmallIcon(R.drawable.ic_icon);
+                builder.setSound(null);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
             }else {

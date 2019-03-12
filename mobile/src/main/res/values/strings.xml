@@ -124,6 +124,7 @@
     <string name="rename_deck">Rename</string>
     <string name="delete_deck">Delete</string>
     <string name="save_deck">Save Deck</string>
+    <string name="save_as_deck">Deck save as</string>
     <string name="deck_list">Deck List</string>
     <string name="card_add_main">+Main Deck</string>
     <string name="card_add_side">+Side Deck</string>
