@@ -132,6 +132,7 @@
     <string name="rename_deck">重命名</string>
     <string name="delete_deck">删除</string>
     <string name="save_deck">保存</string>
+    <string name="save_as_deck">另存为</string>
     <string name="deck_list">卡组列表</string>
     <string name="loading">加载中..."</string>
     <string name="tip">提示</string>

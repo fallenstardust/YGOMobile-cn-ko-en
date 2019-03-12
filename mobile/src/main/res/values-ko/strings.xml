@@ -132,6 +132,7 @@
     <string name="rename_deck">이름변경</string>
     <string name="delete_deck">삭제</string>
     <string name="save_deck">덱저장</string>
+    <string name="save_as_deck">Deck save as</string>
     <string name="deck_list">덱 리스트</string>
     <string name="loading">로딩중..."</string>
     <string name="tip">정보</string>
