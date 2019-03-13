@@ -1152,6 +1152,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			mainGame->dField.attackable_cards.push_back(pcard);
 			pcard->cmdFlag |= COMMAND_ATTACK;
 		}
+		mainGame->dField.RefreshCardCountDisplay();
 		mainGame->gMutex.Lock();
 		if(BufferIO::ReadInt8(pbuf)) {
 			mainGame->btnM2->setVisible(true);
@@ -2307,6 +2308,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->btnShuffle->setVisible(false);
 		mainGame->showcarddif = 30;
 		mainGame->showcardp = 0;
+		mainGame->dField.RefreshCardCountDisplay();
 		switch (phase) {
 		case PHASE_DRAW:
 			mainGame->btnPhaseStatus->setText(L"\xff24\xff30");
