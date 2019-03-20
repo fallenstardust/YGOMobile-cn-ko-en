@@ -160,25 +160,25 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
 
     protected abstract void onCardLongClick(View view, Card cardInfo, int pos);
 
-    protected void showSearch(boolean autoclose) {
-        if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerlayout.closeDrawer(Gravity.LEFT);
+    protected void showSearch(boolean autoClose) {
+        if (mDrawerlayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
+            mDrawerlayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
         }
-        if (autoclose && mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+        if (autoClose && mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         } else if (isLoad) {
             mDrawerlayout.openDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
     }
 
-    protected void showResult(boolean autoclose) {
+    protected void showResult(boolean autoClose) {
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
-        if (autoclose && mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerlayout.closeDrawer(Gravity.LEFT);
+        if (autoClose && mDrawerlayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
+            mDrawerlayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
         } else if (isLoad) {
-            mDrawerlayout.openDrawer(Gravity.LEFT);
+            mDrawerlayout.openDrawer(Constants.CARD_RESULT_GRAVITY);
         }
     }
 }

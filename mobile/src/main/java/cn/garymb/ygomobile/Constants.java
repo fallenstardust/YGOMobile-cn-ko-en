@@ -121,6 +121,7 @@ public interface Constants {
 
     int UNSORT_TIMES = 0x80;
 
+    int CARD_RESULT_GRAVITY = Gravity.LEFT;
     int CARD_SEARCH_GRAVITY = Gravity.RIGHT;
     int STRING_LIMIT_START = 1315;
     int STRING_CATEGORY_START = 1100;
@@ -199,4 +200,7 @@ public interface Constants {
     //额外的cdb
     boolean NETWORK_IMAGE = false;
     boolean SHOW_MYCARD = !"core".equals(BuildConfig.FLAVOR);
+
+    //打开ydk，是否复制到文件夹
+    boolean COPY_YDK_FILE = false;
 }

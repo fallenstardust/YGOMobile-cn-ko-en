@@ -4,12 +4,26 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class FileUtils {
+
+    public static boolean deleteFile(File file){
+        if(file.isFile()){
+            try {
+                file.delete();
+            }catch (Throwable e){
+                return false;
+            }
+        }
+        return true;
+    }
 
     public static List<String> readLines(String file, String encoding) {
         InputStreamReader in = null;
@@ -64,20 +78,47 @@ public class FileUtils {
         return true;
     }
 
-    public static void copyFile(String in, FileOutputStream outputStream) {
-        FileInputStream inputStream = null;
-        byte[] data = new byte[1024 * 8];
+    public static void copyFile(InputStream in, File out) {
+        FileOutputStream outputStream = null;
         try {
-            inputStream = new FileInputStream(in);
-            int len;
-            while ((len = inputStream.read(data)) != -1) {
-                outputStream.write(data, 0, len);
+            File dir = out.getParentFile();
+            if(!dir.exists()){
+                dir.mkdirs();
             }
+            outputStream = new FileOutputStream(out);
+            copy(in, outputStream);
         } catch (Throwable e) {
-            //
-        } finally {
+            e.printStackTrace();
+        }finally {
+            IOUtils.close(outputStream);
+            IOUtils.close(in);
+        }
+    }
+
+    public static void copyFile(File in, File out) {
+        FileOutputStream outputStream = null;
+        FileInputStream inputStream = null;
+        try {
+            File dir = out.getParentFile();
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
+            inputStream = new FileInputStream(in);
+            outputStream = new FileOutputStream(out);
+            copy(inputStream, outputStream);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }finally {
             IOUtils.close(outputStream);
             IOUtils.close(inputStream);
+        }
+    }
+
+    public static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] data = new byte[1024 * 8];
+        int len;
+        while ((len = in.read(data)) != -1) {
+            out.write(data, 0, len);
         }
     }
 }
