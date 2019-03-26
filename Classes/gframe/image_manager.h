@@ -31,6 +31,7 @@ public:
 	irr::video::ITexture* tUnknown;
 	irr::video::ITexture* tAct;
 	irr::video::ITexture* tAttack;
+	irr::video::ITexture* tTotalAtk;
 	irr::video::ITexture* tNegated;
 	irr::video::ITexture* tChain;
 	irr::video::ITexture* tNumber;
