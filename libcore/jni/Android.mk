@@ -85,6 +85,7 @@ LOCAL_STATIC_LIBRARIES += libevent2
 LOCAL_STATIC_LIBRARIES += libocgcore_static
 LOCAL_STATIC_LIBRARIES += liblua5.3
 LOCAL_STATIC_LIBRARIES += clzma
+LOCAL_STATIC_LIBRARIES += cspmemvfs
 LOCAL_STATIC_LIBRARIES += sqlite3
 LOCAL_STATIC_LIBRARIES += libft2
 
@@ -100,6 +101,7 @@ $(call import-module,ocgcore)
 $(call import-module,lua)
 $(call import-module,freetype)
 $(call import-module,gframe/lzma)
+$(call import-module,gframe/spmemvfs)
 
 $(call import-module,android/native_app_glue)
 
