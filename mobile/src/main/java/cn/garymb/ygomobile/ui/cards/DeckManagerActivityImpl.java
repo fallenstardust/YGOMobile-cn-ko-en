@@ -4,15 +4,11 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Keep;
 import android.support.annotation.Nullable;
-import android.support.v4.util.LruCache;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerViewItemListener;
@@ -65,6 +61,7 @@ import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import ocgcore.DataManager;
@@ -75,17 +72,17 @@ import ocgcore.enums.LimitType;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener {
+
+    //region ui onCreate/onDestroy
     private RecyclerView mRecyclerView;
     private DeckAdapater mDeckAdapater;
     private AppsSettings mSettings = AppsSettings.get();
-    private LimitList mLimitList;
-    private File mYdkFile;
+
     private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private AppCompatSpinner mDeckSpinner;
     private SimpleSpinnerAdapter mSimpleSpinnerAdapter;
     private AppCompatSpinner mLimitSpinner;
-    private String mPreLoad;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
 
@@ -111,7 +108,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 File file = getSelectDeck(mDeckSpinner);
                 if (file != null) {
-                    loadDeck(file);
+                    loadDeckFromFile(file);
                 }
             }
 
@@ -119,11 +116,9 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             public void onNothingSelected(AdapterView<?> adapterView) {
             }
         });
+        String preLoadFile = null;
         if (getIntent().hasExtra(Intent.EXTRA_TEXT)) {
-            String path = getIntent().getStringExtra(Intent.EXTRA_TEXT);
-            if (!TextUtils.isEmpty(path)) {
-                mPreLoad = path;
-            }
+            preLoadFile = getIntent().getStringExtra(Intent.EXTRA_TEXT);
         }
         initBoomMenuButton($(R.id.bmb));
 
@@ -134,52 +129,17 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             doMenu(R.id.action_card_list);
         });
         //
-        DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         final File _file;
-        if (!TextUtils.isEmpty(mPreLoad)) {
-            mPreLoadFile = new File(mPreLoad);
+        //打开指定卡组
+        if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
+            //外面卡组
             _file = mPreLoadFile;
-            mPreLoad = null;
         } else {
+            mPreLoadFile = null;
+            //最后卡组
             _file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
         }
-
-        VUiKit.defer().when(() -> {
-            DataManager.get().load(false);
-            if (mLimitManager.getCount() > 0) {
-                mCardLoader.setLimitList(mLimitManager.getTopLimit());
-            }
-            File file = _file;
-            if (!file.exists()) {
-                //当默认卡组不存在的时候
-                List<File> files = getYdkFiles();
-                if (files != null && files.size() > 0) {
-                    file = files.get(0);
-                }
-            }
-            //EXTRA_DECK
-            if (file == null) {
-                return new DeckInfo();
-            }
-            Log.i("kk", "load ydk " + file);
-            mYdkFile = file;
-            if (mCardLoader.isOpen() && mYdkFile.exists()) {
-                return mDeckAdapater.read(mCardLoader, mYdkFile, mLimitList);
-            } else {
-                return new DeckInfo();
-            }
-        }).done((rs) -> {
-            isLoad = true;
-            dlg.dismiss();
-            mCardSelector.initItems();
-            mLimitList = mCardLoader.getLimitList();
-            isLoad = true;
-            setCurYdkFile(rs.source, false);
-            initLimitListSpinners(mLimitSpinner);
-            initDecksListSpinners(mDeckSpinner);
-            mDeckAdapater.setDeck(rs);
-            mDeckAdapater.notifyDataSetChanged();
-        });
+        init(_file);
         EventBus.getDefault().register(this);
     }
 
@@ -188,7 +148,9 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
+    //endregion
 
+    //region card edit
     @Override
     public void onLimitListChanged(LimitList limitList) {
 
@@ -205,7 +167,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         if (Constants.DEBUG)
             Log.d("kk", "delete " + pos);
         if (mSettings.isDialogDelete()) {
-
             DeckItem deckItem = mDeckAdapater.getItem(pos);
             if (deckItem == null || deckItem.getCardInfo() == null) {
                 return;
@@ -232,45 +193,93 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     @Override
     public void onDragEnd() {
     }
+    //endregion
 
-    private void loadDeck(File file) {
-        loadDeck(file, false);
-    }
-
-    private void loadDeck(File file, boolean noSaveLast) {
+    //region load deck
+    private void loadDeckFromFile(File file) {
+        if (!mCardLoader.isOpen() || file == null || !file.exists()) {
+            setCurDeck(new DeckInfo());
+            return;
+        }
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            if (file == null) {
-                return new DeckInfo();
-            }
             if (mCardLoader.isOpen() && file.exists()) {
-                return mDeckAdapater.read(mCardLoader, file, mLimitList);
+                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurYdkFile(file, noSaveLast);
-            mDeckAdapater.setDeck(rs);
-            mDeckAdapater.notifyDataSetChanged();
+            setCurDeck(rs);
         });
     }
+    //endregion
 
-    private void setCurYdkFile(File file) {
-        setCurYdkFile(file, false);
+    //region init
+    private void init(File ydk){
+        DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
+        VUiKit.defer().when(() -> {
+            DataManager.get().load(false);
+            //默认第一个卡表
+            if (mLimitManager.getCount() > 0) {
+                mCardLoader.setLimitList(mLimitManager.getTopLimit());
+            }
+            File file = ydk;
+            if (!file.exists()) {
+                //当默认卡组不存在的时候
+                List<File> files = getYdkFiles();
+                if (files != null && files.size() > 0) {
+                    file = files.get(0);
+                }
+            }
+            //EXTRA_DECK
+            if (file == null) {
+                return new DeckInfo();
+            }
+            Log.i("kk", "load ydk " + file);
+            if (mCardLoader.isOpen() && file.exists()) {
+                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
+            } else {
+                return new DeckInfo();
+            }
+        }).done((rs) -> {
+            isLoad = true;
+            dlg.dismiss();
+            mCardSelector.initItems();
+            initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
+            initDecksListSpinners(mDeckSpinner, rs.source);
+            //设置当前卡组
+            setCurDeck(rs);
+        });
     }
+    //endregion
 
-    private void setCurYdkFile(File file, boolean noSaveLast) {
-        mYdkFile = file;
+    /**
+     * 设置当前卡组
+     * @param deckInfo
+     */
+    private void setCurDeck(DeckInfo deckInfo) {
+        if(deckInfo == null){
+            deckInfo = new DeckInfo();
+        }
+        File file = deckInfo.source;
         if (file != null && file.exists()) {
             String name = IOUtils.tirmName(file.getName(), Constants.YDK_FILE_EX);
             setActionBarSubTitle(name);
-            if (!noSaveLast) {
+            if (inDeckDir(file)) {
+                //deck文件夹里面的，则保存文件
                 mSettings.setLastDeck(name);
             }
         } else {
             setActionBarSubTitle(getString(R.string.noname));
         }
+        mDeckAdapater.setDeck(deckInfo);
+        mDeckAdapater.notifyDataSetChanged();
+    }
+
+    private boolean inDeckDir(File file) {
+        String deck = new File(AppsSettings.get().getDeckDir()).getAbsolutePath();
+        return TextUtils.equals(deck, file.getParentFile().getAbsolutePath());
     }
 
     @Override
@@ -311,11 +320,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     @Override
-    public void onResetSearch() {
-        super.onResetSearch();
-    }
-
-    @Override
     public void onSearchResult(List<Card> cardInfos) {
         super.onSearchResult(cardInfos);
         showResult(false);
@@ -326,18 +330,13 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         if (isShowDrawer()) {
             return;
         }
-
         showDeckCard(view, pos);
-
-    }
+     }
 
     @Override
     public void onItemLongClick(View view, int pos) {
         if (isShowDrawer()) {
             return;
-        }
-        //拖拽中，就不显示
-        if (Constants.DECK_SINGLE_PRESS_DRAG) {
         }
     }
 
@@ -360,8 +359,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     private boolean isShowDrawer() {
-        return mDrawerlayout.isDrawerOpen(Gravity.LEFT)
-                || mDrawerlayout.isDrawerOpen(Gravity.RIGHT);
+        return mDrawerlayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)
+                || mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY);
     }
 
     private boolean isShowCard() {
@@ -455,30 +454,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     private boolean isExit = false;
-//
-//    @Override
-//    public void finish() {
-//        if (!isExit) {
-//            if (mYdkFile != null && mYdkFile.exists()) {
-//                DialogPlus builder = new DialogPlus(this);
-//                builder.setTitle(R.string.question);
-//                builder.setMessage(R.string.quit_deck_tip);
-//                builder.setLeftButtonListener((dlg, s) -> {
-//                    dlg.dismiss();
-//                    isExit = true;
-//                    finish();
-//                });
-//                builder.show();
-//                return;
-//            }
-//        }
-//        super.finish();
-//    }
 
     @Override
     protected void onBackHome() {
         if (mDeckAdapater.isChanged()) {
-            if (mYdkFile != null && mYdkFile.exists()) {
+            File ydk = mDeckAdapater.getYdkFile();
+            if (ydk != null && ydk.exists()) {
                 DialogPlus builder = new DialogPlus(this);
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.quit_deck_tip);
@@ -505,13 +486,14 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     @Override
     public void onBackPressed() {
-        if (mDrawerlayout.isDrawerOpen(Gravity.RIGHT)) {
-            mDrawerlayout.closeDrawer(Gravity.RIGHT);
-        } else if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerlayout.closeDrawer(Gravity.LEFT);
+        if (mDrawerlayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
+            mDrawerlayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
+        } else if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+            mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         } else if (!isExit) {
             if (mDeckAdapater.isChanged()) {
-                if (mYdkFile != null && mYdkFile.exists()) {
+                File ydk = mDeckAdapater.getYdkFile();
+                if (ydk != null && ydk.exists()) {
                     DialogPlus builder = new DialogPlus(this);
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.quit_deck_tip);
@@ -533,23 +515,27 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     private boolean checkLimit(Card cardInfo, boolean tip) {
         SparseArray<Integer> mCount = mDeckAdapater.getCardCount();
-        if (mLimitList != null && mLimitList.check(cardInfo, LimitType.Forbidden)) {
+        LimitList limitList = mDeckAdapater.getLimitList();
+        Integer id = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        Integer count = mCount.get(id);
+        if (limitList == null) {
+            return count != null && count <= 3;
+        }
+        if (limitList.check(cardInfo, LimitType.Forbidden)) {
             if (tip) {
                 showToast(getString(R.string.tip_card_max, 0), Toast.LENGTH_SHORT);
             }
             return false;
         }
-        Integer id = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
-        Integer count = mCount.get(id);
         if (count != null) {
-            if (mLimitList != null && mLimitList.check(cardInfo, LimitType.Limit)) {
+            if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
                     if (tip) {
                         showToast(getString(R.string.tip_card_max, 1), Toast.LENGTH_SHORT);
                     }
                     return false;
                 }
-            } else if (mLimitList != null && mLimitList.check(cardInfo, LimitType.SemiLimit)) {
+            } else if (limitList.check(cardInfo, LimitType.SemiLimit)) {
                 if (count >= 2) {
                     if (tip) {
                         showToast(getString(R.string.tip_card_max, 2), Toast.LENGTH_SHORT);
@@ -594,10 +580,15 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 shareDeck();
                 break;
             case R.id.action_save:
-                if (mYdkFile == null) {
-                    inputDeckName(null);
-                } else {
-                    save();
+                if(mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()){
+                    //需要保存到deck文件夹
+                    inputDeckName(mPreLoadFile, true);
+                }else {
+                    if (mDeckAdapater.getYdkFile() == null) {
+                        inputDeckName(null, true);
+                    } else {
+                        save(mDeckAdapater.getYdkFile());
+                    }
                 }
                 break;
 //            case R.id.action_save_as:
@@ -608,32 +599,28 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //                }
 //                break;
             case R.id.action_rename:
-                if (mYdkFile == null) {
-                    inputDeckName(null);
-                } else {
-                    inputDeckName(mYdkFile.getName());
-                }
+                inputDeckName(mDeckAdapater.getYdkFile(), false);
                 break;
             case R.id.action_deck_new: {
-                final String old = mYdkFile == null ? null : mYdkFile.getAbsolutePath();
-                setCurYdkFile(null);
+                final File old = mDeckAdapater.getYdkFile();
                 DialogPlus builder = new DialogPlus(this);
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.question_keep_cur_deck);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                 builder.setLeftButtonListener((dlg, rs) -> {
                     dlg.dismiss();
-                    inputDeckName(old);
+                    //复制当前卡组
+                    inputDeckName(old, true);
                 });
                 builder.setRightButtonListener((dlg, rs) -> {
                     dlg.dismiss();
-                    loadDeck(null);
-                    inputDeckName(old);
+                    setCurDeck(null);
+                    inputDeckName(null, true);
                 });
                 builder.setOnCloseLinster((dlg) -> {
                     dlg.dismiss();
-                    loadDeck(null);
-                    inputDeckName(old);
+                    setCurDeck(null);
+                    inputDeckName(null, true);
                 });
                 builder.show();
             }
@@ -657,12 +644,15 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 builder.setMessage(R.string.question_delete_deck);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                 builder.setLeftButtonListener((dlg, rs) -> {
-                    if (mYdkFile != null && mYdkFile.exists()) {
-                        mYdkFile.delete();
+                    File ydk = mDeckAdapater.getYdkFile();
+                    if(ydk == null){
+                        return;
                     }
+                    FileUtils.deleteFile(ydk);
                     dlg.dismiss();
-                    initDecksListSpinners(mDeckSpinner);
-                    loadDeck(null);
+                    File file = getFirstYdk();
+                    initDecksListSpinners(mDeckSpinner, file);
+                    loadDeckFromFile(file);
                 });
                 builder.show();
             }
@@ -683,6 +673,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         return true;
     }
 
+    private File getFirstYdk() {
+        List<File> files = getYdkFiles();
+        return files == null || files.size() == 0 ? null : files.get(0);
+    }
+
     private void shareDeck() {
 //        开启绘图缓存
         mRecyclerView.setDrawingCacheEnabled(true);
@@ -698,7 +693,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         mRecyclerView.destroyDrawingCache();
 //        shotRecyclerView(mRecyclerView)
 
-        Deck deck = mDeckAdapater.toDeck(mYdkFile);
+        Deck deck = mDeckAdapater.toDeck(mDeckAdapater.getYdkFile());
         String deckName = deck.getName();
         int end = deckName.lastIndexOf(".");
         if (end != -1) {
@@ -751,7 +746,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         });
         if (files != null) {
             List<File> list = new ArrayList<>(Arrays.asList(files));
-            if (mPreLoadFile != null) {
+            if (mPreLoadFile != null && mPreLoadFile.exists()) {
                 boolean hasCur = false;
                 for (File f : list) {
                     if (TextUtils.equals(f.getAbsolutePath(), mPreLoadFile.getAbsolutePath())) {
@@ -768,10 +763,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         return null;
     }
 
-    private void initDecksListSpinners(Spinner spinner) {
+    private void initDecksListSpinners(Spinner spinner, File curYdk) {
         List<File> files = getYdkFiles();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        String name = mYdkFile != null ? mYdkFile.getName() : null;
+        String name = curYdk != null ? curYdk.getName() : null;
         int index = -1;
         if (files != null) {
             int i = 0;
@@ -812,12 +807,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //        if (index >= 0) {
 //            spinner.setSelection(index);
 //        }
-    private void initLimitListSpinners(Spinner spinner) {
+    private void initLimitListSpinners(Spinner spinner, LimitList cur) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limitLists = mLimitManager.getLimitNames();
         int index = -1;
         int count = mLimitManager.getCount();
-        LimitList cur = mLimitList;
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         for (int i = 0; i < count; i++) {
             int j = i + 1;
@@ -849,10 +843,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     private void setLimitList(LimitList limitList) {
         if (limitList == null) return;
-        boolean nochanged = mLimitList != null && TextUtils.equals(mLimitList.getName(), limitList.getName());
-        mLimitList = limitList;
+        LimitList last = mDeckAdapater.getLimitList();
+        boolean nochanged = last != null && TextUtils.equals(last.getName(), limitList.getName());
         if (!nochanged) {
-            mDeckAdapater.setLimitList(mLimitList);
+            mDeckAdapater.setLimitList(limitList);
             runOnUiThread(() -> {
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraEnd);
@@ -865,7 +859,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         });
     }
 
-    private void inputDeckName(String old) {
+    private void inputDeckName(File oldYdk, boolean keepOld) {
         DialogPlus builder = new DialogPlus(this);
 //        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.intpu_name);
@@ -873,12 +867,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         editText.setGravity(Gravity.TOP | Gravity.LEFT);
         editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         editText.setSingleLine();
+        if(oldYdk != null) {
+            editText.setText(oldYdk.getName());
+        }
         builder.setContentView(editText);
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
-            if (old != null) {
-                loadDeck(new File(old));
-            }
         });
         builder.setLeftButtonListener((dlg, s) -> {
             CharSequence name = editText.getText();
@@ -892,23 +886,24 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     showToast(R.string.file_exist, Toast.LENGTH_SHORT);
                     return;
                 }
-                if ( mYdkFile != null && mYdkFile.exists()) {
-                    if (mYdkFile.renameTo(ydk)) {
-                        mYdkFile = ydk;
-                        initDecksListSpinners(mDeckSpinner);
+                if (!keepOld && oldYdk != null && oldYdk.exists()) {
+                    if (oldYdk.renameTo(ydk)) {
+                        initDecksListSpinners(mDeckSpinner, ydk);
                         dlg.dismiss();
-                        loadDeck(ydk);
+                        loadDeckFromFile(ydk);
                     }
                 } else {
+                    if(oldYdk == mPreLoadFile){
+                        mPreLoadFile = null;
+                    }
                     dlg.dismiss();
                     try {
                         ydk.createNewFile();
                     } catch (IOException e) {
                     }
-                    mYdkFile = ydk;
-                    initDecksListSpinners(mDeckSpinner);
-                    save();
-                    setCurYdkFile(mYdkFile);
+                    initDecksListSpinners(mDeckSpinner, ydk);
+                    save(ydk);
+                    loadDeckFromFile(ydk);
                 }
             } else {
                 dlg.dismiss();
@@ -917,8 +912,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         builder.show();
     }
 
-    private void save() {
-        if (mDeckAdapater.save(mYdkFile)) {
+    private void save(File ydk) {
+        if (mDeckAdapater.save(ydk)) {
             showToast(R.string.save_tip_ok, Toast.LENGTH_SHORT);
         } else {
             showToast(R.string.save_tip_fail, Toast.LENGTH_SHORT);

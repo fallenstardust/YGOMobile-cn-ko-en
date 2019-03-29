@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.ui.cards.deck;
 
 import android.content.Context;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.SparseArray;
@@ -65,6 +67,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private ImageLoader imageLoader;
     private boolean showHead = false;
     private String mDeckMd5;
+    private DeckInfo mDeckInfo;
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
         this.context = context;
@@ -378,7 +381,23 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return mSideCount;
     }
 
+    public DeckInfo getDeckInfo() {
+        return mDeckInfo;
+    }
+
+    public LimitList getLimitList() {
+        return mLimitList;
+    }
+
+    public File getYdkFile(){
+        if(mDeckInfo != null){
+            return mDeckInfo.source;
+        }
+        return null;
+    }
+
     public void setDeck(DeckInfo deck) {
+        mDeckInfo = deck;
         if (deck != null) {
             loadData(deck);
         }
@@ -386,7 +405,9 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     public DeckInfo read(CardLoader cardLoader, File file, LimitList limitList) {
-        setLimitList(limitList);
+        if(limitList != null) {
+            setLimitList(limitList);
+        }
         return DeckLoader.readDeck(cardLoader, file, limitList);
     }
 
