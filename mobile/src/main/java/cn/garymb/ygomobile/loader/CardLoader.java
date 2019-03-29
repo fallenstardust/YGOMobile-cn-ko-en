@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.loader;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -45,6 +46,7 @@ public class CardLoader implements ICardLoader {
         this.context = context;
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
+        mLimitList = mLimitManager.getTopLimit();
     }
 
     @Override
@@ -85,7 +87,8 @@ public class CardLoader implements ICardLoader {
     }
 
     @Override
-    public LimitList getLimitList() {
+    public @NonNull
+    LimitList getLimitList() {
         return mLimitList;
     }
 
