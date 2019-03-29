@@ -7,6 +7,7 @@
 #else
 #include "sqlite3.h"
 #endif
+#include "spmemvfs/spmemvfs.h"
 #include "client_card.h"
 #include <unordered_map>
 
@@ -15,9 +16,11 @@ namespace ygo {
 class DataManager {
 public:
 	DataManager(): _datas(8192), _strings(8192) {}
-	bool LoadDB(const char* file);
+	bool LoadDB(const wchar_t* wfile);
 	bool LoadStrings(const char* file);
-	bool Error(sqlite3* pDB, sqlite3_stmt* pStmt = 0, int err=0);
+	bool LoadStrings(IReadFile* reader);
+	void ReadStringConfLine(const char* linebuf);
+	bool Error(spmemvfs_db_t* pDB, sqlite3_stmt* pStmt = 0, int err = 0);
 	bool GetData(int code, CardData* pData);
 	code_pointer GetCodePointer(int code);
 	bool GetString(int code, CardString* pStr);
@@ -59,7 +62,7 @@ public:
 	static byte* ScriptReaderEx(const char* script_name, int* slen);
 	static byte* ScriptReader(const char* script_name, int* slen);
 	static byte* ScriptReaderZip(const char* script_name, int* slen);
-
+	static IFileSystem* FileSystem;
 };
 
 extern DataManager dataManager;
