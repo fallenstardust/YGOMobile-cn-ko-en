@@ -15,6 +15,10 @@ public:
 	S3DVertex vNegate[4];
 	S3DVertex vPScale[4];
 	S3DVertex vChainNum[4];
+	S3DVertex vTotalAtkme[4];
+	S3DVertex vTotalAtkop[4];
+	S3DVertex vTotalAtkmeT[4];
+	S3DVertex vTotalAtkopT[4];
 	S3DVertex vActivate[4];
 	S3DVertex vField[4];
 	S3DVertex vFieldSpell[4];
