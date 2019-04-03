@@ -177,6 +177,9 @@ public class ServiceDuelAssistant extends Service {
                             if (TextUtils.isEmpty(cardSearchMessage)) {
                                 return;
                             }
+                            if (cardSearchMessage.indexOf("=") != -1) {
+                                return;
+                            }
                             Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
