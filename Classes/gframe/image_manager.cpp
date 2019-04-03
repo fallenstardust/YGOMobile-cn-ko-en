@@ -13,6 +13,7 @@ bool ImageManager::Initial(const path dir) {
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
 	tAct = driver->getTexture((dir + path("/textures/act.png")).c_str());
 	tAttack = driver->getTexture((dir + path("/textures/attack.png")).c_str());
+	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
 	tChain = driver->getTexture((dir + path("/textures/chain.png")).c_str());
 	tNegated = driver->getTexture((dir + path("/textures/negated.png")).c_str());
 	tNumber = driver->getTexture((dir + path("/textures/number.png")).c_str());

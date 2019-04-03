@@ -62,6 +62,7 @@ struct DuelInfo {
 	bool tag_player[2];
 	int lp[2];
 	int card_count[2];
+	int total_attack[2];
 	int duel_rule;
 	int turn;
 	short curMsg;
@@ -78,7 +79,9 @@ struct DuelInfo {
 	wchar_t str_time_left[2][16];
 	video::SColor time_color[2];
 	wchar_t str_card_count[2][16];
+	wchar_t str_total_attack[2][16];
 	video::SColor card_count_color[2];
+	video::SColor total_attack_color[2];
 	bool isReplaySwapped;
 };
 
@@ -115,7 +118,7 @@ public:
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	void SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
-	void LoadExpansionDB();
+	void LoadExpansions();
 	void RefreshDeck(irr::gui::IGUIComboBox* cbDeck);
 	void RefreshReplay();
 	void RefreshSingleplay();

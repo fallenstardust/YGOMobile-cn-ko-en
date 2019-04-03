@@ -25,7 +25,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1348;
+const unsigned short PRO_VERSION = 0x1349;
 
 namespace ygo {
 
@@ -73,7 +73,7 @@ bool Game::Initialize() {
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
-	IFileSystem * fs = device->getFileSystem();
+	dataManager.FileSystem = device->getFileSystem();
 	xScale = android::getScreenHeight(app) / 1024.0;
 	yScale = android::getScreenWidth(app) / 640.0;
 /*	if (xScale < yScale) {
@@ -88,7 +88,7 @@ bool Game::Initialize() {
 	char log_working[256] = {0};
 	sprintf(log_working, "workingDir= %s", workingDir.c_str());
 	Printer::log(log_working);
-	fs->changeWorkingDirectoryTo(workingDir);
+	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
 	 This example copies the media in the Android.mk makefile. */
@@ -97,9 +97,9 @@ bool Game::Initialize() {
 	// The Android assets file-system does not know which sub-directories it has (blame google).
 	// So we have to add all sub-directories in assets manually. Otherwise we could still open the files,
 	// but existFile checks will fail (which are for example needed by getFont).
-	for ( u32 i=0; i < fs->getFileArchiveCount(); ++i )
+	for ( u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
 	{
-		IFileArchive* archive = fs->getFileArchive(i);
+		IFileArchive* archive = dataManager.FileSystem->getFileArchive(i);
 		if ( archive->getType() == EFAT_ANDROID_ASSET )
 		{
 			archive->addDirectoryToFileList(mediaPath);
@@ -111,7 +111,7 @@ bool Game::Initialize() {
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
-		if(fs->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
 		    os::Printer::log("add arrchive ok ", zip_path.c_str());
 	    }else{
 			os::Printer::log("add arrchive fail ", zip_path.c_str());
@@ -170,12 +170,16 @@ bool Game::Initialize() {
 	imageManager.SetDevice(device);
 	if(!imageManager.Initial(workingDir))
 		return false;
+	LoadExpansions();
+	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
 	io::path* cdbs = options->getDBFiles();
 	len = options->getDbCount();
 	//os::Printer::log("load cdbs count %d", len);
 	for(int i=0;i<len;i++){
 		io::path cdb_path = cdbs[i];
-		if(dataManager.LoadDB(cdb_path.c_str())) {
+		wchar_t wpath[1024];
+		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
+		if(dataManager.LoadDB(wpath)) {
 		    os::Printer::log("add cdb ok ", cdb_path.c_str());
 	    }else{
 			os::Printer::log("add cdb fail ", cdb_path.c_str());
@@ -190,10 +194,10 @@ bool Game::Initialize() {
 		return false;
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
-	numFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.numfont, (int)16 * yScale, isAntialias, false);
-	adFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.numfont, (int)12 * yScale, isAntialias, false);
-	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.numfont, (int)48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(driver, fs, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
+	numFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)16 * yScale, isAntialias, false);
+	adFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)12 * yScale, isAntialias, false);
+	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)48 * yScale, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	textFont = guiFont;
 	if(!numFont || !textFont) {
 	  os::Printer::log("add font fail ");
@@ -1260,6 +1264,46 @@ void Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gu
 	dataManager.strBuffer[pbuffer] = 0;
 	pControl->setText(dataManager.strBuffer);
 }
+void Game::LoadExpansions() {
+	// TODO: get isUseExtraCards
+#ifdef _IRR_ANDROID_PLATFORM_
+	DIR * dir;
+	struct dirent * dirp;
+	if((dir = opendir("./expansions/")) == NULL)
+		return;
+	while((dirp = readdir(dir)) != NULL) {
+		size_t len = strlen(dirp->d_name);
+		if(len < 5 || strcasecmp(dirp->d_name + len - 4, ".zip") != 0)
+			continue;
+		char upath[1024];
+		sprintf(upath, "./expansions/%s", dirp->d_name);
+		dataManager.FileSystem->addFileArchive(upath, true, false);
+	}
+	closedir(dir);
+#endif
+	for(u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
+		const IFileList* archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
+		for(u32 j = 0; j < archive->getFileCount(); ++j) {
+#ifdef _WIN32
+			const wchar_t* fname = archive->getFullFileName(j).c_str();
+#else
+			wchar_t fname[1024];
+			const char* uname = archive->getFullFileName(j).c_str();
+			BufferIO::DecodeUTF8(uname, fname);
+#endif
+			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".cdb", 4))
+				dataManager.LoadDB(fname);
+			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".conf", 5)) {
+#ifdef _WIN32
+				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(fname);
+#else
+				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(uname);
+#endif
+				dataManager.LoadStrings(reader);
+			}
+		}
+	}
+}
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbDeck) {
 	cbDeck->clear();
 #ifdef _WIN32
@@ -1609,6 +1653,8 @@ void Game::ErrorLog(const char* msg) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	imgCard->setImage(imageManager.tCover[0]);
+	scrCardText->setVisible(false);
+	imgCard->setScaleImage(true);
 	btnPSAU->setImage();
 	btnPSDU->setImage();
 	for(int i=0; i<=4; ++i) {

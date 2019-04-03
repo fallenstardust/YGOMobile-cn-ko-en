@@ -17,7 +17,7 @@ int32 field::field_used_count[32] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3
 bool chain::chain_operation_sort(const chain& c1, const chain& c2) {
 	return c1.triggering_effect->id < c2.triggering_effect->id;
 }
-void chain::set_triggering_place(card* pcard) {
+void chain::set_triggering_state(card* pcard) {
 	triggering_controler = pcard->current.controler;
 	if(pcard->current.is_location(LOCATION_FZONE))
 		triggering_location = LOCATION_SZONE | LOCATION_FZONE;
@@ -27,6 +27,14 @@ void chain::set_triggering_place(card* pcard) {
 		triggering_location = pcard->current.location;
 	triggering_sequence = pcard->current.sequence;
 	triggering_position = pcard->current.position;
+	triggering_state.code = pcard->get_code();
+	triggering_state.code2 = pcard->get_another_code();
+	triggering_state.level = pcard->get_level();
+	triggering_state.rank = pcard->get_rank();
+	triggering_state.attribute = pcard->get_attribute();
+	triggering_state.race = pcard->get_race();
+	triggering_state.attack = pcard->get_attack();
+	triggering_state.defense = pcard->get_defense();
 }
 bool tevent::operator< (const tevent& v) const {
 	return std::memcmp(this, &v, sizeof(tevent)) < 0;
@@ -1228,8 +1236,8 @@ void field::reset_phase(uint32 phase) {
 		// work around: skip turn still raise reset_phase(PHASE_END)
 		// without this taking control only for one turn will be returned when skipping turn
 		// RESET_TURN_END should be introduced
-		if((*rm)->code == EFFECT_SET_CONTROL)
-			continue;
+		//if((*rm)->code == EFFECT_SET_CONTROL)
+		//	continue;
 		if((*rm)->reset(phase, RESET_PHASE)) {
 			if((*rm)->is_flag(EFFECT_FLAG_FIELD_ONLY))
 				remove_effect((*rm));

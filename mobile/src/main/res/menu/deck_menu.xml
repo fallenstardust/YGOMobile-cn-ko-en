@@ -38,6 +38,11 @@
         android:id="@+id/action_save"
         android:icon="@drawable/ic_mode_save_white"
         android:title="@string/save_deck"/>
+
+   <!-- <item
+        android:id="@+id/action_save_as"
+        android:icon="@drawable/ic_mode_save_white"
+        android:title="@string/save_as_deck"/>-->
     <!--<item
         android:id="@+id/action_share_deck"
         android:icon="@drawable/ic_refresh"

@@ -2964,6 +2964,8 @@ int32 field::special_summon_step(uint16 step, group* targets, card* target, uint
 			int32 ct1 = get_tofield_count(target, playerid, LOCATION_MZONE, target->summon_player, LOCATION_REASON_TOFIELD, zone, &flag1);
 			int32 ct2 = get_spsummonable_count_fromex(target, playerid, target->summon_player, zone, &flag2);
 			for(auto& pcard : targets->container) {
+				if(pcard->current.location == LOCATION_MZONE)
+					continue;
 				if(pcard->current.location != LOCATION_EXTRA)
 					ct1--;
 				else
@@ -4826,7 +4828,7 @@ int32 field::activate_effect(uint16 step, effect* peffect) {
 		newchain.evt.reason_effect = 0;
 		newchain.evt.reason_player = PLAYER_NONE;
 		newchain.triggering_effect = peffect;
-		newchain.set_triggering_place(phandler);
+		newchain.set_triggering_state(phandler);
 		newchain.triggering_player = playerid;
 		core.new_chains.push_back(newchain);
 		phandler->set_status(STATUS_CHAINING, TRUE);

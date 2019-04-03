@@ -179,6 +179,31 @@ void Game::DrawBackGround() {
 				DrawSelectionLine(matManager.vFieldSzone[1][i][rule], !(dField.selected_field & filter), 2, cv);
 		}
 	}
+	//draw total attack
+	if (mainGame->dInfo.total_attack[0] > 0) {
+	    matManager.mTexture.setTexture(0, imageManager.tTotalAtk);
+		driver->setMaterial(matManager.mTexture);
+		if (dInfo.duel_rule >= 4) {
+		    driver->drawVertexPrimitiveList(matManager.vTotalAtkme, 4, matManager.iRectangle, 2);
+			DrawShadowText(numFont, dInfo.str_total_attack[0], recti(430 * mainGame->xScale, 346 * mainGame->yScale, 445 * mainGame->xScale, 366 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[0], 0xff000000, true, false, 0);
+	    } else {
+			driver->drawVertexPrimitiveList(matManager.vTotalAtkmeT, 4, matManager.iRectangle, 2);
+		    DrawShadowText(numFont, dInfo.str_total_attack[0], recti(590 * mainGame->xScale, 326 * mainGame->yScale, 610 * mainGame->xScale, 346 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[0], 0xff000000, true, false, 0);
+	    }
+	}
+	if (mainGame->dInfo.total_attack[1] > 0) {
+		matManager.mTexture.setTexture(0, imageManager.tTotalAtk);
+		driver->setMaterial(matManager.mTexture);
+		if (dInfo.duel_rule >= 4) {
+		    driver->drawVertexPrimitiveList(matManager.vTotalAtkop, 4, matManager.iRectangle, 2);
+		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(885 * mainGame->xScale, 271 * mainGame->yScale, 905 * mainGame->xScale, 291 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
+	    } else {
+			driver->drawVertexPrimitiveList(matManager.vTotalAtkopT, 4, matManager.iRectangle, 2);
+		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(740 * mainGame->xScale, 295 * mainGame->yScale, 760 * mainGame->xScale, 3315 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
+		
+	    }
+	}
+	
 	//disabled field
 	{
 		/*float cv[4] = {0.0f, 0.0f, 1.0f, 1.0f};*/
@@ -584,10 +609,12 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_card_count[0], recti(600 * mainGame->xScale, 51 * mainGame->yScale, 625 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
 		DrawShadowText(numFont, dInfo.str_card_count[1], recti(710 * mainGame->xScale, 51 * mainGame->yScale, 735 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 	}
+
 	numFont->draw(dInfo.strLP[0], recti(305 * mainGame->xScale, 49 * mainGame->yScale, 614 * mainGame->xScale, 68 * mainGame->yScale), 0xff000000, true, false, 0);
 	numFont->draw(dInfo.strLP[0], recti(305 * mainGame->xScale, 50 * mainGame->yScale, 616 * mainGame->xScale, 69 * mainGame->yScale), 0xffffff00, true, false, 0);
 	numFont->draw(dInfo.strLP[1], recti(711 * mainGame->xScale, 49 * mainGame->yScale, 1010 * mainGame->xScale, 68 * mainGame->yScale), 0xff000000, true, false, 0);
 	numFont->draw(dInfo.strLP[1], recti(711 * mainGame->xScale, 50 * mainGame->yScale, 1012 * mainGame->xScale, 69 * mainGame->yScale), 0xffffff00, true, false, 0);
+
 
 	if(!dInfo.isTag || !dInfo.tag_player[0])
 		textFont->draw(dInfo.hostname, recti(400 * mainGame->xScale, 18 * mainGame->yScale, 629 * mainGame->xScale, 37 * mainGame->yScale), 0xffffffff, false, false, 0);
