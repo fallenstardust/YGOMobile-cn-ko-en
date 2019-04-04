@@ -177,7 +177,8 @@ public class ServiceDuelAssistant extends Service {
                             if (TextUtils.isEmpty(cardSearchMessage)) {
                                 return;
                             }
-                            if (cardSearchMessage.indexOf("=") != -1) {
+                            //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
+                            if (cardSearchMessage.contains("=")&&clipMessage.contains(".")) {
                                 return;
                             }
                             Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
