@@ -23,6 +23,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -43,6 +45,7 @@ import static com.bumptech.glide.Glide.with;
 public class ImageLoader implements Closeable {
     private static final String TAG = ImageLoader.class.getSimpleName();
     private ZipFile mZipFile;
+    private List<ZipFile> zipFileList;
     private LruBitmapPool mLruBitmapPool;
     //    private ExecutorService mExecutorService = Executors.newSingleThreadExecutor();
     private boolean isClose = false;
@@ -72,6 +75,7 @@ public class ImageLoader implements Closeable {
     private ImageLoader(Context context) {
         mContext = context;
         mLruBitmapPool = new LruBitmapPool(100);
+        zipFileList=new ArrayList<>();
     }
 
     private class BpgResourceDecoder implements ResourceDecoder<ImageVideoWrapper, GifBitmapWrapper> {
@@ -179,6 +183,7 @@ public class ImageLoader implements Closeable {
         String path = AppsSettings.get().getResourcePath();
         boolean bind = false;
         File zip = new File(path, Constants.CORE_PICS_ZIP);
+        List<File> zipList=new ArrayList<>();
         for (String ex : Constants.IMAGE_EX) {
             File file = new File(AppsSettings.get().getResourcePath(), name + ex);
             File file_ex = new File(AppsSettings.get().getResourcePath(), name_ex + ex);
@@ -216,6 +221,48 @@ public class ImageLoader implements Closeable {
                 e.printStackTrace();
             } finally {
                 IOUtils.close(inputStream);
+            }
+        }
+        if (!bind) {
+            File[] files = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS).listFiles();
+            if (files != null) {
+                for (File file :files) {
+                    if (file.isFile() && file.getName().endsWith(".zip")) {
+                        ZipEntry entry = null;
+                        InputStream inputStream = null;
+                        ByteArrayOutputStream outputStream = null;
+                        try {
+                            ZipFile zipFile = null;
+                            for(ZipFile zipFile1:zipFileList){
+                                if (zipFile1.getName().equals(file.getAbsolutePath())){
+                                    zipFile=zipFile1;
+                                    break;
+                                }
+                            }
+                            if (zipFile==null){
+                                zipFile=new ZipFile(file.getAbsoluteFile());
+                                zipFileList.add(zipFile);
+                            }
+                            for (String ex : Constants.IMAGE_EX) {
+                                entry = zipFile.getEntry(name + ex);
+                                if (entry != null) {
+                                    inputStream = zipFile.getInputStream(entry);
+                                    outputStream = new ByteArrayOutputStream();
+                                    IOUtils.copy(inputStream, outputStream);
+                                    bind(outputStream.toByteArray(), imageview, Constants.BPG.equals(ex), code, pre, isBig);
+                                    bind = true;
+                                    break;
+                                }
+                            }
+                            if (bind)
+                                break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            IOUtils.close(inputStream);
+                        }
+                    }
+                }
             }
         }
         if (!bind) {
