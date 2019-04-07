@@ -26,7 +26,7 @@ import ocgcore.enums.CardOt;
 
 public class StringManager implements Closeable {
     private static final String PRE_SYSTEM = "!system";
-    private  static final String PRE_SETNAME = "!setname";
+    private static final String PRE_SETNAME = "!setname";
     private final SparseArray<String> mSystem = new SparseArray<>();
     private final List<CardSet> mCardSets = new ArrayList<>();
 
@@ -35,7 +35,7 @@ public class StringManager implements Closeable {
     }
 
     @Override
-    public void close(){
+    public void close() {
         mSystem.clear();
         mCardSets.clear();
     }
@@ -46,29 +46,29 @@ public class StringManager implements Closeable {
         File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
         boolean rs1 = loadFile(stringFile.getAbsolutePath());
         boolean rs2 = true;
-        boolean res3=true;
+        boolean res3 = true;
         if (AppsSettings.get().isReadExpansions()) {
             File stringFile2 = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_STRING_PATH);
             rs2 = loadFile(stringFile2.getAbsolutePath());
-            File[] files=AppsSettings.get().getExpansionsPath().listFiles();
-            if (files!=null){
-                for(File file:files){
-                    if (file.isFile()&&file.getName().endsWith(".zip")){
+            File[] files = AppsSettings.get().getExpansionsPath().listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".zip")) {
                         try {
-                            ZipFile zipFile=new ZipFile(file.getAbsoluteFile());
+                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
                             ZipEntry entry = zipFile.getEntry(Constants.CORE_STRING_PATH);
-                            if (entry!=null){
-                               res3&=loadFile(zipFile.getInputStream(entry));
+                            if (entry != null) {
+                                res3 &= loadFile(zipFile.getInputStream(entry));
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
-                            res3=false;
+                            res3 = false;
                         }
                     }
                 }
             }
         }
-        return rs1 && rs2&&res3;
+        return rs1 && rs2 && res3;
     }
 
     public boolean loadFile(InputStream inputStream) {
