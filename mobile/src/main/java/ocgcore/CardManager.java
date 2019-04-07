@@ -6,6 +6,9 @@ import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,10 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
@@ -29,6 +32,7 @@ import ocgcore.data.Card;
 public class CardManager {
     private String dbDir, exDbPath;
     private final SparseArray<Card> cardDataHashMap = new SparseArray<>();
+    private static int cdbNum=0;
 
     public CardManager(String dbDir, String exPath) {
         this.dbDir = dbDir;
@@ -122,17 +126,19 @@ public class CardManager {
     public static List<File> readZipCdb(String zipPath) throws IOException {
         String savePath= App.get().getExternalCacheDir().getAbsolutePath();
         List<File> fileList=new ArrayList<>();
-        int num=0;
-        ZipFile zf = new ZipFile(zipPath);
+
+        ZipFile zf = new ZipFile(zipPath,"GBK");
         InputStream in = new BufferedInputStream(new FileInputStream(zipPath));
         ZipInputStream zin = new ZipInputStream(in);
         ZipEntry ze;
-        while ((ze = zin.getNextEntry()) != null) {
+        Enumeration<ZipEntry> entris = zf.getEntries();
+        while (entris.hasMoreElements()) {
+            ze=entris.nextElement();
             if (ze.isDirectory()) {
                 //Do nothing
             } else {
                 if (ze.getName().endsWith(".cdb")) {
-                    File file=new File(savePath,"cards"+num+".cdb");
+                    File file=new File(savePath,"cards"+cdbNum+".cdb");
                     InputStream inputStream = zf.getInputStream(ze);
                     OutputStream os = new FileOutputStream(file);
                     int bytesRead = 0;
@@ -143,6 +149,7 @@ public class CardManager {
                     os.close();
                     inputStream.close();
                     fileList.add(file);
+                    cdbNum++;
                 }
             }
         }
