@@ -35,6 +35,10 @@
             android:persistent="true"
             android:title="@string/title_use_ex"/>
         <CheckBoxPreference
+            android:key="pref_key_start_serviceduelassistant"
+            android:persistent="true"
+            android:title="@string/Start_ServiceDuelAssistant"/>
+        <CheckBoxPreference
             android:key="pref_key_game_sound_effect"
             android:persistent="true"
             android:title="@string/settings_game_enable_sound_effect"/>

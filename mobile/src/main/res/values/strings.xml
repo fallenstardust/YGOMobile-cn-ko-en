@@ -244,4 +244,5 @@
     <string name="crashed">YGOMobile Crashed！</string>
     <string name="invalid_shortcut">Invalid Shortcut</string>
     <string name="return_to_duel">Return to Duel☞</string>
+    <string name="Start_ServiceDuelAssistant">DuelAssistant</string>
 </resources>

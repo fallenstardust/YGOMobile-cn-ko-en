@@ -37,6 +37,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -66,6 +67,7 @@ import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_SOUND_EFFECT;
+import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
@@ -97,6 +99,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     };
     private AppsSettings mSettings;
     private boolean isInit = true;
+
     public SettingFragment() {
 
     }
@@ -119,6 +122,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 + "(" + SystemUtils.getVersion(getActivity()) + ")");
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
+        bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
         bind(PREF_IMMERSIVE_MODE, mSettings.isImmerSiveMode());

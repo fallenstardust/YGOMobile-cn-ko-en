@@ -273,6 +273,17 @@ public class AppsSettings {
     }
 
     /***
+     * 决斗助手
+     */
+    public boolean isServiceDuelAssistant() {
+        return mSharedPreferences.getBoolean(Constants.PREF_START_SERVICEDUELASSISTANT, Constants.PREF_DEF_START_SERVICEDUELASSISTANT);
+    }
+
+    public void setServiceDuelAssistant(boolean serviceDuelAssiatant) {
+        mSharedPreferences.putBoolean(Constants.PREF_START_SERVICEDUELASSISTANT, serviceDuelAssiatant);
+    }
+
+    /***
      * 摇摆数字
      */
     public boolean isPendulumScale() {

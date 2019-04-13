@@ -245,4 +245,5 @@
     <string name="crashed">YGOMobile 추락 한！</string>
     <string name="invalid_shortcut">잘못된 바로 가기</string>
     <string name="return_to_duel">게임으로 돌아가다☞</string>
+    <string name="Start_ServiceDuelAssistant">결투 보조원</string>
 </resources>
