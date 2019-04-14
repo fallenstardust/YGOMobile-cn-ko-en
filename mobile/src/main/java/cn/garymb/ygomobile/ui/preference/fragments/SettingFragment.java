@@ -186,6 +186,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     //设置使用额外卡库后重新加载卡片数据
                     DataManager.get().load(true);
                 }
+                //开关决斗助手
+                if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
+                    getActivity().startService(new Intent(getContext(), ServiceDuelAssistant.class));
+                }else{
+                    getActivity().stopService(new Intent(getContext(), ServiceDuelAssistant.class));
+                }
                 //如果是音效开关
                 if (preference.getKey().equals(PREF_SOUND_EFFECT)) {
                     //如果打勾开启音效
