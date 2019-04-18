@@ -189,8 +189,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
                     getActivity().startService(new Intent(getContext(), ServiceDuelAssistant.class));
-                }else{
-                    getActivity().stopService(new Intent(getContext(), ServiceDuelAssistant.class));
+                    if (!checkBoxPreference.isChecked()) {
+                        getActivity().stopService(new Intent(getContext(), ServiceDuelAssistant.class));
+                    }
                 }
                 //如果是音效开关
                 if (preference.getKey().equals(PREF_SOUND_EFFECT)) {
