@@ -300,33 +300,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->SetStaticText(mainGame->stOptions, 310 * mainGame->xScale, mainGame->textFont, dataManager.GetDesc(select_options[selected_option]));
 				break;
 			}
-			case BUTTON_OPTION_0: {
-				mainGame->soundEffectPlayer->doPressButton();
-				selected_option = 0;
-				SetResponseSelectedOption();
-				break;
-			}
-			case BUTTON_OPTION_1: {
-				mainGame->soundEffectPlayer->doPressButton();
-				selected_option = 1;
-				SetResponseSelectedOption();
-				break;
-			}
-			case BUTTON_OPTION_2: {
-				mainGame->soundEffectPlayer->doPressButton();
-				selected_option = 2;
-				SetResponseSelectedOption();
-				break;
-			}
-			case BUTTON_OPTION_3: {
-				mainGame->soundEffectPlayer->doPressButton();
-				selected_option = 3;
-				SetResponseSelectedOption();
-				break;
-			}
+			case BUTTON_OPTION_0:
+			case BUTTON_OPTION_1: 
+			case BUTTON_OPTION_2: 
+			case BUTTON_OPTION_3: 
 			case BUTTON_OPTION_4: {
 				mainGame->soundEffectPlayer->doPressButton();
-				selected_option = 4;
+				int step = mainGame->scrOption->isVisible() ? mainGame->scrOption->getPos() : 0;
+				selected_option = id - BUTTON_OPTION_0 + step;
 				SetResponseSelectedOption();
 				break;
 			}
@@ -859,6 +840,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_SCROLL_BAR_CHANGED: {
 			switch(id) {
+			case SCROLL_OPTION_SELECT: {
+				int step = mainGame->scrOption->isVisible() ? mainGame->scrOption->getPos() : 0;
+				for(int i = 0; i < 5; i++) {
+					const wchar_t* option = dataManager.GetDesc(select_options[i + step]);
+					mainGame->btnOption[i]->setText(option);
+				}
+				break;
+			}
 			case SCROLL_CARD_SELECT: {
 				int pos = mainGame->scrCardList->getPos() / 10;
 				for(int i = 0; i < 5; ++i) {
@@ -870,7 +859,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					else if(conti_selecting)
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
-						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler]);
+						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler + 2]);
 					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->xScale, 55 * mainGame->xScale, (30 + 120 + i * 125)  * mainGame->xScale, 225  * mainGame->yScale));
 					// text
 					wchar_t formatBuffer[2048];
