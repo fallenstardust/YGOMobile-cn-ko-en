@@ -624,14 +624,14 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(i < count);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		int newheight = 30 + 40 * (scrollbar ? 5 : count) * mainGame->yScale;
+		int newheight = 30 + 70 * (scrollbar ? 5 : count) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 375 : 350);
+		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 375 : 350) * mainGame->xScale;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
 		mainGame->wOptions->setRelativePosition(pos);
 	} else {
-		mainGame->SetStaticText(mainGame->stOptions, 310  * mainGame->xScale, mainGame->guiFont,
+		mainGame->SetStaticText(mainGame->stOptions, 370  * mainGame->xScale, mainGame->guiFont,
 			(wchar_t*)dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
 		mainGame->btnOptionp->setVisible(false);
@@ -640,7 +640,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 140 * mainGame->yScale;
+		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 180 * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
 	}
 	if(select_hint)
