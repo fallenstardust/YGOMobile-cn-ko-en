@@ -90,6 +90,7 @@ public class ServiceDuelAssistant extends Service {
 
     private WindowManager.LayoutParams wmParams;
     private WindowManager mWindowManager;
+    private ClipboardManager cm;
 
     @Override
     public IBinder onBind(Intent p1) {
@@ -112,85 +113,89 @@ public class ServiceDuelAssistant extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        //移除剪贴板监听
+        cm.removePrimaryClipChangedListener(onPrimaryClipChangedListener);
         //关闭悬浮窗时的声明
         stopForeground(true);
     }
 
     private void startClipboardListener() {
-        final ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm == null)
             return;
-        cm.addPrimaryClipChangedListener(new ClipboardManager.OnPrimaryClipChangedListener() {
+        cm.addPrimaryClipChangedListener(onPrimaryClipChangedListener);
+    }
 
-            @Override
-            public void onPrimaryClipChanged() {
-                ClipData clipData = cm.getPrimaryClip();
-                if (clipData == null)
-                    return;
-                CharSequence cs = clipData.getItemAt(0).getText();
-                final String clipMessage;
-                if (cs != null) {
-                    clipMessage = cs.toString();
-                } else {
-                    clipMessage = null;
-                }
+   ClipboardManager.OnPrimaryClipChangedListener onPrimaryClipChangedListener= new ClipboardManager.OnPrimaryClipChangedListener() {
 
-                //如果复制的内容为空则不执行下面的代码
-                if (TextUtils.isEmpty(clipMessage)) {
-                    return;
-                }
-                //如果复制的内容是多行不执行
-                if (clipMessage.contains("\n"))
-                    return;
-                int start = -1;
-                int end = -1;
-                String passwordPrefixKey = null;
-                for (String s : passwordPrefix) {
-                    start = clipMessage.indexOf(s);
-                    passwordPrefixKey = s;
-                    if(start != -1) {
-                        break;
-                    }
-                }
+        @Override
+        public void onPrimaryClipChanged() {
+            ClipData clipData = cm.getPrimaryClip();
+            if (clipData == null)
+                return;
+            CharSequence cs = clipData.getItemAt(0).getText();
+            final String clipMessage;
+            if (cs != null) {
+                clipMessage = cs.toString();
+            } else {
+                clipMessage = null;
+            }
 
-                if (start != -1) {
-                    //如果密码含有空格，则以空格结尾
-                    end = clipMessage.indexOf(" ", start);
-                    //如果不含有空格则取片尾所有
-                    if (end == -1) {
-                        end = clipMessage.length();
-                    }else {
-                        //如果只有密码前缀而没有密码内容则不跳转
-                        if (end-start==passwordPrefixKey.length())
+            //如果复制的内容为空则不执行下面的代码
+            if (TextUtils.isEmpty(clipMessage)) {
+                return;
+            }
+            //如果复制的内容是多行不执行
+            if (clipMessage.contains("\n"))
+                return;
+            int start = -1;
+            int end = -1;
+            String passwordPrefixKey = null;
+            for (String s : passwordPrefix) {
+                start = clipMessage.indexOf(s);
+                passwordPrefixKey = s;
+                if(start != -1) {
+                    break;
+                }
+            }
+
+            if (start != -1) {
+                //如果密码含有空格，则以空格结尾
+                end = clipMessage.indexOf(" ", start);
+                //如果不含有空格则取片尾所有
+                if (end == -1) {
+                    end = clipMessage.length();
+                }else {
+                    //如果只有密码前缀而没有密码内容则不跳转
+                    if (end-start==passwordPrefixKey.length())
+                        return;
+                }
+                //如果有悬浮窗权限再显示
+                if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
+                    joinRoom(clipMessage, start, end);
+            } else {
+                for (String s : cardSearchKey) {
+                    int cardSearchStart = clipMessage.indexOf(s);
+                    if (cardSearchStart != -1) {
+                        //卡查内容
+                        cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
+                        //如果复制的文本里带？号后面没有内容则不跳转
+                        if (TextUtils.isEmpty(cardSearchMessage)) {
                             return;
-                    }
-                    //如果有悬浮窗权限再显示
-                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
-                        joinRoom(clipMessage, start, end);
-                } else {
-                    for (String s : cardSearchKey) {
-                        int cardSearchStart = clipMessage.indexOf(s);
-                        if (cardSearchStart != -1) {
-                            //卡查内容
-                            cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
-                            //如果复制的文本里带？号后面没有内容则不跳转
-                            if (TextUtils.isEmpty(cardSearchMessage)) {
-                                return;
-                            }
-                            //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
-                            if (cardSearchMessage.contains("=")&&clipMessage.contains(".")) {
-                                return;
-                            }
-                            Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
-                            startActivity(intent);
                         }
+                        //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
+                        if (cardSearchMessage.contains("=")&&clipMessage.contains(".")) {
+                            return;
+                        }
+                        Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
+                        startActivity(intent);
                     }
                 }
             }
-        });
-    }
+        }
+    };
 
     private void startForeground() {
 

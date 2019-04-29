@@ -220,22 +220,22 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(this);
-            if (dialogPlus == null)
-                this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
-            else
-                dialogPlus.show();
-        } else {
-            startService(new Intent(this, ServiceDuelAssistant.class));
+        if(AppsSettings.get().isServiceDuelAssistant()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(this);
+                if (dialogPlus == null)
+                    this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
+                else
+                    dialogPlus.show();
+            } else {
+                startService(new Intent(this, ServiceDuelAssistant.class));
+            }
         }
-
         //萌卡
         StartMycard();
         checkNotch();
