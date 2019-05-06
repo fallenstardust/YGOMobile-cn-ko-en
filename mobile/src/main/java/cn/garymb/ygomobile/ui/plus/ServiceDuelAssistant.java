@@ -79,6 +79,9 @@ public class ServiceDuelAssistant extends Service {
 
     //卡查内容
     public static String cardSearchMessage = "";
+    //卡组复制
+    public static final String[] DeckTextKey = new String[]{"#Created by", "#main"};
+    public static String DeckText = "";
 
     //悬浮窗布局View
     private View mFloatLayout;
@@ -145,9 +148,22 @@ public class ServiceDuelAssistant extends Service {
             if (TextUtils.isEmpty(clipMessage)) {
                 return;
             }
-            //如果复制的内容是多行不执行
-            if (clipMessage.contains("\n"))
-                return;
+            //如果复制的内容是多行则视为卡组
+            if (clipMessage.contains("\n")) {
+                for (String s : DeckTextKey) {
+                    int DeckTextStart = clipMessage.indexOf(s);
+                    if (DeckTextStart != -1) {
+                        DeckText = clipMessage.substring(DeckTextStart + s.length(), clipMessage.length());
+                        if (TextUtils.isEmpty(DeckText)) {
+                            return;
+                        }
+                        //如果卡组文本包含“#extra”并且复制的内容包含“!side”则作为卡组打开
+                        if (DeckText.contains("#extra")&&clipMessage.contains("!side")) {
+
+                        }
+                    }
+                }
+            }
             int start = -1;
             int end = -1;
             String passwordPrefixKey = null;
