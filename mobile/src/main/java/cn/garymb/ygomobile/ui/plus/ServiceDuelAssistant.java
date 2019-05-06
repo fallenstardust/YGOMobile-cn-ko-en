@@ -25,9 +25,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 
@@ -37,6 +39,8 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -80,7 +84,7 @@ public class ServiceDuelAssistant extends Service {
     //卡查内容
     public static String cardSearchMessage = "";
     //卡组复制
-    public static final String[] DeckTextKey = new String[]{"#Created by", "#main"};
+    public static final String[] DeckTextKey = new String[]{ "#main"};
     public static String DeckText = "";
 
     //悬浮窗布局View
@@ -148,21 +152,16 @@ public class ServiceDuelAssistant extends Service {
             if (TextUtils.isEmpty(clipMessage)) {
                 return;
             }
-            //如果复制的内容是多行则视为卡组
+            //如果复制的内容是多行作为卡组去判断
             if (clipMessage.contains("\n")) {
                 for (String s : DeckTextKey) {
-                    int DeckTextStart = clipMessage.indexOf(s);
-                    if (DeckTextStart != -1) {
-                        DeckText = clipMessage.substring(DeckTextStart + s.length(), clipMessage.length());
-                        if (TextUtils.isEmpty(DeckText)) {
-                            return;
-                        }
-                        //如果卡组文本包含“#extra”并且复制的内容包含“!side”则作为卡组打开
-                        if (DeckText.contains("#extra")&&clipMessage.contains("!side")) {
-
-                        }
+                    //只要包含其中一个关键字就视为卡组
+                    if (clipMessage.contains(s)) {
+                       saveDeck(clipMessage);
+                       return;
                     }
                 }
+                return;
             }
             int start = -1;
             int end = -1;
@@ -315,6 +314,44 @@ public class ServiceDuelAssistant extends Service {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void saveDeck(String deckMessage){
+        tv_message.setText("检测到卡组文本，是否保存？");
+        bt_close.setText(R.string.search_close);
+        bt_join.setText("保存并打开");
+        disJoinDialog();
+        showJoinDialog();
+        new Handler().postDelayed(() -> {
+            if (isdis) {
+                isdis = false;
+                mWindowManager.removeView(mFloatLayout);
+            }
+        }, TIME_DIS_WINDOW);
+        bt_close.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disJoinDialog();
+            }
+        });
+        bt_join.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disJoinDialog();
+                try {
+                    //以当前时间戳作为卡组名保存卡组
+                    File file=DeckUtils.save("助手保存："+System.currentTimeMillis(),deckMessage);
+                    Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(startdeck);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(ServiceDuelAssistant.this,"保存失败，原因为"+e,Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
     }
 
     private void joinRoom(String ss, int start, int end) {
