@@ -8,7 +8,7 @@ namespace ygo {
 
 DeckManager deckManager;
 
-void DeckManager::LoadLFListSingle(const char* path) {
+void DeckManager::LoadLFList(const char* path, bool load_none) {
 	LFList* cur = NULL;
 	FILE* fp = fopen(path, "r");
 	char linebuf[256];
@@ -24,7 +24,7 @@ void DeckManager::LoadLFListSingle(const char* path) {
 				LFList newlist;
 				_lfList.push_back(newlist);
 				cur = &_lfList[_lfList.size() - 1];
-				memcpy(cur->listName, (const void*)strBuffer, 20 * sizeof(wchar_t));
+				memcpy(cur->listName, (const void*)strBuffer, 40);
 				cur->listName[sa] = 0;
 				cur->content = new std::unordered_map<int, int>;
 				cur->hash = 0x7dfcee6a;
@@ -48,15 +48,30 @@ void DeckManager::LoadLFListSingle(const char* path) {
 		}
 		fclose(fp);
 	}
-}
-void DeckManager::LoadLFList() {
-	LoadLFListSingle("expansions/lflist.conf");
-	LoadLFListSingle("lflist.conf");
+	if(!load_none)
+		return;
 	LFList nolimit;
 	myswprintf(nolimit.listName, L"N/A");
 	nolimit.hash = 0;
 	nolimit.content = new std::unordered_map<int, int>;
 	_lfList.push_back(nolimit);
+}
+bool DeckManager::RenameDeck(const wchar_t* oldname, const wchar_t* newname) {
+	wchar_t oldfname[256];
+	wchar_t newfname[256];
+	myswprintf(oldfname, L"./deck/%ls.ydk", oldname);
+	myswprintf(newfname, L"./deck/%ls.ydk", newname);
+#ifdef WIN32
+	BOOL result = MoveFileW(oldfname, newfname);
+	return !!result;
+#else
+	char oldfilefn[256];
+	char newfilefn[256];
+	BufferIO::EncodeUTF8(oldfname, oldfilefn);
+	BufferIO::EncodeUTF8(newfname, newfilefn);
+	int result = rename(oldfilefn, newfilefn);
+	return result == 0;
+#endif
 }
 wchar_t* DeckManager::GetLFListName(int lfhash) {
 	for(size_t i = 0; i < _lfList.size(); ++i) {
@@ -191,37 +206,6 @@ bool DeckManager::LoadSide(Deck& deck, int* dbuf, int mainc, int sidec) {
 	deck = ndeck;
 	return true;
 }
-void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text) {
-	wchar_t catepath[256];
-	switch(index) {
-	case 0:
-		myswprintf(catepath, L"./pack");
-		break;
-	case 1:
-		myswprintf(catepath, mainGame->gameConf.bot_deck_path);
-		break;
-	case -1:
-	case 2:
-	case 3:
-		myswprintf(catepath, L"./deck");
-		break;
-	default:
-		myswprintf(catepath, L"./deck/%ls", text);
-	}
-	BufferIO::CopyWStr(catepath, ret, 256);
-}
-void DeckManager::GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
-	wchar_t filepath[256];
-	wchar_t catepath[256];
-	GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
-	myswprintf(filepath, L"%ls/%ls.ydk", catepath, cbDeck->getItem(cbDeck->getSelected()));
-	BufferIO::CopyWStr(filepath, ret, 256);
-}
-bool DeckManager::LoadDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
-	wchar_t filepath[256];
-	GetDeckFile(filepath, cbCategory, cbDeck);
-	return LoadDeck(filepath);
-}
 FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
 #ifdef WIN32
 	FILE* fp = _wfopen(file, (wchar_t*)mode);
@@ -234,11 +218,11 @@ FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
 }
 bool DeckManager::LoadDeck(const wchar_t* file) {
 	int sp = 0, ct = 0, mainc = 0, sidec = 0, code;
-	FILE* fp = OpenDeckFile(file, "r");
+	wchar_t localfile[64];
+	myswprintf(localfile, L"./deck/%ls.ydk", file);
+	FILE* fp = OpenDeckFile(localfile, "r");
 	if(!fp) {
-		wchar_t localfile[64];
-		myswprintf(localfile, L"./deck/%ls.ydk", file);
-		fp = OpenDeckFile(localfile, "r");
+		fp = OpenDeckFile(file, "r");
 	}
 	if(!fp)
 		return false;
@@ -264,9 +248,9 @@ bool DeckManager::LoadDeck(const wchar_t* file) {
 	LoadDeck(current_deck, cardlist, mainc, sidec);
 	return true;
 }
-bool DeckManager::SaveDeck(Deck& deck, const wchar_t* file) {
-	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
-		return false;
+bool DeckManager::SaveDeck(Deck& deck, const wchar_t* name) {
+	wchar_t file[64];
+	myswprintf(file, L"./deck/%ls.ydk", name);
 	FILE* fp = OpenDeckFile(file, "w");
 	if(!fp)
 		return false;
@@ -282,7 +266,9 @@ bool DeckManager::SaveDeck(Deck& deck, const wchar_t* file) {
 	fclose(fp);
 	return true;
 }
-bool DeckManager::DeleteDeck(const wchar_t* file) {
+bool DeckManager::DeleteDeck(Deck& deck, const wchar_t* name) {
+	wchar_t file[64];
+	myswprintf(file, L"./deck/%ls.ydk", name);
 #ifdef WIN32
 	BOOL result = DeleteFileW(file);
 	return !!result;
@@ -293,31 +279,13 @@ bool DeckManager::DeleteDeck(const wchar_t* file) {
 	return result == 0;
 #endif
 }
-bool DeckManager::CreateCategory(const wchar_t* name) {
-	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
-		return false;
-	if(name[0] == 0)
-		return false;
-	wchar_t localname[256];
-	myswprintf(localname, L"./deck/%ls", name);
-	return FileSystem::MakeDir(localname);
-}
-bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname) {
-	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
-		return false;
-	if(newname[0] == 0)
-		return false;
-	wchar_t oldlocalname[256];
-	wchar_t newlocalname[256];
-	myswprintf(oldlocalname, L"./deck/%ls", oldname);
-	myswprintf(newlocalname, L"./deck/%ls", newname);
-	return FileSystem::Rename(oldlocalname, newlocalname);
-}
-bool DeckManager::DeleteCategory(const wchar_t* name) {
-	wchar_t localname[256];
-	myswprintf(localname, L"./deck/%ls", name);
-	if(!FileSystem::IsDirExists(localname))
-		return false;
-	return FileSystem::DeleteDir(localname);
+int DeckManager::TypeCount(std::vector<code_pointer> list, unsigned int ctype) {
+	int res = 0;
+	for(size_t i = 0; i < list.size(); ++i) {
+		code_pointer cur = list[i];
+		if(cur->second.type & ctype)
+			res++;
+	}
+	return res;
 }
 }

@@ -304,7 +304,6 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			}
 			}
 			mainGame->env->addMessageBox(L"", msgbuf);
-			mainGame->cbCategorySelect->setEnabled(true);
 			mainGame->cbDeckSelect->setEnabled(true);
 			mainGame->gMutex.Unlock();
 			break;
@@ -468,8 +467,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->stHostPrepDuelist[3]->setText(L"");
 		mainGame->stHostPrepOB->setText(L"");
 		mainGame->SetStaticText(mainGame->stHostPrepRule, 180 * mainGame->xScale, mainGame->guiFont, str.c_str());
-		mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
-		mainGame->cbCategorySelect->setEnabled(true);
+		mainGame->RefreshDeck(mainGame->cbDeckSelect);
 		mainGame->cbDeckSelect->setEnabled(true);
 		if(mainGame->wCreateHost->isVisible())
 			mainGame->HideElement(mainGame->wCreateHost);

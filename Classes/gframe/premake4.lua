@@ -1,13 +1,12 @@
 include "lzma/."
-include "spmemvfs/."
 
 project "ygopro"
     kind "WindowedApp"
 
     files { "**.cpp", "**.cc", "**.c", "**.h" }
-    excludes { "lzma/**", "spmemvfs/**" }
+    excludes "lzma/**"
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "freetype", "sqlite3", "lua" , "event" }
+    links { "ocgcore", "clzma", "Irrlicht", "freetype", "sqlite3", "lua" , "event" }
 
     configuration "windows"
         files "ygopro.rc"
