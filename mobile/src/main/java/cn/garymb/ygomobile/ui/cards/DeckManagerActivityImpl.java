@@ -37,8 +37,11 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -216,7 +219,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     //endregion
 
     //region init
-    private void init(File ydk){
+    private void init(File ydk) {
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(false);
@@ -256,10 +259,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     /**
      * 设置当前卡组
+     *
      * @param deckInfo
      */
     private void setCurDeck(DeckInfo deckInfo) {
-        if(deckInfo == null){
+        if (deckInfo == null) {
             deckInfo = new DeckInfo();
         }
         File file = deckInfo.source;
@@ -331,7 +335,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             return;
         }
         showDeckCard(view, pos);
-     }
+    }
 
     @Override
     public void onItemLongClick(View view, int pos) {
@@ -580,10 +584,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 shareDeck();
                 break;
             case R.id.action_save:
-                if(mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()){
+                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
                     //需要保存到deck文件夹
                     inputDeckName(mPreLoadFile, true);
-                }else {
+                } else {
                     if (mDeckAdapater.getYdkFile() == null) {
                         inputDeckName(null, true);
                     } else {
@@ -645,7 +649,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                 builder.setLeftButtonListener((dlg, rs) -> {
                     File ydk = mDeckAdapater.getYdkFile();
-                    if(ydk == null){
+                    if (ydk == null) {
                         return;
                     }
                     FileUtils.deleteFile(ydk);
@@ -767,6 +771,16 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         List<File> files = getYdkFiles();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         String name = curYdk != null ? curYdk.getName() : null;
+        Collections.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File ydk1, File ydk2) {
+                if (ydk1.isDirectory() && ydk2.isFile())
+                    return -1;
+                if (ydk1.isFile() && ydk2.isDirectory())
+                    return 1;
+                return ydk1.getName().compareTo(ydk2.getName());
+            }
+        });
         int index = -1;
         if (files != null) {
             int i = 0;
@@ -867,7 +881,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         editText.setGravity(Gravity.TOP | Gravity.LEFT);
         editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         editText.setSingleLine();
-        if(oldYdk != null) {
+        if (oldYdk != null) {
             editText.setText(oldYdk.getName());
         }
         builder.setContentView(editText);
@@ -893,7 +907,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                         loadDeckFromFile(ydk);
                     }
                 } else {
-                    if(oldYdk == mPreLoadFile){
+                    if (oldYdk == mPreLoadFile) {
                         mPreLoadFile = null;
                     }
                     dlg.dismiss();

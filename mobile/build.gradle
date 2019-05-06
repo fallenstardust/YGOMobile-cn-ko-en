@@ -8,7 +8,7 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 340300407
+        versionCode 340300422
         versionName "3.4.3"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
@@ -101,7 +101,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //
     implementation(name: 'paysdk-release-1.2.4', ext: 'aar')
-    implementation 'com.pgyersdk:sdk:3.0.4'
+    implementation "com.pgyersdk:sdk:3.0.4"
 
 
 }
