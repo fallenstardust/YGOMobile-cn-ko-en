@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,8 +31,8 @@ public class Deck implements Parcelable {
         sideList = new ArrayList<>();
     }
 
-    public Deck(Uri uri) {
-        this(uri.getQueryParameter(QUERY_YDK));
+    public Deck(String name,Uri uri){
+        this(name);
         String main = uri.getQueryParameter(QUERY_MAIN);
         String extra = uri.getQueryParameter(QUERY_EXTRA);
         String side = uri.getQueryParameter(QUERY_SIDE);
@@ -62,6 +63,10 @@ public class Deck implements Parcelable {
                 }
             }
         }
+    }
+
+    public Deck(Uri uri) {
+        this(uri.getQueryParameter(QUERY_YDK),uri);
     }
 
     public Uri toAppUri() {

@@ -3,8 +3,15 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.util;
 import android.app.Activity;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
+
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.utils.PermissionUtil;
 
 public class Util {
     //提示
@@ -26,5 +33,18 @@ public class Util {
         cmb.setText(message);//复制命令
     }
 
+    public static void startDuelService(Context context){
+        if(AppsSettings.get().isServiceDuelAssistant()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
+                if (dialogPlus == null)
+                    context.startForegroundService(new Intent(context, ServiceDuelAssistant.class));
+                else
+                    dialogPlus.show();
+            } else {
+                context.startService(new Intent(context, ServiceDuelAssistant.class));
+            }
+        }
+    }
 
 }

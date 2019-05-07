@@ -11,6 +11,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,7 +23,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,10 +30,11 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
@@ -43,9 +44,7 @@ import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
-import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.PermissionUtil;
-import cn.garymb.ygomobile.utils.XmlUtils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
@@ -59,6 +58,7 @@ public class ServiceDuelAssistant extends Service {
     private final static String CMD_NAME = "CMD";
     private final static String CMD_START_GAME = "CMD : START GAME";
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
+    private final static String DECK_URL_PREFIX = "ygomobile://m.ygomobile.com/";
     //悬浮窗显示的时间
     private static final int TIME_DIS_WINDOW = 3000;
 
@@ -84,7 +84,7 @@ public class ServiceDuelAssistant extends Service {
     //卡查内容
     public static String cardSearchMessage = "";
     //卡组复制
-    public static final String[] DeckTextKey = new String[]{ "#main"};
+    public static final String[] DeckTextKey = new String[]{"#main"};
     public static String DeckText = "";
 
     //悬浮窗布局View
@@ -133,7 +133,7 @@ public class ServiceDuelAssistant extends Service {
         cm.addPrimaryClipChangedListener(onPrimaryClipChangedListener);
     }
 
-   ClipboardManager.OnPrimaryClipChangedListener onPrimaryClipChangedListener= new ClipboardManager.OnPrimaryClipChangedListener() {
+    ClipboardManager.OnPrimaryClipChangedListener onPrimaryClipChangedListener = new ClipboardManager.OnPrimaryClipChangedListener() {
 
         @Override
         public void onPrimaryClipChanged() {
@@ -157,19 +157,26 @@ public class ServiceDuelAssistant extends Service {
                 for (String s : DeckTextKey) {
                     //只要包含其中一个关键字就视为卡组
                     if (clipMessage.contains(s)) {
-                       saveDeck(clipMessage);
-                       return;
+                        saveDeck(clipMessage,false);
+                        return;
                     }
                 }
                 return;
             }
+            //如果是卡组url
+            int deckStart=clipMessage.indexOf(DECK_URL_PREFIX);
+            if (deckStart!=-1){
+                saveDeck(clipMessage.substring(deckStart+DECK_URL_PREFIX.length(),clipMessage.length()),true);
+                return;
+            }
+
             int start = -1;
             int end = -1;
             String passwordPrefixKey = null;
             for (String s : passwordPrefix) {
                 start = clipMessage.indexOf(s);
                 passwordPrefixKey = s;
-                if(start != -1) {
+                if (start != -1) {
                     break;
                 }
             }
@@ -180,9 +187,9 @@ public class ServiceDuelAssistant extends Service {
                 //如果不含有空格则取片尾所有
                 if (end == -1) {
                     end = clipMessage.length();
-                }else {
+                } else {
                     //如果只有密码前缀而没有密码内容则不跳转
-                    if (end-start==passwordPrefixKey.length())
+                    if (end - start == passwordPrefixKey.length())
                         return;
                 }
                 //如果有悬浮窗权限再显示
@@ -199,7 +206,7 @@ public class ServiceDuelAssistant extends Service {
                             return;
                         }
                         //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
-                        if (cardSearchMessage.contains("=")&&clipMessage.contains(".")) {
+                        if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
                             return;
                         }
                         Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
@@ -243,20 +250,19 @@ public class ServiceDuelAssistant extends Service {
                 builder.setSound(null);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
-            }else {
+            } else {
                 //如果没有通知权限则关闭服务
                 stopForeground(true);
-                stopService(new Intent(ServiceDuelAssistant.this,ServiceDuelAssistant.class));
+                stopService(new Intent(ServiceDuelAssistant.this, ServiceDuelAssistant.class));
             }
         }
     }
 
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent==null)
-            return super.onStartCommand(intent,flags,startId);
+        if (intent == null)
+            return super.onStartCommand(intent, flags, startId);
         String action = intent.getAction();
         Log.d(TAG, "rev action:" + action);
         if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {
@@ -316,7 +322,7 @@ public class ServiceDuelAssistant extends Service {
         }
     }
 
-    private void saveDeck(String deckMessage){
+    private void saveDeck(String deckMessage, boolean isUrl) {
         tv_message.setText("检测到卡组文本，是否保存？");
         bt_close.setText(R.string.search_close);
         bt_join.setText("保存并打开");
@@ -338,16 +344,27 @@ public class ServiceDuelAssistant extends Service {
             @Override
             public void onClick(View v) {
                 disJoinDialog();
-                try {
-                    //以当前时间戳作为卡组名保存卡组
-                    File file=DeckUtils.save("助手保存："+System.currentTimeMillis(),deckMessage);
+                //如果是卡组url
+                if (isUrl) {
+                    Deck deckInfo = new Deck("助手保存：" + System.currentTimeMillis(),Uri.parse(deckMessage));
+                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                     Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                     startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(startdeck);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(ServiceDuelAssistant.this,"保存失败，原因为"+e,Toast.LENGTH_SHORT).show();
+                } else {
+                    //如果是卡组文本
+                    try {
+                        //以当前时间戳作为卡组名保存卡组
+                        File file = DeckUtils.save("助手保存：" + System.currentTimeMillis(), deckMessage);
+                        Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                        startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                        startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(startdeck);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Toast.makeText(ServiceDuelAssistant.this, "保存失败，原因为" + e, Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });

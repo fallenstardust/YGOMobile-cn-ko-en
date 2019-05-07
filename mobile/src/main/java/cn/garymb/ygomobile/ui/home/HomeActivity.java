@@ -225,17 +225,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
-        if(AppsSettings.get().isServiceDuelAssistant()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(this);
-                if (dialogPlus == null)
-                    this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
-                else
-                    dialogPlus.show();
-            } else {
-                startService(new Intent(this, ServiceDuelAssistant.class));
-            }
-        }
+
         //萌卡
         StartMycard();
         checkNotch();

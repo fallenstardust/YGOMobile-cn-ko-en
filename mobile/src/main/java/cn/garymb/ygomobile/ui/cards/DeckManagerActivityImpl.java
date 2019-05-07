@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Keep;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
@@ -37,7 +36,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,9 +57,11 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -706,8 +706,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         String savePath = new File(AppsSettings.get().getDeckSharePath(), deckName + ".jpg").getAbsolutePath();
         BitmapUtil.saveBitmap(bitmap, savePath, 50);
         ShareUtil.shareImage(DeckManagerActivityImpl.this, "卡组分享", savePath, null);
-
-
+        //复制前关闭决斗助手
+        stopService(new Intent(this, ServiceDuelAssistant.class));
+        Util.fzMessage(this,mDeckAdapater.getDeckInfo().toDeck().toAppUri().toString());
+        showToast("已复制卡组代码到剪贴板");
+        //复制完毕开启决斗助手
+        Util.startDuelService(this);
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
 //        final String uriString = deck.toAppUri().toString();
 //        final String httpUri = deck.toHttpUri().toString();

@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import android.util.Log;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -123,6 +125,7 @@ public class DeckUtils {
             outputStream = new FileOutputStream(file);
             save(deck, outputStream);
         } catch (Exception e) {
+            Log.e("DeckUtil","保存出错"+e);
             //ignore
         } finally {
             IOUtils.close(outputStream);
