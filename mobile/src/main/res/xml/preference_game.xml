@@ -37,7 +37,7 @@
         <CheckBoxPreference
             android:key="pref_key_start_serviceduelassistant"
             android:persistent="true"
-            android:summary="快速卡查，加入决斗等"
+            android:summary="@string/About_DuelAssistant"
             android:title="@string/Start_ServiceDuelAssistant"/>
         <CheckBoxPreference
             android:key="pref_key_game_sound_effect"

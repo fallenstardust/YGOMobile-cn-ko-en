@@ -157,16 +157,16 @@ public class ServiceDuelAssistant extends Service {
                 for (String s : DeckTextKey) {
                     //只要包含其中一个关键字就视为卡组
                     if (clipMessage.contains(s)) {
-                        saveDeck(clipMessage,false);
+                        saveDeck(clipMessage, false);
                         return;
                     }
                 }
                 return;
             }
             //如果是卡组url
-            int deckStart=clipMessage.indexOf(DECK_URL_PREFIX);
-            if (deckStart!=-1){
-                saveDeck(clipMessage.substring(deckStart+DECK_URL_PREFIX.length(),clipMessage.length()),true);
+            int deckStart = clipMessage.indexOf(DECK_URL_PREFIX);
+            if (deckStart != -1) {
+                saveDeck(clipMessage.substring(deckStart + DECK_URL_PREFIX.length(), clipMessage.length()), true);
                 return;
             }
 
@@ -323,7 +323,7 @@ public class ServiceDuelAssistant extends Service {
     }
 
     private void saveDeck(String deckMessage, boolean isUrl) {
-        tv_message.setText("检测到卡组文本，是否保存？");
+        tv_message.setText(R.string.find_deck_text);
         bt_close.setText(R.string.search_close);
         bt_join.setText("保存并打开");
         disJoinDialog();
@@ -346,7 +346,7 @@ public class ServiceDuelAssistant extends Service {
                 disJoinDialog();
                 //如果是卡组url
                 if (isUrl) {
-                    Deck deckInfo = new Deck("助手保存：" + System.currentTimeMillis(),Uri.parse(deckMessage));
+                    Deck deckInfo = new Deck("助手保存：" + System.currentTimeMillis(), Uri.parse(deckMessage));
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                     Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
@@ -363,7 +363,7 @@ public class ServiceDuelAssistant extends Service {
                         startActivity(startdeck);
                     } catch (IOException e) {
                         e.printStackTrace();
-                        Toast.makeText(ServiceDuelAssistant.this, "保存失败，原因为" + e, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ServiceDuelAssistant.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
                     }
                 }
             }

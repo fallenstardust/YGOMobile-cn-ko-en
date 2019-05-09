@@ -709,7 +709,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         //复制前关闭决斗助手
         stopService(new Intent(this, ServiceDuelAssistant.class));
         Util.fzMessage(this,mDeckAdapater.getDeckInfo().toDeck().toAppUri().toString());
-        showToast("已复制卡组代码到剪贴板");
+        showToast(getString(R.string.deck_text_copyed));
         //复制完毕开启决斗助手
         Util.startDuelService(this);
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();

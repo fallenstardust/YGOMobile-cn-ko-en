@@ -246,4 +246,11 @@
     <string name="invalid_shortcut">잘못된 바로 가기</string>
     <string name="return_to_duel">게임으로 돌아가다☞</string>
     <string name="Start_ServiceDuelAssistant">결투 보조원</string>
+    <string name="about_DuelAssistant">다음 기능을 사용하도록 권한 설정이 필요합니다.
+        \n게임 코드를 통한 방 입장
+        \n“？”을 이용한 카드 검색
+        \n덱 코드를 이용한 덱공유</string>
+    <string name="find_deck_text">덱 공유 코드가 감지 되었습니다. 덱을 저장하겠습니까？</string>
+    <string name="save_failed_bcos">다음 이유로 인해 저장에 실패했습니다:</string>
+    <string name="deck_text_copyed">덱 공유 코드를 클립보드에 복사했습니다</string>
 </resources>
