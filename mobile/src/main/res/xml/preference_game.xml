@@ -31,14 +31,14 @@
             android:summary="@string/only_game_tip"
             android:title="@string/settings_pref_settings_only_game"/-->
         <CheckBoxPreference
+            android:key="pref_key_start_serviceduelassistant"
+            android:persistent="true"
+            android:summary="@string/about_DuelAssistant"
+            android:title="@string/Start_ServiceDuelAssistant"/>
+        <CheckBoxPreference
             android:key="pref_settings_read_ex"
             android:persistent="true"
             android:title="@string/title_use_ex"/>
-        <CheckBoxPreference
-            android:key="pref_key_start_serviceduelassistant"
-            android:persistent="true"
-            android:summary="@string/About_DuelAssistant"
-            android:title="@string/Start_ServiceDuelAssistant"/>
         <CheckBoxPreference
             android:key="pref_key_game_sound_effect"
             android:persistent="true"

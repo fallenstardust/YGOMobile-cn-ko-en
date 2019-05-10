@@ -325,7 +325,7 @@ public class ServiceDuelAssistant extends Service {
     private void saveDeck(String deckMessage, boolean isUrl) {
         tv_message.setText(R.string.find_deck_text);
         bt_close.setText(R.string.search_close);
-        bt_join.setText("保存并打开");
+        bt_join.setText(R.string.save_n_open);
         disJoinDialog();
         showJoinDialog();
         new Handler().postDelayed(() -> {
@@ -346,7 +346,7 @@ public class ServiceDuelAssistant extends Service {
                 disJoinDialog();
                 //如果是卡组url
                 if (isUrl) {
-                    Deck deckInfo = new Deck("助手保存：" + System.currentTimeMillis(), Uri.parse(deckMessage));
+                    Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                     Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
@@ -356,7 +356,7 @@ public class ServiceDuelAssistant extends Service {
                     //如果是卡组文本
                     try {
                         //以当前时间戳作为卡组名保存卡组
-                        File file = DeckUtils.save("助手保存：" + System.currentTimeMillis(), deckMessage);
+                        File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
                         Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
                         startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                         startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

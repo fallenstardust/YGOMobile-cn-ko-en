@@ -237,7 +237,6 @@
     <string name="Checking_Update_Failed">업데이트 확인 실패</string>
     <string name="Ask_to_Change_Other_Way">\, 다른 방법으로 변경을 원하십니까</string>
     <string name="DuelAssistant">빠른 방 입장 기능이 사용중 입니다.</string>
-    <string name="About_DuelAssistant">코드 번호를 복사할 경우 빠른 방 입장 기능을 사용이 가능합니다.</string>
     <string name="masterrule">마스터즈 룰</string>
     <string name="tutorial">가이드 북 보기</string>
     <string name="about_help">원하는 내용을 클릭합니다.</string>
@@ -246,11 +245,11 @@
     <string name="invalid_shortcut">잘못된 바로 가기</string>
     <string name="return_to_duel">게임으로 돌아가다☞</string>
     <string name="Start_ServiceDuelAssistant">결투 보조원</string>
-    <string name="about_DuelAssistant">다음 기능을 사용하도록 권한 설정이 필요합니다.
-        \n게임 코드를 통한 방 입장
+    <string name="about_DuelAssistant">게임 코드를 통한 방 입장
         \n“？”을 이용한 카드 검색
         \n덱 코드를 이용한 덱공유</string>
     <string name="find_deck_text">덱 공유 코드가 감지 되었습니다. 덱을 저장하겠습니까？</string>
     <string name="save_failed_bcos">다음 이유로 인해 저장에 실패했습니다:</string>
     <string name="deck_text_copyed">덱 공유 코드를 클립보드에 복사했습니다</string>
+    <string name="save_n_open">저장후 열기</string>
 </resources>
