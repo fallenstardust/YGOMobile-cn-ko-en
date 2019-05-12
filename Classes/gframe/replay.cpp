@@ -3,6 +3,7 @@
 #include "../ocgcore/common.h"
 #include <algorithm>
 #include "lzma/LzmaLib.h"
+#include "myfilesystem.h"
 
 namespace ygo {
 

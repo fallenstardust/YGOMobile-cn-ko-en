@@ -158,13 +158,13 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SURRENDER_YES: {
-				soundManager.PlaySoundEffect(SOUND_BUTTON);
+			    mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::SendPacketToServer(CTOS_SURRENDER);
 				mainGame->HideElement(mainGame->wSurrender);
 				break;
 			}
 			case BUTTON_SURRENDER_NO: {
-				soundManager.PlaySoundEffect(SOUND_BUTTON);
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wSurrender);
 				break;
 			}
@@ -193,6 +193,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CANCEL_OR_FINISH: {
+			    mainGame->soundEffectPlayer->doPressButton();
 				CancelOrFinish();
 				break;
 			}
