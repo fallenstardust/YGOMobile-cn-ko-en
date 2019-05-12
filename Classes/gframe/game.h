@@ -146,6 +146,7 @@ public:
 	void SaveConfig();
 	void ShowCardInfo(int code);
 	void ClearCardInfo(int player = 0);
+	void AddLog(const wchar_t* msg, int param = 0);
 	void AddChatMsg(const wchar_t* msg, int player);
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
