@@ -1680,7 +1680,7 @@ int32 card::add_effect(effect* peffect) {
 		if((peffect->code == EFFECT_SET_ATTACK || peffect->code == EFFECT_SET_BASE_ATTACK) && !peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE)) {
 			for(auto it = single_effect.begin(); it != single_effect.end();) {
 				auto rm = it++;
-				if((rm->second->code == EFFECT_SET_ATTACK || rm->second->code == EFFECT_SET_ATTACK_FINAL)
+				if((rm->second->code == EFFECT_SET_ATTACK || rm->second->code == EFFECT_SET_ATTACK_FINAL || rm->second->code == EFFECT_SET_BASE_ATTACK)
 				        && !rm->second->is_flag(EFFECT_FLAG_SINGLE_RANGE))
 					remove_effect(rm->second);
 			}
@@ -1696,7 +1696,7 @@ int32 card::add_effect(effect* peffect) {
 		if((peffect->code == EFFECT_SET_DEFENSE || peffect->code == EFFECT_SET_BASE_DEFENSE) && !peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE)) {
 			for(auto it = single_effect.begin(); it != single_effect.end();) {
 				auto rm = it++;
-				if((rm->second->code == EFFECT_SET_DEFENSE || rm->second->code == EFFECT_SET_DEFENSE_FINAL)
+				if((rm->second->code == EFFECT_SET_DEFENSE || rm->second->code == EFFECT_SET_DEFENSE_FINAL || rm->second->code == EFFECT_SET_BASE_DEFENSE)
 				        && !rm->second->is_flag(EFFECT_FLAG_SINGLE_RANGE))
 					remove_effect(rm->second);
 			}
@@ -3610,14 +3610,16 @@ int32 card::is_capable_be_effect_target(effect* peffect, uint8 playerid) {
 	}
 	return TRUE;
 }
-int32 card::is_can_be_fusion_material(card* fcard) {
+int32 card::is_can_be_fusion_material(card* fcard, uint32 summon_type) {
 	if(is_status(STATUS_FORBIDDEN))
 		return FALSE;
 	effect_set eset;
 	filter_effect(EFFECT_CANNOT_BE_FUSION_MATERIAL, &eset);
-	for(int32 i = 0; i < eset.size(); ++i)
-		if(eset[i]->get_value(fcard))
+	for(int32 i = 0; i < eset.size(); ++i) {
+		pduel->lua->add_param(summon_type, PARAM_TYPE_INT);
+		if(eset[i]->get_value(fcard, 1))
 			return FALSE;
+	}
 	eset.clear();
 	filter_effect(EFFECT_EXTRA_FUSION_MATERIAL, &eset);
 	if(eset.size()) {
