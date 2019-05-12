@@ -113,7 +113,7 @@ CAndroidGUISkin::CAndroidGUISkin(EGUI_SKIN_TYPE type,
 		Colors[EGDC_GRAY_EDITABLE] = 0xff5a5a5a;//输入框不可用时的颜色
 		Colors[EGDC_FOCUSED_EDITABLE] = 0xffffffff;//输入状态的框色
 
-		Sizes[EGDS_SCROLLBAR_SIZE] = 14;
+		Sizes[EGDS_SCROLLBAR_SIZE] = 50;//实际控制scrollbar的大小
 		Sizes[EGDS_MENU_HEIGHT] = 48;
 		Sizes[EGDS_WINDOW_BUTTON_WIDTH] = 15;
 		Sizes[EGDS_CHECK_BOX_WIDTH] = 18;

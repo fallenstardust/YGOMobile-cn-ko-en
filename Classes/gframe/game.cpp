@@ -14,7 +14,6 @@
 #include <android/AndroidSoundEffectPlayer.h>
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
-#include <android/CAndroidGUIListBox.h>
 #include <android/CAndroidGUISkin.h>
 #include <COGLES2ExtensionHandler.h>
 #include <COGLESExtensionHandler.h>
@@ -428,9 +427,7 @@ bool Game::Initialize() {
 	scrCardText->setVisible(false);
 	//log
 	irr::gui::IGUITab* tabLog =  wInfos->addTab(dataManager.GetSysString(1271));
-#ifdef _IRR_ANDROID_PLATFORM_
-	lstLog = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 290 * xScale, 290 * yScale), tabLog, LISTBOX_LOG, false, 40 * xScale);
-#endif
+	lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 290 * xScale, 290 * yScale), tabLog, LISTBOX_LOG, false);
 	lstLog->setItemHeight(22 * yScale);
 	btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), tabLog, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
 	//helper
@@ -640,12 +637,9 @@ bool Game::Initialize() {
 	wANCard = env->addWindow(rect<s32>(400 * xScale, 100 * yScale, 800 * xScale, 400 * yScale), false, L"");
 	wANCard->getCloseButton()->setVisible(false);
 	wANCard->setVisible(false);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebANCard = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 25 * yScale, 380 * xScale, 55 * yScale), wANCard, EDITBOX_ANCARD);
-	lstANCard = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(20 * xScale, 55 * yScale, 380 * xScale, 260 * yScale), wANCard, LISTBOX_ANCARD, true, 40 * xScale);
-#endif
 	ebANCard->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-//dont merge
+	lstANCard = env->addListBox(rect<s32>(20 * xScale, 55 * yScale, 380 * xScale, 260 * yScale), wANCard, LISTBOX_ANCARD, true);
 	btnANCardOK = env->addButton(rect<s32>(140 * xScale, 260 * yScale, 270 * xScale, 295 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
 	//announce attribute
 	wANAttribute = env->addWindow(rect<s32>(450 * xScale, 200 * yScale, 800 * xScale, 370 * yScale), false, dataManager.GetSysString(562));
@@ -864,7 +858,7 @@ bool Game::Initialize() {
 	wReplay = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1202));
 	wReplay->getCloseButton()->setVisible(false);
 	wReplay->setVisible(false);
-	lstReplayList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 30 * yScale, 350 * xScale, 400 * yScale), wReplay, LISTBOX_REPLAY_LIST, true, 40 * xScale);
+	lstReplayList = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 350 * xScale, 400 * yScale), wReplay, LISTBOX_REPLAY_LIST, true);
 	lstReplayList->setItemHeight(22 * yScale);
 	btnLoadReplay = env->addButton(rect<s32>(470 * xScale, 320 * yScale, 570 * xScale, 360 * yScale), wReplay, BUTTON_LOAD_REPLAY, dataManager.GetSysString(1348));
 	btnDeleteReplay = env->addButton(rect<s32>(360 * xScale, 320 * yScale, 460 * xScale, 360 * yScale), wReplay, BUTTON_DELETE_REPLAY, dataManager.GetSysString(1361));
@@ -885,7 +879,7 @@ bool Game::Initialize() {
 	//TEST BOT MODE
 	if(gameConf.enable_bot_mode) {
 		irr::gui::IGUITab* tabBot = wSingle->addTab(dataManager.GetSysString(1380));
-		lstBotList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabBot, LISTBOX_BOT_LIST, true, 40 * xScale);
+		lstBotList = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabBot, LISTBOX_BOT_LIST, true);
 		lstBotList->setItemHeight(25 * yScale);
 		btnStartBot = env->addButton(rect<s32>(460 * xScale, 260 * yScale, 570 * xScale, 300 * yScale), tabBot, BUTTON_BOT_START, dataManager.GetSysString(1211));
 		btnBotCancel = env->addButton(rect<s32>(460 * xScale, 310 * yScale, 570 * xScale, 350 * yScale), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
@@ -904,7 +898,8 @@ bool Game::Initialize() {
 	//SINGLE MODE	
 	irr::gui::IGUITab* tabSingle = wSingle->addTab(dataManager.GetSysString(1381));
 	env->addStaticText(dataManager.GetSysString(1352), rect<s32>(360 * xScale, 30 * yScale, 570 * xScale, 50 * yScale), false, true, tabSingle);
-	stSinglePlayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 295 * yScale), false, true, tabSingle);lstSinglePlayList = CAndroidGUIListBox::addAndroidGUIListBox(env, rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabSingle, LISTBOX_SINGLEPLAY_LIST, true, 40 * xScale);
+	stSinglePlayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 295 * yScale), false, true, tabSingle);
+	lstSinglePlayList = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 350 * xScale, 350 * yScale), tabSingle, LISTBOX_SINGLEPLAY_LIST, true);
 	lstSinglePlayList->setItemHeight(25 * yScale);
 	btnLoadSinglePlay = env->addButton(rect<s32>(460 * xScale, 260 * yScale, 570 * xScale, 300 * yScale), tabSingle, BUTTON_LOAD_SINGLEPLAY, dataManager.GetSysString(1211));
 	btnSinglePlayCancel = env->addButton(rect<s32>(460 * xScale, 310 * yScale, 570 * xScale, 350 * yScale),tabSingle, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
