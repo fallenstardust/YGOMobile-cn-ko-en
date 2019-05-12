@@ -225,7 +225,7 @@ bool Game::Initialize() {
 	ebNickName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.nickname, true, env, rect<s32>(110 * xScale, 25 * yScale, 450 * xScale, 65 * yScale), wLanWindow);
 	ebNickName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	lstHostList = env->addListBox(rect<s32>(20 * xScale, 75 * yScale, 600 * xScale, 320 * yScale), wLanWindow, LISTBOX_LAN_HOST, true);
-	lstHostList->setItemHeight(22 * yScale);
+	lstHostList->setItemHeight(25 * yScale);
 	btnLanRefresh = env->addButton(rect<s32>(250 * xScale, 330 * yScale, 350 * xScale, 370 * yScale), wLanWindow, BUTTON_LAN_REFRESH, dataManager.GetSysString(1217));
 	env->addStaticText(dataManager.GetSysString(1221), rect<s32>(35 * xScale, 390 * yScale, 220 * xScale, 410 * yScale), false, false, wLanWindow);
 	ebJoinHost = CAndroidGUIEditBox::addAndroidEditBox(gameConf.lasthost, true, env, rect<s32>(110 * xScale, 380 * yScale, 270 * xScale, 420 * yScale), wLanWindow);
@@ -428,7 +428,7 @@ bool Game::Initialize() {
 	//log
 	irr::gui::IGUITab* tabLog =  wInfos->addTab(dataManager.GetSysString(1271));
 	lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 290 * xScale, 290 * yScale), tabLog, LISTBOX_LOG, false);
-	lstLog->setItemHeight(22 * yScale);
+	lstLog->setItemHeight(25 * yScale);
 	btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), tabLog, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
 	//helper
 	irr::gui::IGUITab* _tabHelper = wInfos->addTab(dataManager.GetSysString(1298));
@@ -554,13 +554,13 @@ bool Game::Initialize() {
 	btnYes = env->addButton(rect<s32>(80 * xScale, 115 * yScale, 170 * xScale, 165 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
 	btnNo = env->addButton(rect<s32>(200 * xScale, 115 * yScale, 290 * xScale, 165 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
 	//surrender yes/no (310)
-	wSurrender = env->addWindow(rect<s32>(490 * xScale, 200 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(560));
+	wSurrender = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
 	wSurrender->getCloseButton()->setVisible(false);
 	wSurrender->setVisible(false);
 	stSurrenderMessage = env->addStaticText(dataManager.GetSysString(1359), rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wSurrender, -1, false);
 	stSurrenderMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnSurrenderYes = env->addButton(rect<s32>(100 * xScale, 105 * yScale, 150 * xScale, 130 * yScale), wSurrender, BUTTON_SURRENDER_YES, dataManager.GetSysString(1213));
-	btnSurrenderNo = env->addButton(rect<s32>(200 * xScale, 105 * yScale, 250 * xScale, 130 * yScale), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
+	btnSurrenderYes = env->addButton(rect<s32>(80 * xScale, 115 * yScale, 170 * xScale, 165 * yScale), wSurrender, BUTTON_SURRENDER_YES, dataManager.GetSysString(1213));
+	btnSurrenderNo = env->addButton(rect<s32>(200 * xScale, 115 * yScale, 290 * xScale, 165 * yScale), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
 	//options (370)
 	wOptions = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, L"");
 	wOptions->getCloseButton()->setVisible(false);
@@ -859,7 +859,7 @@ bool Game::Initialize() {
 	wReplay->getCloseButton()->setVisible(false);
 	wReplay->setVisible(false);
 	lstReplayList = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 350 * xScale, 400 * yScale), wReplay, LISTBOX_REPLAY_LIST, true);
-	lstReplayList->setItemHeight(22 * yScale);
+	lstReplayList->setItemHeight(25 * yScale);
 	btnLoadReplay = env->addButton(rect<s32>(470 * xScale, 320 * yScale, 570 * xScale, 360 * yScale), wReplay, BUTTON_LOAD_REPLAY, dataManager.GetSysString(1348));
 	btnDeleteReplay = env->addButton(rect<s32>(360 * xScale, 320 * yScale, 460 * xScale, 360 * yScale), wReplay, BUTTON_DELETE_REPLAY, dataManager.GetSysString(1361));
 	btnRenameReplay = env->addButton(rect<s32>(360 * xScale, 370 * yScale, 460 * xScale, 410 * yScale), wReplay, BUTTON_RENAME_REPLAY, dataManager.GetSysString(1362));
