@@ -24,7 +24,7 @@ void DeckManager::LoadLFList(const char* path, bool load_none) {
 				LFList newlist;
 				_lfList.push_back(newlist);
 				cur = &_lfList[_lfList.size() - 1];
-				memcpy(cur->listName, (const void*)strBuffer, 40);
+				memcpy(cur->listName, (const void*)strBuffer, 20 * sizeof(wchar_t));
 				cur->listName[sa] = 0;
 				cur->content = new std::unordered_map<int, int>;
 				cur->hash = 0x7dfcee6a;

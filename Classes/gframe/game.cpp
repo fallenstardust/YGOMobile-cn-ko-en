@@ -3,12 +3,12 @@
 #include "image_manager.h"
 #include "data_manager.h"
 #include "deck_manager.h"
+#include "myfilesystem.h"
 #include "replay.h"
 #include "materials.h"
 #include "duelclient.h"
 #include "netserver.h"
 #include "single_mode.h"
-#include "myfilesystem.h"
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/AndroidSoundEffectPlayer.h>
@@ -353,7 +353,6 @@ bool Game::Initialize() {
 	btnHostPrepStart = env->addButton(rect<s32>(280 * xScale, 380 * yScale, 390 * xScale, 405 * yScale), wHostPrepare, BUTTON_HP_START, dataManager.GetSysString(1215));
 	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 405 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 #endif
-
 	//img
 	wCardImg = env->addStaticText(L"", rect<s32>(1 * xScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * xScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
 	wCardImg->setBackgroundColor(0x6011113d);
@@ -643,7 +642,6 @@ bool Game::Initialize() {
 	wCmdMenu->setDrawTitlebar(false);
 	wCmdMenu->setVisible(false);
 	wCmdMenu->getCloseButton()->setVisible(false);
-#ifdef _IRR_ANDROID_PLATFORM_
 	btnActivate = env->addButton(rect<s32>(1 * xScale, 1 * yScale, 105 * xScale, 51 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1150));
 	btnSummon = env->addButton(rect<s32>(1 * xScale, 52 * yScale, 105 * xScale, 102 * yScale), wCmdMenu, BUTTON_CMD_SUMMON, dataManager.GetSysString(1151));
 	btnSPSummon = env->addButton(rect<s32>(1 * xScale, 103 * yScale, 105 * xScale, 153 * yScale), wCmdMenu, BUTTON_CMD_SPSUMMON, dataManager.GetSysString(1152));
@@ -654,7 +652,6 @@ bool Game::Initialize() {
 	btnShowList = env->addButton(rect<s32>(1 * xScale, 358 * yScale, 105 * xScale, 408 * yScale), wCmdMenu, BUTTON_CMD_SHOWLIST, dataManager.GetSysString(1158));
 	btnOperation = env->addButton(rect<s32>(1 * xScale, 409 * yScale, 105 * xScale, 459 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1161));
 	btnReset = env->addButton(rect<s32>(1 * xScale, 460 * yScale , 105 * xScale, 510 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
-#endif
 	//deck edit
 	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 8 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
 	wDeckEdit->setVisible(false);
@@ -673,9 +670,7 @@ bool Game::Initialize() {
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
 		cbDBLFList->addItem(deckManager._lfList[i].listName);
 	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 290 * xScale, 60 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(80 * xScale, 65 * yScale, 220 * xScale, 90 * yScale), wDeckEdit, -1);
-#endif
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnSaveDeckAs = env->addButton(rect<s32>(225 * xScale, 65 * yScale, 290 * xScale, 90 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
 	btnDeleteDeck = env->addButton(rect<s32>(10 * xScale, 95 * yScale, 70 * xScale, 116 * yScale), wDeckEdit, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));

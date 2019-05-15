@@ -257,11 +257,11 @@ public:
 	irr::gui::IGUIWindow* tabSystem;
 	irr::gui::IGUIElement* elmTabSystemLast;
 	irr::gui::IGUIScrollBar* scrTabSystem;
+	irr::gui::IGUICheckBox* chkDrawFieldSpell;
 	irr::gui::IGUICheckBox* chkIgnoreDeckChanges;
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
-	irr::gui::IGUICheckBox* chkDrawFieldSpell;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -681,6 +681,7 @@ extern Game* mainGame;
 #define BUTTON_MARKS_FILTER			322
 #define BUTTON_MARKERS_OK			323
 #define COMBOBOX_SORTTYPE			324
+
 #define CHECKBOX_AUTO_SEARCH		360
 #define CHECKBOX_DRAW_FIELD_SPELL	361
 #define CHECKBOX_DISABLE_CHAT		364
