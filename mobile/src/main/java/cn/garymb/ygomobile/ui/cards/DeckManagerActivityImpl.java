@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
@@ -88,6 +89,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
+    private DialogPlus builderShareLoading;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -682,8 +684,27 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         return files == null || files.size() == 0 ? null : files.get(0);
     }
 
-    private void shareDeck() {
-//        开启绘图缓存
+    private void shareDeck(){
+    builderShareLoading = new DialogPlus(this);
+        builderShareLoading.showProgressBar();
+        builderShareLoading.hideTitleBar();
+        builderShareLoading.setMessage("准备分享中");
+        builderShareLoading.show();
+
+        //先排序
+        mDeckAdapater.sort();
+        //延时一秒，等排好序再分享
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                shareDeck1();
+            }
+        },1000);
+    }
+
+    private void shareDeck1() {
+
+        //开启绘图缓存
         mRecyclerView.setDrawingCacheEnabled(true);
         //这个方法可调可不调，因为在getDrawingCache()里会自动判断有没有缓存有没有准备好，
         //如果没有，会自动调用buildDrawingCache()
@@ -712,6 +733,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         showToast(getString(R.string.deck_text_copyed));
         //复制完毕开启决斗助手
         Util.startDuelService(this);
+        builderShareLoading.dismiss();
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
 //        final String uriString = deck.toAppUri().toString();
 //        final String httpUri = deck.toHttpUri().toString();
