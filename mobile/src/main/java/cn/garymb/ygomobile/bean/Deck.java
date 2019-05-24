@@ -121,6 +121,7 @@ public class Deck implements Parcelable {
             }
             if (id > 0) {
                 builder.append(id);
+                //如果是最后一张就不用对比下张卡
                 if(i!=ids.size()-1) {
                     int id1 = ids.get(i + 1);
                     //同名卡张数
@@ -129,11 +130,14 @@ public class Deck implements Parcelable {
                     if (id1 == id) {
                         tNum++;
                         i++;
-                        id1 = ids.get(i + 2);
-                        //如果下下张是同名卡
-                        if (id1 == id) {
-                            tNum++;
-                            i++;
+                        //如果是倒数第二张就不用对比下下张卡
+                        if(i!=ids.size()-2) {
+                            id1 = ids.get(i + 2);
+                            //如果下下张是同名卡
+                            if (id1 == id) {
+                                tNum++;
+                                i++;
+                            }
                         }
                     }
                     //如果有同名卡
