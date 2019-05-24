@@ -700,9 +700,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         } else {
             if (mDeckAdapater.getYdkFile() == null) {
                 inputDeckName(null, true,false);
-            } else {
-                save(mDeckAdapater.getYdkFile());
             }
+        }
+        //保存成功后重新加载卡组
+        File file = getSelectDeck(mDeckSpinner);
+        if (file != null) {
+            loadDeckFromFile(file);
         }
         //延时一秒，等排好序再分享
         new Handler().postDelayed(new Runnable() {

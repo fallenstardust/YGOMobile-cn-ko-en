@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -129,7 +130,6 @@ public class Deck implements Parcelable {
                     //如果下张是同名卡
                     if (id1 == id) {
                         tNum++;
-                        i++;
                         //如果是倒数第二张就不用对比下下张卡
                         if(i!=ids.size()-2) {
                             id1 = ids.get(i + 2);
@@ -139,6 +139,7 @@ public class Deck implements Parcelable {
                                 i++;
                             }
                         }
+                        i++;
                     }
                     //如果有同名卡
                     if (tNum > 1) {
