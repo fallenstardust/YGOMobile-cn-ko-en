@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.RecyclerView;
@@ -88,6 +89,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
+    private DialogPlus builderShareLoading;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -586,10 +588,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             case R.id.action_save:
                 if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
                     //需要保存到deck文件夹
-                    inputDeckName(mPreLoadFile, true);
+                    inputDeckName(mPreLoadFile, true,true);
                 } else {
                     if (mDeckAdapater.getYdkFile() == null) {
-                        inputDeckName(null, true);
+                        inputDeckName(null, true,true);
                     } else {
                         save(mDeckAdapater.getYdkFile());
                     }
@@ -603,7 +605,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //                }
 //                break;
             case R.id.action_rename:
-                inputDeckName(mDeckAdapater.getYdkFile(), false);
+                inputDeckName(mDeckAdapater.getYdkFile(), false,true);
                 break;
             case R.id.action_deck_new: {
                 final File old = mDeckAdapater.getYdkFile();
@@ -614,17 +616,17 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 builder.setLeftButtonListener((dlg, rs) -> {
                     dlg.dismiss();
                     //复制当前卡组
-                    inputDeckName(old, true);
+                    inputDeckName(old, true,true);
                 });
                 builder.setRightButtonListener((dlg, rs) -> {
                     dlg.dismiss();
                     setCurDeck(null);
-                    inputDeckName(null, true);
+                    inputDeckName(null, true,true);
                 });
                 builder.setOnCloseLinster((dlg) -> {
                     dlg.dismiss();
                     setCurDeck(null);
-                    inputDeckName(null, true);
+                    inputDeckName(null, true,true);
                 });
                 builder.show();
             }
@@ -682,8 +684,41 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         return files == null || files.size() == 0 ? null : files.get(0);
     }
 
-    private void shareDeck() {
-//        开启绘图缓存
+    private void shareDeck(){
+    builderShareLoading = new DialogPlus(this);
+        builderShareLoading.showProgressBar();
+        builderShareLoading.hideTitleBar();
+        builderShareLoading.setMessage("准备分享中");
+        builderShareLoading.show();
+
+        //先排序
+        mDeckAdapater.sort();
+        //保存
+        if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
+            //需要保存到deck文件夹
+            inputDeckName(mPreLoadFile, true,false);
+        } else {
+            if (mDeckAdapater.getYdkFile() == null) {
+                inputDeckName(null, true,false);
+            }
+        }
+        //保存成功后重新加载卡组
+        File file = getSelectDeck(mDeckSpinner);
+        if (file != null) {
+            loadDeckFromFile(file);
+        }
+        //延时一秒，等排好序再分享
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                shareDeck1();
+            }
+        },1000);
+    }
+
+    private void shareDeck1() {
+
+        //开启绘图缓存
         mRecyclerView.setDrawingCacheEnabled(true);
         //这个方法可调可不调，因为在getDrawingCache()里会自动判断有没有缓存有没有准备好，
         //如果没有，会自动调用buildDrawingCache()
@@ -712,6 +747,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         showToast(getString(R.string.deck_text_copyed));
         //复制完毕开启决斗助手
         Util.startDuelService(this);
+        builderShareLoading.dismiss();
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
 //        final String uriString = deck.toAppUri().toString();
 //        final String httpUri = deck.toHttpUri().toString();
@@ -877,7 +913,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         });
     }
 
-    private void inputDeckName(File oldYdk, boolean keepOld) {
+    private void inputDeckName(File oldYdk, boolean keepOld,boolean isToastSave) {
         DialogPlus builder = new DialogPlus(this);
 //        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.intpu_name);
@@ -920,7 +956,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     } catch (IOException e) {
                     }
                     initDecksListSpinners(mDeckSpinner, ydk);
-                    save(ydk);
+                    if(isToastSave)
+                        save(ydk);
                     loadDeckFromFile(ydk);
                 }
             } else {
