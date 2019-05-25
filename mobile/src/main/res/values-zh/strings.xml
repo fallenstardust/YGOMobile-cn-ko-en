@@ -251,4 +251,5 @@
     <string name="save_failed_bcos">保存失败，原因为</string>
     <string name="deck_text_copyed">已复制卡组文本到剪贴板</string>
     <string name="save_n_open">保存并打开</string>
+    <string name="searchresult">搜索结果</string>
 </resources>
