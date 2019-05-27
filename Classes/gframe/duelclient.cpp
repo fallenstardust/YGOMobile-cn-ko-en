@@ -1867,14 +1867,12 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		if(mainGame->dInfo.isReplay && mainGame->dInfo.isReplaySkiping)
 			return true;
 		myswprintf(textBuffer, dataManager.GetSysString(207), count);
-		mainGame->lstLog->addItem(textBuffer);
-		mainGame->logParam.push_back(0);
+		mainGame->AddLog(textBuffer);
 		for (int i = 0; i < count; ++i) {
 			pcard = *(mainGame->dField.deck[player].rbegin() + i);
 			mainGame->gMutex.Lock();
 			myswprintf(textBuffer, L"*[%ls]", dataManager.GetName(pcard->code));
-			mainGame->lstLog->addItem(textBuffer);
-			mainGame->logParam.push_back(pcard->code);
+			mainGame->AddLog(textBuffer, pcard->code);
 			mainGame->gMutex.Unlock();
 			float shift = -0.15f;
 			if (player == 1) shift = 0.15f;
@@ -3465,7 +3463,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->gMutex.Lock();
 		mainGame->ebANCard->setText(L"");
 		mainGame->wANCard->setText(textBuffer);
-		mainGame->dField.UpdateDeclarableCode(false);
+		mainGame->dField.UpdateDeclarableCode();
 		mainGame->PopupElement(mainGame->wANCard);
 		mainGame->gMutex.Unlock();
 		return false;
@@ -3492,7 +3490,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 	}
 	case MSG_ANNOUNCE_CARD_FILTER: {
 		/*int player = */mainGame->LocalPlayer(BufferIO::ReadInt8(pbuf));
-		int count = BufferIO::ReadInt8(pbuf);
+		int count = BufferIO::ReadUInt8(pbuf);
 		mainGame->dField.declarable_type = 0;
 		mainGame->dField.opcode.clear();
 		for (int i = 0; i < count; ++i)
@@ -3504,7 +3502,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->gMutex.Lock();
 		mainGame->ebANCard->setText(L"");
 		mainGame->wANCard->setText(textBuffer);
-		mainGame->dField.UpdateDeclarableCode(false);
+		mainGame->dField.UpdateDeclarableCode();
 		mainGame->PopupElement(mainGame->wANCard);
 		mainGame->gMutex.Unlock();
 		return false;

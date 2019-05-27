@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -17,8 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#80000000"
-            android:orientation="vertical">
-        </LinearLayout>
+            android:orientation="vertical"></LinearLayout>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -27,14 +25,14 @@
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/grid_cards"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="68dp"
                 android:layout_gravity="bottom"
-                android:layout_marginBottom="2dp"
                 android:layout_marginLeft="10dp"
+                android:layout_marginBottom="2dp"
                 android:orientation="horizontal"
                 android:weightSum="1">
 
@@ -50,43 +48,84 @@
                     android:layout_height="@dimen/item_height"
                     android:layout_weight="1" />
 
-                <ImageView
-                    android:id="@+id/btn_nav_list"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
+                <LinearLayout
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
                     android:layout_marginLeft="2dp"
                     android:layout_marginRight="2dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/listicon"/>
-
-                <ImageView
-                    android:id="@+id/btn_nav_search"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:layout_marginLeft="2dp"
-                    android:layout_marginRight="2dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/search"/>
-
-                <com.nightonke.boommenu.BoomMenuButton
-                    android:id="@+id/bmb"
-                    android:layout_width="60dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/buttonfunction"
-                    app:bmb_buttonEnum="textOutsideCircle"
-                    app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
-                    app:bmb_dimColor="#80000000"
-                    app:bmb_normalColor="@android:color/transparent"
-                    app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
+                    android:orientation="vertical">
 
                     <ImageView
-                        android:id="@+id/cube2"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        app:srcCompat="@drawable/cube" />
-                </com.nightonke.boommenu.BoomMenuButton>
+                        android:id="@+id/btn_nav_list"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/listicon" />
+
+                    <TextView
+                        android:layout_width="48dp"
+                        android:layout_height="20dp"
+                        android:gravity="bottom|center_horizontal"
+                        android:text="@string/searchresult"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginRight="2dp"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/btn_nav_search"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/search" />
+
+                    <TextView
+                        android:layout_width="48dp"
+                        android:layout_height="20dp"
+                        android:gravity="bottom|center_horizontal"
+                        android:text="@string/card_search"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="60dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginRight="2dp"
+                    android:orientation="vertical">
+
+                    <com.nightonke.boommenu.BoomMenuButton
+                        android:id="@+id/bmb"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/buttonfunction"
+                        app:bmb_buttonEnum="textOutsideCircle"
+                        app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
+                        app:bmb_dimColor="#80000000"
+                        app:bmb_normalColor="@android:color/transparent"
+                        app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
+
+                        <ImageView
+                            android:id="@+id/cube2"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:layout_gravity="center"
+                            app:srcCompat="@drawable/cube" />
+                    </com.nightonke.boommenu.BoomMenuButton>
+
+                    <TextView
+                        android:layout_width="60dp"
+                        android:layout_height="20dp"
+                        android:gravity="bottom|center_horizontal"
+                        android:text="@string/Function_Menu"
+                        android:textSize="10sp" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
 
@@ -97,15 +136,15 @@
             android:background="@drawable/left"
             android:orientation="vertical"
             android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:paddingTop="2dp">
+            android:paddingTop="2dp"
+            android:paddingRight="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_marginRight="30dp"
                 android:layout_marginTop="10dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginBottom="4dp"
                 android:orientation="horizontal"
                 android:paddingLeft="20dp">
 
@@ -114,7 +153,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:text="@string/label_limitlist"
-                    android:textColor="@color/holo_blue_light"/>
+                    android:textColor="@color/holo_blue_light" />
+
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/sp_limit_list"
                     android:layout_width="match_parent"
@@ -140,7 +180,7 @@
 
             <include
                 android:id="@+id/nav_view_list"
-                layout="@layout/nav_card_search"/>
+                layout="@layout/nav_card_search" />
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 
