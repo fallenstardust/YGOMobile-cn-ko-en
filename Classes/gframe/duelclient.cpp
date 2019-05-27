@@ -1867,14 +1867,12 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		if(mainGame->dInfo.isReplay && mainGame->dInfo.isReplaySkiping)
 			return true;
 		myswprintf(textBuffer, dataManager.GetSysString(207), count);
-		mainGame->lstLog->addItem(textBuffer);
-		mainGame->logParam.push_back(0);
+		mainGame->AddLog(textBuffer);
 		for (int i = 0; i < count; ++i) {
 			pcard = *(mainGame->dField.deck[player].rbegin() + i);
 			mainGame->gMutex.Lock();
 			myswprintf(textBuffer, L"*[%ls]", dataManager.GetName(pcard->code));
-			mainGame->lstLog->addItem(textBuffer);
-			mainGame->logParam.push_back(pcard->code);
+			mainGame->AddLog(textBuffer, pcard->code);
 			mainGame->gMutex.Unlock();
 			float shift = -0.15f;
 			if (player == 1) shift = 0.15f;
