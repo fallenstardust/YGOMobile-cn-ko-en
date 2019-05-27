@@ -588,10 +588,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             case R.id.action_save:
                 if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
                     //需要保存到deck文件夹
-                    inputDeckName(mPreLoadFile, true,true);
+                    inputDeckName(mPreLoadFile, true);
                 } else {
                     if (mDeckAdapater.getYdkFile() == null) {
-                        inputDeckName(null, true,true);
+                        inputDeckName(null, true);
                     } else {
                         save(mDeckAdapater.getYdkFile());
                     }
@@ -605,7 +605,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //                }
 //                break;
             case R.id.action_rename:
-                inputDeckName(mDeckAdapater.getYdkFile(), false,true);
+                inputDeckName(mDeckAdapater.getYdkFile(), false);
                 break;
             case R.id.action_deck_new: {
                 final File old = mDeckAdapater.getYdkFile();
@@ -616,17 +616,17 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 builder.setLeftButtonListener((dlg, rs) -> {
                     dlg.dismiss();
                     //复制当前卡组
-                    inputDeckName(old, true,true);
+                    inputDeckName(old, true);
                 });
                 builder.setRightButtonListener((dlg, rs) -> {
                     dlg.dismiss();
                     setCurDeck(null);
-                    inputDeckName(null, true,true);
+                    inputDeckName(null, true);
                 });
                 builder.setOnCloseLinster((dlg) -> {
                     dlg.dismiss();
                     setCurDeck(null);
-                    inputDeckName(null, true,true);
+                    inputDeckName(null, true);
                 });
                 builder.show();
             }
@@ -696,10 +696,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         //保存
         if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
             //需要保存到deck文件夹
-            inputDeckName(mPreLoadFile, true,false);
+            inputDeckName(mPreLoadFile, true);
         } else {
             if (mDeckAdapater.getYdkFile() == null) {
-                inputDeckName(null, true,false);
+                inputDeckName(null, true);
+            } else {
+                save(mDeckAdapater.getYdkFile());
             }
         }
         //保存成功后重新加载卡组
@@ -913,7 +915,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         });
     }
 
-    private void inputDeckName(File oldYdk, boolean keepOld,boolean isToastSave) {
+    private void inputDeckName(File oldYdk, boolean keepOld) {
         DialogPlus builder = new DialogPlus(this);
 //        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.intpu_name);
@@ -956,8 +958,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     } catch (IOException e) {
                     }
                     initDecksListSpinners(mDeckSpinner, ydk);
-                    if(isToastSave)
-                        save(ydk);
+                    save(ydk);
                     loadDeckFromFile(ydk);
                 }
             } else {
