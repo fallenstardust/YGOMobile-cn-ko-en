@@ -836,9 +836,9 @@ bool Game::Initialize() {
 	env->addStaticText(dataManager.GetSysString(1349), rect<s32>(360 * xScale, 30 * yScale, 570 * xScale, 50 * yScale), false, true, wReplay);
 	stReplayInfo = env->addStaticText(L"", rect<s32>(360 * xScale, 60 * yScale, 570 * xScale, 315 * yScale), false, true, wReplay);
 	env->addStaticText(dataManager.GetSysString(1353), rect<s32>(360 * xScale, 240 * yScale, 570 * xScale, 260 * yScale), false, true, wReplay);
-
-	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(360 * xScale, 275 * yScale, 460 * xScale, 295 * yScale), wReplay, -1);
+	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(360 * xScale, 270 * yScale, 460 * xScale, 310 * yScale), wReplay, -1);
 	ebRepStartTurn->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnExportDeck = env->addButton(rect<s32>(470 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1281));
 	//single play window
 	wSinglePlay = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1201));
 	wSinglePlay->getCloseButton()->setVisible(false);
