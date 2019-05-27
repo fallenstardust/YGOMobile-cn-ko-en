@@ -320,23 +320,16 @@ bool Game::Initialize() {
 	wHostPrepare->getCloseButton()->setVisible(false);
 	wHostPrepare->setVisible(false);
 	btnHostPrepDuelist = env->addButton(rect<s32>(10 * xScale, 30 * yScale, 110 * xScale, 55 * yScale), wHostPrepare, BUTTON_HP_DUELIST, dataManager.GetSysString(1251));
-	for (int i = 0; i < 2; ++i) {
-		stHostPrepDuelist[i] = env->addStaticText(L"",
-				rect<s32>(60 * xScale, (65 + i * 45) * yScale, 260 * xScale,
-						(105 + i * 45) * yScale), true, false, wHostPrepare);
+	for(int i = 0; i < 2; ++i) {
+		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (65 + i * 45) * yScale, 260 * xScale, (105 + i * 45) * yScale), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-		btnHostPrepKick[i] = env->addButton(
-				rect<s32>(10 * xScale, (65 + i * 45) * yScale, 50 * xScale,
-						(105 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK,
-				L"X");
-		chkHostPrepReady[i] = env->addCheckBox(false,
-				rect<s32>(270 * xScale, (65 + i * 45) * yScale, 310 * xScale,
-						(105 + i * 45) * yScale), wHostPrepare,
-				CHECKBOX_HP_READY, L"");
+		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (65 + i * 45) * yScale, 50 * xScale, (105 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
+		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (65 + i * 45) * yScale, 310 * xScale, (105 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
 	}
-	for (int i = 2; i < 4; ++i) {
+	for(int i = 2; i < 4; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (145 + i * 45) * yScale, 260 * xScale, (185 + i * 45) * yScale), true, false, wHostPrepare);
+		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
 		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (145 + i * 45) * yScale, 50 * xScale, (185 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
 		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (145 + i * 45) * yScale, 310 * xScale, (185 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
