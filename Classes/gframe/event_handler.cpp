@@ -1050,6 +1050,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			irr::core::position2di pos(x, y);
 			if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
 				mainGame->textFont->setTransparency(true);
+				mainGame->ClearChatMsg();
 				break;
 			 }//touch the pic of detail to refresh textfonts
 			if(x < 300 * mainGame->xScale)
