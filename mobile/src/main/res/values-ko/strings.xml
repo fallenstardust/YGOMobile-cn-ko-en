@@ -253,4 +253,5 @@
     <string name="deck_text_copyed">덱 공유 코드를 클립보드에 복사했습니다</string>
     <string name="save_n_open">저장후 열기</string>
     <string name="searchresult">결과</string>
+    <string name="Pre_share">공유 준비</string>
 </resources>

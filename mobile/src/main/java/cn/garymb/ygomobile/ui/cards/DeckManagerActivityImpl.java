@@ -688,7 +688,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     builderShareLoading = new DialogPlus(this);
         builderShareLoading.showProgressBar();
         builderShareLoading.hideTitleBar();
-        builderShareLoading.setMessage("准备分享中");
+        builderShareLoading.setMessage(R.string.Pre_share);
         builderShareLoading.show();
 
         //先排序
