@@ -37,7 +37,7 @@ public class Deck implements Parcelable {
         String extra = uri.getQueryParameter(QUERY_EXTRA);
         String side = uri.getQueryParameter(QUERY_SIDE);
         if (!TextUtils.isEmpty(main)) {
-            String[] mains = main.split(",");
+            String[] mains = main.split("_");
             for (String m : mains) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -48,7 +48,7 @@ public class Deck implements Parcelable {
             }
         }
         if (!TextUtils.isEmpty(extra)) {
-            String[] extras = extra.split(",");
+            String[] extras = extra.split("_");
             for (String m : extras) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -59,7 +59,7 @@ public class Deck implements Parcelable {
             }
         }
         if (!TextUtils.isEmpty(side)) {
-            String[] sides = side.split(",");
+            String[] sides = side.split("_");
             for (String m : sides) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -102,8 +102,8 @@ public class Deck implements Parcelable {
     public Uri toUri(String host) {
         Uri.Builder uri = Uri.parse(host + "://")
                 .buildUpon()
-                .authority(Constants.URI_HOST)
-                .path(Constants.PATH_DECK);
+                .authority(Constants.URI_HOST);
+                //.path(Constants.PATH_DECK);
         if (!TextUtils.isEmpty(name)) {
             uri.appendQueryParameter(Constants.QUERY_NAME, name);
         }
@@ -118,10 +118,10 @@ public class Deck implements Parcelable {
         for (int i = 0; i < ids.size(); i++) {
             Integer id = ids.get(i);
             if (i > 0) {
-                builder.append(",");
+                builder.append("_");
             }
             if (id > 0) {
-                builder.append(id);
+                builder.append(compressedId(id));
                 //如果是最后一张就不用对比下张卡
                 if(i!=ids.size()-1) {
                     int id1 = ids.get(i + 1);
@@ -151,6 +151,15 @@ public class Deck implements Parcelable {
         return builder.toString();
     }
 
+    //压缩卡密,目前直接转换为16进制
+    private String compressedId(int id){
+        return Integer.toHexString(id);
+    }
+
+    //解析卡密，目前直接16进制转换为10进制
+    private int unId(String id){
+        return Integer.parseInt(id,16);
+    }
 
     public String getName() {
         return name;
@@ -187,7 +196,7 @@ public class Deck implements Parcelable {
     private int toId(String str) {
         if (TextUtils.isEmpty(str)) return 0;
         try {
-            return Integer.parseInt(str);
+            return unId(str);
         } catch (Exception e) {
             return 0;
         }

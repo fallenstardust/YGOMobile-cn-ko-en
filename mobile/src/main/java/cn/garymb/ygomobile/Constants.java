@@ -185,8 +185,8 @@ public interface Constants {
      */
     String PATH_DECK = "/deck";
     String SCHEME_HTTP = "http";
-    String SCHEME_APP = "ygomobile";
-    String URI_HOST = "m.ygomobile.com";
+    String SCHEME_APP = "ygo";
+    String URI_HOST = "deck";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";

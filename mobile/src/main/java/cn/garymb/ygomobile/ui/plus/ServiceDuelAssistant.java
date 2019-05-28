@@ -58,7 +58,7 @@ public class ServiceDuelAssistant extends Service {
     private final static String CMD_NAME = "CMD";
     private final static String CMD_START_GAME = "CMD : START GAME";
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
-    private final static String DECK_URL_PREFIX = "ygomobile://m.ygomobile.com/";
+    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP+"://"+Constants.URI_HOST;
     //悬浮窗显示的时间
     private static final int TIME_DIS_WINDOW = 3000;
 

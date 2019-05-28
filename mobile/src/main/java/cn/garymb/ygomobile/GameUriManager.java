@@ -150,11 +150,11 @@ public class GameUriManager {
             }
         } else {
             String host = uri.getHost();
-            if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
-                return;
-            }
+//            if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
+//                return;
+//            }
             String path = uri.getPath();
-            if (PATH_DECK.equals(path)) {
+            if (Constants.URI_HOST.equals(host)) {
                 String name = uri.getQueryParameter(QUERY_NAME);
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
@@ -165,19 +165,20 @@ public class GameUriManager {
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                     activity.startActivity(startdeck);
                 }
-            } else if (PATH_ROOM.equals(path)) {
-                try {
-                    YGOGameOptions options = new YGOGameOptions();
-                    options.mServerAddr = uri.getQueryParameter(Constants.QUERY_HOST);
-                    options.mUserName = uri.getQueryParameter(Constants.QUERY_USER);
-                    options.mPort = Integer.parseInt(uri.getQueryParameter(Constants.QUERY_PORT));
-                    options.mRoomName = uri.getQueryParameter(Constants.QUERY_ROOM);
-                    YGOStarter.startGame(getActivity(), options);
-                } catch (Exception e) {
-                    Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
-                    activity.finish();
-                }
             }
+//            else if (PATH_ROOM.equals(path)) {
+//                try {
+//                    YGOGameOptions options = new YGOGameOptions();
+//                    options.mServerAddr = uri.getQueryParameter(Constants.QUERY_HOST);
+//                    options.mUserName = uri.getQueryParameter(Constants.QUERY_USER);
+//                    options.mPort = Integer.parseInt(uri.getQueryParameter(Constants.QUERY_PORT));
+//                    options.mRoomName = uri.getQueryParameter(Constants.QUERY_ROOM);
+//                    YGOStarter.startGame(getActivity(), options);
+//                } catch (Exception e) {
+//                    Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
+//                    activity.finish();
+//                }
+//            }
         }
     }
 
