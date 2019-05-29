@@ -37,7 +37,7 @@ public class Deck implements Parcelable {
         String extra = uri.getQueryParameter(QUERY_EXTRA);
         String side = uri.getQueryParameter(QUERY_SIDE);
         if (!TextUtils.isEmpty(main)) {
-            String[] mains = main.split("_");
+            String[] mains = main.split("'");
             for (String m : mains) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -48,7 +48,7 @@ public class Deck implements Parcelable {
             }
         }
         if (!TextUtils.isEmpty(extra)) {
-            String[] extras = extra.split("_");
+            String[] extras = extra.split("'");
             for (String m : extras) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -59,7 +59,7 @@ public class Deck implements Parcelable {
             }
         }
         if (!TextUtils.isEmpty(side)) {
-            String[] sides = side.split("_");
+            String[] sides = side.split("'");
             for (String m : sides) {
                 int []idNum=toIdAndNum(m);
                 if (idNum[0] > 0) {
@@ -118,10 +118,11 @@ public class Deck implements Parcelable {
         for (int i = 0; i < ids.size(); i++) {
             Integer id = ids.get(i);
             if (i > 0) {
-                builder.append("_");
+                builder.append("'");
             }
             if (id > 0) {
-                builder.append(compressedId(id));
+                //如果需要使用十六进制码：builder.append(compressedId(id));
+                builder.append(id);
                 //如果是最后一张就不用对比下张卡
                 if(i!=ids.size()-1) {
                     int id1 = ids.get(i + 1);
@@ -196,7 +197,8 @@ public class Deck implements Parcelable {
     private int toId(String str) {
         if (TextUtils.isEmpty(str)) return 0;
         try {
-            return unId(str);
+            //如果需要返回16进制码：return unId(str)
+            return Integer.parseInt(str);
         } catch (Exception e) {
             return 0;
         }
