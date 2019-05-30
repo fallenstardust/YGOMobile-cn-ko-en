@@ -980,7 +980,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
         // addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
-        addMenuButton(mMenuIds, menu, R.id.action_share_deck, R.string.share_deck, R.drawable.listicon);
+        addMenuButton(mMenuIds, menu, R.id.action_share_deck, R.string.share_deck, R.drawable.shareicon);
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
 
