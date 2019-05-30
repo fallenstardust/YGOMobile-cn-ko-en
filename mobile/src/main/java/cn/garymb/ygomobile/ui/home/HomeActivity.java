@@ -383,6 +383,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setContentView(R.layout.dialog_help);
+                dialog.setTitle(R.string.question);
                 dialog.show();
                 View viewDialog = dialog.getContentView();
                 Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
