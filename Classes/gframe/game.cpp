@@ -239,82 +239,66 @@ bool Game::Initialize() {
 	btnJoinCancel = env->addButton(rect<s32>(460 * xScale, 430 * yScale, 590 * xScale, 470 * yScale), wLanWindow, BUTTON_JOIN_CANCEL, dataManager.GetSysString(1212));
 	btnCreateHost = env->addButton(rect<s32>(460 * xScale, 25 * yScale, 590 * xScale, 65 * yScale), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224));
 #endif
+#ifdef _IRR_ANDROID_PLATFORM_
 	//create host
-	wCreateHost = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 700 * xScale, 520 * yScale), false, dataManager.GetSysString(1224));
+	wCreateHost = env->addWindow(rect<s32>(320 * xScale, 50 * yScale, 700 * xScale, 570 * yScale), false, dataManager.GetSysString(1224));
 	wCreateHost->getCloseButton()->setVisible(false);
 	wCreateHost->setVisible(false);
-	env->addStaticText(dataManager.GetSysString(1226), rect<s32>(20 * xScale, 30 * yScale, 220 * xScale, 50 * yScale), false, false, wCreateHost);
-#ifdef _IRR_ANDROID_PLATFORM_
-	cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 25 * yScale, 300 * xScale, 50 * yScale), wCreateHost);
-#endif
+	env->addStaticText(dataManager.GetSysString(1226), rect<s32>(20 * xScale, 30 * yScale, 220 * xScale, 65 * yScale), false, false, wCreateHost);
+	cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 25 * yScale, 300 * xScale, 65 * yScale), wCreateHost);
 	std::vector<LFList>::iterator iter;
 	for (iter = deckManager._lfList.begin(); iter != deckManager._lfList.end(); iter++) {
 		cbLFlist->addItem((*iter).listName, (*iter).hash);
 	}
-	env->addStaticText(dataManager.GetSysString(1225), rect<s32>(20 * xScale, 60 * yScale, 220 * xScale, 80 * yScale), false, false, wCreateHost);
-#ifdef _IRR_ANDROID_PLATFORM_
-	cbRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 55 * yScale, 300 * xScale, 80 * yScale), wCreateHost);
-#endif
+	env->addStaticText(dataManager.GetSysString(1225), rect<s32>(20 * xScale, 75 * yScale, 220 * xScale, 110 * yScale), false, false, wCreateHost);
+	cbRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 70 * yScale, 300 * xScale, 110 * yScale), wCreateHost);
 	cbRule->addItem(dataManager.GetSysString(1240));
 	cbRule->addItem(dataManager.GetSysString(1241));
 	cbRule->addItem(dataManager.GetSysString(1242));
 	cbRule->addItem(dataManager.GetSysString(1243));
 	cbRule->setSelected(gameConf.defaultOT - 1);
-	env->addStaticText(dataManager.GetSysString(1227), rect<s32>(20 * xScale, 90 * yScale, 220 * xScale, 110 * yScale), false, false, wCreateHost);
-#ifdef _IRR_ANDROID_PLATFORM_
-	cbMatchMode = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 85 * yScale, 300 * xScale, 110 * yScale), wCreateHost);
-#endif
+	env->addStaticText(dataManager.GetSysString(1227), rect<s32>(20 * xScale, 120 * yScale, 220 * xScale, 155 * yScale), false, false, wCreateHost);
+	cbMatchMode = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 115 * yScale, 300 * xScale, 155 * yScale), wCreateHost);
 	cbMatchMode->addItem(dataManager.GetSysString(1244));
 	cbMatchMode->addItem(dataManager.GetSysString(1245));
 	cbMatchMode->addItem(dataManager.GetSysString(1246));
-	env->addStaticText(dataManager.GetSysString(1237), rect<s32>(20 * xScale, 120 * yScale, 320 * xScale, 140 * yScale), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1237), rect<s32>(20 * xScale, 165 * yScale, 320 * xScale, 200 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 180);
-#ifdef _IRR_ANDROID_PLATFORM_
-	ebTimeLimit = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 115 * yScale, 220 * xScale, 140 * yScale), wCreateHost);
-#endif
+	ebTimeLimit = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 160 * yScale, 220 * xScale, 200 * yScale), wCreateHost);
 	ebTimeLimit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1228), rect<s32>(20 * xScale, 150 * yScale, 320 * xScale, 170 * yScale), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1228), rect<s32>(20 * xScale, 205 * yScale, 320 * xScale, 245 * yScale), false, false, wCreateHost);
 	env->addStaticText(dataManager.GetSysString(1236), rect<s32>(20 * xScale, 180 * yScale, 220 * xScale, 200 * yScale), false, false, wCreateHost);
-	cbDuelRule = env->addComboBox(rect<s32>(140 * xScale, 175 * yScale, 300 * xScale, 200 * yScale), wCreateHost);
+	cbDuelRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 175 * yScale, 300 * xScale, 200 * yScale), wCreateHost);
 	cbDuelRule->addItem(dataManager.GetSysString(1260));
 	cbDuelRule->addItem(dataManager.GetSysString(1261));
 	cbDuelRule->addItem(dataManager.GetSysString(1262));
 	cbDuelRule->addItem(dataManager.GetSysString(1263));
 	cbDuelRule->setSelected(DEFAULT_DUEL_RULE - 1);
-	chkNoCheckDeck = env->addCheckBox(false, rect<s32>(20 * xScale, 210 * yScale, 170 * xScale, 230 * yScale), wCreateHost, -1, dataManager.GetSysString(1229));
-	chkNoShuffleDeck = env->addCheckBox(false, rect<s32>(180 * xScale, 210 * yScale, 360 * xScale, 230 * yScale), wCreateHost, -1, dataManager.GetSysString(1230));
+	chkNoCheckDeck = env->addCheckBox(false, rect<s32>(20 * xScale, 210 * yScale, 170 * xScale, 235 * yScale), wCreateHost, -1, dataManager.GetSysString(1229));
+	chkNoShuffleDeck = env->addCheckBox(false, rect<s32>(180 * xScale, 210 * yScale, 360 * xScale, 235 * yScale), wCreateHost, -1, dataManager.GetSysString(1230));
 	env->addStaticText(dataManager.GetSysString(1231), rect<s32>(20 * xScale, 240 * yScale, 320 * xScale, 260 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 8000);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebStartLP = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 235 * yScale, 220 * xScale, 260 * yScale), wCreateHost);
-#endif
 	ebStartLP->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1232), rect<s32>(20 * xScale, 270 * yScale, 320 * xScale, 290 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 5);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebStartHand = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 265 * yScale, 220 * xScale, 290 * yScale), wCreateHost);
-#endif
 	ebStartHand->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1233), rect<s32>(20 * xScale, 300 * yScale, 320 * xScale, 320 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 1);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebDrawCount = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 295 * yScale, 220 * xScale, 320 * yScale), wCreateHost);
-#endif
 	ebDrawCount->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1234), rect<s32>(10 * xScale, 360 * yScale, 220 * xScale, 380 * yScale), false, false, wCreateHost);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebServerName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.gamename, true, env, rect<s32>(110 * xScale, 355 * yScale, 250 * xScale, 380 * yScale), wCreateHost);
-#endif
 	ebServerName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1235), rect<s32>(10 * xScale, 390 * yScale, 220 * xScale, 410 * yScale), false, false, wCreateHost);
-#ifdef _IRR_ANDROID_PLATFORM_
 	ebServerPass = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(110 * xScale, 385 * yScale, 250 * xScale, 410 * yScale), wCreateHost);
-#endif
 	ebServerPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnHostConfirm = env->addButton(rect<s32>(260 * xScale, 355 * yScale, 370 * xScale, 380 * yScale), wCreateHost, BUTTON_HOST_CONFIRM, dataManager.GetSysString(1211));
 	btnHostCancel = env->addButton(rect<s32>(260 * xScale, 385 * yScale, 370 * xScale, 410 * yScale), wCreateHost, BUTTON_HOST_CANCEL, dataManager.GetSysString(1212));
-	//host(single)
+#endif
 #ifdef _IRR_ANDROID_PLATFORM_
+	//host(single)
 	wHostPrepare = env->addWindow(rect<s32>(250 * xScale, 30 * yScale, 780 * xScale, 550 * yScale), false, dataManager.GetSysString(1250));
 	wHostPrepare->setDraggable(false);
 	wHostPrepare->getCloseButton()->setVisible(false);
