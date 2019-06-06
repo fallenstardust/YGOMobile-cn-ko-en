@@ -23,7 +23,7 @@
     <color name="holo_blue_light">#ff33b5e5</color>
     <color name="holo_green_bright">#95d389</color>
     <color name="holo_orange_bright">#ff982a</color>
-	
-	<color name="colorMain">#2196F3</color>
-	<color name="background">#ECEFF1</color>
+
+    <color name="colorMain">#2196F3</color>
+    <color name="background">#ECEFF1</color>
 </resources>

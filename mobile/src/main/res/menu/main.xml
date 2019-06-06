@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_game"
         android:icon="@drawable/start"
         android:title="@string/action_game"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_card_search"
         android:icon="@drawable/search"
         android:title="@string/card_search"
-        app:showAsAction="always"
-        />
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_deck_manager"
         android:icon="@drawable/deck"
         android:title="@string/deck_manager"
-        app:showAsAction="always"
-        />
+        app:showAsAction="always" />
 </menu>

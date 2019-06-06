@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="BaseTheme" parent="Theme.AppCompat">
-    </style>
+    <style name="BaseTheme" parent="Theme.AppCompat"></style>
 
-    <style name="AppBaseTheme" parent="BaseTheme">
-    </style>
+    <style name="AppBaseTheme" parent="BaseTheme"></style>
 
     <style name="AppTheme" parent="AppBaseTheme">
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -52,9 +50,11 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
 
     </style>
+
     <style name="AppTheme.Dialog" parent="Theme.AppCompat.Dialog.Alert">
 
     </style>
+
     <style name="ProcessDialog" parent="AppTheme.Dialog">
         <item name="android:windowIsFloating">true</item><!--是否浮现在activity之上-->
         <item name="android:windowFullscreen">true</item>
@@ -74,14 +74,14 @@
         <item name="android:windowBackground">@android:color/transparent</item><!--背景透明-->
         <item name="android:backgroundDimEnabled">false</item><!--模糊-->
     </style>
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark"/>
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
 
     <style name="AppTheme.PopupOverlay.Bule" parent="ThemeOverlay.AppCompat.Dark">
         <item name="android:colorBackground">@color/colorPrimary</item>
     </style>
 
-    <style name="AppTheme.PopupOverlay.Dark" parent="ThemeOverlay.AppCompat.Dark">
-    </style>
+    <style name="AppTheme.PopupOverlay.Dark" parent="ThemeOverlay.AppCompat.Dark"></style>
 
     <style name="Link_Marker">
         <item name="android:layout_width">match_parent</item>

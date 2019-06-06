@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/window" >
+    android:background="@drawable/window">
 
     <RelativeLayout
         android:id="@+id/layout_title"
@@ -21,7 +20,7 @@
             android:gravity="center_vertical"
             android:text="@android:string/dialog_alert_title"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
-            android:textColor="@color/item_title"/>
+            android:textColor="@color/item_title" />
 
         <ImageButton
             android:id="@+id/close"
@@ -30,15 +29,15 @@
             android:layout_alignParentRight="true"
             android:layout_marginRight="10dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_close_black_24dp"/>
+            app:srcCompat="@drawable/ic_close_black_24dp" />
     </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
         android:layout_below="@id/layout_title"
         android:layout_centerVertical="true"
+        android:layout_marginTop="5dp"
         android:orientation="vertical">
 
         <LinearLayout
@@ -48,17 +47,17 @@
             android:layout_gravity="center_horizontal|center_vertical"
             android:layout_marginBottom="5dp"
             android:minWidth="200dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal">
 
             <ProgressBar
                 android:id="@+id/pb1"
                 style="?android:attr/progressBarStyleSmall"
                 android:layout_width="@dimen/button_width_small"
                 android:layout_height="@dimen/button_width_small"
-                android:layout_marginLeft="10dp"
                 android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
                 android:visibility="gone"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
 
             <TextView
@@ -67,26 +66,26 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="left|center_vertical"
                 android:layout_marginLeft="10dp"
-                android:minLines="1"
                 android:gravity="left|center_vertical"
+                android:minLines="1"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/holo_blue_bright"
                 android:visibility="gone"
                 tools:text="hello"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
         </LinearLayout>
 
 
         <ProgressBar
             android:id="@+id/pb2"
-            android:progressDrawable="@drawable/background_lp_progress_bar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_gravity="center_horizontal|center_vertical"
             android:layout_height="100px"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:progressDrawable="@drawable/background_lp_progress_bar"
             android:visibility="gone"
-            tools:visibility="visible"/>
+            tools:visibility="visible" />
 
 
         <LinearLayout
@@ -109,9 +108,9 @@
                     android:layout_gravity="center"
                     android:background="@drawable/button_bg"
                     android:text="@android:string/ok"
-                    android:visibility="gone"
                     android:textColor="@android:color/white"
-                    tools:visibility="visible"/>
+                    android:visibility="gone"
+                    tools:visibility="visible" />
             </FrameLayout>
 
             <FrameLayout
@@ -131,7 +130,7 @@
                     android:text="@android:string/cancel"
                     android:textColor="@android:color/white"
                     android:visibility="gone"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible" />
             </FrameLayout>
         </LinearLayout>
     </LinearLayout>

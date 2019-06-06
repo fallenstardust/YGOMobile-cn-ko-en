@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <include
-        layout="@layout/content_toolbar"/>
+    <include layout="@layout/content_toolbar" />
 
     <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    <TextView
-        android:textStyle="bold"
-        android:id="@+id/tv_log"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:padding="15dp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/tv_log"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="15dp"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
     </android.support.v4.widget.NestedScrollView>
-
 
 
 </LinearLayout>

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="StringFormatInvalid"
-    >
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="app_name">YGOMobile.kor</string>
     <string name="action_settings">설정</string>
     <string name="action_game">싱글 게임</string>

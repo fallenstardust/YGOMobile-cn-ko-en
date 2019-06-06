@@ -9,8 +9,8 @@
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="10dp"
         android:layout_marginTop="5dp"
+        android:layout_marginRight="10dp"
         android:scaleType="centerCrop" />
 
     <LinearLayout
@@ -18,9 +18,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/icm_avatar"
-        android:layout_marginBottom="5dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
+        android:layout_marginBottom="5dp"
         android:layout_toLeftOf="@id/icm_avatar"
         android:background="@drawable/chat_message_me_background"
         android:descendantFocusability="blocksDescendants"

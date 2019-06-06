@@ -1,76 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-	android:orientation="vertical"
-	android:background="@color/background"
-	android:gravity="center">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:gravity="center"
+    android:orientation="vertical">
 
-	<RelativeLayout
-		android:background="@color/mediumPurpleLight"
-		android:layout_height="wrap_content"
-		android:layout_width="match_parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/mediumPurpleLight">
 
-		<TextView
-			android:textColor="@color/white"
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
-			android:text="@string/mc_chat"
-			android:layout_margin="10dp"
-			android:textSize="20sp"
-			android:id="@+id/main_title"/>
+        <TextView
+            android:id="@+id/main_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="@string/mc_chat"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
 
-	</RelativeLayout>
+    </RelativeLayout>
 
-	<android.support.v7.widget.RecyclerView
-		android:id="@+id/main_rec"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:layout_weight="1000"/>
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/main_rec"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1000" />
 
-	<LinearLayout
-		android:gravity="center"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:background="@color/white"
-		android:orientation="horizontal"
-		android:padding="7dp"
-		android:id="@+id/main_bottom_bar">
+    <LinearLayout
+        android:id="@+id/main_bottom_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="7dp">
 
-		<EditText
-			android:background="@drawable/chat_edittext_background"
-			android:padding="7dp"
-			android:id="@+id/main_send_message"
-			android:layout_width="0dp"
-			android:layout_height="wrap_content"
-			android:textSize="15sp"
-			android:textColor="@color/black"
-			android:layout_weight="10"
-			android:maxEms="3"/>
+        <EditText
+            android:id="@+id/main_send_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:background="@drawable/chat_edittext_background"
+            android:maxEms="3"
+            android:padding="7dp"
+            android:textColor="@color/black"
+            android:textSize="15sp" />
 
-		<LinearLayout
-			android:layout_marginLeft="7dp"
-			android:layout_width="0dp"
-			android:layout_height="33dp"
-			android:gravity="center"
-			android:layout_weight="2"
-			android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_marginLeft="7dp"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:orientation="vertical">
 
-			<ImageButton
-				android:background="@drawable/chat_message_background"
-				android:src="@drawable/ic_send_black_24dp"
-				android:id="@+id/main_send"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"
-				android:text="@string/send"
-				android:gravity="center"
-				android:textSize="12sp"
-			/>
+            <ImageButton
+                android:id="@+id/main_send"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/chat_message_background"
+                android:gravity="center"
+                android:src="@drawable/ic_send_black_24dp"
+                android:text="@string/send"
+                android:textSize="12sp" />
 
-		</LinearLayout>
+        </LinearLayout>
 
-	</LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
 

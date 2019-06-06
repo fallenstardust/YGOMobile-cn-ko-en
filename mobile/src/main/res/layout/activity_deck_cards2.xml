@@ -12,8 +12,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include
-                layout="@layout/content_toolbar_list"/>
+            <include layout="@layout/content_toolbar_list" />
 
             <LinearLayout
                 android:id="@+id/layout_main"
@@ -24,7 +23,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"/>
+                    android:layout_height="?attr/actionBarSize" />
 
                 <cn.garymb.ygomobile.ui.widget.DeckGroupView
                     android:id="@+id/deck_group"
@@ -33,16 +32,16 @@
 
                 <cn.garymb.ygomobile.ui.widget.DeckView
                     android:id="@+id/deckview"
-                    android:visibility="gone"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
 
                 <CheckBox
                     android:id="@+id/chk_autosort"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="自动排序"/>
+                    android:text="自动排序" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -54,26 +53,29 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="删除模式"/>
+                        android:text="删除模式" />
+
                     <Button
                         android:id="@+id/btn_edit_main2side"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="主卡组到副卡组"/>
+                        android:text="主卡组到副卡组" />
+
                     <Button
                         android:id="@+id/btn_edit_side2main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="副卡组到主卡组"/>
+                        android:text="副卡组到主卡组" />
+
                     <Button
                         android:id="@+id/btn_delete"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:enabled="false"
-                        android:text="完成"/>
+                        android:text="完成" />
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>
@@ -91,22 +93,21 @@
                 android:background="@drawable/left"
                 android:orientation="vertical"
                 android:paddingLeft="4dp"
-                android:paddingRight="4dp"
-                android:paddingTop="2dp">
+                android:paddingTop="2dp"
+                android:paddingRight="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/item_height"
-                    android:layout_marginBottom="4dp"
                     android:layout_marginLeft="20dp"
+                    android:layout_marginTop="10dp"
                     android:layout_marginRight="30dp"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginBottom="4dp">
 
                     <android.support.v7.widget.AppCompatSpinner
                         android:id="@+id/sp_limit_list"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        />
+                        android:layout_height="match_parent" />
                 </LinearLayout>
 
                 <com.tubb.smrv.SwipeMenuRecyclerView
@@ -116,7 +117,7 @@
                     android:divider="@android:color/transparent"
                     android:dividerHeight="4dp"
                     android:padding="2dp"
-                    android:scrollbars="none"/>
+                    android:scrollbars="none" />
             </LinearLayout>
         </LinearLayout>
 
@@ -129,7 +130,7 @@
 
             <include
                 android:id="@+id/nav_view_list"
-                layout="@layout/nav_card_search"/>
+                layout="@layout/nav_card_search" />
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 

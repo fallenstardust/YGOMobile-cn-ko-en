@@ -5,19 +5,19 @@
         android:id="@+id/action_search"
         android:icon="@drawable/search"
         android:title="@string/search"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_share_deck"
         android:icon="@drawable/listicon"
         android:title="@string/share_deck"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
 
     <!--<item-->
-        <!--android:id="@+id/action_card_list"-->
-        <!--android:icon="@drawable/listicon"-->
-        <!--android:title="@string/card_result"-->
-        <!--app:showAsAction="always"/>-->
+    <!--android:id="@+id/action_card_list"-->
+    <!--android:icon="@drawable/listicon"-->
+    <!--android:title="@string/card_result"-->
+    <!--app:showAsAction="always"/>-->
     <!--<item
         android:id="@+id/action_refresh"
         android:icon="@drawable/ic_refresh"
@@ -29,7 +29,7 @@
     <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_refresh"
-        android:title="@string/sort"/>
+        android:title="@string/sort" />
     <!-- <item
          android:id="@+id/action_manager"
          android:icon="@drawable/ic_edit_white"
@@ -37,12 +37,12 @@
     <item
         android:id="@+id/action_save"
         android:icon="@drawable/ic_mode_save_white"
-        android:title="@string/save_deck"/>
+        android:title="@string/save_deck" />
 
-   <!-- <item
-        android:id="@+id/action_save_as"
-        android:icon="@drawable/ic_mode_save_white"
-        android:title="@string/save_as_deck"/>-->
+    <!-- <item
+         android:id="@+id/action_save_as"
+         android:icon="@drawable/ic_mode_save_white"
+         android:title="@string/save_as_deck"/>-->
     <!--<item
         android:id="@+id/action_share_deck"
         android:icon="@drawable/ic_refresh"
@@ -50,16 +50,16 @@
     <item
         android:id="@+id/action_deck_new"
         android:icon="@drawable/ic_edit_white"
-        android:title="@string/new_deck"/>
+        android:title="@string/new_deck" />
     <item
         android:id="@+id/action_delete_deck"
         android:icon="@drawable/ic_edit_white"
-        android:title="@string/delete_deck"/>
+        android:title="@string/delete_deck" />
     <item
         android:id="@+id/action_clear_deck"
-        android:title="@string/clear_deck"/>
+        android:title="@string/clear_deck" />
     <item
         android:id="@+id/action_rename"
         android:icon="@drawable/ic_edit_white"
-        android:title="@string/rename_deck"/>
+        android:title="@string/rename_deck" />
 </menu>

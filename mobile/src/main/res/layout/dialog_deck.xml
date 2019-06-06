@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="@string/label_limitlist"
-        android:textColor="@color/blackLinght"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/blackLinght" />
 
     <android.support.v7.widget.AppCompatSpinner
         android:id="@+id/sp_limit_list"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/item_height"/>
+        android:layout_height="@dimen/item_height" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="@string/deck_list"
-        android:textColor="@color/blackLinght"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/blackLinght" />
 
     <android.support.v7.widget.AppCompatSpinner
         android:id="@+id/sp_ydk_list"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/item_height"/>
+        android:layout_height="@dimen/item_height" />
 </LinearLayout>

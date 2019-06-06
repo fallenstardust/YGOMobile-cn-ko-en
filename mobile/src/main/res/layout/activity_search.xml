@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -18,8 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-            <include
-                layout="@layout/content_toolbar"/>
+
+            <include layout="@layout/content_toolbar" />
 
             <com.tubb.smrv.SwipeMenuRecyclerView
                 android:id="@+id/list_cards"
@@ -28,7 +27,7 @@
                 android:divider="@android:color/transparent"
                 android:dividerHeight="4dp"
                 android:padding="5dp"
-                android:scrollbars="none"/>
+                android:scrollbars="none" />
         </LinearLayout>
 
         <LinearLayout
@@ -39,7 +38,7 @@
 
             <include
                 android:id="@+id/nav_view_list"
-                layout="@layout/nav_card_search"/>
+                layout="@layout/nav_card_search" />
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 </android.support.design.widget.CoordinatorLayout>

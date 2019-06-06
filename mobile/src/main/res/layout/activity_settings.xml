@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg3">
@@ -11,8 +10,7 @@
         android:background="#80000000"
         android:orientation="vertical">
 
-        <include
-            layout="@layout/content_toolbar"/>
+        <include layout="@layout/content_toolbar" />
 
         <FrameLayout
             android:id="@+id/fragment"

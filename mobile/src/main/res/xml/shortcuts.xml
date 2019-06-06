@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
-        android:shortcutId="short_mycard"
         android:enabled="true"
         android:icon="@drawable/mycard"
-        android:shortcutShortLabel="@string/mycard"
+        android:shortcutDisabledMessage="@string/invalid_shortcut"
+        android:shortcutId="short_mycard"
         android:shortcutLongLabel="@string/mycard"
-        android:shortcutDisabledMessage="@string/invalid_shortcut">
+        android:shortcutShortLabel="@string/mycard">
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="cn.garymb.ygomobile"
-            android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity" />
-        <categories android:name="android.shortcut.conversation"/>
+            android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
+            android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
     <shortcut
-        android:shortcutId="short_card_query"
         android:enabled="true"
         android:icon="@drawable/search"
-        android:shortcutShortLabel="@string/card_search"
+        android:shortcutDisabledMessage="@string/invalid_shortcut"
+        android:shortcutId="short_card_query"
         android:shortcutLongLabel="@string/card_search"
-        android:shortcutDisabledMessage="@string/invalid_shortcut">
+        android:shortcutShortLabel="@string/card_search">
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="cn.garymb.ygomobile"
-            android:targetClass="cn.garymb.ygomobile.ui.cards.CardSearchAcitivity" />
-        <categories android:name="android.shortcut.conversation"/>
+            android:targetClass="cn.garymb.ygomobile.ui.cards.CardSearchAcitivity"
+            android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
     <shortcut
-        android:shortcutId="short_deck_manager"
         android:enabled="true"
         android:icon="@drawable/deck"
-        android:shortcutShortLabel="@string/deck_manager"
+        android:shortcutDisabledMessage="@string/invalid_shortcut"
+        android:shortcutId="short_deck_manager"
         android:shortcutLongLabel="@string/deck_manager"
-        android:shortcutDisabledMessage="@string/invalid_shortcut">
+        android:shortcutShortLabel="@string/deck_manager">
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="cn.garymb.ygomobile"
-            android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity" />
-        <categories android:name="android.shortcut.conversation"/>
+            android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
+            android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
     <LinearLayout
         android:id="@+id/layout_label"
         android:layout_width="match_parent"
@@ -20,17 +21,17 @@
             android:singleLine="true"
             android:textColor="@color/white"
             android:textSize="12sp"
-            tools:text="name"/>
+            tools:text="name" />
     </LinearLayout>
 
     <ImageView
         android:id="@+id/card_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="1px"
         android:layout_marginLeft="1px"
         android:layout_marginRight="1px"
-        tools:src="@drawable/unknown"/>
+        android:layout_marginBottom="1px"
+        tools:src="@drawable/unknown" />
 
     <ImageView
         android:id="@+id/right_top"
@@ -38,6 +39,6 @@
         android:layout_height="@dimen/right_size2"
         android:layout_alignParentRight="true"
         android:visibility="visible"
-        app:srcCompat="@drawable/ic_close_black_24dp"/>
+        app:srcCompat="@drawable/ic_close_black_24dp" />
 
 </RelativeLayout>

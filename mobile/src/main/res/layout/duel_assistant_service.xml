@@ -1,60 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_height="wrap_content"
-	android:layout_width="match_parent"
-	android:orientation="vertical"
-	android:background="#00FFFFFF">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00FFFFFF"
+    android:orientation="vertical">
 
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:gravity="center_horizontal"
-			android:background="@drawable/window">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/window"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
-			<TextView
-				android:textColor="@color/gold"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:text="Text"
-				android:layout_margin="10dp"
-				android:id="@+id/tv_message" />
+        <TextView
+            android:id="@+id/tv_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="Text"
+            android:textColor="@color/gold" />
 
-			<LinearLayout
-				android:layout_height="wrap_content"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-				<Button
-					android:textColor="@color/white"
-					style="?android:attr/buttonBarButtonStyle"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:text="@string/join_game"
-					android:layout_weight="1"
-					android:id="@+id/bt_join" />
+            <Button
+                android:id="@+id/bt_join"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/join_game"
+                android:textColor="@color/white" />
 
-				<TextView
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:layout_margin="20dp" />
-				<Button
-					android:textColor="@color/white"
-					style="?android:attr/buttonBarButtonStyle"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:text="@string/search_close"
-					android:layout_weight="1"
-					android:id="@+id/bt_close" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp" />
 
-			</LinearLayout>
-			<TextView
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:textSize="20px"
-				android:text="@string/app_name"/>
-		</LinearLayout>
+            <Button
+                android:id="@+id/bt_close"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/search_close"
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textSize="20px" />
+    </LinearLayout>
 
 </LinearLayout>
 

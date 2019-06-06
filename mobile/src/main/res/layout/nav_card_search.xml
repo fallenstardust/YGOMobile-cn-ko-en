@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@drawable/right"
-              android:orientation="vertical"
-              android:padding="10dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/right"
+    android:orientation="vertical"
+    android:padding="10dp"
 
-              android:theme="@style/AppTheme.PopupOverlay.Dark"
-              tools:showIn="@layout/activity_search">
+    android:theme="@style/AppTheme.PopupOverlay.Dark"
+    tools:showIn="@layout/activity_search">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +20,7 @@
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="18dp"/>
+            android:layout_marginLeft="18dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -43,7 +43,7 @@
                     android:inputType="textNoSuggestions"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:textColorHint="@color/gold"/>
+                    android:textColorHint="@color/gold" />
             </android.support.design.widget.TextInputLayout>
 
             <android.support.v7.widget.AppCompatButton
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:background="@drawable/button_bg"
-                android:text="@string/search"/>
+                android:text="@string/search" />
         </LinearLayout>
 
         <LinearLayout
@@ -75,7 +75,7 @@
                     android:inputType="textNoSuggestions"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:textColorHint="@color/gold"/>
+                    android:textColorHint="@color/gold" />
             </android.support.design.widget.TextInputLayout>
 
             <android.support.v7.widget.AppCompatButton
@@ -84,7 +84,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:background="@drawable/button_bg"
-                android:text="@string/reset"/>
+                android:text="@string/reset" />
         </LinearLayout>
 
         <LinearLayout
@@ -101,7 +101,7 @@
                     android:id="@+id/sp_ot"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
-                    android:layout_weight="1"/>
+                    android:layout_weight="1" />
 
 
                 <android.support.v7.widget.AppCompatSpinner
@@ -109,7 +109,7 @@
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
-                    android:visibility="invisible"/>
+                    android:visibility="invisible" />
             </LinearLayout>
 
             <LinearLayout
@@ -121,14 +121,14 @@
                     android:id="@+id/sp_limit_list"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                    android:layout_weight="1" />
 
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/sp_limit"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:visibility="invisible"/>
+                    android:visibility="invisible" />
             </LinearLayout>
 
             <LinearLayout
@@ -140,7 +140,7 @@
                     android:id="@+id/sp_category"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                    android:layout_weight="1" />
 
                 <Button
                     android:id="@+id/btn_linkmarker"
@@ -149,7 +149,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/button_bg"
                     android:text="@string/linkmarker"
-                    android:visibility="visible"/>
+                    android:visibility="visible" />
 
             </LinearLayout>
 
@@ -157,7 +157,7 @@
                 android:id="@+id/sp_setcode"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/label_width_small"
-                app:searchTitle="@string/label_set"/>
+                app:searchTitle="@string/label_set" />
 
 
             <LinearLayout
@@ -169,21 +169,21 @@
                     android:id="@+id/sp_type_card"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
-                    android:layout_weight="1"/>
+                    android:layout_weight="1" />
 
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/sp_race"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/sp_type_st"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
-                    android:visibility="invisible"/>
+                    android:visibility="invisible" />
             </LinearLayout>
 
             <LinearLayout
@@ -201,13 +201,13 @@
                         android:id="@+id/sp_level"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
 
                     <android.support.v7.widget.AppCompatSpinner
                         android:id="@+id/sp_attribute"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -219,13 +219,13 @@
                         android:id="@+id/sp_type_monster"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
 
                     <android.support.v7.widget.AppCompatSpinner
                         android:id="@+id/sp_type_monster2"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
                 </LinearLayout>
 
 
@@ -247,7 +247,7 @@
                             android:hint="@string/hit_atk"
                             android:maxLines="1"
                             android:singleLine="true"
-                            tools:text="100"/>
+                            tools:text="100" />
                     </android.support.design.widget.TextInputLayout>
 
                     <android.support.design.widget.TextInputLayout
@@ -262,7 +262,7 @@
                             android:hint="@string/hit_def"
                             android:maxLines="1"
                             android:singleLine="true"
-                            tools:text="100"/>
+                            tools:text="100" />
                     </android.support.design.widget.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>

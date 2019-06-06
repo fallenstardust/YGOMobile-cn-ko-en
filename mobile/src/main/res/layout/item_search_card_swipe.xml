@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.tubb.smrv.SwipeHorizontalMenuLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.tubb.smrv.SwipeHorizontalMenuLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:sml="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/swipe_layout"
@@ -22,10 +21,10 @@
             android:layout_height="@dimen/item_menu_height"
             android:layout_gravity="left|center_vertical"
             android:background="@drawable/blue"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:gravity="center"
             android:text="@string/card_add_main"
-            android:textColor="@color/white"/>
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/white" />
 
         <TextView
             android:id="@+id/btn_add_side"
@@ -34,9 +33,9 @@
             android:layout_gravity="right|center_vertical"
             android:background="@drawable/red"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:text="@string/card_add_side"
-            android:textColor="@color/white"/>
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/white" />
 
     </LinearLayout>
 
@@ -45,7 +44,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/padding"
-        android:orientation="horizontal" >
+        android:orientation="horizontal">
 
         <RelativeLayout
             android:layout_width="@dimen/card_small_width"
@@ -59,7 +58,7 @@
                 android:layout_centerVertical="true"
                 android:layout_gravity="center_vertical"
                 android:scaleType="fitXY"
-                tools:src="@drawable/unknown"/>
+                tools:src="@drawable/unknown" />
 
             <ImageView
                 android:id="@+id/right_top"
@@ -67,15 +66,14 @@
                 android:layout_height="@dimen/right_size"
                 android:layout_alignParentRight="true"
                 android:visibility="visible"
-                tools:src="@drawable/ic_close_black_24dp"/>
+                tools:src="@drawable/ic_close_black_24dp" />
         </RelativeLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
-            android:orientation="vertical"
-            >
+            android:orientation="vertical">
 
             <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
                 android:id="@+id/card_name"
@@ -90,7 +88,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:textColor="@color/item_title"
                 android:textSize="18sp"
-                tools:text="Card Name"/>
+                tools:text="Card Name" />
 
             <TextView
                 android:id="@+id/card_level"
@@ -104,7 +102,7 @@
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/star"
-                tools:text="★★★★"/>
+                tools:text="★★★★" />
 
             <TextView
                 android:id="@+id/card_type"
@@ -115,21 +113,20 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="15sp"
-                tools:text="[A/XYZ]"/>
+                tools:text="[A/XYZ]" />
 
             <View
                 android:id="@+id/view_bar"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="3dp"
-                android:background="@color/gray"/>
+                android:background="@color/gray" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:orientation="horizontal"
-                >
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/card_code"
@@ -140,7 +137,7 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                     android:textColor="@color/holo_blue_bright"
-                    tools:text="123456789"/>
+                    tools:text="123456789" />
 
                 <TextView
                     android:layout_width="1px"
@@ -148,13 +145,12 @@
                     android:text="A"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/colorPrimary"
-                    android:visibility="invisible"/>
+                    android:visibility="invisible" />
 
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
-                    android:layout_weight="1"
-                    />
+                    android:layout_weight="1" />
 
                 <LinearLayout
                     android:id="@+id/layout_atk"
@@ -168,7 +164,7 @@
                         android:singleLine="true"
                         android:text="ATK/"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light"/>
+                        android:textColor="@android:color/holo_green_light" />
 
                     <TextView
                         android:id="@+id/card_atk"
@@ -180,11 +176,11 @@
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
-                        tools:text="2500"/>
+                        tools:text="2500" />
 
                     <View
                         android:layout_width="5dp"
-                        android:layout_height="1dp"/>
+                        android:layout_height="1dp" />
 
 
                 </LinearLayout>
@@ -202,7 +198,7 @@
                         android:singleLine="true"
                         android:text="DEF/"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light"/>
+                        android:textColor="@android:color/holo_green_light" />
 
                     <TextView
                         android:id="@+id/card_def"
@@ -214,7 +210,7 @@
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
-                        tools:text="2500"/>
+                        tools:text="2500" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

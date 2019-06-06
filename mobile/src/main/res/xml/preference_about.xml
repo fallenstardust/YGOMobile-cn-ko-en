@@ -5,21 +5,21 @@
         <Preference
             android:key="pref_key_about_author"
             android:summary="@string/settings_author"
-            android:title="@string/settings_about_author_pref"/>
+            android:title="@string/settings_about_author_pref" />
         <Preference
             android:key="pref_key_about_version"
             android:persistent="true"
-            android:title="@string/settings_about_version_pref"/>
+            android:title="@string/settings_about_version_pref" />
         <Preference
             android:key="pref_key_open_alipay"
             android:persistent="true"
-            android:title="@string/donation"/>
+            android:title="@string/donation" />
         <Preference
             android:key="pref_key_about_check_update"
             android:persistent="true"
-            android:title="@string/settings_about_check_update"/>
+            android:title="@string/settings_about_check_update" />
         <Preference
             android:key="pref_key_change_log"
-            android:title="@string/settings_about_change_log"/>
+            android:title="@string/settings_about_change_log" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -11,14 +11,14 @@
         android:layout_height="@dimen/item_height"
         android:gravity="top|left"
         android:hint="@string/intput_room_name"
-        android:textColorHint="@color/gray"
-        android:inputType="textNoSuggestions"
         android:imeOptions="actionDone"
+        android:inputType="textNoSuggestions"
         android:singleLine="true"
-        android:textColor="@color/holo_blue_bright" />
+        android:textColor="@color/holo_blue_bright"
+        android:textColorHint="@color/gray" />
 
     <ListView
         android:id="@+id/room_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 </LinearLayout>

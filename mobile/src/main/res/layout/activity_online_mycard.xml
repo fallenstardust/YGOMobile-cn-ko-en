@@ -11,7 +11,6 @@
     tools:openDrawer="left">
 
 
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -19,14 +18,13 @@
         <cn.garymb.ygomobile.ui.mycard.MyCardWebView
             android:id="@+id/webbrowser"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="@style/StyleProgressBarMini"
                 android:layout_width="match_parent"
-                android:layout_height="5px"
-                />
+                android:layout_height="5px" />
 
         </cn.garymb.ygomobile.ui.mycard.MyCardWebView>
 
@@ -42,7 +40,6 @@
         app:itemIconTint="@color/gold"
         app:itemTextColor="@color/mediumPurple"
         app:menu="@menu/nav_mycard_menu" />
-
 
 
 </android.support.v4.widget.DrawerLayout>

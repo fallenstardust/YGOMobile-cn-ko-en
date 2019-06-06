@@ -3,8 +3,7 @@
     <item
         android:id="@+id/action_home"
         android:icon="@drawable/ic_home"
-        android:title="@string/mc_home"
-        />
+        android:title="@string/mc_home" />
     <item
         android:id="@+id/action_chat"
         android:icon="?android:attr/textSelectHandleLeft"
@@ -12,21 +11,18 @@
     <item
         android:id="@+id/action_bbs"
         android:icon="@drawable/ic_forum"
-        android:title="@string/bbs"
-        />
+        android:title="@string/bbs" />
     <item
         android:id="@+id/action_arena"
         android:icon="@drawable/ic_highlight"
-        android:title="@string/arena"
-        />
+        android:title="@string/arena" />
 
     <item
         android:id="@+id/action_deck_manager"
         android:icon="@drawable/ic_edit"
-        android:title="@string/deck_manager"
-        />
+        android:title="@string/deck_manager" />
     <item
         android:id="@+id/action_quit"
         android:icon="@drawable/ic_close_black_24dp"
-        android:title="@string/quit"/>
+        android:title="@string/quit" />
 </menu>

@@ -20,18 +20,18 @@
             android:singleLine="true"
             android:textColor="@color/white"
             android:textSize="12sp"
-            tools:text="name"/>
+            tools:text="name" />
     </LinearLayout>
 
     <ImageView
         android:id="@+id/card_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="1px"
         android:layout_marginLeft="1px"
         android:layout_marginRight="1px"
+        android:layout_marginBottom="1px"
         android:scaleType="fitCenter"
-        tools:src="@drawable/unknown"/>
+        tools:src="@drawable/unknown" />
 
     <ImageView
         android:id="@+id/right_top"
@@ -39,7 +39,7 @@
         android:layout_height="@dimen/right_size2"
         android:layout_alignParentLeft="true"
         android:visibility="gone"
-        tools:visibility="visible"
-        tools:srcCompat="@drawable/ic_close_black_24dp"/>
+        tools:srcCompat="@drawable/ic_close_black_24dp"
+        tools:visibility="visible" />
 
 </RelativeLayout>

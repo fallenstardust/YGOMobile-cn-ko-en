@@ -12,8 +12,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include
-                layout="@layout/content_toolbar_list"/>
+            <include layout="@layout/content_toolbar_list" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -24,12 +23,12 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    android:layout_marginBottom="5dp"/>
+                    android:layout_marginBottom="5dp" />
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/recyclerview"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -46,7 +45,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="refresh"/>
+                            android:text="refresh" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -65,22 +64,21 @@
                 android:background="@drawable/left"
                 android:orientation="vertical"
                 android:paddingLeft="4dp"
-                android:paddingRight="4dp"
-                android:paddingTop="2dp">
+                android:paddingTop="2dp"
+                android:paddingRight="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/item_height"
-                    android:layout_marginBottom="4dp"
                     android:layout_marginLeft="20dp"
+                    android:layout_marginTop="10dp"
                     android:layout_marginRight="30dp"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginBottom="4dp">
 
                     <android.support.v7.widget.AppCompatSpinner
                         android:id="@+id/sp_limit_list"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        />
+                        android:layout_height="match_parent" />
                 </LinearLayout>
 
                 <com.tubb.smrv.SwipeMenuRecyclerView
@@ -90,7 +88,7 @@
                     android:divider="@android:color/transparent"
                     android:dividerHeight="4dp"
                     android:padding="2dp"
-                    android:scrollbars="none"/>
+                    android:scrollbars="none" />
             </LinearLayout>
         </LinearLayout>
 
@@ -103,7 +101,7 @@
 
             <include
                 android:id="@+id/nav_view_list"
-                layout="@layout/nav_card_search"/>
+                layout="@layout/nav_card_search" />
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 

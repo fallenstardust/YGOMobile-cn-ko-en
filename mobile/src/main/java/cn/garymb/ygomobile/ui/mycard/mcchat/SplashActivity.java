@@ -144,7 +144,6 @@ public class SplashActivity extends Activity {
             try {
                 su.login(name, password);
             } catch (Exception e) {
-                Log.e("登录失败", "登录失败" + e);
                 Message me = new Message();
                 me.obj = e;
                 me.what = 0;

@@ -17,8 +17,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp"
-        android:orientation="vertical"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
             android:layout_width="wrap_content"
@@ -41,7 +41,7 @@
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center|right"
-        android:text="@string/search_close"
         android:gravity="center"
+        android:text="@string/search_close"
         android:textColor="@color/colorAccent" />
 </LinearLayout>
