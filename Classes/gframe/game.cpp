@@ -323,12 +323,12 @@ bool Game::Initialize() {
 	stHostPrepOB = env->addStaticText(dataManager.strBuffer, rect<s32>(10 * xScale, 210 * yScale, 270 * xScale, 230 * yScale), false, false, wHostPrepare);
 	stHostPrepRule = env->addStaticText(L"", rect<s32>(300 * xScale, 30 * yScale, 460 * xScale, 230 * yScale), false, true, wHostPrepare);
 	env->addStaticText(dataManager.GetSysString(1254), rect<s32>(10 * xScale, 385 * yScale, 110 * xScale, 410 * yScale), false, false, wHostPrepare);
-	cbDeckSelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(120 * xScale, 380 * yScale, 270 * xScale, 405 * yScale), wHostPrepare);
+	cbDeckSelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(120 * xScale, 380 * yScale, 270 * xScale, 420 * yScale), wHostPrepare);
 	btnHostPrepReady = env->addButton(rect<s32>(170 * xScale, 180 * yScale, 280 * xScale, 205 * yScale), wHostPrepare, BUTTON_HP_READY, dataManager.GetSysString(1218));
 	btnHostPrepNotReady = env->addButton(rect<s32>(170 * xScale, 180 * yScale, 280 * xScale, 205 * yScale), wHostPrepare, BUTTON_HP_NOTREADY, dataManager.GetSysString(1219));
 	btnHostPrepNotReady->setVisible(false);
-	btnHostPrepStart = env->addButton(rect<s32>(280 * xScale, 380 * yScale, 390 * xScale, 405 * yScale), wHostPrepare, BUTTON_HP_START, dataManager.GetSysString(1215));
-	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 405 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
+	btnHostPrepStart = env->addButton(rect<s32>(280 * xScale, 380 * yScale, 390 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_START, dataManager.GetSysString(1215));
+	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 #endif
 	//img
 	wCardImg = env->addStaticText(L"", rect<s32>(1 * xScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * xScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
