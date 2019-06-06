@@ -241,7 +241,7 @@ bool Game::Initialize() {
 #endif
 #ifdef _IRR_ANDROID_PLATFORM_
 	//create host
-	wCreateHost = env->addWindow(rect<s32>(320 * xScale, 50 * yScale, 700 * xScale, 570 * yScale), false, dataManager.GetSysString(1224));
+	wCreateHost = env->addWindow(rect<s32>(320 * xScale, 20 * yScale, 700 * xScale, 620 * yScale), false, dataManager.GetSysString(1224));
 	wCreateHost->getCloseButton()->setVisible(false);
 	wCreateHost->setVisible(false);
 	env->addStaticText(dataManager.GetSysString(1226), rect<s32>(20 * xScale, 30 * yScale, 220 * xScale, 65 * yScale), false, false, wCreateHost);
@@ -266,36 +266,36 @@ bool Game::Initialize() {
 	myswprintf(strbuf, L"%d", 180);
 	ebTimeLimit = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 160 * yScale, 220 * xScale, 200 * yScale), wCreateHost);
 	ebTimeLimit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1228), rect<s32>(20 * xScale, 205 * yScale, 320 * xScale, 245 * yScale), false, false, wCreateHost);
-	env->addStaticText(dataManager.GetSysString(1236), rect<s32>(20 * xScale, 180 * yScale, 220 * xScale, 200 * yScale), false, false, wCreateHost);
-	cbDuelRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 175 * yScale, 300 * xScale, 200 * yScale), wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1228), rect<s32>(20 * xScale, 235 * yScale, 320 * xScale, 260 * yScale), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1236), rect<s32>(20 * xScale, 275 * yScale, 220 * xScale, 310 * yScale), false, false, wCreateHost);
+	cbDuelRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(140 * xScale, 270 * yScale, 300 * xScale, 310 * yScale), wCreateHost);
 	cbDuelRule->addItem(dataManager.GetSysString(1260));
 	cbDuelRule->addItem(dataManager.GetSysString(1261));
 	cbDuelRule->addItem(dataManager.GetSysString(1262));
 	cbDuelRule->addItem(dataManager.GetSysString(1263));
 	cbDuelRule->setSelected(DEFAULT_DUEL_RULE - 1);
-	chkNoCheckDeck = env->addCheckBox(false, rect<s32>(20 * xScale, 210 * yScale, 170 * xScale, 235 * yScale), wCreateHost, -1, dataManager.GetSysString(1229));
-	chkNoShuffleDeck = env->addCheckBox(false, rect<s32>(180 * xScale, 210 * yScale, 360 * xScale, 235 * yScale), wCreateHost, -1, dataManager.GetSysString(1230));
-	env->addStaticText(dataManager.GetSysString(1231), rect<s32>(20 * xScale, 240 * yScale, 320 * xScale, 260 * yScale), false, false, wCreateHost);
+	chkNoCheckDeck = env->addCheckBox(false, rect<s32>(20 * xScale, 325 * yScale, 170 * xScale, 350 * yScale), wCreateHost, -1, dataManager.GetSysString(1229));
+	chkNoShuffleDeck = env->addCheckBox(false, rect<s32>(180 * xScale, 325 * yScale, 360 * xScale, 350 * yScale), wCreateHost, -1, dataManager.GetSysString(1230));
+	env->addStaticText(dataManager.GetSysString(1231), rect<s32>(20 * xScale, 370 * yScale, 320 * xScale, 405 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 8000);
-	ebStartLP = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 235 * yScale, 220 * xScale, 260 * yScale), wCreateHost);
+	ebStartLP = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 365 * yScale, 220 * xScale, 405 * yScale), wCreateHost);
 	ebStartLP->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1232), rect<s32>(20 * xScale, 270 * yScale, 320 * xScale, 290 * yScale), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1232), rect<s32>(20 * xScale, 415 * yScale, 320 * xScale, 450 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 5);
-	ebStartHand = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 265 * yScale, 220 * xScale, 290 * yScale), wCreateHost);
+	ebStartHand = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 410 * yScale, 220 * xScale, 450 * yScale), wCreateHost);
 	ebStartHand->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1233), rect<s32>(20 * xScale, 300 * yScale, 320 * xScale, 320 * yScale), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1233), rect<s32>(20 * xScale, 460 * yScale, 320 * xScale, 495 * yScale), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 1);
-	ebDrawCount = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 295 * yScale, 220 * xScale, 320 * yScale), wCreateHost);
+	ebDrawCount = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, rect<s32>(140 * xScale, 455 * yScale, 220 * xScale, 495 * yScale), wCreateHost);
 	ebDrawCount->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1234), rect<s32>(10 * xScale, 360 * yScale, 220 * xScale, 380 * yScale), false, false, wCreateHost);
-	ebServerName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.gamename, true, env, rect<s32>(110 * xScale, 355 * yScale, 250 * xScale, 380 * yScale), wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1234), rect<s32>(10 * xScale, 510 * yScale, 220 * xScale, 545 * yScale), false, false, wCreateHost);
+	ebServerName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.gamename, true, env, rect<s32>(110 * xScale, 505 * yScale, 250 * xScale, 545 * yScale), wCreateHost);
 	ebServerName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1235), rect<s32>(10 * xScale, 390 * yScale, 220 * xScale, 410 * yScale), false, false, wCreateHost);
-	ebServerPass = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(110 * xScale, 385 * yScale, 250 * xScale, 410 * yScale), wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1235), rect<s32>(10 * xScale, 555 * yScale, 220 * xScale, 590 * yScale), false, false, wCreateHost);
+	ebServerPass = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(110 * xScale, 550 * yScale, 250 * xScale, 590 * yScale), wCreateHost);
 	ebServerPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnHostConfirm = env->addButton(rect<s32>(260 * xScale, 355 * yScale, 370 * xScale, 380 * yScale), wCreateHost, BUTTON_HOST_CONFIRM, dataManager.GetSysString(1211));
-	btnHostCancel = env->addButton(rect<s32>(260 * xScale, 385 * yScale, 370 * xScale, 410 * yScale), wCreateHost, BUTTON_HOST_CANCEL, dataManager.GetSysString(1212));
+	btnHostConfirm = env->addButton(rect<s32>(260 * xScale, 505 * yScale, 370 * xScale, 545 * yScale), wCreateHost, BUTTON_HOST_CONFIRM, dataManager.GetSysString(1211));
+	btnHostCancel = env->addButton(rect<s32>(260 * xScale, 550 * yScale, 370 * xScale, 590 * yScale), wCreateHost, BUTTON_HOST_CANCEL, dataManager.GetSysString(1212));
 #endif
 #ifdef _IRR_ANDROID_PLATFORM_
 	//host(single)
