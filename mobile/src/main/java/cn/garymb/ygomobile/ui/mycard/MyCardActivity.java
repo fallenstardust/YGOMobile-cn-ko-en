@@ -27,7 +27,6 @@ import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
-import java.io.File;
 import java.text.MessageFormat;
 
 import cn.garymb.ygomobile.YGOStarter;
@@ -35,15 +34,14 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
     private static final int FILECHOOSER_RESULTCODE = 10;
+    protected DrawerLayout mDrawerlayout;
     private MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
-    protected DrawerLayout mDrawerlayout;
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
 
@@ -88,7 +86,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mWebViewPlus.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                if (newProgress == 100 ) {
+                if (newProgress == 100) {
                     mProgressBar.setVisibility(View.GONE);
                 } else {
                     if (View.GONE == mProgressBar.getVisibility()) {
@@ -105,7 +103,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("*/*");
-                startActivityForResult( Intent.createChooser( i, "File Browser" ), FILECHOOSER_RESULTCODE );
+                startActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
 
             }
 
@@ -197,6 +195,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             }
         }
     }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void onActivityResultAboveL(int requestCode, int resultCode, Intent data) {
         if (requestCode != FILECHOOSER_RESULTCODE

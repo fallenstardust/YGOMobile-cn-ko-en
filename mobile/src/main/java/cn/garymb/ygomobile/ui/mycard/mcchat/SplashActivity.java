@@ -25,6 +25,48 @@ public class SplashActivity extends Activity {
     ProgressBar sp_jz;
     TextView sp_tv;
     LinearLayout sp_li;
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO: Implement this method
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    su.setIsConnected(false);
+                    sp_jz.setVisibility(View.GONE);
+                    sp_tv.setText(getString(R.string.logining_failed));
+                    Util.show(SplashActivity.this, getString(R.string.failed_reason) + msg.obj);
+                    break;
+                case 1:
+                    startActivity(new Intent(SplashActivity.this, McchatActivity.class));
+                    finish();
+                    break;
+                case 2:
+                    su.setIsListener(false);
+                    sp_jz.setVisibility(View.GONE);
+                    sp_tv.setText(getString(R.string.logining_failed));
+                    break;
+                case 3:
+                    sp_jz.setVisibility(View.VISIBLE);
+                    sp_tv.setText(getString(R.string.logining_in));
+                    break;
+                case 4:
+                    sp_jz.setVisibility(View.VISIBLE);
+                    sp_tv.setText(getString(R.string.logining_in));
+                    break;
+                case 5:
+					/*sp_jz.setVisibility(View.GONE);
+					sp_tv.setText("用户名或密码为空");*/
+                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
+                    finish();
+
+                    break;
+            }
+        }
+
+
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +144,7 @@ public class SplashActivity extends Activity {
             try {
                 su.login(name, password);
             } catch (Exception e) {
+                Log.e("登录失败", "登录失败" + e);
                 Message me = new Message();
                 me.obj = e;
                 me.what = 0;
@@ -113,47 +156,4 @@ public class SplashActivity extends Activity {
 
         // TODO: Implement this method
     }
-
-    Handler han = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            // TODO: Implement this method
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    su.setIsConnected(false);
-                    sp_jz.setVisibility(View.GONE);
-                    sp_tv.setText(getString(R.string.logining_failed));
-                    Util.show(SplashActivity.this, getString(R.string.failed_reason) + msg.obj);
-                    break;
-                case 1:
-                    startActivity(new Intent(SplashActivity.this, McchatActivity.class));
-                    finish();
-                    break;
-                case 2:
-                    su.setIsListener(false);
-                    sp_jz.setVisibility(View.GONE);
-                    sp_tv.setText(getString(R.string.logining_failed));
-                    break;
-                case 3:
-                    sp_jz.setVisibility(View.VISIBLE);
-                    sp_tv.setText(getString(R.string.logining_in));
-                    break;
-                case 4:
-                    sp_jz.setVisibility(View.VISIBLE);
-                    sp_tv.setText(getString(R.string.logining_in));
-                    break;
-                case 5:
-					/*sp_jz.setVisibility(View.GONE);
-					sp_tv.setText("用户名或密码为空");*/
-                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
-                    finish();
-
-                    break;
-            }
-        }
-
-
-    };
 }

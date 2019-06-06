@@ -29,12 +29,12 @@ public class Util {
 
     //复制字符串到剪贴板
     public static void fzMessage(Context context, String message) {
-        ClipboardManager cmb = (ClipboardManager) context.getSystemService(context.CLIPBOARD_SERVICE);
+        ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         cmb.setText(message);//复制命令
     }
 
-    public static void startDuelService(Context context){
-        if(AppsSettings.get().isServiceDuelAssistant()) {
+    public static void startDuelService(Context context) {
+        if (AppsSettings.get().isServiceDuelAssistant()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
                 if (dialogPlus == null)

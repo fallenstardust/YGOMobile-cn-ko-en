@@ -22,12 +22,16 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
+    private static final int CHAT = 0;
+    private static final int CHAT_ME = 1;
     private List<ChatMessage> data;
     private Context context;
 
-    private static final int CHAT = 0;
-    private static final int CHAT_ME = 1;
 
+    public ChatAdapter(Context context, List<ChatMessage> data) {
+        this.context = context;
+        this.data = data;
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup p1, int p2) {
@@ -54,7 +58,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             return CHAT;
         }
     }
-
 
     @Override
     public void onBindViewHolder(ViewHolder vh, int position) {
@@ -104,10 +107,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         return data.size();
     }
 
+    public void sx() {
 
-    public ChatAdapter(Context context, List<ChatMessage> data) {
-        this.context = context;
-        this.data = data;
+        notifyDataSetChanged();
+
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
@@ -121,23 +124,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             super(v);
             vh = v;
             if (position == CHAT) {
-                ic_dialog = (LinearLayout) v.findViewById(R.id.ic_dialog);
-                ic_name = (TextView) v.findViewById(R.id.ic_name);
-                ic_avatar = (ImageView) v.findViewById(R.id.ic_avatar);
-                ic_message = (TextView) v.findViewById(R.id.ic_message);
+                ic_dialog = v.findViewById(R.id.ic_dialog);
+                ic_name = v.findViewById(R.id.ic_name);
+                ic_avatar = v.findViewById(R.id.ic_avatar);
+                ic_message = v.findViewById(R.id.ic_message);
             } else {
-                ic_name = (TextView) v.findViewById(R.id.icm_name);
-                ic_avatar = (ImageView) v.findViewById(R.id.icm_avatar);
-                ic_message = (TextView) v.findViewById(R.id.icm_message);
-                ic_dialog = (LinearLayout) v.findViewById(R.id.icm_dialog);
+                ic_name = v.findViewById(R.id.icm_name);
+                ic_avatar = v.findViewById(R.id.icm_avatar);
+                ic_message = v.findViewById(R.id.icm_message);
+                ic_dialog = v.findViewById(R.id.icm_dialog);
             }
         }
-
-    }
-
-    public void sx() {
-
-        notifyDataSetChanged();
 
     }
 }

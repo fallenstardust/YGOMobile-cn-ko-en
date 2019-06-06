@@ -21,6 +21,14 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 
 public class McchatActivity extends Activity implements ChatListener {
 
+    private EditText main_send_message;
+    private ImageButton main_send;
+    private RecyclerView main_rec;
+    private TextView main_title;
+    private LinearLayout main_bottom_bar;
+    private ChatAdapter cadp;
+    private ServiceManagement su;
+
     @Override
     public void reLogin(boolean state) {
         main_bottom_bar.setVisibility(View.GONE);
@@ -44,7 +52,6 @@ public class McchatActivity extends Activity implements ChatListener {
         // TODO: Implement this method
     }
 
-
     @Override
     public void addMessage(Message message) {
         cadp.sx();
@@ -58,17 +65,6 @@ public class McchatActivity extends Activity implements ChatListener {
         // TODO: Implement this method
     }
 
-
-    private EditText main_send_message;
-    private ImageButton main_send;
-    private RecyclerView main_rec;
-    private TextView main_title;
-    private LinearLayout main_bottom_bar;
-
-    private ChatAdapter cadp;
-    private ServiceManagement su;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,11 +75,11 @@ public class McchatActivity extends Activity implements ChatListener {
 
 
     private void initView() {
-        main_rec = (RecyclerView) findViewById(R.id.main_rec);
-        main_send = (ImageButton) findViewById(R.id.main_send);
-        main_send_message = (EditText) findViewById(R.id.main_send_message);
-        main_title = (TextView) findViewById(R.id.main_title);
-        main_bottom_bar = (LinearLayout) findViewById(R.id.main_bottom_bar);
+        main_rec = findViewById(R.id.main_rec);
+        main_send = findViewById(R.id.main_send);
+        main_send_message = findViewById(R.id.main_send_message);
+        main_title = findViewById(R.id.main_title);
+        main_bottom_bar = findViewById(R.id.main_bottom_bar);
 
         su = ServiceManagement.getDx();
         cadp = new ChatAdapter(this, su.getData());
