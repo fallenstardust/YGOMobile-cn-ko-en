@@ -874,7 +874,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
 						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler]);
-					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->xScale, 55 * mainGame->xScale, (30 + 120 + i * 125)  * mainGame->xScale, 225  * mainGame->yScale));
+					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->xScale, 55 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->xScale, 225  * mainGame->yScale));
 					// text
 					wchar_t formatBuffer[2048];
 					if(sort_list.size()) {
