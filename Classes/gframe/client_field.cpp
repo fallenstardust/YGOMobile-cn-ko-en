@@ -405,7 +405,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 		else if(conti_selecting)
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->chain_code));
 		else
-			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler + 2]);
+			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler]);
 		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);

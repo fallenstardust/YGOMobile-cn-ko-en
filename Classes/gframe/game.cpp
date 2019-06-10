@@ -533,17 +533,17 @@ bool Game::Initialize() {
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
 	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(10 * xScale, 45 * yScale, 150 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_AU);
-	btnPSAU->setImageScale(core::vector2df(0.5 * xScale, 0.5 * yScale));
+	btnPSAU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(155 * xScale, 45 * yScale, 295 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_AD);
-	btnPSAD->setImageScale(core::vector2df(0.5 * xScale, 0.5 * yScale));
-	btnPSAD->setImage(imageManager.tCover[2], rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT));
+	btnPSAD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
+	btnPSAD->setImage(imageManager.tCover[0]);
 	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(300 * xScale, 45 * yScale, 440 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_DU);
-	btnPSDU->setImageScale(core::vector2df(0.5 * xScale, 0.5 * yScale));
+	btnPSDU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSDU->setImageRotation(270);
 	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(445 * xScale, 45 * yScale, 585 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_DD);
-	btnPSDD->setImageScale(core::vector2df(0.5 * xScale, 0.5 * yScale));
+	btnPSDD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[2], rect<s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT));
+	btnPSDD->setImage(imageManager.tCover[0]);
 #ifdef _IRR_ANDROID_PLATFORM_
     //card select
 	wCardSelect = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 1000 * xScale, 430 * yScale), false, L"");
@@ -554,7 +554,7 @@ bool Game::Initialize() {
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>((30 + 125 * i)  * xScale, 55 * yScale, (150 + 125 * i) * xScale, 225 * yScale), wCardSelect, BUTTON_CARD_0 + i);
-		btnCardSelect[i]->setImageScale(core::vector2df(0.6f * xScale, 0.6f  * yScale));
+		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrCardList = env->addScrollBar(true, rect<s32>(30 * xScale, 235 * yScale, 650 * xScale, 275 * yScale), wCardSelect, SCROLL_CARD_SELECT);
 	btnSelectOK = env->addButton(rect<s32>(300 * xScale, 285 * yScale, 380 * xScale, 325 * yScale), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
@@ -567,7 +567,7 @@ bool Game::Initialize() {
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
 		stDisplayPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>((30 + 125 * i) * xScale, 55 * yScale, (150 + 125 * i) * xScale, 225 * yScale), wCardDisplay, BUTTON_DISPLAY_0 + i);
-		btnCardDisplay[i]->setImageScale(core::vector2df(0.6f * xScale, 0.6f * yScale));
+		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrDisplayList = env->addScrollBar(true, rect<s32>(30 * xScale, 235 * yScale, 650 * xScale, 255 * yScale), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(rect<s32>(300 * xScale, 265 * yScale, 380 * xScale, 290 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
