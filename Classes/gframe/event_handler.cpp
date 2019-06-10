@@ -626,6 +626,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			case BUTTON_CARD_4: {
 				if(mainGame->dInfo.isReplay)
 					break;
+				mainGame->stCardListTip->setVisible(false);
 				switch(mainGame->dInfo.curMsg) {
 				case MSG_SELECT_IDLECMD:
 				case MSG_SELECT_BATTLECMD:
@@ -772,6 +773,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_CARD_SEL_OK: {
 				mainGame->soundEffectPlayer->doPressButton();
+				mainGame->stCardListTip->setVisible(false);
 				if(mainGame->dInfo.isReplay) {
 					mainGame->HideElement(mainGame->wCardSelect);
 					break;
