@@ -1872,7 +1872,7 @@ int32 field::get_overlay_count(uint8 self, uint8 s, uint8 o) {
 	}
 	return count;
 }
-// put all cards in the target of peffect into effects.disable_check_set, effects.disable_check_list
+// put all cards in the target of peffect into effects.disable_check_list
 void field::update_disable_check_list(effect* peffect) {
 	card_set cset;
 	filter_affected_cards(peffect, &cset);
@@ -1880,9 +1880,9 @@ void field::update_disable_check_list(effect* peffect) {
 		add_to_disable_check_list(pcard);
 }
 void field::add_to_disable_check_list(card* pcard) {
-	if (effects.disable_check_set.find(pcard) != effects.disable_check_set.end())
-		return;
-	effects.disable_check_set.insert(pcard);
+	auto result=effects.disable_check_set.insert(pcard);
+	if(!result.second)
+		return
 	effects.disable_check_list.push_back(pcard);
 }
 void field::adjust_disable_check_list() {
