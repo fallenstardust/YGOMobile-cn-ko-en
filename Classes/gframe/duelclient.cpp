@@ -682,8 +682,11 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->btnChainWhenAvail->setVisible(false);
 		mainGame->btnCancelOrFinish->setVisible(false);
 		mainGame->btnShuffle->setVisible(false);
-		time_t nowtime = time(NULL);
-		tm* localedtime = localtime(&nowtime);
+		char* prep = pdata;
+		Replay new_replay;
+		memcpy(&new_replay.pheader, prep, sizeof(ReplayHeader));
+		time_t starttime = new_replay.pheader.seed;
+		tm* localedtime = localtime(&starttime);
 		wchar_t timetext[40];
 		wcsftime(timetext, 40, L"%Y-%m-%d %H-%M-%S", localedtime);
 		mainGame->ebRSName->setText(timetext);
