@@ -176,15 +176,15 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             if (deckItem == null || deckItem.getCardInfo() == null) {
                 return;
             }
-//            DialogPlus dialogPlus = new DialogPlus(this);
-//            dialogPlus.setTitle(R.string.question);
-//            dialogPlus.setMessage(getString(R.string.delete_card, deckItem.getCardInfo().Name));
-//            dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-//            dialogPlus.setLeftButtonListener((dlg, v) -> {
-//                dlg.dismiss();
+            DialogPlus dialogPlus = new DialogPlus(this);
+            dialogPlus.setTitle(R.string.question);
+            dialogPlus.setMessage(getString(R.string.delete_card, deckItem.getCardInfo().Name));
+            dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+            dialogPlus.setLeftButtonListener((dlg, v) -> {
+                dlg.dismiss();
                 mDeckItemTouchHelper.remove(pos);
-//            });
-//            dialogPlus.show();
+            });
+            dialogPlus.show();
         } else {
             mDeckAdapater.showHeadView();
         }

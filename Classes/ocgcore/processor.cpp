@@ -4359,7 +4359,10 @@ int32 field::add_chain(uint16 step) {
 						}
 					} else {
 						uint32 sumplayer = clit.triggering_player;
-						if(optarget.op_player == 1)
+						// genarally setting op_player is unnecessary when the effect targets cards
+						// in the case of CATEGORY_SPECIAL_SUMMON(with EFFECT_FLAG_CARD_TARGET), op_player=0x10
+						// indecates that it is the opponent that special summons the target monsters
+						if(peffect->is_flag(EFFECT_FLAG_CARD_TARGET) && optarget.op_player == 0x10)
 							sumplayer = 1 - sumplayer;
 						for(auto& pcard : optarget.op_cards->container) {
 							if(pcard->spsummon_code) {
@@ -4546,7 +4549,9 @@ int32 field::solve_chain(uint16 step, uint32 chainend_arg1, uint32 chainend_arg2
 			}
 			adjust_instant();
 		}
-		if(is_chain_disablable(cait->chain_count)) {
+		// creating continuous target: peffect->is_flag(EFFECT_FLAG_CONTINUOUS_TARGET) && !cait->replace_op
+		// operation function creating continuous target should be executed even when disabled
+		if(is_chain_disablable(cait->chain_count) && (!peffect->is_flag(EFFECT_FLAG_CONTINUOUS_TARGET) || cait->replace_op)) {
 			if(is_chain_disabled(cait->chain_count) || (pcard->get_status(STATUS_DISABLED | STATUS_FORBIDDEN) && pcard->is_has_relation(*cait))) {
 				if(!(cait->flag & CHAIN_DISABLE_EFFECT)) {
 					pduel->write_buffer8(MSG_CHAIN_DISABLED);
@@ -4606,7 +4611,10 @@ int32 field::solve_chain(uint16 step, uint32 chainend_arg1, uint32 chainend_arg2
 						check_card_counter(*opit, 3, 1 - sumplayer);
 					} else {
 						uint32 sumplayer = cait->triggering_player;
-						if(optarget.op_player == 1)
+						// genarally setting op_player is unnecessary when the effect targets cards
+						// in the case of CATEGORY_SPECIAL_SUMMON(with EFFECT_FLAG_CARD_TARGET), op_player=0x10
+						// indecates that it is the opponent that special summons the target monsters
+						if(cait->triggering_effect->is_flag(EFFECT_FLAG_CARD_TARGET) && optarget.op_player == 0x10)
 							sumplayer = 1 - sumplayer;
 						for(auto& ptarget : optarget.op_cards->container) {
 							if((core.global_flag & GLOBALFLAG_SPSUMMON_ONCE) && ptarget->spsummon_code)

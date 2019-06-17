@@ -2431,8 +2431,10 @@ void card::filter_immune_effect() {
 	immune_effect.sort();
 }
 // for all disable-related peffect of this,
-// 1. put all cards in the target of peffect into effects.disable_check_set, effects.disable_check_list
-// 2. add equiping_target of peffect into effects.disable_check_set, effects.disable_check_list
+// 1. Insert all cards in the target of peffect into effects.disable_check_list.
+// 2. Insert equiping_target of peffect into it.
+// 3. Insert overlay_target of peffect into it.
+// 4. Insert continuous target of this into it.
 void card::filter_disable_related_cards() {
 	for (auto& it : indexer) {
 		effect* peffect = it.first;
@@ -2443,6 +2445,15 @@ void card::filter_disable_related_cards() {
 				pduel->game_field->add_to_disable_check_list(equiping_target);
 			else if ((peffect->type & EFFECT_TYPE_XMATERIAL) && overlay_target)
 				pduel->game_field->add_to_disable_check_list(overlay_target);
+		}
+	}
+	for(auto pcard : effect_target_cards) {
+		for(auto it = pcard->single_effect.begin(); it != pcard->single_effect.end(); ++it) {
+			effect* peffect = it->second;
+			if(peffect->is_disable_related() && peffect->is_flag(EFFECT_FLAG_OWNER_RELATE)){
+				pduel->game_field->add_to_disable_check_list(pcard);
+				break;
+			}
 		}
 	}
 }
@@ -2928,6 +2939,16 @@ int32 card::is_spsummonable(effect* peffect) {
 		}
 		if(pduel->lua->check_condition(peffect->condition, param_count))
 			result = TRUE;
+	} else if(pduel->game_field->core.limit_link) {
+		pduel->lua->add_param(pduel->game_field->core.limit_link, PARAM_TYPE_GROUP);
+		uint32 param_count = 3;
+		if(pduel->game_field->core.limit_link_minc) {
+			pduel->lua->add_param(pduel->game_field->core.limit_link_minc, PARAM_TYPE_INT);
+			pduel->lua->add_param(pduel->game_field->core.limit_link_maxc, PARAM_TYPE_INT);
+			param_count = 5;
+		}
+		if(pduel->lua->check_condition(peffect->condition, param_count))
+			result = TRUE;
 	} else {
 		if(pduel->lua->check_condition(peffect->condition, 2))
 			result = TRUE;
@@ -3105,6 +3126,9 @@ int32 card::is_special_summonable(uint8 playerid, uint32 summon_type) {
 	pduel->game_field->core.limit_xyz = 0;
 	pduel->game_field->core.limit_xyz_minc = 0;
 	pduel->game_field->core.limit_xyz_maxc = 0;
+	pduel->game_field->core.limit_link = 0;
+	pduel->game_field->core.limit_link_minc = 0;
+	pduel->game_field->core.limit_link_maxc = 0;
 	pduel->game_field->restore_lp_cost();
 	return eset.size();
 }

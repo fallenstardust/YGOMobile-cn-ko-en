@@ -96,6 +96,9 @@ field::field(duel* pduel) {
 	core.limit_xyz = 0;
 	core.limit_xyz_minc = 0;
 	core.limit_xyz_maxc = 0;
+	core.limit_link = 0;
+	core.limit_link_minc = 0;
+	core.limit_link_maxc = 0;
 	core.last_control_changed_id = 0;
 	core.duel_options = 0;
 	core.duel_rule = 0;
@@ -1872,7 +1875,7 @@ int32 field::get_overlay_count(uint8 self, uint8 s, uint8 o) {
 	}
 	return count;
 }
-// put all cards in the target of peffect into effects.disable_check_set, effects.disable_check_list
+// put all cards in the target of peffect into effects.disable_check_list
 void field::update_disable_check_list(effect* peffect) {
 	card_set cset;
 	filter_affected_cards(peffect, &cset);
@@ -1880,9 +1883,9 @@ void field::update_disable_check_list(effect* peffect) {
 		add_to_disable_check_list(pcard);
 }
 void field::add_to_disable_check_list(card* pcard) {
-	if (effects.disable_check_set.find(pcard) != effects.disable_check_set.end())
+	auto result=effects.disable_check_set.insert(pcard);
+	if(!result.second)
 		return;
-	effects.disable_check_set.insert(pcard);
 	effects.disable_check_list.push_back(pcard);
 }
 void field::adjust_disable_check_list() {
