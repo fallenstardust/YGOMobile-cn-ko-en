@@ -39,28 +39,9 @@ public class MyCard {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
     private final User mUser = new User();
+    private final SharedPreferences lastModified;
     private MyCardListener mMyCardListener;
     private Activity mContext;
-    private final SharedPreferences lastModified;
-
-    public interface MyCardListener {
-        void onLogin(String name, String icon, String statu);
-
-        void watchReplay();
-
-        void puzzleMode();
-
-        void openDrawer();
-
-        void closeDrawer();
-
-        void backHome();
-
-        void share(String text);
-
-        void onHome();
-
-    }
 
     public MyCard(Activity context) {
         mContext = context;
@@ -94,6 +75,17 @@ public class MyCard {
         };
     }
 
+    private static String byteArrayToHexString(byte[] array) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : array) {
+            int intVal = b & 0xff;
+            if (intVal < 0x10)
+                hexString.append("0");
+            hexString.append(Integer.toHexString(intVal));
+        }
+        return hexString.toString();
+    }
+
     public String getArenaUrl() {
         return mArenaUrl;
     }
@@ -106,15 +98,8 @@ public class MyCard {
         return mDefWebViewClient;
     }
 
-    private static String byteArrayToHexString(byte[] array) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : array) {
-            int intVal = b & 0xff;
-            if (intVal < 0x10)
-                hexString.append("0");
-            hexString.append(Integer.toHexString(intVal));
-        }
-        return hexString.toString();
+    public String getHomeUrl() {
+        return mHomeUrl;
     }
 
 //    public String getLoginUrl() throws NoSuchAlgorithmException, InvalidKeyException {
@@ -132,10 +117,6 @@ public class MyCard {
 //        return requestBuilder.build().toString();
 //    }
 
-    public String getHomeUrl() {
-        return mHomeUrl;
-    }
-
     public String getBBSUrl() {
         return mCommunityUrl;
     }
@@ -152,6 +133,25 @@ public class MyCard {
                 mMyCardListener.onLogin(name, headurl, null);
             }
         }
+    }
+
+    public interface MyCardListener {
+        void onLogin(String name, String icon, String statu);
+
+        void watchReplay();
+
+        void puzzleMode();
+
+        void openDrawer();
+
+        void closeDrawer();
+
+        void backHome();
+
+        void share(String text);
+
+        void onHome();
+
     }
 
     public static class User {

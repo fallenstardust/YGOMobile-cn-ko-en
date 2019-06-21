@@ -146,6 +146,7 @@ public:
 	void SaveConfig();
 	void ShowCardInfo(int code);
 	void ClearCardInfo(int player = 0);
+	void AddLog(const wchar_t* msg, int param = 0);
 	void AddChatMsg(const wchar_t* msg, int player);
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
@@ -251,12 +252,12 @@ public:
 	irr::gui::IGUICheckBox* chkRandomPos;
 	irr::gui::IGUICheckBox* chkAutoChain;
 	irr::gui::IGUICheckBox* chkWaitChain;
+	irr::gui::IGUICheckBox* chkQuickAnimation;
+	irr::gui::IGUICheckBox* chkAutoSaveReplay;
 	irr::gui::IGUIWindow* tabSystem;
 	irr::gui::IGUIElement* elmTabSystemLast;
 	irr::gui::IGUIScrollBar* scrTabSystem;
 	irr::gui::IGUICheckBox* chkDrawFieldSpell;
-	irr::gui::IGUICheckBox* chkQuickAnimation;
-	irr::gui::IGUICheckBox* chkAutoSaveReplay;
 	irr::gui::IGUICheckBox* chkIgnoreDeckChanges;
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
@@ -318,6 +319,7 @@ public:
 	irr::gui::IGUIButton* btnDeleteReplay;
 	irr::gui::IGUIButton* btnRenameReplay;
 	irr::gui::IGUIButton* btnReplayCancel;
+	irr::gui::IGUIButton* btnExportDeck;
 	irr::gui::IGUIEditBox* ebRepStartTurn;
 	//single play
 	irr::gui::IGUIWindow* wSinglePlay;
@@ -354,6 +356,11 @@ public:
 	irr::gui::IGUIStaticText* stQMessage;
 	irr::gui::IGUIButton* btnYes;
 	irr::gui::IGUIButton* btnNo;
+	//surrender yes/no
+	irr::gui::IGUIWindow* wSurrender;
+	irr::gui::IGUIStaticText* stSurrenderMessage;
+	irr::gui::IGUIButton* btnSurrenderYes;
+	irr::gui::IGUIButton* btnSurrenderNo;
 	//options
 	irr::gui::IGUIWindow* wOptions;
 	irr::gui::IGUIStaticText* stOptions;
@@ -361,6 +368,7 @@ public:
 	irr::gui::IGUIButton* btnOptionn;
 	irr::gui::IGUIButton* btnOptionOK;
 	irr::gui::IGUIButton* btnOption[5];
+	irr::gui::IGUIScrollBar* scrOption;
 	//pos selection
 	irr::gui::IGUIWindow* wPosSelect;
 	irr::gui::CGUIImageButton* btnPSAU;
@@ -434,8 +442,19 @@ public:
 	irr::gui::IGUIButton* btnSideSort;
 	irr::gui::IGUIButton* btnSideReload;
 	irr::gui::IGUIEditBox* ebDeckname;
-	irr::gui::IGUIButton* btnRenameDeck;
+	irr::gui::IGUIStaticText* stBanlist;
+	irr::gui::IGUIStaticText* stDeck;
+	irr::gui::IGUIStaticText* stCategory;
+	irr::gui::IGUIStaticText* stLimit;
+	irr::gui::IGUIStaticText* stAttribute;
+	irr::gui::IGUIStaticText* stRace;
+	irr::gui::IGUIStaticText* stAttack;
+	irr::gui::IGUIStaticText* stDefense;
+	irr::gui::IGUIStaticText* stStar;
+	irr::gui::IGUIStaticText* stSearch;
+	irr::gui::IGUIStaticText* stScale;
 	//deck rename
+	irr::gui::IGUIButton* btnRenameDeck;
 	irr::gui::IGUIWindow* wRenameDeck;
 	irr::gui::IGUIEditBox* ebREName;
 	irr::gui::IGUIButton* btnREYes;
@@ -556,7 +575,23 @@ extern Game* mainGame;
 #define BUTTON_CANCEL_REPLAY		132
 #define BUTTON_DELETE_REPLAY		133
 #define BUTTON_RENAME_REPLAY		134
-#define EDITBOX_CHAT				140
+#define BUTTON_EXPORT_DECK			135
+#define BUTTON_REPLAY_START			140
+#define BUTTON_REPLAY_PAUSE			141
+#define BUTTON_REPLAY_STEP			142
+#define BUTTON_REPLAY_UNDO			143
+#define BUTTON_REPLAY_EXIT			144
+#define BUTTON_REPLAY_SWAP			145
+#define BUTTON_REPLAY_SAVE			146
+#define BUTTON_REPLAY_CANCEL		147
+#define LISTBOX_SINGLEPLAY_LIST		150
+#define BUTTON_LOAD_SINGLEPLAY		151
+#define BUTTON_CANCEL_SINGLEPLAY	152
+#define LISTBOX_BOT_LIST			153
+#define BUTTON_BOT_START			154
+#define CHECKBOX_BOT_OLD_RULE		155
+#define EDITBOX_CHAT				199
+
 #define BUTTON_MSG_OK				200
 #define BUTTON_YES					201
 #define BUTTON_NO					202
@@ -577,6 +612,7 @@ extern Game* mainGame;
 #define BUTTON_OPTION_2				225
 #define BUTTON_OPTION_3				226
 #define BUTTON_OPTION_4				227
+#define SCROLL_OPTION_SELECT		228
 #define BUTTON_CARD_0				230
 #define BUTTON_CARD_1				231
 #define BUTTON_CARD_2				232
@@ -620,7 +656,9 @@ extern Game* mainGame;
 #define BUTTON_DISPLAY_4			294
 #define SCROLL_CARD_DISPLAY			295
 #define BUTTON_CARD_DISP_OK			296
-#define BUTTON_CATEGORY_OK			300
+#define BUTTON_SURRENDER_YES		297
+#define BUTTON_SURRENDER_NO			298
+
 #define COMBOBOX_DBLFLIST			301
 #define COMBOBOX_DBDECKS			302
 #define BUTTON_CLEAR_DECK			303
@@ -640,37 +678,24 @@ extern Game* mainGame;
 #define BUTTON_CLEAR_FILTER			317
 #define COMBOBOX_ATTRIBUTE			318
 #define COMBOBOX_RACE				319
-#define BUTTON_REPLAY_START			320
-#define BUTTON_REPLAY_PAUSE			321
-#define BUTTON_REPLAY_STEP			322
-#define BUTTON_REPLAY_UNDO			323
-#define BUTTON_REPLAY_EXIT			324
-#define BUTTON_REPLAY_SWAP			325
-#define BUTTON_REPLAY_SAVE			330
-#define BUTTON_REPLAY_CANCEL		331
-#define BUTTON_BOT_START			340
-#define LISTBOX_BOT_LIST			341
-#define CHECKBOX_BOT_OLD_RULE		342
-#define LISTBOX_SINGLEPLAY_LIST		343
-#define BUTTON_LOAD_SINGLEPLAY		344
-#define BUTTON_CANCEL_SINGLEPLAY	345
-#define SCROLL_TAB_HELPER			350
-#define SCROLL_TAB_SYSTEM			351
+#define COMBOBOX_LIMIT				320
+#define BUTTON_CATEGORY_OK			321
+#define BUTTON_MARKS_FILTER			322
+#define BUTTON_MARKERS_OK			323
+#define COMBOBOX_SORTTYPE			324
+
 #define CHECKBOX_AUTO_SEARCH		360
+#define CHECKBOX_DRAW_FIELD_SPELL	361
+#define CHECKBOX_DISABLE_CHAT		364
+//ygomobile function
+#define BUTTON_RENAME_DECK			365
+#define BUTTON_RENAME_DECK_SAVE		366
+#define BUTTON_RENAME_DECK_CANCEL	367
+#define CHECKBOX_QUICK_ANIMATION	369
+#define SCROLL_TAB_HELPER			370
+#define SCROLL_TAB_SYSTEM			371
 #define CHECKBOX_MULTI_KEYWORDS		372
 #define CHECKBOX_PREFER_EXPANSION	373
-#define CHECKBOX_DISABLE_CHAT		364
-#define CHECKBOX_DRAW_FIELD_SPELL	368
-#define CHECKBOX_QUICK_ANIMATION	369
-#define COMBOBOX_SORTTYPE			370
-#define COMBOBOX_LIMIT				371
-
-#define BUTTON_MARKS_FILTER			380
-#define BUTTON_MARKERS_OK			381
-
-#define BUTTON_RENAME_DECK			386
-#define BUTTON_RENAME_DECK_SAVE			387
-#define BUTTON_RENAME_DECK_CANCEL		388
 
 #define DEFAULT_DUEL_RULE			4
 

@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,8 +22,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="@string/must_info"
-            android:maxLines="1"
             android:inputType="textNoSuggestions"
+            android:maxLines="1"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/holo_blue_bright" />
@@ -101,36 +102,36 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:inputType="textNoSuggestions"
             android:hint="@string/must_info"
+            android:inputType="textNoSuggestions"
             android:maxLines="1"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@android:color/holo_green_light" />
     </LinearLayout>
-<!--
-    <LinearLayout
-        android:id="@+id/layout_more"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="@dimen/label_width_middle"
+    <!--
+        <LinearLayout
+            android:id="@+id/layout_more"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:text="@string/server_user_pwd"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
+            android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/text_player_pwd"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            tools:text="123456"/>
-    </LinearLayout>-->
+            <TextView
+                android:layout_width="@dimen/label_width_middle"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="@string/server_user_pwd"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
+
+            <EditText
+                android:id="@+id/text_player_pwd"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                tools:text="123456"/>
+        </LinearLayout>-->
 </LinearLayout>

@@ -35,9 +35,52 @@ public class ServiceManagement {
     private boolean isListener = false;
     private List<ChatMessage> data = new ArrayList<ChatMessage>();
     private List<ChatListener> cl = new ArrayList<ChatListener>();
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(android.os.Message msg) {
+            // TODO: Implement this method
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    for (ChatListener c : cl) {
+                        if (c != null) {
+                            c.addMessage((Message) msg.obj);
+                        } else {
+                            cl.remove(c);
+                        }
+                    }
+                    break;
+                case 1:
+                    for (ChatListener c : cl) {
+                        if (c != null) {
+                            c.reLogin((boolean) msg.obj);
+                        } else {
+                            cl.remove(c);
+                        }
+                    }
+                    break;
+                case 2:
+                    for (ChatListener c : cl) {
+                        if (c != null) {
+                            c.reJoin((boolean) msg.obj);
+                        } else {
+                            cl.remove(c);
+                        }
+                    }
+                    break;
+            }
+        }
+
+
+    };
 
     private ServiceManagement() {
 
+    }
+
+    public static ServiceManagement getDx() {
+        return su;
     }
 
     public void addListener(ChatListener c) {
@@ -64,7 +107,6 @@ public class ServiceManagement {
         return isConnected;
     }
 
-
     public XMPPTCPConnection getCon() {
         return con;
     }
@@ -80,7 +122,6 @@ public class ServiceManagement {
         con = new XMPPTCPConnection(config);
         return con;
     }
-
 
     public boolean login(String name, String password) throws IOException, SmackException, XMPPException, InterruptedException {
 
@@ -123,47 +164,6 @@ public class ServiceManagement {
         }
     }
 
-    Handler han = new Handler() {
-
-        @Override
-        public void handleMessage(android.os.Message msg) {
-            // TODO: Implement this method
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    for (ChatListener c : cl) {
-                        if (c != null) {
-                            c.addMessage((Message) msg.obj);
-                        } else {
-                            cl.remove(c);
-                        }
-                    }
-                    break;
-                case 1:
-                    for (ChatListener c : cl) {
-                        if (c != null) {
-                            c.reLogin((boolean) msg.obj);
-                        } else {
-                            cl.remove(c);
-                        }
-                    }
-                    break;
-                case 2:
-                    for (ChatListener c : cl) {
-                        if (c != null) {
-                            c.reJoin((boolean) msg.obj);
-                        } else {
-                            cl.remove(c);
-                        }
-                    }
-                    break;
-            }
-        }
-
-
-    };
-
-
     public void setreLogin(boolean state) {
         android.os.Message me = new android.os.Message();
         me.what = 1;
@@ -176,10 +176,6 @@ public class ServiceManagement {
         me.what = 2;
         me.obj = state;
         han.sendMessage(me);
-    }
-
-    public static ServiceManagement getDx() {
-        return su;
     }
 
     public void disSerVice() {

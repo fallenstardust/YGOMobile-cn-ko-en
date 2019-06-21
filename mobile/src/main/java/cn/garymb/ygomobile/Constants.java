@@ -27,6 +27,8 @@ public interface Constants {
     boolean PREF_DEF_PENDULUM_SCALE = true;
     String PREF_SOUND_EFFECT = "pref_key_game_sound_effect";
     boolean PREF_DEF_SOUND_EFFECT = true;
+    String PREF_START_SERVICEDUELASSISTANT = "pref_key_start_serviceduelassistant";
+    boolean PREF_DEF_START_SERVICEDUELASSISTANT = true;
     String PREF_LOCK_SCREEN = "pref_key_game_screen_orientation";
     boolean PREF_DEF_LOCK_SCREEN = false;
     String PREF_IMMERSIVE_MODE = "pref_key_immersive_mode";
@@ -150,7 +152,7 @@ public interface Constants {
     /***
      * 长按删除
      */
-    long LONG_PRESS_DRAG = 700;
+    long LONG_PRESS_DRAG = 900;
     /***
      * adb shell am start -n cn.garymb.ygomobile/cn.garymb.ygomobile.ui.home.MainActivity -a ygomobile.intent.action.DECK --es android.intent.extra.TEXT 青眼白龙.ydk
      * <p>
@@ -183,8 +185,8 @@ public interface Constants {
      */
     String PATH_DECK = "/deck";
     String SCHEME_HTTP = "http";
-    String SCHEME_APP = "ygomobile";
-    String URI_HOST = "m.ygomobile.com";
+    String SCHEME_APP = "ygo";
+    String URI_HOST = "deck";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";

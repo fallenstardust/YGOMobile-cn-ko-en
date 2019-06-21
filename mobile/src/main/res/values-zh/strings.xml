@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="StringFormatInvalid"
-    >
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="app_name">YGOMobile</string>
     <string name="action_settings">设置</string>
     <string name="action_game">单人游戏</string>
@@ -236,7 +233,6 @@
     <string name="Checking_Update_Failed">检查更新失败</string>
     <string name="Ask_to_Change_Other_Way">，是否跳转到备用下载方式？</string>
     <string name="DuelAssistant">决斗助手启用中</string>
-    <string name="About_DuelAssistant">用于快速查卡与约战加房的服务</string>
     <string name="masterrule">学习大师规则</string>
     <string name="tutorial">查看软件教程</string>
     <string name="about_help">点击您想要了解的内容</string>
@@ -269,4 +265,14 @@
     <string name="duel_mode_match">比赛模式</string>
     <string name="complete_setting">完成设置</string>
 
+    <string name="Start_ServiceDuelAssistant">开启决斗助手</string>
+    <string name="about_DuelAssistant">复制约战房间号直接加房
+        \n复制“？”+关键词直接查询卡片
+        \n复制卡组文本直接保存为卡组并在卡组编辑打开它</string>
+    <string name="find_deck_text">检测到卡组文本，是否保存？</string>
+    <string name="save_failed_bcos">保存失败，原因为</string>
+    <string name="deck_text_copyed">已复制卡组文本到剪贴板</string>
+    <string name="save_n_open">保存并打开</string>
+    <string name="searchresult">搜索结果</string>
+    <string name="Pre_share">准备分享，请稍候……</string>
 </resources>

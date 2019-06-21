@@ -34,7 +34,7 @@ public class ChatMessage {
 
             }
             String names = message.getFrom().toString();
-            String name = names.substring(names.indexOf(ServiceManagement.GROUP_ADDRESS) + ServiceManagement.GROUP_ADDRESS.length() + 1, names.length());
+            String name = names.substring(names.indexOf(ServiceManagement.GROUP_ADDRESS) + ServiceManagement.GROUP_ADDRESS.length() + 1);
             ChatMessage cm = new ChatMessage();
             cm.setName(name);
             //cm.setTime(ss);

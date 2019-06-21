@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,38 +31,64 @@ public class Deck implements Parcelable {
         sideList = new ArrayList<>();
     }
 
-    public Deck(Uri uri) {
-        this(uri.getQueryParameter(QUERY_YDK));
+    public Deck(String name, Uri uri) {
+        this(name);
         String main = uri.getQueryParameter(QUERY_MAIN);
         String extra = uri.getQueryParameter(QUERY_EXTRA);
         String side = uri.getQueryParameter(QUERY_SIDE);
         if (!TextUtils.isEmpty(main)) {
-            String[] mains = main.split(",");
+            String[] mains = main.split("'");
             for (String m : mains) {
-                int id = toId(m);
-                if (id > 0) {
-                    mainlist.add(id);
+                int []idNum=toIdAndNum(m);
+                if (idNum[0] > 0) {
+                    for (int i=0;i<idNum[1];i++){
+                        mainlist.add(idNum[0]);
+                    }
                 }
             }
         }
         if (!TextUtils.isEmpty(extra)) {
-            String[] extras = extra.split(",");
+            String[] extras = extra.split("'");
             for (String m : extras) {
-                int id = toId(m);
-                if (id > 0) {
-                    extraList.add(id);
+                int []idNum=toIdAndNum(m);
+                if (idNum[0] > 0) {
+                    for (int i=0;i<idNum[1];i++){
+                        extraList.add(idNum[0]);
+                    }
                 }
             }
         }
         if (!TextUtils.isEmpty(side)) {
-            String[] sides = side.split(",");
+            String[] sides = side.split("'");
             for (String m : sides) {
-                int id = toId(m);
-                if (id > 0) {
-                    sideList.add(id);
+                int []idNum=toIdAndNum(m);
+                if (idNum[0] > 0) {
+                    for (int i=0;i<idNum[1];i++){
+                        sideList.add(idNum[0]);
+                    }
                 }
             }
         }
+    }
+
+    private int[] toIdAndNum(String m) {
+        int[] idNum={0,1};
+        if (m.contains("*")){
+            try{
+                idNum[1]=Integer.parseInt(m.substring(m.length()-1));
+            }catch (Exception e){
+
+            }
+            idNum[0]=toId(m.substring(0,m.length()-2));
+        }else {
+            idNum[0]=toId(m);
+        }
+
+        return idNum;
+    }
+
+    public Deck(Uri uri) {
+        this(uri.getQueryParameter(QUERY_YDK), uri);
     }
 
     public Uri toAppUri() {
@@ -75,8 +102,8 @@ public class Deck implements Parcelable {
     public Uri toUri(String host) {
         Uri.Builder uri = Uri.parse(host + "://")
                 .buildUpon()
-                .authority(Constants.URI_HOST)
-                .path(Constants.PATH_DECK);
+                .authority(Constants.URI_HOST);
+                //.path(Constants.PATH_DECK);
         if (!TextUtils.isEmpty(name)) {
             uri.appendQueryParameter(Constants.QUERY_NAME, name);
         }
@@ -88,19 +115,52 @@ public class Deck implements Parcelable {
 
     private String toString(List<Integer> ids) {
         StringBuilder builder = new StringBuilder();
-        int i = 0;
-        for (Integer id : ids) {
+        for (int i = 0; i < ids.size(); i++) {
+            Integer id = ids.get(i);
             if (i > 0) {
-                builder.append(",");
+                builder.append("'");
             }
             if (id > 0) {
+                //如果需要使用十六进制码：builder.append(compressedId(id));
                 builder.append(id);
-                i++;
+                //如果是最后一张就不用对比下张卡
+                if(i!=ids.size()-1) {
+                    int id1 = ids.get(i + 1);
+                    //同名卡张数
+                    int tNum = 1;
+                    //如果下张是同名卡
+                    if (id1 == id) {
+                        tNum++;
+                        //如果是倒数第二张就不用对比下下张卡
+                        if(i!=ids.size()-2) {
+                            id1 = ids.get(i + 2);
+                            //如果下下张是同名卡
+                            if (id1 == id) {
+                                tNum++;
+                                i++;
+                            }
+                        }
+                        i++;
+                    }
+                    //如果有同名卡
+                    if (tNum > 1) {
+                        builder.append("*" + tNum);
+                    }
+                }
             }
         }
         return builder.toString();
     }
 
+    //压缩卡密,目前直接转换为16进制
+    private String compressedId(int id){
+        return Integer.toHexString(id);
+    }
+
+    //解析卡密，目前直接16进制转换为10进制
+    private int unId(String id){
+        return Integer.parseInt(id,16);
+    }
 
     public String getName() {
         return name;
@@ -137,6 +197,7 @@ public class Deck implements Parcelable {
     private int toId(String str) {
         if (TextUtils.isEmpty(str)) return 0;
         try {
+            //如果需要返回16进制码：return unId(str)
             return Integer.parseInt(str);
         } catch (Exception e) {
             return 0;

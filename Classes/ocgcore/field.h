@@ -192,7 +192,7 @@ struct processor {
 	event_list sub_solving_event;
 	chain_array select_chains;
 	chain_array current_chain;
-	chain_array tmp_chains;
+	chain_array ignition_priority_chains;
 	chain_list continuous_chain;
 	chain_list solving_continuous;
 	chain_list sub_solving_continuous;
@@ -265,6 +265,9 @@ struct processor {
 	group* limit_xyz;
 	int32 limit_xyz_minc;
 	int32 limit_xyz_maxc;
+	group* limit_link;
+	int32 limit_link_minc;
+	int32 limit_link_maxc;
 	uint8 attack_cancelable;
 	uint8 attack_rollback;
 	uint8 effect_damage_step;
@@ -447,7 +450,7 @@ public:
 	int32 is_player_can_discard_deck(uint8 playerid, int32 count);
 	int32 is_player_can_discard_deck_as_cost(uint8 playerid, int32 count);
 	int32 is_player_can_discard_hand(uint8 playerid, card* pcard, effect* peffect, uint32 reason);
-	int32 is_player_can_summon(uint8 playerid);
+	int32 is_player_can_action(uint8 playerid, uint32 actionlimit);
 	int32 is_player_can_summon(uint32 sumtype, uint8 playerid, card* pcard, uint8 toplayer);
 	int32 is_player_can_mset(uint32 sumtype, uint8 playerid, card* pcard, uint8 toplayer);
 	int32 is_player_can_sset(uint8 playerid, card* pcard);
@@ -560,8 +563,8 @@ public:
 	int32 summon(uint16 step, uint8 sumplayer, card* target, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone);
 	int32 flip_summon(uint16 step, uint8 sumplayer, card* target);
 	int32 mset(uint16 step, uint8 setplayer, card* ptarget, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone);
-	int32 sset(uint16 step, uint8 setplayer, uint8 toplayer, card* ptarget);
-	int32 sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget, uint8 confirm);
+	int32 sset(uint16 step, uint8 setplayer, uint8 toplayer, card* ptarget, effect* reason_effect);
+	int32 sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget, uint8 confirm, effect* reason_effect);
 	int32 special_summon_rule(uint16 step, uint8 sumplayer, card* target, uint32 summon_type);
 	int32 special_summon_step(uint16 step, group* targets, card* target, uint32 zone);
 	int32 special_summon(uint16 step, effect* reason_effect, uint8 reason_player, group* targets, uint32 zone);

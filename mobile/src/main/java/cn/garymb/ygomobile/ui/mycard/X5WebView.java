@@ -31,6 +31,11 @@ public class X5WebView extends WebView {
         this.getView().setClickable(true);
     }
 
+    public X5WebView(Context arg0) {
+        super(arg0);
+        setBackgroundColor(85621);
+    }
+
     private void initWebViewSettings() {
         WebSettings webSetting = this.getSettings();
         webSetting.setJavaScriptEnabled(true);
@@ -88,11 +93,6 @@ public class X5WebView extends WebView {
 		canvas.restore();
 		return ret;*/
         return super.drawChild(canvas, child, drawingTime);
-    }
-
-    public X5WebView(Context arg0) {
-        super(arg0);
-        setBackgroundColor(85621);
     }
 
 }

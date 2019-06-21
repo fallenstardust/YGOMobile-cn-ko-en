@@ -1,12 +1,17 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import android.util.Log;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -120,10 +125,28 @@ public class DeckUtils {
             outputStream = new FileOutputStream(file);
             save(deck, outputStream);
         } catch (Exception e) {
+            Log.e("DeckUtil","保存出错"+e);
             //ignore
         } finally {
             IOUtils.close(outputStream);
         }
         return true;
     }
+
+    public static File save(String name,String deckMessage) throws IOException {
+        FileWriter fw = null;
+
+        //如果文件存在，则重写内容；如果文件不存在，则创建文件
+        File f = new File(AppsSettings.get().getDeckDir(),name+".ydk");
+        fw = new FileWriter(f, false);
+
+        PrintWriter pw = new PrintWriter(fw);
+        pw.println(deckMessage);
+        pw.flush();
+        fw.flush();
+        pw.close();
+        fw.close();
+        return f;
+    }
+
 }

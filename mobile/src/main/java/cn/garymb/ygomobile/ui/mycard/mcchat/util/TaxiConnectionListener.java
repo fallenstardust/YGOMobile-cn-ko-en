@@ -18,6 +18,12 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 
 public class TaxiConnectionListener implements ConnectionListener {
 
+    private Timer tExit;
+    private String username;
+    private String password;
+    private int logintime = 2000;
+    private ServiceManagement sm = ServiceManagement.getDx();
+
     @Override
     public void connected(XMPPConnection p1) {
         Log.e("TaxiConnectionListener", "开始连接");
@@ -32,12 +38,6 @@ public class TaxiConnectionListener implements ConnectionListener {
         // TODO: Implement this method
     }
 
-
-    private Timer tExit;
-    private String username;
-    private String password;
-    private int logintime = 2000;
-    private ServiceManagement sm = ServiceManagement.getDx();
 
     @Override
     public void connectionClosed() {

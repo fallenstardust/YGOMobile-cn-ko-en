@@ -1,51 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	android:background="#00000000">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00000000">
 
-	<cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
-		android:layout_height="35dp"
-		android:layout_width="35dp"
-		android:id="@+id/ic_avatar"
-		android:scaleType="centerCrop"
-		android:layout_marginTop="5dp"
-		android:layout_marginLeft="10dp"/>
+    <cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
+        android:id="@+id/ic_avatar"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="5dp"
+        android:scaleType="centerCrop" />
 
-	<LinearLayout
-		android:layout_alignTop="@id/ic_avatar"
-		android:layout_toRightOf="@id/ic_avatar"
-		android:descendantFocusability="blocksDescendants"
-		android:padding="8dp"
-		android:background="@drawable/chat_message_background"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:orientation="vertical"
-		android:id="@+id/ic_dialog"
-		android:layout_marginRight="10dp"
-		android:layout_marginBottom="5dp"
-		android:layout_marginLeft="10dp">
+    <LinearLayout
+        android:id="@+id/ic_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/ic_avatar"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="5dp"
+        android:layout_toRightOf="@id/ic_avatar"
+        android:background="@drawable/chat_message_background"
+        android:descendantFocusability="blocksDescendants"
+        android:orientation="vertical"
+        android:padding="8dp">
 
-		<TextView
-			android:id="@+id/ic_name"
-			android:text="name"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:paddingBottom="4dp"
-			android:textSize="13sp"
-			android:textColor="#B8630C"
-			android:textStyle="bold"/>
+        <TextView
+            android:id="@+id/ic_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="name"
+            android:textColor="#B8630C"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
-		<TextView
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
-			android:text="message"
-			android:textColor="#000000"
-			android:id="@+id/ic_message"
-			android:textSize="16sp"/>
+        <TextView
+            android:id="@+id/ic_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="message"
+            android:textColor="#000000"
+            android:textSize="16sp" />
 
-	</LinearLayout>
+    </LinearLayout>
 
 </RelativeLayout>
 

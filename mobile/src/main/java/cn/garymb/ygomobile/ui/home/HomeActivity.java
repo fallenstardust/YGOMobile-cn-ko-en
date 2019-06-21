@@ -1,11 +1,11 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import android.text.TextUtils;
@@ -23,6 +23,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -37,13 +42,10 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.IOException;
 import java.util.List;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
@@ -57,15 +59,20 @@ import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
+import cn.garymb.ygomobile.ui.widget.Shimmer;
+import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
+import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.PermissionUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
+
+import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
+    ShimmerTextView tv;
+    Shimmer shimmer;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
 
@@ -82,6 +89,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             builder.setMessage(R.string.Checking_Update);
             builder.show();
         }
+
     }
 
     @Override
@@ -105,6 +113,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
+        //tv = findViewById(R.id.shimmer_tv);
+        toggleAnimation(tv);
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
@@ -113,7 +123,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 if (arg0) {
                     //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -123,24 +133,20 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-
-
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(this);
-            if (dialogPlus == null)
-                this.startForegroundService(new Intent(this, ServiceDuelAssistant.class));
-            else
-                dialogPlus.show();
-        } else {
-            startService(new Intent(this, ServiceDuelAssistant.class));
-        }
+        startDuelService(this);
 
         //萌卡
         StartMycard();
         checkNotch();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        BacktoDuel();
     }
 
     //检查是否有刘海
@@ -221,6 +227,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private boolean doMenu(int id) {
         switch (id) {
             case R.id.nav_donation:
+
+
             break;
             case R.id.action_game:
                 openGame();
@@ -259,6 +267,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setContentView(R.layout.dialog_help);
+                dialog.setTitle(R.string.question);
                 dialog.show();
                 View viewDialog = dialog.getContentView();
                 Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
@@ -434,20 +443,40 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
     }
 
+    public void toggleAnimation(View target) {
+        if (shimmer != null && shimmer.isAnimating()) {
+            shimmer.cancel();
+        } else {
+            shimmer = new Shimmer();
+            shimmer.start(tv);
+        }
+    }
+
     public void StartMycard() {
-//        ImageView iv_mc = $(R.id.btn_mycard);
-//        iv_mc.setOnClickListener((v) -> {
-//            if (Constants.SHOW_MYCARD) {
-//                startActivity(new Intent(this, MyCardActivity.class));
-//            }
-//        });
-//        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
-//                return true;
-//            }
-//        });
+        ImageView iv_mc = $(R.id.btn_mycard);
+        iv_mc.setOnClickListener((v) -> {
+            if (Constants.SHOW_MYCARD) {
+               // startActivity(new Intent(this, MyCardActivity.class));
+            }
+        });
+        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
+                return true;
+            }
+        });
+    }
+
+    public void BacktoDuel() {
+        tv.setOnClickListener((v) -> {
+            openGame();
+        });
+        if (ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+            tv.setVisibility(View.VISIBLE);
+        } else {
+            tv.setVisibility(View.GONE);
+        }
     }
 
     public boolean joinQQGroup(String key) {

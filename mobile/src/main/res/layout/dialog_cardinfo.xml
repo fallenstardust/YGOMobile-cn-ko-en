@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:background="@android:color/transparent"
-              android:orientation="horizontal">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:orientation="horizontal">
 
     <Button
         android:id="@+id/lastone"
         android:layout_width="@dimen/brower_arrow_width"
         android:layout_height="@dimen/brower_arrow_height"
         android:layout_gravity="left|center"
-        android:background="@drawable/left_1"
-        />
+        android:background="@drawable/left_1" />
 
     <LinearLayout
         android:id="@+id/detail"
@@ -25,9 +24,9 @@
         android:layout_weight="1"
         android:background="@drawable/blue"
         android:orientation="vertical"
-        android:paddingBottom="10dp"
         android:paddingLeft="10dp"
-        android:paddingRight="10dp">
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -49,7 +48,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/colorAccentDark"
                 android:textSize="14sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/btn_add_main"
@@ -64,7 +63,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="invisible"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
             <TextView
                 android:id="@+id/btn_add_side"
@@ -79,19 +78,19 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="invisible"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
-                android:layout_weight="1"/>
+                android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btn_close"
                 android:layout_width="@dimen/button_width_small"
                 android:layout_height="@dimen/button_width_small"
                 android:background="@android:color/transparent"
-                app:srcCompat="@drawable/ic_close_black_24dp"/>
+                app:srcCompat="@drawable/ic_close_black_24dp" />
         </LinearLayout>
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
@@ -101,7 +100,6 @@
             android:layout_marginTop="5dp"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:textIsSelectable="true"
             android:minHeight="@dimen/label_height"
             android:paddingLeft="4dp"
             android:shadowColor="@color/black"
@@ -111,7 +109,8 @@
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
             android:textColor="@color/item_title"
-            tools:text="name"/>
+            android:textIsSelectable="true"
+            tools:text="name" />
 
         <TextView
             android:id="@+id/card_level"
@@ -123,7 +122,7 @@
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:textColor="@color/star"
-            tools:text="★★★★"/>
+            tools:text="★★★★" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -141,7 +140,7 @@
                     android:layout_height="@dimen/card_height2"
                     android:layout_gravity="center_vertical"
                     android:scaleType="fitXY"
-                    android:src="@drawable/unknown"/>
+                    android:src="@drawable/unknown" />
 
                 <ImageView
                     android:id="@+id/image_control"
@@ -169,7 +168,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/label_ot"
                         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                        android:textColor="@color/item_title"/>
+                        android:textColor="@color/item_title" />
 
                     <TextView
                         android:id="@+id/card_ot"
@@ -200,7 +199,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/label_attr"
                             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                            android:textColor="@color/item_title"/>
+                            android:textColor="@color/item_title" />
 
                         <TextView
                             android:id="@+id/card_attribute"
@@ -224,7 +223,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/label_race"
                             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                            android:textColor="@color/item_title"/>
+                            android:textColor="@color/item_title" />
 
                         <TextView
                             android:id="@+id/card_race"
@@ -238,12 +237,13 @@
                             tools:text="Test" />
                     </LinearLayout>
                 </LinearLayout>
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_type"
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                    android:textColor="@color/item_title"/>
+                    android:textColor="@color/item_title" />
 
                 <TextView
                     android:id="@+id/card_type"
@@ -262,7 +262,7 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                     android:textColor="@color/item_title"
                     android:visibility="invisible"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible" />
 
                 <TextView
                     android:id="@+id/card_setname"
@@ -314,7 +314,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="4dp"
-                    android:background="@color/white"/>
+                    android:background="@color/white" />
 
                 <FrameLayout
                     android:layout_width="match_parent"
@@ -331,7 +331,7 @@
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
                         android:textIsSelectable="true"
-                        tools:text="12345678"/>
+                        tools:text="12345678" />
 
                     <LinearLayout
                         android:id="@+id/layout_atkdef2"
@@ -351,7 +351,7 @@
                             android:singleLine="true"
                             android:text="0"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/white"/>
+                            android:textColor="@color/white" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -360,7 +360,7 @@
                             android:singleLine="true"
                             android:text="/"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/white"/>
+                            android:textColor="@color/white" />
 
                         <TextView
                             android:id="@+id/card_def"
@@ -372,7 +372,7 @@
                             android:singleLine="true"
                             android:text="0"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/white"/>
+                            android:textColor="@color/white" />
                     </LinearLayout>
 
                 </FrameLayout>
@@ -386,5 +386,5 @@
         android:layout_width="@dimen/brower_arrow_width"
         android:layout_height="@dimen/brower_arrow_height"
         android:layout_gravity="right|center"
-        android:background="@drawable/right_1"/>
+        android:background="@drawable/right_1" />
 </LinearLayout>

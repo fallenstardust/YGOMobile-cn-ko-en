@@ -34,18 +34,18 @@
                 android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="@string/settings_about_author_pref"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                tools:text="@string/settings_about_author_pref" />
 
             <TextView
                 android:id="@+id/tv_dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                tools:text="@string/settings_about_author_pref"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                tools:text="@string/settings_about_author_pref" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

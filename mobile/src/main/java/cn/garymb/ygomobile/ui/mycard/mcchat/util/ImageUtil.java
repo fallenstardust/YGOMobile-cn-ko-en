@@ -9,17 +9,16 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import cn.garymb.ygomobile.lite.R;
 
-public class ImageUtil
-{
-	public  static void tuxian(Context context,String url,final ImageView im){
-		if(url!=null){
+public class ImageUtil {
+    public static void tuxian(Context context, String url, final ImageView im) {
+        if (url != null) {
             Glide.with(context)
-                .load(Uri.parse(url))
-				.asBitmap()
-			 	.diskCacheStrategy(DiskCacheStrategy.SOURCE)
-				.placeholder(R.drawable.avatar)
-                .into(im);
+                    .load(Uri.parse(url))
+                    .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .placeholder(R.drawable.avatar)
+                    .into(im);
         }
     }
-	
+
 }

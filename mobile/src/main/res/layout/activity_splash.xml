@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-	android:orientation="horizontal"
-	android:gravity="center"
-	android:id="@+id/sp_li"
-	android:background="@color/white">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sp_li"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/white"
+    android:gravity="center"
+    android:orientation="horizontal">
 
-	<ProgressBar
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:id="@+id/sp_jz"/>
+    <ProgressBar
+        android:id="@+id/sp_jz"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-	<TextView
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:text="@string/logining_in"
-		android:textColor="@color/dark_purple"
-		android:textSize="18sp"
-		android:id="@+id/sp_tv"/>
+    <TextView
+        android:id="@+id/sp_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/logining_in"
+        android:textColor="@color/dark_purple"
+        android:textSize="18sp" />
 
 </LinearLayout>
 

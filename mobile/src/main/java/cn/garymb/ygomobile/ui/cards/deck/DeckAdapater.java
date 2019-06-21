@@ -516,6 +516,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         holder.setItemType(item.getType());
         if (item.getType() == DeckItemType.MainLabel || item.getType() == DeckItemType.SideLabel
                 || item.getType() == DeckItemType.ExtraLabel) {
+            //分隔栏
             if (item.getType() == DeckItemType.MainLabel) {
                 holder.setText(getMainString());
             } else if (item.getType() == DeckItemType.SideLabel) {
@@ -537,13 +538,25 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 //                Log.i("kk", "w=" + mWidth + ",h=" + mHeight);
             }
 //            holder.cardImage.setLayoutParams(new RelativeLayout.LayoutParams(holder.cardImage.getMeasuredWidth(), mHeight));
+            //显示卡片
             holder.showImage();
             holder.setSize(mHeight);
             if (item.getType() == DeckItemType.Space) {
+                //占位但是不显示卡图
                 holder.setCardType(0);
                 holder.showEmpty();
             } else {
+
                 Card cardInfo = item.getCardInfo();
+//                holder.cardImage.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        if(cardInfo!=null)
+//                            Toast.makeText(context,"不为空点击"+cardInfo.Name,Toast.LENGTH_SHORT).show();
+//                        else
+//                            Toast.makeText(context,"空点击"+position,Toast.LENGTH_SHORT).show();
+//                    }
+//                });
                 if (cardInfo != null) {
                     holder.setCardType(cardInfo.Type);
                     if (mImageTop == null) {

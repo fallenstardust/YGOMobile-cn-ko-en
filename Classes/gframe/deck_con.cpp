@@ -398,6 +398,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::gui::EGET_SCROLL_BAR_CHANGED: {
+			switch(id) {
+			case SCROLL_FILTER: {
+				GetHoveredCard();
+				break;
+			}
+			}
 			break;
 		}
 		case irr::gui::EGET_EDITBOX_ENTER: {
@@ -584,6 +590,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::EMIE_LMOUSE_LEFT_UP: {
+		    s32 x = event.MouseInput.X;
+        	s32 y = event.MouseInput.Y;
+        	irr::core::position2di pos(x, y);
+        	if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
+        		mainGame->textFont->setTransparency(true);
+        		mainGame->ClearChatMsg();
+        		break;
+        	}//touch the pic of detail to refresh textfonts
 			is_starting_dragging = false;
 			if(!is_draging)
 				break;
@@ -1035,6 +1049,8 @@ void DeckBuilder::ClearSearch() {
 	mainGame->ebStar->setEnabled(false);
 	mainGame->ebScale->setEnabled(false);
 	mainGame->ebCardName->setText(L"");
+	mainGame->scrFilter->setVisible(false);
+	mainGame->scrFilter->setPos(0);
 	ClearFilter();
 	results.clear();
 	myswprintf(result_string, L"%d", 0);

@@ -14,14 +14,14 @@ public class UserManagement {
         return userName;
     }
 
-    public static String getUserPassword() {
-        return userPassword;
-    }
-
     public static void setUserName(String name) {
 
         userName = name;
 
+    }
+
+    public static String getUserPassword() {
+        return userPassword;
     }
 
     public static void setUserPassword(String password) {

@@ -11,6 +11,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,26 +23,28 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
-import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.PermissionUtil;
-import cn.garymb.ygomobile.utils.XmlUtils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
@@ -55,6 +58,7 @@ public class ServiceDuelAssistant extends Service {
     private final static String CMD_NAME = "CMD";
     private final static String CMD_START_GAME = "CMD : START GAME";
     private final static String CMD_STOP_SERVICE = "CMD : STOP SERVICE";
+    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP+"://"+Constants.URI_HOST;
     //悬浮窗显示的时间
     private static final int TIME_DIS_WINDOW = 3000;
 
@@ -79,6 +83,9 @@ public class ServiceDuelAssistant extends Service {
 
     //卡查内容
     public static String cardSearchMessage = "";
+    //卡组复制
+    public static final String[] DeckTextKey = new String[]{"#main"};
+    public static String DeckText = "";
 
     //悬浮窗布局View
     private View mFloatLayout;
@@ -90,6 +97,7 @@ public class ServiceDuelAssistant extends Service {
 
     private WindowManager.LayoutParams wmParams;
     private WindowManager mWindowManager;
+    private ClipboardManager cm;
 
     @Override
     public IBinder onBind(Intent p1) {
@@ -112,84 +120,104 @@ public class ServiceDuelAssistant extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        //移除剪贴板监听
+        cm.removePrimaryClipChangedListener(onPrimaryClipChangedListener);
         //关闭悬浮窗时的声明
         stopForeground(true);
     }
 
     private void startClipboardListener() {
-        final ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm == null)
             return;
-        cm.addPrimaryClipChangedListener(new ClipboardManager.OnPrimaryClipChangedListener() {
+        cm.addPrimaryClipChangedListener(onPrimaryClipChangedListener);
+    }
 
-            @Override
-            public void onPrimaryClipChanged() {
-                ClipData clipData = cm.getPrimaryClip();
-                if (clipData == null)
-                    return;
-                CharSequence cs = clipData.getItemAt(0).getText();
-                final String clipMessage;
-                if (cs != null) {
-                    clipMessage = cs.toString();
-                } else {
-                    clipMessage = null;
-                }
+    ClipboardManager.OnPrimaryClipChangedListener onPrimaryClipChangedListener = new ClipboardManager.OnPrimaryClipChangedListener() {
 
-                //如果复制的内容为空则不执行下面的代码
-                if (TextUtils.isEmpty(clipMessage)) {
-                    return;
-                }
-                //如果复制的内容是多行不执行
-                if (clipMessage.contains("\n"))
-                    return;
-                int start = -1;
-                int end = -1;
-                String passwordPrefixKey = null;
-                for (String s : passwordPrefix) {
-                    start = clipMessage.indexOf(s);
-                    passwordPrefixKey = s;
-                    if(start != -1) {
-                        break;
+        @Override
+        public void onPrimaryClipChanged() {
+            ClipData clipData = cm.getPrimaryClip();
+            if (clipData == null)
+                return;
+            CharSequence cs = clipData.getItemAt(0).getText();
+            final String clipMessage;
+            if (cs != null) {
+                clipMessage = cs.toString();
+            } else {
+                clipMessage = null;
+            }
+
+            //如果复制的内容为空则不执行下面的代码
+            if (TextUtils.isEmpty(clipMessage)) {
+                return;
+            }
+            //如果复制的内容是多行作为卡组去判断
+            if (clipMessage.contains("\n")) {
+                for (String s : DeckTextKey) {
+                    //只要包含其中一个关键字就视为卡组
+                    if (clipMessage.contains(s)) {
+                        saveDeck(clipMessage, false);
+                        return;
                     }
                 }
+                return;
+            }
+            //如果是卡组url
+            int deckStart = clipMessage.indexOf(DECK_URL_PREFIX);
+            if (deckStart != -1) {
+                saveDeck(clipMessage.substring(deckStart + DECK_URL_PREFIX.length(), clipMessage.length()), true);
+                return;
+            }
 
+            int start = -1;
+            int end = -1;
+            String passwordPrefixKey = null;
+            for (String s : passwordPrefix) {
+                start = clipMessage.indexOf(s);
+                passwordPrefixKey = s;
                 if (start != -1) {
-                    //如果密码含有空格，则以空格结尾
-                    end = clipMessage.indexOf(" ", start);
-                    //如果不含有空格则取片尾所有
-                    if (end == -1) {
-                        end = clipMessage.length();
-                    }else {
-                        //如果只有密码前缀而没有密码内容则不跳转
-                        if (end-start==passwordPrefixKey.length())
-                            return;
-                    }
-                    //如果有悬浮窗权限再显示
-                    if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
-                        joinRoom(clipMessage, start, end);
+                    break;
+                }
+            }
+
+            if (start != -1) {
+                //如果密码含有空格，则以空格结尾
+                end = clipMessage.indexOf(" ", start);
+                //如果不含有空格则取片尾所有
+                if (end == -1) {
+                    end = clipMessage.length();
                 } else {
-                    for (String s : cardSearchKey) {
-                        int cardSearchStart = clipMessage.indexOf(s);
-                        if (cardSearchStart != -1) {
-                            //卡查内容
-                            cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
-                            //如果复制的文本里带？号后面没有内容则不跳转
-                            if (TextUtils.isEmpty(cardSearchMessage)) {
-                                return;
-                            }
-                            if (cardSearchMessage.indexOf("=") != -1) {
-                                return;
-                            }
-                            Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
-                            startActivity(intent);
+                    //如果只有密码前缀而没有密码内容则不跳转
+                    if (end - start == passwordPrefixKey.length())
+                        return;
+                }
+                //如果有悬浮窗权限再显示
+                if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
+                    joinRoom(clipMessage, start, end);
+            } else {
+                for (String s : cardSearchKey) {
+                    int cardSearchStart = clipMessage.indexOf(s);
+                    if (cardSearchStart != -1) {
+                        //卡查内容
+                        cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
+                        //如果复制的文本里带？号后面没有内容则不跳转
+                        if (TextUtils.isEmpty(cardSearchMessage)) {
+                            return;
                         }
+                        //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
+                        if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
+                            return;
+                        }
+                        Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
+                        startActivity(intent);
                     }
                 }
             }
-        });
-    }
+        }
+    };
 
     private void startForeground() {
 
@@ -222,20 +250,19 @@ public class ServiceDuelAssistant extends Service {
                 builder.setSound(null);
                 builder.setCustomContentView(remoteViews);
                 startForeground(1, builder.build());
-            }else {
+            } else {
                 //如果没有通知权限则关闭服务
                 stopForeground(true);
-                stopService(new Intent(ServiceDuelAssistant.this,ServiceDuelAssistant.class));
+                stopService(new Intent(ServiceDuelAssistant.this, ServiceDuelAssistant.class));
             }
         }
     }
 
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent==null)
-            return super.onStartCommand(intent,flags,startId);
+        if (intent == null)
+            return super.onStartCommand(intent, flags, startId);
         String action = intent.getAction();
         Log.d(TAG, "rev action:" + action);
         if (DUEL_ASSISTANT_SERVICE_ACTION.equals(action)) {
@@ -293,6 +320,55 @@ public class ServiceDuelAssistant extends Service {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void saveDeck(String deckMessage, boolean isUrl) {
+        tv_message.setText(R.string.find_deck_text);
+        bt_close.setText(R.string.search_close);
+        bt_join.setText(R.string.save_n_open);
+        disJoinDialog();
+        showJoinDialog();
+        new Handler().postDelayed(() -> {
+            if (isdis) {
+                isdis = false;
+                mWindowManager.removeView(mFloatLayout);
+            }
+        }, TIME_DIS_WINDOW);
+        bt_close.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disJoinDialog();
+            }
+        });
+        bt_join.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disJoinDialog();
+                //如果是卡组url
+                if (isUrl) {
+                    Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                    Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(startdeck);
+                } else {
+                    //如果是卡组文本
+                    try {
+                        //以当前时间戳作为卡组名保存卡组
+                        File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                        Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                        startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                        startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(startdeck);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Toast.makeText(ServiceDuelAssistant.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+
     }
 
     private void joinRoom(String ss, int start, int end) {

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="SearchableSpinner">
-        <attr name="hintText" format="string"/>
-        <attr name="searchTitle" format="string"/>
+        <attr name="hintText" format="string" />
+        <attr name="searchTitle" format="string" />
     </declare-styleable>
     <declare-styleable name="CardGroupView">
-        <attr name="lines" format="integer"/>
-        <attr name="card_width" format="integer"/>
-        <attr name="card_height" format="integer"/>
-        <attr name="line_limit" format="integer"/>
-        <attr name="line_max_count" format="integer"/>
+        <attr name="lines" format="integer" />
+        <attr name="card_width" format="integer" />
+        <attr name="card_height" format="integer" />
+        <attr name="line_limit" format="integer" />
+        <attr name="line_max_count" format="integer" />
     </declare-styleable>
     <declare-styleable name="ShimmerView">
-        <attr name="reflectionColor" format="color"/>
+        <attr name="reflectionColor" format="color" />
     </declare-styleable>
 </resources>

@@ -7,11 +7,16 @@ import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -21,7 +26,7 @@ import ocgcore.enums.CardOt;
 
 public class StringManager implements Closeable {
     private static final String PRE_SYSTEM = "!system";
-    private  static final String PRE_SETNAME = "!setname";
+    private static final String PRE_SETNAME = "!setname";
     private final SparseArray<String> mSystem = new SparseArray<>();
     private final List<CardSet> mCardSets = new ArrayList<>();
 
@@ -30,7 +35,7 @@ public class StringManager implements Closeable {
     }
 
     @Override
-    public void close(){
+    public void close() {
         mSystem.clear();
         mCardSets.clear();
     }
@@ -41,11 +46,70 @@ public class StringManager implements Closeable {
         File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
         boolean rs1 = loadFile(stringFile.getAbsolutePath());
         boolean rs2 = true;
+        boolean res3 = true;
         if (AppsSettings.get().isReadExpansions()) {
             File stringFile2 = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_STRING_PATH);
             rs2 = loadFile(stringFile2.getAbsolutePath());
+            File[] files = AppsSettings.get().getExpansionsPath().listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".zip")) {
+                        try {
+                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
+                            ZipEntry entry = zipFile.getEntry(Constants.CORE_STRING_PATH);
+                            if (entry != null) {
+                                res3 &= loadFile(zipFile.getInputStream(entry));
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            res3 = false;
+                        }
+                    }
+                }
+            }
         }
-        return rs1 && rs2;
+        return rs1 && rs2 && res3;
+    }
+
+    public boolean loadFile(InputStream inputStream) {
+
+        InputStreamReader in = null;
+        try {
+            in = new InputStreamReader(inputStream, "utf-8");
+            BufferedReader reader = new BufferedReader(in);
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
+                    continue;
+                }
+                String[] words = line.split("[\t| ]+");
+//
+                if (words.length >= 3) {
+                    if (PRE_SETNAME.equals(words[0])) {
+//                        System.out.println(Arrays.toString(words));
+                        //setcode
+                        long id = toNumber(words[1]);
+                        CardSet cardSet = new CardSet(id, words[2]);
+                        int i = mCardSets.indexOf(cardSet);
+                        if (i >= 0) {
+                            CardSet cardSet1 = mCardSets.get(i);
+                            cardSet1.setName(cardSet.getName());
+                        } else {
+                            mCardSets.add(cardSet);
+                        }
+                    } else {
+                        mSystem.put((int) toNumber(words[1]), words[2]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+
+        } finally {
+            IOUtils.close(inputStream);
+            IOUtils.close(in);
+        }
+        Collections.sort(mCardSets, CardSet.NAME_ASC);
+        return true;
     }
 
     public boolean loadFile(String path) {

@@ -241,7 +241,6 @@
     <string name="Checking_Update_Failed">Checking Update Failed</string>
     <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
     <string name="DuelAssistant">DuelAssiatant is On</string>
-    <string name="About_DuelAssistant">Service for getting Keywords from Clipboard</string>
     <string name="masterrule">Master Rule</string>
     <string name="tutorial">Soft Tutorial</string>
     <string name="about_help">Click button which you want to know</string>
@@ -273,4 +272,14 @@
     <string name="duel_mode_one">单局模式</string>
     <string name="duel_mode_match">比赛模式</string>
     <string name="complete_setting">完成设置</string>
+    <string name="Start_ServiceDuelAssistant">DuelAssistant</string>
+    <string name="about_DuelAssistant">Copy PSW to Quick Join Game.
+        \nCopy Keywords to Search Cards.
+        \nCopy Deck Text to Save as YDK and Open in Deck Editor</string>
+    <string name="find_deck_text">Find your copyed Deck Text, Save or Not?</string>
+    <string name="save_failed_bcos">save failed bcos of</string>
+    <string name="deck_text_copyed">Deck Text copyed</string>
+    <string name="save_n_open">Save and Open</string>
+    <string name="searchresult">Results</string>
+    <string name="Pre_share">Prepare to Share</string>
 </resources>
