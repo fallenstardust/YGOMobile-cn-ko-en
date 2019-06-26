@@ -80,20 +80,22 @@
                     android:host="deck"
                     android:scheme="ygo"/>
             </intent-filter>
-            <intent-filter tools:ignore="AppLinkUrlError">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
 
-                <data android:mimeType="*/*"/>
+                <data android:scheme="file"/>
+                <data android:host="*"/>
+                <!--data android:mimeType="*/*" /-->
                 <data android:pathPattern=".*\\.ydk"/>
-
             </intent-filter>
-            <intent-filter tools:ignore="AppLinkUrlError">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
 
+                <data android:scheme="content"/>
+                <data android:host="*"/>
+                <data android:mimeType="*/*" />
                 <data android:pathPattern=".*\\.ydk"/>
             </intent-filter>
 
