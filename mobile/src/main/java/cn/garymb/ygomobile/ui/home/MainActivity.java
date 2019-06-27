@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import java.io.IOException;
 
@@ -21,6 +23,7 @@ import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
@@ -79,7 +82,40 @@ public class MainActivity extends HomeActivity {
             }
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
-                    DialogPlus dialog = new DialogPlus(this)
+                    final DialogPlus dialog = new DialogPlus(this);
+                    dialog.showTitleBar();
+                    dialog.setTitle(getString(R.string.settings_about_change_log));
+                    dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
+                    dialog.setLeftButtonText(R.string.help);
+                    dialog.setLeftButtonListener((dlg, i) -> {
+                        dialog.setContentView(R.layout.dialog_help);
+                        dialog.setTitle(R.string.question);
+                        dialog.hideButton();
+                        dialog.show();
+                        View viewDialog = dialog.getContentView();
+                        Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
+                        Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
+
+                        btnMasterRule.setOnClickListener((v) -> {
+                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                            dialog.dismiss();
+                        });
+                        btnTutorial.setOnClickListener((v) -> {
+                            WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
+                            dialog.dismiss();
+                        });
+                    });
+                    dialog.setRightButtonText(R.string.OK);
+                    dialog.setRightButtonListener((dlg, i) -> {
+                        dlg.dismiss();
+                        //mImageUpdater
+                        if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+                            if (!mImageUpdater.isRunning()) {
+                                mImageUpdater.start();
+                            }
+                        }
+                    });
+                    /*DialogPlus dialog = new DialogPlus(this)
                             .setTitleText(getString(R.string.settings_about_change_log))
                             .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                             .hideButton()
@@ -91,7 +127,7 @@ public class MainActivity extends HomeActivity {
                                         mImageUpdater.start();
                                     }
                                 }
-                            });
+                            });*/
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
