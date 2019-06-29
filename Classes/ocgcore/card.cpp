@@ -2891,11 +2891,12 @@ int32 card::check_cost_condition(int32 ecode, int32 playerid, int32 sumtype) {
 	}
 	return TRUE;
 }
-// check if this is a normal summonable card
 int32 card::is_summonable_card() {
-	if(!(data.type & TYPE_MONSTER) || (data.type & TYPE_TOKEN))
+	if(!(data.type & TYPE_MONSTER))
 		return FALSE;
-	return !is_affected_by_effect(EFFECT_UNSUMMONABLE_CARD);
+	return !(data.type & (TYPE_RITUAL | TYPE_SPSUMMON
+		| TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK
+		| TYPE_TOKEN));
 }
 int32 card::is_fusion_summonable_card(uint32 summon_type) {
 	if(!(data.type & TYPE_FUSION))
@@ -2927,7 +2928,13 @@ int32 card::is_spsummonable(effect* peffect) {
 	if(pduel->game_field->core.limit_tuner || pduel->game_field->core.limit_syn) {
 		pduel->lua->add_param(pduel->game_field->core.limit_tuner, PARAM_TYPE_CARD);
 		pduel->lua->add_param(pduel->game_field->core.limit_syn, PARAM_TYPE_GROUP);
-		if(pduel->lua->check_condition(peffect->condition, 4))
+		uint32 param_count = 4;
+		if(pduel->game_field->core.limit_syn_minc) {
+			pduel->lua->add_param(pduel->game_field->core.limit_syn_minc, PARAM_TYPE_INT);
+			pduel->lua->add_param(pduel->game_field->core.limit_syn_maxc, PARAM_TYPE_INT);
+			param_count = 6;
+		}
+		if(pduel->lua->check_condition(peffect->condition, param_count))
 			result = TRUE;
 	} else if(pduel->game_field->core.limit_xyz) {
 		pduel->lua->add_param(pduel->game_field->core.limit_xyz, PARAM_TYPE_GROUP);
@@ -2971,18 +2978,17 @@ int32 card::is_summonable(effect* peffect, uint8 min_tribute, uint32 zone, uint3
 	pduel->lua->add_param(min_tribute, PARAM_TYPE_INT);
 	pduel->lua->add_param(zone, PARAM_TYPE_INT);
 	pduel->lua->add_param(releasable, PARAM_TYPE_INT);
+	pduel->game_field->core.limit_extra_summon_zone = zone;
+	pduel->game_field->core.limit_extra_summon_releasable = releasable;
 	if(pduel->lua->check_condition(peffect->condition, 5))
 		result = TRUE;
+	pduel->game_field->core.limit_extra_summon_zone = 0;
+	pduel->game_field->core.limit_extra_summon_releasable = 0;
 	pduel->game_field->restore_lp_cost();
 	pduel->game_field->core.reason_effect = oreason;
 	pduel->game_field->core.reason_player = op;
 	return result;
 }
-// if this does not have a summon procedure, it will check ordinary summon
-// ignore_count: ignore the summon count in this turn or not
-// peffect: effects that change the ordinary summon procedure (c80921533)
-// min_tribute: the limit of min tribute number by EFFECT_EXTRA_SUMMON_COUNT
-// return: whether playerid can summon this or not
 int32 card::is_can_be_summoned(uint8 playerid, uint8 ignore_count, effect* peffect, uint8 min_tribute, uint32 zone) {
 	if(!is_summonable_card())
 		return FALSE;
@@ -3027,7 +3033,6 @@ int32 card::is_can_be_summoned(uint8 playerid, uint8 ignore_count, effect* peffe
 	pduel->game_field->restore_lp_cost();
 	return TRUE;
 }
-// return: the min/max number of tribute for an ordinary advance summon of this
 int32 card::get_summon_tribute_count() {
 	int32 min = 0, max = 0;
 	int32 minul = 0, maxul = 0;
@@ -3123,6 +3128,8 @@ int32 card::is_special_summonable(uint8 playerid, uint32 summon_type) {
 	filter_spsummon_procedure(playerid, &eset, summon_type);
 	pduel->game_field->core.limit_tuner = 0;
 	pduel->game_field->core.limit_syn = 0;
+	pduel->game_field->core.limit_syn_minc = 0;
+	pduel->game_field->core.limit_syn_maxc = 0;
 	pduel->game_field->core.limit_xyz = 0;
 	pduel->game_field->core.limit_xyz_minc = 0;
 	pduel->game_field->core.limit_xyz_maxc = 0;

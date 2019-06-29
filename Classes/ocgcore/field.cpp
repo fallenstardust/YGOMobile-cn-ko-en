@@ -93,6 +93,8 @@ field::field(duel* pduel) {
 	core.check_level = 0;
 	core.limit_tuner = 0;
 	core.limit_syn = 0;
+	core.limit_syn_minc = 0;
+	core.limit_syn_maxc = 0;
 	core.limit_xyz = 0;
 	core.limit_xyz_minc = 0;
 	core.limit_xyz_maxc = 0;
@@ -691,12 +693,11 @@ int32 field::get_spsummonable_count_fromex_rule4(card* pcard, uint8 playerid, ui
 			value = eset[i]->get_value(pcard, 3);
 		}
 		if(eset[i]->get_handler_player() == playerid)
-			flag |= ~value & 0x1f;
+			flag |= ~value & 0x7f;
 		else
-			flag |= ~(value >> 16) & 0x1f;
+			flag |= ~(value >> 16) & 0x7f;
 	}
 	uint32 linked_zone = get_linked_zone(playerid) | (1u << 5) | (1u << 6);
-	flag = flag | ~zone | ~linked_zone;
 	if(player[playerid].list_mzone[5] && is_location_useable(playerid, LOCATION_MZONE, 6)
 		&& check_extra_link(playerid, pcard, 6)) {
 		flag |= 1u << 5;
@@ -711,6 +712,7 @@ int32 field::get_spsummonable_count_fromex_rule4(card* pcard, uint8 playerid, ui
 		if(!is_location_useable(playerid, LOCATION_MZONE, 6))
 			flag |= 1u << 6;
 	}
+	flag = flag | ~zone | ~linked_zone;
 	if(list)
 		*list = flag & 0x7f;
 	int32 count = 5 - field_used_count[flag & 0x1f];
@@ -3359,6 +3361,8 @@ int32 field::check_trigger_effect(const chain& ch) const {
 		return FALSE;
 	if(peffect->code == EVENT_FLIP && infos.phase == PHASE_DAMAGE)
 		return TRUE;
+	if((phandler->current.location & LOCATION_DECK) && !(ch.flag & CHAIN_DECK_EFFECT))
+		return FALSE;
 	if((ch.triggering_location & (LOCATION_DECK | LOCATION_HAND | LOCATION_EXTRA))
 		&& (ch.triggering_position & POS_FACEDOWN))
 		return TRUE;
