@@ -158,7 +158,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
-        mImageOpen.setOnClickListener((v) -> {
+        cardImage.setOnClickListener((v) -> {
             PhotoViewActivity.showImage(context, cardInfo.Code, cardInfo.Name);
         });
         name.setText(cardInfo.Name);
