@@ -30,6 +30,10 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 public class ServiceManagement {
     public static final String GROUP_ADDRESS = "ygopro_china_north@conference.mycard.moe";
 
+    public static final int TYPE_ADD_MESSAGE=0;
+    public static final int TYPE_RE_LOGIN=1;
+    public static final int TYPE_RE_JOIN=2;
+
     private static ServiceManagement su = new ServiceManagement();
     private XMPPTCPConnection con;
     private MultiUserChat muc;
@@ -45,7 +49,7 @@ public class ServiceManagement {
             // TODO: Implement this method
             super.handleMessage(msg);
             switch (msg.what) {
-                case 0:
+                case TYPE_ADD_MESSAGE:
                     for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.addMessage((Message) msg.obj);
@@ -54,7 +58,7 @@ public class ServiceManagement {
                         }
                     }
                     break;
-                case 1:
+                case TYPE_RE_LOGIN:
                     for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.reLogin((boolean) msg.obj);
@@ -63,7 +67,7 @@ public class ServiceManagement {
                         }
                     }
                     break;
-                case 2:
+                case TYPE_RE_JOIN:
                     for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.reJoin((boolean) msg.obj);
@@ -164,7 +168,7 @@ public class ServiceManagement {
                     ChatMessage cm = ChatMessage.toChatMessage(message);
                     if (cm != null) {
                         chatMessageList.add(cm);
-                        han.sendEmptyMessage(0);
+                        han.sendEmptyMessage(TYPE_ADD_MESSAGE);
                     }
                 }
             });
@@ -172,22 +176,24 @@ public class ServiceManagement {
         }
     }
 
-    public void setreLogin(boolean state) {
+    public void setReLogin(boolean state) {
         android.os.Message me = new android.os.Message();
-        me.what = 1;
+        me.what = TYPE_RE_LOGIN;
         me.obj = state;
         han.sendMessage(me);
     }
 
-    public void setreJoin(boolean state) {
+    public void setReJoin(boolean state) {
         android.os.Message me = new android.os.Message();
-        me.what = 2;
+        me.what = TYPE_RE_JOIN;
         me.obj = state;
         han.sendMessage(me);
     }
 
     public void disSerVice() {
-        con.disconnect();
+        if(con!=null) {
+            con.disconnect();
+        }
         setIsConnected(false);
     }
 

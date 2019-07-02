@@ -64,12 +64,12 @@ public class TaxiConnectionListener implements ConnectionListener {
             username = UserManagement.getUserName();
             password = UserManagement.getUserPassword();
             if (username != null && password != null) {
-                sm.setreLogin(false);
+                sm.setReLogin(false);
                 Log.e("TaxiConnectionListener", "尝试登录");
                 // 连接服务器
                 try {
                     if (sm.login(username, password)) {
-                        sm.setreLogin(true);
+                        sm.setReLogin(true);
                         Log.e("TaxiConnectionListener", "登录成功");
                         tExit.schedule(new timeJoin(), logintime);
                     } else {
@@ -86,11 +86,11 @@ public class TaxiConnectionListener implements ConnectionListener {
         class timeJoin extends TimerTask {
             @Override
             public void run() {
-                sm.setreJoin(false);
+                sm.setReJoin(false);
                 Log.e("TaxiConnectionListener", "尝试加入房间");
                 try {
                     sm.joinChat();
-                    sm.setreJoin(true);
+                    sm.setReJoin(true);
                     Log.e("TaxiConnectionListener", "加入房间成功");
                 } catch (Exception e) {
                     Log.e("TaxiConnectionListener", "重新加入房间");
