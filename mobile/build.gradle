@@ -91,6 +91,8 @@ dependencies {
         implementation 'com.github.chrisbanes.photoview:library:1.2.4'
         exclude group: 'com.android.support', module: 'support-v4'             //
     }
+    implementation "org.igniterealtime.smack:smack-android-extensions:4.3.0"
+    implementation "org.igniterealtime.smack:smack-tcp:4.3.0"
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
     implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
