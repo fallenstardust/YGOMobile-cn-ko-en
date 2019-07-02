@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.util.Log;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.TaxiConnectionListener;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 
 public class ServiceManagement {
     public static final String GROUP_ADDRESS = "ygopro_china_north@conference.mycard.moe";
@@ -33,8 +35,9 @@ public class ServiceManagement {
     private MultiUserChat muc;
     private boolean isConnected = false;
     private boolean isListener = false;
-    private List<ChatMessage> data = new ArrayList<ChatMessage>();
-    private List<ChatListener> cl = new ArrayList<ChatListener>();
+    private List<ChatMessage> chatMessageList;
+    private List<ChatListener> chatListenerList;
+    @SuppressLint("HandlerLeak")
     Handler han = new Handler() {
 
         @Override
@@ -43,40 +46,39 @@ public class ServiceManagement {
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    for (ChatListener c : cl) {
+                    for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.addMessage((Message) msg.obj);
                         } else {
-                            cl.remove(c);
+                            chatListenerList.remove(c);
                         }
                     }
                     break;
                 case 1:
-                    for (ChatListener c : cl) {
+                    for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.reLogin((boolean) msg.obj);
                         } else {
-                            cl.remove(c);
+                            chatListenerList.remove(c);
                         }
                     }
                     break;
                 case 2:
-                    for (ChatListener c : cl) {
+                    for (ChatListener c : chatListenerList) {
                         if (c != null) {
                             c.reJoin((boolean) msg.obj);
                         } else {
-                            cl.remove(c);
+                            chatListenerList.remove(c);
                         }
                     }
                     break;
             }
         }
-
-
     };
 
     private ServiceManagement() {
-
+        chatMessageList=new ArrayList<>();
+        chatListenerList=new ArrayList<>();
     }
 
     public static ServiceManagement getDx() {
@@ -84,11 +86,11 @@ public class ServiceManagement {
     }
 
     public void addListener(ChatListener c) {
-        cl.add(c);
+        chatListenerList.add(c);
     }
 
     public List<ChatMessage> getData() {
-        return data;
+        return chatMessageList;
     }
 
     public void setIsListener(boolean isListener) {
@@ -111,7 +113,7 @@ public class ServiceManagement {
         return con;
     }
 
-    private XMPPTCPConnection getConnextion(String name, String password) throws XmppStringprepException {
+    private XMPPTCPConnection getConnextion(String name, String password) throws IOException {
         XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
                 .setUsernameAndPassword(name, password)
                 .setXmppDomain("mycard.moe")
@@ -119,18 +121,24 @@ public class ServiceManagement {
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .setHost("chat.mycard.moe")
                 .build();
+        FileLogUtil.writeAndTime("初始化配置");
         con = new XMPPTCPConnection(config);
+        FileLogUtil.writeAndTime("建立新配置");
         return con;
     }
 
     public boolean login(String name, String password) throws IOException, SmackException, XMPPException, InterruptedException {
 
+        FileLogUtil.writeAndTime("获取配置之前");
         XMPPTCPConnection con = getConnextion(name, password);
+        FileLogUtil.writeAndTime("获取配置完毕");
         con.connect();
-
+        FileLogUtil.writeAndTime("连接完毕");
         if (con.isConnected()) {
             con.login();
+            FileLogUtil.writeAndTime("登陆完毕");
             con.addConnectionListener(new TaxiConnectionListener());
+            FileLogUtil.writeAndTime("设置监听完毕");
             setIsConnected(true);
             return true;
         }
@@ -147,7 +155,7 @@ public class ServiceManagement {
             MultiUserChatManager multiUserChatManager = MultiUserChatManager.getInstanceFor(getCon());
             muc = multiUserChatManager.getMultiUserChat(JidCreate.entityBareFrom(GROUP_ADDRESS));
             muc.createOrJoin(Resourcepart.from(UserManagement.getUserName()));
-            data.clear();
+            chatMessageList.clear();
             muc.addMessageListener(new MessageListener() {
                 @Override
                 public void processMessage(Message message) {
@@ -155,7 +163,7 @@ public class ServiceManagement {
                     Log.e("接收消息", "接收" + message);
                     ChatMessage cm = ChatMessage.toChatMessage(message);
                     if (cm != null) {
-                        data.add(cm);
+                        chatMessageList.add(cm);
                         han.sendEmptyMessage(0);
                     }
                 }
@@ -187,8 +195,8 @@ public class ServiceManagement {
         disSerVice();
         setIsConnected(false);
         setIsListener(false);
-        data.clear();
-        cl.clear();
+        chatMessageList.clear();
+        chatListenerList.clear();
     }
 
 }

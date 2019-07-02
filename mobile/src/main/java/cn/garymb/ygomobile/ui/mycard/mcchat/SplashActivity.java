@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,11 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
+
+import java.io.IOException;
+
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
@@ -25,6 +31,7 @@ public class SplashActivity extends Activity {
     ProgressBar sp_jz;
     TextView sp_tv;
     LinearLayout sp_li;
+    @SuppressLint("HandlerLeak")
     Handler han = new Handler() {
 
         @Override
@@ -141,14 +148,38 @@ public class SplashActivity extends Activity {
         String name = UserManagement.getUserName();
         String password = UserManagement.getUserPassword();
         if (name != null && password != null) {
+            Message me = new Message();
+                me.what = 0;
+
             try {
                 su.login(name, password);
-            } catch (Exception e) {
-                Message me = new Message();
-                me.obj = e;
-                me.what = 0;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                me.obj = "InterruptedException："+e;
+                han.sendMessage(me);
+            } catch (IOException e) {
+                me.obj = "IOException："+e;
+                e.printStackTrace();
+                han.sendMessage(me);
+            } catch (SmackException e) {
+                me.obj = "SmackException："+e;
+                e.printStackTrace();
+                han.sendMessage(me);
+            } catch (XMPPException e) {
+                me.obj = "XMPPException："+e;
+                e.printStackTrace();
+                han.sendMessage(me);
+            } catch (Exception e){
+                me.obj = "其他错误："+e;
+                e.printStackTrace();
                 han.sendMessage(me);
             }
+//            catch (Exception e) {
+//                Message me = new Message();
+//                me.obj = e;
+//                me.what = 0;
+//                han.sendMessage(me);
+//            }
         } else {
             han.sendEmptyMessage(5);
         }
