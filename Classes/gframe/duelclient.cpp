@@ -1051,8 +1051,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		}
 		case HINT_NUMBER: {
 			myswprintf(textBuffer, dataManager.GetSysString(1512), data);
-			mainGame->lstLog->addItem(textBuffer);
-			mainGame->logParam.push_back(0);
+			mainGame->AddLog(textBuffer);
 			mainGame->gMutex.Lock();
 			mainGame->SetStaticText(mainGame->stACMessage, 310, mainGame->textFont, textBuffer);
 			mainGame->PopupElement(mainGame->wACMessage, 20);
