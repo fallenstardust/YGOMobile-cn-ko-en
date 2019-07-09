@@ -935,8 +935,20 @@ void field::shuffle(uint8 playerid, uint8 location) {
 		pduel->write_buffer8(svector.size());
 		for(auto& pcard : svector)
 			pduel->write_buffer32(pcard->data.code);
-		if(location == LOCATION_HAND)
+		if(location == LOCATION_HAND) {
 			core.shuffle_hand_check[playerid] = FALSE;
+			for(auto& pcard : svector) {
+				for(auto& i : pcard->indexer) {
+					effect* peffect = i.first;
+					if(peffect->is_flag(EFFECT_FLAG_CLIENT_HINT) && !peffect->is_flag(EFFECT_FLAG_PLAYER_TARGET)) {
+						pduel->write_buffer8(MSG_CARD_HINT);
+						pduel->write_buffer32(pcard->get_info_location());
+						pduel->write_buffer8(CHINT_DESC_ADD);
+						pduel->write_buffer32(peffect->description);
+					}
+				}
+			}
+		}
 	} else {
 		pduel->write_buffer8(MSG_SHUFFLE_DECK);
 		pduel->write_buffer8(playerid);
@@ -2400,7 +2412,7 @@ int32 field::check_synchro_material(card* pcard, int32 findex1, int32 findex2, i
 	return FALSE;
 }
 int32 field::check_tuner_material(card* pcard, card* tuner, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg) {
-	if(!tuner || !tuner->is_position(POS_FACEUP) || !(tuner->get_synchro_type() & TYPE_TUNER) || !tuner->is_can_be_synchro_material(pcard))
+	if(!tuner || (tuner->current.location == LOCATION_MZONE && !tuner->is_position(POS_FACEUP)) || !(tuner->get_synchro_type() & TYPE_TUNER) || !tuner->is_can_be_synchro_material(pcard))
 		return FALSE;
 	effect* pcheck = tuner->is_affected_by_effect(EFFECT_SYNCHRO_CHECK);
 	if(pcheck)

@@ -543,11 +543,10 @@ int32 field::process() {
 		return PROCESSOR_WAITING + pduel->bufferlen;
 	}
 	case PROCESSOR_ANNOUNCE_CARD: {
-		if(announce_card(it->step, it->arg1, it->arg2)) {
+		if(announce_card(it->step, it->arg1)) {
 			core.units.pop_front();
 		} else {
-			if(it->step == 0)
-				it->step++;
+			it->step++;
 		}
 		return PROCESSOR_WAITING + pduel->bufferlen;
 	}
