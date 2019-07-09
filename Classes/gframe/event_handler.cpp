@@ -26,8 +26,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 #endif
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
-	    if(mainGame->fadingList.size())
-    			break;
+		if(mainGame->fadingList.size())
+			break;
 		s32 id = event.GUIEvent.Caller->getID();
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
@@ -97,8 +97,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->dInfo.isReplay)
 					ReplayMode::SwapField();
-				else if (mainGame->dInfo.player_type == 7)
-					mainGame->dField.ReplaySwap();
+				else if(mainGame->dInfo.player_type == 7)
+					DuelClient::SwapField();
 				break;
 			}
 			case BUTTON_REPLAY_UNDO: {
@@ -977,7 +977,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::gui::EGET_EDITBOX_CHANGED: {
 			switch(id) {
 			case EDITBOX_ANCARD: {
-				UpdateDeclarableCode();
+				UpdateDeclarableList();
 				break;
 			}
 			}
@@ -986,7 +986,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::gui::EGET_EDITBOX_ENTER: {
 			switch(id) {
 			case EDITBOX_ANCARD: {
-				UpdateDeclarableCode();
+				UpdateDeclarableList();
 				break;
 			}
 			}
