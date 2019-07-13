@@ -1455,6 +1455,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->chain_when_avail = false;
 				UpdateChainButtons();
 			}
+			if(mainGame->wSurrender->isVisible())
+				mainGame->HideElement(mainGame->wSurrender);
 			mainGame->wCmdMenu->setVisible(false);
 			if(mainGame->fadingList.size())
 				break;
@@ -1552,8 +1554,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							myswprintf(formatBuffer, L"%ls", dataManager.GetName(mcard->code));
 							str.append(formatBuffer);
 							if(mcard->type & TYPE_MONSTER) {
-								if(mcard->alias && (mcard->alias < mcard->code - 10 || mcard->alias > mcard->code + 10)
-								        && wcscmp(dataManager.GetName(mcard->code), dataManager.GetName(mcard->alias))) {
+								if(mcard->alias && wcscmp(dataManager.GetName(mcard->code), dataManager.GetName(mcard->alias))) {
 									myswprintf(formatBuffer, L"\n(%ls)", dataManager.GetName(mcard->alias));
 									str.append(formatBuffer);
 								}
@@ -1575,7 +1576,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									str.append(formatBuffer);
 								}
 							} else {
-								if(mcard->alias && (mcard->alias < mcard->code - 10 || mcard->alias > mcard->code + 10)) {
+								if(mcard->alias && wcscmp(dataManager.GetName(mcard->code), dataManager.GetName(mcard->alias))) {
 									myswprintf(formatBuffer, L"\n(%ls)", dataManager.GetName(mcard->alias));
 									str.append(formatBuffer);
 								}
@@ -1866,7 +1867,6 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				int sel = mainGame->lstLog->getSelected();
 				if(sel != -1 && (int)mainGame->logParam.size() >= sel && mainGame->logParam[sel]) {
 					mainGame->wInfos->setActiveTab(0);
-					mainGame->ShowCardInfo(mainGame->logParam[sel]);
 				}
 				return true;
 				break;
