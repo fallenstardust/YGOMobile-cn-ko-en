@@ -118,13 +118,13 @@ void Game::DrawBackGround() {
 	driver->setTransform(irr::video::ETS_WORLD, irr::core::IdentityMatrix);
 	bool drawField = false;
 	int rule = (dInfo.duel_rule >= 4) ? 1 : 0;
-	if(mainGame->gameConf.draw_field_spell) {
+	if(gameConf.draw_field_spell) {
 		int fieldcode1 = -1;
 		int fieldcode2 = -1;
-		if(mainGame->dField.szone[0][5] && mainGame->dField.szone[0][5]->position & POS_FACEUP)
-			fieldcode1 = mainGame->dField.szone[0][5]->code;
-		if(mainGame->dField.szone[1][5] && mainGame->dField.szone[1][5]->position & POS_FACEUP)
-			fieldcode2 = mainGame->dField.szone[1][5]->code;
+		if(dField.szone[0][5] && dField.szone[0][5]->position & POS_FACEUP)
+			fieldcode1 = dField.szone[0][5]->code;
+		if(dField.szone[1][5] && dField.szone[1][5]->position & POS_FACEUP)
+			fieldcode2 = dField.szone[1][5]->code;
 		int fieldcode = (fieldcode1 > 0) ? fieldcode1 : fieldcode2;
 		if(fieldcode1 > 0 && fieldcode2 > 0 && fieldcode1 != fieldcode2) {
 			ITexture* texture = imageManager.GetTextureField(fieldcode1);
@@ -1141,7 +1141,7 @@ void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
 }
 void Game::PopupElement(irr::gui::IGUIElement * element, int hideframe) {
 	element->getParent()->bringToFront(element);
-	if(!mainGame->is_building)
+	if(!is_building)
 		dField.panel = element;
 	env->setFocus(element);
 	if(!hideframe)
