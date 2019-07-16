@@ -79,7 +79,6 @@ public class TaxiConnectionListener implements ConnectionListener {
                 } catch (Exception e) {
                     tExit.schedule(new timetask(), logintime);
                 }
-
             }
         }
 
@@ -96,12 +95,9 @@ public class TaxiConnectionListener implements ConnectionListener {
                     Log.e("TaxiConnectionListener", "重新加入房间");
                     tExit.schedule(new timeJoin(), logintime);
                 }
-
-
                 // TODO: Implement this method
             }
         }
 
     }
-
 }
