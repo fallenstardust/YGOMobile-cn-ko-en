@@ -163,9 +163,7 @@ public:
 		return focus && focus->hasType(type);
 	}
 // don't merge
-
-	Mutex gMutex;
-	Mutex gBuffer;
+	std::mutex gMutex;
 	Signal frameSignal;
 	Signal actionSignal;
 	Signal replaySignal;

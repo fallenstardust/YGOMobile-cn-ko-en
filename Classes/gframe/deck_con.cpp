@@ -139,10 +139,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case BUTTON_CLEAR_DECK: {
 				mainGame->soundEffectPlayer->doPressButton();
-				mainGame->gMutex.Lock();
+				mainGame->gMutex.lock();
 				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->textFont, dataManager.GetSysString(1339));
 				mainGame->PopupElement(mainGame->wQuery);
-				mainGame->gMutex.Unlock();
+				mainGame->gMutex.unlock();
 				prev_operation = id;
 				break;
 			}
@@ -198,11 +198,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				int sel = mainGame->cbDBDecks->getSelected();
 				if(sel == -1)
 					break;
-				mainGame->gMutex.Lock();
+				mainGame->gMutex.lock();
 				mainGame->wRenameDeck->setText(dataManager.GetSysString(1362));
 				mainGame->ebREName->setText(mainGame->cbDBDecks->getItem(sel));
 				mainGame->PopupElement(mainGame->wRenameDeck);
-				mainGame->gMutex.Unlock();
+				mainGame->gMutex.unlock();
 				prev_operation = id;
 				prev_sel = sel;
 				break;
@@ -240,12 +240,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				int sel = mainGame->cbDBDecks->getSelected();
 				if(sel == -1)
 					break;
-				mainGame->gMutex.Lock();
+				mainGame->gMutex.lock();
 				wchar_t textBuffer[256];
 				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337));
 				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
-				mainGame->gMutex.Unlock();
+				mainGame->gMutex.unlock();
 				prev_operation = id;
 				prev_sel = sel;
 				mainGame->soundEffectPlayer->doDelete();
@@ -253,10 +253,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_LEAVE_GAME: {
 				if(is_modified && !mainGame->chkIgnoreDeckChanges->isChecked()) {
-					mainGame->gMutex.Lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, dataManager.GetSysString(1356));
+					mainGame->gMutex.lock();
+					mainGame->SetStaticText(mainGame->stQMessage, 310, mainGame->guiFont, dataManager.GetSysString(1356));
 					mainGame->PopupElement(mainGame->wQuery);
-					mainGame->gMutex.Unlock();
+					mainGame->gMutex.unlock();
 					prev_operation = id;
 					break;
 				}
@@ -432,10 +432,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case COMBOBOX_DBDECKS: {
 				if(is_modified && !mainGame->chkIgnoreDeckChanges->isChecked()) {
-					mainGame->gMutex.Lock();
+					mainGame->gMutex.lock();
 					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->textFont, dataManager.GetSysString(1356));
 					mainGame->PopupElement(mainGame->wQuery);
-					mainGame->gMutex.Unlock();
+					mainGame->gMutex.unlock();
 					prev_operation = id;
 					break;
 				}

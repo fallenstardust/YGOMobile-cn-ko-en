@@ -1045,7 +1045,7 @@ void Game::MainLoop() {
 		}
 		driver->enableMaterial2D(false);
 #endif
-		gMutex.Lock();
+		gMutex.lock();
 		if(dInfo.isStarted) {
 			DrawBackImage(imageManager.tBackGround);
 			DrawBackGround();
@@ -1074,7 +1074,7 @@ void Game::MainLoop() {
 		DrawGUI();
 		DrawSpec();
 #endif
-		gMutex.Unlock();
+		gMutex.unlock();
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
