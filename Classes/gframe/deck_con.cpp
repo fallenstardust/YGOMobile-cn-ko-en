@@ -465,6 +465,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 							}
 						}
 					}
+					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
+                    	!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect))
+                    	break;
+
 					if(catesel > 0) {
 						mainGame->lstCategories->setSelected(catesel);
 						refreshDeckList();
