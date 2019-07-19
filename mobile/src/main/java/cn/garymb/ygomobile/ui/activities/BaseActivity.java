@@ -230,11 +230,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        try {
-            FileLogUtil.writeAndTime("resultcode值"+resultCode);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
         if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
             showToast("喵不给我权限让我怎么运行？！");
