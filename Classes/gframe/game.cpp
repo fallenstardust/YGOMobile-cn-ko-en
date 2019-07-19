@@ -633,7 +633,7 @@ bool Game::Initialize() {
 	wDeckEdit->setVisible(false);
 	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
 	//deck manage
-	wDeckManage = env->addWindow(rect<s32>(510 * xScale, 100 * yScale, 970 * xScale, 600 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
+	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 990 * xScale, 550 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
 	lstCategories = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 140 * xScale, 530 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
