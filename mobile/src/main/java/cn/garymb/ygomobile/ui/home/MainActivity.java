@@ -229,6 +229,9 @@ public class MainActivity extends HomeActivity {
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
                         AppsSettings.get().getResourcePath(), true);
 
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.WINDBOT_PATH),
+                        AppsSettings.get().getResourcePath(), true);
+
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
             } catch (IOException e) {
