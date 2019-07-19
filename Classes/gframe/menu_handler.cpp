@@ -11,6 +11,8 @@
 namespace ygo {
 
 void UpdateDeck() {
+	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()),
+		mainGame->gameConf.lastcategory, 64);
 	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()),
 		mainGame->gameConf.lastdeck, 64);
 		
@@ -52,7 +54,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		switch(event.GUIEvent.EventType) {
-//dont merge these cases
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
 			case BUTTON_MODE_EXIT: {
@@ -180,18 +181,20 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_HP_READY: {
 			    mainGame->soundEffectPlayer->doPressButton();
-				if(mainGame->cbDeckSelect->getSelected() == -1 ||
-					!deckManager.LoadDeck(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()))) {
+				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
+					!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 					break;
 				}
 				UpdateDeck();
 				DuelClient::SendPacketToServer(CTOS_HS_READY);
+				mainGame->cbCategorySelect->setEnabled(false);
 				mainGame->cbDeckSelect->setEnabled(false);
 				break;
 			}
 			case BUTTON_HP_NOTREADY: {
 		    	mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
+				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
 				break;
 			}
@@ -295,42 +298,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->ShowElement(mainGame->wMainMenu);
 				break;
 			}
-			case BUTTON_EXPORT_DECK: {
-				if(mainGame->lstReplayList->getSelected() == -1)
-					break;
-				Replay replay;
-				wchar_t ex_filename[256];
-				wchar_t namebuf[4][20];
-				wchar_t filename[256];
-				myswprintf(ex_filename, L"%ls", mainGame->lstReplayList->getListItem(mainGame->lstReplayList->getSelected()));
-				if(!replay.OpenReplay(ex_filename))
-					break;
-				const ReplayHeader& rh = replay.pheader;
-				if(rh.flag & REPLAY_SINGLE_MODE)
-					break;
-				int max = (rh.flag & REPLAY_TAG) ? 4 : 2;
-				//player name
-				for(int i = 0; i < max; ++i)
-					replay.ReadName(namebuf[i]);
-				//skip pre infos
-				for(int i = 0; i < 4; ++i)
-					replay.ReadInt32();
-				//deck
-				for(int i = 0; i < max; ++i) {
-					int main = replay.ReadInt32();
-					Deck tmp_deck;
-					for(int j = 0; j < main; ++j)
-						tmp_deck.main.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
-					int extra = replay.ReadInt32();
-					for(int j = 0; j < extra; ++j)
-						tmp_deck.extra.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
-					myswprintf(filename, L"%ls %ls", ex_filename, namebuf[i]);
-					deckManager.SaveDeck(tmp_deck, filename);
-				}
-				mainGame->stACMessage->setText(dataManager.GetSysString(1335));
-				mainGame->PopupElement(mainGame->wACMessage, 20);
-				break;
-			}
 			//TEST BOT MODE
 			case BUTTON_BOT_START: {
 				int sel = mainGame->lstBotList->getSelected();
@@ -417,11 +384,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_DECK_EDIT: {
+				mainGame->RefreshCategoryDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 				mainGame->soundEffectPlayer->doPressButton();
-				mainGame->RefreshDeck(mainGame->cbDBDecks);
-				if(mainGame->cbDBDecks->getSelected() != -1)
-					deckManager.LoadDeck(mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
+				if(mainGame->cbDBCategory->getSelected() != -1 && mainGame->cbDBDecks->getSelected() != -1) {
+					deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 					mainGame->ebDeckname->setText(L"");
+				}
 				mainGame->HideElement(mainGame->wMainMenu);
 				mainGame->deckBuilder.Initialize();
 				break;
@@ -574,6 +542,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			break;
 		}
+		case irr::gui::EGET_COMBO_BOX_CHANGED: {
+			switch(id) {
+			case COMBOBOX_HP_CATEGORY: {
+				int catesel = mainGame->cbCategorySelect->getSelected();
+				if(catesel == 3) {
+					catesel = 2;
+					mainGame->cbCategorySelect->setSelected(2);
+				}
+				if(catesel >= 0) {
+					mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+					mainGame->cbDeckSelect->setSelected(0);
+				}
+				break;
+			}
+			}
+			break;
+		}
 		case irr::gui::EGET_CHECKBOX_CHANGED: {
 			switch(id) {
 			case CHECKBOX_HP_READY: {
@@ -581,16 +566,18 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					break;
 				mainGame->env->setFocus(mainGame->wHostPrepare);
 				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
-					if(mainGame->cbDeckSelect->getSelected() == -1 ||
-					        !deckManager.LoadDeck(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()))) {
+					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
+						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
 						break;
 					}
 					UpdateDeck();
 					DuelClient::SendPacketToServer(CTOS_HS_READY);
+					mainGame->cbCategorySelect->setEnabled(false);
 					mainGame->cbDeckSelect->setEnabled(false);
 				} else {
 					DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
+					mainGame->cbCategorySelect->setEnabled(true);
 					mainGame->cbDeckSelect->setEnabled(true);
 				}
 				break;
