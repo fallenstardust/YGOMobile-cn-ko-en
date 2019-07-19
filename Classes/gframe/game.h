@@ -469,6 +469,7 @@ public:
 	irr::gui::IGUIButton* btnDMDeleteDeck;
 	irr::gui::IGUIButton* btnMoveDeck;
 	irr::gui::IGUIButton* btnCopyDeck;
+	irr::gui::IGUIButton* btnCloseDM;
 	irr::gui::IGUIWindow* wDMQuery;
 	irr::gui::IGUIStaticText* stDMMessage;
 	irr::gui::IGUIStaticText* stDMMessage2;
@@ -716,6 +717,7 @@ extern Game* mainGame;
 #define LISTBOX_DECKS				340
 #define BUTTON_DM_OK				341
 #define BUTTON_DM_CANCEL			342
+#define BUTTON_CLOSE_DECKMANAGER	343
 #define COMBOBOX_LFLIST				349
 
 #define CHECKBOX_AUTO_SEARCH		360

@@ -631,14 +631,15 @@ bool Game::Initialize() {
 	//deck edit
 	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 8 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
 	wDeckEdit->setVisible(false);
-	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1328));
+	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
 	//deck manage
 	wDeckManage = env->addWindow(rect<s32>(510 * xScale, 100 * yScale, 970 * xScale, 600 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
-	lstCategories = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 140 * xScale, 480 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
-    lstCategories->setItemHeight(22 * yScale);
-	lstDecks = env->addListBox(rect<s32>(150 * xScale, 30 * yScale, 340 * xScale, 480 * yScale), wDeckManage, LISTBOX_DECKS, true);
-	lstCategories->setItemHeight(22 * yScale);
+	wDeckManage->getCloseButton()->setVisible(false);
+	lstCategories = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 140 * xScale, 530 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
+    lstCategories->setItemHeight(25 * yScale);
+	lstDecks = env->addListBox(rect<s32>(150 * xScale, 30 * yScale, 340 * xScale, 530 * yScale), wDeckManage, LISTBOX_DECKS, true);
+	lstCategories->setItemHeight(25 * yScale);
 	posY = 30;
 	btnNewCategory = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_NEW_CATEGORY, dataManager.GetSysString(1461));
 	posY += 50;
@@ -659,6 +660,8 @@ bool Game::Initialize() {
 	cbLFList = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, COMBOBOX_LFLIST);
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
 		cbLFList->addItem(deckManager._lfList[i].listName);
+	posY += 50;
+	btnCloseDM = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_CLOSE_DECKMANAGER, dataManager.GetSysString(1211));
 	//deck manage query
 	wDMQuery = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1460));
 	wDMQuery->getCloseButton()->setVisible(false);

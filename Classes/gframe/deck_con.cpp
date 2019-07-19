@@ -704,6 +704,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->cbDMCategory->setVisible(false);
 				break;
 			}
+			case BUTTON_CLOSE_DECKMANAGER: {
+            		mainGame->HideElement(mainGame->wDeckManage);
+            		break;
+			}
 			case BUTTON_SIDE_OK: {
 				mainGame->soundEffectPlayer->doPressButton();
 				if(deckManager.current_deck.main.size() != pre_mainc || deckManager.current_deck.extra.size() != pre_extrac
