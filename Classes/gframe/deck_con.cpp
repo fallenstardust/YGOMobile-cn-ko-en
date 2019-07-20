@@ -299,7 +299,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_LEAVE_GAME: {
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
