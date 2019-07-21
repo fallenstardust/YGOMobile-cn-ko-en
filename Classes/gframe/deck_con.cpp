@@ -173,16 +173,21 @@ void DeckBuilder::Terminate() {
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);
 	mainGame->ClearTextures();
-	mainGame->SaveConfig();
 	mainGame->scrFilter->setVisible(false);
 	int catesel = mainGame->cbDBCategory->getSelected();
-	if(catesel >= 0)
-		BufferIO::CopyWStr(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory, 64);
-	int decksel = mainGame->cbDBDecks->getSelected();
 	char linebuf[256];
-	if(decksel >= 0)		
+	if(catesel >= 0)
+	    BufferIO::CopyWStr(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory, 64);
+	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
+		android::setLastCategory(mainGame->appMain, linebuf);
+		//irr:os::Printer::log("setLastCategory", linebuf);
+	int decksel = mainGame->cbDBDecks->getSelected();
+	if(decksel >= 0)
+	    BufferIO::CopyWStr(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck, 64);
 		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
 		android::setLastDeck(mainGame->appMain, linebuf);
+		//os::Printer::log("setLastDeck", linebuf);
+	mainGame->SaveConfig();
 	if(exit_on_return)
 		mainGame->device->closeDevice();
 }
@@ -1037,8 +1042,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						break;
 				}
 				refreshDeckList();
-				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
-                    break;
+//				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
+//                    break;
 				mainGame->lstDecks->setSelected(0);
 				mainGame->cbDBCategory->setSelected(catesel);
 				changeCategory(catesel);

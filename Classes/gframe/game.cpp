@@ -1392,11 +1392,12 @@ void Game::LoadConfig() {
 	gameConf.textfontsize = 16;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
-	gameConf.bot_deck_path[0] = 0;
-	gameConf.lastcategory[0] = 0;
+    BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
+    BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
+    //irr:os::Printer::log("getLastCategory", android::getLastCategory(appMain).c_str());
 	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
-	irr:os::Printer::log(android::getFontPath(appMain).c_str());
+	//os::Printer::log(android::getFontPath(appMain).c_str());
 	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
