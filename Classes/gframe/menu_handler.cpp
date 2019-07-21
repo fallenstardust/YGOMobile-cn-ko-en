@@ -11,12 +11,12 @@
 namespace ygo {
 
 void UpdateDeck() {
-	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()),
-		mainGame->gameConf.lastcategory, 64);
-	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()),
-		mainGame->gameConf.lastdeck, 64);
-		
-	char linebuf[256];	
+    char linebuf[256];
+	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), mainGame->gameConf.lastcategory, 64);
+	BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
+    android::setLastCategory(mainGame->appMain, linebuf);
+
+	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()), mainGame->gameConf.lastdeck, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
 	android::setLastDeck(mainGame->appMain, linebuf);
 		
