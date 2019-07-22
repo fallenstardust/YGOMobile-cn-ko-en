@@ -96,7 +96,7 @@ inline void changeCategory(int catesel) {
 	refreshReadonly(catesel);
 	mainGame->RefreshDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 	mainGame->cbDBDecks->setSelected(0);
-	deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
+	deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);//fixme
 	mainGame->deckBuilder.is_modified = false;
 	mainGame->deckBuilder.prev_category = catesel;
 	mainGame->deckBuilder.prev_deck = 0;
@@ -118,8 +118,8 @@ inline void showDeckManage() {
 		}
 	});
 	lstCategories->setSelected(mainGame->deckBuilder.prev_category);
-	refreshReadonly(mainGame->deckBuilder.prev_category);
 	refreshDeckList();
+	refreshReadonly(mainGame->deckBuilder.prev_category);
 	mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
 	mainGame->PopupElement(mainGame->wDeckManage);
 }
@@ -345,6 +345,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_MANAGE_DECK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
 					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
@@ -357,6 +358,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_NEW_CATEGORY: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1469));
 				mainGame->ebDMName->setVisible(true);
@@ -367,6 +369,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_RENAME_CATEGORY: {
+				mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->lstCategories->getSelected() < 4)
 					break;
 				mainGame->gMutex.lock();
@@ -379,6 +382,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_DELETE_CATEGORY: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1470));
 				mainGame->stDMMessage2->setVisible(true);
@@ -389,6 +393,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_NEW_DECK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1471));
 				mainGame->ebDMName->setVisible(true);
@@ -399,6 +404,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_RENAME_DECK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1471));
 				mainGame->ebDMName->setVisible(true);
@@ -409,6 +415,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_DELETE_DECK_DM: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1337));
 				mainGame->stDMMessage2->setVisible(true);
@@ -419,6 +426,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_MOVE_DECK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1472));
 				mainGame->cbDMCategory->setVisible(true);
@@ -436,6 +444,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_COPY_DECK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				mainGame->gMutex.lock();
 				mainGame->stDMMessage->setText(dataManager.GetSysString(1473));
 				mainGame->cbDMCategory->setVisible(true);
@@ -453,6 +462,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_DM_OK: {
+				mainGame->soundEffectPlayer->doPressButton();
 				switch(prev_operation) {
 				case BUTTON_NEW_CATEGORY: {
 					int catesel = 0;
@@ -472,19 +482,20 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 							}
 						}
 					}
-					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
-                    	break;
+//					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
+//                    	break;
 
 					if(catesel > 0) {
 						mainGame->lstCategories->setSelected(catesel);
 						refreshDeckList();
 						mainGame->lstDecks->setSelected(0);
 						mainGame->cbDBCategory->setSelected(catesel);
-						changeCategory(catesel);
+						changeCategory(catesel);//fixme
 					}
 					break;
 				}
 				case BUTTON_RENAME_CATEGORY: {
+					mainGame->soundEffectPlayer->doPressButton();
 					int catesel = mainGame->lstCategories->getSelected();
 					const wchar_t* oldcatename = mainGame->lstCategories->getListItem(catesel);
 					const wchar_t* newcatename = mainGame->ebDMName->getText();
@@ -515,6 +526,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_DELETE_CATEGORY: {
+					mainGame->soundEffectPlayer->doPressButton();
 					int catesel = mainGame->lstCategories->getSelected();
 					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
 					if(deckManager.DeleteCategory(catename)) {
@@ -533,6 +545,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_NEW_DECK: {
+					mainGame->soundEffectPlayer->doPressButton();
 					const wchar_t* deckname = mainGame->ebDMName->getText();
 					wchar_t catepath[256];
 					deckManager.GetCategoryPath(catepath, mainGame->cbDBCategory->getSelected(), mainGame->cbDBCategory->getText());
@@ -563,6 +576,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_RENAME_DECK: {
+					mainGame->soundEffectPlayer->doPressButton();
 					int catesel = mainGame->lstCategories->getSelected();
 					int decksel = mainGame->lstDecks->getSelected();
 					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
@@ -597,6 +611,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_DELETE_DECK_DM: {
+					mainGame->soundEffectPlayer->doPressButton();
 					int decksel = mainGame->lstDecks->getSelected();
 					wchar_t filepath[256];
 					deckManager.GetDeckFile(filepath, mainGame->cbDBCategory, mainGame->cbDBDecks);
@@ -612,6 +627,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 							mainGame->cbDBDecks->setSelected(decksel);
 							deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 						}
+						refreshReadonly(prev_category);
 						prev_deck = decksel;
 					} else {
 						mainGame->stACMessage->setText(dataManager.GetSysString(1476));
@@ -620,6 +636,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_MOVE_DECK: {
+					mainGame->soundEffectPlayer->doPressButton();
 					int oldcatesel = mainGame->lstCategories->getSelected();
 					int newcatesel = mainGame->cbDMCategory->getSelected();
 					int decksel = mainGame->lstDecks->getSelected();
@@ -660,6 +677,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				case BUTTON_COPY_DECK: {
+				    mainGame->soundEffectPlayer->doPressButton();
 					int oldcatesel = mainGame->lstCategories->getSelected();
 					int newcatesel = mainGame->cbDMCategory->getSelected();
 					int decksel = mainGame->lstDecks->getSelected();
@@ -708,6 +726,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_DM_CANCEL: {
+			    mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wDMQuery);
 				mainGame->stDMMessage2->setVisible(false);
 				mainGame->ebDMName->setVisible(false);
@@ -715,6 +734,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CLOSE_DECKMANAGER: {
+			        mainGame->soundEffectPlayer->doPressButton();
             		mainGame->HideElement(mainGame->wDeckManage);
             		break;
 			}
