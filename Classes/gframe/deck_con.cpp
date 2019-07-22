@@ -215,13 +215,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		switch(event.GUIEvent.EventType) {
-		case irr::gui::EGET_ELEMENT_CLOSED: {
-			if(id == WINDOW_DECK_MANAGE) {
-				mainGame->HideElement(mainGame->wDeckManage);
-				return true;
-				break;
-			}
-		}
+/*		case irr::gui::EGET_ELEMENT_CLOSED: {
+*			if(id == WINDOW_DECK_MANAGE) {
+*				mainGame->HideElement(mainGame->wDeckManage);
+*				return true;
+*				break;
+*			}
+*		}*/
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
 			case BUTTON_CLEAR_DECK: {
@@ -1066,7 +1066,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 //                    break;
 				mainGame->lstDecks->setSelected(0);
 				mainGame->cbDBCategory->setSelected(catesel);
-				changeCategory(catesel);
+				changeCategory(catesel);//fixme
 				break;
 			}
 			case LISTBOX_DECKS: {
