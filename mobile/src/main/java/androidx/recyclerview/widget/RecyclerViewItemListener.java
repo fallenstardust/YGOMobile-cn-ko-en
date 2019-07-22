@@ -1,9 +1,12 @@
-package android.support.v7.widget;
+package androidx.appcompat.widget;
 
-import android.support.v4.view.GestureDetectorCompat;
+
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.core.view.GestureDetectorCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class RecyclerViewItemListener extends RecyclerView.SimpleOnItemTouchListener {
     private GestureDetectorCompat gestureDetector;

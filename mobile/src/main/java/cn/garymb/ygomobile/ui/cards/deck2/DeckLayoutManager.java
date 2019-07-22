@@ -1,7 +1,9 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
 import android.content.Context;
-import android.support.v7.widget.GridLayoutManagerPlus;
+
+import androidx.recyclerview.widget.GridLayoutManagerPlus;
+
 
 class DeckLayoutManager extends GridLayoutManagerPlus {
     DeckLayoutManager(Context context, final int span, final IDeckLayout deckAdapter) {

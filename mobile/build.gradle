@@ -81,9 +81,9 @@ dependencies {
     implementation 'junit:junit:4.12'
     implementation project(':libcore')
     //support-annotations，support-vector-drawable
-    implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion
-    implementation 'com.android.support:design:' + rootProject.ext.supportVersion
+//    implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
+//    implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion
+//    implementation 'com.android.support:design:' + rootProject.ext.supportVersion
 
     implementation 'org.jdeferred:jdeferred-android-aar:1.2.4'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
@@ -106,4 +106,6 @@ dependencies {
     implementation "com.pgyersdk:sdk:3.0.5"
 
 
+    //dialog库
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.9'
 }

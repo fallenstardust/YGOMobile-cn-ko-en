@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile;
 
 
+
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.AppCompatDelegate;
+
+import androidx.appcompat.app.AppCompatDelegate;
 
 import cn.garymb.ygomobile.utils.CrashHandler;
 

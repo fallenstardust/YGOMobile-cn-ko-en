@@ -1,8 +1,10 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
+
 import android.graphics.Rect;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 class DeckItemDecoration extends RecyclerView.ItemDecoration {
     private IDeckLayout mDeckLayout;

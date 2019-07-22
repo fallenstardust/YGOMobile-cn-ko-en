@@ -1,10 +1,12 @@
 package cn.garymb.ygomobile.ui.widget;
 
+
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
-import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 public class ShimmerTextView extends AppCompatTextView implements ShimmerViewBase {
 

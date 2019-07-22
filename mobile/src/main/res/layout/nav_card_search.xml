@@ -17,7 +17,7 @@
         android:layout_marginTop="6dp"
         android:orientation="vertical">
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="18dp" />
@@ -27,13 +27,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="18dp"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatEditText
+                <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/edt_word1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -44,9 +44,9 @@
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColorHint="@color/gold" />
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <android.support.v7.widget.AppCompatButton
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btn_search"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -60,13 +60,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="18dp"
                 android:layout_weight="1">
 
-                <android.support.v7.widget.AppCompatEditText
+                <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/edt_word2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -76,9 +76,9 @@
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColorHint="@color/gold" />
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <android.support.v7.widget.AppCompatButton
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btn_reset"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -97,14 +97,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_ot"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1" />
 
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_scale"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
@@ -117,13 +117,13 @@
                 android:layout_height="@dimen/label_width_small"
                 android:orientation="horizontal">
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_limit_list"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_limit"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -136,7 +136,7 @@
                 android:layout_height="@dimen/label_width_small"
                 android:orientation="horizontal">
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_category"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -165,20 +165,20 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_type_card"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1" />
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_race"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
                     android:visibility="gone" />
 
-                <android.support.v7.widget.AppCompatSpinner
+                <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_type_st"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
@@ -197,13 +197,13 @@
                     android:layout_height="@dimen/label_width_small"
                     android:orientation="horizontal">
 
-                    <android.support.v7.widget.AppCompatSpinner
+                    <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_level"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
 
-                    <android.support.v7.widget.AppCompatSpinner
+                    <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_attribute"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -215,13 +215,13 @@
                     android:layout_height="@dimen/label_width_small"
                     android:orientation="horizontal">
 
-                    <android.support.v7.widget.AppCompatSpinner
+                    <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_type_monster"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
 
-                    <android.support.v7.widget.AppCompatSpinner
+                    <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_type_monster2"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -235,12 +235,12 @@
                     android:layout_marginLeft="10dp"
                     android:orientation="horizontal">
 
-                    <android.support.design.widget.TextInputLayout
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1">
 
-                        <android.support.v7.widget.AppCompatEditText
+                        <androidx.appcompat.widget.AppCompatEditText
                             android:id="@+id/edt_atk"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -248,14 +248,14 @@
                             android:maxLines="1"
                             android:singleLine="true"
                             tools:text="100" />
-                    </android.support.design.widget.TextInputLayout>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <android.support.design.widget.TextInputLayout
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1">
 
-                        <android.support.v7.widget.AppCompatEditText
+                        <androidx.appcompat.widget.AppCompatEditText
                             android:id="@+id/edt_def"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -263,7 +263,7 @@
                             android:maxLines="1"
                             android:singleLine="true"
                             tools:text="100" />
-                    </android.support.design.widget.TextInputLayout>
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

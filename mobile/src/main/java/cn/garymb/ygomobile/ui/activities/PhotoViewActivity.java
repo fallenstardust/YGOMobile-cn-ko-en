@@ -3,8 +3,9 @@ package cn.garymb.ygomobile.ui.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+
+import androidx.appcompat.widget.Toolbar;
 
 import java.io.IOException;
 

@@ -3,9 +3,10 @@ package cn.garymb.ygomobile.ui.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;

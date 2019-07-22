@@ -1,9 +1,10 @@
 package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
+
+import androidx.annotation.Nullable;
 
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;

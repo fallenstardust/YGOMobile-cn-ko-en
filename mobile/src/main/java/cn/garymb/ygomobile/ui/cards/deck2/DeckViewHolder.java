@@ -1,11 +1,13 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
 import android.graphics.Bitmap;
-import android.support.v7.widget.GridLayoutManagerPlus;
+
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.GridLayoutManagerPlus;
 
 import cn.garymb.ygomobile.lite.R;
 import ocgcore.data.Card;

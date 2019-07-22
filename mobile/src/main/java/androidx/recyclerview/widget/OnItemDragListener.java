@@ -1,4 +1,4 @@
-package android.support.v7.widget.helper;
+package androidx.recyclerview.widget;
 
 public interface OnItemDragListener {
     void onDragStart();
