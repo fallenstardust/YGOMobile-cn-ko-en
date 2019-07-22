@@ -142,7 +142,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         } else {
             mPreLoadFile = null;
             //最后卡组
-            _file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
+            _file = new File(mSettings.getLastDeckPath());
         }
         init(_file);
         EventBus.getDefault().register(this);
@@ -275,7 +275,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             setActionBarSubTitle(name);
             if (inDeckDir(file)) {
                 //deck文件夹里面的，则保存文件
-                mSettings.setLastDeck(name);
+                mSettings.setLastDeckPath(file.getAbsolutePath());
             }
         } else {
             setActionBarSubTitle(getString(R.string.noname));

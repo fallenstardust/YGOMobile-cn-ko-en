@@ -483,16 +483,16 @@ public class AppsSettings {
     }
 
     /***
-     * 获得最后卡组名
+     * 获得最后卡组绝对路径
      */
-    public String getLastDeck() {
+    public String getLastDeckPath() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     /***
-     * 保存最后卡组名
+     * 保存最后卡组绝对路径
      */
-    public void setLastDeck(String name) {
+    public void setLastDeckPath(String name) {
         if (TextUtils.equals(name, getCurLastDeck())) {
             //一样
             return;
@@ -592,7 +592,7 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            setLastDeck(value);
+            setLastDeckPath(value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
@@ -600,7 +600,7 @@ public class AppsSettings {
 
     public String getSettings(String key) {
         if ("lastdeck".equals(key)) {
-            String val = getLastDeck();
+            String val = getLastDeckPath();
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);
