@@ -36,16 +36,39 @@
                 android:orientation="horizontal"
                 android:weightSum="1">
 
+                <LinearLayout
+                    android:padding="5dp"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/item_and_text_height">
+
                 <TextView
+                    android:textSize="12sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/deck_name"
                     android:textColor="@color/holo_blue_light" />
 
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:layout_marginTop="2dp"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:text="假装这是一个卡组.ydk"
+                        android:textSize="18sp"
+                        android:id="@+id/tv_deck"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                </LinearLayout>
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/toolbar_list"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/item_height"
+                    android:visibility="gone"
                     android:layout_weight="1" />
 
                 <LinearLayout

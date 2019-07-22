@@ -161,6 +161,9 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_ONLY_GAME, DEF_PREF_ONLY_GAME);
     }
 
+    /***
+     * 是否使用额外卡库
+     */
     public boolean isReadExpansions() {
         return mSharedPreferences.getBoolean(PREF_READ_EX, DEF_PREF_READ_EX);
     }
@@ -398,14 +401,14 @@ public class AppsSettings {
     }
 
     /***
-     * 是否使用额外卡库
+     * 是否优先使用外置数据
      */
     public boolean isUseExtraCards() {
         return mSharedPreferences.getBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, Constants.PREF_DEF_USE_EXTRA_CARD_CARDS);
     }
 
     /***
-     * 设置是否使用额外卡库
+     * 设置是否优先使用外置数据
      */
     public void setUseExtraCards(boolean useExtraCards) {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
@@ -464,6 +467,21 @@ public class AppsSettings {
     //获取卡组文件夹
     public String getDeckDir() {
         return new File(getResourcePath(), Constants.CORE_DECK_PATH).getAbsolutePath();
+    }
+
+    //获取ai卡组文件夹
+    public String getAiDeckDir() {
+        return new File(getResourcePath(), Constants.CORE_DECK_PATH+"/Decks").getAbsolutePath();
+    }
+
+    //获取新卡卡包文件夹
+    public String getPackDeckDir() {
+        return new File(getResourcePath(), "pack").getAbsolutePath();
+    }
+
+    //获取临时存放卡组的目录
+    public String getCacheDeckDir(){
+        return context.getExternalFilesDir("cacheDeck").getAbsolutePath();
     }
 
     //获取残局文件夹

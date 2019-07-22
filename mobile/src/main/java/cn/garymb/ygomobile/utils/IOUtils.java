@@ -246,4 +246,24 @@ public class IOUtils {
 
     }
 
+    public static File asFile(InputStream is, String outPath) throws IOException {
+        OutputStream os = null;
+        try {
+            os = new FileOutputStream(outPath);
+            int len = 0;
+            byte[] buffer = new byte[8192];
+
+            while ((len = is.read(buffer)) != -1) {
+                os.write(buffer, 0, len);
+            }
+        } finally {
+            if (os!=null)
+            os.close();
+            is.close();
+        }
+        return new File(outPath);
+    }
+
+
+
 }

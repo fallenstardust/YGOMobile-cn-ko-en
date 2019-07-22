@@ -26,8 +26,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
@@ -69,6 +71,7 @@ import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
+import cn.garymb.ygomobile.utils.YGODialogUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -86,15 +89,20 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private AppCompatSpinner mDeckSpinner;
+    private TextView tv_deck;
     private SimpleSpinnerAdapter mSimpleSpinnerAdapter;
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
+    private DialogUtils du;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        du=DialogUtils.getdx(this);
+        tv_deck=$(R.id.tv_deck);
         mDeckSpinner = $(R.id.toolbar_list);
         mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mLimitSpinner = $(R.id.sp_limit_list);
@@ -147,6 +155,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         }
         init(_file);
         EventBus.getDefault().register(this);
+        tv_deck.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                YGODialogUtil.dialogDeckSelect(DeckManagerActivityImpl.this,null);
+            }
+        });
     }
 
     @Override
