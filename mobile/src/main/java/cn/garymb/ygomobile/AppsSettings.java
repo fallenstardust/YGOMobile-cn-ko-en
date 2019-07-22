@@ -483,14 +483,14 @@ public class AppsSettings {
     }
 
     /***
-     * 最后卡组名
+     * 获得最后卡组名
      */
     public String getLastDeck() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     /***
-     * 最后卡组名
+     * 保存最后卡组名
      */
     public void setLastDeck(String name) {
         if (TextUtils.equals(name, getCurLastDeck())) {
@@ -502,6 +502,28 @@ public class AppsSettings {
 
     public String getCurLastDeck() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, null);
+    }
+
+    /***
+     * 获得最后卡组分类名
+     */
+    public String getLastCategory() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
+    }
+
+    /***
+     * 保存最后卡组分类名
+     */
+    public void setLastCategory(String name) {
+        if (TextUtils.equals(name, getCurLastCategory())) {
+            //一样
+            return;
+        }
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
+    }
+
+    public String getCurLastCategory() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, null);
     }
 
     public void saveIntSettings(String key, int value) {
@@ -579,6 +601,22 @@ public class AppsSettings {
     public String getSettings(String key) {
         if ("lastdeck".equals(key)) {
             String val = getLastDeck();
+            return val;
+        }
+        return mSharedPreferences.getString(Constants.PREF_START + key, null);
+    }
+
+    public void saveCategorySettings(String key, String value) {
+        if ("lastcategory".equals(key)) {
+            setLastCategory(value);
+        } else {
+            mSharedPreferences.putString(Constants.PREF_START + key, value);
+        }
+    }
+
+    public String getCategorySettings(String key) {
+        if ("lastcategory".equals(key)) {
+            String val = getLastCategory();
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);

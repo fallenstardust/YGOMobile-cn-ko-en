@@ -241,6 +241,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             if (file == null) {
                 return new DeckInfo();
             }
+            Log.i("最后分类", mSettings.getLastCategory());
             Log.i("kk", "load ydk " + file);
             if (mCardLoader.isOpen() && file.exists()) {
                 return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
