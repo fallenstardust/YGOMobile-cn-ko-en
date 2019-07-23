@@ -30,7 +30,7 @@ public class YGODialogUtil {
         rv_deck.setLayoutManager(new LinearLayoutManager(context));
         rv_type.setLayoutManager(new LinearLayoutManager(context));
         TextSelectAdapter typeAdp, deckAdp;
-        List<DeckType> typeList = DeckUtil.getDeckTypeList();
+        List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
 
         int typeSelectPosition=2;
         int deckSelectPosition=-1;
