@@ -46,12 +46,11 @@ public class AppsSettings {
     private float mScreenHeight, mScreenWidth, mDensity;
 
 
-
     private AppsSettings(Context context) {
         this.context = context;
         mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
         mSharedPreferences.setAutoSave(true);
-        Log.e("YGOMobileLog", "初始化类地址:  "+ System.identityHashCode(this));
+        Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
         update(context);
     }
 
@@ -79,9 +78,9 @@ public class AppsSettings {
             if (dm != null) {
 
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.e("YGOMobileLog","类地址"+System.identityHashCode(this));
+                Log.e("YGOMobileLog", "类地址" + System.identityHashCode(this));
 
-                int notchHeight=getNotchHeight();
+                int notchHeight = getNotchHeight();
 
                 try {
                     FileLogUtil.writeAndTime("是否沉浸:  " + isImmerSiveMode());
@@ -89,7 +88,7 @@ public class AppsSettings {
                     FileLogUtil.writeAndTime("原始宽:  " + mScreenWidth);
                     FileLogUtil.writeAndTime("界面长:  " + dm.heightPixels);
                     FileLogUtil.writeAndTime("界面宽:  " + dm.widthPixels);
-                    FileLogUtil.writeAndTime("刘海长:  "+notchHeight);
+                    FileLogUtil.writeAndTime("刘海长:  " + notchHeight);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -147,7 +146,7 @@ public class AppsSettings {
         return mSharedPreferences.getInt(PREF_NOTCH_HEIGHT, DEF_PREF_NOTCH_HEIGHT);
     }
 
-    public void setNotchHeight(int height){
+    public void setNotchHeight(int height) {
         mSharedPreferences.putInt(PREF_NOTCH_HEIGHT, height);
     }
 
@@ -469,7 +468,7 @@ public class AppsSettings {
 
     //获取ai卡组文件夹
     public String getAiDeckDir() {
-        return new File(getResourcePath(), Constants.CORE_DECK_PATH+"/Decks").getAbsolutePath();
+        return new File(getResourcePath(), Constants.WINDBOT_PATH + "/Decks").getAbsolutePath();
     }
 
     //获取新卡卡包文件夹
@@ -478,7 +477,7 @@ public class AppsSettings {
     }
 
     //获取临时存放卡组的目录
-    public String getCacheDeckDir(){
+    public String getCacheDeckDir() {
         return context.getExternalFilesDir("cacheDeck").getAbsolutePath();
     }
 

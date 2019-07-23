@@ -250,4 +250,7 @@
     <string name="save_n_open">保存并打开</string>
     <string name="searchresult">搜索结果</string>
     <string name="Pre_share">准备分享，请稍候……</string>
+    <string name="category_pack">卡包展示</string>
+    <string name="category_windbot_deck">人机卡组</string>
+    <string name="category_Uncategorized">未分类卡组</string>
 </resources>
