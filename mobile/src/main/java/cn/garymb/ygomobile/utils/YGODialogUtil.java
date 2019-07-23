@@ -10,7 +10,6 @@ import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;

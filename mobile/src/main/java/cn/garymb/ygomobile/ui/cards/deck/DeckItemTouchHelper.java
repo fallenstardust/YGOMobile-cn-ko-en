@@ -1,11 +1,11 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import android.util.Log;
+
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.util.Log;
 
 import java.util.List;
 

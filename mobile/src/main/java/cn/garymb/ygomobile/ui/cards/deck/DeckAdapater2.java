@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
 import android.content.Context;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

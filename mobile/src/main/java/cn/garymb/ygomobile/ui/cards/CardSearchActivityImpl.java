@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.os.Bundle;
-
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.Menu;

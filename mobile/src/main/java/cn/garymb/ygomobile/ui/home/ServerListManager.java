@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
 import android.content.Context;
-
 import android.text.TextUtils;
 import android.widget.Toast;
 

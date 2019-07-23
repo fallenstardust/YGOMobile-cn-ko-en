@@ -8,13 +8,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatSpinner;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.RecyclerViewItemListener;
-import androidx.recyclerview.widget.ItemTouchHelperPlus;
-import androidx.recyclerview.widget.OnItemDragListener;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +21,13 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatSpinner;
+import androidx.appcompat.widget.RecyclerViewItemListener;
+import androidx.recyclerview.widget.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.OnItemDragListener;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;

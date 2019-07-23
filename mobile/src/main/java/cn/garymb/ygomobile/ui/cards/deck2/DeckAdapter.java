@@ -1,14 +1,14 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
 import android.content.Context;
-import androidx.recyclerview.widget.ItemTouchHelperPlus;
-import androidx.recyclerview.widget.OnItemDragListener;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.recyclerview.widget.ItemTouchHelperPlus;
+import androidx.recyclerview.widget.OnItemDragListener;
+import androidx.recyclerview.widget.RecyclerView;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;

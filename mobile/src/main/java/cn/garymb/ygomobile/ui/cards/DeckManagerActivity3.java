@@ -3,14 +3,13 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.text.TextUtils;
-import android.view.View;
-import android.widget.Toast;
 
 import java.io.File;
 import java.util.List;

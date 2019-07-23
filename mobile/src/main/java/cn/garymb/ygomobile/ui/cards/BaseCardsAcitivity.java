@@ -1,16 +1,16 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.RecyclerViewItemListener;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.RecyclerViewItemListener;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 

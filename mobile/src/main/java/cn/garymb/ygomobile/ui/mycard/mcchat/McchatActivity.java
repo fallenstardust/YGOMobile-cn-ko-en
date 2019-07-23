@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.mycard.mcchat;
 
 import android.app.Activity;
 import android.os.Bundle;
-
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;

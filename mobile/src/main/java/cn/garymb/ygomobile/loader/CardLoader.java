@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.loader;
 
 import android.app.Dialog;
 import android.content.Context;
-
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;

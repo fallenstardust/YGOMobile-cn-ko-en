@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.activities;
 
 import android.os.Bundle;
 
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 

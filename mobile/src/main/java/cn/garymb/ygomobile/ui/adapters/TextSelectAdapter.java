@@ -12,7 +12,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class TextSelectAdapter extends RecyclerView.Adapter<TextSelectAdapter.ViewHolder> {

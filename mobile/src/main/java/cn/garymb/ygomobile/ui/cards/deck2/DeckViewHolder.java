@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards.deck2;
 
 import android.graphics.Bitmap;
-
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
