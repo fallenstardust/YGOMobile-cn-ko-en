@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.bean.events;
 
+import androidx.annotation.Nullable;
+
 import java.io.File;
 
 import cn.garymb.ygomobile.bean.TextSelect;
@@ -14,13 +16,15 @@ public class DeckFile extends TextSelect {
         name=new File(path).getName();
         name=name.substring(0,name.lastIndexOf("."));
         super.setName(name);
-        super.setObject(this);
+        setObject(this);
     }
 
     public DeckFile(File file) {
         path=file.getAbsolutePath();
         name=file.getName();
         name=name.substring(0,name.lastIndexOf("."));
+        super.setName(name);
+        setObject(this);
     }
 
     public String getName() {
@@ -38,4 +42,5 @@ public class DeckFile extends TextSelect {
     public void setPath(String path) {
         this.path = path;
     }
+
 }

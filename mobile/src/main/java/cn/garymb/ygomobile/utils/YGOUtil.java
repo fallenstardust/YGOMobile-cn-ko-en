@@ -5,6 +5,7 @@ import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.lite.R;
 
 public class YGOUtil {
 
@@ -15,5 +16,8 @@ public class YGOUtil {
 
     public static int c(int colorId){
         return ContextCompat.getColor(App.get(),colorId);
+    }
+    public static String s(int stringId){
+        return App.get().getResources().getString(stringId);
     }
 }

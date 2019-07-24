@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.ConfigManager;
@@ -402,7 +403,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         process.waitFor();
 
                         IOUtils.delete(soFile);
-                        IOUtils.copyFile(file, soFile.getAbsolutePath(), true);
+                        FileUtils.copyFile(file, soFile.getAbsolutePath(), true);
                         me.what = COPY_SO_OK;
                     } catch (Exception e) {
                         e.printStackTrace();

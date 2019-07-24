@@ -104,8 +104,8 @@ dependencies {
     //
     implementation(name: 'paysdk-release-1.2.4', ext: 'aar')
     implementation "com.pgyersdk:sdk:3.0.5"
-
-
     //dialog库
     implementation 'com.github.feihuaduo:DialogUtils:1.8.9'
+    //recyclerview的adapter库
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
 }

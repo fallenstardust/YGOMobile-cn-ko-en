@@ -225,26 +225,6 @@ public class IOUtils {
         return false;
     }
 
-    public static void copyFile(String oldPath, String newPath, boolean isname) throws FileNotFoundException, IOException {
-
-        //判断复制后的路径是否含有文件名,如果没有则加上
-        if (!isname) {
-            //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
-            String abb[]=oldPath.split("/");
-            newPath = newPath + "/" + abb[abb.length - 1];
-        }
-
-        FileInputStream fis=new FileInputStream(oldPath);
-        FileOutputStream fos=new FileOutputStream(newPath);
-        byte[] buf=new byte[1024];
-        int len=0;
-        while ((len = fis.read(buf)) != -1) {
-            fos.write(buf, 0, len);
-        }
-        fos.close();
-        fis.close();
-
-    }
 
     public static File asFile(InputStream is, String outPath) throws IOException {
         OutputStream os = null;

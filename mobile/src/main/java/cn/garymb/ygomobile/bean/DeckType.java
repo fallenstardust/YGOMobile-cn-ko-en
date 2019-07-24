@@ -8,7 +8,7 @@ public class DeckType extends TextSelect {
         this.name = name;
         this.path = path;
         super.setName(name);
-        super.setObject(this);
+        setObject(this);
     }
 
     public String getName() {
