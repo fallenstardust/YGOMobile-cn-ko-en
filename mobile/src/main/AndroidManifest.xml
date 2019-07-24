@@ -76,7 +76,7 @@
 
                 <data android:scheme="file"/>
                 <data android:host="*"/>
-                <data android:mimeType="*/*" />
+                <!--data android:mimeType="*/*" /-->
                 <data android:pathPattern=".*\\.ydk"/>
             </intent-filter>
             <intent-filter>

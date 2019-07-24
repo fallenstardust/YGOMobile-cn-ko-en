@@ -147,12 +147,18 @@ extern irr::io::path getFontPath(ANDROID_APP app);
 //Retrive last deck name.
 extern irr::io::path getLastDeck(ANDROID_APP app);
 
+//Retrive last catagory name.
+extern irr::io::path getLastCategory(ANDROID_APP app);
+
 extern int getIntSetting(ANDROID_APP app, const char* key,int defvalue);
 
 extern irr::io::path getSetting(ANDROID_APP app, const char* key);
 
 //save last deck name.
 extern void setLastDeck(ANDROID_APP app, const char* deckname);
+
+//save last category name.
+extern void setLastCategory(ANDROID_APP app, const char* catename);
 
 extern void saveIntSetting(ANDROID_APP app, const char* key, int value);
 

@@ -11,7 +11,7 @@
     </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
         <item>游戏王圈子不大，珍惜一起玩的人</item>
-        <item>界面数字偏了还点不准？试试全屏应用，再「功能菜单」→「设置」→打勾「适配非16：9分辨率屏幕」</item>
+        <item>决斗界面点触不准？可以去手机设置→显示设置→隐藏刘海</item>
         <item>主页每个服务器按住左划就会出现「编辑」和「删除」哦</item>
         <item>试试点击左下角浮动的「功能菜单」会有更多功能</item>
         <item>想不联网也打人机？「功能菜单」→「单人游戏」→「人机模式」</item>

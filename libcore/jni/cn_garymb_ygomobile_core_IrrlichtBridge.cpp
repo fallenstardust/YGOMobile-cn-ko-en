@@ -179,9 +179,9 @@ JNIEXPORT jbyteArray JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_native
 
 static void* join_game_thread(void* param) {
 	ygo::mainGame->externalSignal.Wait();
-	ygo::mainGame->gMutex.Lock();
+	ygo::mainGame->gMutex.lock();
 	if (ygo::mainGame->dInfo.isStarted) {
-		ygo::mainGame->gMutex.Unlock();
+		ygo::mainGame->gMutex.unlock();
 		return NULL;
 	}
 	irr::android::YGOGameOptions options = irr::android::YGOGameOptions(param);
@@ -219,7 +219,7 @@ static void* join_game_thread(void* param) {
  		event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
  		ygo::mainGame->device->postEventFromUser(event);
  //	}
- 	exit: ygo::mainGame->gMutex.Unlock();
+ 	exit: ygo::mainGame->gMutex.unlock();
 
 	free(param);
 	return NULL;

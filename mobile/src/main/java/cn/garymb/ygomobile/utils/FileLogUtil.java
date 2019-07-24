@@ -2,11 +2,9 @@ package cn.garymb.ygomobile.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -21,19 +19,29 @@ public class FileLogUtil {
         return new File(AppsSettings.get().getResourcePath(), "YGOMobile.log");
     }
 
+    public static void clear() throws IOException {
+        write("",false);
+    }
+
+
     public static void writeAndTime(String message) throws IOException {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd HH:mm");// HH:mm:ss
         // 获取当前时间
         Date date = new Date(System.currentTimeMillis());
+        //追加内容写入
         write(simpleDateFormat.format(date) + "：   " + message);
     }
 
     public static void write(String message) throws IOException {
+        write(message,true);
+    }
+
+    public static void write(String message,boolean append) throws IOException {
         FileWriter fw = null;
 
         //如果文件存在，则追加内容；如果文件不存在，则创建文件
         File f = getConfigFile();
-        fw = new FileWriter(f, true);
+        fw = new FileWriter(f, append);
 
         PrintWriter pw = new PrintWriter(fw);
         if (writeNum==0)

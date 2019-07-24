@@ -82,14 +82,15 @@ inline int _wtoi(const wchar_t * s) {
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <thread>
+#include <mutex>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/bufferio_android.h>
 #else
 #include "bufferio.h"
 #endif
-#include "mymutex.h"
+#include "myfilesystem.h"
 #include "mysignal.h"
-#include "mythread.h"
 #include "../ocgcore/ocgapi.h"
 #include "../ocgcore/common.h"
 

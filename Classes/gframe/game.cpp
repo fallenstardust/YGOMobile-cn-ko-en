@@ -21,7 +21,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x134A;
+const unsigned short PRO_VERSION = 0x134B;
 
 namespace ygo {
 
@@ -303,29 +303,30 @@ bool Game::Initialize() {
 	wHostPrepare->setDraggable(false);
 	wHostPrepare->getCloseButton()->setVisible(false);
 	wHostPrepare->setVisible(false);
-	btnHostPrepDuelist = env->addButton(rect<s32>(10 * xScale, 30 * yScale, 110 * xScale, 70 * yScale), wHostPrepare, BUTTON_HP_DUELIST, dataManager.GetSysString(1251));
+	btnHostPrepDuelist = env->addButton(rect<s32>(10 * xScale, 30 * yScale, 110 * xScale, 55 * yScale), wHostPrepare, BUTTON_HP_DUELIST, dataManager.GetSysString(1251));
 	for(int i = 0; i < 2; ++i) {
-		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (80 + i * 45) * yScale, 260 * xScale, (120 + i * 45) * yScale), true, false, wHostPrepare);
+		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (65 + i * 45) * yScale, 260 * xScale, (105 + i * 45) * yScale), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (80 + i * 45) * yScale, 50 * xScale, (120 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
-		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (80 + i * 45) * yScale, 310 * xScale, (120 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
+		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (65 + i * 45) * yScale, 50 * xScale, (105 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
+		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (65 + i * 45) * yScale, 310 * xScale, (105 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
 	}
 	for(int i = 2; i < 4; ++i) {
-		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (105 + i * 45) * yScale, 260 * xScale, (145 + i * 45) * yScale), true, false, wHostPrepare);
+		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (145 + i * 45) * yScale, 260 * xScale, (185 + i * 45) * yScale), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (105 + i * 45) * yScale, 50 * xScale, (145 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
-		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (105 + i * 45) * yScale, 310 * xScale, (145 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
+		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (145 + i * 45) * yScale, 50 * xScale, (185 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
+		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (145 + i * 45) * yScale, 310 * xScale, (185 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
 	}
-	btnHostPrepOB = env->addButton(rect<s32>(10 * xScale, 300 * yScale, 110 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_OBSERVER, dataManager.GetSysString(1252));
+	btnHostPrepOB = env->addButton(rect<s32>(10 * xScale, 180 * yScale, 110 * xScale, 205 * yScale), wHostPrepare, BUTTON_HP_OBSERVER, dataManager.GetSysString(1252));
 	myswprintf(dataManager.strBuffer, L"%ls%d", dataManager.GetSysString(1253), 0);
-	stHostPrepOB = env->addStaticText(dataManager.strBuffer, rect<s32>(10 * xScale, 340 * yScale, 270 * xScale, 370 * yScale), false, false, wHostPrepare);
+	stHostPrepOB = env->addStaticText(dataManager.strBuffer, rect<s32>(10 * xScale, 210 * yScale, 270 * xScale, 230 * yScale), false, false, wHostPrepare);
 	stHostPrepRule = env->addStaticText(L"", rect<s32>(300 * xScale, 30 * yScale, 460 * xScale, 230 * yScale), false, true, wHostPrepare);
-	env->addStaticText(dataManager.GetSysString(1254), rect<s32>(10 * xScale, 385 * yScale, 110 * xScale, 410 * yScale), false, false, wHostPrepare);
+	env->addStaticText(dataManager.GetSysString(1254), rect<s32>(10 * xScale, 355 * yScale, 110 * xScale, 385 * yScale), false, false, wHostPrepare);
+	cbCategorySelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(10 * xScale, 380 * yScale, 110 * xScale, 420 * yScale), wHostPrepare, COMBOBOX_HP_CATEGORY);
 	cbDeckSelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(120 * xScale, 380 * yScale, 270 * xScale, 420 * yScale), wHostPrepare);
-	btnHostPrepReady = env->addButton(rect<s32>(170 * xScale, 300 * yScale, 280 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_READY, dataManager.GetSysString(1218));
-	btnHostPrepNotReady = env->addButton(rect<s32>(170 * xScale, 300 * yScale, 280 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_NOTREADY, dataManager.GetSysString(1219));
+	btnHostPrepReady = env->addButton(rect<s32>(170 * xScale, 180 * yScale, 280 * xScale, 205 * yScale), wHostPrepare, BUTTON_HP_READY, dataManager.GetSysString(1218));
+	btnHostPrepNotReady = env->addButton(rect<s32>(170 * xScale, 180 * yScale, 280 * xScale, 205 * yScale), wHostPrepare, BUTTON_HP_NOTREADY, dataManager.GetSysString(1219));
 	btnHostPrepNotReady->setVisible(false);
 	btnHostPrepStart = env->addButton(rect<s32>(280 * xScale, 380 * yScale, 390 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_START, dataManager.GetSysString(1215));
 	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
@@ -630,20 +631,59 @@ bool Game::Initialize() {
 	//deck edit
 	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 8 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
 	wDeckEdit->setVisible(false);
-	env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
-#ifdef _IRR_ANDROID_PLATFORM_
-	cbDBLFList = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBLFLIST);
-#else
-	cbDBLFList = env->addComboBox(rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBLFLIST);
-#endif
-	env->addStaticText(dataManager.GetSysString(1301), rect<s32>(10 * xScale, 39 * yScale, 100 * xScale, 59 * yScale), false, false, wDeckEdit);
-#ifdef _IRR_ANDROID_PLATFORM_
-	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 35 * yScale, 220 * xScale, 60 * yScale), wDeckEdit, COMBOBOX_DBDECKS);
-#else
-	cbDBDecks = env->addComboBox(rect<s32>(80 * xScale, 35 * yScale, 220 * xScale, 60 * yScale), wDeckEdit, COMBOBOX_DBDECKS);
-#endif
+	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+	//deck manage
+	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 990 * xScale, 550 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
+	wDeckManage->setVisible(false);
+	wDeckManage->getCloseButton()->setVisible(false);
+	lstCategories = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 140 * xScale, 530 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
+    lstCategories->setItemHeight(25 * yScale);
+	lstDecks = env->addListBox(rect<s32>(150 * xScale, 30 * yScale, 340 * xScale, 530 * yScale), wDeckManage, LISTBOX_DECKS, true);
+	lstCategories->setItemHeight(25 * yScale);
+	posY = 30;
+	btnNewCategory = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_NEW_CATEGORY, dataManager.GetSysString(1461));
+	posY += 50;
+	btnRenameCategory = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_RENAME_CATEGORY, dataManager.GetSysString(1462));
+	posY += 50;
+	btnDeleteCategory = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_DELETE_CATEGORY, dataManager.GetSysString(1463));
+	posY += 50;
+	btnNewDeck = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_NEW_DECK, dataManager.GetSysString(1464));
+	posY += 50;
+	btnRenameDeck = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_RENAME_DECK, dataManager.GetSysString(1465));
+	posY += 50;
+	btnDMDeleteDeck = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_DELETE_DECK_DM, dataManager.GetSysString(1466));
+	posY += 50;
+	btnMoveDeck = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_MOVE_DECK, dataManager.GetSysString(1467));
+	posY += 50;
+	btnCopyDeck = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_COPY_DECK, dataManager.GetSysString(1468));
+	posY += 60;
+	cbLFList = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, COMBOBOX_LFLIST);
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
-		cbDBLFList->addItem(deckManager._lfList[i].listName);
+		cbLFList->addItem(deckManager._lfList[i].listName);
+	posY += 50;
+	btnCloseDM = env->addButton(rect<s32>(350 * xScale, posY * yScale, 450 * xScale, (posY + 40) * yScale), wDeckManage, BUTTON_CLOSE_DECKMANAGER, dataManager.GetSysString(1211));
+	//deck manage query
+	wDMQuery = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1460));
+	wDMQuery->getCloseButton()->setVisible(false);
+	wDMQuery->setVisible(false);
+	stDMMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wDMQuery);
+	stDMMessage2 = env->addStaticText(L"", rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), false, false, wDMQuery, -1, true);
+	stDMMessage2->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	ebDMName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wDMQuery, -1);
+	ebDMName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	cbDMCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wDMQuery, -1);
+	stDMMessage2->setVisible(false);
+	ebDMName->setVisible(false);
+	cbDMCategory->setVisible(false);
+	cbDMCategory->setMaxSelectionRows(10);
+	btnDMOK = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_OK, dataManager.GetSysString(1211));
+	btnDMCancel = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 270 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_CANCEL, dataManager.GetSysString(1212));
+	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
+	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBCATEGORY);
+	cbDBCategory->setMaxSelectionRows(15);
+	stDeck = env->addStaticText(dataManager.GetSysString(1301), rect<s32>(10 * xScale, 39 * yScale, 100 * xScale, 59 * yScale), false, false, wDeckEdit);
+	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 35 * yScale, 220 * xScale, 60 * yScale), wDeckEdit, COMBOBOX_DBDECKS);
+	cbDBDecks->setMaxSelectionRows(15);
 	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 290 * xScale, 60 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
 	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(80 * xScale, 65 * yScale, 220 * xScale, 90 * yScale), wDeckEdit, -1);
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
@@ -660,21 +700,11 @@ bool Game::Initialize() {
 	btnSideSort->setVisible(false);
 	btnSideReload = env->addButton(rect<s32>(440 * xScale, 100 * yScale, 500 * xScale, 130 * yScale), 0, BUTTON_SIDE_RELOAD, dataManager.GetSysString(1309));
 	btnSideReload->setVisible(false);
-	btnRenameDeck = env->addButton(rect<s32>(75 * xScale, 95 * yScale, 125 * xScale, 116 * yScale), wDeckEdit, BUTTON_RENAME_DECK, dataManager.GetSysString(1362));
 	//
 	scrFilter = env->addScrollBar(false, recti(999 * xScale, 161 * yScale, 1019 * xScale, 629 * yScale), 0, SCROLL_FILTER);
 	scrFilter->setLargeStep(10);
 	scrFilter->setSmallStep(1);
 	scrFilter->setVisible(false);
-	//rename deck
-	wRenameDeck = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1367));
-	wRenameDeck->getCloseButton()->setVisible(false);
-	wRenameDeck->setVisible(false);
-	env->addStaticText(dataManager.GetSysString(1280), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wRenameDeck);
-	ebREName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wRenameDeck, -1);
-	ebREName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnREYes = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wRenameDeck, BUTTON_RENAME_DECK_SAVE, dataManager.GetSysString(1341));
-	btnRENo = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 270 * xScale, 150 * yScale), wRenameDeck, BUTTON_RENAME_DECK_CANCEL, dataManager.GetSysString(1212));
 	//sort type
 	wSort = env->addStaticText(L"", rect<s32>(930 * xScale, 132 * yScale, 1020 * xScale, 156 * yScale), true, false, 0, -1, true);
 	cbSortType = env->addComboBox(rect<s32>(10 * xScale, 2 * yScale, 85 * xScale, 22 * yScale), wSort, COMBOBOX_SORTTYPE);
@@ -1046,7 +1076,7 @@ void Game::MainLoop() {
 		}
 		driver->enableMaterial2D(false);
 #endif
-		gMutex.Lock();
+		gMutex.lock();
 		if(dInfo.isStarted) {
 			DrawBackImage(imageManager.tBackGround);
 			DrawBackGround();
@@ -1075,7 +1105,7 @@ void Game::MainLoop() {
 		DrawGUI();
 		DrawSpec();
 #endif
-		gMutex.Unlock();
+		gMutex.unlock();
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
@@ -1092,12 +1122,12 @@ void Game::MainLoop() {
 			}
 		}
 		driver->endScene();
-		if(closeSignal.Wait(0))
+		if(closeSignal.Wait(1))
 			CloseDuelWindow();
-		if(!device->isWindowActive())
-			ignore_chain = false;
 		fps++;
 		cur_time = timer->getTime();
+		if(cur_time < fps * 17 - 20)
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		if(cur_time >= 1000) {
 
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -1252,9 +1282,44 @@ void Game::LoadExpansions() {
 		}
 	}
 }
-void Game::RefreshDeck(irr::gui::IGUIComboBox* cbDeck) {
+void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
+	cbCategory->clear();
+	cbCategory->addItem(dataManager.GetSysString(1450));
+	cbCategory->addItem(dataManager.GetSysString(1451));
+	cbCategory->addItem(dataManager.GetSysString(1452));
+	cbCategory->addItem(dataManager.GetSysString(1453));
+	FileSystem::TraversalDir(L"./deck", [cbCategory](const wchar_t* name, bool isdir) {
+		if(isdir) {
+			cbCategory->addItem(name);
+		}
+	});
+	cbCategory->setSelected(2);
+	if(selectlastused) {
+		for(size_t i = 0; i < cbCategory->getItemCount(); ++i) {
+			if(!wcscmp(cbCategory->getItem(i), gameConf.lastcategory)) {
+				cbCategory->setSelected(i);
+				break;
+			}
+		}
+	}
+	RefreshDeck(cbCategory, cbDeck);
+	if(selectlastused) {
+		for(size_t i = 0; i < cbDeck->getItemCount(); ++i) {
+			if(!wcscmp(cbDeck->getItem(i), gameConf.lastdeck)) {
+				cbDeck->setSelected(i);
+				break;
+			}
+		}
+	}
+}
+void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
+	wchar_t catepath[256];
+	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
+	RefreshDeck(catepath, cbDeck);
+}
+void Game::RefreshDeck(const wchar_t* deckpath, irr::gui::IGUIComboBox* cbDeck) {
 	cbDeck->clear();
-	FileSystem::TraversalDir(L"./deck", [cbDeck](const wchar_t* name, bool isdir) {
+	FileSystem::TraversalDir(deckpath, [cbDeck](const wchar_t* name, bool isdir) {
 		if(!isdir && wcsrchr(name, '.') && !wcsncasecmp(wcsrchr(name, '.'), L".ydk", 4)) {
 			size_t len = wcslen(name);
 			wchar_t deckname[256];
@@ -1263,12 +1328,6 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbDeck) {
 			cbDeck->addItem(deckname);
 		}
 	});
-	for(size_t i = 0; i < cbDeck->getItemCount(); ++i) {
-		if(!wcscmp(cbDeck->getItem(i), gameConf.lastdeck)) {
-			cbDeck->setSelected(i);
-			break;
-		}
-	}
 }
 void Game::RefreshReplay() {
 	lstReplayList->clear();
@@ -1334,9 +1393,12 @@ void Game::LoadConfig() {
 	gameConf.textfontsize = 16;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
+    BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
+    BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
+    //irr:os::Printer::log("getLastCategory", android::getLastCategory(appMain).c_str());
 	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
-	irr:os::Printer::log(android::getFontPath(appMain).c_str());
+	//os::Printer::log(android::getFontPath(appMain).c_str());
 	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);

@@ -19,8 +19,6 @@ import cn.garymb.ygomobile.utils.FileUtils;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
-import static cn.garymb.ygomobile.Constants.PATH_DECK;
-import static cn.garymb.ygomobile.Constants.PATH_ROOM;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 
 

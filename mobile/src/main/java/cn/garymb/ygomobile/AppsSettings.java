@@ -13,7 +13,6 @@ import org.json.JSONArray;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
@@ -48,12 +46,11 @@ public class AppsSettings {
     private float mScreenHeight, mScreenWidth, mDensity;
 
 
-
     private AppsSettings(Context context) {
         this.context = context;
         mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
         mSharedPreferences.setAutoSave(true);
-        Log.e("YGOMobileLog", "初始化类地址:  "+ System.identityHashCode(this));
+        Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
         update(context);
     }
 
@@ -81,9 +78,9 @@ public class AppsSettings {
             if (dm != null) {
 
                 int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.e("YGOMobileLog","类地址"+System.identityHashCode(this));
+                Log.e("YGOMobileLog", "类地址" + System.identityHashCode(this));
 
-                int notchHeight=getNotchHeight();
+                int notchHeight = getNotchHeight();
 
                 try {
                     FileLogUtil.writeAndTime("是否沉浸:  " + isImmerSiveMode());
@@ -91,7 +88,7 @@ public class AppsSettings {
                     FileLogUtil.writeAndTime("原始宽:  " + mScreenWidth);
                     FileLogUtil.writeAndTime("界面长:  " + dm.heightPixels);
                     FileLogUtil.writeAndTime("界面宽:  " + dm.widthPixels);
-                    FileLogUtil.writeAndTime("刘海长:  "+notchHeight);
+                    FileLogUtil.writeAndTime("刘海长:  " + notchHeight);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -149,7 +146,7 @@ public class AppsSettings {
         return mSharedPreferences.getInt(PREF_NOTCH_HEIGHT, DEF_PREF_NOTCH_HEIGHT);
     }
 
-    public void setNotchHeight(int height){
+    public void setNotchHeight(int height) {
         mSharedPreferences.putInt(PREF_NOTCH_HEIGHT, height);
     }
 
@@ -161,6 +158,9 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_ONLY_GAME, DEF_PREF_ONLY_GAME);
     }
 
+    /***
+     * 是否使用额外卡库
+     */
     public boolean isReadExpansions() {
         return mSharedPreferences.getBoolean(PREF_READ_EX, DEF_PREF_READ_EX);
     }
@@ -398,14 +398,14 @@ public class AppsSettings {
     }
 
     /***
-     * 是否使用额外卡库
+     * 是否优先使用外置数据
      */
     public boolean isUseExtraCards() {
         return mSharedPreferences.getBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, Constants.PREF_DEF_USE_EXTRA_CARD_CARDS);
     }
 
     /***
-     * 设置是否使用额外卡库
+     * 设置是否优先使用外置数据
      */
     public void setUseExtraCards(boolean useExtraCards) {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
@@ -471,6 +471,21 @@ public class AppsSettings {
         return new File(getResourcePath(), Constants.CORE_DECK_PATH).getAbsolutePath();
     }
 
+    //获取ai卡组文件夹
+    public String getAiDeckDir() {
+        return new File(getResourcePath(), Constants.WINDBOT_PATH + "/Decks").getAbsolutePath();
+    }
+
+    //获取新卡卡包文件夹
+    public String getPackDeckDir() {
+        return new File(getResourcePath(), "pack").getAbsolutePath();
+    }
+
+    //获取临时存放卡组的目录
+    public String getCacheDeckDir() {
+        return context.getExternalFilesDir("cacheDeck").getAbsolutePath();
+    }
+
     //获取残局文件夹
     public String getSingleDir() {
         return new File(getResourcePath(), Constants.CORE_SINGLE_PATH).getAbsolutePath();
@@ -488,16 +503,16 @@ public class AppsSettings {
     }
 
     /***
-     * 最后卡组名
+     * 获得最后卡组绝对路径
      */
-    public String getLastDeck() {
+    public String getLastDeckPath() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     /***
-     * 最后卡组名
+     * 保存最后卡组绝对路径
      */
-    public void setLastDeck(String name) {
+    public void setLastDeckPath(String name) {
         if (TextUtils.equals(name, getCurLastDeck())) {
             //一样
             return;
@@ -507,6 +522,28 @@ public class AppsSettings {
 
     public String getCurLastDeck() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, null);
+    }
+
+    /***
+     * 获得最后卡组分类名
+     */
+    public String getLastCategory() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
+    }
+
+    /***
+     * 保存最后卡组分类名
+     */
+    public void setLastCategory(String name) {
+        if (TextUtils.equals(name, getCurLastCategory())) {
+            //一样
+            return;
+        }
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
+    }
+
+    public String getCurLastCategory() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, null);
     }
 
     public void saveIntSettings(String key, int value) {
@@ -575,7 +612,7 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            setLastDeck(value);
+            setLastDeckPath(value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
@@ -583,7 +620,23 @@ public class AppsSettings {
 
     public String getSettings(String key) {
         if ("lastdeck".equals(key)) {
-            String val = getLastDeck();
+            String val = getLastDeckPath();
+            return val;
+        }
+        return mSharedPreferences.getString(Constants.PREF_START + key, null);
+    }
+
+    public void saveCategorySettings(String key, String value) {
+        if ("lastcategory".equals(key)) {
+            setLastCategory(value);
+        } else {
+            mSharedPreferences.putString(Constants.PREF_START + key, value);
+        }
+    }
+
+    public String getCategorySettings(String key) {
+        if ("lastcategory".equals(key)) {
+            String val = getLastCategory();
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);

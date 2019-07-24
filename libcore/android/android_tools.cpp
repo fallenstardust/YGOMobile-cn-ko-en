@@ -363,6 +363,11 @@ irr::io::path getLastDeck(ANDROID_APP app) {
 	return getSetting(app, "lastdeck");
 }
 
+//Retrive last category name.
+irr::io::path getLastCategory(ANDROID_APP app) {
+	return getSetting(app, "lastcategory");
+}
+
 irr::io::path getSetting(ANDROID_APP app, const char* key) {
 	irr::io::path ret;
 	if (!app || !app->activity || !app->activity->vm)
@@ -401,6 +406,11 @@ irr::io::path getSetting(ANDROID_APP app, const char* key) {
 //save last deck name.
 void setLastDeck(ANDROID_APP app, const char* deckname) {
 	saveSetting(app, "lastdeck", deckname);
+}
+
+//save last category name.
+void setLastCategory(ANDROID_APP app, const char* catename) {
+	saveSetting(app, "lastcategory", catename);
 }
 
 int getIntSetting(ANDROID_APP app, const char* key,int defvalue){

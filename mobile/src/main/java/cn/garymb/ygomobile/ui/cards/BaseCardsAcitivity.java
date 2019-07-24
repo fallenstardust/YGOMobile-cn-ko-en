@@ -7,6 +7,12 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.RecyclerViewItemListener;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 
 import java.io.IOException;

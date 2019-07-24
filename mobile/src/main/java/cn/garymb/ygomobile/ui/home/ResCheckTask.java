@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -24,7 +23,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
@@ -148,12 +146,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
-            String[] textures1=mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
-            String[] textures2=new File(mSettings.getCoreSkinPath()).list();
+            String[] textures1 = mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
+            String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
 
             //复制资源文件夹
             //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
-            if (textures2==null||(textures1!=null&&textures1.length>textures2.length)||needsUpdate) {
+            if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
                         mSettings.getCoreSkinPath(), needsUpdate);
@@ -176,9 +174,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
-
+            //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    mContext.getFilesDir().getPath(), needsUpdate);
+                    resPath, needsUpdate);//mContext.getFilesDir().getPath()
             han.sendEmptyMessage(0);
 
             loadData();
@@ -288,7 +286,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 //卡组分享截图文件夹
                 Constants.MOBILE_DECK_SHARE,
                 //额外卡库文件夹
-                Constants.CORE_EXPANSIONS
+                Constants.CORE_EXPANSIONS,
+                //人机资源文件夹
+                Constants.WINDBOT_PATH
         };
         File dirFile = null;
         for (String dir : dirs) {
@@ -354,7 +354,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         Log.i("路径", mContext.getFilesDir().getPath());
         Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
         try {
-            WindBot.initAndroid(mContext.getFilesDir().getPath(),
+            WindBot.initAndroid(mSettings.getResourcePath(),
                     mSettings.getDataBasePath() + "/" + DATABASE_NAME,
                     mSettings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);
         } catch (Throwable e) {

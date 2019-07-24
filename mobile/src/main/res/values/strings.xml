@@ -282,4 +282,7 @@
     <string name="save_n_open">Save and Open</string>
     <string name="searchresult">Results</string>
     <string name="Pre_share">Prepare to Share</string>
+    <string name="category_pack">Pack</string>
+    <string name="category_windbot_deck">BotDeck</string>
+    <string name="category_Uncategorized">UncategorizedDeck</string>
 </resources>
