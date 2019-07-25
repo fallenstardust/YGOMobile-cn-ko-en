@@ -371,9 +371,9 @@ public class YGODialogUtil {
         ImageUtil.reImageColor(IMAGE_MOVE, iv_move);
         ImageUtil.reImageColor(IMAGE_DEL, iv_del);
         ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.black));
-        tv_copy.setTextColor(YGOUtil.c(R.color.black));
-        tv_move.setTextColor(YGOUtil.c(R.color.black));
+        tv_del.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+        tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+        tv_move.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
         ll_del.setEnabled(true);
         ll_copy.setEnabled(true);
         ll_move.setEnabled(true);
@@ -383,9 +383,9 @@ public class YGODialogUtil {
         ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
         ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
         ImageUtil.setGrayImage(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.gray));
-        tv_copy.setTextColor(YGOUtil.c(R.color.gray));
-        tv_move.setTextColor(YGOUtil.c(R.color.gray));
+        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));
+        tv_copy.setTextColor(YGOUtil.c(R.color.star_rank));
+        tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
         ll_del.setEnabled(false);
         ll_copy.setEnabled(false);
         ll_move.setEnabled(false);
@@ -395,9 +395,9 @@ public class YGODialogUtil {
         ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
         ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
         ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.gray));
-        tv_copy.setTextColor(YGOUtil.c(R.color.black));
-        tv_move.setTextColor(YGOUtil.c(R.color.gray));
+        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));
+        tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+        tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
         ll_del.setEnabled(false);
         ll_copy.setEnabled(true);
         ll_move.setEnabled(false);

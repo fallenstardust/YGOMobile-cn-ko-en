@@ -5,12 +5,12 @@
     android:layout_height="wrap_content"
     android:padding="10dp"
     android:gravity="center"
-    android:background="@drawable/click_background"
+    android:background="@android:color/transparent"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:gravity="center"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />

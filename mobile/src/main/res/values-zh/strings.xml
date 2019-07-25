@@ -87,6 +87,7 @@
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
     <string name="deck_manager">卡组编辑</string>
+    <string name="category_manager">卡组分类选择</string>
     <string name="search">搜索</string>
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
@@ -126,6 +127,8 @@
     <string name="card_add_main">+主卡组</string>
     <string name="card_add_side">+副卡组</string>
     <string name="new_deck">新建</string>
+    <string name="move_deck">移动</string>
+    <string name="copy_deck">复制</string>
     <string name="rename_deck">重命名</string>
     <string name="delete_deck">删除</string>
     <string name="save_deck">保存</string>

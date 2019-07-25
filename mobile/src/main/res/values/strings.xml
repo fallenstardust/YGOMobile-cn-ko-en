@@ -98,6 +98,7 @@
     <string name="server_info_error">server info is bad.</string>
     <string name="card_search">Card Search</string>
     <string name="deck_manager">Deck Manager</string>
+    <string name="category_manager"> Categorized Deck Select</string>
     <string name="search">Search</string>
     <string name="search_open">Select</string>
     <string name="search_close">Close</string>
@@ -121,6 +122,8 @@
     <string name="no_webbrowser">No web browser</string>
     <string name="load_game">loading game</string>
     <string name="new_deck">New</string>
+    <string name="move_deck">move Deck</string>
+    <string name="copy_deck">copy Deck</string>
     <string name="rename_deck">Rename</string>
     <string name="delete_deck">Delete</string>
     <string name="save_deck">Save Deck</string>
