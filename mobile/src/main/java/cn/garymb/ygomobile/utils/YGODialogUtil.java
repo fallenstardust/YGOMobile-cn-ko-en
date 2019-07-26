@@ -36,6 +36,8 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
+import static cn.garymb.ygomobile.lite.R.string.please_select_target_category;
+
 public class YGODialogUtil {
 
     private static final int IMAGE_MOVE = 0;
@@ -50,7 +52,7 @@ public class YGODialogUtil {
 
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         DialogUtils du = DialogUtils.getdx(context);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select,0);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, 0);
         RecyclerView rv_type, rv_deck;
 
         rv_deck = viewDialog.findViewById(R.id.rv_deck);
@@ -153,7 +155,9 @@ public class YGODialogUtil {
         ll_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                du.dialogl(context.getString(R.string.new_deck), new String[]{context.getString(R.string.category_name), context.getString(R.string.deck_name)}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(R.string.new_deck),
+                        new String[]{context.getString(R.string.category_name),
+                                context.getString(R.string.deck_name)}, R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -198,7 +202,9 @@ public class YGODialogUtil {
             public void onClick(View v) {
                 List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl(context.getString(R.string.please_select_target_category), getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
+                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -225,7 +231,9 @@ public class YGODialogUtil {
             public void onClick(View v) {
                 List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl(context.getString(R.string.please_select_target_category), getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
+                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -352,21 +360,6 @@ public class YGODialogUtil {
         return moveTypeList;
     }
 
-
-    public interface OnDeckMenuListener {
-        void onDeckSelect(DeckFile deckFile);
-
-        void onDeckDel(List<DeckFile> deckFileList);
-
-        void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType);
-
-        void onDeckCopy(List<DeckFile> deckFileList, DeckType toDeckType);
-
-        void onDeckNew(DeckType currentDeckType);
-
-    }
-
-
     private static void showAllDeckUtil() {
         ImageUtil.reImageColor(IMAGE_MOVE, iv_move);
         ImageUtil.reImageColor(IMAGE_DEL, iv_del);
@@ -403,7 +396,6 @@ public class YGODialogUtil {
         ll_move.setEnabled(false);
     }
 
-
     private static void clearDeckSelect() {
         deckAdp.setManySelect(false);
         hideAllDeckUtil();
@@ -412,6 +404,19 @@ public class YGODialogUtil {
     public static void dis() {
         if (ygoDialog != null)
             ygoDialog.dismiss();
+    }
+
+    public interface OnDeckMenuListener {
+        void onDeckSelect(DeckFile deckFile);
+
+        void onDeckDel(List<DeckFile> deckFileList);
+
+        void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType);
+
+        void onDeckCopy(List<DeckFile> deckFileList, DeckType toDeckType);
+
+        void onDeckNew(DeckType currentDeckType);
+
     }
 
     public interface OnDeckTypeListener {

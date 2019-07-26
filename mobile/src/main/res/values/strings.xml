@@ -266,4 +266,5 @@
     <string name="delete_confirm">will delete all deck of this Category</string>
     <string name="no_deck_is_selected">no_deck_is_selected</string>
     <string name="done">done！</string>
+    <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work right</string>
 </resources>

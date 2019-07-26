@@ -100,6 +100,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
+    private boolean isExit = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -165,14 +166,13 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             }
         });
     }
-
+    //endregion
 
     @Override
     protected void onDestroy() {
         EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
-    //endregion
 
     //region card edit
     @Override
@@ -213,6 +213,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     public void onDragLongPressEnd() {
         mDeckAdapater.hideHeadView();
     }
+    //endregion
 
     @Override
     public void onDragEnd() {
@@ -277,7 +278,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             setCurDeck(rs);
         });
     }
-    //endregion
 
     /**
      * 设置当前卡组
@@ -480,8 +480,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         return false;
     }
 
-    private boolean isExit = false;
-
     @Override
     protected void onBackHome() {
         if (mDeckAdapater.isChanged()) {
@@ -614,7 +612,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     if (mDeckAdapater.getYdkFile() == null) {
                         inputDeckName(null, null, true);
                     } else {
-                        save(mDeckAdapater.getYdkFile());
+                        if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
+                            Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                        } else {
+                            save(mDeckAdapater.getYdkFile());
+                        }
                     }
                 }
                 break;
@@ -626,7 +628,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //                }
 //                break;
             case R.id.action_rename:
-                inputDeckName(mDeckAdapater.getYdkFile(), null, false);
+                if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
+                    Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                } else {
+                    inputDeckName(mDeckAdapater.getYdkFile(), null, false);
+                }
                 break;
             case R.id.action_deck_new:
                 createDeck(null);
@@ -646,22 +652,26 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             }
             break;
             case R.id.action_delete_deck: {
-                DialogPlus builder = new DialogPlus(this);
-                builder.setTitle(R.string.question);
-                builder.setMessage(R.string.question_delete_deck);
-                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                builder.setLeftButtonListener((dlg, rs) -> {
-                    File ydk = mDeckAdapater.getYdkFile();
-                    if (ydk == null) {
-                        return;
-                    }
-                    FileUtils.deleteFile(ydk);
-                    dlg.dismiss();
-                    File file = getFirstYdk();
-                    initDecksListSpinners(mDeckSpinner, file);
-                    loadDeckFromFile(file);
-                });
-                builder.show();
+                if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
+                    Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                } else {
+                    DialogPlus builder = new DialogPlus(this);
+                    builder.setTitle(R.string.question);
+                    builder.setMessage(R.string.question_delete_deck);
+                    builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+                    builder.setLeftButtonListener((dlg, rs) -> {
+                        File ydk = mDeckAdapater.getYdkFile();
+                        if (ydk == null) {
+                            return;
+                        }
+                        FileUtils.deleteFile(ydk);
+                        dlg.dismiss();
+                        File file = getFirstYdk();
+                        initDecksListSpinners(mDeckSpinner, file);
+                        loadDeckFromFile(file);
+                    });
+                    builder.show();
+                }
             }
             break;
             case R.id.action_unsort:
@@ -769,7 +779,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         BitmapUtil.saveBitmap(bitmap, savePath, 50);
         builderShareLoading.dismiss();
         DialogUtils du = DialogUtils.getdx(DeckManagerActivityImpl.this);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share,0);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share, 0);
         ImageView iv_image = viewDialog.findViewById(R.id.iv_image);
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
