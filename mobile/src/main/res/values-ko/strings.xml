@@ -254,4 +254,10 @@
     <string name="category_pack">한 갑</string>
     <string name="category_windbot_deck">AI 덱</string>
     <string name="category_Uncategorized">분류되지 않은</string>
+    <string name="please_input_category_name">카테고리 이름을 입력하십시오.</string>
+    <string name="invalid_category_name">잘못된 카테고리</string>
+    <string name="please_select_target_category">카테고리를 지정하십시오.</string>
+    <string name="delete_confirm">카테고리 전부 삭제</string>
+    <string name="no_deck_is_selected">덱이 선택되지 않았습니다.</string>
+    <string name="done">완료！</string>
 </resources>

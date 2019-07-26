@@ -153,14 +153,14 @@ public class YGODialogUtil {
         ll_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                du.dialogl("新建", new String[]{"分类", "卡组"}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(R.string.new_deck), new String[]{context.getString(R.string.category_name), context.getString(R.string.deck_name)}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
                         switch (position) {
                             case 0:
                                 DialogPlus builder = new DialogPlus(context);
-                                builder.setTitle("请输入分类名");
+                                builder.setTitle(R.string.please_input_category_name);
                                 EditText editText = new EditText(context);
                                 editText.setGravity(Gravity.TOP | Gravity.LEFT);
                                 editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
@@ -172,7 +172,7 @@ public class YGODialogUtil {
                                 builder.setLeftButtonListener((dlg, s) -> {
                                     String name = editText.getText().toString().trim();
                                     if (TextUtils.isEmpty(name)) {
-                                        YGOUtil.show("名称不能为空");
+                                        YGOUtil.show(context.getString(R.string.invalid_category_name));
                                         return;
                                     }
                                     File file = new File(AppsSettings.get().getDeckDir(), name);
@@ -198,7 +198,7 @@ public class YGODialogUtil {
             public void onClick(View v) {
                 List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl("请选择要移动到的分类", getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(R.string.please_select_target_category), getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -212,7 +212,7 @@ public class YGODialogUtil {
                             }
                             deckList.remove(deckFile);
                         }
-                        YGOUtil.show("移动完毕");
+                        YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
                         clearDeckSelect();
                     }
@@ -225,7 +225,7 @@ public class YGODialogUtil {
             public void onClick(View v) {
                 List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl("请选择要复制到的分类", getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                du.dialogl(context.getString(R.string.please_select_target_category), getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -239,7 +239,7 @@ public class YGODialogUtil {
                             }
                             deckList.remove(deckFile);
                         }
-                        YGOUtil.show("复制完毕");
+                        YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
                         clearDeckSelect();
                     }
@@ -251,13 +251,13 @@ public class YGODialogUtil {
             @Override
             public void onClick(View v) {
                 if (deckAdp.getSelectList().size() == 0) {
-                    YGOUtil.show("未选中卡组");
+                    YGOUtil.show(context.getString(R.string.no_deck_is_selected));
                     return;
                 }
                 DialogPlus dialogPlus = new DialogPlus(context);
-                dialogPlus.setMessage("确定删除这些卡组吗？");
+                dialogPlus.setMessage(R.string.question_delete_deck);
                 dialogPlus.setLeftButtonText(YGOUtil.s(R.string.delete));
-                dialogPlus.setRightButtonText("取消");
+                dialogPlus.setRightButtonText(R.string.Cancel);
                 dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -266,7 +266,7 @@ public class YGODialogUtil {
                             new File(deckFile.getPath()).delete();
                             deckList.remove(deckFile);
                         }
-                        YGOUtil.show("删除完毕");
+                        YGOUtil.show(context.getString(R.string.done));
                         dialogPlus.dismiss();
                         onDeckMenuListener.onDeckDel(selectDeckList);
                         clearDeckSelect();
@@ -314,7 +314,7 @@ public class YGODialogUtil {
                     }
                 }
                 IOUtils.delete(file);
-                YGOUtil.show("删除完毕");
+                YGOUtil.show(context.getString(R.string.done));
                 onDeckMenuListener.onDeckDel(deckFileList);
                 typeAdp.remove(positon);
                 if (typeAdp.getSelectPosition() == positon) {

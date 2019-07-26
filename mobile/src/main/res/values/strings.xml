@@ -210,6 +210,7 @@
     <string name="deck_manager_v2">Deck Manager V2</string>
     <string name="reset_game_ver_fail">reset game version fail</string>
     <string name="deck_name">Deck</string>
+    <string name="category_name">Deck Category</string>
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
     <string name="join_helper_tip">you can move your favourite sever on top
@@ -259,4 +260,10 @@
     <string name="category_pack">Pack</string>
     <string name="category_windbot_deck">BotDeck</string>
     <string name="category_Uncategorized">UncategorizedDeck</string>
+    <string name="please_input_category_name">please input category name</string>
+    <string name="invalid_category_name">invalid category name</string>
+    <string name="please_select_target_category">please select target category</string>
+    <string name="delete_confirm">will delete all deck of this Category</string>
+    <string name="no_deck_is_selected">no_deck_is_selected</string>
+    <string name="done">done！</string>
 </resources>
