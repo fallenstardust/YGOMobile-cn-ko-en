@@ -50,7 +50,7 @@ public class YGODialogUtil {
 
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         DialogUtils du = DialogUtils.getdx(context);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select,0);
         RecyclerView rv_type, rv_deck;
 
         rv_deck = viewDialog.findViewById(R.id.rv_deck);
