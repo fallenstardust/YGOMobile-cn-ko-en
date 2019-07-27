@@ -264,4 +264,7 @@
     <string name="delete_confirm">카테고리 전부 삭제</string>
     <string name="no_deck_is_selected">덱이 선택되지 않았습니다.</string>
     <string name="done">완료！</string>
+    <string name="screenshoot">스크린 샷</string>
+    <string name="code_share">코드 공유</string>
+    <string name="donot_editor_bot_Deck">AI 덱을 편집 / 제거하지 마십시오. AI 모드는 제대로 작동하지 않습니다.</string>
 </resources>
