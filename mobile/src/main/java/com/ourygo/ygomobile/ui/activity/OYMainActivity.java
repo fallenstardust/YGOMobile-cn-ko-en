@@ -185,7 +185,7 @@ checkRes();
             });
         }else {
             tv_name.setText(name);
-            ImageUtil.tuxian(this, MyCardUtil.getAvatarUrl(name),iv_avatar);
+            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name),iv_avatar);
         }
     }
 

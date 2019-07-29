@@ -70,7 +70,7 @@ public class DeckManagerActivity3 extends BaseActivity implements OnItemDragList
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             mCardLoader.setLimitList(mLimitManager.getTopLimit());
-            File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + Constants.YDK_FILE_EX);
+            File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeckPath() + Constants.YDK_FILE_EX);
             if (!TextUtils.isEmpty(mPreLoad)) {
                 file = new File(mPreLoad);
                 mPreLoad = null;

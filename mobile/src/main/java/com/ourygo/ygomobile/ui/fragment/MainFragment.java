@@ -136,7 +136,7 @@ public class MainFragment extends Fragment {
                 iv_image=view.findViewById(R.id.iv_image);
 
                 MyCardNews myCardNews=myCardNewsList.get(position);
-                ImageUtil.tuxian(getContext(),myCardNews.getImage_url(),iv_image);
+                ImageUtil.setImage(getContext(),myCardNews.getImage_url(),iv_image);
                 tv_time.setText(MyCardUtil.getMyCardNewsData(myCardNews.getCreate_time()));
                 tv_title.setText(myCardNews.getTitle());
                 tv_type.setVisibility(View.GONE);

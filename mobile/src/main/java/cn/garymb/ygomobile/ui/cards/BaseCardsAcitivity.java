@@ -8,7 +8,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,10 +17,6 @@ import com.bumptech.glide.Glide;
 import java.io.IOException;
 import java.util.List;
 
-import androidx.annotation.Nullable;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerViewItemListener;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;

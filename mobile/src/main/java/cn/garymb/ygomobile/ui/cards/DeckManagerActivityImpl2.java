@@ -189,7 +189,7 @@ class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBa
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
-            File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeck() + YDK_FILE_EX);
+            File file = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH + "/" + mSettings.getLastDeckPath() + YDK_FILE_EX);
             if (!TextUtils.isEmpty(mPreLoad)) {
                 file = new File(mPreLoad);
                 mPreLoad = null;
@@ -362,7 +362,7 @@ class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBa
             String name = IOUtils.tirmName(file.getName(), YDK_FILE_EX);
             setActionBarSubTitle(name);
             if (!noSaveLast) {
-                mSettings.setLastDeck(name);
+//                mSettings.setLastDeck(name);
             }
         } else {
             setActionBarSubTitle(getString(R.string.noname));
