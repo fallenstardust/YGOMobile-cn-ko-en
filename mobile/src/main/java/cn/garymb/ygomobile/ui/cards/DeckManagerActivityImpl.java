@@ -652,7 +652,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             }
             break;
             case R.id.action_delete_deck: {
-                if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
+                File ydk = mDeckAdapater.getYdkFile();
+                if (ydk == null)
+                    return true;
+                if (ydk.getParent().equals(mSettings.getAiDeckDir())) {
                     Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     DialogPlus builder = new DialogPlus(this);
@@ -660,15 +663,16 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     builder.setMessage(R.string.question_delete_deck);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
-                        File ydk = mDeckAdapater.getYdkFile();
-                        if (ydk == null) {
+
+                        if (ydk != null) {
+                            FileUtils.deleteFile(ydk);
+                            dlg.dismiss();
+                            File file = getFirstYdk();
+                            initDecksListSpinners(mDeckSpinner, file);
+                            loadDeckFromFile(file);
+                        } else {
                             return;
                         }
-                        FileUtils.deleteFile(ydk);
-                        dlg.dismiss();
-                        File file = getFirstYdk();
-                        initDecksListSpinners(mDeckSpinner, file);
-                        loadDeckFromFile(file);
                     });
                     builder.show();
                 }
@@ -1092,7 +1096,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
     @Override
     public void onDeckDel(List<DeckFile> deckFileList) {
-        String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
+        File deck = mDeckAdapater.getYdkFile();
+        if (deck == null)
+            return;
+        String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
             if (deckFile.getPath().equals(currentDeckPath)) {
                 List<File> files = getYdkFiles();

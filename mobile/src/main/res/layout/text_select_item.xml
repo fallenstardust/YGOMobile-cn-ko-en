@@ -9,6 +9,8 @@
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatTextView
+        android:lines="1"
+        android:ellipsize="end"
         android:gravity="center"
         android:textColor="@color/white"
         android:id="@+id/tv_name"
