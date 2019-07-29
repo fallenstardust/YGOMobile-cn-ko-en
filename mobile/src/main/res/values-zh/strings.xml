@@ -87,6 +87,7 @@
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
     <string name="deck_manager">卡组编辑</string>
+    <string name="category_manager">卡组分类选择</string>
     <string name="search">搜索</string>
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
@@ -126,6 +127,8 @@
     <string name="card_add_main">+主卡组</string>
     <string name="card_add_side">+副卡组</string>
     <string name="new_deck">新建</string>
+    <string name="move_deck">移动</string>
+    <string name="copy_deck">复制</string>
     <string name="rename_deck">重命名</string>
     <string name="delete_deck">删除</string>
     <string name="save_deck">保存</string>
@@ -144,6 +147,8 @@
     <string name="tip_card_max" formatted="false">卡片最大数量:%d</string>
     <string name="file_exist">文件已经存在</string>
     <string name="share_deck">分享卡组</string>
+    <string name="code_share">卡组码分享</string>
+    <string name="screenshoot">图片分享</string>
     <string name="no_share_app">没有找到分享应用</string>
     <string name="intput_room_name">输入密码（可不填）</string>
     <string name="join">加入</string>
@@ -204,6 +209,7 @@
     <string name="deck_manager_v2">组卡器V2</string>
     <string name="reset_game_ver_fail">重置游戏版本失败</string>
     <string name="deck_name">卡组</string>
+    <string name="category_name">卡组分类</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
     <string name="join_helper_tip">你可以把常约战的服务器拖到第一位
@@ -278,4 +284,11 @@
     <string name="category_pack">卡包展示</string>
     <string name="category_windbot_deck">人机卡组</string>
     <string name="category_Uncategorized">未分类卡组</string>
+    <string name="please_input_category_name">请输入新卡组分类名</string>
+    <string name="invalid_category_name">无效的名称</string>
+    <string name="please_select_target_category">要放到哪个的分类</string>
+    <string name="delete_confirm">确定删除该分类吗，分类下的卡组也将全部被删除</string>
+    <string name="no_deck_is_selected">未选中卡组</string>
+    <string name="done">完成！</string>
+    <string name="donot_editor_bot_Deck">请不要更改/删除AI卡组否则会导致人机模式无法正常使用</string>
 </resources>

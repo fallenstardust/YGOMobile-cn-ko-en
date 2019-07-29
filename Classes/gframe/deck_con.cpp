@@ -482,15 +482,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 							}
 						}
 					}
-//					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
-//                    	break;
-
 					if(catesel > 0) {
 						mainGame->lstCategories->setSelected(catesel);
 						refreshDeckList();
 						mainGame->lstDecks->setSelected(0);
 						mainGame->cbDBCategory->setSelected(catesel);
-						changeCategory(catesel);//fixme
+						changeCategory(catesel);
 					}
 					break;
 				}
@@ -1062,11 +1059,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						break;
 				}
 				refreshDeckList();
-//				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1)
-//                    break;
 				mainGame->lstDecks->setSelected(0);
 				mainGame->cbDBCategory->setSelected(catesel);
-				changeCategory(catesel);//fixme
+				changeCategory(catesel);
 				break;
 			}
 			case LISTBOX_DECKS: {

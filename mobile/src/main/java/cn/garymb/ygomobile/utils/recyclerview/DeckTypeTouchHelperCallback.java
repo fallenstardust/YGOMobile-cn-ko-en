@@ -12,6 +12,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -52,9 +53,9 @@ public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
         TextSelectAdapter textSelectAdapter = ((TextSelectAdapter) recyclerView.getAdapter());
 
         DialogPlus dialogPlus = new DialogPlus(recyclerView.getContext());
-        dialogPlus.setMessage("确定删除该分类吗？分类下的卡组也将全部被删除");
-        dialogPlus.setLeftButtonText("删除");
-        dialogPlus.setRightButtonText("取消");
+        dialogPlus.setMessage(R.string.delete_confirm);
+        dialogPlus.setLeftButtonText(R.string.delete);
+        dialogPlus.setRightButtonText(R.string.Cancel);
         dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.view.View;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -42,6 +44,7 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
         });
     }
 
+    @SuppressLint("ResourceType")
     @Override
     protected void convert(BaseViewHolder helper, T item) {
         int position = helper.getAdapterPosition();
@@ -49,17 +52,17 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
         helper.setText(R.id.tv_name, item.getName());
         if (isManySelect) {
             if (selectList.contains(item))
-                helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.gray));
+                helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             else
-                helper.setBackgroundRes(R.id.ll_layout, R.drawable.click_background);
+                helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
         } else if (isSelect) {
             if (position == selectPosition) {
-                helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.gray));
+                helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             } else {
-                helper.setBackgroundRes(R.id.ll_layout, R.drawable.click_background);
+                helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
             }
         }else {
-            helper.setBackgroundRes(R.id.ll_layout, R.drawable.click_background);
+            helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
         }
 
     }

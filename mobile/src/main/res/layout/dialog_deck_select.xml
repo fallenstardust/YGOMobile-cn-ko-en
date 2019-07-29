@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/blue"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -11,8 +12,8 @@
         android:layout_gravity="center_horizontal"
         android:gravity="center"
         android:padding="10dp"
-        android:text="卡组管理"
-        android:textColor="@color/black"
+        android:text="@string/category_manager"
+        android:textColor="@color/holo_blue_bright"
         android:textSize="15sp"
         android:textStyle="bold" />
 
@@ -28,7 +29,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/click_background"
+            android:background="@android:color/transparent"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -43,8 +44,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="新建"
-                android:textColor="@color/black"
+                android:text="@string/new_deck"
+                android:textColor="@color/holo_blue_bright"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -53,7 +54,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/click_background"
+            android:background="@android:color/transparent"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -68,8 +69,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="移动"
-                android:textColor="@color/black"
+                android:text="@string/move_deck"
+                android:textColor="@color/holo_blue_bright"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -78,7 +79,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/click_background"
+            android:background="@android:color/transparent"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -93,8 +94,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="复制"
-                android:textColor="@color/black"
+                android:text="@string/copy_deck"
+                android:textColor="@color/holo_blue_bright"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -103,7 +104,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/click_background"
+            android:background="@android:color/transparent"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -118,8 +119,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="删除"
-                android:textColor="@color/black"
+                android:text="@string/delete_deck"
+                android:textColor="@color/holo_blue_bright"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
@@ -139,7 +140,7 @@
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:background="@color/gray" />
+            android:background="@color/holo_blue_light" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -153,6 +154,5 @@
                 android:layout_height="match_parent"
                 android:nestedScrollingEnabled="true" />
         </LinearLayout>
-
     </LinearLayout>
 </LinearLayout>
