@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -47,6 +49,7 @@ public class DeckUtil {
                 }
             }
         }
+        Collections.sort(deckList,nameCom);
         return deckList;
     }
 
@@ -81,8 +84,16 @@ public class DeckUtil {
                     IOUtils.close(zipFile);
                 }
             }
-
         }
+        Collections.sort(deckList,nameCom);
         return deckList;
     }
+
+   static Comparator nameCom=  new Comparator<DeckFile>() {
+        @Override
+        public int compare(DeckFile ydk1, DeckFile ydk2) {
+            return ydk1.getName().compareTo(ydk2.getName());
+        }
+    };
+
 }
