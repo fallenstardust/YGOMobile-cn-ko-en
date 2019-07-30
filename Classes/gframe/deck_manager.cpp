@@ -275,7 +275,7 @@ bool DeckManager::SaveDeck(Deck& deck, const wchar_t* file) {
 	FILE* fp = OpenDeckFile(file, "w");
 	if(!fp)
 		return false;
-	fprintf(fp, "#created by ...\n#main\n");
+	fprintf(fp, "#created by ygomobile\n#main\n");
 	for(size_t i = 0; i < deck.main.size(); ++i)
 		fprintf(fp, "%d\n", deck.main[i]->first);
 	fprintf(fp, "#extra\n");
