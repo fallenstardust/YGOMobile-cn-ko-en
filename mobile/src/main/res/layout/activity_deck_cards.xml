@@ -57,7 +57,7 @@
                         android:layout_marginTop="2dp"
                         android:textColor="@color/white"
                         android:textStyle="bold"
-                        android:text="假装这是一个卡组.ydk"
+                        android:text="@string/select_deck"
                         android:textSize="18sp"
                         android:id="@+id/tv_deck"
                         android:layout_width="match_parent"

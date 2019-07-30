@@ -375,7 +375,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
                 break;
             case R.id.action_join_qq_group:
-                String key = "4IyCWlDy1rdR14_eg0q1Xi488nG53_Lm";
+                String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
                 joinQQGroup(key);
                 break;
             case R.id.action_help: {

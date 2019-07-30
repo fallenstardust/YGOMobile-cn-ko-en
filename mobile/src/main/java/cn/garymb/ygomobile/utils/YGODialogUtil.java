@@ -174,9 +174,9 @@ public class YGODialogUtil {
                         du.dis();
                         switch (position) {
                             case 0:
-                                if (deckList.size()>=8){
-                                    YGOUtil.show("最多只能有5个自定义分类");
-                                }
+                                //if (deckList.size()>=8){
+                                //    YGOUtil.show("最多只能有5个自定义分类");
+                                //}
                                 DialogPlus builder = new DialogPlus(context);
                                 builder.setTitle(R.string.please_input_category_name);
                                 EditText editText = new EditText(context);

@@ -159,6 +159,7 @@
     <string name="label_pendulum">Pendulum scale</string>
     <string name="all">All</string>
     <string name="refresh">Refresh</string>
+    <string name="select_deck">Click here to select Deck</string>
     <string name="quit_deck_tip">Quit deck editor?</string>
     <string name="deck_delete_text">Drag here to delete</string>
     <string name="question_keep_cur_deck">keep current cards?</string>
