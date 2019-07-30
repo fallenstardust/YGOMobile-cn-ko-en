@@ -631,7 +631,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
                     Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
-                    inputDeckName(mDeckAdapater.getYdkFile(), null, false);
+                    inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
                 }
                 break;
             case R.id.action_deck_new:
