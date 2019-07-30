@@ -138,6 +138,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
                         mSettings.getDeckDir(), needsUpdate);
+                //复制卡包
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
+                        mSettings.get().getPackDeckDir(), needsUpdate);
                 //复制残局
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
@@ -270,6 +273,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 Constants.CORE_SINGLE_PATH,
                 //卡组文件夹
                 Constants.CORE_DECK_PATH,
+                //pack文件夹
+                Constants.CORE_PACK_PATH,
                 //录像文件夹
                 Constants.CORE_REPLAY_PATH,
                 //字体文件夹

@@ -167,10 +167,11 @@ public class IOUtils {
             dir.mkdirs();
         }
     }
-    public static void createFolder(File file) {
+    public static boolean createFolder(File file) {
         if (!file.exists()) {
-            file.mkdirs();
+           return file.mkdirs();
         }
+        return false;
     }
 
     public static void copy(InputStream in, OutputStream out) throws IOException {
