@@ -807,7 +807,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             @Override
             public void onClick(View v) {
                 du.dis();
-                ShareUtil.shareImage(DeckManagerActivityImpl.this, "卡组分享", savePath, null);
+                ShareUtil.shareImage(DeckManagerActivityImpl.this, getContext().getString(R.string.screenshoot), savePath, null);
 
             }
         });

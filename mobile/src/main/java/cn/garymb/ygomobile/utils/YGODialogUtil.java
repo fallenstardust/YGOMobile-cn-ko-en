@@ -199,7 +199,7 @@ public class YGODialogUtil {
                                         typeAdp.notifyItemInserted(typeList.size() - 1);
                                         dlg.dismiss();
                                     } else {
-                                        YGOUtil.show("新建分类失败");
+                                        YGOUtil.show(context.getString(R.string.create_new_failed));
                                     }
 
                                 });
