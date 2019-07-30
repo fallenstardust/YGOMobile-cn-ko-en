@@ -270,4 +270,5 @@
     <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work properly</string>
     <string name="code_share">Code Share</string>
     <string name="screenshoot">Screenshoot</string>
+    <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
 </resources>

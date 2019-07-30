@@ -602,6 +602,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 showResult(true);
                 break;
             case R.id.action_share_deck:
+                if (mDeckAdapater.getYdkFile() == null) {
+                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    return true;
+                }
                 shareDeck();
                 break;
             case R.id.action_save:
@@ -620,14 +624,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     }
                 }
                 break;
-//            case R.id.action_save_as:
-//                if (mYdkFile == null) {
-//                    inputDeckName(null);
-//                } else {
-//                    inputDeckName(mYdkFile.getName());
-//                }
-//                break;
             case R.id.action_rename:
+                if (mDeckAdapater.getYdkFile() == null) {
+                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    return true;
+                }
                 if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
                     Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
@@ -652,10 +653,11 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             }
             break;
             case R.id.action_delete_deck: {
-                File ydk = mDeckAdapater.getYdkFile();
-                if (ydk == null)
+                if (mDeckAdapater.getYdkFile() == null) {
+                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
-                if (ydk.getParent().equals(mSettings.getAiDeckDir())) {
+                }
+                if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
                     Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     DialogPlus builder = new DialogPlus(this);
@@ -664,8 +666,8 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
 
-                        if (ydk != null) {
-                            FileUtils.deleteFile(ydk);
+                        if (mDeckAdapater.getYdkFile() != null) {
+                            FileUtils.deleteFile(mDeckAdapater.getYdkFile());
                             dlg.dismiss();
                             File file = getFirstYdk();
                             initDecksListSpinners(mDeckSpinner, file);
@@ -685,9 +687,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             case R.id.action_sort:
                 mDeckAdapater.sort();
                 break;
-//            case R.id.action_share_deck:
-//                shareDeck();
-//                break;
             default:
                 return false;
         }

@@ -267,4 +267,5 @@
     <string name="no_deck_is_selected">未选中卡组</string>
     <string name="done">完成！</string>
     <string name="donot_editor_bot_Deck">请不要更改/删除AI卡组否则会导致人机模式无法正常使用</string>
+    <string name="unable_to_edit_empty_deck">不可操作空卡组</string>
 </resources>
