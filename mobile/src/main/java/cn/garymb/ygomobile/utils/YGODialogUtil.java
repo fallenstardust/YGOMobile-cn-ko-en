@@ -81,13 +81,14 @@ public class YGODialogUtil {
             File file = new File(selectDeckPath);
             if (file.exists()) {
                 String name = file.getParentFile().getName();
+                String lastName=file.getParentFile().getParentFile().getName();
                 if (name.equals("pack") || name.equals("cacheDeck")) {
                     //卡包
                     typeSelectPosition = 0;
-                } else if (name.equals("Decks")) {
+                } else if (name.equals("Decks")&&lastName.equals(Constants.WINDBOT_PATH)) {
                     //ai卡组
                     typeSelectPosition = 1;
-                } else if (name.equals("deck") && new File(selectDeckPath).getParentFile().getParentFile().getName().equals(Constants.PREF_DEF_GAME_DIR)) {
+                } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
                     //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
                 } else {
                     //其他卡包
