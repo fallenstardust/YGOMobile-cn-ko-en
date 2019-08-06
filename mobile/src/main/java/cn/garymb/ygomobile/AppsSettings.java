@@ -37,6 +37,7 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.utils.DeckUtil.getDeckTypeName;
 
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
@@ -529,12 +530,9 @@ public class AppsSettings {
     /***
      * 保存最后卡组分类名
      */
-    public void setLastCategory(String name) {
-        if (TextUtils.equals(name, getCurLastCategory())) {
-            //一样
-            return;
-        }
-        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
+    public void setLastCategory(String path) {
+        String catename = getDeckTypeName(path);
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, catename);
     }
 
     public String getCurLastCategory() {
