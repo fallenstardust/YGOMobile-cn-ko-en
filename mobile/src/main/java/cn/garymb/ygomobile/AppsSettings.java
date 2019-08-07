@@ -530,9 +530,12 @@ public class AppsSettings {
     /***
      * 保存最后卡组分类名
      */
-    public void setLastCategory(String path) {
-        String catename = getDeckTypeName(path);
-        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, catename);
+    public void setLastCategory(String name) {
+        if (TextUtils.equals(name, getCurLastCategory())) {
+            //一样
+            return;
+        }
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
     }
 
     public String getCurLastCategory() {

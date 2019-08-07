@@ -73,6 +73,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
@@ -295,6 +296,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //            if (inDeckDir(file)) {
             //记住最后打开的卡组
             mSettings.setLastDeckPath(file.getAbsolutePath());
+            mSettings.setLastCategory(DeckUtil.getDeckTypeName(file.getAbsolutePath()));
             tv_deck.setText(name);
 //            }
         } else {
