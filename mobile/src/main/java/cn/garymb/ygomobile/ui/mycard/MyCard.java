@@ -20,14 +20,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
+import cn.garymb.ygomobile.utils.DeckUtil;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -272,7 +277,21 @@ public class MyCard {
         public String readdir(String path) {
             File file = new File(settings.getResourcePath(), path);
             String[] result = file.list();
-            return new JSONArray(Arrays.asList(result)).toString();
+            List<DeckFile> deckFileList=new ArrayList<>();
+            for (File file1:file.listFiles()){
+                if (file1.isDirectory()){
+                    deckFileList.addAll(DeckUtil.getDeckList(file1.getAbsolutePath()));
+                }else {
+                    if (file.getName().endsWith(".ydk"))
+                    deckFileList.add(new DeckFile(file1.getAbsolutePath()));
+                }
+            }
+            int deckPathLenght=file.getAbsolutePath().length();
+            List<String> deckList=new ArrayList<>();
+            for (DeckFile deckFile:deckFileList){
+                deckList.add(deckFile.getPath().substring(deckPathLenght));
+            }
+            return new JSONArray(deckList).toString();
         }
 
         /*
