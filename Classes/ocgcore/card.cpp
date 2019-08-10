@@ -1992,8 +1992,7 @@ void card::reset(uint32 id, uint32 reset_type) {
 			}
 		}
 		if(id & RESET_TURN_SET) {
-			effect* peffect = check_control_effect();
-			if(peffect) {
+			if(effect* peffect = check_control_effect()) {
 				effect* new_effect = pduel->new_effect();
 				new_effect->id = peffect->id;
 				new_effect->owner = this;
@@ -2454,15 +2453,6 @@ void card::filter_disable_related_cards() {
 				pduel->game_field->add_to_disable_check_list(overlay_target);
 		}
 	}
-	for(auto pcard : effect_target_cards) {
-		for(auto it = pcard->single_effect.begin(); it != pcard->single_effect.end(); ++it) {
-			effect* peffect = it->second;
-			if(peffect->is_disable_related() && peffect->is_flag(EFFECT_FLAG_OWNER_RELATE)){
-				pduel->game_field->add_to_disable_check_list(pcard);
-				break;
-			}
-		}
-	}
 }
 // put all summon procedures except ordinay summon in peset (see is_can_be_summoned())
 // return value:
@@ -2759,7 +2749,6 @@ effect* card::is_affected_by_effect(int32 code, card* target) {
 	}
 	return 0;
 }
-// return the last control-changing continuous effect
 effect* card::check_control_effect() {
 	effect* ret_effect = 0;
 	for (auto& pcard : equiping_cards) {
@@ -2783,11 +2772,21 @@ effect* card::check_control_effect() {
 	auto rg = single_effect.equal_range(EFFECT_SET_CONTROL);
 	for (; rg.first != rg.second; ++rg.first) {
 		effect* peffect = rg.first->second;
-		if(!peffect->is_flag(EFFECT_FLAG_OWNER_RELATE))
+		if(!peffect->condition)
 			continue;
 		if(!ret_effect || peffect->id > ret_effect->id)
 			ret_effect = peffect;
 	}
+	/*
+	rg = pduel->game_field->effects.aura_effect.equal_range(EFFECT_SET_CONTROL);
+	for(; rg.first != rg.second; ++rg.first) {
+		effect* peffect = rg.first->second;
+		if(peffect->is_flag(EFFECT_FLAG_PLAYER_TARGET) || !peffect->is_target(this))
+			continue;
+		if(!ret_effect || peffect->id > ret_effect->id)
+			ret_effect = peffect;
+	}
+	*/
 	return ret_effect;
 }
 int32 card::fusion_check(group* fusion_m, card* cg, uint32 chkf) {
