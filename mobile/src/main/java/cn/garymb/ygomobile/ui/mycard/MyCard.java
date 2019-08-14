@@ -282,14 +282,14 @@ public class MyCard {
                 if (file1.isDirectory()){
                     deckFileList.addAll(DeckUtil.getDeckList(file1.getAbsolutePath()));
                 }else {
-                    if (file.getName().endsWith(".ydk"))
+//                    if (file.getName().endsWith(".ydk"))
                     deckFileList.add(new DeckFile(file1.getAbsolutePath()));
                 }
             }
             int deckPathLenght=file.getAbsolutePath().length();
             List<String> deckList=new ArrayList<>();
             for (DeckFile deckFile:deckFileList){
-                deckList.add(deckFile.getPath().substring(deckPathLenght));
+                deckList.add(deckFile.getPath().substring(deckPathLenght+1));
             }
             return new JSONArray(deckList).toString();
         }
