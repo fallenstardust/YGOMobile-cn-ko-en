@@ -20,10 +20,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -277,19 +275,19 @@ public class MyCard {
         public String readdir(String path) {
             File file = new File(settings.getResourcePath(), path);
             String[] result = file.list();
-            List<DeckFile> deckFileList=new ArrayList<>();
-            for (File file1:file.listFiles()){
-                if (file1.isDirectory()){
+            List<DeckFile> deckFileList = new ArrayList<>();
+            for (File file1 : file.listFiles()) {
+                if (file1.isDirectory()) {
                     deckFileList.addAll(DeckUtil.getDeckList(file1.getAbsolutePath()));
-                }else {
+                } else {
 //                    if (file.getName().endsWith(".ydk"))
                     deckFileList.add(new DeckFile(file1.getAbsolutePath()));
                 }
             }
-            int deckPathLenght=file.getAbsolutePath().length();
-            List<String> deckList=new ArrayList<>();
-            for (DeckFile deckFile:deckFileList){
-                deckList.add(deckFile.getPath().substring(deckPathLenght+1));
+            int deckPathLenght = file.getAbsolutePath().length();
+            List<String> deckList = new ArrayList<>();
+            for (DeckFile deckFile : deckFileList) {
+                deckList.add(deckFile.getPath().substring(deckPathLenght + 1));
             }
             return new JSONArray(deckList).toString();
         }
