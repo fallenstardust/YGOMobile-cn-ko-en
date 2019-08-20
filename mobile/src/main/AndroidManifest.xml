@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="cn.garymb.ygomobile.lite">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="cn.garymb.ygomobile.lite">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.READ_LOGS"
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission
+        android:name="android.permission.READ_LOGS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.GET_TASKS"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    
-    <uses-sdk
-        tools:overrideLibrary="com.toptoche.searchablespinnerlibrary"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-sdk tools:overrideLibrary="com.toptoche.searchablespinnerlibrary" />
     <application
         android:name="cn.garymb.ygomobile.App"
         android:allowBackup="false"
@@ -32,8 +33,8 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:supportsRtl="false"
-        android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
 
         tools:replace="android:allowBackup,android:supportsRtl">
         <activity
@@ -42,71 +43,71 @@
             android:taskAffinity="cn.garymb.logo"
             android:theme="@style/TranslucentTheme">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
             <meta-data
                 android:name="android.app.shortcuts"
-                android:resource="@xml/shortcuts"/>
+                android:resource="@xml/shortcuts" />
 
         </activity>
 
         <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
-            android:excludeFromRecents="false"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:excludeFromRecents="false"
             android:exported="true"
             android:screenOrientation="portrait"
             android:stateNotNeeded="true"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <intent-filter>
-                <action android:name="ygomobile.intent.action.DECK"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="ygomobile.intent.action.DECK" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
-                <action android:name="ygomobile.intent.action.GAME"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="ygomobile.intent.action.GAME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
                 <!--android:pathPrefix="/deck"-->
                 <data
                     android:host="deck"
-                    android:scheme="ygo"/>
+                    android:scheme="ygo" />
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="file"/>
-                <data android:host="*"/>
+                <data android:scheme="file" />
+                <data android:host="*" />
                 <!--data android:mimeType="*/*" /-->
-                <data android:pathPattern=".*\\.ydk"/>
+                <data android:pathPattern=".*\\.ydk" />
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="content"/>
-                <data android:host="*"/>
+                <data android:scheme="content" />
+                <data android:host="*" />
                 <data android:mimeType="*/*" />
-                <data android:pathPattern=".*\\.ydk"/>
+                <data android:pathPattern=".*\\.ydk" />
             </intent-filter>
 
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
-            tools:replace="android:theme"/>
+            tools:replace="android:theme" />
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.AboutActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -114,7 +115,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -122,7 +123,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.cards.CardSearchAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -130,7 +131,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
         <activity
             android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -138,7 +139,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
         <activity
             android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity2"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -146,7 +147,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
         <activity
             android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity3"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -154,69 +155,74 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
         <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.WebActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.PhotoViewActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"/>
-		<activity
+            android:theme="@style/AppTheme" />
+        <activity
             android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Mycard"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.McchatActivity"
-            android:windowSoftInputMode="stateHidden|adjustResize"
-            android:label="@string/app_name"/>
-        <activity
-            android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"/>
-        <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity"/>
-        <activity android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"/>
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity" />
+        <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
+        <activity android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity" />
 
         <service
             android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
-            android:priority="1000"/>
+            android:priority="1000" />
 
-    <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
-    <!--android:priority="1000"-->
+        <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
+        <!--android:priority="1000"-->
         <activity
             android:name="com.base.bj.paysdk.TrPayAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="behind"
-            android:windowSoftInputMode="adjustResize|stateHidden" >
-        </activity>
+            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
         <activity
             android:name="com.base.bj.paysdk.TrPayUnionAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize|stateHidden" >
-        </activity>
+            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
         <activity
             android:name="com.base.bj.paysdk.TrSelectListActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize|stateHidden" >
-        </activity>
+            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
+
         <meta-data
             android:name="PGYER_APPID"
-            android:value="${PGYER_APPID}" >
-        </meta-data>
+            android:value="${PGYER_APPID}"></meta-data>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fallenstardust"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

@@ -9,13 +9,17 @@ import android.net.Uri;
 import android.os.Build;
 import android.preference.Preference;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
@@ -28,18 +32,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
     private CurImageInfo mCurImageInfo;
 
-    private class CurImageInfo {
-        public String mOutFile;
-        public String mCurTitle;
-        public boolean mJpeg;
-        public int width;
-        public int height;
-
-        public CurImageInfo() {
-
-        }
-    }
-
     protected void onChooseFileOk(Preference preference, String file) {
         onPreferenceChange(preference, file);
     }
@@ -47,7 +39,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     protected void onChooseFileFail(Preference preference) {
 
     }
-    protected void showFolderChooser(Preference preference,  String defPath, String title) {
+
+    protected void showFolderChooser(Preference preference, String defPath, String title) {
         curPreference = preference;
         Intent intent = FileActivity.getIntent(getActivity(), title, null, defPath, false, FileOpenType.SelectFolder);
         startActivityForResult(intent, REQUEST_CHOOSE_FOLDER);
@@ -76,9 +69,9 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     }
 
     public Context getContext() {
-        if(Build.VERSION.SDK_INT>=23) {
+        if (Build.VERSION.SDK_INT >= 23) {
             return super.getContext();
-        }else{
+        } else {
             return super.getActivity();
         }
     }
@@ -126,8 +119,9 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             onChooseFileFail(preference);
             return;
         }
+        Log.i("我是srcfile", srcfile + "");
         File file = new File(info.mOutFile);
-        Uri saveimgUri = Uri.fromFile(file);
+        Uri saveimgUri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fallenstardust", file);
         Intent intent = new Intent("com.android.camera.action.CROP");
         intent.setDataAndType(srcfile, "image/*");
         // 下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
@@ -143,9 +137,11 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         intent.putExtra("return-data", false);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, saveimgUri);
         intent.putExtra("outputFormat", info.mJpeg ? Bitmap.CompressFormat.JPEG.toString() : Bitmap.CompressFormat.PNG.toString());
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         try {
             startActivityForResult(Intent.createChooser(intent, info.mCurTitle), Constants.REQUEST_CUT_IMG);
         } catch (Exception e) {
+            Log.i("我是e",e +"");
             Toast.makeText(getActivity(), R.string.no_find_image_cutor, Toast.LENGTH_SHORT).show();
         }
     }
@@ -155,6 +151,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         super.onActivityResult(requestCode, resultCode, data);
 //        Log.i("kk", "result "+requestCode+",data="+data);
         if (requestCode == Constants.REQUEST_CHOOSE_IMG) {
+            Log.i("我是“data.getData”", "“" + data.getData() + "”");
             if (resultCode == Activity.RESULT_OK) {
                 Uri file = data.getData();
 //                onChooseFileOk(curPreference, mOutFile);
@@ -181,7 +178,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 }
             }
             onChooseFileFail(curPreference);
-        }else if(requestCode==Constants.REQUEST_CHOOSE_FOLDER){
+        } else if (requestCode == Constants.REQUEST_CHOOSE_FOLDER) {
             //选择文件
             if (data != null) {
                 Uri uri = data.getData();
@@ -199,14 +196,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 
     public static class SharedPreferencesPlus implements SharedPreferences {
 
-        public static SharedPreferencesPlus create(Context context, String name) {
-            return create(context, name, Context.MODE_PRIVATE|Context.MODE_MULTI_PROCESS);
-        }
-
-        public static SharedPreferencesPlus create(Context context, String name, int mode) {
-            return new SharedPreferencesPlus(context, name, mode);
-        }
-
         private SharedPreferences mSharedPreferences;
         private boolean autoSave = false;
         private boolean isMultiProess = false;
@@ -214,6 +203,14 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         private SharedPreferencesPlus(Context context, String name, int mode) {
             mSharedPreferences = context.getSharedPreferences(name, mode);
             isMultiProess = (mode & Context.MODE_MULTI_PROCESS) == Context.MODE_MULTI_PROCESS;
+        }
+
+        public static SharedPreferencesPlus create(Context context, String name) {
+            return create(context, name, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
+        }
+
+        public static SharedPreferencesPlus create(Context context, String name, int mode) {
+            return new SharedPreferencesPlus(context, name, mode);
         }
 
         public SharedPreferences getSharedPreferences() {
@@ -368,6 +365,18 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         @Override
         public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
             mSharedPreferences.unregisterOnSharedPreferenceChangeListener(listener);
+        }
+    }
+
+    private class CurImageInfo {
+        public String mOutFile;
+        public String mCurTitle;
+        public boolean mJpeg;
+        public int width;
+        public int height;
+
+        public CurImageInfo() {
+
         }
     }
 }
