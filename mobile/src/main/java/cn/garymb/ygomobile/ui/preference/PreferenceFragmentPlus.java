@@ -31,6 +31,7 @@ import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
     private CurImageInfo mCurImageInfo;
+    private  Uri saveimgUri;
 
     protected void onChooseFileOk(Preference preference, String file) {
         onPreferenceChange(preference, file);
@@ -121,8 +122,13 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         }
         Log.i("我是srcfile", srcfile + "");
         File file = new File(info.mOutFile);
-        Uri saveimgUri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fallenstardust", file);
         Intent intent = new Intent("com.android.camera.action.CROP");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            saveimgUri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fallenstardust", file);
+        } else {
+            saveimgUri = Uri.fromFile(file);
+        }
         intent.setDataAndType(srcfile, "image/*");
         // 下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
         intent.putExtra("crop", "true");
@@ -137,11 +143,11 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         intent.putExtra("return-data", false);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, saveimgUri);
         intent.putExtra("outputFormat", info.mJpeg ? Bitmap.CompressFormat.JPEG.toString() : Bitmap.CompressFormat.PNG.toString());
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
         try {
             startActivityForResult(Intent.createChooser(intent, info.mCurTitle), Constants.REQUEST_CUT_IMG);
         } catch (Exception e) {
-            Log.i("我是e",e +"");
+            Log.i("我是e", e + "");
             Toast.makeText(getActivity(), R.string.no_find_image_cutor, Toast.LENGTH_SHORT).show();
         }
     }
