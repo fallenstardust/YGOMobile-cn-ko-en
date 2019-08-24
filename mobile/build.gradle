@@ -8,8 +8,8 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 340800810
-        versionName "3.4.8"
+        versionCode 350000823
+        versionName "3.5.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
@@ -110,4 +110,6 @@ dependencies {
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     api 'androidx.appcompat:appcompat:1.0.2'
     api 'com.google.android.material:material:1.0.0'
+    //图片选择
+    implementation 'com.yuyh.imgsel:library:2.0.6'
 }
