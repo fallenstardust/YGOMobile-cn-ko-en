@@ -1,29 +1,28 @@
 package cn.garymb.ygomobile.ui.preference;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.Preference;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.Toast;
 
-import androidx.core.content.FileProvider;
+import com.yuyh.library.imgsel.ISNav;
+import com.yuyh.library.imgsel.config.ISListConfig;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 
+
+import static android.app.Activity.RESULT_OK;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
@@ -31,7 +30,7 @@ import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
     private CurImageInfo mCurImageInfo;
-    private  Uri saveimgUri;
+    private Uri saveimgUri;
 
     protected void onChooseFileOk(Preference preference, String file) {
         onPreferenceChange(preference, file);
@@ -92,19 +91,38 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 //        startActivityForResult(intent, REQUEST_CHOOSE_IMG);
 
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-////        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-////        intent.putExtra("crop", "true");
-////        intent.putExtra("aspectX", width);
-////        intent.putExtra("aspectY", height);
-////        intent.putExtra("outputX", width);
-////        intent.putExtra("outputY", height);
-////        intent.putExtra("scale", true);
-////        intent.putExtra("scaleUpIfNeeded", true);// 黑边
-////        intent.putExtra("return-data", false);
-////        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(outFile)));
-////        intent.putExtra("outputFormat", isJpeg ? Bitmap.CompressFormat.JPEG.toString() : Bitmap.CompressFormat.PNG.toString());
-////        intent.putExtra("noFaceDetection", true); // no face detection
+//      intent.addCategory(Intent.CATEGORY_OPENABLE);
+//        intent.setType("image/*");
+        ISListConfig config = new ISListConfig.Builder()
+                // 是否多选, 默认true
+                .multiSelect(false)
+                // 是否记住上次选中记录, 仅当multiSelect为true的时候配置，默认为true
+                .rememberSelected(false)
+                // “确定”按钮背景色
+                .btnBgColor(Color.BLACK)
+                // “确定”按钮文字颜色
+                .btnTextColor(Color.WHITE)
+                // 使用沉浸式状态栏
+                .statusBarColor(Color.parseColor("#11113d"))
+                // 返回图标ResId
+                .backResId(R.drawable.ic_back)
+                // 标题
+                .title("图片")
+                // 标题文字颜色
+                .titleColor(Color.WHITE)
+                // TitleBar背景色
+                .titleBgColor(Color.parseColor("#11113d"))
+                // 裁剪大小。needCrop为true的时候配置
+                .cropSize(mCurImageInfo.width, mCurImageInfo.height, mCurImageInfo.width, mCurImageInfo.height)
+                .needCrop(true)
+                // 第一个是否显示相机，默认true
+                .needCamera(false)
+                // 最大选择图片数量，默认9
+                .maxNum(1)
+                .build();
+
+// 跳转到图片选择器
+        ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
         try {
             startActivityForResult(intent, REQUEST_CHOOSE_IMG);
         } catch (android.content.ActivityNotFoundException ex) {
@@ -114,6 +132,20 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // 图片选择结果回调
+        if (requestCode == REQUEST_CHOOSE_IMG && resultCode == RESULT_OK && data != null) {
+            List<String> pathList = data.getStringArrayListExtra("result");
+            /*for (String path : pathList) {
+                tvResult.append(path + "\n");
+            }*/
+        }
+    }
+
+    //已弃用裁剪和回调
+    /*
     protected void openPhotoCut(Preference preference, Uri srcfile, CurImageInfo info) {
         // 裁剪图片
         if (srcfile == null || info == null) {
@@ -199,7 +231,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             onChooseFileFail(curPreference);
         }
     }
-
+*/
     public static class SharedPreferencesPlus implements SharedPreferences {
 
         private SharedPreferences mSharedPreferences;
