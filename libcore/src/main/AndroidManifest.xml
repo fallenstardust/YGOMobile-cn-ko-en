@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="cn.garymb.ygomobile.lib">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="cn.garymb.ygomobile.lib">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -17,7 +18,8 @@
             android:screenOrientation="sensorLandscape"
             android:taskAffinity="cn.garymb.ygomobile.game"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan"
+            tools:targetApi="honeycomb">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="YGOMobile"/>
