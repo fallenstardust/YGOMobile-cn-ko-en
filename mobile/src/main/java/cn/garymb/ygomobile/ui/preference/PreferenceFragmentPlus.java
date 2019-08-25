@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.preference;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,19 +8,26 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.Preference;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.config.ISListConfig;
+import com.yuyh.library.imgsel.ui.ISListActivity;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
+import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.IOUtils;
 
 
 import static android.app.Activity.RESULT_OK;
@@ -107,7 +115,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 // 返回图标ResId
                 .backResId(R.drawable.ic_back)
                 // 标题
-                .title("图片")
+                .title(getString(R.string.images))
                 // 标题文字颜色
                 .titleColor(Color.WHITE)
                 // TitleBar背景色
@@ -121,30 +129,18 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 .maxNum(1)
                 .build();
 
-// 跳转到图片选择器
+        // 跳转到图片选择器
         ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
         try {
             startActivityForResult(intent, REQUEST_CHOOSE_IMG);
         } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(getActivity(), R.string.no_find_file_selectotr, Toast.LENGTH_SHORT)
+            Toast.makeText(getActivity(), ex + "", Toast.LENGTH_LONG)
                     .show();
             onChooseFileFail(preference);
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // 图片选择结果回调
-        if (requestCode == REQUEST_CHOOSE_IMG && resultCode == RESULT_OK && data != null) {
-            List<String> pathList = data.getStringArrayListExtra("result");
-            /*for (String path : pathList) {
-                tvResult.append(path + "\n");
-            }*/
-        }
-    }
-
-    //已弃用裁剪和回调
+    //已弃用裁剪
     /*
     protected void openPhotoCut(Preference preference, Uri srcfile, CurImageInfo info) {
         // 裁剪图片
@@ -182,23 +178,22 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Log.i("我是e", e + "");
             Toast.makeText(getActivity(), R.string.no_find_image_cutor, Toast.LENGTH_SHORT).show();
         }
-    }
+    }*/
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 //        Log.i("kk", "result "+requestCode+",data="+data);
-        if (requestCode == Constants.REQUEST_CHOOSE_IMG) {
-            Log.i("我是“data.getData”", "“" + data.getData() + "”");
-            if (resultCode == Activity.RESULT_OK) {
-                Uri file = data.getData();
-//                onChooseFileOk(curPreference, mOutFile);
-                openPhotoCut(curPreference, file, mCurImageInfo);
-            } else {
-                onChooseFileFail(curPreference);
-            }
-        } else if (requestCode == Constants.REQUEST_CUT_IMG) {// 裁剪完图片
-            if (resultCode == Activity.RESULT_OK && mCurImageInfo != null) {
+        if (requestCode == Constants.REQUEST_CHOOSE_IMG && resultCode == Activity.RESULT_OK && data != null) {
+            ArrayList<String> photos = data.getStringArrayListExtra(ISListActivity.INTENT_RESULT);
+            if (mCurImageInfo != null) {
+                String cachePath = photos.get(0);
+                try {
+                    FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile, true);
+                } catch (IOException e) {
+                    Toast.makeText(getContext(), e + "", Toast.LENGTH_LONG).show();
+                    onChooseFileFail(curPreference);
+                }
                 onChooseFileOk(curPreference, mCurImageInfo.mOutFile);
             } else {
                 onChooseFileFail(curPreference);
@@ -231,7 +226,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             onChooseFileFail(curPreference);
         }
     }
-*/
+
     public static class SharedPreferencesPlus implements SharedPreferences {
 
         private SharedPreferences mSharedPreferences;
