@@ -98,7 +98,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 //        Intent intent = FileActivity.getIntent(getActivity(), title, "*.[jpg|png|bmp]", defPath, false, FileOpenType.SelectFile);
 //        startActivityForResult(intent, REQUEST_CHOOSE_IMG);
 
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 //      intent.addCategory(Intent.CATEGORY_OPENABLE);
 //        intent.setType("image/*");
         ISListConfig config = new ISListConfig.Builder()
@@ -131,13 +130,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 
         // 跳转到图片选择器
         ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
-        try {
-            startActivityForResult(intent, REQUEST_CHOOSE_IMG);
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(getActivity(), ex + "", Toast.LENGTH_LONG)
-                    .show();
-            onChooseFileFail(preference);
-        }
     }
 
     //已弃用裁剪

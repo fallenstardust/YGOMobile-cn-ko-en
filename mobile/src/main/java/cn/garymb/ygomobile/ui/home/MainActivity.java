@@ -65,8 +65,6 @@ public class MainActivity extends HomeActivity {
 //        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
         //资源复制
         checkRes();
-        // 自定义图片加载器
-        Startimgsel();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
@@ -256,13 +254,5 @@ public class MainActivity extends HomeActivity {
     /*        checkResourceDownload((result, isNewVersion) -> {
                 Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
             });*/
-    public void Startimgsel() {
-        // 自定义图片加载器
-        ISNav.getInstance().init(new ImageLoader() {
-            @Override
-            public void displayImage(Context context, String path, ImageView imageView) {
-                Glide.with(context).load(path).into(imageView);
-            }
-        });
-    }
+
 }
