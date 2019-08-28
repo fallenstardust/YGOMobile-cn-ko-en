@@ -58,10 +58,10 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             switch (msg.what) {
                 case TYPE_MC_LOGIN:
                     String[] ss = (String[]) msg.obj;
-                    if (!TextUtils.isEmpty(ss[0])) {
-                        Glide.with(MyCardActivity.this).load(Uri.parse(ss[0])).into(mHeadView);
+                    if (!TextUtils.isEmpty(ss[1])) {
+                        Glide.with(MyCardActivity.this).load(Uri.parse(ss[1])).into(mHeadView);
                     }
-                    mNameView.setText(ss[1]);
+                    mNameView.setText(ss[0]);
                     mStatusView.setText(ss[2]);
                     break;
             }
