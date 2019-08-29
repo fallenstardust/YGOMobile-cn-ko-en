@@ -18,8 +18,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
@@ -506,18 +509,26 @@ public class AppsSettings {
     }
 
     /***
-     * 保存最后卡组绝对路径
+     * 保存最后卡组绝对路径、分类、卡组名
      */
     public void setLastDeckPath(String path) {
         if (TextUtils.equals(path, getCurLastDeck())) {
             //一样
             return;
         }
+        //保存最后卡组绝对路径
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, path);
+        //保存最后分类名
+        mSharedPreferences.putString(Constants.PREF_DEF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
+        //保存最后卡组名
+        File lastDeck = new File(path);
+        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
+        mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
+        Log.i("我是最后卡组+最后分类+最后卡组名", path + "以及" + DeckUtil.getDeckTypeName(path) + "以及" + lastDeckName);
     }
 
     public String getCurLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, null);
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
     /***
@@ -527,19 +538,8 @@ public class AppsSettings {
         return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
     }
 
-    /***
-     * 保存最后卡组分类名
-     */
-    public void setLastCategory(String name) {
-        if (TextUtils.equals(name, getCurLastCategory())) {
-            //一样
-            return;
-        }
-        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
-    }
-
     public String getCurLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, null);
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, null);
     }
 
     public void saveIntSettings(String key, int value) {
@@ -624,7 +624,7 @@ public class AppsSettings {
 
     public void saveCategorySettings(String key, String value) {
         if ("lastcategory".equals(key)) {
-            setLastCategory(value);
+            setLastDeckPath(value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }

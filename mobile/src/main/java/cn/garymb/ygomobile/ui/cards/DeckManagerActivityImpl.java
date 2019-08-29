@@ -296,7 +296,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 //            if (inDeckDir(file)) {
             //记住最后打开的卡组
             mSettings.setLastDeckPath(file.getAbsolutePath());
-            mSettings.setLastCategory(DeckUtil.getDeckTypeName(file.getAbsolutePath()));
+
             tv_deck.setText(name);
 //            }
         } else {
