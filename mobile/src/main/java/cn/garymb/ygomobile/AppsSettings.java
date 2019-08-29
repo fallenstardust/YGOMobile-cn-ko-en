@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
@@ -40,7 +39,6 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
-import static cn.garymb.ygomobile.utils.DeckUtil.getDeckTypeName;
 
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
@@ -501,16 +499,7 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
-    /***
-     * 获得最后卡组绝对路径
-     */
-    public String getLastDeckPath() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
-    }
-
-    /***
-     * 保存最后卡组绝对路径、分类、卡组名
-     */
+    //保存最后卡组绝对路径、分类、卡组名
     public void setLastDeckPath(String path) {
         if (TextUtils.equals(path, getCurLastDeck())) {
             //一样
@@ -525,6 +514,24 @@ public class AppsSettings {
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
         mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
         Log.i("我是最后卡组+最后分类+最后卡组名", path + "以及" + DeckUtil.getDeckTypeName(path) + "以及" + lastDeckName);
+    }
+
+    //获得最后卡组绝对路径
+    public String getLastDeckPath() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+    }
+
+    //获得最后分类名
+    public String getLastCategory(String path) {
+        String lastCategoryName = DeckUtil.getDeckTypeName(path);
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, lastCategoryName);
+    }
+
+    //获得最后卡组名
+    public String getLastDeckName(String path) {
+        File lastDeck = new File(path);
+        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
     }
 
     public String getCurLastDeck() {
