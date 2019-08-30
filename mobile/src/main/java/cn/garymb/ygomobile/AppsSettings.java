@@ -499,6 +499,10 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
+    public String getCurLastDeck() {
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
+    }
+
     //保存最后卡组绝对路径、分类、卡组名
     public void setLastDeckPath(String path) {
         if (TextUtils.equals(path, getCurLastDeck())) {
@@ -532,17 +536,6 @@ public class AppsSettings {
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
         return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
-    }
-
-    public String getCurLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
-    }
-
-    /***
-     * 获得最后卡组分类名
-     */
-    public String getLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
     }
 
     public String getCurLastCategory() {
@@ -614,7 +607,8 @@ public class AppsSettings {
     }*/
 
     public void saveSettings(String key, String value) {
-        if ("lastdeck".equals(key)) {
+        Log.i("我是key+value", key + "+" + value);
+        if ("lastdeck".equals(key) || "lastcategory".equals(key)) {
             setLastDeckPath(value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
@@ -639,7 +633,7 @@ public class AppsSettings {
 
     public String getCategorySettings(String key) {
         if ("lastcategory".equals(key)) {
-            String val = getLastCategory();
+            String val = getLastCategory(key);
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);

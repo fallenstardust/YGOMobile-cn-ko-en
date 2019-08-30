@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.Preference;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.yuyh.library.imgsel.ISNav;
@@ -18,7 +17,6 @@ import com.yuyh.library.imgsel.ui.ISListActivity;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,10 +25,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.IOUtils;
 
-
-import static android.app.Activity.RESULT_OK;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
@@ -38,7 +33,6 @@ import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
     private CurImageInfo mCurImageInfo;
-    private Uri saveimgUri;
 
     protected void onChooseFileOk(Preference preference, String file) {
         onPreferenceChange(preference, file);
@@ -99,7 +93,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 //        startActivityForResult(intent, REQUEST_CHOOSE_IMG);
 
 //      intent.addCategory(Intent.CATEGORY_OPENABLE);
-//        intent.setType("image/*");
+//      intent.setType("image/*");
         ISListConfig config = new ISListConfig.Builder()
                 // 是否多选, 默认true
                 .multiSelect(false)

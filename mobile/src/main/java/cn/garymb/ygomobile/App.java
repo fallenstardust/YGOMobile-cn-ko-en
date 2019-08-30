@@ -1,10 +1,10 @@
 package cn.garymb.ygomobile;
 
 
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -23,11 +23,11 @@ public class App extends GameApplication {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
         //初始化异常工具类
-        CrashHandler crashHandler =  CrashHandler.getInstance();
+        CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
         if (AppsSettings.get().isSoundEffect()) {
             initSoundEffectPool();
-           setInitSoundEffectPool(true);
+            setInitSoundEffectPool(true);
         }
         //初始化图片选择器
         initImgsel();
@@ -38,6 +38,7 @@ public class App extends GameApplication {
     @Override
     public NativeInitOptions getNativeInitOptions() {
         NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
+        Log.i("我是getNativeInitOptions", options + "");
         return options;
     }
 
@@ -76,15 +77,18 @@ public class App extends GameApplication {
     @Override
     public void saveSetting(String key, String value) {
         AppsSettings.get().saveSettings(key, value);
+        Log.i("我是saveSetting的key+value", key + "以及" + value);
     }
 
     @Override
     public String getSetting(String key) {
+        Log.i("我是getSetting的key", key);
         return AppsSettings.get().getSettings(key);
     }
 
     @Override
     public int getIntSetting(String key, int def) {
+        Log.i("我是getIntSetting的key+def", key + "以及" + def);
         return AppsSettings.get().getIntSettings(key, def);
     }
 
