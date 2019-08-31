@@ -222,7 +222,6 @@ public class AppsSettings {
                         //
                     }
                     for (File file : cdbs) {
-                        Log.i("合法的数据库才会加载", "菜菜辛苦了");
                         //if (CardManager.checkDataBase(file)) {
                         //合法数据库才会加载
                         pathList.add(file.getAbsolutePath());
@@ -510,36 +509,32 @@ public class AppsSettings {
             return;
         }
         //保存最后卡组绝对路径
-        mSharedPreferences.putString(Constants.PREF_LAST_YDK, path);
+        mSharedPreferences.putString(Constants.PREF_LAST_DECK_PATH, path);
         //保存最后分类名
         mSharedPreferences.putString(Constants.PREF_DEF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
         //保存最后卡组名
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
         mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
-        Log.i("我是最后卡组+最后分类+最后卡组名", path + "以及" + DeckUtil.getDeckTypeName(path) + "以及" + lastDeckName);
+        Log.i("我是最后卡组路径+最后分类+最后卡组名",
+                getLastDeckPath() + "以及" +
+                        getLastCategory() + "以及" +
+                        getLastDeckName());
     }
 
     //获得最后卡组绝对路径
     public String getLastDeckPath() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+        return mSharedPreferences.getString(Constants.PREF_LAST_DECK_PATH, null);
     }
 
     //获得最后分类名
-    public String getLastCategory(String path) {
-        String lastCategoryName = DeckUtil.getDeckTypeName(path);
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, lastCategoryName);
+    public String getLastCategory() {
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, null);
     }
 
     //获得最后卡组名
-    public String getLastDeckName(String path) {
-        File lastDeck = new File(path);
-        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
-    }
-
-    public String getCurLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, null);
+    public String getLastDeckName() {
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
     public void saveIntSettings(String key, int value) {
@@ -607,33 +602,22 @@ public class AppsSettings {
     }*/
 
     public void saveSettings(String key, String value) {
-        Log.i("我是key+value", key + "+" + value);
-        if ("lastdeck".equals(key) || "lastcategory".equals(key)) {
-            setLastDeckPath(value);
+        if ("lastdeck".equals(key)) {
+            mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, value);
+        } else if ("lastcategory".equals(key)) {
+            mSharedPreferences.putString(Constants.PREF_DEF_LAST_CATEGORY, value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
     }
 
     public String getSettings(String key) {
+        String val;
         if ("lastdeck".equals(key)) {
-            String val = getLastDeckPath();
+            val = getLastDeckName();
             return val;
-        }
-        return mSharedPreferences.getString(Constants.PREF_START + key, null);
-    }
-
-    public void saveCategorySettings(String key, String value) {
-        if ("lastcategory".equals(key)) {
-            setLastDeckPath(value);
-        } else {
-            mSharedPreferences.putString(Constants.PREF_START + key, value);
-        }
-    }
-
-    public String getCategorySettings(String key) {
-        if ("lastcategory".equals(key)) {
-            String val = getLastCategory(key);
+        } else if ("lastcategory".equals(key)) {
+            val = getLastCategory();
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);
