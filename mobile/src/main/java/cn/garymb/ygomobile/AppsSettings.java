@@ -511,11 +511,11 @@ public class AppsSettings {
         //保存最后卡组绝对路径
         mSharedPreferences.putString(Constants.PREF_LAST_DECK_PATH, path);
         //保存最后分类名
-        mSharedPreferences.putString(Constants.PREF_DEF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
         //保存最后卡组名
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
-        mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, lastDeckName);
+        mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
         Log.i("我是最后卡组路径+最后分类+最后卡组名",
                 getLastDeckPath() + "以及" +
                         getLastCategory() + "以及" +
@@ -524,17 +524,17 @@ public class AppsSettings {
 
     //获得最后卡组绝对路径
     public String getLastDeckPath() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_DECK_PATH, null);
+        return mSharedPreferences.getString(Constants.PREF_LAST_DECK_PATH, "");
     }
 
     //获得最后分类名
     public String getLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_CATEGORY, null);
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_YDK);
     }
 
     //获得最后卡组名
     public String getLastDeckName() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
+        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     public void saveIntSettings(String key, int value) {
