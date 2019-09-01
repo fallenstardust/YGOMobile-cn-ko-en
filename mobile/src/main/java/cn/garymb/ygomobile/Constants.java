@@ -59,6 +59,7 @@ public interface Constants {
     String DATABASE_NAME = "cards.cdb";
     String BOT_CONF = "bot.conf";
     String WINDBOT_PATH = "windbot";
+    String WINDBOT_DECK_PATH = "Decks";
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";

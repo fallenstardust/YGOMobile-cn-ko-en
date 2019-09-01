@@ -39,6 +39,7 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
@@ -514,7 +515,7 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
         //保存最后卡组名
         File lastDeck = new File(path);
-        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), Constants.YDK_FILE_EX);
+        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
         Log.i("我是最后卡组路径+最后分类+最后卡组名",
                 getLastDeckPath() + "以及" +
@@ -535,6 +536,21 @@ public class AppsSettings {
     //获得最后卡组名
     public String getLastDeckName() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+    }
+
+    //从获得的key+value里拼接一个绝对路径
+    public String getCurLastDeckPath() {
+        String path;
+        if(TextUtils.equals(Constants.CORE_PACK_PATH, Constants.PREF_LAST_CATEGORY)) {
+            path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, Constants.PREF_LAST_CATEGORY)){
+            path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if(TextUtils.equals(Constants.PREF_LAST_CATEGORY,null)){
+            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else {
+            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        }
+        return path;
     }
 
     public void saveIntSettings(String key, int value) {
@@ -603,9 +619,9 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            mSharedPreferences.putString(Constants.PREF_DEF_LAST_YDK, value);
+            mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
         } else if ("lastcategory".equals(key)) {
-            mSharedPreferences.putString(Constants.PREF_DEF_LAST_CATEGORY, value);
+            mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
