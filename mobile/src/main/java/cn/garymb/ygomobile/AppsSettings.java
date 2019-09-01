@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
@@ -505,7 +506,10 @@ public class AppsSettings {
 
     //保存最后卡组绝对路径、分类、卡组名
     public void setLastDeckPath(String path) {
-        if (TextUtils.equals(path, getCurLastDeck())) {
+        Log.i("我是path", path);
+        Log.i("我是getCurLastDeckPath", getCurLastDeckPath());
+        Log.i("我是getLastDeckPath", getLastDeckPath());
+        if (TextUtils.equals(path, getLastDeckPath())) {
             //一样
             return;
         }
@@ -517,10 +521,6 @@ public class AppsSettings {
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
-        Log.i("我是最后卡组路径+最后分类+最后卡组名",
-                getLastDeckPath() + "以及" +
-                        getLastCategory() + "以及" +
-                        getLastDeckName());
     }
 
     //获得最后卡组绝对路径
@@ -545,11 +545,12 @@ public class AppsSettings {
             path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, Constants.PREF_LAST_CATEGORY)){
             path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if(TextUtils.equals(Constants.PREF_LAST_CATEGORY,null)){
+        } else if(TextUtils.equals(context.getString(R.string.category_Uncategorized),Constants.PREF_LAST_CATEGORY)){
             path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else {
             path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         }
+        mSharedPreferences.putString(Constants.PREF_LAST_DECK_PATH, path);
         return path;
     }
 
@@ -619,9 +620,12 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
+            Log.i("我是lastdeck的value", value);
             mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
         } else if ("lastcategory".equals(key)) {
+            Log.i("我是lastcategory的value", value);
             mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
+
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
