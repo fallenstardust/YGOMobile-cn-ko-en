@@ -530,7 +530,7 @@ public class AppsSettings {
 
     //获得最后分类名
     public String getLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_YDK);
+        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
     }
 
     //获得最后卡组名
@@ -541,11 +541,11 @@ public class AppsSettings {
     //从获得的key+value里拼接一个绝对路径
     public String getCurLastDeckPath() {
         String path;
-        if(TextUtils.equals(Constants.CORE_PACK_PATH, Constants.PREF_LAST_CATEGORY)) {
+        if(TextUtils.equals(Constants.CORE_PACK_PATH, getLastCategory())) {
             path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, Constants.PREF_LAST_CATEGORY)){
+        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, getLastCategory())){
             path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if(TextUtils.equals(context.getString(R.string.category_Uncategorized),Constants.PREF_LAST_CATEGORY)){
+        } else if(TextUtils.equals(context.getString(R.string.category_Uncategorized),getLastCategory())){
             path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else {
             path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
