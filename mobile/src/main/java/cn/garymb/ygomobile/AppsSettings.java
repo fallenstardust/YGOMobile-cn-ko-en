@@ -509,9 +509,9 @@ public class AppsSettings {
     //获得最后卡组绝对路径
     public String getLastDeckPath() {
         String path;
-        if (TextUtils.equals(Constants.CORE_PACK_PATH, getLastCategory())) {
-            path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, getLastCategory())) {
+        if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
+            path = getResourcePath() + "/" + Constants.CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(context.getString(R.string.category_windbot_deck), getLastCategory())) {
             path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
             path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
