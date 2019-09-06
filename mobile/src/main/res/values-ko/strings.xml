@@ -258,7 +258,7 @@
     <string name="Pre_share">공유 준비</string>
     <string name="category_pack">한 갑</string>
     <string name="category_windbot_deck">AI 덱</string>
-    <string name="category_Uncategorized">분류되지 않은</string>
+    <string name="category_Uncategorized">분류되지</string>
     <string name="please_input_category_name">카테고리 이름을 입력하십시오.</string>
     <string name="invalid_category_name">잘못된 카테고리</string>
     <string name="please_select_target_category">카테고리를 지정하십시오.</string>
