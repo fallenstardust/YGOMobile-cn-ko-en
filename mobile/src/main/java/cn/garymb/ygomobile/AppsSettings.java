@@ -27,7 +27,9 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
+import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
+import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
@@ -42,6 +44,8 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
+import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 public class AppsSettings {
@@ -468,12 +472,12 @@ public class AppsSettings {
 
     //获取卡组文件夹
     public String getDeckDir() {
-        return new File(getResourcePath(), Constants.CORE_DECK_PATH).getAbsolutePath();
+        return new File(getResourcePath(), CORE_DECK_PATH).getAbsolutePath();
     }
 
     //获取ai卡组文件夹
     public String getAiDeckDir() {
-        return new File(getResourcePath(), Constants.WINDBOT_PATH + "/Decks").getAbsolutePath();
+        return new File(getResourcePath(), WINDBOT_PATH + "/Decks").getAbsolutePath();
     }
 
     //获取新卡卡包文件夹
@@ -510,13 +514,13 @@ public class AppsSettings {
     public String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
-            path = getResourcePath() + "/" + Constants.CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(context.getString(R.string.category_windbot_deck), getLastCategory())) {
-            path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = getResourcePath() + "/" + WINDBOT_PATH + "/" + WINDBOT_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
-            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else {
-            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         }
         Log.e("Appsettings", "拼接最后路径" + path);
         return path;
