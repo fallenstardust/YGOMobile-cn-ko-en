@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 28
         versionCode 350000823
         versionName "3.5.0"
@@ -108,8 +108,10 @@ dependencies {
     implementation(name: 'dialogutils2-release', ext: 'aar')
     //recyclerview的adapter库
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.android.material:material:1.0.0'
     //图片选择
     implementation 'com.yuyh.imgsel:library:2.0.6'
+    //跨进程SharedPreferencesPlus工具
+    implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
 }

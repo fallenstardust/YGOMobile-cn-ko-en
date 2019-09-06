@@ -8,6 +8,8 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import com.zlm.libs.preferences.PreferencesProviderUtils;
+
 import org.json.JSONArray;
 
 import java.io.File;
@@ -504,28 +506,35 @@ public class AppsSettings {
         return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
+    //获得最后卡组绝对路径
+    public String getLastDeckPath() {
+        String path;
+        if (TextUtils.equals(Constants.CORE_PACK_PATH, getLastCategory())) {
+            path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, getLastCategory())) {
+            path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
+            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else {
+            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        }
+        Log.e("Appsettings", "拼接最后路径" + path);
+        return path;
+    }
+
     //保存最后卡组绝对路径、分类、卡组名
     public void setLastDeckPath(String path) {
-        Log.i("我是path", path);
-        Log.i("我是getCurLastDeckPath", getCurLastDeckPath());
-        Log.i("我是getLastDeckPath", getLastDeckPath());
+        Log.e("Appsettings", "设置最后路径" + path);
         if (TextUtils.equals(path, getLastDeckPath())) {
             //一样
             return;
         }
-        //保存最后卡组绝对路径
-        mSharedPreferences.putString(Constants.PREF_LAST_DECK_PATH, path);
         //保存最后分类名
         mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
         //保存最后卡组名
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
         mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
-    }
-
-    //获得最后卡组绝对路径
-    public String getLastDeckPath() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_DECK_PATH, "");
     }
 
     //获得最后分类名
@@ -536,22 +545,6 @@ public class AppsSettings {
     //获得最后卡组名
     public String getLastDeckName() {
         return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
-    }
-
-    //从获得的key+value里拼接一个绝对路径
-    public String getCurLastDeckPath() {
-        String path;
-        if(TextUtils.equals(Constants.CORE_PACK_PATH, getLastCategory())) {
-            path = getResourcePath() + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if (TextUtils.equals(Constants.WINDBOT_DECK_PATH, getLastCategory())){
-            path = getResourcePath() + "/" + Constants.WINDBOT_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else if(TextUtils.equals(context.getString(R.string.category_Uncategorized),getLastCategory())){
-            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
-        } else {
-            path = getResourcePath() + "/" + Constants.CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
-        }
-        mSharedPreferences.putString(Constants.PREF_LAST_DECK_PATH, path);
-        return path;
     }
 
     public void saveIntSettings(String key, int value) {
@@ -620,12 +613,11 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            Log.i("我是lastdeck的value", value);
+            Log.e("AppSettings", value);
             mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
         } else if ("lastcategory".equals(key)) {
-            Log.i("我是lastcategory的value", value);
+            Log.e("AppSettings", value);
             mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
-
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }

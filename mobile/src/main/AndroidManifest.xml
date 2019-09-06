@@ -191,6 +191,12 @@
         <service
             android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
             android:priority="1000" />
+
+        <provider
+            android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:exported="false"/>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

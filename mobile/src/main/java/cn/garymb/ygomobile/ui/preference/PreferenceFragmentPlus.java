@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.config.ISListConfig;
 import com.yuyh.library.imgsel.ui.ISListActivity;
+import com.zlm.libs.preferences.PreferencesProviderUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -218,8 +219,12 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         private SharedPreferences mSharedPreferences;
         private boolean autoSave = false;
         private boolean isMultiProess = false;
+        private String spName;
+        private Context context;
 
         private SharedPreferencesPlus(Context context, String name, int mode) {
+            spName = name;
+            this.context = context;
             mSharedPreferences = context.getSharedPreferences(name, mode);
             isMultiProess = (mode & Context.MODE_MULTI_PROCESS) == Context.MODE_MULTI_PROCESS;
         }
@@ -252,7 +257,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Editor editor = edit().putString(key, value);
             if (autoSave) {
                 if (isMultiProess) {
-                    editor.commit();
+//                    editor.commit();
+                    PreferencesProviderUtils.putString(context, spName, key, value);
                 } else {
                     editor.apply();
                 }
@@ -274,7 +280,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Editor editor = edit().putInt(key, value);
             if (autoSave) {
                 if (isMultiProess) {
-                    editor.commit();
+//                    editor.commit();
+                    PreferencesProviderUtils.putInt(context, spName, key, value);
                 } else {
                     editor.apply();
                 }
@@ -285,7 +292,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Editor editor = edit().putLong(key, value);
             if (autoSave) {
                 if (isMultiProess) {
-                    editor.commit();
+//                    editor.commit();
+                    PreferencesProviderUtils.putLong(context, spName, key, value);
                 } else {
                     editor.apply();
                 }
@@ -296,7 +304,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Editor editor = edit().putFloat(key, value);
             if (autoSave) {
                 if (isMultiProess) {
-                    editor.commit();
+//                    editor.commit();
+                    PreferencesProviderUtils.putFloat(context, spName, key, value);
                 } else {
                     editor.apply();
                 }
@@ -307,7 +316,8 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             Editor editor = edit().putBoolean(key, value);
             if (autoSave) {
                 if (isMultiProess) {
-                    editor.commit();
+//                    editor.commit();
+                    PreferencesProviderUtils.putBoolean(context, spName, key, value);
                 } else {
                     editor.apply();
                 }
@@ -343,7 +353,10 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 
         @Override
         public String getString(String key, String defValue) {
-            return mSharedPreferences.getString(key, defValue);
+            if (isMultiProess)
+                return PreferencesProviderUtils.getString(context, spName, key, defValue);
+            else
+                return mSharedPreferences.getString(key, defValue);
         }
 
         @Override
@@ -353,22 +366,34 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 
         @Override
         public int getInt(String key, int defValue) {
-            return mSharedPreferences.getInt(key, defValue);
+            if (isMultiProess)
+                return PreferencesProviderUtils.getInt(context, spName, key, defValue);
+            else
+                return mSharedPreferences.getInt(key, defValue);
         }
 
         @Override
         public long getLong(String key, long defValue) {
-            return mSharedPreferences.getLong(key, defValue);
+            if (isMultiProess)
+                return PreferencesProviderUtils.getLong(context, spName, key, defValue);
+            else
+                return mSharedPreferences.getLong(key, defValue);
         }
 
         @Override
         public float getFloat(String key, float defValue) {
-            return mSharedPreferences.getFloat(key, defValue);
+            if (isMultiProess)
+                return PreferencesProviderUtils.getFloat(context, spName, key, defValue);
+            else
+                return mSharedPreferences.getFloat(key, defValue);
         }
 
         @Override
         public boolean getBoolean(String key, boolean defValue) {
-            return mSharedPreferences.getBoolean(key, defValue);
+            if (isMultiProess)
+                return PreferencesProviderUtils.getBoolean(context, spName, key, defValue);
+            else
+                return mSharedPreferences.getBoolean(key, defValue);
         }
 
         @Override

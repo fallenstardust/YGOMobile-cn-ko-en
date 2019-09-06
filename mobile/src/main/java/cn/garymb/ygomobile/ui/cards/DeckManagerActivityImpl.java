@@ -758,7 +758,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     private void shareDeck1() {
-
         //开启绘图缓存
         mRecyclerView.setDrawingCacheEnabled(true);
         //这个方法可调可不调，因为在getDrawingCache()里会自动判断有没有缓存有没有准备好，
