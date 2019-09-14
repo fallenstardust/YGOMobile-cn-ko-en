@@ -6,9 +6,9 @@ android {
 
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 28
-        versionCode 350000908
+        versionCode 350000914
         versionName "3.5.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
