@@ -2142,7 +2142,6 @@ void ClientField::GetHoverField(int x, int y) {
 	}
 }
 void ClientField::ShowMenu(int flag, int x, int y) {
-    mainGame->textFont->setTransparency(true);
 	if(!flag) {
 		mainGame->wCmdMenu->setVisible(false);
 		return;
