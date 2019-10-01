@@ -332,10 +332,12 @@ bool Game::Initialize() {
 	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 #endif
 	//img
-	wCardImg = env->addStaticText(L"", rect<s32>(1 * xScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * xScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
+	float imgScale=xScale;
+	if (imgScale > yScale) imgScale=yScale;
+	wCardImg = env->addStaticText(L"", rect<s32>(1 * imgScale, 1 * imgScale, ( 1 + CARD_IMG_WIDTH + 20) * imgScale, (1 + CARD_IMG_HEIGHT + 18) * imgScale), true, false, 0, -1, true);
 	wCardImg->setBackgroundColor(0x6011113d);
 	wCardImg->setVisible(false);
-	imgCard = env->addImage(rect<s32>(10 * xScale, 9 * yScale, (10 + CARD_IMG_WIDTH) * xScale, (9 + CARD_IMG_HEIGHT) * yScale), wCardImg);
+	imgCard = env->addImage(rect<s32>(10 * imgScale, 9 * imgScale, (10 + CARD_IMG_WIDTH) * imgScale, (9 + CARD_IMG_HEIGHT) * imgScale), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
