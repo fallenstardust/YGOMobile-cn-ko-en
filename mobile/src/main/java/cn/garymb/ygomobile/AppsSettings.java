@@ -8,6 +8,8 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import com.zlm.libs.preferences.PreferencesProviderUtils;
+
 import org.json.JSONArray;
 
 import java.io.File;
@@ -18,11 +20,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 
+import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
+import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
@@ -37,6 +44,9 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
+import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
@@ -220,7 +230,6 @@ public class AppsSettings {
                         //
                     }
                     for (File file : cdbs) {
-                        Log.i("合法的数据库才会加载", "菜菜辛苦了");
                         //if (CardManager.checkDataBase(file)) {
                         //合法数据库才会加载
                         pathList.add(file.getAbsolutePath());
@@ -468,12 +477,12 @@ public class AppsSettings {
 
     //获取卡组文件夹
     public String getDeckDir() {
-        return new File(getResourcePath(), Constants.CORE_DECK_PATH).getAbsolutePath();
+        return new File(getResourcePath(), CORE_DECK_PATH).getAbsolutePath();
     }
 
     //获取ai卡组文件夹
     public String getAiDeckDir() {
-        return new File(getResourcePath(), Constants.WINDBOT_PATH + "/Decks").getAbsolutePath();
+        return new File(getResourcePath(), WINDBOT_PATH + "/Decks").getAbsolutePath();
     }
 
     //获取新卡卡包文件夹
@@ -502,48 +511,49 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
-    /***
-     * 获得最后卡组绝对路径
-     */
-    public String getLastDeckPath() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+    public String getCurLastDeck() {
+        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
-    /***
-     * 保存最后卡组绝对路径
-     */
-    public void setLastDeckPath(String name) {
-        if (TextUtils.equals(name, getCurLastDeck())) {
+    //获得最后卡组绝对路径
+    public String getLastDeckPath() {
+        String path;
+        if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
+            path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(context.getString(R.string.category_windbot_deck), getLastCategory())) {
+            path = getResourcePath() + "/" + WINDBOT_PATH + "/" + WINDBOT_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+        } else {
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+        }
+        Log.e("Appsettings", "拼接最后路径" + path);
+        return path;
+    }
+
+    //保存最后卡组绝对路径、分类、卡组名
+    public void setLastDeckPath(String path) {
+        Log.e("Appsettings", "设置最后路径" + path);
+        if (TextUtils.equals(path, getLastDeckPath())) {
             //一样
             return;
         }
-        mSharedPreferences.putString(Constants.PREF_LAST_YDK, name);
+        //保存最后分类名
+        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
+        //保存最后卡组名
+        File lastDeck = new File(path);
+        String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
+        mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
     }
 
-    public String getCurLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, null);
-    }
-
-    /***
-     * 获得最后卡组分类名
-     */
+    //获得最后分类名
     public String getLastCategory() {
         return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
     }
 
-    /***
-     * 保存最后卡组分类名
-     */
-    public void setLastCategory(String name) {
-        if (TextUtils.equals(name, getCurLastCategory())) {
-            //一样
-            return;
-        }
-        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, name);
-    }
-
-    public String getCurLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, null);
+    //获得最后卡组名
+    public String getLastDeckName() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
     }
 
     public void saveIntSettings(String key, int value) {
@@ -612,31 +622,23 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            setLastDeckPath(value);
+            Log.e("AppSettings", value);
+            mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
+        } else if ("lastcategory".equals(key)) {
+            Log.e("AppSettings", value);
+            mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
         }
     }
 
     public String getSettings(String key) {
+        String val;
         if ("lastdeck".equals(key)) {
-            String val = getLastDeckPath();
+            val = getLastDeckName();
             return val;
-        }
-        return mSharedPreferences.getString(Constants.PREF_START + key, null);
-    }
-
-    public void saveCategorySettings(String key, String value) {
-        if ("lastcategory".equals(key)) {
-            setLastCategory(value);
-        } else {
-            mSharedPreferences.putString(Constants.PREF_START + key, value);
-        }
-    }
-
-    public String getCategorySettings(String key) {
-        if ("lastcategory".equals(key)) {
-            String val = getLastCategory();
+        } else if ("lastcategory".equals(key)) {
+            val = getLastCategory();
             return val;
         }
         return mSharedPreferences.getString(Constants.PREF_START + key, null);

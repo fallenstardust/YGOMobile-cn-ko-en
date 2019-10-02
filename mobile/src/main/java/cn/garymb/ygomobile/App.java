@@ -2,10 +2,17 @@ package cn.garymb.ygomobile;
 
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-
+import android.util.Log;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
+
+import com.bumptech.glide.Glide;
+import com.yuyh.library.imgsel.ISNav;
+import com.yuyh.library.imgsel.common.ImageLoader;
+
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class App extends GameApplication {
@@ -16,13 +23,14 @@ public class App extends GameApplication {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
         //初始化异常工具类
-        CrashHandler crashHandler =  CrashHandler.getInstance();
+        CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
         if (AppsSettings.get().isSoundEffect()) {
             initSoundEffectPool();
-           setInitSoundEffectPool(true);
+            setInitSoundEffectPool(true);
         }
-
+        //初始化图片选择器
+        initImgsel();
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
     }
@@ -120,5 +128,15 @@ public class App extends GameApplication {
         intent.putExtra("args", args);
         intent.setAction("RUN_WINDBOT");
         getBaseContext().sendBroadcast(intent);
+    }
+
+    private void initImgsel() {
+        // 自定义图片加载器
+        ISNav.getInstance().init(new ImageLoader() {
+            @Override
+            public void displayImage(Context context, String path, ImageView imageView) {
+                Glide.with(context).load(path).into(imageView);
+            }
+        });
     }
 }

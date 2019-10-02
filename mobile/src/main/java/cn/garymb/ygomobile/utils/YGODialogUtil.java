@@ -77,29 +77,41 @@ public class YGODialogUtil {
         int typeSelectPosition = 2;
         int deckSelectPosition = -1;
         List<DeckFile> deckList;
-        if (selectDeckPath != null) {
-            String name = new File(selectDeckPath).getParentFile().getName();
-            if (name.equals("pack") || name.equals("cacheDeck")) {
-                //卡包
-                typeSelectPosition = 0;
-            } else if (name.equals("Decks")) {
-                //ai卡组
-                typeSelectPosition = 1;
-            } else if (name.equals("deck") && new File(selectDeckPath).getParentFile().getParentFile().getName().equals(Constants.PREF_DEF_GAME_DIR)) {
-                //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
-                typeSelectPosition = 2;
-            } else {
-                //其他卡包
-                for (int i = 3; i < typeList.size(); i++) {
-                    DeckType deckType = typeList.get(i);
-                    if (deckType.getName().equals(name)) {
-                        typeSelectPosition = i;
-                        break;
+        if (!TextUtils.isEmpty(selectDeckPath)) {
+            File file = new File(selectDeckPath);
+            if (file.exists()) {
+                String name = file.getParentFile().getName();
+                String lastName=file.getParentFile().getParentFile().getName();
+                if (name.equals("pack") || name.equals("cacheDeck")) {
+                    //卡包
+                    typeSelectPosition = 0;
+                } else if (name.equals("Decks")&&lastName.equals(Constants.WINDBOT_PATH)) {
+                    //ai卡组
+                    typeSelectPosition = 1;
+                } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
+                    //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
+                } else {
+                    //其他卡包
+                    for (int i = 3; i < typeList.size(); i++) {
+                        DeckType deckType = typeList.get(i);
+                        if (deckType.getName().equals(name)) {
+                            typeSelectPosition = i;
+                            break;
+                        }
                     }
                 }
             }
         }
         deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
+        if (typeSelectPosition == 0) {
+            if (AppsSettings.get().isReadExpansions()) {
+                try {
+                    deckList.addAll(DeckUtil.getExpansionsDeckList());
+                } catch (IOException e) {
+                    YGOUtil.show("额外卡库加载失败,愿意为" + e);
+                }
+            }
+        }
         typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
         deckAdp = new TextSelectAdapter<>(deckList, deckSelectPosition);
         rv_type.setAdapter(typeAdp);
@@ -163,6 +175,9 @@ public class YGODialogUtil {
                         du.dis();
                         switch (position) {
                             case 0:
+                                //if (deckList.size()>=8){
+                                //    YGOUtil.show("最多只能有5个自定义分类");
+                                //}
                                 DialogPlus builder = new DialogPlus(context);
                                 builder.setTitle(R.string.please_input_category_name);
                                 EditText editText = new EditText(context);
@@ -180,10 +195,14 @@ public class YGODialogUtil {
                                         return;
                                     }
                                     File file = new File(AppsSettings.get().getDeckDir(), name);
-                                    IOUtils.createFolder(file);
-                                    typeList.add(new DeckType(name, file.getAbsolutePath()));
-                                    typeAdp.notifyItemInserted(typeList.size() - 1);
-                                    dlg.dismiss();
+                                    if (IOUtils.createFolder(file)) {
+                                        typeList.add(new DeckType(name, file.getAbsolutePath()));
+                                        typeAdp.notifyItemInserted(typeList.size() - 1);
+                                        dlg.dismiss();
+                                    } else {
+                                        YGOUtil.show(context.getString(R.string.create_new_failed));
+                                    }
+
                                 });
                                 builder.show();
                                 break;

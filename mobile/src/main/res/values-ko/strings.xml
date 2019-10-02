@@ -154,6 +154,7 @@
     <string name="all">모두보기</string>
     <string name="donation">기부</string>
     <string name="refresh">새로고침</string>
+    <string name="select_deck">덱을 선택하세요</string>
     <string name="quit_deck_tip">덱관리자를 나가겠습니까?</string>
     <string name="deck_delete_text">삭제하려면 여기로 드래그하십시오.</string>
     <string name="question_keep_cur_deck">현재 카드를 유지하겠습니까?</string>
@@ -275,4 +276,18 @@
     <string name="duel_mode_one">单局模式</string>
     <string name="duel_mode_match">比赛模式</string>
     <string name="complete_setting">完成设置</string>
+    <string name="category_pack">한 갑</string>
+    <string name="category_windbot_deck">AI 덱</string>
+    <string name="category_Uncategorized">분류되지</string>
+    <string name="please_input_category_name">카테고리 이름을 입력하십시오.</string>
+    <string name="invalid_category_name">잘못된 카테고리</string>
+    <string name="please_select_target_category">카테고리를 지정하십시오.</string>
+    <string name="delete_confirm">카테고리 전부 삭제</string>
+    <string name="no_deck_is_selected">덱이 선택되지 않았습니다.</string>
+    <string name="done">완료！</string>
+    <string name="screenshoot">사진공유</string>
+    <string name="code_share">덱 코드 공유</string>
+    <string name="donot_editor_bot_Deck">덱을 변경하지 말아 주세요. 그러면 프로그램이 제대로 작동하지 않을 수 있습니다.</string>
+    <string name="unable_to_edit_empty_deck">사용할 수 없는 빈 구역</string>
+    <string name="create_new_failed">생성실패</string>
 </resources>

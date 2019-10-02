@@ -59,7 +59,11 @@ void field::change_chain_effect(uint8 chaincount, int32 rep_op) {
 		return;
 	if(chaincount > core.current_chain.size() || chaincount < 1)
 		chaincount = core.current_chain.size();
-	core.current_chain[chaincount - 1].replace_op = rep_op;
+	chain& pchain = core.current_chain[chaincount - 1];
+	pchain.replace_op = rep_op;
+	if((pchain.triggering_effect->type & EFFECT_TYPE_ACTIVATE) && (pchain.triggering_effect->handler->current.location == LOCATION_SZONE)) {
+		pchain.triggering_effect->handler->set_status(STATUS_LEAVE_CONFIRMED, TRUE);
+	}
 }
 void field::change_target(uint8 chaincount, group* targets) {
 	if(core.current_chain.size() == 0)
@@ -4688,12 +4692,14 @@ int32 field::operation_replace(uint16 step, effect* replace_effect, group* targe
 	}
 	case 1: {
 		if (returns.ivalue[0]) {
-			targets->container.erase(target);
-			target->current.reason = target->temp.reason;
-			target->current.reason_effect = target->temp.reason_effect;
-			target->current.reason_player = target->temp.reason_player;
-			if(is_destroy)
-				core.destroy_canceled.insert(target);
+			if(!target->current.reason_effect->is_self_destroy_related()) {
+				targets->container.erase(target);
+				target->current.reason = target->temp.reason;
+				target->current.reason_effect = target->temp.reason_effect;
+				target->current.reason_player = target->temp.reason_player;
+				if(is_destroy)
+					core.destroy_canceled.insert(target);
+			}
 			replace_effect->dec_count(replace_effect->get_handler_player());
 		} else
 			core.units.begin()->step = 2;
@@ -4752,7 +4758,7 @@ int32 field::operation_replace(uint16 step, effect* replace_effect, group* targe
 		if (returns.ivalue[0]) {
 			for (auto cit = targets->container.begin(); cit != targets->container.end();) {
 				auto rm = cit++;
-				if (replace_effect->get_value(*rm)) {
+				if (replace_effect->get_value(*rm) && !(*rm)->current.reason_effect->is_self_destroy_related()) {
 					(*rm)->current.reason = (*rm)->temp.reason;
 					(*rm)->current.reason_effect = (*rm)->temp.reason_effect;
 					(*rm)->current.reason_player = (*rm)->temp.reason_player;

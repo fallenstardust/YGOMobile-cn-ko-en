@@ -7,9 +7,10 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 public interface Constants {
     boolean DEBUG = BuildConfig.DEBUG;
     String PREF_START = "game_pref_";
+    String PREF_LAST_DECK_PATH = "pref_last_deck_path";
     String PREF_LAST_YDK = "pref_last_ydk";
     String PREF_DEF_LAST_YDK = "new";
-    String PREF_LAST_CATEGORY = "pre_last_category";
+    String PREF_LAST_CATEGORY = "pref_last_category";
     String PREF_DEF_LAST_CATEGORY = "newcate";
     String PREF_GAME_PATH = "pref_key_game_res_path";
     String PREF_DEF_GAME_DIR = "ygocore";
@@ -58,6 +59,7 @@ public interface Constants {
     String DATABASE_NAME = "cards.cdb";
     String BOT_CONF = "bot.conf";
     String WINDBOT_PATH = "windbot";
+    String WINDBOT_DECK_PATH = "Decks";
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";
@@ -139,7 +141,7 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
-    String URL_HELP = "http://www.jianshu.com/p/a43f5d951a25";
+    String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
 

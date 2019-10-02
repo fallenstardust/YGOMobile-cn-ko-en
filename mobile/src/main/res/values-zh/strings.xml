@@ -159,6 +159,7 @@
     <string name="all">全卡表</string>
     <string name="donation">支持我们</string>
     <string name="refresh">刷新</string>
+    <string name="select_deck">点击选择卡组</string>
     <string name="quit_deck_tip">退出卡组编辑?</string>
     <string name="deck_delete_text">拖到这里删除</string>
     <string name="question_keep_cur_deck">保留当前卡牌？</string>
@@ -221,7 +222,7 @@
     <string name="OpenTIP">快捷加房使用方法</string>
     <string name="Open_Alert_Window">去打开悬浮窗</string>
     <string name="Function_Menu">功能菜单</string>
-    <string name="Join_QQ">水友群</string>
+    <string name="Join_QQ">机型调试群</string>
     <string name="donatefor">您的捐赠将用于维持自动更新费用，收集更新资料、修图后期以及购买适配机型等</string>
     <string name="coverSelect">点击相应卡背选择文件</string>
     <string name="bgSelect">点击相应背景选择文件</string>
@@ -291,4 +292,6 @@
     <string name="no_deck_is_selected">未选中卡组</string>
     <string name="done">完成！</string>
     <string name="donot_editor_bot_Deck">请不要更改/删除AI卡组否则会导致人机模式无法正常使用</string>
+    <string name="unable_to_edit_empty_deck">不可操作空卡组</string>
+    <string name="create_new_failed">创建失败</string>
 </resources>

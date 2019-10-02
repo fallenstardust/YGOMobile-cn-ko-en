@@ -584,14 +584,20 @@ int32 scriptlib::card_get_attack(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	lua_pushinteger(L, pcard->get_attack());
+	int32 atk = pcard->get_attack();
+	if(atk < 0)
+		atk = 0;
+	lua_pushinteger(L, atk);
 	return 1;
 }
 int32 scriptlib::card_get_origin_attack(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	lua_pushinteger(L, pcard->get_base_attack());
+	int32 atk = pcard->get_base_attack();
+	if(atk < 0)
+		atk = 0;
+	lua_pushinteger(L, atk);
 	return 1;
 }
 int32 scriptlib::card_get_text_attack(lua_State *L) {
@@ -608,14 +614,20 @@ int32 scriptlib::card_get_defense(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	lua_pushinteger(L, pcard->get_defense());
+	int32 def = pcard->get_defense();
+	if(def < 0)
+		def = 0;
+	lua_pushinteger(L, def);
 	return 1;
 }
 int32 scriptlib::card_get_origin_defense(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	lua_pushinteger(L, pcard->get_base_defense());
+	int32 def = pcard->get_base_defense();
+	if(def < 0)
+		def = 0;
+	lua_pushinteger(L, def);
 	return 1;
 }
 int32 scriptlib::card_get_text_defense(lua_State *L) {
@@ -1198,7 +1210,8 @@ int32 scriptlib::card_enable_dual_state(lua_State *L) {
 	deffect->owner = pcard;
 	deffect->code = EFFECT_DUAL_STATUS;
 	deffect->type = EFFECT_TYPE_SINGLE;
-	deffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE;
+	deffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE | EFFECT_FLAG_CLIENT_HINT;
+	deffect->description = 64;
 	deffect->reset_flag = RESET_EVENT + 0x1fe0000;
 	pcard->add_effect(deffect);
 	return 0;
@@ -1973,8 +1986,10 @@ int32 scriptlib::card_is_synchro_summonable(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	if(!(pcard->data.type & TYPE_SYNCHRO))
-		return 0;
+	if(!(pcard->data.type & TYPE_SYNCHRO)) {
+		lua_pushboolean(L, FALSE);
+		return 1;
+	}
 	card* tuner = 0;
 	group* mg = 0;
 	if(!lua_isnil(L, 2)) {
@@ -2005,8 +2020,10 @@ int32 scriptlib::card_is_xyz_summonable(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	if(!(pcard->data.type & TYPE_XYZ))
-		return 0;
+	if(!(pcard->data.type & TYPE_XYZ)) {
+		lua_pushboolean(L, FALSE);
+		return 1;
+	}
 	group* materials = 0;
 	if(!lua_isnil(L, 2)) {
 		check_param(L, PARAM_TYPE_GROUP, 2);
@@ -2029,8 +2046,10 @@ int32 scriptlib::card_is_link_summonable(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**)lua_touserdata(L, 1);
-	if(!(pcard->data.type & TYPE_LINK))
-		return 0;
+	if(!(pcard->data.type & TYPE_LINK)) {
+		lua_pushboolean(L, FALSE);
+		return 1;
+	}
 	group* materials = 0;
 	card* lcard = 0;
 	if(!lua_isnil(L, 2)) {

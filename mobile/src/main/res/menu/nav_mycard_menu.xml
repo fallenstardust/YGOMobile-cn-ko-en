@@ -6,7 +6,7 @@
         android:title="@string/mc_home" />
     <item
         android:id="@+id/action_chat"
-        android:icon="?android:attr/textSelectHandleLeft"
+        android:icon="@drawable/ic_send_black_24dp"
         android:title="@string/mc_chat" />
     <item
         android:id="@+id/action_bbs"
