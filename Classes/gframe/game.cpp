@@ -63,7 +63,7 @@ bool Game::Initialize() {
 	params.AntiAlias  = 0;
 	int w = 1024.0*xScale;
 	int h = 640.0*yScale;
-	params.WindowSize = irr::core::dimension2d<u32>(w, h);
+	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
 	params.WindowLeft =  (screenH - w)/2.0;
 	params.WindowTop =  (screenW - h)/2.0;
 #else
