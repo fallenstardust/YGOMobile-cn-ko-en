@@ -10,8 +10,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
 
-import com.zlm.libs.preferences.PreferencesProviderUtils;
-
 import org.json.JSONArray;
 
 import java.io.File;
@@ -471,7 +469,7 @@ public class AppsSettings {
     public String getResourcePath() {
         String defPath;
         try {
-            defPath = new File(context.getExternalStorageDirectory(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
+            defPath = new File(Environment.getExternalStorageDirectory(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
         } catch (Exception e) {
             defPath = new File(context.getFilesDir(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
         }
