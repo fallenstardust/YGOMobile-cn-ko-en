@@ -3,10 +3,12 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.zlm.libs.preferences.PreferencesProviderUtils;
 
@@ -78,10 +80,21 @@ public class AppsSettings {
         return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 
+
+    private static float getScale(float srcWidth, float srcHeight, float destWidth, float destHeight) {
+        float sx = srcWidth / destWidth;
+        float sy = srcHeight == 0 ? (sx + 1.0f) : (srcHeight / destHeight);
+        return Math.min(sx, sy);
+    }
+
     public void update(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Point size = new Point();
+        //真实宽高
+        wm.getDefaultDisplay().getRealSize(size);
         mDensity = context.getResources().getDisplayMetrics().density;
-        mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
-        mScreenWidth = context.getResources().getDisplayMetrics().widthPixels;
+        mScreenHeight = size.y;
+        mScreenWidth = size.x;
 
         if (isImmerSiveMode() && context instanceof Activity) {
             DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
@@ -458,7 +471,7 @@ public class AppsSettings {
     public String getResourcePath() {
         String defPath;
         try {
-            defPath = new File(Environment.getExternalStorageDirectory(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
+            defPath = new File(context.getExternalStorageDirectory(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
         } catch (Exception e) {
             defPath = new File(context.getFilesDir(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
         }

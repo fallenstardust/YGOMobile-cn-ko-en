@@ -37,8 +37,17 @@ bool Game::Initialize() {
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
     int screenH = android::getScreenHeight(app);
     int screenW = android::getScreenWidth(app);
-    xScale = screenH / 1024.0;
-    yScale = screenW / 640.0;
+    float sH = screenH / 1024.0;
+    float sW = screenW / 640.0;
+
+    //取最小值
+    if(sH < sW){
+        xScale = sH;
+        yScale = sH;
+    } else {
+        xScale = sW;
+        yScale = sW;
+    }
 
 #ifdef _IRR_ANDROID_PLATFORM_
 	android::InitOptions *options = android::getInitOptions(app);
@@ -52,9 +61,11 @@ bool Game::Initialize() {
 	params.Bits = 24;
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
-	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
-	params.WindowLeft =  (screenH - 1024.0*xScale)/2.0;
-	params.WindowTop =  (screenW - 640.0*yScale)/2.0;
+	int w = 1024.0*xScale;
+	int h = 640.0*yScale;
+	params.WindowSize = irr::core::dimension2d<u32>(w, h);
+	params.WindowLeft =  (screenH - w)/2.0;
+	params.WindowTop =  (screenW - h)/2.0;
 #else
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
