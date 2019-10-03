@@ -64,8 +64,9 @@ bool Game::Initialize() {
 	int w = 1024.0*xScale;
 	int h = 640.0*yScale;
 	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
-	params.WindowLeft =  (screenH - w)/2.0;
-	params.WindowTop =  (screenW - h)/2.0;
+	//每一个元素得left和top都需要改
+	xStart =  (screenH - w)/2.0;
+	yStart =  (screenW - h)/2.0;
 #else
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
@@ -95,7 +96,7 @@ bool Game::Initialize() {
 *		yScale = android::getScreenHeight(app) / 640.0;
 *	}//start ygocore when mobile is in landscape mode, or using Android tablets or TV.*/
 	char log_scale[256] = {0};
-	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
+	sprintf(log_scale, "xScale = %f, yScale = %f， xStart=%f, yStart=%f", xScale, yScale, xStart, yStart);
 	Printer::log(log_scale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
