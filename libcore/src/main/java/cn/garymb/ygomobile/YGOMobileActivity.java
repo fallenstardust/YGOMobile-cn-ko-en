@@ -14,6 +14,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -84,6 +85,8 @@ public class YGOMobileActivity extends NativeActivity implements
     private volatile int mPositionX, mPositionY;
     private boolean mPaused;
     private SurfaceView mSurfaceView;
+    private HandlerThread mThread;
+    private Handler mWorker;
 
 
 //    public static int notchHeight;
@@ -108,6 +111,9 @@ public class YGOMobileActivity extends NativeActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         mSurfaceView = new SurfaceView(this);
         mSurfaceView.getHolder().addCallback(this);
+        mThread = new HandlerThread("ygo_work_"+hashCode());
+        mThread.start();
+        mWorker = new Handler(mThread.getLooper());
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -281,7 +287,15 @@ public class YGOMobileActivity extends NativeActivity implements
                     default:
                        return false;
                 }
-                IrrlichtBridge.sendTouch(event.getAction(), event.getX(), event.getY(), 0);
+                final int action = event.getAction();
+                final float x = event.getX();
+                final float y = event.getY();
+                mWorker.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        IrrlichtBridge.sendTouch(action, x, y, 0);
+                    }
+                });
                 return true;
             }
         });
@@ -305,18 +319,28 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
+    public boolean onKeyDown(final int keyCode, KeyEvent event) {
         if(keyCode != KeyEvent.KEYCODE_BACK){
-            IrrlichtBridge.sendKey(keyCode, true);
+            mWorker.post(new Runnable() {
+                @Override
+                public void run() {
+                    IrrlichtBridge.sendKey(keyCode, true);
+                }
+            });
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
     @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
+    public boolean onKeyUp(final int keyCode, KeyEvent event) {
         if(keyCode != KeyEvent.KEYCODE_BACK){
-            IrrlichtBridge.sendKey(keyCode, false);
+            mWorker.post(new Runnable() {
+                @Override
+                public void run() {
+                    IrrlichtBridge.sendKey(keyCode, false);
+                }
+            });
             return true;
         }
         return super.onKeyUp(keyCode, event);
@@ -324,7 +348,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onBackPressed() {
-//        Toast.makeText(this, "请在游戏里面退出", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "请在游戏里面退出", Toast.LENGTH_SHORT).show();
 //        super.onBackPressed();
     }
 
