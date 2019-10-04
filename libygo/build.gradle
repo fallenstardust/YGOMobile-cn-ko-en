@@ -5,6 +5,7 @@ android {
 
     defaultConfig {
         minSdkVersion 16
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 22
 		
         ndk {
@@ -19,6 +20,13 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            assets.srcDirs = ['../libcore/src/main/assets']
+            java.srcDirs = ['../libcore/src/main/java']
+            res.srcDirs = ['../libcore/src/main/res']
+        }
+    }
 }
 
 dependencies {
