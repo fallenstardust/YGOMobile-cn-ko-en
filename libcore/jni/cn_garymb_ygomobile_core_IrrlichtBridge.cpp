@@ -226,38 +226,27 @@ static void* join_game_thread(void* param) {
 	return NULL;
 }
 
-bool sendKey(int handle, int keycode, bool begin){
- 	if(handle) {
-		CIrrDeviceAndroid *device = (CIrrDeviceAndroid *) handle;
-		if (device->isWindowFocused()) {
-			SEvent event;
-			event.EventType = EET_KEY_INPUT_EVENT;
-
-			int keyCode = keycode;
-			if (keyCode >= 0 && (u32) keyCode < device->KeyMap.size())
-				event.KeyInput.Key = device->KeyMap[keyCode];
-			else
-				event.KeyInput.Key = KEY_UNKNOWN;
-			event.KeyInput.PressedDown = begin;
-			event.KeyInput.Shift = false;
-			event.KeyInput.Control = false;
-			device->postEventFromUser(event);
-			return true;
-		}
-	}
-	return false;
- }
-
 /*
  * Class:     cn_garymb_ygomobile_core_IrrlichtBridge
  * Method:    nativeRefreshTexture
  * Signature: (I)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeRefreshTexture(
 		JNIEnv* env, jclass clazz, jint handle) {
+	if (handle) {
+		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 
- 	if(sendKey(handle, KEY_KEY_R, true)){
-		irr::os::Printer::log("before send refresh event");
- 	}
+		if (device->isWindowFocused()) {
+			irr::os::Printer::log("before send refresh event");
+			SEvent event;
+			event.EventType = EET_KEY_INPUT_EVENT;
+			//just cause a right up event to refresh texture
+			event.KeyInput.PressedDown = true;
+			event.KeyInput.Shift = false;
+			event.KeyInput.Control = false;
+			event.KeyInput.Key = KEY_KEY_R;
+			device->postEventFromUser(event);
+		}
+	}
 }
 
 /*
@@ -266,8 +255,19 @@ bool sendKey(int handle, int keycode, bool begin){
  * Signature: (IZ)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeIgnoreChain(
 		JNIEnv* env, jclass clazz, jint handle, jboolean begin) {
-	if(sendKey(handle, KEY_KEY_S, true)){
-		irr::os::Printer::log("before send ignore chain");
+	if (handle) {
+		IrrlichtDevice* device = (IrrlichtDevice*) handle;
+		if (device->isWindowFocused()) {
+			irr::os::Printer::log("before send ignore chain");
+			SEvent event;
+			event.EventType = EET_KEY_INPUT_EVENT;
+			//just cause a right up event to refresh texture
+			event.KeyInput.PressedDown = begin;
+			event.KeyInput.Shift = false;
+			event.KeyInput.Control = false;
+			event.KeyInput.Key = KEY_KEY_S;
+			device->postEventFromUser(event);
+		}
 	}
 }
 
@@ -277,16 +277,19 @@ bool sendKey(int handle, int keycode, bool begin){
  * Signature: (IZ)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeReactChain(
 		JNIEnv* env, jclass clazz, jint handle, jboolean begin) {
-	if(sendKey(handle, KEY_KEY_A, true)){
-		irr::os::Printer::log("before send react chain");
-	}
-}
-
-//key事件
-JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSendKey(
-		JNIEnv* env, jclass clazz, jint handle, jint keycode, jboolean begin) {
-	if(sendKey(handle, keycode, begin)){
-		irr::os::Printer::log("before send nativeSendKey");
+	if (handle) {
+		IrrlichtDevice* device = (IrrlichtDevice*) handle;
+		if (device->isWindowFocused()) {
+			irr::os::Printer::log("before send react chain");
+			SEvent event;
+			event.EventType = EET_KEY_INPUT_EVENT;
+			//just cause a right up event to refresh texture
+			event.KeyInput.PressedDown = begin;
+			event.KeyInput.Shift = false;
+			event.KeyInput.Control = false;
+			event.KeyInput.Key = KEY_KEY_A;
+			device->postEventFromUser(event);
+		}
 	}
 }
 

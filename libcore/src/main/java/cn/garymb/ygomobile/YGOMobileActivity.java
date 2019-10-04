@@ -263,8 +263,8 @@ public class YGOMobileActivity extends NativeActivity implements
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
+        getWindow().takeInputQueue(null);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-
         lp.gravity = Gravity.CENTER;
         layout.addView(mSurfaceView, lp);
         layout.addView(view, lp);
@@ -290,7 +290,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 final int action = event.getAction();
                 final float x = event.getX();
                 final float y = event.getY();
-                mWorker.post(new Runnable() {
+                doWork(new Runnable() {
                     @Override
                     public void run() {
                         IrrlichtBridge.sendTouch(action, x, y, 0);
@@ -303,9 +303,8 @@ public class YGOMobileActivity extends NativeActivity implements
 //        getWindow().setLayout(w, h);
 //        getWindow().setGravity(Gravity.CENTER);
         super.setContentView(layout);
-        mSurfaceView.requestFocus();
         getWindow().takeSurface(null);
-        getWindow().takeInputQueue(null);
+        mSurfaceView.requestFocus();
     }
 
     @Override
@@ -321,7 +320,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public boolean onKeyDown(final int keyCode, KeyEvent event) {
         if(keyCode != KeyEvent.KEYCODE_BACK){
-            mWorker.post(new Runnable() {
+            doWork(new Runnable() {
                 @Override
                 public void run() {
                     IrrlichtBridge.sendKey(keyCode, true);
@@ -335,7 +334,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public boolean onKeyUp(final int keyCode, KeyEvent event) {
         if(keyCode != KeyEvent.KEYCODE_BACK){
-            mWorker.post(new Runnable() {
+            doWork(new Runnable() {
                 @Override
                 public void run() {
                     IrrlichtBridge.sendKey(keyCode, false);
@@ -344,6 +343,10 @@ public class YGOMobileActivity extends NativeActivity implements
             return true;
         }
         return super.onKeyUp(keyCode, event);
+    }
+
+    private void doWork(Runnable runnable){
+        mWorker.post(runnable);
     }
 
     @Override

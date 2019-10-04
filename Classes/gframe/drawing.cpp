@@ -199,7 +199,7 @@ void Game::DrawBackGround() {
 		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(885 * mainGame->xScale, 271 * mainGame->yScale, 905 * mainGame->xScale, 291 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
 	    } else {
 			driver->drawVertexPrimitiveList(matManager.vTotalAtkopT, 4, matManager.iRectangle, 2);
-		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(740 * mainGame->xScale, 295 * mainGame->yScale, 760 * mainGame->xScale, 3315 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
+		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(740 * mainGame->xScale, 295 * mainGame->yScale, 760 * mainGame->xScale, 315 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
 		
 	    }
 	}
