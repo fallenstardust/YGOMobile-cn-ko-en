@@ -266,13 +266,16 @@ public class YGOMobileActivity extends NativeActivity implements
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v,final MotionEvent event) {
+                if(mPaused){
+                    return false;
+                }
                 int eventType = event.getAction() & MotionEvent.ACTION_MASK;
                 switch (eventType) {
                     case MotionEvent.ACTION_DOWN:
-                    case MotionEvent.ACTION_POINTER_DOWN:
+//                    case MotionEvent.ACTION_POINTER_DOWN:
                     case MotionEvent.ACTION_MOVE:
                     case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_POINTER_UP:
+//                    case MotionEvent.ACTION_POINTER_UP:
                     case MotionEvent.ACTION_CANCEL:
                         break;
                     default:
