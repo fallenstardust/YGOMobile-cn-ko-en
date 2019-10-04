@@ -20,6 +20,7 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -211,7 +212,45 @@ public class YGOMobileActivity extends NativeActivity implements
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
+            //游戏大小
+            int[] size = getGameSize();
+            getWindow().setLayout(size[0], size[1]);
         }
+    }
+
+    private int[] getGameSize(){
+        //调整padding
+        float screenW = app().getScreenWidth();
+        float screenH = app().getScreenHeight();
+        float sH = screenH / 1024.0f;
+        float sW = screenW / 640.0f;
+
+        float xScale,yScale;
+        //取最小值
+        if(sH < sW){
+            xScale = sH;
+            yScale = sH;
+        } else {
+            xScale = sW;
+            yScale = sW;
+        }
+        int w = (int)(1024.0*xScale);
+        int h = (int)(640.0*yScale);
+        return new int[]{w, h};
+    }
+
+    @Override
+    public void setContentView(View view) {
+        int[] size = getGameSize();
+        int w = size[0];
+        int h = size[1];
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
+        FrameLayout layout = new FrameLayout(this);
+        lp.gravity = Gravity.CENTER;
+        layout.addView(view, lp);
+        getWindow().setLayout(w, h);
+        getWindow().setGravity(Gravity.CENTER);
+        super.setContentView(layout);
     }
 
     private void initExtraView() {

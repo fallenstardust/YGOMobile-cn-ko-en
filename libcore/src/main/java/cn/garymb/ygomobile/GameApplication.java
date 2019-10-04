@@ -26,6 +26,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     public void onCreate() {
         super.onCreate();
         sGameApplication = this;
+//        Reflection.unseal(this);
 //        initSoundEffectPool();
     }
 

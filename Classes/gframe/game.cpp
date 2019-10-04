@@ -35,10 +35,10 @@ bool Game::Initialize() {
 #endif
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
-    int screenH = android::getScreenHeight(app);
-    int screenW = android::getScreenWidth(app);
-    float sH = screenH / 1024.0;
-    float sW = screenW / 640.0;
+    int screenH = static_cast<int>(android::getScreenHeight(app));
+    int screenW = static_cast<int>(android::getScreenWidth(app));
+    float sH = static_cast<float>(screenH / 1024.0);
+    float sW = static_cast<float>(screenW / 640.0);
 
     //取最小值
     if(sH < sW){
@@ -61,13 +61,13 @@ bool Game::Initialize() {
 	params.Bits = 24;
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
-    int w = (int)(1024.0*xScale);
-    int h = (int)(640.0*yScale);
-	params.WindowSize = irr::core::dimension2d<u32>(w, h);
+    //int w = (int)(1024.0*xScale);
+    //int h = (int)(640.0*yScale);
+	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
 	//每一个元素得left和top都需要改
-	xStart =  (float)((screenH - w)/2.0);
-	yStart =  (float)((screenW - h)/2.0);
-	params.WindowPosition = core::position2di((s32)xStart, (s32)yStart);
+	//xStart =  (float)((screenH - w)/2.0);
+	//yStart =  (float)((screenW - h)/2.0);
+	//params.WindowPosition = core::position2di((s32)xStart, (s32)yStart);
 #else
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
