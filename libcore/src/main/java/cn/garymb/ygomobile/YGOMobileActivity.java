@@ -18,7 +18,10 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.InputQueue;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
@@ -78,6 +81,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private GameApplication mApp;
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
+    private volatile int mPositionX, mPositionY;
+    private boolean mPaused;
+    private SurfaceView mSurfaceView;
 
 
 //    public static int notchHeight;
@@ -100,6 +106,8 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mSurfaceView = new SurfaceView(this);
+        mSurfaceView.getHolder().addCallback(this);
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -126,6 +134,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     protected void onResume() {
+        mPaused = false;
         super.onResume();
         Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
         if (mLock == null) {
@@ -140,6 +149,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     protected void onPause() {
+        mPaused = true;
         super.onPause();
         if (mLock != null) {
             if (mLock.isHeld()) {
@@ -206,18 +216,6 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void fullscreen() {
-
-        //如果是沉浸模式
-        if (app().isImmerSiveMode()) {
-            mFullScreenUtils.fullscreen();
-            app().attachGame(this);
-            //游戏大小
-            int[] size = getGameSize();
-            getWindow().setLayout(size[0], size[1]);
-        }
-    }
-
     private int[] getGameSize(){
         //调整padding
         float screenW = app().getScreenWidth();
@@ -236,21 +234,94 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         int w = (int)(1024.0*xScale);
         int h = (int)(640.0*yScale);
+        mPositionX = (int)((sH - w)/2.0f);
+        mPositionY = (int)((sW - h)/2.0f);
         return new int[]{w, h};
+    }
+
+    private void fullscreen() {
+
+        //如果是沉浸模式
+        if (app().isImmerSiveMode()) {
+            mFullScreenUtils.fullscreen();
+            app().attachGame(this);
+            //游戏大小
+//            int[] size = getGameSize();
+//            getWindow().setLayout(size[0], size[1]);
+        }
     }
 
     @Override
     public void setContentView(View view) {
+        FrameLayout layout = new FrameLayout(this);
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-        FrameLayout layout = new FrameLayout(this);
+
         lp.gravity = Gravity.CENTER;
+        layout.addView(mSurfaceView, lp);
         layout.addView(view, lp);
-        getWindow().setLayout(w, h);
-        getWindow().setGravity(Gravity.CENTER);
+        view.setLongClickable(true);
+        view.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v,final MotionEvent event) {
+                int eventType = event.getAction() & MotionEvent.ACTION_MASK;
+                switch (eventType) {
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_MOVE:
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_POINTER_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        break;
+                    default:
+                       return false;
+                }
+                IrrlichtBridge.sendTouch(event.getAction(), event.getX(), event.getY(), 0);
+                return true;
+            }
+        });
+
+//        getWindow().setLayout(w, h);
+//        getWindow().setGravity(Gravity.CENTER);
         super.setContentView(layout);
+        getWindow().takeSurface(null);
+        getWindow().takeInputQueue(null);
+    }
+
+    @Override
+    public void onInputQueueCreated(InputQueue queue) {
+//        super.onInputQueueCreated(queue);
+    }
+
+    @Override
+    public void onInputQueueDestroyed(InputQueue queue) {
+//        super.onInputQueueDestroyed(queue);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode != KeyEvent.KEYCODE_BACK){
+            IrrlichtBridge.sendKey(keyCode, true);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode != KeyEvent.KEYCODE_BACK){
+            IrrlichtBridge.sendKey(keyCode, false);
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
+    @Override
+    public void onBackPressed() {
+//        Toast.makeText(this, "请在游戏里面退出", Toast.LENGTH_SHORT).show();
+//        super.onBackPressed();
     }
 
     private void initExtraView() {
@@ -425,6 +496,6 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void setNativeHandle(int nativeHandle) {
-        IrrlichtBridge.sNativeHandle = nativeHandle;
+        IrrlichtBridge.setHandle(nativeHandle);
     }
 }

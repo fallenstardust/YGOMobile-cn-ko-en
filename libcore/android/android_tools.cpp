@@ -441,12 +441,19 @@ int getIntSetting(ANDROID_APP app, const char* key,int defvalue){
 	return (int)ret;
 }
 
-void saveIntSetting(ANDROID_APP app, const char* key, int value) {
+void saveIntSettingAuto(ANDROID_APP app, const char* key, int value){
 	if (!app || !app->activity || !app->activity->vm)
 		return;
 	JNIEnv* jni = 0;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
+		return;
+	saveIntSetting(app, jni, key, value);
+	app->activity->vm->DetachCurrentThread();
+}
+
+void saveIntSetting(ANDROID_APP app, JNIEnv* jni, const char* key, int value) {
+	if (!app || !app->activity || !app->activity->vm)
 		return;
 	// Retrieves NativeActivity.
 	jobject lNativeActivity = app->activity->clazz;
@@ -464,7 +471,6 @@ void saveIntSetting(ANDROID_APP app, const char* key, int value) {
 	}
 	jni->DeleteLocalRef(classApp);
 	jni->DeleteLocalRef(ClassNativeActivity);
-	app->activity->vm->DetachCurrentThread();
 }
 
 void saveSetting(ANDROID_APP app, const char* key, const char* value) {

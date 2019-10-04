@@ -160,7 +160,9 @@ extern void setLastDeck(ANDROID_APP app, const char* deckname);
 //save last category name.
 extern void setLastCategory(ANDROID_APP app, const char* catename);
 
-extern void saveIntSetting(ANDROID_APP app, const char* key, int value);
+extern void saveIntSetting(ANDROID_APP app, JNIEnv* jni, const char* key, int value);
+
+extern void saveIntSettingAuto(ANDROID_APP app, const char* key, int value);
 
 extern void saveSetting(ANDROID_APP app, const char* key, const char* value);
 

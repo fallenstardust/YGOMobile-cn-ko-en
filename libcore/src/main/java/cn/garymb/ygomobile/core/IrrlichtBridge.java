@@ -39,7 +39,7 @@ public final class IrrlichtBridge {
 
     }
 
-    public static int sNativeHandle;
+    private static int sNativeHandle;
     //显示卡图
     public static native byte[] nativeBpgImage(byte[] data);
     //插入文本（大概是发送消息）
@@ -58,6 +58,10 @@ public final class IrrlichtBridge {
     private static native void nativeSetComboBoxSelection(int handle, int idx);
 
     private static native void nativeJoinGame(int handle, ByteBuffer buffer, int length);
+
+    private static native void nativeSendKey(int handle, int keycode, boolean begin);
+
+    private static native void nativeSendTouch(int handle, int action, int id, float x, float y);
 
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
@@ -117,37 +121,56 @@ public final class IrrlichtBridge {
             return null;
         }
     }
+    public static void setHandle(int handle){
+        synchronized (IrrlichtBridge.class){
+            sNativeHandle = handle;
+        }
+    }
+
+    public static int getHandle() {
+        synchronized (IrrlichtBridge.class){
+            return sNativeHandle;
+        }
+    }
 
     public static void cancelChain() {
-        nativeCancelChain(sNativeHandle);
+        nativeCancelChain(getHandle());
     }
 
     public static void ignoreChain(boolean begin) {
-        nativeIgnoreChain(sNativeHandle, begin);
+        nativeIgnoreChain(getHandle(), begin);
     }
 
     public static void reactChain(boolean begin) {
-        nativeReactChain(sNativeHandle, begin);
+        nativeReactChain(getHandle(), begin);
+    }
+
+    public static void sendKey(int keycode, boolean begin) {
+        nativeSendKey(getHandle(), keycode, begin);
+    }
+
+    public static void sendTouch(int action, float x, float y, int id) {
+        nativeSendTouch(getHandle(), action, id, x, y);
     }
 
     public static void insertText(String text) {
-        nativeInsertText(sNativeHandle, text);
+        nativeInsertText(getHandle(), text);
     }
 
     public static void setComboBoxSelection(int idx) {
-        nativeSetComboBoxSelection(sNativeHandle, idx);
+        nativeSetComboBoxSelection(getHandle(), idx);
     }
 
     public static void refreshTexture() {
-        nativeRefreshTexture(sNativeHandle);
+        nativeRefreshTexture(getHandle());
     }
 
     public static void setCheckBoxesSelection(int idx) {
-        nativeSetCheckBoxesSelection(sNativeHandle, idx);
+        nativeSetCheckBoxesSelection(getHandle(), idx);
     }
 
     public static void joinGame(ByteBuffer options, int length) {
-        nativeJoinGame(sNativeHandle, options, length);
+        nativeJoinGame(getHandle(), options, length);
     }
 
     public interface IrrlichtApplication {
