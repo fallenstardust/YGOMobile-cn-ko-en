@@ -289,6 +289,7 @@ public class YGOMobileActivity extends NativeActivity implements
 //        getWindow().setLayout(w, h);
 //        getWindow().setGravity(Gravity.CENTER);
         super.setContentView(layout);
+        mSurfaceView.requestFocus();
         getWindow().takeSurface(null);
         getWindow().takeInputQueue(null);
     }
