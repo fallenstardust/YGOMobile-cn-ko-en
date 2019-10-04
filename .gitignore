@@ -56,3 +56,5 @@ libYGOMobile.so
 Thumbs.db
 output.json
 
+/libcore/.cxx
+/libygo/.cxx

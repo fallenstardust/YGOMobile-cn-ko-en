@@ -1,0 +1,26 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 22
+		
+        ndk {
+            moduleName "YGOMobile"
+            abiFilters "armeabi-v7a"//,"x86"
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "../libcore/jni/Android.mk"
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
