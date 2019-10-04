@@ -61,6 +61,7 @@ import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_PATH;
 import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
@@ -146,6 +147,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(SETTINGS_CARD_BG, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
+        bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
         isInit = false;
     }
 

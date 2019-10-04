@@ -13,6 +13,12 @@
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log" />
+
+        <CheckBoxPreference
+            android:key="pref_settings_keep_scale"
+            android:persistent="false"
+            android:title="@string/about_pref_settings_keep_scale"/>
+
         <ListPreference
             android:entries="@array/opengl_version"
             android:entryValues="@array/opengl_version_value"

@@ -32,6 +32,7 @@ import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
@@ -39,6 +40,7 @@ import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
@@ -76,13 +78,6 @@ public class AppsSettings {
 
     public File getSystemConfig() {
         return new File(getResourcePath(), CORE_SYSTEM_PATH);
-    }
-
-
-    private static float getScale(float srcWidth, float srcHeight, float destWidth, float destHeight) {
-        float sx = srcWidth / destWidth;
-        float sy = srcHeight == 0 ? (sx + 1.0f) : (srcHeight / destHeight);
-        return Math.min(sx, sy);
     }
 
     public void update(Context context) {
@@ -190,12 +185,35 @@ public class AppsSettings {
         return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
+    public float getGameHeight() {
+        return (float)Constants.CORE_GAME_SIZE[1];
+    }
+
+    public float getGameWidth() {
+        return (float)Constants.CORE_GAME_SIZE[0];
+    }
+
     public float getXScale() {
-        return getScreenHeight() / (float) Constants.CORE_SKIN_BG_SIZE[0];
+        if(isKeepScale()){
+            float sx = getScreenHeight() / getGameWidth();
+            float sy = getScreenWidth() / getGameHeight();
+            return Math.min(sx, sy);
+        }
+        return getScreenHeight() / getGameWidth();
     }
 
     public float getYScale() {
-        return getScreenWidth() / (float) Constants.CORE_SKIN_BG_SIZE[1];
+        if(isKeepScale()){
+            //固定比例，取最小值
+            float sx = getScreenHeight() / getGameWidth();
+            float sy = getScreenWidth() / getGameHeight();
+            return Math.min(sx, sy);
+        }
+        return getScreenWidth() / getGameHeight();
+    }
+
+    public boolean isKeepScale(){
+        return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
     }
 
     public float getScreenHeight() {

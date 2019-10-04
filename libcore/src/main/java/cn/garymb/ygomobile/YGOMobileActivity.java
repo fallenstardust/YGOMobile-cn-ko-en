@@ -212,30 +212,20 @@ public class YGOMobileActivity extends NativeActivity implements
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
+
             //游戏大小
             int[] size = getGameSize();
             getWindow().setLayout(size[0], size[1]);
         }
     }
 
-    private int[] getGameSize(){
+    private int[] getGameSize() {
         //调整padding
-        float screenW = app().getScreenWidth();
-        float screenH = app().getScreenHeight();
-        float sH = screenH / 1024.0f;
-        float sW = screenW / 640.0f;
-
-        float xScale,yScale;
-        //取最小值
-        if(sH < sW){
-            xScale = sH;
-            yScale = sH;
-        } else {
-            xScale = sW;
-            yScale = sW;
-        }
-        int w = (int)(1024.0*xScale);
-        int h = (int)(640.0*yScale);
+        float xScale = app().getXScale();
+        float yScale = app().getYScale();
+        int w = (int) (app().getGameWidth() * xScale);
+        int h = (int) (app().getGameHeight() * yScale);
+        Log.i("kk", "w=" + w + ",h=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
         return new int[]{w, h};
     }
 

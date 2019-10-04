@@ -90,6 +90,7 @@ public interface Constants {
     String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
+    int[] CORE_GAME_SIZE = new int[]{1024, 640};
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
     int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{177, 254};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};
@@ -115,6 +116,9 @@ public interface Constants {
 
     String PREF_DECK_MANAGER_V2 = "pref_settings_deck_manager_v2";
     boolean DEF_PREF_DECK_MANAGER_V2 = false;
+
+    String PREF_KEEP_SCALE = "pref_settings_keep_scale";
+    boolean DEF_PREF_KEEP_SCALE = false;
 
     int REQUEST_CUT_IMG = 0x1000 + 0x10;
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
