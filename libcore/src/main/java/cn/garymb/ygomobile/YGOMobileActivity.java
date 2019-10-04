@@ -213,9 +213,9 @@ public class YGOMobileActivity extends NativeActivity implements
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
 
-            if(!app().isKeepScale()) {
-                //游戏大小
-                int[] size = getGameSize();
+            //游戏大小
+            int[] size = getGameSize();
+            if(app().isKeepScale()) {
                 getWindow().setLayout(size[0], size[1]);
             }
         }
@@ -233,10 +233,6 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void setContentView(View view) {
-        if(!app().isKeepScale()) {
-            super.setContentView(view);
-            return;
-        }
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
