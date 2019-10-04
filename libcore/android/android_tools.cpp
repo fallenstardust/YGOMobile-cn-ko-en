@@ -703,20 +703,29 @@ void toggleGlobalIME(ANDROID_APP app, bool pShow) {
 	app->activity->vm->DetachCurrentThread();
 }
 
-void initJavaBridge(ANDROID_APP app, void* handle) {
+core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 	if (!app || !app->activity || !app->activity->vm)
-		return;
+		return core::position2di(0, 0);
 	JNIEnv* jni = 0;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
 	jmethodID MethodSetHandle = jni->GetMethodID(ClassNativeActivity,
-			"setNativeHandle", "(I)V");
+												 "setNativeHandle", "(I)V");
 	jint code = (int) handle;
 	jni->CallVoidMethod(lNativeActivity, MethodSetHandle, code);
+
+
+	jmethodID methodX = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionX", "()I");
+    jint posX = jni->CallIntMethod(lNativeActivity, methodX);
+	jmethodID methodY = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionY", "()I");
+	jint posY = jni->CallIntMethod(lNativeActivity, methodY);
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
-	return;
+	__android_log_print(ANDROID_LOG_INFO, "ygo", "Android command initJavaBridge posX=%d, posY=%d", posX, posY);
+	return core::position2di((int)posX, (int)posY);
 }
 
 InitOptions* getInitOptions(ANDROID_APP app) {

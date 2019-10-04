@@ -14,14 +14,11 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
-import android.view.InputQueue;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -85,9 +82,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private volatile int mPositionX, mPositionY;
     private boolean mPaused;
     private SurfaceView mSurfaceView;
-    private HandlerThread mThread;
-    private Handler mWorker;
-
 
 //    public static int notchHeight;
 
@@ -111,9 +105,8 @@ public class YGOMobileActivity extends NativeActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         mSurfaceView = new SurfaceView(this);
         mSurfaceView.getHolder().addCallback(this);
-        mThread = new HandlerThread("ygo_work_"+hashCode());
-        mThread.start();
-        mWorker = new Handler(mThread.getLooper());
+        app().attachGame(this);
+        getGameSize();
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -239,10 +232,38 @@ public class YGOMobileActivity extends NativeActivity implements
             yScale = sW;
         }
         int w = (int)(1024.0*xScale);
-        int h = (int)(640.0*yScale);
-        mPositionX = (int)((sH - w)/2.0f);
-        mPositionY = (int)((sW - h)/2.0f);
+        int h = (int) (640.0 * yScale);
+        int spX = (int) ((screenH - w) / 2.0f);
+        int spY = (int) ((screenW - h) / 2.0f);
+        Log.i("ygo", "Android command setInputFix1:posX=" + spX + ",posY=" + spY);
+
+        boolean update = false;
+        synchronized (this) {
+            if (spX != mPositionX || spY != mPositionY) {
+                mPositionX = spX;
+                mPositionY = spY;
+                update = true;
+            }
+        }
+        if (update) {
+            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
+            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
+        }
         return new int[]{w, h};
+    }
+
+    @Override
+    public int getPositionX() {
+        synchronized (this) {
+            return mPositionX;
+        }
+    }
+
+    @Override
+    public int getPositionY() {
+        synchronized (this) {
+            return mPositionY;
+        }
     }
 
     private void fullscreen() {
@@ -252,7 +273,7 @@ public class YGOMobileActivity extends NativeActivity implements
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
             //游戏大小
-//            int[] size = getGameSize();
+            int[] size = getGameSize();
 //            getWindow().setLayout(size[0], size[1]);
         }
     }
@@ -263,90 +284,15 @@ public class YGOMobileActivity extends NativeActivity implements
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
-        getWindow().takeInputQueue(null);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
         lp.gravity = Gravity.CENTER;
         layout.addView(mSurfaceView, lp);
         layout.addView(view, lp);
-        view.setLongClickable(true);
-        view.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v,final MotionEvent event) {
-                if(mPaused){
-                    return false;
-                }
-                int eventType = event.getAction() & MotionEvent.ACTION_MASK;
-                switch (eventType) {
-                    case MotionEvent.ACTION_DOWN:
-//                    case MotionEvent.ACTION_POINTER_DOWN:
-                    case MotionEvent.ACTION_MOVE:
-                    case MotionEvent.ACTION_UP:
-//                    case MotionEvent.ACTION_POINTER_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        break;
-                    default:
-                       return false;
-                }
-                final int action = event.getAction();
-                final float x = event.getX();
-                final float y = event.getY();
-                doWork(new Runnable() {
-                    @Override
-                    public void run() {
-                        IrrlichtBridge.sendTouch(action, x, y, 0);
-                    }
-                });
-                return true;
-            }
-        });
-
 //        getWindow().setLayout(w, h);
 //        getWindow().setGravity(Gravity.CENTER);
         super.setContentView(layout);
         getWindow().takeSurface(null);
         mSurfaceView.requestFocus();
-    }
-
-    @Override
-    public void onInputQueueCreated(InputQueue queue) {
-//        super.onInputQueueCreated(queue);
-    }
-
-    @Override
-    public void onInputQueueDestroyed(InputQueue queue) {
-//        super.onInputQueueDestroyed(queue);
-    }
-
-    @Override
-    public boolean onKeyDown(final int keyCode, KeyEvent event) {
-        if(keyCode != KeyEvent.KEYCODE_BACK){
-            doWork(new Runnable() {
-                @Override
-                public void run() {
-                    IrrlichtBridge.sendKey(keyCode, true);
-                }
-            });
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public boolean onKeyUp(final int keyCode, KeyEvent event) {
-        if(keyCode != KeyEvent.KEYCODE_BACK){
-            doWork(new Runnable() {
-                @Override
-                public void run() {
-                    IrrlichtBridge.sendKey(keyCode, false);
-                }
-            });
-            return true;
-        }
-        return super.onKeyUp(keyCode, event);
-    }
-
-    private void doWork(Runnable runnable){
-        mWorker.post(runnable);
     }
 
     @Override

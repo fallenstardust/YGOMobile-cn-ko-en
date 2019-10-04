@@ -63,6 +63,8 @@ public final class IrrlichtBridge {
 
     private static native void nativeSendTouch(int handle, int action, int id, float x, float y);
 
+    private static native void nativeSetInputFix(int handle, int x, int y);
+
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
 
@@ -133,6 +135,10 @@ public final class IrrlichtBridge {
         }
     }
 
+    public static void setInputFix(int x, int y){
+        nativeSetInputFix(sNativeHandle, x, y);
+    }
+
     public static void cancelChain() {
         nativeCancelChain(getHandle());
     }
@@ -193,7 +199,7 @@ public final class IrrlichtBridge {
         void playSoundEffect(String path);
 		
 		void runWindbot(String args);
-		
+
 //        float getSmallerSize();
 //        float getXScale();
 //        float getYScale();
@@ -221,5 +227,9 @@ public final class IrrlichtBridge {
         int getLocalAddress();
 
         void setNativeHandle(int nativeHandle);
+
+        int getPositionX();
+
+        int getPositionY();
     }
 }

@@ -84,6 +84,10 @@ struct SDisplayMetrics {
 	irr::f32 xdpi;
 	irr::f32 ydpi;
 };
+typedef  struct{
+	float posX;
+	float posY;
+} AppPosition;
 /* jni utils*/
 // Access SDisplayMetrics
 extern float getScreenWidth(ANDROID_APP app);
@@ -115,7 +119,7 @@ extern void toggleGlobalIME(ANDROID_APP app, bool pShow);
 extern void toggleIME(ANDROID_APP app, bool pShow, const char* hint);
 
 //Init Java Irrlicht world.
-extern void initJavaBridge(ANDROID_APP app, void* handle);
+extern core::position2di initJavaBridge(ANDROID_APP app, void* handle);
 
 //Cause a haptic feedback.
 extern void perfromHapticFeedback(ANDROID_APP app);

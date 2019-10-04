@@ -15,6 +15,7 @@
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
 #include <android/CAndroidGUISkin.h>
+#include <Android/CIrrDeviceAndroid.h>
 #include <COGLES2ExtensionHandler.h>
 #include <COGLESExtensionHandler.h>
 #include <COGLES2Driver.h>
@@ -25,7 +26,18 @@ const unsigned short PRO_VERSION = 0x134B;
 
 namespace ygo {
 
-Game* mainGame;
+Game *mainGame;
+
+	void Game::process(irr::SEvent &event) {
+		if (event.EventType == EET_MOUSE_INPUT_EVENT) {
+			s32 x = event.MouseInput.X;
+			s32 y = event.MouseInput.Y;
+			event.MouseInput.X = optX(x);
+			event.MouseInput.Y = optY(y);
+//			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "Android comman process %d,%d -> %d,%d", x, y,
+//								event.MouseInput.X, event.MouseInput.Y);
+		}
+	}
 
 #ifdef _IRR_ANDROID_PLATFORM_
 bool Game::Initialize(ANDROID_APP app) {
@@ -80,10 +92,13 @@ bool Game::Initialize() {
 	if(!device)
 		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
+	device->setProcessReceiver(this);
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
-	android::initJavaBridge(app, device);
+	core::position2di appPosition = android::initJavaBridge(app, device);
+	setPositionFix(appPosition);
+
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
 	app->onInputEvent = android::handleInput;
