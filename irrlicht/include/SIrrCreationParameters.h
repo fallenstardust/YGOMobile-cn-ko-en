@@ -51,8 +51,6 @@ namespace irr
 			UsePerformanceTimer(true),
 			SDK_version_do_not_use(IRRLICHT_SDK_VERSION),
 			PrivateData(0),
-			WindowLeft(0),
-			WindowTop(0),
 	#ifdef _IRR_COMPILE_WITH_IPHONE_DEVICE_
 			OGLES2ShaderPath("")
 	#elif defined(_IRR_ANDROID_PLATFORM_)
@@ -118,10 +116,6 @@ namespace irr
 
 		//! Size of the window or the video mode in fullscreen mode. Default: 800x600
 		core::dimension2d<u32> WindowSize;
-
-		int WindowLeft;
-
-		int WindowTop;
 
 		//! Position of the window on-screen. Default: (-1, -1) or centered.
 		core::position2di WindowPosition;

@@ -38,7 +38,7 @@ CIrrDeviceAndroid::CIrrDeviceAndroid(const SIrrlichtCreationParameters& param)
 #ifdef _DEBUG
 	setDebugName("CIrrDeviceAndroid");
 #endif
-    startPoint = core::position2di(param.WindowLeft, param.WindowTop);
+
 	// Get the interface to the native Android activity.
 	Android = (ANDROID_APP)(param.PrivateData);
 
@@ -189,7 +189,7 @@ void CIrrDeviceAndroid::restoreWindow()
 
 core::position2di CIrrDeviceAndroid::getWindowPosition()
 {
-	return startPoint;
+	return core::position2di(0,0);
 }
 
 E_DEVICE_TYPE CIrrDeviceAndroid::getType() const

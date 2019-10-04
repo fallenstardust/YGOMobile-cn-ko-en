@@ -79,8 +79,7 @@ repositories {
 }
 dependencies {
     implementation 'junit:junit:4.12'
-    debugImplementation project(':libygo')
-    releaseImplementation project(':libcore')
+    implementation project(':libcore')
     //support-annotations，support-vector-drawable
 //    implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
 //    implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion

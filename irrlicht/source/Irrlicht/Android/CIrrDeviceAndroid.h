@@ -75,8 +75,6 @@ namespace irr
 		bool Focused;
 		bool Initialized;
 		bool Paused;
-
-		core::position2di startPoint;
 	
 		JNIEnv* JNIEnvAttachedToVM;
 
