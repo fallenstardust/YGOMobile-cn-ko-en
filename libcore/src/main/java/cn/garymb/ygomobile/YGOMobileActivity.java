@@ -213,9 +213,11 @@ public class YGOMobileActivity extends NativeActivity implements
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
 
-            //游戏大小
-            int[] size = getGameSize();
-            getWindow().setLayout(size[0], size[1]);
+            if(!app().isKeepScale()) {
+                //游戏大小
+                int[] size = getGameSize();
+                getWindow().setLayout(size[0], size[1]);
+            }
         }
     }
 
@@ -225,12 +227,16 @@ public class YGOMobileActivity extends NativeActivity implements
         float yScale = app().getYScale();
         int w = (int) (app().getGameWidth() * xScale);
         int h = (int) (app().getGameHeight() * yScale);
-        Log.i("kk", "w=" + w + ",h=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
+        Log.i("kk", "w1=" + app().getGameWidth() + ",h1=" + app().getGameHeight() + ",w2=" + w + ",h2=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
         return new int[]{w, h};
     }
 
     @Override
     public void setContentView(View view) {
+        if(!app().isKeepScale()) {
+            super.setContentView(view);
+            return;
+        }
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];

@@ -2010,8 +2010,8 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / ((cardSize + cardSpace) * 5 * mainGame->xScale);
 		}
 	} else {
-		double screenx = x / (1024.0 * mainGame->xScale) * 1.35  - 0.90;
-		double screeny = y / (640.0 * mainGame->yScale) * 0.84 - 0.42;
+		double screenx = x / (GAME_WIDTH * mainGame->xScale) * 1.35  - 0.90;
+		double screeny = y / (GAME_HEIGHT * mainGame->yScale) * 0.84 - 0.42;
 		double angle = 0.798056 - atan(screeny);	//0.798056 = arctan(8.0/7.8)
 		double vlen = sqrt(1.0 + screeny * screeny);
 		double boardx = 4.2 + 7.8 * screenx / vlen / cos(angle);
@@ -2308,7 +2308,7 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 			x = w + 10 * mainGame->xScale;
 		if(x + w > 670 * mainGame->xScale)
 			x = 670 * mainGame->xScale - w;
-		mainGame->stCardListTip->setRelativePosition(recti(x - dTip.Width / 2, y - 10, x + dTip.Width / 2, y - 10 + dTip.Height));
+		mainGame->stCardListTip->setRelativePosition(recti(x - dTip.Width / 2, y - 10 * mainGame->yScale, x + dTip.Width / 2, y - 10 * mainGame->yScale + dTip.Height));
 		mainGame->stCardListTip->setVisible(true);
 	}
 }

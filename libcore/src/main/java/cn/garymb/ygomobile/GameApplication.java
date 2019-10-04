@@ -53,9 +53,13 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         isInitSoundEffectPool = initSoundEffectPool;
     }
 
-    public abstract int getGameWidth();
+    public int getGameWidth(){
+        return 1024;
+    }
 
-    public abstract int getGameHeight();
+    public int getGameHeight(){
+        return 640;
+    }
 
     public abstract boolean isKeepScale();
 

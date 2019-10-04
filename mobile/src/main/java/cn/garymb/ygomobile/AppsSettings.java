@@ -185,31 +185,23 @@ public class AppsSettings {
         return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
-    public float getGameHeight() {
-        return (float)Constants.CORE_GAME_SIZE[1];
-    }
-
-    public float getGameWidth() {
-        return (float)Constants.CORE_GAME_SIZE[0];
-    }
-
-    public float getXScale() {
+    public float getXScale(int w, int h) {
         if(isKeepScale()){
-            float sx = getScreenHeight() / getGameWidth();
-            float sy = getScreenWidth() / getGameHeight();
+            float sx = getScreenHeight() / w;
+            float sy = getScreenWidth() / h;
             return Math.min(sx, sy);
         }
-        return getScreenHeight() / getGameWidth();
+        return getScreenHeight() / w;
     }
 
-    public float getYScale() {
+    public float getYScale(int w, int h) {
         if(isKeepScale()){
             //固定比例，取最小值
-            float sx = getScreenHeight() / getGameWidth();
-            float sy = getScreenWidth() / getGameHeight();
+            float sx = getScreenHeight() / w;
+            float sy = getScreenWidth() / h;
             return Math.min(sx, sy);
         }
-        return getScreenWidth() / getGameHeight();
+        return getScreenWidth() / h;
     }
 
     public boolean isKeepScale(){

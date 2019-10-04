@@ -53,12 +53,12 @@ public class App extends GameApplication {
 
     @Override
     public float getXScale() {
-        return AppsSettings.get().getXScale();
+        return AppsSettings.get().getXScale(getGameWidth(), getGameHeight());
     }
 
     @Override
     public float getYScale() {
-        return AppsSettings.get().getYScale();
+        return AppsSettings.get().getYScale(getGameWidth(), getGameHeight());
     }
 
     @Override
@@ -74,16 +74,6 @@ public class App extends GameApplication {
     @Override
     public boolean isKeepScale() {
         return AppsSettings.get().isKeepScale();
-    }
-
-    @Override
-    public int getGameHeight() {
-        return Constants.CORE_GAME_SIZE[1];
-    }
-
-    @Override
-    public int getGameWidth() {
-        return Constants.CORE_GAME_SIZE[0];
     }
 
     @Override

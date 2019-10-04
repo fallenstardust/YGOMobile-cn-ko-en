@@ -738,6 +738,14 @@ extern Game* mainGame;
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
 
 #ifdef _IRR_ANDROID_PLATFORM_
+#define GAME_WIDTH 1024
+#define GAME_HEIGHT 640
+#else
+#define GAME_WIDTH 1280
+#define GAME_HEIGHT 720
+#endif
+
+#ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000
 #endif
 #endif // GAME_H
