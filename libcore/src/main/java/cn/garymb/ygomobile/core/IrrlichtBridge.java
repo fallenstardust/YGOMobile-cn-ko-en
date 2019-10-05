@@ -59,6 +59,8 @@ public final class IrrlichtBridge {
 
     private static native void nativeJoinGame(int handle, ByteBuffer buffer, int length);
 
+    private static native void nativeSetInputFix(int handle, int x, int y);
+
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
 
@@ -116,6 +118,10 @@ public final class IrrlichtBridge {
                 Log.e(TAG, "zip image", e);
             return null;
         }
+    }
+
+    public static void setInputFix(int x, int y){
+        nativeSetInputFix(sNativeHandle, x, y);
     }
 
     public static void cancelChain() {
@@ -202,5 +208,9 @@ public final class IrrlichtBridge {
         int getLocalAddress();
 
         void setNativeHandle(int nativeHandle);
+
+        int getPositionX();
+
+        int getPositionY();
     }
 }

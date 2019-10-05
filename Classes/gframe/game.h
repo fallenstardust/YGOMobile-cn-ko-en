@@ -107,7 +107,7 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game {
+class Game :IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -542,10 +542,30 @@ public:
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
 #endif
+	void setPositionFix(core::position2di fix){
+		InputFix = fix;
+	}
+	float optX(float x) {
+		float x2 = x - InputFix.X;
+		if (x2 < 0) {
+			return 0;
+		}
+		return x2;
+	}
 
-};
+	float optY(float y) {
+		float y2 = y - InputFix.Y;
+		if (y2 < 0) {
+			return 0;
+		}
+		return y2;
+	}
+    void process(irr::SEvent &event);
+private:
+	core::position2di InputFix;
+    };
 
-extern Game* mainGame;
+    extern Game *mainGame;
 
 }
 
