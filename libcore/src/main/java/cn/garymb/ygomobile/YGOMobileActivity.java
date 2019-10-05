@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -80,8 +81,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
     private volatile int mPositionX, mPositionY;
-    private boolean mPaused;
+    private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
+    private boolean replaced = false;
 
 //    public static int notchHeight;
 
@@ -104,9 +106,6 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mSurfaceView = new SurfaceView(this);
-        mSurfaceView.getHolder().addCallback(this);
-        app().attachGame(this);
-        getGameSize();
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -133,7 +132,6 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     protected void onResume() {
-        mPaused = false;
         super.onResume();
         Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
         if (mLock == null) {
@@ -148,7 +146,6 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     protected void onPause() {
-        mPaused = true;
         super.onPause();
         if (mLock != null) {
             if (mLock.isHeld()) {
@@ -215,6 +212,16 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
+    private void fullscreen() {
+
+        //如果是沉浸模式
+        if (app().isImmerSiveMode()) {
+            mFullScreenUtils.fullscreen();
+            app().attachGame(this);
+            changeGameSize();
+        }
+    }
+
     private int[] getGameSize(){
         //调整padding
         float screenW = app().getScreenWidth();
@@ -233,22 +240,6 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         int w = (int)(1024.0*xScale);
         int h = (int) (640.0 * yScale);
-        int spX = (int) ((screenH - w) / 2.0f);
-        int spY = (int) ((screenW - h) / 2.0f);
-        Log.i("ygo", "Android command setInputFix1:posX=" + spX + ",posY=" + spY);
-
-        boolean update = false;
-        synchronized (this) {
-            if (spX != mPositionX || spY != mPositionY) {
-                mPositionX = spX;
-                mPositionY = spY;
-                update = true;
-            }
-        }
-        if (update) {
-            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
-            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
-        }
         return new int[]{w, h};
     }
 
@@ -266,39 +257,49 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void fullscreen() {
-
-        //如果是沉浸模式
-        if (app().isImmerSiveMode()) {
-            mFullScreenUtils.fullscreen();
-            app().attachGame(this);
-            //游戏大小
-            int[] size = getGameSize();
-//            getWindow().setLayout(size[0], size[1]);
-        }
-    }
-
     @Override
     public void setContentView(View view) {
-        FrameLayout layout = new FrameLayout(this);
+        mLayout = new FrameLayout(this);
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
         lp.gravity = Gravity.CENTER;
-        layout.addView(mSurfaceView, lp);
-        layout.addView(view, lp);
-//        getWindow().setLayout(w, h);
-//        getWindow().setGravity(Gravity.CENTER);
-        super.setContentView(layout);
+        mLayout.addView(mSurfaceView, lp);
+        mLayout.addView(view, lp);
+        super.setContentView(mLayout);
+        app().attachGame(this);
+        changeGameSize();
         getWindow().takeSurface(null);
+        replaced = true;
+        mSurfaceView.getHolder().addCallback(this);
         mSurfaceView.requestFocus();
     }
 
-    @Override
-    public void onBackPressed() {
-        Toast.makeText(this, "请在游戏里面退出", Toast.LENGTH_SHORT).show();
-//        super.onBackPressed();
+    private void changeGameSize(){
+        //游戏大小
+        int[] size = getGameSize();
+        int w = mLayout.getMeasuredWidth();
+        int h = mLayout.getMeasuredHeight();
+        if(w == 0 || h == 0){
+            w = (int) app().getScreenHeight();
+            h = (int) app().getScreenWidth();
+        }
+        int spX = (int) ((w - size[0]) / 2.0f);
+        int spY = (int) ((h - size[1]) / 2.0f);
+//        Log.i("ygo", "Android command 1:posX=" + spX + ",posY=" + spY);
+        boolean update = false;
+        synchronized (this) {
+            if (spX != mPositionX || spY != mPositionY) {
+                mPositionX = spX;
+                mPositionY = spY;
+                update = true;
+            }
+        }
+        if (update) {
+//            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
+            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
+        }
     }
 
     private void initExtraView() {
@@ -473,6 +474,38 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void setNativeHandle(int nativeHandle) {
-        IrrlichtBridge.setHandle(nativeHandle);
+        IrrlichtBridge.sNativeHandle = nativeHandle;
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if(!replaced){
+            return;
+        }
+        super.surfaceCreated(holder);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        if(!replaced){
+            return;
+        }
+        super.surfaceChanged(holder, format, width, height);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if(!replaced){
+            return;
+        }
+        super.surfaceDestroyed(holder);
+    }
+
+    @Override
+    public void surfaceRedrawNeeded(SurfaceHolder holder) {
+        if(!replaced){
+            return;
+        }
+        super.surfaceRedrawNeeded(holder);
     }
 }
