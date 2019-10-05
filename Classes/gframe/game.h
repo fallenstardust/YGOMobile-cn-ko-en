@@ -529,6 +529,7 @@ public:
 	irr::gui::IGUIButton* btnCancelOrFinish;
 	float xScale;
     float yScale;
+
 	IYGOSoundEffectPlayer* soundEffectPlayer;
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
@@ -754,6 +755,14 @@ private:
 #define DEFAULT_DUEL_RULE			4
 
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
+
+#ifdef _IRR_ANDROID_PLATFORM_
+#define GAME_WIDTH 1024
+#define GAME_HEIGHT 640
+#else
+#define GAME_WIDTH 1280
+#define GAME_HEIGHT 720
+#endif
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000

@@ -356,7 +356,53 @@ irr::io::path getResourcePath(ANDROID_APP app) {
 	return ret;
 }
 
+float getXScale(ANDROID_APP app){
+	float ret = 1;
+	if (!app || !app->activity || !app->activity->vm)
+		return ret;
+	JNIEnv* jni = 0;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return ret;
+	// Retrieves NativeActivity.
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+											  "getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID glversionMethod = jni->GetMethodID(classApp, "getXScale",
+												 "()F");
+	ret = jni->CallFloatMethod(application, glversionMethod);
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+	return ret;
+}
 
+float getYScale(ANDROID_APP app){
+	float ret = 1;
+	if (!app || !app->activity || !app->activity->vm)
+		return ret;
+	JNIEnv* jni = 0;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return ret;
+	// Retrieves NativeActivity.
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+											  "getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID glversionMethod = jni->GetMethodID(classApp, "getYScale",
+												 "()F");
+	ret = jni->CallFloatMethod(application, glversionMethod);
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+	return ret;
+}
 
 //Retrive last deck name.
 irr::io::path getLastDeck(ANDROID_APP app) {

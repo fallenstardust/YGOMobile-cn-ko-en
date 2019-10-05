@@ -47,19 +47,6 @@ bool Game::Initialize() {
 #endif
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
-    int screenH = static_cast<int>(android::getScreenHeight(app));
-    int screenW = static_cast<int>(android::getScreenWidth(app));
-    float sH = static_cast<float>(screenH / 1024.0);
-    float sW = static_cast<float>(screenW / 640.0);
-
-    //取最小值
-    if(sH < sW){
-        xScale = sH;
-        yScale = sH;
-    } else {
-        xScale = sW;
-        yScale = sW;
-    }
 
 #ifdef _IRR_ANDROID_PLATFORM_
 	android::InitOptions *options = android::getInitOptions(app);
@@ -73,13 +60,7 @@ bool Game::Initialize() {
 	params.Bits = 24;
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
-    //int w = (int)(1024.0*xScale);
-    //int h = (int)(640.0*yScale);
 	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
-	//每一个元素得left和top都需要改
-	//xStart =  (float)((screenH - w)/2.0);
-	//yStart =  (float)((screenW - h)/2.0);
-	//params.WindowPosition = core::position2di((s32)xStart, (s32)yStart);
 #else
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
@@ -92,12 +73,13 @@ bool Game::Initialize() {
 	if(!device)
 		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
-	device->setProcessReceiver(this);
+
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
 	core::position2di appPosition = android::initJavaBridge(app, device);
 	setPositionFix(appPosition);
+	device->setProcessReceiver(this);
 
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
@@ -107,10 +89,10 @@ bool Game::Initialize() {
 	isPSEnabled = options->isPendulumScaleEnabled();
 	dataManager.FileSystem = device->getFileSystem();
 
-/*	if (xScale < yScale) {
-*		xScale = android::getScreenWidth(app) / 1024.0;
-*		yScale = android::getScreenHeight(app) / 640.0;
-*	}//start ygocore when mobile is in landscape mode, or using Android tablets or TV.*/
+	xScale = android::getXScale(app);
+	yScale = android::getYScale(app);
+
+ 	//start ygocore when mobile is in landscape mode, or using Android tablets or TV.
 	char log_scale[256] = {0};
 	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
 	Printer::log(log_scale);

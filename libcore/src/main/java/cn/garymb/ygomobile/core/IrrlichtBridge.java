@@ -177,6 +177,10 @@ public final class IrrlichtBridge {
 		
 		void runWindbot(String args);
 
+        float getXScale();
+
+        float getYScale();
+		
 //        float getSmallerSize();
 //        float getXScale();
 //        float getYScale();

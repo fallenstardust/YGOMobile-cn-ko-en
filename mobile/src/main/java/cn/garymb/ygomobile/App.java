@@ -4,7 +4,6 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -54,12 +53,12 @@ public class App extends GameApplication {
 
     @Override
     public float getXScale() {
-        return AppsSettings.get().getXScale();
+        return AppsSettings.get().getXScale(getGameWidth(), getGameHeight());
     }
 
     @Override
     public float getYScale() {
-        return AppsSettings.get().getYScale();
+        return AppsSettings.get().getYScale(getGameWidth(), getGameHeight());
     }
 
     @Override
@@ -72,6 +71,10 @@ public class App extends GameApplication {
         return AppsSettings.get().getFontPath();
     }
 
+    @Override
+    public boolean isKeepScale() {
+        return AppsSettings.get().isKeepScale();
+    }
 
     @Override
     public void saveSetting(String key, String value) {

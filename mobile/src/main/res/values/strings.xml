@@ -272,4 +272,5 @@
     <string name="screenshoot">Screenshoot</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
+    <string name="about_pref_settings_keep_scale">Keep Display Scale</string>
 </resources>

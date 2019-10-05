@@ -1065,7 +1065,7 @@ void Game::DrawSpec() {
 void Game::DrawBackImage(irr::video::ITexture* texture) {
 	if(!texture)
 		return;
-	driver->draw2DImage(texture, recti(0, 0, 1024 * mainGame->xScale, 640 * mainGame->yScale), recti(0, 0, texture->getOriginalSize().Width, texture->getOriginalSize().Height));
+	driver->draw2DImage(texture, recti(0, 0, GAME_WIDTH * mainGame->xScale, GAME_HEIGHT * mainGame->yScale), recti(0, 0, texture->getOriginalSize().Width, texture->getOriginalSize().Height));
 }
 void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	FadingUnit fu;

@@ -53,6 +53,16 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         isInitSoundEffectPool = initSoundEffectPool;
     }
 
+    public int getGameWidth(){
+        return 1024;
+    }
+
+    public int getGameHeight(){
+        return 640;
+    }
+
+    public abstract boolean isKeepScale();
+
     @SuppressWarnings("deprecation")
     public void initSoundEffectPool() {
         mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -74,10 +84,6 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     public abstract NativeInitOptions getNativeInitOptions();
 
     public abstract float getSmallerSize();
-
-    public abstract float getXScale();
-
-    public abstract float getYScale();
 
     public abstract boolean isLockSreenOrientation();
 

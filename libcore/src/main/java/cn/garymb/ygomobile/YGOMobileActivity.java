@@ -84,6 +84,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
+    private static boolean USE_SURFACE = true;
 
 //    public static int notchHeight;
 
@@ -105,7 +106,9 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        mSurfaceView = new SurfaceView(this);
+        if(USE_SURFACE) {
+            mSurfaceView = new SurfaceView(this);
+        }
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -218,28 +221,24 @@ public class YGOMobileActivity extends NativeActivity implements
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
-            changeGameSize();
+            if (USE_SURFACE) {
+                changeGameSize();
+            } else {
+                int[] size = getGameSize();
+                if (app().isKeepScale()) {
+                    getWindow().setLayout(size[0], size[1]);
+                }
+            }
         }
     }
 
     private int[] getGameSize(){
         //调整padding
-        float screenW = app().getScreenWidth();
-        float screenH = app().getScreenHeight();
-        float sH = screenH / 1024.0f;
-        float sW = screenW / 640.0f;
-
-        float xScale,yScale;
-        //取最小值
-        if(sH < sW){
-            xScale = sH;
-            yScale = sH;
-        } else {
-            xScale = sW;
-            yScale = sW;
-        }
-        int w = (int)(1024.0*xScale);
-        int h = (int) (640.0 * yScale);
+        float xScale = app().getXScale();
+        float yScale = app().getYScale();
+        int w = (int) (app().getGameWidth() * xScale);
+        int h = (int) (app().getGameHeight() * yScale);
+        Log.i("kk", "w1=" + app().getGameWidth() + ",h1=" + app().getGameHeight() + ",w2=" + w + ",h2=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
         return new int[]{w, h};
     }
 
@@ -259,21 +258,28 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void setContentView(View view) {
-        mLayout = new FrameLayout(this);
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
+        mLayout = new FrameLayout(this);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
         lp.gravity = Gravity.CENTER;
-        mLayout.addView(mSurfaceView, lp);
-        mLayout.addView(view, lp);
-        super.setContentView(mLayout);
-        app().attachGame(this);
-        changeGameSize();
-        getWindow().takeSurface(null);
-        replaced = true;
-        mSurfaceView.getHolder().addCallback(this);
-        mSurfaceView.requestFocus();
+        if (USE_SURFACE) {
+            mLayout.addView(mSurfaceView, lp);
+            mLayout.addView(view, lp);
+            super.setContentView(mLayout);
+            app().attachGame(this);
+            changeGameSize();
+            getWindow().takeSurface(null);
+            replaced = true;
+            mSurfaceView.getHolder().addCallback(this);
+            mSurfaceView.requestFocus();
+        } else {
+            mLayout.addView(view, lp);
+            getWindow().setLayout(w, h);
+            getWindow().setGravity(Gravity.CENTER);
+            super.setContentView(mLayout);
+        }
     }
 
     private void changeGameSize(){
@@ -479,32 +485,40 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if(!replaced){
-            return;
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
         }
         super.surfaceCreated(holder);
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if(!replaced){
-            return;
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
         }
         super.surfaceChanged(holder, format, width, height);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if(!replaced){
-            return;
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
         }
         super.surfaceDestroyed(holder);
     }
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if(!replaced){
-            return;
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
         }
         super.surfaceRedrawNeeded(holder);
     }
