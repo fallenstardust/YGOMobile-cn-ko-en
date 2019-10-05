@@ -78,7 +78,7 @@ bool Game::Initialize() {
 
  	//start ygocore when mobile is in landscape mode, or using Android tablets or TV.
 	char log_scale[256] = {0};
-	sprintf(log_scale, "xScale = %f, yScale = %f， xStart=%f, yStart=%f", xScale, yScale, xStart, yStart);
+	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
 	Printer::log(log_scale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();

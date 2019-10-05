@@ -529,8 +529,7 @@ public:
 	irr::gui::IGUIButton* btnCancelOrFinish;
 	float xScale;
     float yScale;
-    float xStart;
-    float yStart;
+
 	IYGOSoundEffectPlayer* soundEffectPlayer;
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
