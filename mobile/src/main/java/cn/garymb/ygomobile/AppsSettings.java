@@ -12,17 +12,14 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
@@ -185,14 +182,6 @@ public class AppsSettings {
         if(isImmerSiveMode()){
             //刘海高度
             ret -= getNotchHeight();
-        }
-        if(BuildConfig.DEBUG) {
-            try {
-                FileLogUtil.write("\n===============================getScreenHeight:real.w="+mRealScreenSize.x+",real.h="+mRealScreenSize.y
-                +",cur.w="+mScreenSize.x+",cur.h="+mScreenSize.y+",nh="+getNotchHeight()+",ret="+ret+"\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         return ret;
     }
