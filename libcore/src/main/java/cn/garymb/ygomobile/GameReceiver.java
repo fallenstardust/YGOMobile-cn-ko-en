@@ -3,7 +3,6 @@ package cn.garymb.ygomobile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 
@@ -17,19 +16,19 @@ public class GameReceiver extends BroadcastReceiver {
         if (ACTION_START.equals(action)) {
             //
             IrrlichtBridge.gPid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
-            Log.w("ygo", "pid=" + IrrlichtBridge.gPid);
+//            Log.w("ygo", "pid=" + IrrlichtBridge.gPid);
         } else if (ACTION_STOP.equals(action)) {
             int pid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
             if (pid == 0 && IrrlichtBridge.gPid != 0) {
                 pid = IrrlichtBridge.gPid;
-                Log.w("ygo", "will kill last pid=" + pid);
+//                Log.w("ygo", "will kill last pid=" + pid);
             }
             if (pid == 0) {
                 pid = android.os.Process.myPid();
-                Log.w("ygo", "will kill now pid=" + pid);
+//                Log.w("ygo", "will kill now pid=" + pid);
             }
             try {
-                Log.e("ygo", "kill pid=" + pid);
+//                Log.w("ygo", "kill pid=" + pid);
                 android.os.Process.killProcess(pid);
             } catch (Exception e) {
 //ignore

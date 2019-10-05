@@ -529,8 +529,6 @@ public:
 	irr::gui::IGUIButton* btnCancelOrFinish;
 	float xScale;
     float yScale;
-    float xStart;
-    float yStart;
 	IYGOSoundEffectPlayer* soundEffectPlayer;
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
@@ -546,28 +544,27 @@ public:
 	void setPositionFix(core::position2di fix){
 		InputFix = fix;
 	}
-		float optX(float x) {
-			float x2 = x - InputFix.X;
-			if (x2 < 0) {
-				return 0;
-			}
-			return x2;
+	float optX(float x) {
+		float x2 = x - InputFix.X;
+		if (x2 < 0) {
+			return 0;
 		}
+		return x2;
+	}
 
-		float optY(float y) {
-			float y2 = y - InputFix.Y;
-			if (y2 < 0) {
-				return 0;
-			}
-			return y2;
+	float optY(float y) {
+		float y2 = y - InputFix.Y;
+		if (y2 < 0) {
+			return 0;
 		}
-        void process(irr::SEvent &event);
-	private:
-		core::position2di InputFix;
+		return y2;
+	}
+    void process(irr::SEvent &event);
+private:
+	core::position2di InputFix;
     };
 
     extern Game *mainGame;
-
 
 }
 

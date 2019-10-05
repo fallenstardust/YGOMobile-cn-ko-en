@@ -302,49 +302,6 @@ JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetInp
 	}
 }
 
-//touch事件
-JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSendTouch(
-		JNIEnv* env, jclass clazz, jint handle, jint action, jint id, jfloat x, jfloat y) {
-	if(handle) {
-        irr::os::Printer::log("before send touch");
-		CIrrDeviceAndroid *device = (CIrrDeviceAndroid *) handle;
-		if (device->isWindowFocused()) {
-			SEvent event;
-			event.EventType = EET_TOUCH_INPUT_EVENT;
-			s32 eventAction = action;
-			s32 eventType = eventAction & AMOTION_EVENT_ACTION_MASK;
-
-			bool touchReceived = true;
-
-			switch (eventType) {
-				case AMOTION_EVENT_ACTION_DOWN:
-				case AMOTION_EVENT_ACTION_POINTER_DOWN:
-					event.TouchInput.Event = ETIE_PRESSED_DOWN;
-					break;
-				case AMOTION_EVENT_ACTION_MOVE:
-					event.TouchInput.Event = ETIE_MOVED;
-					break;
-				case AMOTION_EVENT_ACTION_UP:
-				case AMOTION_EVENT_ACTION_POINTER_UP:
-				case AMOTION_EVENT_ACTION_CANCEL:
-					event.TouchInput.Event = ETIE_LEFT_UP;
-					break;
-				default:
-					touchReceived = false;
-					break;
-			}
-
-			if (touchReceived) {
-				// Process all touches for move action.
-				event.TouchInput.ID = static_cast<size_t>(id);
-				event.TouchInput.X = static_cast<s32>(x);
-				event.TouchInput.Y = static_cast<s32>(y);
-				device->postEventFromUser(event);
-			}
-		}
-	}
-}
-
 static void* cancel_chain_thread(void* param) {
 	IrrlichtDevice* device = (IrrlichtDevice*) param;
 	irr::os::Printer::log("before send cancel chain");
