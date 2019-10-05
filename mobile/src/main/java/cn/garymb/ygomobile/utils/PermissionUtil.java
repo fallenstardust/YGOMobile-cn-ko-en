@@ -66,7 +66,7 @@ public class PermissionUtil {
                     dialog.setLeftButtonListener(new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            context.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+                            context.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:"+context.getPackageName())));
                             dialog.dismiss();
                         }
                     });
