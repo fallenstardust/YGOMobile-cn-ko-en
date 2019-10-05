@@ -109,11 +109,11 @@ public class YGOMobileActivity extends NativeActivity implements
         if(USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
         }
-        super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
+        super.onCreate(savedInstanceState);
+        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
             initPostion();
         }
