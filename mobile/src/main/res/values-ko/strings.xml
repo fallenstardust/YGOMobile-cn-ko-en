@@ -59,7 +59,7 @@
     <string name="settings_game_diy_card_db">커스텀cdb사용</string>
     <string name="settings_test_options">Lab</string>
     <string name="settings_test_replace_kernel">커널 바꾸기 (필수ROOT)</string>
-    <string name="settings_game_immersive_mode">해상도 최적화</string>
+    <string name="settings_game_immersive_mode">가상 키 숨기기</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">프로필 이미지</string>
     <string name="restart_app">앱을 다시 시작하세요.</string>
@@ -229,7 +229,7 @@
     <string name="ClickLinkArrows">활성화된 링크마커</string>
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
     <string name="Already_Lastest">이미 최신 버전입니다.</string>
-    <string name="about_immersive_mode">16:9 화면 비율이 아닌 휴대전화 또는 터치 포인트가 어긋나는 경우 설정하십시오.</string>
+    <string name="about_immersive_mode">몰입 모드입니다</string>
     <string name="Download">다운로드</string>
     <string name="Downloading">다운로드 중입니다. 잠시 기다려 주십시오.</string>
     <string name="Update_Found">새로운 버전</string>
@@ -270,5 +270,5 @@
     <string name="donot_editor_bot_Deck">덱을 변경하지 말아 주세요. 그러면 프로그램이 제대로 작동하지 않을 수 있습니다.</string>
     <string name="unable_to_edit_empty_deck">사용할 수 없는 빈 구역</string>
     <string name="create_new_failed">생성실패</string>
-    <string name="about_pref_settings_keep_scale">Keep Display Scale</string>
+    <string name="about_pref_settings_keep_scale">디스플레이 해상도 16\:9</string>
 </resources>

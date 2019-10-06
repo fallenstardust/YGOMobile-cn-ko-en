@@ -231,7 +231,7 @@
     <string name="ClickLinkArrows">click link arrows</string>
     <string name="Already_Lastest">Already be the Lastest Version</string>
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
-    <string name="about_immersive_mode">switch it to optimize the screen resolution which isnot 16:9</string>
+    <string name="about_immersive_mode">it will hide virtual-key</string>
     <string name="Download">Download</string>
     <string name="Downloading">Now Downloading</string>
     <string name="Update_Found">Found New Version</string>
@@ -272,5 +272,5 @@
     <string name="screenshoot">Screenshoot</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
-    <string name="about_pref_settings_keep_scale">Keep Display Scale</string>
+    <string name="about_pref_settings_keep_scale">Keep Display Scale 16\:9</string>
 </resources>
