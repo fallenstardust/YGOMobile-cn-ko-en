@@ -92,7 +92,6 @@ bool Game::Initialize() {
 	xScale = android::getXScale(app);
 	yScale = android::getYScale(app);
 
- 	//start ygocore when mobile is in landscape mode, or using Android tablets or TV.
 	char log_scale[256] = {0};
 	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
 	Printer::log(log_scale);
@@ -943,7 +942,7 @@ bool Game::Initialize() {
 	btnCancelOrFinish->setVisible(false);
 #endif
 	//leave/surrender/exit
-	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
+	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 10 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
 	//tip
 	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
