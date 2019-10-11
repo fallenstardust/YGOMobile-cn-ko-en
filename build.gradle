@@ -2,9 +2,11 @@
 
 buildscript {
     repositories {
-        jcenter()
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/gradle-plugin' }
         maven { url "https://jitpack.io" }
-        google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.1'
@@ -20,8 +22,10 @@ ext {
 
 allprojects {
     repositories {
-        jcenter()
-        google()
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/gradle-plugin' }
         maven { url "https://jitpack.io" }
         maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
     }
