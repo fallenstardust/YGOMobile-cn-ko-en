@@ -33,7 +33,6 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.controller.NetworkController;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lib.R;
-import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.SignUtils;
 import cn.garymb.ygomobile.widget.ComboBoxCompat;
 import cn.garymb.ygomobile.widget.EditWindowCompat;
@@ -57,14 +56,32 @@ public class YGOMobileActivity extends NativeActivity implements
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
-    protected final int windowsFlags =
-            Build.VERSION.SDK_INT >= 19 ? (
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
-                    View.SYSTEM_UI_FLAG_LOW_PROFILE;
+    /**
+     * 沉浸全屏模式
+     */
+    private static final int windowsFlags;
+    /**
+     * 非沉浸全屏模式
+     */
+    private static final int windowsFlags2;
+
+    static {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            windowsFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE/* 系统UI变化不触发relayout */
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION/* 导航栏悬浮在布局上面 */
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN/* 状态栏悬浮在布局上面 */
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION/* 隐藏导航栏 */
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN/* 隐藏状态栏 */
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY/* 沉浸模式 */;
+            windowsFlags2 = View.SYSTEM_UI_FLAG_LAYOUT_STABLE/* 系统UI变化不触发relayout */
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION/* 隐藏导航栏 */
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION/* 隐藏状态栏 */
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        } else {
+            windowsFlags = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LOW_PROFILE;
+            windowsFlags2 = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LOW_PROFILE;
+        }
+    }
 
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
@@ -79,7 +96,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private Handler handler = new Handler();
-    private FullScreenUtils mFullScreenUtils;
     private volatile int mPositionX, mPositionY;
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
@@ -109,9 +125,7 @@ public class YGOMobileActivity extends NativeActivity implements
         if(USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
         }
-        mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
-        mFullScreenUtils.fullscreen();
-        mFullScreenUtils.onCreate();
+        fullscreen();
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
@@ -127,6 +141,17 @@ public class YGOMobileActivity extends NativeActivity implements
         sendBroadcast(new Intent(ACTION_START)
                 .putExtra(IrrlichtBridge.EXTRA_PID, android.os.Process.myPid())
                 .setPackage(getPackageName()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+
+                @Override
+                public void onSystemUiVisibilityChange(int visibility) {
+                    if ((visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
+                        fullscreen();
+                    }
+                }
+            });
+        }
     }
 
     //电池管理
@@ -216,19 +241,23 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void fullscreen() {
-
-        //如果是沉浸模式
         if (app().isImmerSiveMode()) {
-            mFullScreenUtils.fullscreen();
-            app().attachGame(this);
-            if (USE_SURFACE) {
-                changeGameSize();
-            } else {
-                int[] size = getGameSize();
-                if (app().isKeepScale()) {
-                    getWindow().setLayout(size[0], size[1]);
-                }
+            //沉浸模式
+            getWindow().getDecorView().setSystemUiVisibility(windowsFlags);
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(windowsFlags2);
+        }
+        app().attachGame(this);
+        if (USE_SURFACE) {
+            changeGameSize();
+        } else {
+            int[] size = getGameSize();
+            if (app().isKeepScale()) {
+                getWindow().setLayout(size[0], size[1]);
             }
+        }
+        if(USE_SURFACE && mSurfaceView != null) {
+            mSurfaceView.requestFocus();
         }
     }
 
