@@ -101,6 +101,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
     private static boolean USE_SURFACE = true;
+    private static boolean RESIZE_WINDOW = true;
 
 //    public static int notchHeight;
 
@@ -143,10 +144,9 @@ public class YGOMobileActivity extends NativeActivity implements
                 .setPackage(getPackageName()));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
-                    if ((visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
+                    if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
                         fullscreen();
                     }
                 }
@@ -169,7 +169,6 @@ public class YGOMobileActivity extends NativeActivity implements
             mLock = mPM.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, TAG);
         }
         mLock.acquire();
-        //注册
     }
 
     @Override
@@ -252,12 +251,11 @@ public class YGOMobileActivity extends NativeActivity implements
             changeGameSize();
         } else {
             int[] size = getGameSize();
-            if (app().isKeepScale()) {
-                getWindow().setLayout(size[0], size[1]);
+            if(RESIZE_WINDOW) {
+                if (app().isKeepScale()) {
+                    getWindow().setLayout(size[0], size[1]);
+                }
             }
-        }
-        if(USE_SURFACE && mSurfaceView != null) {
-            mSurfaceView.requestFocus();
         }
     }
 
@@ -291,6 +289,7 @@ public class YGOMobileActivity extends NativeActivity implements
         int w = size[0];
         int h = size[1];
         mLayout = new FrameLayout(this);
+//        mLayout.setFitsSystemWindows(true);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
         lp.gravity = Gravity.CENTER;
         if (USE_SURFACE) {
@@ -298,16 +297,18 @@ public class YGOMobileActivity extends NativeActivity implements
             mLayout.addView(view, lp);
             super.setContentView(mLayout);
             app().attachGame(this);
-            changeGameSize();
             getWindow().takeSurface(null);
             replaced = true;
             mSurfaceView.getHolder().addCallback(this);
             mSurfaceView.requestFocus();
             getWindow().setGravity(Gravity.CENTER);
+            changeGameSize();
         } else {
             mLayout.addView(view, lp);
-            getWindow().setLayout(w, h);
-            getWindow().setGravity(Gravity.CENTER);
+            if (RESIZE_WINDOW) {
+                getWindow().setLayout(w, h);
+                getWindow().setGravity(Gravity.CENTER);
+            }
             super.setContentView(mLayout);
         }
     }
@@ -332,12 +333,14 @@ public class YGOMobileActivity extends NativeActivity implements
 //            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
             IrrlichtBridge.setInputFix(mPositionX, mPositionY);
         }
-        if (app().isKeepScale()) {
-            //设置为屏幕宽高
-            getWindow().setLayout(w, h);
-        } else {
-            //拉伸，画布设置为游戏宽高
-            getWindow().setLayout(size[0], size[1]);
+        if(RESIZE_WINDOW) {
+            if (app().isKeepScale()) {
+                //设置为屏幕宽高
+                getWindow().setLayout(w, h);
+            } else {
+                //拉伸，画布设置为游戏宽高
+                getWindow().setLayout(size[0], size[1]);
+            }
         }
     }
 
