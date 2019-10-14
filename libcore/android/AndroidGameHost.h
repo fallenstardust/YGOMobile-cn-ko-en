@@ -14,11 +14,8 @@ namespace ygo {
     private:
         jobject host;
         jmethodID java_getSetting;
-        jmethodID java_getFontPath;
         jmethodID java_getIntSetting;
         jmethodID java_saveIntSetting;
-        jmethodID java_getCardImagePath;
-        jmethodID java_getResourcePath;
         jmethodID java_runWindbot;
         jmethodID java_saveSetting;
         jmethodID java_getLocalAddr;
@@ -44,17 +41,11 @@ namespace ygo {
 
         irr::io::path getLastDeck(JNIEnv *env);
 
-        irr::io::path getFontPath(JNIEnv *env);
-
         irr::io::path getSetting(JNIEnv *env, const char *key);
 
         int getIntSetting(JNIEnv *env, const char *key, int defvalue);
 
         void saveIntSetting(JNIEnv *env, const char *key, int value);
-
-        irr::io::path getResourcePath(JNIEnv *env);
-
-        irr::io::path getCardImagePath(JNIEnv *env);
 
         void runWindbot(JNIEnv *env, const char *cmd);
 

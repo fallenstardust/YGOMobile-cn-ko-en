@@ -13,21 +13,6 @@ public class GameHostWrapper extends GameHost {
     }
 
     @Override
-    public String getResourcePath() {
-        return mBase.getResourcePath();
-    }
-
-    @Override
-    public String getCardImagePath() {
-        return mBase.getCardImagePath();
-    }
-
-    @Override
-    public String getFontPath() {
-        return mBase.getFontPath();
-    }
-
-    @Override
     public String getSetting(String key) {
         return mBase.getSetting(key);
     }

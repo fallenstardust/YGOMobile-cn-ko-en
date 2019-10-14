@@ -328,4 +328,47 @@ JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeJoinGame(
     pthread_detach(joinGameThread);
 }
 
+JNIEXPORT jboolean JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeSendTouch(
+        JNIEnv* env, jobject, jint handle, jint action, jint x, jint y, jint id
+        ){
+    if(!handle){
+        return false;
+    }
+    IrrlichtDevice *device = (IrrlichtDevice *) handle;
+    SEvent Event;
+    Event.EventType = EET_TOUCH_INPUT_EVENT;
+
+    s32 EventAction = action;
+    s32 EventType = EventAction & AMOTION_EVENT_ACTION_MASK;
+
+    bool TouchReceived = true;
+
+    switch (EventType) {
+        case AMOTION_EVENT_ACTION_DOWN:
+        case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            Event.TouchInput.Event = ETIE_PRESSED_DOWN;
+            break;
+        case AMOTION_EVENT_ACTION_MOVE:
+            Event.TouchInput.Event = ETIE_MOVED;
+            break;
+        case AMOTION_EVENT_ACTION_UP:
+        case AMOTION_EVENT_ACTION_POINTER_UP:
+        case AMOTION_EVENT_ACTION_CANCEL:
+            Event.TouchInput.Event = ETIE_LEFT_UP;
+            break;
+        default:
+            TouchReceived = false;
+            break;
+    }
+
+    if (TouchReceived) {
+        // Process all touches for move action.
+        Event.TouchInput.ID = id;
+        Event.TouchInput.X = x;
+        Event.TouchInput.Y = y;
+
+        device->postEventFromUser(Event);
+    }
+    return TouchReceived?TRUE:FALSE;
+}
 };

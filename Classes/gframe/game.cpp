@@ -74,7 +74,7 @@ bool Game::Initialize() {
         return false;
     }
 	gameHost->attachNativeDevice(jni, device);
-    LoadConfig();
+    LoadConfig(options);
 #ifdef _IRR_ANDROID_PLATFORM_
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
@@ -946,7 +946,7 @@ bool Game::Initialize() {
 	stCardListTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stCardListTip->setVisible(false);
 	device->setEventReceiver(&menuHandler);
-	LoadConfig();
+	LoadConfig(options);
 	env->getSkin()->setFont(guiFont);
 	env->getSkin()->setSize(EGDS_CHECK_BOX_WIDTH, (gameConf.textfontsize + 10) * yScale);
 	env->setFocus(wMainMenu);
@@ -1393,12 +1393,12 @@ void Game::RefreshBot() {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
 }
 
-void Game::LoadConfig() {
+void Game::LoadConfig(irr::android::InitOptions* options) {
 	JNIEnv *env = getJniEnv();
 	wchar_t wstr[256];
 	if(gameConf._init)return;
-	cardImagePath = gameHost->getCardImagePath(env);
-	resourcePath = gameHost->getResourcePath(env);
+	cardImagePath = options->getImageDir();
+	resourcePath = options->getResourceDir();
 	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
@@ -1411,7 +1411,7 @@ void Game::LoadConfig() {
 	BufferIO::DecodeUTF8(gameHost->getLastDeck(env).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
 	//os::Printer::log(android::getFontPath(appMain).c_str());
-	BufferIO::DecodeUTF8(gameHost->getFontPath(env).c_str(), wstr);
+	BufferIO::DecodeUTF8(options->getFontFile().c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
 	gameConf.lasthost[0] = 0;

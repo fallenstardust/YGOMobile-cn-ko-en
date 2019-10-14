@@ -21,11 +21,8 @@ void AndroidGameHost::initMethods(JNIEnv *env) {
     jclass clazz = env->GetObjectClass(host);
     java_getSetting = env->GetMethodID(clazz, "getSetting",
                                        "(Ljava/lang/String;)Ljava/lang/String;");
-    java_getFontPath = env->GetMethodID(clazz, "getFontPath", "()Ljava/lang/String;");
     java_getIntSetting = env->GetMethodID(clazz, "getIntSetting", "(Ljava/lang/String;I)I");
     java_saveIntSetting = env->GetMethodID(clazz, "saveIntSetting", "(Ljava/lang/String;I)V");
-    java_getResourcePath = env->GetMethodID(clazz, "getResourcePath", "()Ljava/lang/String;");
-    java_getCardImagePath = env->GetMethodID(clazz, "getCardImagePath", "()Ljava/lang/String;");
     java_runWindbot = env->GetMethodID(clazz, "runWindbot", "(Ljava/lang/String;)V");
     java_saveSetting = env->GetMethodID(clazz, "saveSetting", "(Ljava/lang/String;Ljava/lang/String;)V");
     java_getLocalAddr = env->GetMethodID(clazz, "getLocalAddr", "()I");
@@ -38,29 +35,6 @@ void AndroidGameHost::initMethods(JNIEnv *env) {
     java_getWindowHeight = env->GetMethodID(clazz, "getWindowHeight", "()I");
     java_attachNativeDevice = env->GetMethodID(clazz, "attachNativeDevice", "(I)V");
     env->DeleteLocalRef(clazz);
-}
-irr::io::path AndroidGameHost::getResourcePath(JNIEnv *env) {
-    irr::io::path ret;
-    if (!java_getResourcePath) {
-        return ret;
-    }
-    jstring value = (jstring) env->CallObjectMethod(host, java_getResourcePath);
-    const char *chars = env->GetStringUTFChars(value, NULL);
-    ret.append(chars);
-    env->ReleaseStringUTFChars(value, chars);
-    return ret;
-}
-
-irr::io::path AndroidGameHost::getCardImagePath(JNIEnv *env) {
-    irr::io::path ret;
-    if (!java_getCardImagePath) {
-        return ret;
-    }
-    jstring value = (jstring) env->CallObjectMethod(host, java_getCardImagePath);
-    const char *chars = env->GetStringUTFChars(value, NULL);
-    ret.append(chars);
-    env->ReleaseStringUTFChars(value, chars);
-    return ret;
 }
 
 irr::io::path AndroidGameHost::getLastDeck(JNIEnv *env) {
@@ -82,19 +56,6 @@ irr::io::path AndroidGameHost::getSetting(JNIEnv *env, const char *_key) {
         env->DeleteLocalRef(key);
     }
     const char *chars = env->GetStringUTFChars(value, NULL);
-    ret.append(chars);
-    env->ReleaseStringUTFChars(value, chars);
-    return ret;
-}
-
-irr::io::path AndroidGameHost::getFontPath(JNIEnv *env) {
-    irr::io::path ret;
-    if (!java_getFontPath) {
-        return ret;
-    }
-    jstring value = (jstring) env->CallObjectMethod(host, java_getFontPath);
-    const char *chars = env->GetStringUTFChars(value, NULL);
-    LOGD("getFontPath:%s", chars);
     ret.append(chars);
     env->ReleaseStringUTFChars(value, chars);
     return ret;

@@ -132,6 +132,9 @@ public class AppsSettings {
         options.mIsPendulumScaleEnabled = isPendulumScale();
         options.mIsSoundEffectEnabled = isSoundEffect();
         options.mOpenglVersion = getOpenglVersion();
+        options.mFontFile = getFontPath();
+        options.mResDir = getResourcePath();
+        options.mImageDir = getCardImagePath();
         if (Constants.DEBUG) {
             Log.i("Irrlicht", "option=" + options);
         }

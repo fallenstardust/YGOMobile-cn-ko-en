@@ -22,12 +22,6 @@ public abstract class GameHost {
         return context.getAssets();
     }
 
-    public abstract String getResourcePath();
-
-    public abstract String getCardImagePath();
-
-    public abstract String getFontPath();
-
     public abstract String getSetting(String key);
 
     public abstract int getIntSetting(String key, int def);

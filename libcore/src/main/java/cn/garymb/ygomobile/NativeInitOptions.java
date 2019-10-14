@@ -28,6 +28,10 @@ public final class NativeInitOptions {
 
     public boolean mIsPendulumScaleEnabled;
 
+    public String mFontFile;
+    public String mResDir;
+    public String mImageDir;
+
     public NativeInitOptions() {
         mDbList = new ArrayList<>();
         mArchiveList = new ArrayList<>();
@@ -50,6 +54,9 @@ public final class NativeInitOptions {
         for (String str : mArchiveList) {
             putString(buffer, str);
         }
+        putString(buffer, mFontFile);
+        putString(buffer, mResDir);
+        putString(buffer, mImageDir);
         return buffer;
     }
 

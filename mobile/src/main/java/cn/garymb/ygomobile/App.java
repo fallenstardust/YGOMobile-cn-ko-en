@@ -67,21 +67,6 @@ public class App extends GameApplication implements GameConfig{
         }
 
         @Override
-        public String getResourcePath() {
-            return AppsSettings.get().getResourcePath();
-        }
-
-        @Override
-        public String getCardImagePath() {
-            return AppsSettings.get().getCardImagePath();
-        }
-
-        @Override
-        public String getFontPath() {
-            return AppsSettings.get().getFontPath();
-        }
-
-        @Override
         public String getSetting(String key) {
             return AppsSettings.get().getSettings(key);
         }

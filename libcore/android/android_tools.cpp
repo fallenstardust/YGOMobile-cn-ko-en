@@ -50,6 +50,9 @@ InitOptions::InitOptions(void*data) :
 			ReadString(tmp_path, rawdata);
 			m_archive_files[i] = tmp_path;
 		}
+		ReadString(m_font_path, rawdata);
+		ReadString(m_res_path, rawdata);
+		ReadString(m_image_path, rawdata);
 	}
 }
 

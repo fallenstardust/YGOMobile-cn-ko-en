@@ -51,6 +51,15 @@ public:
 	inline bool isPendulumScaleEnabled() {
 		return m_ps_enabled;
 	}
+    inline irr::io::path getFontFile() {
+        return m_font_path;
+    }
+    inline irr::io::path getResourceDir() {
+        return m_res_path;
+    }
+    inline irr::io::path getImageDir() {
+        return m_image_path;
+    }
 	~InitOptions()
     {
 		if(m_db_files != NULL){
@@ -66,6 +75,10 @@ private:
 	irr::io::path m_work_dir;
     irr::io::path* m_db_files;
     irr::io::path* m_archive_files;
+    irr::io::path m_font_path;
+    irr::io::path m_res_path;
+    irr::io::path m_image_path;
+
     int m_opengles_version;
     int m_card_quality;
 	int cdb_count;

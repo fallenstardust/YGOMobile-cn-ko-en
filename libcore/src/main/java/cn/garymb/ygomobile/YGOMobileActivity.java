@@ -232,14 +232,15 @@ public class YGOMobileActivity extends NativeActivity implements
         int[] size = getGameSize();
         mGameWidth = size[0];
         mGameHeight = size[1];
-    }
+   }
 
-    private int[] getGameSize(){
+    private int[] getGameSize() {
         Display display = getWindowManager().getDefaultDisplay();
         int activityHeight = display.getHeight();
         int activityWidth = display.getWidth();
         int w = Math.max(activityHeight, activityWidth);
         int h = Math.min(activityHeight, activityWidth);
+        Log.i(TAG, "getGameSize:isKeepScale=" + mGameConfig.isKeepScale());
         if (mGameConfig.isKeepScale()) {
             float sx = w / GAME_WIDTH;
             float sy = h / GAME_HEIGHT;
@@ -273,6 +274,8 @@ public class YGOMobileActivity extends NativeActivity implements
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
+        mGameWidth = w;
+        mGameHeight = h;
         mLayout = new FrameLayout(this);
         mSurfaceView = new SurfaceView(this);
 //        mLayout.setFitsSystemWindows(true);
@@ -292,6 +295,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 return mCore.sendTouchEvent(event);
             }
         });
+        onInputQueueCreated(null);
     }
 
 
@@ -462,11 +466,13 @@ public class YGOMobileActivity extends NativeActivity implements
 
         @Override
         public int getWindowWidth() {
+            Log.i(TAG, "getWindowWidth:" + mGameWidth);
             return mGameWidth;
         }
 
         @Override
         public int getWindowHeight() {
+            Log.i(TAG, "getWindowHeight:" + mGameHeight);
             return mGameHeight;
         }
 
@@ -479,12 +485,12 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onInputQueueCreated(InputQueue queue) {
-        super.onInputQueueCreated(mCore.getInputQueue());
+//        super.onInputQueueCreated(mCore.getInputQueue());
     }
 
     @Override
     public void onInputQueueDestroyed(InputQueue queue) {
-        super.onInputQueueDestroyed(mCore.getInputQueue());
+//        super.onInputQueueDestroyed(mCore.getInputQueue());
     }
 
     @Override

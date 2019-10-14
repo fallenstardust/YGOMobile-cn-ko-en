@@ -147,7 +147,11 @@ public:
 	void WaitFrameSignal(int frame);
 	void DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, int>* lflist);
 	void DrawDeckBd();
+#ifdef _IRR_ANDROID_PLATFORM_
+	void LoadConfig(irr::android::InitOptions* options);
+#else
 	void LoadConfig();
+#endif
 	void SaveConfig();
 	void ShowCardInfo(int code);
 	void ClearCardInfo(int player = 0);

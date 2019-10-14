@@ -47,7 +47,7 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
     private final Context mContext;
     private AssetManager mAssetManager;
     private boolean mInit = false;
-    private InputQueueCompat mInputQueue;
+//    private InputQueueCompat mInputQueue;
     private HandlerThread mWorker;
     private Handler H;
 
@@ -62,7 +62,7 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
     public YGOCore(Context context, AssetManager mAssetManager) throws Exception {
         this.mContext = context;
         this.mAssetManager = mAssetManager;
-        mInputQueue = new InputQueueCompat();
+//        mInputQueue = new InputQueueCompat();
         mWorker = new HandlerThread("ygopro_work");
         mWorker.start();
         H = new Handler(mWorker.getLooper());
@@ -72,9 +72,9 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
         mWorker.stop();
     }
 
-    public InputQueue getInputQueue() {
-        return mInputQueue.getInputQueue();
-    }
+//    public InputQueue getInputQueue() {
+//        return mInputQueue.getInputQueue();
+//    }
 
     public void setNativeAndroidDevice(int nativeAndroidDevice) {
         Log.i(TAG, "setNativeAndroidDevice:" + nativeAndroidDevice);
@@ -147,7 +147,7 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
             Log.w(TAG, "sendTouchEvent fail nativeAndroidDevice = 0");
             return false;
         }
-        int eventType = event.getAction() & MotionEvent.ACTION_MASK;
+        final int eventType = event.getAction() & MotionEvent.ACTION_MASK;
         boolean touchReceived = true;
         switch (eventType) {
             case MotionEvent.ACTION_DOWN:
@@ -164,23 +164,32 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
         if (!touchReceived) {
             return false;
         }
+        if(event.getPointerId(0) != 0){
+            return false;
+        }
         H.post(new Runnable() {
             @Override
             public void run() {
-                mInputQueue.sendInputEvent(event, event, true, YGOCore.this);
+                sendTouch(event.getAction(), (int)event.getX(), (int)event.getY(), 0);
             }
         });
         return true;
     }
 
     public void sendKeyEvent(final KeyEvent event) {
+//        if (nativeAndroidDevice != 0) {
+//            H.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    sendTouch(event.getAction(), event);
+//                }
+//            });
+//        }
+    }
+
+    public void sendTouch(int action, int x, int y, int id){
         if (nativeAndroidDevice != 0) {
-            H.post(new Runnable() {
-                @Override
-                public void run() {
-                    mInputQueue.sendInputEvent(event, event, true, YGOCore.this);
-                }
-            });
+            nativeSendTouch(nativeAndroidDevice, action, x, y, id);
         }
     }
 
@@ -255,5 +264,7 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
     private native void nativeSetComboBoxSelection(int device, int idx);
 
     private native void nativeJoinGame(int device, ByteBuffer buffer, int length);
+
+    private native boolean nativeSendTouch(int device, int action, int x, int y, int id);
 
 }
