@@ -1,24 +1,25 @@
 package cn.garymb.ygomobile.core;
 
+import android.content.res.AssetManager;
 
-public class GameConfig {
-    static boolean error = false;
+import cn.garymb.ygomobile.NativeInitOptions;
 
-    static {
-        try {
-            System.loadLibrary("game_version");
-        } catch (Throwable e) {
-            //ignore
-            error = true;
-        }
-    }
+public interface GameConfig {
 
-    public static int getVersion(){
-        if(!error){
-            return getGameVersion();
-        }
-        return 0;
-    }
+    boolean isKeepScale();
 
-    private static native int getGameVersion();
+    NativeInitOptions getNativeInitOptions();
+
+    boolean isLockScreenOrientation();
+
+    boolean isSensorRefresh();
+
+    /***
+     * 隐藏底部导航栏
+     */
+    boolean isImmerSiveMode();
+
+    boolean isEnableSoundEffect();
+
+    AssetManager getGameAsset();
 }

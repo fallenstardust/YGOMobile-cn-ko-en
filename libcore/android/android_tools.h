@@ -5,12 +5,15 @@
 #define __IRR_ANDROID_TOOLS_H__
 
 #include <irrlicht.h>
-#include <android_native_app_glue.h>
 #include <signal.h>
 #include <android/log.h>
+#include <jni.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "ygomobile-native", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "ygomobile-native", __VA_ARGS__))
+#define LOG_TAG "ygomobile-native"
+#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__))
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
 
 namespace irr {
 namespace android {
@@ -72,121 +75,9 @@ private:
     bool m_ps_enabled;
 };
 
-static unsigned char signed_buff[16] = { 0x30, 0x82, 0x2, 0x41, 0x30, 0x82, 0x1,
-		0xAA, 0xA0, 0x3, 0x2, 0x1, 0x2, 0x2, 0x4, 0x53 };
+s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
-struct SDisplayMetrics {
-	irr::s32 widthPixels;
-	irr::s32 heightPixels;
-	irr::f32 density;
-	irr::s32 densityDpi;
-	irr::f32 scaledDensity;
-	irr::f32 xdpi;
-	irr::f32 ydpi;
-};
-/* jni utils*/
-// Access SDisplayMetrics
-extern float getScreenWidth(ANDROID_APP app);
-
-extern float getScreenHeight(ANDROID_APP app);
-
-// Get SDCard path.
-extern irr::io::path getExternalStorageDir(ANDROID_APP app);
-
-// Get SDCard path.
-extern irr::io::path getExternalFilesDir(ANDROID_APP app);
-
-// Get cache path.
-extern irr::io::path getCacheDir(ANDROID_APP app);
-
-// Get database path.
-extern irr::io::path getDBDir(ANDROID_APP app);
-
-// Get global resource path
-extern irr::io::path getResourcePath(ANDROID_APP app);
-
-// Get card image path.
-extern irr::io::path getCardImagePath(ANDROID_APP app);
-
-//Toggle IME using global window token.
-extern void toggleGlobalIME(ANDROID_APP app, bool pShow);
-
-//Toggle IME using android UI trick.
-extern void toggleIME(ANDROID_APP app, bool pShow, const char* hint);
-
-//Init Java Irrlicht world.
-extern core::position2di initJavaBridge(ANDROID_APP app, void* handle);
-
-//Cause a haptic feedback.
-extern void perfromHapticFeedback(ANDROID_APP app);
-
-//perform trick
-extern bool perfromTrick(ANDROID_APP app);
-
-//toogle overlay view
-extern void toggleOverlayView(ANDROID_APP app, bool pShow);
-
-//Retrive customized resource directory()
-extern irr::io::path getCoreConfigVersion(ANDROID_APP app);
-
-//Retrive opengl version.
-extern int getOpenglVersion(ANDROID_APP app);
-
-//Retrive init options
-extern InitOptions* getInitOptions(ANDROID_APP app);
-
-//Retrive card quality settings.
-extern int getCardQuality(ANDROID_APP app);
-
-//Retrive local ip address(mostly for wifi only);
-extern int getLocalAddr(ANDROID_APP app);
-
-extern float getXScale(ANDROID_APP app);
-
-extern float getYScale(ANDROID_APP app);
-
-//Retrive font path.
-extern irr::io::path getFontPath(ANDROID_APP app);
-
-//Retrive last deck name.
-extern irr::io::path getLastDeck(ANDROID_APP app);
-
-//Retrive last catagory name.
-extern irr::io::path getLastCategory(ANDROID_APP app);
-
-extern int getIntSetting(ANDROID_APP app, const char* key,int defvalue);
-
-extern irr::io::path getSetting(ANDROID_APP app, const char* key);
-
-//save last deck name.
-extern void setLastDeck(ANDROID_APP app, const char* deckname);
-
-//save last category name.
-extern void setLastCategory(ANDROID_APP app, const char* catename);
-
-extern void saveIntSetting(ANDROID_APP app, const char* key, int value);
-
-extern void saveSetting(ANDROID_APP app, const char* key, const char* value);
-
-//Retrive font antialias options
-extern bool getFontAntiAlias(ANDROID_APP app);
-
-extern bool isSoundEffectEnabled(ANDROID_APP app);
-
-//Show Android compat gui;
-extern void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow,
-		char** pContents, int count, int mode = 0);
-
-/* android  event handlers*/
-extern void process_input(ANDROID_APP app,
-		struct android_poll_source* source);
-
-extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
-
-extern bool android_deck_delete(const char* deck_name);
-
-extern void runWindbot(ANDROID_APP app, const char* args);
-
+JNIEnv *getJniEnv(ANDROID_APP app);
 }
 }
 

@@ -178,9 +178,6 @@ namespace irr
 		//! Resize the render window.
 		virtual void setWindowSize(const irr::core::dimension2d<u32>& size) _IRR_OVERRIDE_ {}
 
-		virtual void setProcessReceiver(IProcessEventReceiver* receiver) _IRR_OVERRIDE_{
-			ProcessReceiver = receiver;
-		}
 	protected:
 
 		void createGUIAndScene();
@@ -203,7 +200,6 @@ namespace irr
 		ITimer* Timer;
 		gui::ICursorControl* CursorControl;
 		IEventReceiver* UserReceiver;
-		IProcessEventReceiver* ProcessReceiver;
 		CLogger* Logger;
 		IOSOperator* Operator;
 		IRandomizer* Randomizer;

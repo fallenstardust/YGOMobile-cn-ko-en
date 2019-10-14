@@ -37,7 +37,6 @@ public final class NetworkController {
      * @author: mabin
      **/
     public boolean isWifiConnected() {
-        // TODO Auto-generated method stub
         boolean isWifiEnabled = mWM.isWifiEnabled();
         NetworkInfo ni = mCM.getActiveNetworkInfo();
         if (isWifiEnabled && null != ni && ni.isConnected()

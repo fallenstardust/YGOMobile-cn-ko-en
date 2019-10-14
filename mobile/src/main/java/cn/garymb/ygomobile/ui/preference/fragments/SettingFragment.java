@@ -125,7 +125,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
         bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
-        bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
+        bind(PREF_LOCK_SCREEN, mSettings.isLockScreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
         bind(PREF_IMMERSIVE_MODE, mSettings.isImmerSiveMode());
         bind(PREF_PENDULUM_SCALE, mSettings.isPendulumScale());
@@ -202,8 +202,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     //如果打勾开启音效
                     if (checkBoxPreference.isChecked()) {
                         //如果未初始化音效
-                        if (App.get().isInitSoundEffectPool())
-                            App.get().initSoundEffectPool();
                     }
                 }
                 return true;

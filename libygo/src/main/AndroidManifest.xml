@@ -4,27 +4,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application>
-        <activity
-            android:name="cn.garymb.ygomobile.YGOMobileActivity"
-            android:clearTaskOnLaunch="true"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:label="YGOMobile"
-            android:process=":game"
-            android:launchMode="singleTop"
-            android:screenOrientation="sensorLandscape"
-            android:taskAffinity="cn.garymb.ygomobile.game"
-            android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
-            android:windowSoftInputMode="adjustPan"
-            tools:targetApi="honeycomb">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="YGOMobile"/>
-            <meta-data
-                android:name="android.notch_support"
-                android:value="true"/>
-        </activity>
         <receiver android:name="cn.garymb.ygomobile.GameReceiver"
             android:process=":game" >
             <intent-filter>

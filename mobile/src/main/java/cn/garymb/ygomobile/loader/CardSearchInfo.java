@@ -173,7 +173,7 @@ class CardSearchInfo {
                 }
             }
         }
-        //TODO setcode
+        //setcode
         if (setcode > 0) {
             if (!card.isSetCode(setcode)) {
                 return false;

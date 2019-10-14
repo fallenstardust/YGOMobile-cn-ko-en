@@ -131,7 +131,7 @@ bool TouchEventTransferAndroid::OnTransferCommon(const SEvent& event,
 			transferEvent.MouseInput.ButtonStates = 0x01;
 			transferEvent.MouseInput.Event = EMIE_MOUSE_MOVED;
 		} else {
-			Printer::log("multitouch missed");
+			LOGD("multitouch missed");
 			return false;
 		}
 		if (ygo::mainGame->device && ygo::mainGame->device->isWindowFocused()) {
@@ -174,7 +174,7 @@ void TouchEventTransferAndroid::set_long_click_handler(int mode) {
 	sev.sigev_notify_attributes = NULL;
 	sev.sigev_value.sival_ptr = (void*)mode;
 	if (timer_create(CLOCK_REALTIME, &sev, &long_press_tid) == -1) {
-		Printer::log("create timer failed!");
+		LOGD("create timer failed!");
 	}
 	/*start the timer*/
 	ts.it_value.tv_sec = 1;
@@ -182,16 +182,14 @@ void TouchEventTransferAndroid::set_long_click_handler(int mode) {
 	ts.it_interval.tv_sec = 0;
 	ts.it_interval.tv_nsec = 0;
 	if (timer_settime(long_press_tid, 0, &ts, NULL) == -1) {
-		Printer::log("set timer failed!");
+		LOGD("set timer failed!");
 	}
 	is_timer_set = true;
 }
 
 void TouchEventTransferAndroid::long_press_handler(sigval_t info) {
 	int mode = (int)info.sival_ptr;
-	char log[256];
-	sprintf(log, "receve long click %d", mode);
-	os::Printer::log(log);
+	LOGD("receve long click %d", mode);
 	if (mode == LONG_CLICK_MODE_AS_RIGHTCLICK) {
 		SEvent rdownEvent, rupEvent;
 		rdownEvent.EventType = EET_MOUSE_INPUT_EVENT;
@@ -204,7 +202,7 @@ void TouchEventTransferAndroid::long_press_handler(sigval_t info) {
 		rupEvent.MouseInput.X = s_current_x;
 		rupEvent.MouseInput.Y = s_current_y;
 		ygo::mainGame->device->postEventFromUser(rupEvent);
-		android::perfromHapticFeedback(ygo::mainGame->appMain);
+		ygo::mainGame->perfromHapticFeedback();
 	} else if (mode == LONG_CLICK_MODE_AS_LEFTCLICK) {
 		SEvent ldownEvent;
 		ldownEvent.EventType = EET_MOUSE_INPUT_EVENT;
@@ -212,7 +210,7 @@ void TouchEventTransferAndroid::long_press_handler(sigval_t info) {
 		ldownEvent.MouseInput.X = s_current_x;
 		ldownEvent.MouseInput.Y = s_current_y;
 		ygo::mainGame->device->postEventFromUser(ldownEvent);
-		android::perfromHapticFeedback(ygo::mainGame->appMain);
+		ygo::mainGame->perfromHapticFeedback();
 	}
 	is_timer_set = false;
 	timer_delete(long_press_tid);

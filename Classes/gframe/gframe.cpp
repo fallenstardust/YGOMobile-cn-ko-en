@@ -2,19 +2,41 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
+#include <android/AndroidGameHost.h>
 
 int enable_log = 0;
 bool exit_on_return = false;
 bool bot_mode = false;
 
 #ifdef _IRR_ANDROID_PLATFORM_
-void android_main(ANDROID_APP app) {
-	app->inputPollSource.process = android::process_input;
-	app_dummy();
+
+ygo::AndroidGameHost *getHost(ANDROID_APP app) {
+	JNIEnv *env = android::getJniEnv(app);
+	jobject activity = app->activity->clazz;
+	jclass clazz = env->GetObjectClass(activity);
+	jmethodID getNativeGameHost = env->GetMethodID(clazz,
+												   "getNativeGameHost", "()Ljava/lang/Object;");
+	jobject jhost = env->CallObjectMethod(activity, getNativeGameHost);
+	if(jhost) {
+		ygo::AndroidGameHost *host = new ygo::AndroidGameHost(app, env->NewGlobalRef(jhost));
+		host->initMethods(env);
+		env->DeleteLocalRef(clazz);
+		return host;
+	}
+	return NULL;
+}
+
+void android_main(ANDROID_APP app){
 #else
 int main(int argc, char* argv[]) {
 #endif
-
+    ygo::Game* game = new ygo::Game;
+    ygo::mainGame = game;
+    ygo::gameHost = getHost(app);
+    if(!ygo::gameHost){
+		LOGE("Initialize game host error");
+		return;
+    }
 #ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -24,10 +46,9 @@ int main(int argc, char* argv[]) {
 #else
 	evthread_use_pthreads();
 #endif //_WIN32
-	ygo::Game _game;
-	ygo::mainGame = &_game;
 #ifdef _IRR_ANDROID_PLATFORM_
-	if(!ygo::mainGame->Initialize(app))
+	LOGI("start Initialize");
+	if(!game->Initialize(app))
 		return;
 #else
 	if(!ygo::mainGame->Initialize())
@@ -84,10 +105,12 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 #ifdef _IRR_ANDROID_PLATFORM_
-	ygo::mainGame->externalSignal.Set();
-	ygo::mainGame->externalSignal.SetNoWait(true);
+	game->externalSignal.Set();
+	game->externalSignal.SetNoWait(true);
 #endif
-	ygo::mainGame->MainLoop();
+	game->MainLoop();
+	delete game;
+	LOGI("end game");
 #ifdef _WIN32
 	WSACleanup();
 #else

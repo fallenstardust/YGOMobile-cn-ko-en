@@ -50,16 +50,12 @@ public class AppsSettings {
     private static AppsSettings sAppsSettings;
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
-    private float mDensity;
-    private final Point mScreenSize = new Point();
-    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;
         mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
         mSharedPreferences.setAutoSave(true);
         Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
-        update(context);
     }
 
     public static void init(Context context) {
@@ -76,15 +72,6 @@ public class AppsSettings {
         return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 
-    public void update(Context context) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        //应用尺寸
-        wm.getDefaultDisplay().getSize(mScreenSize);
-        //屏幕尺寸
-        wm.getDefaultDisplay().getRealSize(mRealScreenSize);
-        mDensity = context.getResources().getDisplayMetrics().density;
-    }
-
     public int getAppVersion() {
         return mSharedPreferences.getInt(PREF_VERSION, 0);
     }
@@ -95,12 +82,6 @@ public class AppsSettings {
 
     public PreferenceFragmentPlus.SharedPreferencesPlus getSharedPreferences() {
         return mSharedPreferences;
-    }
-
-    public float getSmallerSize() {
-        float w = getScreenWidth();
-        float h = getScreenHeight();
-        return h < w ? h : w;
     }
 
     public boolean isDialogDelete() {
@@ -134,56 +115,8 @@ public class AppsSettings {
         return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
-    public float getXScale(int w, int h) {
-        if(isKeepScale()){
-            float sx = getScreenHeight() / w;
-            float sy = getScreenWidth() / h;
-            return Math.min(sx, sy);
-        }
-        return getScreenHeight() / w;
-    }
-
-    public float getYScale(int w, int h) {
-        if(isKeepScale()){
-            //固定比例，取最小值
-            float sx = getScreenHeight() / w;
-            float sy = getScreenWidth() / h;
-            return Math.min(sx, sy);
-        }
-        return getScreenWidth() / h;
-    }
-
     public boolean isKeepScale(){
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
-    }
-
-    public float getScreenWidth() {
-        int w, h;
-        if (isImmerSiveMode()) {
-            w = mRealScreenSize.x;
-            h = mRealScreenSize.y;
-        } else {
-            w = mScreenSize.x;
-            h = mScreenSize.y;
-        }
-        return Math.min(w, h);
-    }
-
-    public float getScreenHeight() {
-        int w, h;
-        if (isImmerSiveMode()) {
-            w = mRealScreenSize.x;
-            h = mRealScreenSize.y;
-        } else {
-            w = mScreenSize.x;
-            h = mScreenSize.y;
-        }
-        int ret = Math.max(w, h);
-        if(isImmerSiveMode()){
-            //刘海高度
-            ret -= getNotchHeight();
-        }
-        return ret;
     }
 
     /**
@@ -385,7 +318,7 @@ public class AppsSettings {
         }
     }
 
-    public boolean isLockSreenOrientation() {
+    public boolean isLockScreenOrientation() {
         return mSharedPreferences.getBoolean(PREF_LOCK_SCREEN, Constants.PREF_DEF_LOCK_SCREEN);
     }
 

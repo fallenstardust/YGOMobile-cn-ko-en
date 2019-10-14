@@ -13,13 +13,13 @@
 
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
-#include <android_native_app_glue.h>
 
 namespace ygo {
 
 class AndroidSoundEffectPlayer: virtual public ygo::IYGOSoundEffectPlayer {
 public:
 	AndroidSoundEffectPlayer(ANDROID_APP app);
+
 	virtual ~AndroidSoundEffectPlayer();
 
 	virtual void doPlayerEnterEffect();

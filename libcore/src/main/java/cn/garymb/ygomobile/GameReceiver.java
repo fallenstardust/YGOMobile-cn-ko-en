@@ -4,10 +4,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.core.YGOCore;
 
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_START;
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_STOP;
+import static cn.garymb.ygomobile.core.YGOCore.ACTION_START;
+import static cn.garymb.ygomobile.core.YGOCore.ACTION_STOP;
 
 public class GameReceiver extends BroadcastReceiver {
     @Override
@@ -15,12 +15,12 @@ public class GameReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (ACTION_START.equals(action)) {
             //
-            IrrlichtBridge.gPid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
+            YGOCore.gPid = intent.getIntExtra(YGOCore.EXTRA_PID, 0);
 //            Log.w("ygo", "pid=" + IrrlichtBridge.gPid);
         } else if (ACTION_STOP.equals(action)) {
-            int pid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
-            if (pid == 0 && IrrlichtBridge.gPid != 0) {
-                pid = IrrlichtBridge.gPid;
+            int pid = intent.getIntExtra(YGOCore.EXTRA_PID, 0);
+            if (pid == 0 && YGOCore.gPid != 0) {
+                pid = YGOCore.gPid;
 //                Log.w("ygo", "will kill last pid=" + pid);
             }
             if (pid == 0) {

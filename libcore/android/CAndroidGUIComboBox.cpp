@@ -34,7 +34,7 @@ bool CAndroidGUIComboBox::OnEvent(const SEvent& event) {
 			BufferIO::EncodeUTF8(getItem(i), content);
 			*(contents + i) = content;
 		}
-		android::showAndroidComboBoxCompat(ygo::mainGame->appMain, true, contents, count);
+		ygo::mainGame->showAndroidComboBoxCompat(true, contents, count);
 		for (int i = 0; i < count; i++) {
 			free(*(contents + i));
 		}

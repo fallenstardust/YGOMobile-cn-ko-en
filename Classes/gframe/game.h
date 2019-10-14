@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include <list>
+#include <android/AndroidGameHost.h>
 #include "IYGOSoundEffectPlayer.h"
 
 namespace ygo {
@@ -107,7 +108,7 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game :IProcessEventReceiver{
+class Game{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -542,30 +543,35 @@ public:
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
 #endif
-	void setPositionFix(core::position2di fix){
-		InputFix = fix;
-	}
-	float optX(float x) {
-		float x2 = x - InputFix.X;
-		if (x2 < 0) {
-			return 0;
-		}
-		return x2;
-	}
 
-	float optY(float y) {
-		float y2 = y - InputFix.Y;
-		if (y2 < 0) {
-			return 0;
-		}
-		return y2;
-	}
-    void process(irr::SEvent &event);
-private:
-	core::position2di InputFix;
+    void showAndroidComboBoxCompat(bool show, char** list, int count, int mode = 0);
+    void perfromHapticFeedback();
+    void toggleIME(bool show, char* msg);
+    void setLastCategory(const char* category);
+    void setLastDeck(const char* name);
+    int getLocalAddr();
+
+    io::path getCardImagePath(){
+        return cardImagePath;
+    }
+    io::path getResourcePath(){
+        return resourcePath;
+    }
+
+    void runWindbot(const char* cmd);
+
+    void playSoundEffect(const char *name);
+
+    private:
+#ifdef _IRR_ANDROID_PLATFORM_
+		JNIEnv* getJniEnv();
+#endif
+        io::path cardImagePath;
+        io::path resourcePath;
     };
 
     extern Game *mainGame;
+    extern ygo::AndroidGameHost *gameHost;
 
 }
 
@@ -757,8 +763,8 @@ private:
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
 
 #ifdef _IRR_ANDROID_PLATFORM_
-#define GAME_WIDTH 1024
-#define GAME_HEIGHT 640
+#define GAME_WIDTH 1024.0f
+#define GAME_HEIGHT 640.0f
 #else
 #define GAME_WIDTH 1280
 #define GAME_HEIGHT 720

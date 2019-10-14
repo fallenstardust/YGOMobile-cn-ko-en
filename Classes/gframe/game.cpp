@@ -20,6 +20,8 @@
 #include <COGLESExtensionHandler.h>
 #include <COGLES2Driver.h>
 #include <COGLESDriver.h>
+#include <android/AndroidGameHost.h>
+
 #endif
 
 const unsigned short PRO_VERSION = 0x134B;
@@ -27,19 +29,9 @@ const unsigned short PRO_VERSION = 0x134B;
 namespace ygo {
 
 Game *mainGame;
-
-void Game::process(irr::SEvent &event) {
-	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
-		s32 x = event.MouseInput.X;
-		s32 y = event.MouseInput.Y;
-		event.MouseInput.X = optX(x);
-		event.MouseInput.Y = optY(y);
-//			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "Android comman process %d,%d -> %d,%d", x, y,
-//								event.MouseInput.X, event.MouseInput.Y);
-	}
-}
-
+AndroidGameHost *gameHost;
 #ifdef _IRR_ANDROID_PLATFORM_
+
 bool Game::Initialize(ANDROID_APP app) {
 	this->appMain = app;
 #else
@@ -49,7 +41,13 @@ bool Game::Initialize() {
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
 
 #ifdef _IRR_ANDROID_PLATFORM_
-	android::InitOptions *options = android::getInitOptions(app);
+	JNIEnv* jni = android::getJniEnv(app);
+	irr::android::InitOptions* options = gameHost->getInitOptions(jni);
+	if(options == NULL){
+		return false;
+	}
+	int windowWidth = gameHost->getWindowWidth(jni);
+	int windowHeight = gameHost->getWindowHeight(jni);
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -60,7 +58,8 @@ bool Game::Initialize() {
 	params.Bits = 24;
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
-	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
+	params.WindowSize = irr::core::dimension2d<u32>(windowWidth, windowHeight);
+    LOGI("params window = %dx%d", windowWidth, windowHeight);
 #else
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
@@ -70,36 +69,29 @@ bool Game::Initialize() {
 #endif
 
 	device = irr::createDeviceEx(params);
-	if(!device)
-		return false;
+	if(!device) {
+		LOGE("createDeviceEx failed");
+        return false;
+    }
+	gameHost->attachNativeDevice(jni, device);
+    LoadConfig();
 #ifdef _IRR_ANDROID_PLATFORM_
-
-	if (!android::perfromTrick(app)) {
-		return false;
-	}
-	core::position2di appPosition = android::initJavaBridge(app, device);
-	setPositionFix(appPosition);
-	device->setProcessReceiver(this);
-
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
+	//replace handle input.
 	app->onInputEvent = android::handleInput;
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
 	dataManager.FileSystem = device->getFileSystem();
 
-	xScale = android::getXScale(app);
-	yScale = android::getYScale(app);
+	xScale = (float)windowWidth / GAME_WIDTH;
+	yScale = (float)windowHeight / GAME_HEIGHT;
 
-	char log_scale[256] = {0};
-	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
-	Printer::log(log_scale);
+	LOGI("xScale = %f, yScale = %f", xScale, yScale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
-	char log_working[256] = {0};
-	sprintf(log_working, "workingDir= %s", workingDir.c_str());
-	Printer::log(log_working);
+	LOGI("workingDir= %s", workingDir.c_str());
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
@@ -124,9 +116,9 @@ bool Game::Initialize() {
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    os::Printer::log("add arrchive ok ", zip_path.c_str());
+            LOGD("add arrchive ok %s", zip_path.c_str());
 	    }else{
-			os::Printer::log("add arrchive fail ", zip_path.c_str());
+            LOGD("add arrchive fail %s", zip_path.c_str());
 		}
 	}
 	
@@ -134,7 +126,6 @@ bool Game::Initialize() {
 	xScale = 1.0;
 	yScale = 1.0;
 #endif
-	LoadConfig();
 	linePatternD3D = 0;
 	linePatternGL = 0x0f0f;
 	waitFrame = 0;
@@ -192,9 +183,9 @@ bool Game::Initialize() {
 		wchar_t wpath[1024];
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
 		if(dataManager.LoadDB(wpath)) {
-		    os::Printer::log("add cdb ok ", cdb_path.c_str());
+		    LOGD("add cdb ok:%s", cdb_path.c_str());
 	    }else{
-			os::Printer::log("add cdb fail ", cdb_path.c_str());
+            LOGD("add cdb fail:%s", cdb_path.c_str());
 		}
 	}
 	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
@@ -212,7 +203,7 @@ bool Game::Initialize() {
 	guiFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	textFont = guiFont;
 	if(!numFont || !textFont) {
-	  os::Printer::log("add font fail ");
+	  LOGW("add font fail ");
 	}
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
@@ -1401,42 +1392,46 @@ void Game::RefreshBot() {
 	if(botInfo.size() == 0)
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
 }
+
 void Game::LoadConfig() {
+	JNIEnv *env = getJniEnv();
 	wchar_t wstr[256];
 	if(gameConf._init)return;
+	cardImagePath = gameHost->getCardImagePath(env);
+	resourcePath = gameHost->getResourcePath(env);
 	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
 	gameConf.textfontsize = 16;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
-    BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
+    BufferIO::DecodeUTF8(gameHost->getLastCategory(env).c_str(), wstr);;
     BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
     //irr:os::Printer::log("getLastCategory", android::getLastCategory(appMain).c_str());
-	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
+	BufferIO::DecodeUTF8(gameHost->getLastDeck(env).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
 	//os::Printer::log(android::getFontPath(appMain).c_str());
-	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
+	BufferIO::DecodeUTF8(gameHost->getFontPath(env).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
 	gameConf.lasthost[0] = 0;
 	gameConf.lastport[0] = 0;
 	gameConf.roompass[0] = 0;
 	//helper
-	gameConf.chkMAutoPos = android::getIntSetting(appMain, "chkMAutoPos", 0);
-	gameConf.chkSTAutoPos = android::getIntSetting(appMain, "chkSTAutoPos", 0);
-	gameConf.chkRandomPos = android::getIntSetting(appMain, "chkRandomPos", 0);
-	gameConf.chkAutoChain = android::getIntSetting(appMain, "chkAutoChain", 0);
-	gameConf.chkWaitChain = android::getIntSetting(appMain, "chkWaitChain", 0);
+	gameConf.chkMAutoPos = gameHost->getIntSetting(env, "chkMAutoPos", 0);
+	gameConf.chkSTAutoPos = gameHost->getIntSetting(env, "chkSTAutoPos", 0);
+	gameConf.chkRandomPos = gameHost->getIntSetting(env, "chkRandomPos", 0);
+	gameConf.chkAutoChain = gameHost->getIntSetting(env, "chkAutoChain", 0);
+	gameConf.chkWaitChain = gameHost->getIntSetting(env, "chkWaitChain", 0);
 	//system
-	gameConf.chkIgnore1 = android::getIntSetting(appMain, "chkIgnore1", 0);
-	gameConf.chkIgnore2 = android::getIntSetting(appMain, "chkIgnore2", 0);
-	gameConf.control_mode = android::getIntSetting(appMain, "control_mode", 0);
-	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
-	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
-	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
-	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
-	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
+	gameConf.chkIgnore1 = gameHost->getIntSetting(env, "chkIgnore1", 0);
+	gameConf.chkIgnore2 = gameHost->getIntSetting(env, "chkIgnore2", 0);
+	gameConf.control_mode = gameHost->getIntSetting(env, "control_mode", 0);
+	gameConf.draw_field_spell = gameHost->getIntSetting(env, "draw_field_spell", 1);
+	gameConf.chkIgnoreDeckChanges = gameHost->getIntSetting(env, "chkIgnoreDeckChanges", 0);
+	gameConf.auto_save_replay = gameHost->getIntSetting(env, "auto_save_replay", 0);
+	gameConf.quick_animation = gameHost->getIntSetting(env, "quick_animation", 0);
+	gameConf.prefer_expansion_script = gameHost->getIntSetting(env, "prefer_expansion_script", 0);
 	//defult Setting without checked
     gameConf.hide_setname = 0;
 	gameConf.hide_hint_button = 0;
@@ -1446,39 +1441,46 @@ void Game::LoadConfig() {
 	gameConf.auto_search_limit = 1;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
+//	if(env_is_thread){
+//	    getGlobalVM()->DetachCurrentThread();
+//	}
 }
 
 void Game::SaveConfig() {
+	JNIEnv *env = getJniEnv();
 	//helper
 	gameConf.chkMAutoPos = chkMAutoPos->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "chkMAutoPos", gameConf.chkMAutoPos);
+	    gameHost->saveIntSetting(env, "chkMAutoPos", gameConf.chkMAutoPos);
 	gameConf.chkSTAutoPos = chkSTAutoPos->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkSTAutoPos", gameConf.chkSTAutoPos);
+		gameHost->saveIntSetting(env, "chkSTAutoPos", gameConf.chkSTAutoPos);
 	gameConf.chkRandomPos = chkRandomPos->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkRandomPos", gameConf.chkRandomPos);
+		gameHost->saveIntSetting(env, "chkRandomPos", gameConf.chkRandomPos);
 	gameConf.chkAutoChain = chkAutoChain->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkAutoChain", gameConf.chkAutoChain);
+		gameHost->saveIntSetting(env, "chkAutoChain", gameConf.chkAutoChain);
     gameConf.chkWaitChain = chkWaitChain->isChecked() ? 1 : 0;
-    	android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
+    	gameHost->saveIntSetting(env, "chkWaitChain", gameConf.chkWaitChain);
 
 	//system
 	gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
+		gameHost->saveIntSetting(env, "chkIgnore1", gameConf.chkIgnore1);
 	gameConf.chkIgnore2 = chkIgnore2->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
+		gameHost->saveIntSetting(env, "chkIgnore2", gameConf.chkIgnore2);
 	gameConf.chkIgnoreDeckChanges = chkIgnoreDeckChanges->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
+		gameHost->saveIntSetting(env, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
 	gameConf.auto_save_replay = chkAutoSaveReplay->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "auto_save_replay", gameConf.auto_save_replay);
+	    gameHost->saveIntSetting(env, "auto_save_replay", gameConf.auto_save_replay);
 	gameConf.draw_field_spell = chkDrawFieldSpell->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
+        gameHost->saveIntSetting(env, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
+        gameHost->saveIntSetting(env, "quick_animation", gameConf.quick_animation);
 	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
+	    gameHost->saveIntSetting(env, "prefer_expansion_script", gameConf.prefer_expansion_script);
 
 //gameConf.control_mode = control_mode->isChecked()?1:0;
-//	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
+//	  gameHost->saveIntSetting(env, "control_mode", gameConf.control_mode);
+//	if(env_is_thread){
+//		getGlobalVM()->DetachCurrentThread();
+//	}
 }
 
 void Game::ShowCardInfo(int code) {
@@ -1701,11 +1703,49 @@ void Game::CloseDuelWindow() {
 	ClearTextures();
 	closeDoneSignal.Set();
 }
+
 int Game::LocalPlayer(int player) {
 	return dInfo.isFirst ? player : 1 - player;
 }
+
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
 }
 
+void Game::toggleIME(bool show, char* msg){
+	gameHost->toggleIME(getJniEnv(), show, msg);
+}
+
+void Game::perfromHapticFeedback(){
+	gameHost->performHapticFeedback(getJniEnv());
+}
+
+void Game::showAndroidComboBoxCompat(bool show, char** list, int count, int mode) {
+	gameHost->showAndroidComboBoxCompat(getJniEnv(), show, list, count, mode);
+}
+
+int Game::getLocalAddr(){
+    return gameHost->getLocalAddr(getJniEnv());
+}
+
+void Game::setLastDeck(const char* name) {
+	gameHost->setLastDeck(getJniEnv(), name);
+}
+
+void Game::setLastCategory(const char* category) {
+	gameHost->setLastCategory(getJniEnv(), category);
+}
+
+void Game::runWindbot(const char* cmd){
+	gameHost->runWindbot(getJniEnv(), cmd);
+}
+
+void Game::playSoundEffect(const char *path){
+	JNIEnv* env = getJniEnv();
+	gameHost->playSoundEffect(getJniEnv(), path);
+}
+
+JNIEnv* Game::getJniEnv(){
+	return android::getJniEnv(appMain);
+}
 }

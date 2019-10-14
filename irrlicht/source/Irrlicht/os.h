@@ -11,6 +11,7 @@
 #include "path.h"
 #include "ILogger.h"
 #include "ITimer.h"
+#include <time.h>
 
 namespace irr
 {
