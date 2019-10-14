@@ -46,6 +46,8 @@ bool Game::Initialize() {
 	if(options == NULL){
 		return false;
 	}
+	gameConf._init = FALSE;
+	LoadConfig(jni, options);
 	int windowWidth = gameHost->getWindowWidth(jni);
 	int windowHeight = gameHost->getWindowHeight(jni);
 	glversion = options->getOpenglVersion();
@@ -74,7 +76,6 @@ bool Game::Initialize() {
         return false;
     }
 	gameHost->attachNativeDevice(jni, device);
-    LoadConfig(options);
 #ifdef _IRR_ANDROID_PLATFORM_
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
@@ -946,7 +947,6 @@ bool Game::Initialize() {
 	stCardListTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stCardListTip->setVisible(false);
 	device->setEventReceiver(&menuHandler);
-	LoadConfig(options);
 	env->getSkin()->setFont(guiFont);
 	env->getSkin()->setSize(EGDS_CHECK_BOX_WIDTH, (gameConf.textfontsize + 10) * yScale);
 	env->setFocus(wMainMenu);
@@ -1393,12 +1393,14 @@ void Game::RefreshBot() {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
 }
 
-void Game::LoadConfig(irr::android::InitOptions* options) {
-	JNIEnv *env = getJniEnv();
+void Game::LoadConfig(JNIEnv*env, irr::android::InitOptions* options) {
 	wchar_t wstr[256];
 	if(gameConf._init)return;
+    LOGI("LoadConfig");
 	cardImagePath = options->getImageDir();
 	resourcePath = options->getResourceDir();
+	LOGD("cardImagePath:%s", cardImagePath.c_str());
+	LOGD("resourcePath:%s", resourcePath.c_str());
 	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
@@ -1411,7 +1413,9 @@ void Game::LoadConfig(irr::android::InitOptions* options) {
 	BufferIO::DecodeUTF8(gameHost->getLastDeck(env).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
 	//os::Printer::log(android::getFontPath(appMain).c_str());
-	BufferIO::DecodeUTF8(options->getFontFile().c_str(), wstr);
+	io::path font_path = options->getFontFile();
+	LOGD("font_path:%s", font_path.c_str());
+	BufferIO::DecodeUTF8(font_path.c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
 	gameConf.lasthost[0] = 0;

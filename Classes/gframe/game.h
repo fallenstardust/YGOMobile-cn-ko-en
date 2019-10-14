@@ -148,7 +148,7 @@ public:
 	void DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, int>* lflist);
 	void DrawDeckBd();
 #ifdef _IRR_ANDROID_PLATFORM_
-	void LoadConfig(irr::android::InitOptions* options);
+	void LoadConfig(JNIEnv*env, irr::android::InitOptions* options);
 #else
 	void LoadConfig();
 #endif
