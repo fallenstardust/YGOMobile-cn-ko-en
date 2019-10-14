@@ -103,9 +103,12 @@ public class YGOMobileActivity extends NativeActivity implements
     private PowerManager mPM;
     private PowerManager.WakeLock mLock;
     private volatile int mGameWidth, mGameHeight;
+    private volatile int mActivityWidth, mActivityHeight;
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
+    private View mClickView;
     private boolean replaced = false;
+    private boolean mInitView = false;
 
     private GameApplication app() {
         return GameApplication.get();
@@ -230,8 +233,7 @@ public class YGOMobileActivity extends NativeActivity implements
             getWindow().getDecorView().setSystemUiVisibility(windowsFlags2);
         }
         int[] size = getGameSize();
-        mGameWidth = size[0];
-        mGameHeight = size[1];
+        setGameSize(size[0], size[1]);
    }
 
     private int[] getGameSize() {
@@ -240,6 +242,8 @@ public class YGOMobileActivity extends NativeActivity implements
         int activityWidth = display.getWidth();
         int w = Math.max(activityHeight, activityWidth);
         int h = Math.min(activityHeight, activityWidth);
+        mActivityWidth = w;
+        mActivityHeight = h;
         if (mGameConfig.isKeepScale()) {
             float sx = (float) w / GAME_WIDTH;
             float sy = (float) h / GAME_HEIGHT;
@@ -274,8 +278,7 @@ public class YGOMobileActivity extends NativeActivity implements
         int[] size = getGameSize();
         int w = size[0];
         int h = size[1];
-        mGameWidth = w;
-        mGameHeight = h;
+        setGameSize(w, h);
         mLayout = new FrameLayout(this);
         mSurfaceView = new SurfaceView(this);
 //        mLayout.setFitsSystemWindows(true);
@@ -284,20 +287,32 @@ public class YGOMobileActivity extends NativeActivity implements
         mLayout.addView(mSurfaceView, lp);
         mLayout.addView(view, lp);
         super.setContentView(mLayout);
+        mClickView = view;
         getWindow().takeSurface(null);
         replaced = true;
         mSurfaceView.getHolder().addCallback(this);
         getWindow().takeInputQueue(null);
         mSurfaceView.requestFocus();
-        view.setOnTouchListener(new View.OnTouchListener() {
+        mClickView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                return mCore.sendTouchEvent(event);
+                return mCore.sendTouchEvent(event.getAction(), (int)event.getX(), (int)event.getY(), event.getPointerId(0));
             }
         });
-        onInputQueueCreated(null);
+        mInitView = true;
     }
 
+    private void setGameSize(int w, int h){
+        mGameWidth = w;
+        mGameHeight = h;
+        if(mInitView) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mClickView.getLayoutParams();
+            lp.width = w;
+            lp.height = h;
+            mClickView.setLayoutParams(lp);
+            mSurfaceView.setLayoutParams(lp);
+        }
+    }
 
     //region popup window
     private void initExtraView() {

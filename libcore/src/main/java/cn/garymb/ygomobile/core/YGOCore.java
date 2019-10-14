@@ -142,12 +142,12 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
         }
     }
 
-    public boolean sendTouchEvent(final MotionEvent event) {
+    public boolean sendTouchEvent(final int action,final int x,final int y,final int id) {
         if (nativeAndroidDevice == 0) {
             Log.w(TAG, "sendTouchEvent fail nativeAndroidDevice = 0");
             return false;
         }
-        final int eventType = event.getAction() & MotionEvent.ACTION_MASK;
+        final int eventType = action & MotionEvent.ACTION_MASK;
         boolean touchReceived = true;
         switch (eventType) {
             case MotionEvent.ACTION_DOWN:
@@ -164,13 +164,14 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
         if (!touchReceived) {
             return false;
         }
-        if(event.getPointerId(0) != 0){
+        if (id != 0) {
             return false;
         }
         H.post(new Runnable() {
             @Override
             public void run() {
-                sendTouch(event.getAction(), (int)event.getX(), (int)event.getY(), 0);
+                Log.i(TAG, "touch " + x + "x" + y);
+                sendTouchInner(action, x, y, id);
             }
         });
         return true;
@@ -187,7 +188,7 @@ public class YGOCore implements InputQueueCompat.FinishedInputEventCallback {
 //        }
     }
 
-    public void sendTouch(int action, int x, int y, int id){
+    private void sendTouchInner(int action, int x, int y, int id){
         if (nativeAndroidDevice != 0) {
             nativeSendTouch(nativeAndroidDevice, action, x, y, id);
         }
