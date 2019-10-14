@@ -53,8 +53,8 @@ public class YGOMobileActivity extends NativeActivity implements
         TextView.OnEditorActionListener,
         OverlayOvalView.OnDuelOptionsSelectListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
-    private static final int GAME_WIDTH = 1024;
-    private static final int GAME_HEIGHT = 640;
+    private static final float GAME_WIDTH = 1024.0f;
+    private static final float GAME_HEIGHT = 640.0f;
     private static final boolean DEBUG = true;
 
     private static final int MAX_REFRESH = 30 * 1000;
@@ -240,12 +240,12 @@ public class YGOMobileActivity extends NativeActivity implements
         int activityWidth = display.getWidth();
         int w = Math.max(activityHeight, activityWidth);
         int h = Math.min(activityHeight, activityWidth);
-        Log.i(TAG, "getGameSize:isKeepScale=" + mGameConfig.isKeepScale());
         if (mGameConfig.isKeepScale()) {
-            float sx = w / GAME_WIDTH;
-            float sy = h / GAME_HEIGHT;
+            float sx = (float) w / GAME_WIDTH;
+            float sy = (float) h / GAME_HEIGHT;
             float scale = Math.min(sx, sy);
-            return new int[]{(int) (w * scale), (int) (h * scale)};
+            Log.i(TAG, "getGameSize:sx=" + sx + ",sy=" + sy + ",w=" + w + ",h=" + h + ",gw=" + (int) (GAME_WIDTH * scale) + ",gh=" + (int) (GAME_HEIGHT * scale));
+            return new int[]{(int) (GAME_WIDTH * scale), (int) (GAME_HEIGHT * scale)};
         } else {
             return new int[]{w, h};
         }
