@@ -494,7 +494,8 @@ public class AppsSettings {
      * 隐藏底部导航栏
      */
     public boolean isImmerSiveMode() {
-        return mSharedPreferences.getBoolean(PREF_IMMERSIVE_MODE, PREF_DEF_IMMERSIVE_MODE);
+        return true;
+        //return mSharedPreferences.getBoolean(PREF_IMMERSIVE_MODE, PREF_DEF_IMMERSIVE_MODE);
     }
 
     public boolean isSensorRefresh() {

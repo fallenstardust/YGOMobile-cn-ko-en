@@ -17,7 +17,7 @@
         <CheckBoxPreference
             android:key="pref_settings_keep_scale"
             android:persistent="false"
-            android:title="@string/about_pref_settings_keep_scale"/>
+            android:title="@string/about_pref_settings_keep_scale" />
 
         <ListPreference
             android:entries="@array/opengl_version"
@@ -58,11 +58,6 @@
             android:persistent="true"
             android:summary="@string/settings_game_font_antialias_summary"
             android:title="@string/settings_game_font_antialias" />
-        <CheckBoxPreference
-            android:key="pref_key_immersive_mode"
-            android:persistent="true"
-            android:summary="@string/about_immersive_mode"
-            android:title="@string/settings_game_immersive_mode" />
         <CheckBoxPreference
             android:key="pref_key_game_lab_pendulum_scale"
             android:persistent="true"
@@ -117,6 +112,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_test_options">
+        <!--CheckBoxPreference
+            android:key="pref_key_immersive_mode"
+            android:persistent="true"
+            android:summary="@string/about_immersive_mode"
+            android:title="@string/settings_game_immersive_mode" /-->
 
         <Preference
             android:key="pref_key_test_replace_kernel"
