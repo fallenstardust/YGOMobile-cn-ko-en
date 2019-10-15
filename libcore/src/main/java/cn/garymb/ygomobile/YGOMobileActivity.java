@@ -101,7 +101,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
     private static boolean USE_SURFACE = true;
-    private static boolean RESIZE_WINDOW = true;
 
 //    public static int notchHeight;
 
@@ -251,11 +250,6 @@ public class YGOMobileActivity extends NativeActivity implements
             changeGameSize();
         } else {
             int[] size = getGameSize();
-            if(RESIZE_WINDOW) {
-                if (app().isKeepScale()) {
-                    getWindow().setLayout(size[0], size[1]);
-                }
-            }
         }
     }
 
@@ -305,11 +299,9 @@ public class YGOMobileActivity extends NativeActivity implements
             changeGameSize();
         } else {
             mLayout.addView(view, lp);
-            if (RESIZE_WINDOW) {
-                getWindow().setLayout(w, h);
-                getWindow().setGravity(Gravity.CENTER);
-            }
             super.setContentView(mLayout);
+            getWindow().setGravity(Gravity.CENTER);
+
         }
     }
 
@@ -332,15 +324,6 @@ public class YGOMobileActivity extends NativeActivity implements
         if (update) {
 //            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
             IrrlichtBridge.setInputFix(mPositionX, mPositionY);
-        }
-        if(RESIZE_WINDOW) {
-            if (app().isKeepScale()) {
-                //设置为屏幕宽高
-                getWindow().setLayout(w, h);
-            } else {
-                //拉伸，画布设置为游戏宽高
-                getWindow().setLayout(size[0], size[1]);
-            }
         }
     }
 
