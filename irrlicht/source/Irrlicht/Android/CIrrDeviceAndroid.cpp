@@ -241,11 +241,12 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 		    break;
 		case APP_CMD_TERM_WINDOW:
 			os::Printer::log("Android command APP_CMD_TERM_WINDOW", ELL_DEBUG);
-			device->getContextManager()->destroySurface();
+			//device->getContextManager()->destroySurface();
 		    break;
 		case APP_CMD_GAINED_FOCUS:
 		     os::Printer::log("Android command APP_CMD_GAINED_FOCUS", ELL_DEBUG);
 		     {
+		     /*
 		          s32 surfaceWidth = ANativeWindow_getWidth(app->window);
 		          s32 surfaceHeight = ANativeWindow_getHeight(app->window);
 				  char log_focus_window[256];
@@ -272,7 +273,7 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 					   }
 					   device->Initialized = true;
 		          }
-
+*/
 		     }
 		     device->Focused = true;
 		    break;
@@ -282,6 +283,7 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 		break;
 		case APP_CMD_DESTROY:
 			os::Printer::log("Android command APP_CMD_DESTROY", ELL_DEBUG);
+			device->getContextManager()->destroySurface();
 			device->Initialized = false;
 			break;
 		case APP_CMD_PAUSE:
