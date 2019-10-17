@@ -12,18 +12,20 @@ import java.util.Map;
 public class GameSoundPlayer {
     private AssetManager mAssetManager;
     private SoundPool mSoundEffectPool;
-    private Map<String, Integer> mSoundIdMap;
+    private final Map<String, Integer> mSoundIdMap;
 
     public GameSoundPlayer(AssetManager mAssetManager) {
         this.mAssetManager = mAssetManager;
+        mSoundIdMap = new HashMap<String, Integer>();
     }
 
     @SuppressWarnings("deprecation")
     public void initSoundEffectPool() {
-        mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+        if(mSoundEffectPool==null) {
+            mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+        }
         AssetManager am = mAssetManager;
         String[] sounds;
-        mSoundIdMap = new HashMap<String, Integer>();
         try {
             sounds = am.list("sound");
             for (String sound : sounds) {
@@ -37,13 +39,18 @@ public class GameSoundPlayer {
     }
 
     public void playSoundEffect(String path) {
+        if (mSoundEffectPool == null) {
+            return;
+        }
         Integer id = mSoundIdMap.get(path);
         if (id != null) {
             mSoundEffectPool.play(id, 0.5f, 0.5f, 2, 0, 1.0f);
         }
     }
 
-    public void release(){
-        mSoundEffectPool.release();
+    public void release() {
+        if (mSoundEffectPool != null) {
+            mSoundEffectPool.release();
+        }
     }
 }
