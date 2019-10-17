@@ -485,7 +485,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 AppsSettings.get().setLastRoomList(items);
                 simpleListAdapter.notifyDataSetChanged();
             }
-            joinGame(serverInfo, name);
+            if (ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))){
+                openGame();
+            } else {
+                joinGame(serverInfo, name);
+            }
         });
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
