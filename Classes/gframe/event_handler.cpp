@@ -1053,8 +1053,10 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			hovered_location = 0;
 			irr::core::position2di pos(x, y);
 			if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
+                mainGame->gMutex.lock();
 				mainGame->textFont->setTransparency(true);
 				mainGame->ClearChatMsg();
+                mainGame->gMutex.unlock();
 				break;
 			 }//touch the pic of detail to refresh textfonts
 			if(x < 300 * mainGame->xScale)
