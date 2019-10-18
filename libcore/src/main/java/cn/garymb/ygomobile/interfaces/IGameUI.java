@@ -21,6 +21,5 @@ public interface IGameUI {
 
     void attachNativeDevice(int device);
 
-    void onGameLaunch();
-
+    ByteBuffer getJoinOptions();
 }

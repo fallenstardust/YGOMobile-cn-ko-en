@@ -9,6 +9,7 @@
 #include <irrlicht.h>
 #include <jni.h>
 #include "android_tools.h"
+#include "YGOGameOptions.h"
 
 namespace ygo {
     class AndroidGameUI {
@@ -21,7 +22,7 @@ namespace ygo {
         jmethodID java_getWindowHeight;
         jmethodID java_getInitOptions;
         jmethodID java_attachNativeDevice;
-        jmethodID java_onGameLaunch;
+        jmethodID java_getJoinOptions;
 
         ANDROID_APP app;
     public:
@@ -47,7 +48,8 @@ namespace ygo {
 
         void attachNativeDevice(JNIEnv* env, void* device);
 
-        void onGameLaunch(JNIEnv* env);
+        irr::android::YGOGameOptions* getJoinOptions(JNIEnv *env);
+
     };
 }
 

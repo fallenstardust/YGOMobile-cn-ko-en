@@ -26,7 +26,7 @@ void AndroidGameUI::initMethods(JNIEnv *env) {
     java_getWindowHeight = env->GetMethodID(clazz, "getWindowHeight", "()I");
     java_getInitOptions = env->GetMethodID(clazz, "getInitOptions", "()Ljava/nio/ByteBuffer;");
     java_attachNativeDevice = env->GetMethodID(clazz, "attachNativeDevice", "(I)V");
-    java_onGameLaunch = env->GetMethodID(clazz, "onGameLaunch", "()V");
+    java_getJoinOptions = env->GetMethodID(clazz, "getJoinOptions", "()Ljava/nio/ByteBuffer;");
     env->DeleteLocalRef(clazz);
 }
 
@@ -93,6 +93,19 @@ irr::android::InitOptions* AndroidGameUI::getInitOptions(JNIEnv *env) {
     return NULL;
 }
 
+irr::android::YGOGameOptions* AndroidGameUI::getJoinOptions(JNIEnv *env) {
+    if (!java_getJoinOptions) {
+        return nullptr;
+    }
+    jobject buffer = env->CallObjectMethod(host, java_getJoinOptions);
+    if(buffer) {
+        void *data = env->GetDirectBufferAddress(buffer);
+        return new irr::android::YGOGameOptions(data);
+    }
+    LOGE("getJoinOptions == null");
+    return NULL;
+}
+
 void AndroidGameUI::attachNativeDevice(JNIEnv*env, void* device){
     if (!java_attachNativeDevice) {
         LOGW("not found attachNativeDevice");
@@ -101,11 +114,4 @@ void AndroidGameUI::attachNativeDevice(JNIEnv*env, void* device){
     jint value = (int)device;
     LOGI("attachNativeDevice %d", value);
     env->CallVoidMethod(host, java_attachNativeDevice, value);
-}
-
-void AndroidGameUI::onGameLaunch(JNIEnv *env) {
-    if (!java_onGameLaunch) {
-        return;
-    }
-    env->CallVoidMethod(host, java_onGameLaunch);
 }

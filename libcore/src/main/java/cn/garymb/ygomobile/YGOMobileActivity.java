@@ -192,15 +192,35 @@ public class YGOMobileActivity extends NativeActivity implements
                 .setPackage(getPackageName()));
     }
 
+    @Override
+    public ByteBuffer getJoinOptions() {
+        Intent intent = getIntent();
+        long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
+        if (System.currentTimeMillis() - time >= YGOGameOptions.TIME_OUT) {
+            if (DEBUG)
+                Log.i(TAG, "command timeout");
+            return null;
+        }
+        if(intent.hasExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY)) {
+            YGOGameOptions options = intent
+                    .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
+            intent.removeExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
+            if (options != null) {
+                return options.toByteBuffer();
+            }
+        }
+        return null;
+    }
+
     private void handleExternalCommand(Intent intent) {
-        YGOGameOptions options = intent
-                .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
         long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
         if (System.currentTimeMillis() - time >= YGOGameOptions.TIME_OUT) {
             if (DEBUG)
                 Log.i(TAG, "command timeout");
             return;
         }
+        YGOGameOptions options = intent
+                .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
         if (options != null) {
             if (DEBUG)
                 Log.i(TAG, "receive:" + time + ":" + options.toString());
@@ -412,11 +432,6 @@ public class YGOMobileActivity extends NativeActivity implements
     public IGameUI getNativeGameUI() {
         //jni call
         return this;
-    }
-
-    @Override
-    public void onGameLaunch(){
-        handleExternalCommand(getIntent());
     }
 
     @Override
