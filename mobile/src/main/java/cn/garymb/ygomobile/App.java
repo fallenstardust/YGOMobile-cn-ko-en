@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Point;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -125,4 +127,16 @@ public class App extends GameApplication implements GameConfig{
         return AppsSettings.get().isSoundEffect();
     }
 
+
+    @Override
+    public int[] getGameSize(Activity activity) {
+        Point size = new Point();
+        activity.getWindowManager().getDefaultDisplay().getRealSize(size);
+        int w = Math.max(size.x, size.y);
+        int h = Math.min(size.x, size.y);
+        if (AppsSettings.get().isImmerSiveMode()) {
+            h -= AppsSettings.get().getNotchHeight();
+        }
+        return new int[]{w, h};
+    }
 }

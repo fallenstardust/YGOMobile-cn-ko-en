@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.core;
 
+import android.app.Activity;
 import android.content.res.AssetManager;
+import android.graphics.Rect;
 
 import cn.garymb.ygomobile.NativeInitOptions;
 
@@ -22,4 +24,6 @@ public interface GameConfig {
     boolean isEnableSoundEffect();
 
     AssetManager getGameAsset();
+
+    int[] getGameSize(Activity activity);
 }

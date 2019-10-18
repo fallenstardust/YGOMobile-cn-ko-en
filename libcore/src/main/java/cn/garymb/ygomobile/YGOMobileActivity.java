@@ -11,6 +11,8 @@ import android.app.NativeActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -237,9 +239,9 @@ public class YGOMobileActivity extends NativeActivity implements
    }
 
     private int[] getGameSize() {
-        Display display = getWindowManager().getDefaultDisplay();
-        int activityHeight = display.getHeight();
-        int activityWidth = display.getWidth();
+        int[] size = mGameConfig.getGameSize(this);
+        int activityHeight = size[0];
+        int activityWidth = size[1];
         int w = Math.max(activityHeight, activityWidth);
         int h = Math.min(activityHeight, activityWidth);
         mActivityWidth = w;
