@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.controller;
+package cn.garymb.ygomobile.tool;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -11,7 +11,6 @@ import android.net.wifi.WifiManager;
  */
 public final class NetworkController {
 
-    private Context mContext;
     private WifiManager mWM;
     private ConnectivityManager mCM;
 
@@ -19,16 +18,8 @@ public final class NetworkController {
      *
      */
     public NetworkController(Context context) {
-        mContext = context;
-        init();
-    }
-
-    /**
-     * @return
-     **/
-    private void init() {
-        mWM = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-        mCM = (ConnectivityManager) mContext
+        mWM = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mCM = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 

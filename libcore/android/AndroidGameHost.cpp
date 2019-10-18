@@ -26,14 +26,7 @@ void AndroidGameHost::initMethods(JNIEnv *env) {
     java_runWindbot = env->GetMethodID(clazz, "runWindbot", "(Ljava/lang/String;)V");
     java_saveSetting = env->GetMethodID(clazz, "saveSetting", "(Ljava/lang/String;Ljava/lang/String;)V");
     java_getLocalAddr = env->GetMethodID(clazz, "getLocalAddr", "()I");
-    java_toggleIME = env->GetMethodID(clazz, "toggleIME", "(ZLjava/lang/String;)V");
-    java_performHapticFeedback = env->GetMethodID(clazz, "performHapticFeedback", "()V");
-    java_showComboBoxCompat = env->GetMethodID(clazz, "showComboBoxCompat", "([Ljava/lang/String;ZI)V");
     java_playSoundEffect = env->GetMethodID(clazz, "playSoundEffect", "(Ljava/lang/String;)V");
-    java_getInitOptions = env->GetMethodID(clazz, "getInitOptions", "()Ljava/nio/ByteBuffer;");
-    java_getWindowWidth = env->GetMethodID(clazz, "getWindowWidth", "()I");
-    java_getWindowHeight = env->GetMethodID(clazz, "getWindowHeight", "()I");
-    java_attachNativeDevice = env->GetMethodID(clazz, "attachNativeDevice", "(I)V");
     env->DeleteLocalRef(clazz);
 }
 
@@ -125,42 +118,6 @@ int AndroidGameHost::getLocalAddr(JNIEnv *env) {
     return env->CallIntMethod(host, java_getLocalAddr);
 }
 
-void AndroidGameHost::toggleIME(JNIEnv *env, bool show, const char *_msg) {
-    if (!java_toggleIME) {
-        return;
-    }
-    jstring msg = env->NewStringUTF(_msg);
-    env->CallVoidMethod(host, java_toggleIME, (jboolean)show, msg);
-    if (msg) {
-        env->DeleteLocalRef(msg);
-    }
-}
-
-void AndroidGameHost::performHapticFeedback(JNIEnv *env) {
-    if(!java_performHapticFeedback){
-        return;
-    }
-    env->CallVoidMethod(host, java_performHapticFeedback);
-}
-
-void
-AndroidGameHost::showAndroidComboBoxCompat(JNIEnv *env, bool pShow, char **pContents, int count,
-                                           int mode) {
-    if (!java_showComboBoxCompat) {
-        return;
-    }
-    jclass strClass = env->FindClass("java/lang/String");
-    jobjectArray array = env->NewObjectArray(count, strClass, 0);
-    jstring str;
-    for (int i = 0; i < count; i++) {
-        str = env->NewStringUTF(*(pContents + i));
-        env->SetObjectArrayElement(array, i, str);
-    }
-    env->CallVoidMethod(host, java_showComboBoxCompat, array, (jboolean) pShow,
-                        (jint) mode);
-
-}
-
 void AndroidGameHost::playSoundEffect(JNIEnv *env, const char *_name) {
     if (!java_playSoundEffect) {
         return;
@@ -170,41 +127,4 @@ void AndroidGameHost::playSoundEffect(JNIEnv *env, const char *_name) {
     if (name) {
         env->DeleteLocalRef(name);
     }
-}
-
-irr::android::InitOptions* AndroidGameHost::getInitOptions(JNIEnv *env) {
-    if (!java_getInitOptions) {
-        return nullptr;
-    }
-    jobject buffer = env->CallObjectMethod(host, java_getInitOptions);
-    if(buffer) {
-        void *data = env->GetDirectBufferAddress(buffer);
-        return new irr::android::InitOptions(data);
-    }
-    LOGE("getInitOptions == null");
-    return NULL;
-}
-
-int AndroidGameHost::getWindowWidth(JNIEnv *env) {
-    if (!java_getWindowWidth) {
-        return 0;
-    }
-    return env->CallIntMethod(host, java_getWindowWidth);
-}
-
-int AndroidGameHost::getWindowHeight(JNIEnv *env) {
-    if (!java_getWindowHeight) {
-        return 0;
-    }
-    return env->CallIntMethod(host, java_getWindowHeight);
-}
-
-void AndroidGameHost::attachNativeDevice(JNIEnv*env, void* device){
-    if (!java_attachNativeDevice) {
-        LOGW("not found attachNativeDevice");
-        return;
-    }
-    jint value = (int)device;
-    LOGI("attachNativeDevice %d", value);
-    env->CallVoidMethod(host, java_attachNativeDevice, value);
 }

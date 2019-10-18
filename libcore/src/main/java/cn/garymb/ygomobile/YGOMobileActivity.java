@@ -11,13 +11,10 @@ import android.app.NativeActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.InputQueue;
@@ -34,12 +31,14 @@ import android.widget.Toast;
 import java.nio.ByteBuffer;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.controller.NetworkController;
-import cn.garymb.ygomobile.core.GameConfig;
-import cn.garymb.ygomobile.core.GameHost;
-import cn.garymb.ygomobile.core.GameHostWrapper;
 import cn.garymb.ygomobile.core.YGOCore;
+import cn.garymb.ygomobile.interfaces.IGameUI;
+import cn.garymb.ygomobile.interfaces.GameHost;
+import cn.garymb.ygomobile.interfaces.GameConfig;
+
+import cn.garymb.ygomobile.interfaces.IGameActivity;
 import cn.garymb.ygomobile.lib.R;
+import cn.garymb.ygomobile.tool.ScreenKeeper;
 import cn.garymb.ygomobile.widget.ComboBoxCompat;
 import cn.garymb.ygomobile.widget.EditWindowCompat;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
@@ -49,15 +48,16 @@ import static cn.garymb.ygomobile.core.YGOCore.ACTION_START;
 import static cn.garymb.ygomobile.core.YGOCore.ACTION_STOP;
 
 public class YGOMobileActivity extends NativeActivity implements
-        YGOCore.IActivityHost,
+        IGameActivity,
         View.OnClickListener,
         PopupWindow.OnDismissListener,
         TextView.OnEditorActionListener,
-        OverlayOvalView.OnDuelOptionsSelectListener {
+        OverlayOvalView.OnDuelOptionsSelectListener,
+        IGameUI {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
     private static final float GAME_WIDTH = 1024.0f;
     private static final float GAME_HEIGHT = 640.0f;
-    private static final boolean DEBUG = true;
+    private static boolean DEBUG;
 
     private static final int MAX_REFRESH = 30 * 1000;
 
@@ -98,12 +98,8 @@ public class YGOMobileActivity extends NativeActivity implements
     private YGOCore mCore;
     private GameHost mHost;
     private GameConfig mGameConfig;
-    private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-    //电池管理
-    private PowerManager mPM;
-    private PowerManager.WakeLock mLock;
     private volatile int mGameWidth, mGameHeight;
     private volatile int mActivityWidth, mActivityHeight;
     private FrameLayout mLayout;
@@ -111,6 +107,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private View mClickView;
     private boolean replaced = false;
     private boolean mInitView = false;
+    private ScreenKeeper mScreenKeeper;
 
     private GameApplication app() {
         return GameApplication.get();
@@ -118,25 +115,21 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DEBUG = GameApplication.isDebug();
         mGameConfig = app().getConfig();
-        try {
-            mCore = new YGOCore(this, mGameConfig.getGameAsset());
-        } catch (Exception e) {
-            Log.e(TAG, "init core", e);
-        }
-        mHost = new DefaultGameHost(this, app().getGameHost());
+        mCore = YGOCore.getInstance();
+        mHost = app().getGameHost();
         fullscreen();
-        if(mGameConfig.isEnableSoundEffect()){
-            mHost.initSoundEffectPool();
-        }
+        mHost.setEnableSound(mGameConfig.isEnableSoundEffect());
         super.onCreate(savedInstanceState);
-        Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
+        if(DEBUG) {
+            Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
+        }
         if (mGameConfig.isLockScreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
         initExtraView();
-        mPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        mNetController = new NetworkController(getApplicationContext());
+        mScreenKeeper = new ScreenKeeper(this);
         handleExternalCommand(getIntent());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
@@ -160,24 +153,16 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
-        if (mLock == null) {
-            if (mPM == null) {
-                mPM = (PowerManager) getSystemService(POWER_SERVICE);
-            }
-            mLock = mPM.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, TAG);
+        if(DEBUG) {
+            Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         }
-        mLock.acquire();
+        mScreenKeeper.keep();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mLock != null) {
-            if (mLock.isHeld()) {
-                mLock.release();
-            }
-        }
+        mScreenKeeper.release();
     }
 
     private void refreshTextures() {
@@ -250,7 +235,9 @@ public class YGOMobileActivity extends NativeActivity implements
             float sx = (float) w / GAME_WIDTH;
             float sy = (float) h / GAME_HEIGHT;
             float scale = Math.min(sx, sy);
-            Log.i(TAG, "getGameSize:sx=" + sx + ",sy=" + sy + ",w=" + w + ",h=" + h + ",gw=" + (int) (GAME_WIDTH * scale) + ",gh=" + (int) (GAME_HEIGHT * scale));
+            if(DEBUG) {
+                Log.i(TAG, "getGameSize:sx=" + sx + ",sy=" + sy + ",w=" + w + ",h=" + h + ",gw=" + (int) (GAME_WIDTH * scale) + ",gh=" + (int) (GAME_HEIGHT * scale));
+            }
             return new int[]{(int) (GAME_WIDTH * scale), (int) (GAME_HEIGHT * scale)};
         } else {
             return new int[]{w, h};
@@ -362,8 +349,9 @@ public class YGOMobileActivity extends NativeActivity implements
         if (v.getId() == R.id.cancel) {
         } else if (v.getId() == R.id.submit) {
             int idx = mGlobalComboBox.getCurrentSelection();
-            if (DEBUG)
+            if (DEBUG) {
                 Log.d(TAG, "showComboBoxCompat: receive selection: " + idx);
+            }
             if (mCompatGUIMode == ComboBoxCompat.COMPAT_GUI_MODE_COMBOBOX) {
                 mCore.setComboBoxSelection(idx);
             } else if (mCompatGUIMode == ComboBoxCompat.COMPAT_GUI_MODE_CHECKBOXES_PANEL) {
@@ -377,23 +365,27 @@ public class YGOMobileActivity extends NativeActivity implements
     public void onDuelOptionsSelected(int mode, boolean action) {
         switch (mode) {
             case OverlayView.MODE_CANCEL_CHAIN_OPTIONS:
-                if (DEBUG)
+                if (DEBUG) {
                     Log.d(TAG, "Constants.MODE_CANCEL_CHAIN_OPTIONS: " + action);
+                }
                 mCore.cancelChain();
                 break;
             case OverlayView.MODE_REFRESH_OPTION:
-                if (DEBUG)
+                if (DEBUG) {
                     Log.d(TAG, "Constants.MODE_REFRESH_OPTION: " + action);
+                }
                 mCore.refreshTexture();
                 break;
             case OverlayView.MODE_REACT_CHAIN_OPTION:
-                if (DEBUG)
+                if (DEBUG){
                     Log.d(TAG, "Constants.MODE_REACT_CHAIN_OPTION: " + action);
+                }
                 mCore.reactChain(action);
                 break;
             case OverlayView.MODE_IGNORE_CHAIN_OPTION:
-                if (DEBUG)
+                if (DEBUG){
                     Log.d(TAG, "Constants.MODE_IGNORE_CHAIN_OPTION: " + action);
+                }
                 mCore.ignoreChain(action);
                 break;
             default:
@@ -411,100 +403,89 @@ public class YGOMobileActivity extends NativeActivity implements
     //endregion
 
     @Override
-    public Object getNativeGameHost(){
+    public GameHost getNativeGameHost(){
         //jni call
         return mHost;
     }
 
-    //region game host
-    protected class DefaultGameHost extends GameHostWrapper {
+    @Override
+    public IGameUI getNativeGameUI() {
+        //jni call
+        return this;
+    }
 
-        public DefaultGameHost(Context context, GameHost base) {
-            super(context, base);
-        }
-
-        @Override
-        public void playSoundEffect(String name) {
-            if(mGameConfig.isEnableSoundEffect()) {
-                super.playSoundEffect(name);
-            }
-        }
-
-        @Override
-        public int getLocalAddr() {
-            return mNetController.getIPAddress();
-        }
-
-        @Override
-        public void toggleIME(final boolean show, final String hint) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (show) {
+    @Override
+    public void toggleIME(final boolean show, final String hint) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (show) {
 //                if (mOverlayShowRequest) {
 //                    mOverlayView.hide();
 //                    mChainOverlayView.hide();
 //                }
-                        mGlobalEditText.fillContent(hint);
-                        mGlobalEditText.showAtLocation(mContentView,
-                                Gravity.BOTTOM, 0, 0);
-                    } else {
-                        mGlobalEditText.dismiss();
-                    }
+                    mGlobalEditText.fillContent(hint);
+                    mGlobalEditText.showAtLocation(mContentView,
+                            Gravity.BOTTOM, 0, 0);
+                } else {
+                    mGlobalEditText.dismiss();
                 }
-            });
-        }
-
-        @Override
-        public void performHapticFeedback() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mContentView.performHapticFeedback(
-                            HapticFeedbackConstants.LONG_PRESS,
-                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-                }
-            });
-        }
-
-        @Override
-        public void showComboBoxCompat(final String[] items, final boolean isShow, final int mode) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mCompatGUIMode = mode;
-                    if (isShow) {
-                        mGlobalComboBox.fillContent(items);
-                        mGlobalComboBox.showAtLocation(mContentView,
-                                Gravity.BOTTOM, 0, 0);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public ByteBuffer getInitOptions() {
-            return mGameConfig.getNativeInitOptions().toNativeBuffer();
-        }
-
-        @Override
-        public int getWindowWidth() {
-            Log.i(TAG, "getWindowWidth:" + mGameWidth);
-            return mGameWidth;
-        }
-
-        @Override
-        public int getWindowHeight() {
-            Log.i(TAG, "getWindowHeight:" + mGameHeight);
-            return mGameHeight;
-        }
-
-        @Override
-        public void attachNativeDevice(int device) {
-            mCore.setNativeAndroidDevice(device);
-        }
+            }
+        });
     }
-    //endregion
+
+    @Override
+    public void performHapticFeedback() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mContentView.performHapticFeedback(
+                        HapticFeedbackConstants.LONG_PRESS,
+                        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            }
+        });
+    }
+
+    @Override
+    public void showComboBoxCompat(final String[] items, final boolean isShow, final int mode) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mCompatGUIMode = mode;
+                if (isShow) {
+                    mGlobalComboBox.fillContent(items);
+                    mGlobalComboBox.showAtLocation(mContentView,
+                            Gravity.BOTTOM, 0, 0);
+                }
+            }
+        });
+    }
+
+    @Override
+    public int getWindowWidth() {
+        if(DEBUG) {
+            Log.i(TAG, "getWindowWidth:" + mGameWidth);
+        }
+        return mGameWidth;
+    }
+
+    @Override
+    public int getWindowHeight() {
+        if(DEBUG) {
+            Log.i(TAG, "getWindowHeight:" + mGameHeight);
+        }
+        return mGameHeight;
+    }
+
+    @Override
+    public ByteBuffer getInitOptions() {
+        return mGameConfig.getNativeInitOptions().toNativeBuffer();
+    }
+
+    @Override
+    public void attachNativeDevice(int device) {
+        mCore.setNativeAndroidDevice(device);
+    }
 
     @Override
     public void onInputQueueCreated(InputQueue queue) {

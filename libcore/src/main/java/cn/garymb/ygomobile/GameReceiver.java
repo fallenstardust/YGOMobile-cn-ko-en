@@ -3,6 +3,7 @@ package cn.garymb.ygomobile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import cn.garymb.ygomobile.core.YGOCore;
 
@@ -16,23 +17,29 @@ public class GameReceiver extends BroadcastReceiver {
         if (ACTION_START.equals(action)) {
             //
             YGOCore.gPid = intent.getIntExtra(YGOCore.EXTRA_PID, 0);
-//            Log.w("ygo", "pid=" + IrrlichtBridge.gPid);
+            if (GameApplication.isDebug()) {
+                Log.w("ygo", "pid=" + YGOCore.gPid);
+            }
         } else if (ACTION_STOP.equals(action)) {
             int pid = intent.getIntExtra(YGOCore.EXTRA_PID, 0);
             if (pid == 0 && YGOCore.gPid != 0) {
                 pid = YGOCore.gPid;
-//                Log.w("ygo", "will kill last pid=" + pid);
+                if (GameApplication.isDebug()) {
+                    Log.w("ygo", "will kill last pid=" + pid);
+                }
             }
             if (pid == 0) {
                 pid = android.os.Process.myPid();
-//                Log.w("ygo", "will kill now pid=" + pid);
+                if (GameApplication.isDebug()) {
+                    Log.w("ygo", "will kill now pid=" + pid);
+                }
             }
             try {
-//                Log.w("ygo", "kill pid=" + pid);
+                if (GameApplication.isDebug()) {
+                    Log.w("ygo", "kill pid=" + pid);
+                }
                 android.os.Process.killProcess(pid);
-            } catch (Exception e) {
-//ignore
-            }
+            } catch (Exception ignore) { }
         }
     }
 }

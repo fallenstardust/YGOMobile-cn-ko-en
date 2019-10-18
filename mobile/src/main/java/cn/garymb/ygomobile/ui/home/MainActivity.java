@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.home;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -13,13 +12,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
-
-import com.bumptech.glide.Glide;
-import com.yuyh.library.imgsel.ISNav;
-import com.yuyh.library.imgsel.common.ImageLoader;
 
 import java.io.IOException;
 
@@ -28,7 +22,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.core.YGOCore;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -158,7 +152,7 @@ public class MainActivity extends HomeActivity {
         YGOStarter.onResumed(this);
         //如果游戏Activity已经不存在了，则
         if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
-            sendBroadcast(new Intent(IrrlichtBridge.ACTION_STOP).setPackage(getPackageName()));
+            sendBroadcast(new Intent(YGOCore.ACTION_STOP).setPackage(getPackageName()));
         }
     }
 

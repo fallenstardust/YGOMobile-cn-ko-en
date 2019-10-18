@@ -31,5 +31,6 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "me.weishu:free_reflection:2.1.0"
+    implementation "com.android.support:support-annotations:$rootProject.ext.supportVersion"
+//    implementation "me.weishu:free_reflection:2.1.0"
 }

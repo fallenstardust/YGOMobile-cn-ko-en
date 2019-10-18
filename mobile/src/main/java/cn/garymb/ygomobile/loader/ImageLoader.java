@@ -32,7 +32,7 @@ import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.core.BpgImage;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -88,7 +88,7 @@ public class ImageLoader implements Closeable {
         @Override
         public Resource<GifBitmapWrapper> decode(ImageVideoWrapper source, int width, int height) throws IOException {
 //            Log.i("kk", "decode source:"+source);
-            Bitmap bitmap = IrrlichtBridge.getBpgImage(source.getStream(), Bitmap.Config.RGB_565);
+            Bitmap bitmap = BpgImage.getBpgImage(source.getStream(), Bitmap.Config.RGB_565);
 //            Log.i("kk", "decode bitmap:"+bitmap);
             BitmapResource resource = new BitmapResource(bitmap, mLruBitmapPool);
             return new GifBitmapWrapperResource(new GifBitmapWrapper(resource, null));

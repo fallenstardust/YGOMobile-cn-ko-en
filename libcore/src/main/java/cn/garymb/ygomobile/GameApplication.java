@@ -2,8 +2,10 @@ package cn.garymb.ygomobile;
 
 import android.app.Application;
 
-import cn.garymb.ygomobile.core.GameConfig;
-import cn.garymb.ygomobile.core.GameHost;
+import androidx.annotation.Keep;
+
+import cn.garymb.ygomobile.interfaces.GameConfig;
+import cn.garymb.ygomobile.interfaces.GameHost;
 
 
 public abstract class GameApplication extends Application {
@@ -20,13 +22,20 @@ public abstract class GameApplication extends Application {
         return sGameApplication;
     }
 
+    @Keep
     public abstract GameConfig getConfig();
 
+    @Keep
     public abstract GameHost getGameHost();
+
+    public static boolean isDebug(){
+        return get().getConfig().isDebugMode();
+    }
 
     /**
      * @deprecated
      */
+    @Keep
     public boolean canNdkCash() {
         return true;
     }

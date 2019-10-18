@@ -19,14 +19,7 @@ namespace ygo {
         jmethodID java_runWindbot;
         jmethodID java_saveSetting;
         jmethodID java_getLocalAddr;
-        jmethodID java_toggleIME;
-        jmethodID java_performHapticFeedback;
-        jmethodID java_showComboBoxCompat;
         jmethodID java_playSoundEffect;
-        jmethodID java_getInitOptions;
-        jmethodID java_getWindowWidth;
-        jmethodID java_getWindowHeight;
-        jmethodID java_attachNativeDevice;
 
         ANDROID_APP app;
     public:
@@ -57,22 +50,8 @@ namespace ygo {
 
         int getLocalAddr(JNIEnv *env);
 
-        void toggleIME(JNIEnv *env, bool show, const char *msg);
-
-        void performHapticFeedback(JNIEnv *env);
-
-        void showAndroidComboBoxCompat(JNIEnv *env, bool pShow,
-                                       char **pContents, int count, int mode = 0);
-
         void playSoundEffect(JNIEnv *env, const char *name);
 
-        irr::android::InitOptions *getInitOptions(JNIEnv *env);
-
-        int getWindowWidth(JNIEnv *env);
-
-        int getWindowHeight(JNIEnv *env);
-
-        void attachNativeDevice(JNIEnv* env, void* device);
     };
 }
 #endif //YGOMOBILE_CN_KO_EN_ANDROIDGAMEHOST_H

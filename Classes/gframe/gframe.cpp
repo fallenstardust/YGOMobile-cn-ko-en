@@ -3,6 +3,7 @@
 #include "data_manager.h"
 #include <event2/thread.h>
 #include <android/AndroidGameHost.h>
+#include <android/AndroidGameUI.h>
 
 int enable_log = 0;
 bool exit_on_return = false;
@@ -10,33 +11,52 @@ bool bot_mode = false;
 
 #ifdef _IRR_ANDROID_PLATFORM_
 
-ygo::AndroidGameHost *getHost(ANDROID_APP app) {
-	JNIEnv *env = android::getJniEnv(app);
-	jobject activity = app->activity->clazz;
-	jclass clazz = env->GetObjectClass(activity);
+ygo::AndroidGameHost *getGameHost(JNIEnv *env, jobject activity, jclass clazz, ANDROID_APP app) {
 	jmethodID getNativeGameHost = env->GetMethodID(clazz,
-												   "getNativeGameHost", "()Ljava/lang/Object;");
+												   "getNativeGameHost", "()Lcn/garymb/ygomobile/interfaces/GameHost;");
 	jobject jhost = env->CallObjectMethod(activity, getNativeGameHost);
 	if(jhost) {
 		ygo::AndroidGameHost *host = new ygo::AndroidGameHost(app, env->NewGlobalRef(jhost));
 		host->initMethods(env);
-		env->DeleteLocalRef(clazz);
 		return host;
 	}
 	return NULL;
 }
 
+ygo::AndroidGameUI *getGameUI(JNIEnv *env, jobject activity, jclass clazz, ANDROID_APP app) {
+    jmethodID getNativeGameHost = env->GetMethodID(clazz,
+                                                   "getNativeGameUI", "()Lcn/garymb/ygomobile/interfaces/IGameUI;");
+    jobject jhost = env->CallObjectMethod(activity, getNativeGameHost);
+    if(jhost) {
+        ygo::AndroidGameUI *host = new ygo::AndroidGameUI(app, env->NewGlobalRef(jhost));
+        host->initMethods(env);
+        return host;
+    }
+    return NULL;
+}
+
 void android_main(ANDROID_APP app){
+    JNIEnv *env = android::getJniEnv(app);
+    jobject activity = app->activity->clazz;
+    jclass clazz = env->GetObjectClass(activity);
+    ygo::gameHost = getGameHost(env, activity, clazz, app);
+    ygo::gameUI = getGameUI(env, activity, clazz, app);
+    env->DeleteLocalRef(clazz);
+
+    if(!ygo::gameHost){
+        LOGE("Initialize game host error");
+        return;
+    }
+
+    if(!ygo::gameUI){
+        LOGE("Initialize game ui error");
+        return;
+    }
 #else
 int main(int argc, char* argv[]) {
 #endif
     ygo::Game* game = new ygo::Game;
     ygo::mainGame = game;
-    ygo::gameHost = getHost(app);
-    if(!ygo::gameHost){
-		LOGE("Initialize game host error");
-		return;
-    }
 #ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;

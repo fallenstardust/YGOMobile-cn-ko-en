@@ -9,6 +9,7 @@
 #include <vector>
 #include <list>
 #include <android/AndroidGameHost.h>
+#include <android/AndroidGameUI.h>
 #include "IYGOSoundEffectPlayer.h"
 
 namespace ygo {
@@ -546,7 +547,6 @@ public:
 	s32 ogles2BlendTexture;
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
-#endif
 
     void showAndroidComboBoxCompat(bool show, char** list, int count, int mode = 0);
     void perfromHapticFeedback();
@@ -555,28 +555,28 @@ public:
     void setLastDeck(const char* name);
     int getLocalAddr();
 
+
+    void playSoundEffect(const char *name);
+
+    JNIEnv* getJniEnv();
+#endif
+    void runWindbot(const char* cmd);
     io::path getCardImagePath(){
         return cardImagePath;
     }
     io::path getResourcePath(){
         return resourcePath;
     }
-
-    void runWindbot(const char* cmd);
-
-    void playSoundEffect(const char *name);
-
-    private:
-#ifdef _IRR_ANDROID_PLATFORM_
-		JNIEnv* getJniEnv();
-#endif
-        io::path cardImagePath;
-        io::path resourcePath;
+private:
+    io::path cardImagePath;
+    io::path resourcePath;
     };
 
     extern Game *mainGame;
+#ifdef _IRR_ANDROID_PLATFORM_
     extern ygo::AndroidGameHost *gameHost;
-
+	extern ygo::AndroidGameUI *gameUI;
+#endif
 }
 
 #define CARD_IMG_WIDTH		177

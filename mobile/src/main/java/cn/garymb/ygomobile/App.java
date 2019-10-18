@@ -14,13 +14,12 @@ import com.bumptech.glide.Glide;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
-import java.nio.ByteBuffer;
-
-import cn.garymb.ygomobile.core.GameConfig;
-import cn.garymb.ygomobile.core.GameHost;
+import cn.garymb.ygomobile.interfaces.GameConfig;
+import cn.garymb.ygomobile.interfaces.GameHost;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
-public class App extends GameApplication implements GameConfig{
+public class App extends GameApplication implements GameConfig {
     private GameHost gameHost;
 
     @Override
@@ -138,5 +137,10 @@ public class App extends GameApplication implements GameConfig{
             h -= AppsSettings.get().getNotchHeight();
         }
         return new int[]{w, h};
+    }
+
+    @Override
+    public boolean isDebugMode() {
+        return BuildConfig.DEBUG;
     }
 }

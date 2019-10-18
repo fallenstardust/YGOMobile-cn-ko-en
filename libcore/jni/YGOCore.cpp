@@ -7,19 +7,12 @@
 #include <pthread.h>
 #include <android/log.h>
 #include <Android/CIrrDeviceAndroid.h>
-#include <android/asset_manager_jni.h>
-#include <android/native_window_jni.h>
-#include <android/input.h>
 #include "irrlicht.h"
-#include "../android/YGOGameOptions.h"
 #include "../Classes/gframe/game.h"
-#include "../android/bufferio_android.h"
 #include "../Classes/gframe/os.h"
+#include "../android/YGOGameOptions.h"
+#include "../android/bufferio_android.h"
 #include "../android/AndroidGameHost.h"
-
-extern "C" {
-#include "libbpg.h"
-}
 
 using namespace irr;
 using namespace gui;
@@ -55,61 +48,6 @@ JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeInsertText(
             env->DeleteLocalRef(textString);
         }
     }
-}
-
-JNIEXPORT jbyteArray JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeBpgImage(
-        JNIEnv* env, jclass, jbyteArray imgdata) {
-    jsize len  = env->GetArrayLength(imgdata);
-    jbyte *jarr = (jbyte *)malloc(len * sizeof(jbyte));
-    env->GetByteArrayRegion(imgdata,0,len,jarr);
-    uint8_t *data = (uint8_t *)jarr;//uint8_t 就是byte
-    BPGDecoderContext *img;
-    BPGImageInfo img_info_s, *img_info = &img_info_s;
-    int w, h, i, y,size, bufferIncrement, rowspan;
-    //加载文件
-    img = bpg_decoder_open();
-    if (bpg_decoder_decode(img, data, (int)len) < 0) {
-        return 0;
-    }
-    //解析信息
-    bpg_decoder_get_info(img, img_info);
-    w = img_info->width;
-    h = img_info->height;
-    size = w * y;
-    //*rgb_line的长度 rgb=3,argb=4
-    if (img_info->format == BPG_FORMAT_GRAY)
-        rowspan = 1 * w;
-    else
-        rowspan = 3 * w;
-    u8* rgb_line = new u8[rowspan];
-    //输出到output
-    unsigned int outBufLen = rowspan * h+8;
-    u8* output = new u8[outBufLen];
-    output[0] = (byte)(w & 0xFF);
-    output[1] = (byte)((w & 0xFF00) >> 8);
-    output[2] = (byte)((w & 0xFF0000) >> 16);
-    output[3] = (byte)((w >> 24) & 0xFF);
-    output[4] = (byte)(h & 0xFF);
-    output[5] = (byte)((h & 0xFF00) >> 8);
-    output[6] = (byte)((h & 0xFF0000) >> 16);
-    output[7] = (byte)((h >> 24) & 0xFF);
-    bpg_decoder_start(img, BPG_OUTPUT_FORMAT_RGB24);
-    bufferIncrement = 8;
-    for (y = 0; y < h; y++) {
-        bpg_decoder_get_line(img, rgb_line);
-        for(i=0; i<rowspan;i++){
-            output[bufferIncrement + i] = rgb_line[i];
-        }
-        bufferIncrement += rowspan;
-    }
-    bpg_decoder_close(img);
-    delete [] rgb_line;
-    jbyteArray  jbarray = env->NewByteArray(outBufLen);
-    jbyte *jy=(jbyte*)output;  //BYTE强制转换成Jbyte；
-    env->SetByteArrayRegion(jbarray, 0, outBufLen, jy);            //将Jbyte 转换为jbarray数组
-    env->DeleteLocalRef(imgdata);
-    free(output);
-    return jbarray;
 }
 
 JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeSetComboBoxSelection(

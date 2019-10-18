@@ -29,9 +29,10 @@ const unsigned short PRO_VERSION = 0x134B;
 namespace ygo {
 
 Game *mainGame;
-AndroidGameHost *gameHost;
-#ifdef _IRR_ANDROID_PLATFORM_
 
+#ifdef _IRR_ANDROID_PLATFORM_
+AndroidGameHost *gameHost;
+AndroidGameUI *gameUI;
 bool Game::Initialize(ANDROID_APP app) {
 	this->appMain = app;
 #else
@@ -42,14 +43,14 @@ bool Game::Initialize() {
 
 #ifdef _IRR_ANDROID_PLATFORM_
 	JNIEnv* jni = android::getJniEnv(app);
-	irr::android::InitOptions* options = gameHost->getInitOptions(jni);
+	irr::android::InitOptions* options = gameUI->getInitOptions(jni);
 	if(options == NULL){
 		return false;
 	}
 	gameConf._init = FALSE;
 	LoadConfig(jni, options);
-	int windowWidth = gameHost->getWindowWidth(jni);
-	int windowHeight = gameHost->getWindowHeight(jni);
+	int windowWidth = gameUI->getWindowWidth(jni);
+	int windowHeight = gameUI->getWindowHeight(jni);
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -75,7 +76,7 @@ bool Game::Initialize() {
 		LOGE("createDeviceEx failed");
         return false;
     }
-	gameHost->attachNativeDevice(jni, device);
+	gameUI->attachNativeDevice(jni, device);
 #ifdef _IRR_ANDROID_PLATFORM_
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
@@ -1716,16 +1717,23 @@ const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
 }
 
+void Game::runWindbot(const char* cmd){
+#ifdef _IRR_ANDROID_PLATFORM_
+	gameHost->runWindbot(getJniEnv(), cmd);
+#endif
+}
+
+#ifdef _IRR_ANDROID_PLATFORM_
 void Game::toggleIME(bool show, char* msg){
-	gameHost->toggleIME(getJniEnv(), show, msg);
+	gameUI->toggleIME(getJniEnv(), show, msg);
 }
 
 void Game::perfromHapticFeedback(){
-	gameHost->performHapticFeedback(getJniEnv());
+	gameUI->performHapticFeedback(getJniEnv());
 }
 
 void Game::showAndroidComboBoxCompat(bool show, char** list, int count, int mode) {
-	gameHost->showAndroidComboBoxCompat(getJniEnv(), show, list, count, mode);
+	gameUI->showAndroidComboBoxCompat(getJniEnv(), show, list, count, mode);
 }
 
 int Game::getLocalAddr(){
@@ -1740,10 +1748,6 @@ void Game::setLastCategory(const char* category) {
 	gameHost->setLastCategory(getJniEnv(), category);
 }
 
-void Game::runWindbot(const char* cmd){
-	gameHost->runWindbot(getJniEnv(), cmd);
-}
-
 void Game::playSoundEffect(const char *path){
 	JNIEnv* env = getJniEnv();
 	gameHost->playSoundEffect(getJniEnv(), path);
@@ -1752,4 +1756,6 @@ void Game::playSoundEffect(const char *path){
 JNIEnv* Game::getJniEnv(){
 	return android::getJniEnv(appMain);
 }
+
+#endif
 }

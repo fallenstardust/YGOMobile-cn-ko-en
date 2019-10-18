@@ -48,6 +48,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/android/AndroidSoundEffectPlayer.cpp \
 				$(LOCAL_PATH)/android/OpenSLSoundTracker.cpp \
 				$(LOCAL_PATH)/android/AndroidGameHost.cpp \
+				$(LOCAL_PATH)/android/AndroidGameUI.cpp \
 				$(LOCAL_PATH)/android/SoundPoolWrapperTracker.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIEditBox.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIButton.cpp \
@@ -73,7 +74,8 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/single_duel.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/single_mode.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/tag_duel.cpp \
-				$(LOCAL_PATH)/jni/YGOCore.cpp
+				$(LOCAL_PATH)/jni/YGOCore.cpp \
+				$(LOCAL_PATH)/jni/BPG.cpp
 
 LOCAL_LDLIBS := -lEGL -llog -lGLESv1_CM -lGLESv2 -landroid -lOpenSLES
 
