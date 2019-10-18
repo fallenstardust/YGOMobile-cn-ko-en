@@ -16,7 +16,7 @@ public class YGOCore{
     private static final String TAG = "ygomobile";
     public static int gPid;
     private static YGOCore sYGOCore;
-    private static final boolean DISABLE_THREAD = true;
+    private static final boolean DISABLE_THREAD = false;
 
     public static YGOCore getInstance(){
         if(sYGOCore == null){
