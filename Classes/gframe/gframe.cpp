@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) {
 #ifdef _IRR_ANDROID_PLATFORM_
 	game->externalSignal.Set();
 	game->externalSignal.SetNoWait(true);
+    ygo::gameUI->onGameLaunch(env);
 #endif
 	game->MainLoop();
 	delete game;

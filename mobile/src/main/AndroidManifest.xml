@@ -86,7 +86,11 @@
         <activity
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
-            tools:replace="android:theme" />
+            tools:replace="android:theme" >
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"/>
+        </activity>
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.AboutActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"

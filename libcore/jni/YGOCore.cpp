@@ -253,8 +253,8 @@ static void* join_game_thread(void* param) {
 }
 
 JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_YGOCore_nativeJoinGame(
-        JNIEnv* env, jobject, jint handle, jobject buffer, jint length) {
-    void* data = env->GetDirectBufferAddress(buffer);
+        JNIEnv *env, jobject, jint handle, jobject buffer, jint length) {
+    void *data = env->GetDirectBufferAddress(buffer);
     s_init_param_buffer = malloc(length);
     memcpy(s_init_param_buffer, data, length);
     pthread_t joinGameThread;

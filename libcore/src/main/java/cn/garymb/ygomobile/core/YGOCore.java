@@ -14,9 +14,9 @@ public class YGOCore{
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
     public static final String EXTRA_PID = "extras.mypid";
     private static final String TAG = "ygomobile";
-    public static boolean DEBUG = false;
     public static int gPid;
     private static YGOCore sYGOCore;
+    private static final boolean DISABLE_THREAD = true;
 
     public static YGOCore getInstance(){
         if(sYGOCore == null){
@@ -42,16 +42,20 @@ public class YGOCore{
     private Handler H;
 
     private YGOCore(){
-        mWorker = new HandlerThread("ygopro_core_work");
-        mWorker.start();
-        H = new Handler(mWorker.getLooper());
+        if(!DISABLE_THREAD) {
+            mWorker = new HandlerThread("ygopro_core_work");
+            mWorker.start();
+            H = new Handler(mWorker.getLooper());
+        }
     }
 
     @Keep
-    public void release(){
-        if(mWorker != null) {
-            mWorker.quitSafely();
-            mWorker = null;
+    public void release() {
+        if (!DISABLE_THREAD) {
+            if (mWorker != null) {
+                mWorker.quitSafely();
+                mWorker = null;
+            }
         }
     }
 
@@ -87,13 +91,17 @@ public class YGOCore{
         if (id != 0) {
             return false;
         }
-        H.post(new Runnable() {
-            @Override
-            public void run() {
-                Log.i(TAG, "touch " + x + "x" + y);
-                sendTouchInner(action, x, y, id);
-            }
-        });
+        if (!DISABLE_THREAD) {
+            H.post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TAG, "touch " + x + "x" + y);
+                    sendTouchInner(action, x, y, id);
+                }
+            });
+        } else {
+            sendTouchInner(action, x, y, id);
+        }
         return true;
     }
 

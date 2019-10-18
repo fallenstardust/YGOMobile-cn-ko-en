@@ -21,6 +21,7 @@ namespace ygo {
         jmethodID java_getWindowHeight;
         jmethodID java_getInitOptions;
         jmethodID java_attachNativeDevice;
+        jmethodID java_onGameLaunch;
 
         ANDROID_APP app;
     public:
@@ -45,6 +46,8 @@ namespace ygo {
         irr::android::InitOptions *getInitOptions(JNIEnv *env);
 
         void attachNativeDevice(JNIEnv* env, void* device);
+
+        void onGameLaunch(JNIEnv* env);
     };
 }
 

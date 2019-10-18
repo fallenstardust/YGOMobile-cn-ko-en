@@ -130,7 +130,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         initExtraView();
         mScreenKeeper = new ScreenKeeper(this);
-        handleExternalCommand(getIntent());
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
                 @Override
@@ -412,6 +412,11 @@ public class YGOMobileActivity extends NativeActivity implements
     public IGameUI getNativeGameUI() {
         //jni call
         return this;
+    }
+
+    @Override
+    public void onGameLaunch(){
+        handleExternalCommand(getIntent());
     }
 
     @Override
