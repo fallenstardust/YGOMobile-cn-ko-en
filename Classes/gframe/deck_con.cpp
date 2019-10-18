@@ -1116,8 +1116,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
         	s32 y = event.MouseInput.Y;
         	irr::core::position2di pos(x, y);
         	if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
+                mainGame->gMutex.lock();
         		mainGame->textFont->setTransparency(true);
         		mainGame->ClearChatMsg();
+                mainGame->gMutex.unlock();
         		break;
         	}//touch the pic of detail to refresh textfonts
 			is_starting_dragging = false;
