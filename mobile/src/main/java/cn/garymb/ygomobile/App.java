@@ -126,15 +126,20 @@ public class App extends GameApplication implements GameConfig {
         return AppsSettings.get().isSoundEffect();
     }
 
-
     @Override
     public int[] getGameSize(Activity activity) {
         Point size = new Point();
-        activity.getWindowManager().getDefaultDisplay().getRealSize(size);
-        int w = Math.max(size.x, size.y);
-        int h = Math.min(size.x, size.y);
-        if (AppsSettings.get().isImmerSiveMode()) {
+        int w, h;
+        if (isImmerSiveMode()) {
+            activity.getWindowManager().getDefaultDisplay().getRealSize(size);
+            w = Math.max(size.x, size.y);
+            h = Math.min(size.x, size.y);
             h -= AppsSettings.get().getNotchHeight();
+        } else {
+            int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
+            int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
+            w = Math.max(w1, h1);
+            h = Math.min(w1, h1);
         }
         return new int[]{w, h};
     }

@@ -80,8 +80,8 @@ public class YGOMobileActivity extends NativeActivity implements
                     | View.SYSTEM_UI_FLAG_FULLSCREEN/* 隐藏状态栏 */
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY/* 沉浸模式 */;
             windowsFlags2 = View.SYSTEM_UI_FLAG_LAYOUT_STABLE/* 系统UI变化不触发relayout */
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION/* 隐藏导航栏 */
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION/* 隐藏状态栏 */
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION/* 隐藏导航栏 */
+//                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION/* 隐藏状态栏 */
                     | View.SYSTEM_UI_FLAG_FULLSCREEN;
         } else {
             windowsFlags = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LOW_PROFILE;
@@ -300,7 +300,7 @@ public class YGOMobileActivity extends NativeActivity implements
             lp.height = h;
             mClickView.setLayoutParams(lp);
             mSurfaceView.setLayoutParams(lp);
-            mSurfaceView.getHolder().setFixedSize(w, h);
+//            mSurfaceView.getHolder().setFixedSize(w, h);
         }
     }
 
