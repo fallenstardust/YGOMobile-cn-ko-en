@@ -1053,7 +1053,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			hovered_location = 0;
 			irr::core::position2di pos(x, y);
 			if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
-				mainGame->textFont->setTransparency(true);
+				mainGame->refreshTexture();
 				mainGame->ClearChatMsg();
 				break;
 			 }//touch the pic of detail to refresh textfonts
@@ -1925,14 +1925,14 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		case irr::KEY_KEY_R: {
 			if(mainGame->gameConf.control_mode == 0
 				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(EGUIET_EDIT_BOX))
-				mainGame->textFont->setTransparency(true);
+				mainGame->refreshTexture();
 			return true;
 			break;
 		}
 		case irr::KEY_F9: {
 			if(mainGame->gameConf.control_mode == 1
 				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(EGUIET_EDIT_BOX))
-				mainGame->textFont->setTransparency(true);
+				mainGame->refreshTexture();
 			return true;
 			break;
 		}

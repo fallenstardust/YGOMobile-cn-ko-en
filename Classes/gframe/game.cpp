@@ -1758,4 +1758,15 @@ JNIEnv* Game::getJniEnv(){
 }
 
 #endif
+void Game::refreshTexture(){
+#ifdef _IRR_ANDROID_PLATFORM_
+	LOGD("refreshTexture before");
+#endif
+	gMutex.lock();
+	textFont->setTransparency(true);
+	gMutex.unlock();
+#ifdef _IRR_ANDROID_PLATFORM_
+	LOGD("refreshTexture after");
+#endif
+}
 }

@@ -560,6 +560,7 @@ public:
 
     JNIEnv* getJniEnv();
 #endif
+    void refreshTexture();
     void runWindbot(const char* cmd);
     io::path getCardImagePath(){
         return cardImagePath;
