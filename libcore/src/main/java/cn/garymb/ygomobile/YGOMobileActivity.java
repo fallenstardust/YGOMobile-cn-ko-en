@@ -320,7 +320,7 @@ public class YGOMobileActivity extends NativeActivity implements
             lp.height = h;
             mClickView.setLayoutParams(lp);
             mSurfaceView.setLayoutParams(lp);
-//            mSurfaceView.getHolder().setFixedSize(w, h);
+            mSurfaceView.getHolder().setFixedSize(w, h);
         }
     }
 
