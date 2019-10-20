@@ -40,7 +40,6 @@
     <style name="AppTheme.Game" parent="android:Theme.Holo.NoActionBar.Fullscreen">
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowDisablePreview">true</item>
-        <item name="android:windowBackground">@drawable/blue</item>
     </style>
 
     <style name="AppTheme.Logo" parent="AppTheme">
