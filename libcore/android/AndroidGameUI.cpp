@@ -22,6 +22,8 @@ void AndroidGameUI::initMethods(JNIEnv *env) {
     java_performHapticFeedback = env->GetMethodID(clazz, "performHapticFeedback", "()V");
     java_showComboBoxCompat = env->GetMethodID(clazz, "showComboBoxCompat",
                                                "([Ljava/lang/String;ZI)V");
+    java_getWindowLeft = env->GetMethodID(clazz, "getWindowLeft", "()I");
+    java_getWindowTop = env->GetMethodID(clazz, "getWindowTop", "()I");
     java_getWindowWidth = env->GetMethodID(clazz, "getWindowWidth", "()I");
     java_getWindowHeight = env->GetMethodID(clazz, "getWindowHeight", "()I");
     java_getInitOptions = env->GetMethodID(clazz, "getInitOptions", "()Ljava/nio/ByteBuffer;");
@@ -114,4 +116,18 @@ void AndroidGameUI::attachNativeDevice(JNIEnv*env, void* device){
     jint value = (int)device;
     LOGI("attachNativeDevice %d", value);
     env->CallVoidMethod(host, java_attachNativeDevice, value);
+}
+
+int AndroidGameUI::getWindowLeft(JNIEnv *env) {
+    if (!java_getWindowLeft) {
+        return 0;
+    }
+    return env->CallIntMethod(host, java_getWindowLeft);
+}
+
+int AndroidGameUI::getWindowTop(JNIEnv *env) {
+    if (!java_getWindowTop) {
+        return 0;
+    }
+    return env->CallIntMethod(host, java_getWindowTop);
 }

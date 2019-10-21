@@ -7,6 +7,10 @@ import java.nio.ByteBuffer;
 @Keep
 public interface IGameUI {
 
+    int getWindowLeft();
+
+    int getWindowTop();
+
     int getWindowWidth();
 
     int getWindowHeight();

@@ -307,6 +307,8 @@ namespace irr
 		//! Get context manager
 		virtual video::IContextManager* getContextManager() =0;
 
+		virtual void setProcessReceiver(IProcessEventReceiver* receiver) = 0;
+
 		//! Set the maximal elapsed time between 2 clicks to generate doubleclicks for the mouse. It also affects tripleclick behavior.
 		/** When set to 0 no double- and tripleclicks will be generated.
 		\param timeMs maximal time in milliseconds for two consecutive clicks to be recognized as double click

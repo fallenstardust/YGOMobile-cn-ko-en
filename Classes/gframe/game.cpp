@@ -30,6 +30,16 @@ namespace ygo {
 
 Game *mainGame;
 
+void Game::process(irr::SEvent &event) {
+	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
+		s32 x = event.MouseInput.X;
+		s32 y = event.MouseInput.Y;
+		event.MouseInput.X = optX(x);
+		event.MouseInput.Y = optY(y);
+//		LOGD("Android comman process %d,%d -> %d,%d", x, y,	event.MouseInput.X, event.MouseInput.Y);
+	}
+}
+
 #ifdef _IRR_ANDROID_PLATFORM_
 AndroidGameHost *gameHost;
 AndroidGameUI *gameUI;
@@ -94,6 +104,13 @@ bool Game::Initialize() {
     }
 	gameUI->attachNativeDevice(jni, device);
 #ifdef _IRR_ANDROID_PLATFORM_
+	int left = gameUI->getWindowLeft(jni);
+	int top = gameUI->getWindowTop(jni);
+	setPositionFix(left, top);
+    LOGI("setPositionFix = %dx%d", left, top);
+    if(left != 0 && top != 0) {
+        device->setProcessReceiver(this);
+    }
 	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
 	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
 	//replace handle input.

@@ -109,7 +109,7 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game{
+class Game :IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -568,7 +568,31 @@ public:
     io::path getResourcePath(){
         return resourcePath;
     }
+
+	void setPositionFix(int left, int top){
+		touchLeft = left;
+		touchTop = top;
+	}
+	
+	float optX(float x) {
+		float x2 = x - touchLeft;
+		if (x2 < 0) {
+			return 0;
+		}
+		return x2;
+	}
+
+	float optY(float y) {
+		float y2 = y - touchTop;
+		if (y2 < 0) {
+			return 0;
+		}
+		return y2;
+	}
+    void process(irr::SEvent &event);
 private:
+	int touchLeft;
+	int touchTop;
     io::path cardImagePath;
     io::path resourcePath;
     };

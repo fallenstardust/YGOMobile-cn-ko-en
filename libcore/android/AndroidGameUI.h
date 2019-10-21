@@ -18,6 +18,8 @@ namespace ygo {
         jmethodID java_toggleIME;
         jmethodID java_performHapticFeedback;
         jmethodID java_showComboBoxCompat;
+        jmethodID java_getWindowLeft;
+        jmethodID java_getWindowTop;
         jmethodID java_getWindowWidth;
         jmethodID java_getWindowHeight;
         jmethodID java_getInitOptions;
@@ -39,6 +41,10 @@ namespace ygo {
 
         void showAndroidComboBoxCompat(JNIEnv *env, bool pShow,
                                        char **pContents, int count, int mode = 0);
+
+        int getWindowLeft(JNIEnv *env);
+
+        int getWindowTop(JNIEnv *env);
 
         int getWindowWidth(JNIEnv *env);
 

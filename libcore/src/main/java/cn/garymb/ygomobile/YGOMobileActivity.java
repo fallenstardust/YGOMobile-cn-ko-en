@@ -100,14 +100,19 @@ public class YGOMobileActivity extends NativeActivity implements
     private GameConfig mGameConfig;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
+    private volatile int mTouchLeft, mTouchTop;
     private volatile int mGameWidth, mGameHeight;
     private volatile int mActivityWidth, mActivityHeight;
     private FrameLayout mLayout;
+    //画面居中
     private SurfaceView mSurfaceView;
     private View mClickView;
     private boolean replaced = false;
     private boolean mInitView = false;
     private ScreenKeeper mScreenKeeper;
+    private static final boolean USE_INPUT_QUEEN = true;
+    //点击修正
+    private static final boolean RESIZE_WINDOW_LAYOUT= false;
 
     private GameApplication app() {
         return GameApplication.get();
@@ -127,6 +132,9 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         if (mGameConfig.isLockScreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+        if(DEBUG) {
+            Log.i(TAG, "USE_INPUT_QUEEN:" + USE_INPUT_QUEEN+",RESIZE_WINDOW_LAYOUT="+RESIZE_WINDOW_LAYOUT);
         }
         initExtraView();
         mScreenKeeper = new ScreenKeeper(this);
@@ -251,17 +259,28 @@ public class YGOMobileActivity extends NativeActivity implements
         int h = Math.min(activityHeight, activityWidth);
         mActivityWidth = w;
         mActivityHeight = h;
+        float sx, sy, scale;
         if (mGameConfig.isKeepScale()) {
-            float sx = (float) w / GAME_WIDTH;
-            float sy = (float) h / GAME_HEIGHT;
-            float scale = Math.min(sx, sy);
-            if(DEBUG) {
+            sx = (float) w / GAME_WIDTH;
+            sy = (float) h / GAME_HEIGHT;
+            scale = Math.min(sx, sy);
+            w = (int) (GAME_WIDTH * scale);
+            h = (int) (GAME_HEIGHT * scale);
+            if (DEBUG) {
                 Log.i(TAG, "getGameSize:sx=" + sx + ",sy=" + sy + ",w=" + w + ",h=" + h + ",gw=" + (int) (GAME_WIDTH * scale) + ",gh=" + (int) (GAME_HEIGHT * scale));
             }
-            return new int[]{(int) (GAME_WIDTH * scale), (int) (GAME_HEIGHT * scale)};
-        } else {
-            return new int[]{w, h};
         }
+        if (RESIZE_WINDOW_LAYOUT || !USE_INPUT_QUEEN) {
+            mTouchLeft = 0;
+            mTouchTop = 0;
+        } else {
+            mTouchLeft = (mActivityWidth - w) / 2;
+            mTouchTop = (mActivityHeight - h) / 2;
+        }
+        if (DEBUG) {
+            Log.i(TAG, "window:" + mActivityWidth + "x" + mActivityHeight + ",game:" + w + "x" + h + ", left=" + mTouchLeft + ",top=" + mTouchTop);
+        }
+        return new int[]{w, h};
     }
 
     @Override
@@ -300,14 +319,18 @@ public class YGOMobileActivity extends NativeActivity implements
         getWindow().takeSurface(null);
         replaced = true;
         mSurfaceView.getHolder().addCallback(this);
-        getWindow().takeInputQueue(null);
+        if (!USE_INPUT_QUEEN) {
+            getWindow().takeInputQueue(null);
+            mClickView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    return mCore.sendTouchEvent(event.getAction(), (int) event.getX(), (int) event.getY(), event.getPointerId(0));
+                }
+            });
+        } else if(RESIZE_WINDOW_LAYOUT){
+            getWindow().setLayout(w, h);
+        }
         mSurfaceView.requestFocus();
-        mClickView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return mCore.sendTouchEvent(event.getAction(), (int)event.getX(), (int)event.getY(), event.getPointerId(0));
-            }
-        });
         mInitView = true;
     }
 
@@ -321,6 +344,9 @@ public class YGOMobileActivity extends NativeActivity implements
             mClickView.setLayoutParams(lp);
             mSurfaceView.setLayoutParams(lp);
             mSurfaceView.getHolder().setFixedSize(w, h);
+        }
+        if(RESIZE_WINDOW_LAYOUT){
+            getWindow().setLayout(w, h);
         }
     }
 
@@ -482,6 +508,22 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
+    public int getWindowLeft() {
+        if (DEBUG) {
+            Log.i(TAG, "getWindowLeft:" + mTouchLeft);
+        }
+        return mTouchLeft;
+    }
+
+    @Override
+    public int getWindowTop() {
+        if (DEBUG) {
+            Log.i(TAG, "getWindowTop:" + mTouchTop);
+        }
+        return mTouchTop;
+    }
+
+    @Override
     public int getWindowWidth() {
         if(DEBUG) {
             Log.i(TAG, "getWindowWidth:" + mGameWidth);
@@ -509,12 +551,16 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onInputQueueCreated(InputQueue queue) {
-//        super.onInputQueueCreated(mCore.getInputQueue());
+        if(USE_INPUT_QUEEN) {
+            super.onInputQueueCreated(queue);
+        }
     }
 
     @Override
     public void onInputQueueDestroyed(InputQueue queue) {
-//        super.onInputQueueDestroyed(mCore.getInputQueue());
+        if(USE_INPUT_QUEEN) {
+            super.onInputQueueDestroyed(queue);
+        }
     }
 
     @Override
