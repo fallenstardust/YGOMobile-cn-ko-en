@@ -210,10 +210,15 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void finish() {
-        super.finish();
         sendBroadcast(new Intent(ACTION_STOP)
-                .putExtra(YGOCore.EXTRA_PID, android.os.Process.myPid())
+                .putExtra(YGOCore.EXTRA_PID, Process.myPid())
+                .putExtra("taskId", getTaskId())
                 .setPackage(getPackageName()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask();
+        } else {
+            super.finish();
+        }
     }
 
     @Override
@@ -256,7 +261,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-   private void fullscreen() {
+    private void fullscreen() {
         if (mGameConfig.isImmerSiveMode()) {
             //沉浸模式
             getWindow().getDecorView().setSystemUiVisibility(windowsFlags);
@@ -265,7 +270,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         int[] size = getGameSize();
         setGameSize(size[0], size[1]);
-   }
+    }
 
     private int[] getGameSize() {
         int[] size = mHost.getGameSize(this);
