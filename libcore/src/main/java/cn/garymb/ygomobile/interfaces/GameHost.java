@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.interfaces;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.net.ConnectivityManager;
@@ -31,6 +32,18 @@ public abstract class GameHost {
 
     public int getLocalAddr() {
         return mNetworkController.getIPAddress();
+    }
+
+    public abstract AssetManager getGameAsset();
+
+    public abstract int[] getGameSize(Activity activity);
+
+    public boolean isDebugMode(){
+        return false;
+    }
+
+    public boolean isAutoKeepGame(){
+        return true;
     }
 
 }

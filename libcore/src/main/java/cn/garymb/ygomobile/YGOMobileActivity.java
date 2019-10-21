@@ -126,21 +126,27 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DEBUG = GameApplication.isDebug();
-        mGameConfig = app().getConfig();
+        mGameConfig = getIntent().getParcelableExtra(GameConfig.EXTRA_CONFIG);
         mCore = YGOCore.getInstance();
         mHost = app().getGameHost();
         fullscreen();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-            getWindow().setAttributes(lp);
-        }
-        mGameSoundPlayer = new GameSoundPlayer(mGameConfig.getGameAsset());
-        if(mGameConfig.isEnableSoundEffect()){
-            mGameSoundPlayer.initSoundEffectPool();
+        if(mGameConfig != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+                getWindow().setAttributes(lp);
+            }
+            mGameSoundPlayer = new GameSoundPlayer(mHost.getGameAsset());
+            if (mGameConfig.isEnableSoundEffect()) {
+                mGameSoundPlayer.initSoundEffectPool();
+            }
         }
         mScreenKeeper = new ScreenKeeper(this);
         super.onCreate(savedInstanceState);
+        if(mGameConfig == null){
+            finish();
+            return;
+        }
         if(DEBUG) {
             Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         }
@@ -262,7 +268,7 @@ public class YGOMobileActivity extends NativeActivity implements
    }
 
     private int[] getGameSize() {
-        int[] size = mGameConfig.getGameSize(this);
+        int[] size = mHost.getGameSize(this);
         int activityHeight = size[0];
         int activityWidth = size[1];
         int w = Math.max(activityHeight, activityWidth);

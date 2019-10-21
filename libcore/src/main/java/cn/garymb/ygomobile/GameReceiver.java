@@ -34,12 +34,19 @@ public class GameReceiver extends BroadcastReceiver {
                     Log.w("ygo", "will kill now pid=" + pid);
                 }
             }
-            try {
-                if (GameApplication.isDebug()) {
-                    Log.w("ygo", "kill pid=" + pid);
+            if (GameApplication.get().getGameHost().isAutoKeepGame()) {
+                try {
+                    if (GameApplication.isDebug()) {
+                        Log.w("ygo", "kill pid=" + pid);
+                    }
+                    android.os.Process.killProcess(pid);
+                } catch (Exception ignore) {
                 }
-                android.os.Process.killProcess(pid);
-            } catch (Exception ignore) { }
+            } else {
+                if (GameApplication.isDebug()) {
+                    Log.w("ygo", "don't kill pid=" + pid);
+                }
+            }
         }
     }
 }

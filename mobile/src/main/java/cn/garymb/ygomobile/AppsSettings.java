@@ -2,11 +2,10 @@ package cn.garymb.ygomobile;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Point;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.WindowManager;
 
 import org.json.JSONArray;
 
@@ -18,7 +17,8 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.ui.preference.SharedPreferencesPlus;
+import cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 
@@ -49,12 +49,16 @@ public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
     private Context context;
-    private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
+    private SharedPreferences mSharedPreferences;
 
     private AppsSettings(Context context) {
         this.context = context;
-        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
-        mSharedPreferences.setAutoSave(true);
+        String name = context.getPackageName() + ".settings";
+        if (App.isGameProcess()) {
+            mSharedPreferences = YGOPreferencesProvider.getOrCreate(context, name);
+        } else {
+            mSharedPreferences = new SharedPreferencesPlus(context, name, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
+        }
         Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
     }
 
@@ -77,10 +81,10 @@ public class AppsSettings {
     }
 
     public void setAppVersion(int ver) {
-        mSharedPreferences.putInt(PREF_VERSION, ver);
+        mSharedPreferences.edit().putInt(PREF_VERSION, ver).apply();
     }
 
-    public PreferenceFragmentPlus.SharedPreferencesPlus getSharedPreferences() {
+    public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
     }
 
@@ -93,7 +97,7 @@ public class AppsSettings {
     }
 
     public void setNotchHeight(int height) {
-        mSharedPreferences.putInt(PREF_NOTCH_HEIGHT, height);
+        mSharedPreferences.edit().putInt(PREF_NOTCH_HEIGHT, height).apply();
     }
 
     public int getFontSize() {
@@ -209,7 +213,7 @@ public class AppsSettings {
      * 音效
      */
     public void setSoundEffect(boolean soundEffect) {
-        mSharedPreferences.putBoolean(Constants.PREF_SOUND_EFFECT, soundEffect);
+        mSharedPreferences.edit().putBoolean(Constants.PREF_SOUND_EFFECT, soundEffect).apply();
     }
 
     /***
@@ -220,7 +224,7 @@ public class AppsSettings {
     }
 
     public void setServiceDuelAssistant(boolean serviceDuelAssiatant) {
-        mSharedPreferences.putBoolean(Constants.PREF_START_SERVICEDUELASSISTANT, serviceDuelAssiatant);
+        mSharedPreferences.edit().putBoolean(Constants.PREF_START_SERVICEDUELASSISTANT, serviceDuelAssiatant).apply();
     }
 
     /***
@@ -234,7 +238,7 @@ public class AppsSettings {
      * 摇摆数字
      */
     public void setPendulumScale(boolean pendulumScale) {
-        mSharedPreferences.putBoolean(Constants.PREF_PENDULUM_SCALE, pendulumScale);
+        mSharedPreferences.edit().putBoolean(Constants.PREF_PENDULUM_SCALE, pendulumScale).apply();
     }
 
     /***
@@ -252,7 +256,7 @@ public class AppsSettings {
      * opengl版本
      */
     public void setOpenglVersion(int openglVersion) {
-        mSharedPreferences.putString(Constants.PREF_OPENGL_VERSION, "" + openglVersion);
+        mSharedPreferences.edit().putString(Constants.PREF_OPENGL_VERSION, "" + openglVersion).apply();
     }
 
     /***
@@ -266,7 +270,7 @@ public class AppsSettings {
      * 字体抗锯齿
      */
     public void setFontAntiAlias(boolean fontAntiAlias) {
-        mSharedPreferences.putBoolean(Constants.PREF_FONT_ANTIALIAS, fontAntiAlias);
+        mSharedPreferences.edit().putBoolean(Constants.PREF_FONT_ANTIALIAS, fontAntiAlias).apply();
     }
 
     /***
@@ -284,7 +288,7 @@ public class AppsSettings {
      * 图片质量
      */
     public void setCardQuality(int quality) {
-        mSharedPreferences.putString(Constants.PREF_IMAGE_QUALITY, "" + quality);
+        mSharedPreferences.edit().putString(Constants.PREF_IMAGE_QUALITY, "" + quality).apply();
     }
 
     /***
@@ -326,7 +330,7 @@ public class AppsSettings {
     }
 
     public void setLockSreenOrientation(boolean lockSreenOrientation) {
-        mSharedPreferences.putBoolean(PREF_LOCK_SCREEN, lockSreenOrientation);
+        mSharedPreferences.edit().putBoolean(PREF_LOCK_SCREEN, lockSreenOrientation).apply();
     }
 
     /***
@@ -348,7 +352,7 @@ public class AppsSettings {
      * 设置是否优先使用外置数据
      */
     public void setUseExtraCards(boolean useExtraCards) {
-        mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
+        mSharedPreferences.edit().putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards).apply();
     }
 
     public String getCoreSkinPath() {
@@ -366,7 +370,7 @@ public class AppsSettings {
      * 字体路径
      */
     public void setFontPath(String font) {
-        mSharedPreferences.putString(Constants.PREF_GAME_FONT, font);
+        mSharedPreferences.edit().putString(Constants.PREF_GAME_FONT, font).apply();
     }
 
     /**
@@ -398,7 +402,7 @@ public class AppsSettings {
 
     public void setResourcePath(String path) {
         if (TextUtils.equals(path, getResourcePath())) return;
-        mSharedPreferences.putString(Constants.PREF_GAME_PATH, path);
+        mSharedPreferences.edit().putString(Constants.PREF_GAME_PATH, path).apply();
     }
 
     //获取卡组文件夹
@@ -465,11 +469,11 @@ public class AppsSettings {
             return;
         }
         //保存最后分类名
-        mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path));
+        mSharedPreferences.edit().putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path)).apply();
         //保存最后卡组名
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
-        mSharedPreferences.putString(Constants.PREF_LAST_YDK, lastDeckName);
+        mSharedPreferences.edit().putString(Constants.PREF_LAST_YDK, lastDeckName).apply();
     }
 
     //获得最后分类名
@@ -483,7 +487,7 @@ public class AppsSettings {
     }
 
     public void saveIntSettings(String key, int value) {
-        mSharedPreferences.putInt(Constants.PREF_START + key, value);
+        mSharedPreferences.edit().putInt(Constants.PREF_START + key, value).apply();
     }
 
     public int getIntSettings(String key, int def) {
@@ -549,12 +553,12 @@ public class AppsSettings {
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
             Log.e("AppSettings", value);
-            mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
+            mSharedPreferences.edit().putString(Constants.PREF_LAST_YDK, value).apply();
         } else if ("lastcategory".equals(key)) {
             Log.e("AppSettings", value);
-            mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
+            mSharedPreferences.edit().putString(Constants.PREF_LAST_CATEGORY, value).apply();
         } else {
-            mSharedPreferences.putString(Constants.PREF_START + key, value);
+            mSharedPreferences.edit().putString(Constants.PREF_START + key, value).apply();
         }
     }
 
@@ -598,6 +602,6 @@ public class AppsSettings {
             }
         }
 //        Log.i("kk", "saveTemp:" + array);
-        mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
+        mSharedPreferences.edit().putString(Constants.PREF_LAST_ROOM_LIST, array.toString()).apply();
     }
 }

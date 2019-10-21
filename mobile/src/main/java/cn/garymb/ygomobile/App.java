@@ -28,14 +28,13 @@ import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import jonathanfinerty.once.Once;
 
-public class App extends GameApplication implements GameConfig {
+public class App extends GameApplication{
     private GameHost gameHost;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        boolean isGameProcess = getCurrentProcessName().endsWith(":game");
-        if (!isGameProcess) {
+        if (!isGameProcess()) {
             Once.initialise(this);
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
             //初始化图片选择器
@@ -50,30 +49,6 @@ public class App extends GameApplication implements GameConfig {
         gameHost = new LocalGameHost(this);
     }
 
-    @SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
-    private String getCurrentProcessName() {
-        if (Build.VERSION.SDK_INT >= 28) {
-            return getProcessName();
-        }
-        try {
-            Class clazz = Class.forName("android.app.ActivityThread");
-            Method currentProcessName = clazz.getDeclaredMethod("currentProcessName");
-            return (String) currentProcessName.invoke(null);
-        } catch (Throwable e) {
-            Log.w("kk", "currentProcessName", e);
-        }
-        int pid = Process.myPid();
-        String processName = getPackageName();
-        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
-            if (info.pid == pid) {
-                processName = info.processName;
-                break;
-            }
-        }
-        return processName;
-    }
-
     private void initImgsel() {
         // 自定义图片加载器
         ISNav.getInstance().init(new ImageLoader() {
@@ -85,18 +60,8 @@ public class App extends GameApplication implements GameConfig {
     }
 
     @Override
-    public GameConfig getConfig() {
-        return this;
-    }
-
-    @Override
     public GameHost getGameHost() {
         return gameHost;
-    }
-
-    @Override
-    public AssetManager getGameAsset() {
-        return getAssets();
     }
 
     private class LocalGameHost extends GameHost {
@@ -131,63 +96,52 @@ public class App extends GameApplication implements GameConfig {
             intent.setAction("RUN_WINDBOT");
             sendBroadcast(intent);
         }
-    }
 
-    ;
+        @Override
+        public AssetManager getGameAsset() {
+            return getAssets();
+        }
 
-    @Override
-    public boolean isKeepScale() {
-        return AppsSettings.get().isKeepScale();
-    }
-
-    @Override
-    public NativeInitOptions getNativeInitOptions() {
-        return AppsSettings.get().getNativeInitOptions();
-    }
-
-    @Override
-    public boolean isLockScreenOrientation() {
-        return AppsSettings.get().isLockScreenOrientation();
-    }
-
-    @Override
-    public boolean isSensorRefresh() {
-        return AppsSettings.get().isSensorRefresh();
-    }
-
-    @Override
-    public boolean isImmerSiveMode() {
-        return AppsSettings.get().isImmerSiveMode();
-    }
-
-    @Override
-    public boolean isEnableSoundEffect() {
-        return AppsSettings.get().isSoundEffect();
-    }
-
-    @Override
-    public int[] getGameSize(Activity activity) {
-        Point size = new Point();
-        int w, h;
+        @Override
+        public int[] getGameSize(Activity activity) {
+//            Point size = new Point();
+            int w, h;
 //        if (isImmerSiveMode()) {
 //            activity.getWindowManager().getDefaultDisplay().getRealSize(size);
 //            w = Math.max(size.x, size.y);
 //            h = Math.min(size.x, size.y);
 //            h -= AppsSettings.get().getNotchHeight();
 //        } else {
-        int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
-        int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
-        w = Math.max(w1, h1);
-        h = Math.min(w1, h1);
-        if (isImmerSiveMode()) {
-            h += ScreenUtil.getCurrentNavigationBarHeight(activity);
-        }
+            int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
+            int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
+            w = Math.max(w1, h1);
+            h = Math.min(w1, h1);
+            if (AppsSettings.get().isImmerSiveMode()) {
+                h += ScreenUtil.getCurrentNavigationBarHeight(activity);
+            }
 //        }
-        return new int[]{w, h};
+            return new int[]{w, h};
+        }
+
+        @Override
+        public boolean isDebugMode() {
+            return BuildConfig.DEBUG;
+        }
+
+        @Override
+        public boolean isAutoKeepGame() {
+            return false;
+        }
     }
 
-    @Override
-    public boolean isDebugMode() {
-        return BuildConfig.DEBUG;
+    public static GameConfig genConfig(){
+        GameConfig config = new GameConfig();
+        config.setKeepScale(AppsSettings.get().isKeepScale());
+        config.setNativeInitOptions(AppsSettings.get().getNativeInitOptions());
+        config.setLockScreenOrientation(AppsSettings.get().isLockScreenOrientation());
+        config.setSensorRefresh(AppsSettings.get().isSensorRefresh());
+        config.setImmerSiveMode(AppsSettings.get().isImmerSiveMode());
+        config.setEnableSoundEffect(AppsSettings.get().isSoundEffect());
+        return config;
     }
 }

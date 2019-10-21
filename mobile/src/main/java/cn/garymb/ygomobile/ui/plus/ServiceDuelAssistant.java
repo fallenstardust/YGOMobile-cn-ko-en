@@ -292,7 +292,7 @@ public class ServiceDuelAssistant extends Service {
             }
         }
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;//super.onStartCommand(intent, flags, startId);
     }
 
 

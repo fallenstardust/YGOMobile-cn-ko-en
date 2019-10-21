@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.TextUtils;
 
 import androidx.annotation.Keep;
@@ -8,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class NativeInitOptions {
+public final class NativeInitOptions implements Parcelable {
 
     private static final int BUFFER_MAX_SIZE = 8192;
 
@@ -94,4 +96,51 @@ public final class NativeInitOptions {
     private void putInt(ByteBuffer buffer, int value) {
         buffer.putInt((Integer.reverseBytes(value)));
     }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.mOpenglVersion);
+        dest.writeByte(this.mIsSoundEffectEnabled ? (byte) 1 : (byte) 0);
+        dest.writeString(this.mWorkPath);
+        dest.writeStringList(this.mDbList);
+        dest.writeStringList(this.mArchiveList);
+        dest.writeInt(this.mCardQuality);
+        dest.writeByte(this.mIsFontAntiAliasEnabled ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.mIsPendulumScaleEnabled ? (byte) 1 : (byte) 0);
+        dest.writeString(this.mFontFile);
+        dest.writeString(this.mResDir);
+        dest.writeString(this.mImageDir);
+    }
+
+    protected NativeInitOptions(Parcel in) {
+        this.mOpenglVersion = in.readInt();
+        this.mIsSoundEffectEnabled = in.readByte() != 0;
+        this.mWorkPath = in.readString();
+        this.mDbList = in.createStringArrayList();
+        this.mArchiveList = in.createStringArrayList();
+        this.mCardQuality = in.readInt();
+        this.mIsFontAntiAliasEnabled = in.readByte() != 0;
+        this.mIsPendulumScaleEnabled = in.readByte() != 0;
+        this.mFontFile = in.readString();
+        this.mResDir = in.readString();
+        this.mImageDir = in.readString();
+    }
+
+    public static final Parcelable.Creator<NativeInitOptions> CREATOR = new Parcelable.Creator<NativeInitOptions>() {
+        @Override
+        public NativeInitOptions createFromParcel(Parcel source) {
+            return new NativeInitOptions(source);
+        }
+
+        @Override
+        public NativeInitOptions[] newArray(int size) {
+            return new NativeInitOptions[size];
+        }
+    };
 }
