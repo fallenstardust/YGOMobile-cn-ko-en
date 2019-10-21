@@ -19,7 +19,6 @@ namespace ygo {
         jmethodID java_runWindbot;
         jmethodID java_saveSetting;
         jmethodID java_getLocalAddr;
-        jmethodID java_playSoundEffect;
 
         ANDROID_APP app;
     public:
@@ -49,8 +48,6 @@ namespace ygo {
         void setLastCategory(JNIEnv *env, const char *catename);
 
         int getLocalAddr(JNIEnv *env);
-
-        void playSoundEffect(JNIEnv *env, const char *name);
 
     };
 }

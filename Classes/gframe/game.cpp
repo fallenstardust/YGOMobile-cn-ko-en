@@ -1780,8 +1780,7 @@ void Game::setLastCategory(const char* category) {
 }
 
 void Game::playSoundEffect(const char *path){
-	JNIEnv* env = getJniEnv();
-	gameHost->playSoundEffect(getJniEnv(), path);
+	gameUI->playSoundEffect(getJniEnv(), path);
 }
 
 JNIEnv* Game::getJniEnv(){

@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.interfaces.GameConfig;
 
 import cn.garymb.ygomobile.interfaces.IGameActivity;
 import cn.garymb.ygomobile.lib.R;
+import cn.garymb.ygomobile.tool.GameSoundPlayer;
 import cn.garymb.ygomobile.tool.ScreenKeeper;
 import cn.garymb.ygomobile.widget.ComboBoxCompat;
 import cn.garymb.ygomobile.widget.EditWindowCompat;
@@ -113,6 +114,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private boolean replaced = false;
     private boolean mInitView = false;
     private ScreenKeeper mScreenKeeper;
+    private GameSoundPlayer mGameSoundPlayer;
     private static final boolean USE_INPUT_QUEEN = true;
     //点击修正
     private static final boolean RESIZE_WINDOW_LAYOUT= false;
@@ -133,7 +135,10 @@ public class YGOMobileActivity extends NativeActivity implements
             lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
             getWindow().setAttributes(lp);
         }
-        mHost.setEnableSound(mGameConfig.isEnableSoundEffect());
+        mGameSoundPlayer = new GameSoundPlayer(mGameConfig.getGameAsset());
+        if(mGameConfig.isEnableSoundEffect()){
+            mGameSoundPlayer.initSoundEffectPool();
+        }
         mScreenKeeper = new ScreenKeeper(this);
         super.onCreate(savedInstanceState);
         if(DEBUG) {
@@ -463,6 +468,13 @@ public class YGOMobileActivity extends NativeActivity implements
     public IGameUI getNativeGameUI() {
         //jni call
         return this;
+    }
+
+    @Override
+    public void playSoundEffect(String path) {
+        if(mGameConfig.isEnableSoundEffect()){
+            mGameSoundPlayer.playSoundEffect(path);
+        }
     }
 
     @Override

@@ -13,30 +13,10 @@ import cn.garymb.ygomobile.tool.NetworkController;
 
 @Keep
 public abstract class GameHost {
-    protected GameSoundPlayer mPlayer;
     private NetworkController mNetworkController;
-    private boolean mEnableSound;
 
     public GameHost(Context context) {
-        mPlayer = new GameSoundPlayer(getAssetManager(context));
         mNetworkController = new NetworkController(context);
-    }
-
-    public void setEnableSound(boolean enableSound) {
-        this.mEnableSound = enableSound;
-        if(enableSound){
-            mPlayer.initSoundEffectPool();
-        }else{
-            mPlayer.release();
-        }
-    }
-
-    public boolean isEnableSound() {
-        return mEnableSound;
-    }
-
-    protected AssetManager getAssetManager(Context context) {
-        return context.getAssets();
     }
 
     public abstract String getSetting(String key);
@@ -48,12 +28,6 @@ public abstract class GameHost {
     public abstract void saveSetting(String key, String value);
 
     public abstract void runWindbot(String cmd);
-
-    public void playSoundEffect(String path){
-        if(isEnableSound()) {
-            mPlayer.playSoundEffect(path);
-        }
-    }
 
     public int getLocalAddr() {
         return mNetworkController.getIPAddress();

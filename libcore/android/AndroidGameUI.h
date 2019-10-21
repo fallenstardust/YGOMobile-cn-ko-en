@@ -25,6 +25,7 @@ namespace ygo {
         jmethodID java_getInitOptions;
         jmethodID java_attachNativeDevice;
         jmethodID java_getJoinOptions;
+        jmethodID java_playSoundEffect;
 
         ANDROID_APP app;
     public:
@@ -55,6 +56,8 @@ namespace ygo {
         void attachNativeDevice(JNIEnv* env, void* device);
 
         irr::android::YGOGameOptions* getJoinOptions(JNIEnv *env);
+
+        void playSoundEffect(JNIEnv *env, const char *name);
 
     };
 }

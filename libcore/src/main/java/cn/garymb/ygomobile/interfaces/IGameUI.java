@@ -26,4 +26,6 @@ public interface IGameUI {
     void attachNativeDevice(int device);
 
     ByteBuffer getJoinOptions();
+
+    void playSoundEffect(String path);
 }

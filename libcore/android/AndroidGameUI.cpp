@@ -29,6 +29,7 @@ void AndroidGameUI::initMethods(JNIEnv *env) {
     java_getInitOptions = env->GetMethodID(clazz, "getInitOptions", "()Ljava/nio/ByteBuffer;");
     java_attachNativeDevice = env->GetMethodID(clazz, "attachNativeDevice", "(I)V");
     java_getJoinOptions = env->GetMethodID(clazz, "getJoinOptions", "()Ljava/nio/ByteBuffer;");
+    java_playSoundEffect = env->GetMethodID(clazz, "playSoundEffect", "(Ljava/lang/String;)V");
     env->DeleteLocalRef(clazz);
 }
 
@@ -130,4 +131,15 @@ int AndroidGameUI::getWindowTop(JNIEnv *env) {
         return 0;
     }
     return env->CallIntMethod(host, java_getWindowTop);
+}
+
+void AndroidGameUI::playSoundEffect(JNIEnv *env, const char *_name) {
+    if (!java_playSoundEffect) {
+        return;
+    }
+    jstring name = env->NewStringUTF(_name);
+    env->CallVoidMethod(host, java_playSoundEffect, name);
+    if (name) {
+        env->DeleteLocalRef(name);
+    }
 }

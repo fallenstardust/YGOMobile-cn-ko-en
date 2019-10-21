@@ -26,7 +26,6 @@ void AndroidGameHost::initMethods(JNIEnv *env) {
     java_runWindbot = env->GetMethodID(clazz, "runWindbot", "(Ljava/lang/String;)V");
     java_saveSetting = env->GetMethodID(clazz, "saveSetting", "(Ljava/lang/String;Ljava/lang/String;)V");
     java_getLocalAddr = env->GetMethodID(clazz, "getLocalAddr", "()I");
-    java_playSoundEffect = env->GetMethodID(clazz, "playSoundEffect", "(Ljava/lang/String;)V");
     env->DeleteLocalRef(clazz);
 }
 
@@ -118,13 +117,3 @@ int AndroidGameHost::getLocalAddr(JNIEnv *env) {
     return env->CallIntMethod(host, java_getLocalAddr);
 }
 
-void AndroidGameHost::playSoundEffect(JNIEnv *env, const char *_name) {
-    if (!java_playSoundEffect) {
-        return;
-    }
-    jstring name = env->NewStringUTF(_name);
-    env->CallVoidMethod(host, java_playSoundEffect, name);
-    if (name) {
-        env->DeleteLocalRef(name);
-    }
-}
