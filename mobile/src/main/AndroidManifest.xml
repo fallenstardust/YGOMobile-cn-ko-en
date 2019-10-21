@@ -198,7 +198,7 @@
             android:priority="1000" />
 
         <provider
-            android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:authorities="${applicationId}.preference"
             android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
             android:exported="false"/>
 

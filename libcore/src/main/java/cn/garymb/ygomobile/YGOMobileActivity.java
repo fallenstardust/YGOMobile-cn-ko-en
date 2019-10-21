@@ -14,6 +14,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.Process;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -23,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -44,6 +46,7 @@ import cn.garymb.ygomobile.widget.EditWindowCompat;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
 import cn.garymb.ygomobile.widget.overlay.OverlayView;
 
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 import static cn.garymb.ygomobile.core.YGOCore.ACTION_START;
 import static cn.garymb.ygomobile.core.YGOCore.ACTION_STOP;
 
@@ -125,7 +128,13 @@ public class YGOMobileActivity extends NativeActivity implements
         mCore = YGOCore.getInstance();
         mHost = app().getGameHost();
         fullscreen();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            getWindow().setAttributes(lp);
+        }
         mHost.setEnableSound(mGameConfig.isEnableSoundEffect());
+        mScreenKeeper = new ScreenKeeper(this);
         super.onCreate(savedInstanceState);
         if(DEBUG) {
             Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
@@ -137,7 +146,6 @@ public class YGOMobileActivity extends NativeActivity implements
             Log.i(TAG, "USE_INPUT_QUEEN:" + USE_INPUT_QUEEN+",RESIZE_WINDOW_LAYOUT="+RESIZE_WINDOW_LAYOUT);
         }
         initExtraView();
-        mScreenKeeper = new ScreenKeeper(this);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
@@ -150,11 +158,8 @@ public class YGOMobileActivity extends NativeActivity implements
             });
         }
         sendBroadcast(new Intent(ACTION_START)
-                .putExtra(YGOCore.EXTRA_PID, android.os.Process.myPid())
+                .putExtra(YGOCore.EXTRA_PID, Process.myPid())
                 .setPackage(getPackageName()));
-        if(mCore == null){
-            finish();
-        }
     }
 
     @SuppressLint("WakelockTimeout")
@@ -480,17 +485,7 @@ public class YGOMobileActivity extends NativeActivity implements
         });
     }
 
-    @Override
-    public void performHapticFeedback() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mContentView.performHapticFeedback(
-                        HapticFeedbackConstants.LONG_PRESS,
-                        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            }
-        });
-    }
+
 
     @Override
     public void showComboBoxCompat(final String[] items, final boolean isShow, final int mode) {
@@ -503,6 +498,18 @@ public class YGOMobileActivity extends NativeActivity implements
                     mGlobalComboBox.showAtLocation(mContentView,
                             Gravity.BOTTOM, 0, 0);
                 }
+            }
+        });
+    }
+	
+	@Override
+    public void performHapticFeedback() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mContentView.performHapticFeedback(
+                        HapticFeedbackConstants.LONG_PRESS,
+                        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             }
         });
     }
