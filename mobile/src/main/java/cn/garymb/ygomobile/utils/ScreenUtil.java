@@ -283,4 +283,34 @@ public class ScreenUtil {
     }
 
 
+    public static int getCurrentNavigationBarHeight(Activity activity){
+        if(isNavigationBarShown(activity)){
+            return getNavigationBarHeight(activity);
+        } else{
+            return 0;
+        }
+    }
+
+    /**
+     * 非全面屏下 虚拟按键是否打开
+     * @param activity
+     */
+    public static boolean isNavigationBarShown(Activity activity) {
+        //虚拟键的view,为空或者不可见时是隐藏状态
+        View view = activity.findViewById(android.R.id.navigationBarBackground);
+        return view != null && view.getVisibility() == View.VISIBLE;
+    }
+
+    /**
+     * 非全面屏下 虚拟键高度(无论是否隐藏)
+     * @param context
+     */
+    public static int getNavigationBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId != 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
 }

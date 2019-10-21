@@ -18,6 +18,7 @@ import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public class App extends GameApplication implements GameConfig {
     private GameHost gameHost;
@@ -130,17 +131,20 @@ public class App extends GameApplication implements GameConfig {
     public int[] getGameSize(Activity activity) {
         Point size = new Point();
         int w, h;
-        if (isImmerSiveMode()) {
-            activity.getWindowManager().getDefaultDisplay().getRealSize(size);
-            w = Math.max(size.x, size.y);
-            h = Math.min(size.x, size.y);
-            h -= AppsSettings.get().getNotchHeight();
-        } else {
+//        if (isImmerSiveMode()) {
+//            activity.getWindowManager().getDefaultDisplay().getRealSize(size);
+//            w = Math.max(size.x, size.y);
+//            h = Math.min(size.x, size.y);
+//            h -= AppsSettings.get().getNotchHeight();
+//        } else {
             int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
             int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
             w = Math.max(w1, h1);
             h = Math.min(w1, h1);
-        }
+            if(isImmerSiveMode()){
+                h += ScreenUtil.getCurrentNavigationBarHeight(activity);
+            }
+//        }
         return new int[]{w, h};
     }
 
