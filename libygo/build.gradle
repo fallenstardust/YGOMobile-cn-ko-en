@@ -25,6 +25,7 @@ android {
             assets.srcDirs = ['../libcore/src/main/assets']
             java.srcDirs = ['../libcore/src/main/java']
             res.srcDirs = ['../libcore/src/main/res']
+            manifest.srcFile  '../libcore/src/main/AndroidManifest.xml'
         }
     }
 }

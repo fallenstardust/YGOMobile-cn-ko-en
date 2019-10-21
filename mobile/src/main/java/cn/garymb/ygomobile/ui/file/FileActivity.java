@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.AdapterView;
@@ -55,6 +56,12 @@ public class FileActivity extends BaseActivity implements AdapterView.OnItemClic
 
     private void initViews() {
         mFileAdapter = new FileAdapter(this);
+        try {
+            mFileAdapter.setRootPath(Environment.getExternalStorageDirectory().getAbsolutePath());
+        } catch (Exception e) {
+            mFileAdapter.setRootPath("/");
+        }
+
         mListView = $(R.id.list_files);
         mListView.setAdapter(mFileAdapter);
 //        footView = $(R.id.head_view);

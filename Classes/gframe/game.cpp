@@ -51,6 +51,22 @@ bool Game::Initialize() {
 	LoadConfig(jni, options);
 	int windowWidth = gameUI->getWindowWidth(jni);
 	int windowHeight = gameUI->getWindowHeight(jni);
+
+    xScale = (float)windowWidth / GAME_WIDTH;
+    yScale = (float)windowHeight / GAME_HEIGHT;
+
+    LOGI("org xScale = %f, yScale = %f", xScale, yScale);
+
+    //int xs = (int) (xScale * 100) / 2 * 2;
+    //int sy = (int) (yScale * 100) / 2 * 2;
+
+    //xScale = xs/100.0f;
+    //yScale = sy/100.0f;
+
+    //windowWidth = (int)(xScale* (int)GAME_WIDTH);
+    //windowHeight = (int)(yScale* (int)GAME_HEIGHT);
+    //LOGI("wrapper xScale = %f, yScale = %f", xScale, yScale);
+
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -87,10 +103,6 @@ bool Game::Initialize() {
 	isPSEnabled = options->isPendulumScaleEnabled();
 	dataManager.FileSystem = device->getFileSystem();
 
-	xScale = (float)windowWidth / GAME_WIDTH;
-	yScale = (float)windowHeight / GAME_HEIGHT;
-
-	LOGI("xScale = %f, yScale = %f", xScale, yScale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
 	LOGI("workingDir= %s", workingDir.c_str());
@@ -118,9 +130,9 @@ bool Game::Initialize() {
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-            LOGD("add arrchive ok %s", zip_path.c_str());
+            LOGD("add arrchive ok [%s]", zip_path.c_str());
 	    }else{
-            LOGD("add arrchive fail %s", zip_path.c_str());
+            LOGW("add arrchive fail [%s]", zip_path.c_str());
 		}
 	}
 	
@@ -187,7 +199,7 @@ bool Game::Initialize() {
 		if(dataManager.LoadDB(wpath)) {
 		    LOGD("add cdb ok:%s", cdb_path.c_str());
 	    }else{
-            LOGD("add cdb fail:%s", cdb_path.c_str());
+            LOGW("add cdb fail [%s]", cdb_path.c_str());
 		}
 	}
 	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
@@ -199,10 +211,10 @@ bool Game::Initialize() {
 		return false;
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
-	numFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)16 * yScale, isAntialias, false);
-	adFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)12 * yScale, isAntialias, false);
-	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
+	numFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, ((int)16 * yScale)/2*2, isAntialias, false);
+	adFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, ((int)12 * yScale)/2*2, isAntialias, false);
+	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, ((int)48 * yScale)/2*2, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, ((int)gameConf.textfontsize * yScale)/2*2, isAntialias, true);
 	textFont = guiFont;
 	if(!numFont || !textFont) {
 	  LOGW("add font fail ");
@@ -640,7 +652,7 @@ bool Game::Initialize() {
 	btnOperation = env->addButton(rect<s32>(1 * xScale, 409 * yScale, 105 * xScale, 459 * yScale), wCmdMenu, BUTTON_CMD_ACTIVATE, dataManager.GetSysString(1161));
 	btnReset = env->addButton(rect<s32>(1 * xScale, 460 * yScale , 105 * xScale, 510 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
 	//deck edit
-	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 8 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
+	wDeckEdit = env->addStaticText(L"", rect<s32>(309 * xScale, 1 * yScale, 605 * xScale, 130 * yScale), true, false, 0, -1, true);
 	wDeckEdit->setVisible(false);
 	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
 	//deck manage
@@ -725,7 +737,7 @@ bool Game::Initialize() {
 	wSort->setVisible(false);
 	//filters
 #ifdef _IRR_ANDROID_PLATFORM_
-	wFilter = env->addStaticText(L"", rect<s32>(610 * xScale, 8 * yScale, 1020 * xScale, 130 * yScale), true, false, 0, -1, true);
+	wFilter = env->addStaticText(L"", rect<s32>(610 * xScale, 1 * yScale, 1020 * xScale, 130 * yScale), true, false, 0, -1, true);
 	wFilter->setVisible(false);
 	env->addStaticText(dataManager.GetSysString(1311), rect<s32>(10 * xScale, 5 * yScale, 70 * xScale, 25 * yScale), false, false, wFilter);
 	cbCardType = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(60 * xScale, 3 * yScale, 120 * xScale, 23 * yScale), wFilter, COMBOBOX_MAINTYPE);
@@ -935,7 +947,7 @@ bool Game::Initialize() {
 	btnCancelOrFinish->setVisible(false);
 #endif
 	//leave/surrender/exit
-	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 10 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
+	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
 	//tip
 	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
@@ -1759,14 +1771,8 @@ JNIEnv* Game::getJniEnv(){
 
 #endif
 void Game::refreshTexture(){
-#ifdef _IRR_ANDROID_PLATFORM_
-	LOGD("refreshTexture before");
-#endif
 	gMutex.lock();
 	textFont->setTransparency(true);
 	gMutex.unlock();
-#ifdef _IRR_ANDROID_PLATFORM_
-	LOGD("refreshTexture after");
-#endif
 }
 }

@@ -74,7 +74,6 @@ import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class SettingFragment extends PreferenceFragmentPlus {
 
@@ -517,12 +516,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
             //rename
             Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
-                try {
-                    IOUtils.createFolder(file);
-                    IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
-                            file.getAbsolutePath(), false);
-                } catch (IOException e) {
-                }
+                IOUtils.createFolder(file);
+                IOUtils.copyFolder(getActivity().getAssets(), Constants.ASSET_SKIN_PENDULUM_DIR_PATH,
+                        file.getAbsolutePath(), false);
+            }).fail((e)->{
+                dlg.dismiss();
             }).done((re) -> {
                 dlg.dismiss();
             });

@@ -17,7 +17,7 @@
         <CheckBoxPreference
             android:key="pref_settings_keep_scale"
             android:persistent="false"
-            android:title="@string/about_pref_settings_keep_scale"/>
+            android:title="@string/about_pref_settings_keep_scale" />
 
         <ListPreference
             android:entries="@array/opengl_version"

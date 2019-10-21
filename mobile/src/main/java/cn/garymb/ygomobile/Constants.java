@@ -53,13 +53,14 @@ public interface Constants {
     String SETTINGS_AVATAR = "settings_game_avatar";
     String SETTINGS_CARD_BG = "settings_game_diy_card_bg";
     String ASSETS_PATH = "data/";
-    String ASSET_SERVER_LIST = "serverlist.xml";
-    String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";
     String DEFAULT_FONT_NAME = "ygo.ttf";
     String DATABASE_NAME = "cards.cdb";
     String BOT_CONF = "bot.conf";
     String WINDBOT_PATH = "windbot";
     String WINDBOT_DECK_PATH = "Decks";
+    String LIB_WINDBOT_PATH = WINDBOT_PATH + "/";
+    String LIB_WINDBOT_DECK_PATH = "windbot/" + WINDBOT_DECK_PATH;
+    String LIB_WINDBOT_DIALOG_PATH = "windbot/Dialogs";
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";
@@ -73,8 +74,8 @@ public interface Constants {
     String CORE_EXPANSIONS = "expansions";
     String CORE_SINGLE_PATH = "single";
     String CORE_IMAGE_PATH = "pics";
-    String MOBILE_LOG="log";
-    String MOBILE_DECK_SHARE="deckShare";
+    String MOBILE_LOG = "log";
+    String MOBILE_DECK_SHARE = "deckShare";
     String CORE_EXPANSIONS_IMAGE_PATH = "expansions/pics";
     String CORE_IMAGE_FIELD_PATH = "field";
     String CORE_SCRIPT_PATH = "script";
@@ -90,6 +91,25 @@ public interface Constants {
     String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
+    String WINDBOT_ACTION = "RUN_WINDBOT";
+    String CORE_CONF_PATH = "conf";
+
+    String ASSET_SERVER_LIST = "serverlist.xml";
+    String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";
+    String ASSET_CARDS_CDB_FILE_PATH = ASSETS_PATH + DATABASE_NAME;
+    String ASSET_DECK_DIR_PATH = ASSETS_PATH + CORE_DECK_PATH;
+    String ASSET_PACK_DIR_PATH = ASSETS_PATH + CORE_PACK_PATH;
+    String ASSET_SINGLE_DIR_PATH = ASSETS_PATH + CORE_SINGLE_PATH;
+    String ASSET_SKIN_DIR_PATH = ASSETS_PATH + CORE_SKIN_PATH;
+    String ASSET_FONTS_DIR_PATH = ASSETS_PATH + FONT_DIRECTORY;
+    String ASSET_SCRIPTS_FILE_PATH = ASSETS_PATH + CORE_SCRIPTS_ZIP;
+    String ASSET_PICS_FILE_PATH = ASSETS_PATH + CORE_PICS_ZIP;
+    String ASSET_WINDBOT_DECK_DIR_PATH = ASSETS_PATH + LIB_WINDBOT_PATH + LIB_WINDBOT_DECK_PATH;
+    String ASSET_WINDBOT_DIALOG_DIR_PATH = ASSETS_PATH + LIB_WINDBOT_PATH + LIB_WINDBOT_DIALOG_PATH;
+    String ASSET_CONF_PATH = ASSETS_PATH + CORE_CONF_PATH;
+    String ASSET_STRING_CONF_FILE_PATH = ASSETS_PATH + CORE_CONF_PATH + "/" + CORE_STRING_PATH;
+    String ASSET_SKIN_PENDULUM_DIR_PATH = ASSETS_PATH + CORE_SKIN_PENDULUM_PATH;
+
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
     int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{177, 254};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};
@@ -104,8 +124,8 @@ public interface Constants {
     String PREF_FONT_SIZE = "pref_settings_font_size";
     int DEF_PREF_FONT_SIZE = 14;
 
-    String PREF_NOTCH_HEIGHT="pref_notch_height";
-    int DEF_PREF_NOTCH_HEIGHT=0;
+    String PREF_NOTCH_HEIGHT = "pref_notch_height";
+    int DEF_PREF_NOTCH_HEIGHT = 0;
 
     String PREF_ONLY_GAME = "pref_settings_only_game";
     boolean DEF_PREF_ONLY_GAME = false;

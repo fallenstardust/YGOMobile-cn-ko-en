@@ -33,7 +33,7 @@ namespace irr
 {
 
 CIrrDeviceAndroid::CIrrDeviceAndroid(const SIrrlichtCreationParameters& param)
-	: CIrrDeviceStub(param), Focused(true), Initialized(false), Paused(true), JNIEnvAttachedToVM(0)
+	: CIrrDeviceStub(param), Focused(false), Initialized(false), Paused(true), JNIEnvAttachedToVM(0)
 {
 #ifdef _DEBUG
 	setDebugName("CIrrDeviceAndroid");
@@ -163,7 +163,7 @@ bool CIrrDeviceAndroid::isWindowFocused() const
 
 bool CIrrDeviceAndroid::isWindowMinimized() const
 {
-	return Paused;
+	return !Focused;
 }
 
 void CIrrDeviceAndroid::closeDevice()
@@ -201,47 +201,44 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 {
 	CIrrDeviceAndroid* device = (CIrrDeviceAndroid*)app->userData;
 
-	switch (cmd) {
+	switch (cmd)
+	{
 		case APP_CMD_SAVE_STATE:
 			os::Printer::log("Android command APP_CMD_SAVE_STATE", ELL_DEBUG);
-			break;
-		case APP_CMD_INIT_WINDOW: {
+		break;
+		case APP_CMD_INIT_WINDOW:
 			char log_init_window[256];
 			os::Printer::log("Android command APP_CMD_INIT_WINDOW", ELL_DEBUG);
 			device->getExposedVideoData().OGLESAndroid.Window = app->window;
 
-			if (device->CreationParams.WindowSize.Width == 0 ||
-				device->CreationParams.WindowSize.Height == 0) {
+			if (device->CreationParams.WindowSize.Width == 0 || device->CreationParams.WindowSize.Height == 0)
+			{
 				device->CreationParams.WindowSize.Width = ANativeWindow_getWidth(app->window);
 				device->CreationParams.WindowSize.Height = ANativeWindow_getHeight(app->window);
 			}
-			sprintf(log_init_window, "init window: width = %d, height = %d",
-					ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window));
+			sprintf(log_init_window, "init window: width = %d, height = %d", ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window));
 			os::Printer::log(log_init_window);
-			device->getContextManager()->initialize(device->CreationParams,
-													device->ExposedVideoData);
+			device->getContextManager()->initialize(device->CreationParams, device->ExposedVideoData);
 			device->getContextManager()->generateSurface();
 			device->getContextManager()->generateContext();
-			device->getContextManager()->activateContext(
-					device->getContextManager()->getContext());
-			if (device->CreationParams.WindowSize.Width != 1 &&
-				device->CreationParams.WindowSize.Height != 1) {
-				if (!device->Initialized) {
-					io::CAndroidAssetFileArchive *assets = new io::CAndroidAssetFileArchive(
-							device->Android->activity->assetManager, false, false);
-					assets->addDirectoryToFileList("");
-					device->FileSystem->addFileArchive(assets);
-					assets->drop();
+			device->getContextManager()->activateContext(device->getContextManager()->getContext());
+			if (device->CreationParams.WindowSize.Width != 1 && device->CreationParams.WindowSize.Height != 1)
+			{
+				if (!device->Initialized)
+		        {
+				    io::CAndroidAssetFileArchive* assets = new io::CAndroidAssetFileArchive( device->Android->activity->assetManager, false, false);
+				    assets->addDirectoryToFileList("");
+				    device->FileSystem->addFileArchive(assets);
+				    assets->drop();
 
-					device->createDriver();
+				    device->createDriver();
 
-					if (device->VideoDriver)
-						device->createGUIAndScene();
-				}
-				device->Initialized = true;
+				    if (device->VideoDriver)
+					    device->createGUIAndScene();
+			    }
+			    device->Initialized = true;
 			}
-		}
-			break;
+		    break;
 		case APP_CMD_TERM_WINDOW:
 			os::Printer::log("Android command APP_CMD_TERM_WINDOW", ELL_DEBUG);
 			device->getContextManager()->destroySurface();
@@ -275,12 +272,13 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 					   }
 					   device->Initialized = true;
 		          }
+
 		     }
-//		     device->Focused = true;
+		     device->Focused = true;
 		    break;
 		case APP_CMD_LOST_FOCUS:
 			os::Printer::log("Android command APP_CMD_LOST_FOCUS", ELL_DEBUG);
-//			device->Focused = false;
+			device->Focused = false;
 		break;
 		case APP_CMD_DESTROY:
 			os::Printer::log("Android command APP_CMD_DESTROY", ELL_DEBUG);

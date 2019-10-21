@@ -1,11 +1,16 @@
 package cn.garymb.ygomobile;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Point;
+import android.os.Build;
+import android.os.Process;
+import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -14,11 +19,14 @@ import com.bumptech.glide.Glide;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import java.lang.reflect.Method;
+
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ScreenUtil;
+import jonathanfinerty.once.Once;
 
 public class App extends GameApplication implements GameConfig {
     private GameHost gameHost;
@@ -26,16 +34,44 @@ public class App extends GameApplication implements GameConfig {
     @Override
     public void onCreate() {
         super.onCreate();
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        boolean isGameProcess = getCurrentProcessName().endsWith(":game");
+        if (!isGameProcess) {
+            Once.initialise(this);
+            AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+            //初始化图片选择器
+            initImgsel();
+//        QbSdk.initX5Environment(this, null);
+//        QbSdk.setCurrentID("");
+        }
         AppsSettings.init(this);
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
         gameHost = new LocalGameHost(this);
-        //初始化图片选择器
-        initImgsel();
-//        QbSdk.initX5Environment(this, null);
-//        QbSdk.setCurrentID("");
+    }
+
+    @SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
+    private String getCurrentProcessName() {
+        if (Build.VERSION.SDK_INT >= 28) {
+            return getProcessName();
+        }
+        try {
+            Class clazz = Class.forName("android.app.ActivityThread");
+            Method currentProcessName = clazz.getDeclaredMethod("currentProcessName");
+            return (String) currentProcessName.invoke(null);
+        } catch (Throwable e) {
+            Log.w("kk", "currentProcessName", e);
+        }
+        int pid = Process.myPid();
+        String processName = getPackageName();
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
+            if (info.pid == pid) {
+                processName = info.processName;
+                break;
+            }
+        }
+        return processName;
     }
 
     private void initImgsel() {
@@ -63,7 +99,7 @@ public class App extends GameApplication implements GameConfig {
         return getAssets();
     }
 
-    private class LocalGameHost extends GameHost{
+    private class LocalGameHost extends GameHost {
         LocalGameHost(Context context) {
             super(context);
         }
@@ -95,7 +131,9 @@ public class App extends GameApplication implements GameConfig {
             intent.setAction("RUN_WINDBOT");
             sendBroadcast(intent);
         }
-    };
+    }
+
+    ;
 
     @Override
     public boolean isKeepScale() {
@@ -137,13 +175,13 @@ public class App extends GameApplication implements GameConfig {
 //            h = Math.min(size.x, size.y);
 //            h -= AppsSettings.get().getNotchHeight();
 //        } else {
-            int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
-            int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
-            w = Math.max(w1, h1);
-            h = Math.min(w1, h1);
-            if(isImmerSiveMode()){
-                h += ScreenUtil.getCurrentNavigationBarHeight(activity);
-            }
+        int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
+        int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
+        w = Math.max(w1, h1);
+        h = Math.min(w1, h1);
+        if (isImmerSiveMode()) {
+            h += ScreenUtil.getCurrentNavigationBarHeight(activity);
+        }
 //        }
         return new int[]{w, h};
     }

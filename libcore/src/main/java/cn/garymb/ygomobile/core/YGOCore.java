@@ -16,7 +16,7 @@ public class YGOCore{
     private static final String TAG = "ygomobile";
     public static int gPid;
     private static YGOCore sYGOCore;
-    private static final boolean DISABLE_THREAD = false;
+    private static final boolean DISABLE_THREAD = true;
 
     public static YGOCore getInstance(){
         if(sYGOCore == null){
@@ -95,7 +95,6 @@ public class YGOCore{
             H.post(new Runnable() {
                 @Override
                 public void run() {
-                    Log.i(TAG, "touch " + x + "x" + y);
                     sendTouchInner(action, x, y, id);
                 }
             });
