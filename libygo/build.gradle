@@ -12,6 +12,11 @@ android {
             moduleName "YGOMobile"
             abiFilters "armeabi-v7a"//,"x86"
         }
+        externalNativeBuild {
+            ndkBuild {
+                arguments "-j8"
+            }
+        }
     }
 
     externalNativeBuild {
