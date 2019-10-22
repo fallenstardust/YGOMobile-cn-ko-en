@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.core.YGOCore;
+import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.interfaces.IGameUI;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.interfaces.GameConfig;
@@ -59,8 +60,7 @@ public class YGOMobileActivity extends NativeActivity implements
         OverlayOvalView.OnDuelOptionsSelectListener,
         IGameUI {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
-    private static final float GAME_WIDTH = 1024.0f;
-    private static final float GAME_HEIGHT = 640.0f;
+
     private static boolean DEBUG;
 
     private static final int MAX_REFRESH = 30 * 1000;
@@ -104,9 +104,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private GameConfig mGameConfig;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-    private volatile int mTouchLeft, mTouchTop;
-    private volatile int mGameWidth, mGameHeight;
-    private volatile int mActivityWidth, mActivityHeight;
+    private final GameSize mGameSize = new GameSize();
     private FrameLayout mLayout;
     //画面居中
     private SurfaceView mSurfaceView;
@@ -273,33 +271,15 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private int[] getGameSize() {
-        int[] size = mHost.getGameSize(this);
-        int activityHeight = size[0];
-        int activityWidth = size[1];
-        int w = Math.max(activityHeight, activityWidth);
-        int h = Math.min(activityHeight, activityWidth);
-        mActivityWidth = w;
-        mActivityHeight = h;
-        float sx, sy, scale;
-        if (mGameConfig.isKeepScale()) {
-            sx = (float) w / GAME_WIDTH;
-            sy = (float) h / GAME_HEIGHT;
-            scale = Math.min(sx, sy);
-            w = (int) (GAME_WIDTH * scale);
-            h = (int) (GAME_HEIGHT * scale);
-            if (DEBUG) {
-                Log.i(TAG, "getGameSize:sx=" + sx + ",sy=" + sy + ",w=" + w + ",h=" + h + ",gw=" + (int) (GAME_WIDTH * scale) + ",gh=" + (int) (GAME_HEIGHT * scale));
-            }
-        }
+        GameSize gameSize = mHost.getGameSize(this);
+        mGameSize.update(gameSize);
+        int w = gameSize.getWidth();
+        int h = gameSize.getHeight();
         if (RESIZE_WINDOW_LAYOUT || !USE_INPUT_QUEEN) {
-            mTouchLeft = 0;
-            mTouchTop = 0;
-        } else {
-            mTouchLeft = (mActivityWidth - w) / 2;
-            mTouchTop = (mActivityHeight - h) / 2;
+            mGameSize.setTouch(0, 0);
         }
         if (DEBUG) {
-            Log.i(TAG, "window:" + mActivityWidth + "x" + mActivityHeight + ",game:" + w + "x" + h + ", left=" + mTouchLeft + ",top=" + mTouchTop);
+            Log.i(TAG, "GameSize:" + mGameSize);
         }
         return new int[]{w, h};
     }
@@ -356,8 +336,6 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void setGameSize(int w, int h){
-        mGameWidth = w;
-        mGameHeight = h;
         if(mInitView) {
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mClickView.getLayoutParams();
             lp.width = w;
@@ -540,33 +518,33 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public int getWindowLeft() {
         if (DEBUG) {
-            Log.i(TAG, "getWindowLeft:" + mTouchLeft);
+            Log.i(TAG, "getWindowLeft:" + mGameSize.getTouchX());
         }
-        return mTouchLeft;
+        return mGameSize.getTouchX();
     }
 
     @Override
     public int getWindowTop() {
         if (DEBUG) {
-            Log.i(TAG, "getWindowTop:" + mTouchTop);
+            Log.i(TAG, "getWindowTop:" + mGameSize.getTouchY());
         }
-        return mTouchTop;
+        return mGameSize.getTouchY();
     }
 
     @Override
     public int getWindowWidth() {
         if(DEBUG) {
-            Log.i(TAG, "getWindowWidth:" + mGameWidth);
+            Log.i(TAG, "getWindowWidth:" + mGameSize.getWidth());
         }
-        return mGameWidth;
+        return mGameSize.getWidth();
     }
 
     @Override
     public int getWindowHeight() {
         if(DEBUG) {
-            Log.i(TAG, "getWindowHeight:" + mGameHeight);
+            Log.i(TAG, "getWindowHeight:" + mGameSize.getHeight());
         }
-        return mGameHeight;
+        return mGameSize.getHeight();
     }
 
     @Override

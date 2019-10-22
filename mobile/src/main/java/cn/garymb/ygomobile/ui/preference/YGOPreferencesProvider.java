@@ -29,8 +29,7 @@ public class YGOPreferencesProvider extends ContentProvider {
     public static final String TYPE_BOOLEAN = "boolean";
     public static final String COL_NAME = "name";
     public static final String COL_VALUE = "value";
-    public static final int COL_NAME_INDEX = 0;
-    public static final int COL_VALUE_INDEX = 1;
+    public static final int COL_VALUE_INDEX = 0;
 
     private static final Map<String, WeakReference<SharedPreferences>> sMap = new HashMap<>();
 
@@ -63,27 +62,27 @@ public class YGOPreferencesProvider extends ContentProvider {
         String key = paths.get(2);
         String def = selection;
         SharedPreferences sharedPreferences = getOrCreate(getContext(), name);
-        MatrixCursor cursor = new MatrixCursor(new String[]{COL_NAME, COL_VALUE});
+        MatrixCursor cursor = new MatrixCursor(new String[]{COL_VALUE});
         try {
             if (TYPE_BOOLEAN.equals(type)) {
-                cursor.addRow(new Object[]{key, (int) (sharedPreferences.getBoolean(key, "true".equalsIgnoreCase(def)) ? 1 : 0)});
+                cursor.addRow(new Object[]{(int) (sharedPreferences.getBoolean(key, "true".equalsIgnoreCase(def)) ? 1 : 0)});
             } else if (TYPE_FLOAT.equals(type)) {
                 if (def == null) {
                     def = "0";
                 }
-                cursor.addRow(new Object[]{key, sharedPreferences.getFloat(key, Float.parseFloat(def))});
+                cursor.addRow(new Object[]{sharedPreferences.getFloat(key, Float.parseFloat(def))});
             } else if (TYPE_LONG.equals(type)) {
                 if (def == null) {
                     def = "0";
                 }
-                cursor.addRow(new Object[]{key, sharedPreferences.getLong(key, Long.parseLong(def))});
+                cursor.addRow(new Object[]{sharedPreferences.getLong(key, Long.parseLong(def))});
             } else if (TYPE_INT.equals(type)) {
                 if (def == null) {
                     def = "0";
                 }
-                cursor.addRow(new Object[]{key, sharedPreferences.getInt(key, Integer.parseInt(def))});
+                cursor.addRow(new Object[]{sharedPreferences.getInt(key, Integer.parseInt(def))});
             } else if (TYPE_STRING.equals(type)) {
-                cursor.addRow(new Object[]{key, sharedPreferences.getString(key, def)});
+                cursor.addRow(new Object[]{sharedPreferences.getString(key, def)});
             } else {
                 cursor.close();
                 return null;
@@ -91,8 +90,9 @@ public class YGOPreferencesProvider extends ContentProvider {
         } catch (Throwable e) {
             Log.e("kk", "query", e);
             cursor.close();
+            return null;
         }
-        return null;
+        return cursor;
     }
 
     @Nullable

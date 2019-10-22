@@ -21,14 +21,16 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 
 import java.lang.reflect.Method;
 
+import cn.garymb.ygomobile.core.YGOCore;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
+import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import jonathanfinerty.once.Once;
 
-public class App extends GameApplication{
+public class App extends GameApplication {
     private GameHost gameHost;
 
     @Override
@@ -103,24 +105,34 @@ public class App extends GameApplication{
         }
 
         @Override
-        public int[] getGameSize(Activity activity) {
-//            Point size = new Point();
-            int w, h;
-//        if (isImmerSiveMode()) {
-//            activity.getWindowManager().getDefaultDisplay().getRealSize(size);
-//            w = Math.max(size.x, size.y);
-//            h = Math.min(size.x, size.y);
-//            h -= AppsSettings.get().getNotchHeight();
-//        } else {
+        public GameSize getGameSize(Activity activity) {
+            int maxW, maxH;
             int w1 = activity.getWindowManager().getDefaultDisplay().getWidth();
             int h1 = activity.getWindowManager().getDefaultDisplay().getHeight();
-            w = Math.max(w1, h1);
-            h = Math.min(w1, h1);
+            maxW = Math.max(w1, h1);
+            maxH = Math.min(w1, h1);
             if (AppsSettings.get().isImmerSiveMode()) {
-                h += ScreenUtil.getCurrentNavigationBarHeight(activity);
+                maxH += ScreenUtil.getCurrentNavigationBarHeight(activity);
             }
-//        }
-            return new int[]{w, h};
+            float sx, sy, scale;
+            int gw, gh;
+            if (AppsSettings.get().isKeepScale()) {
+                sx = (float) maxW / YGOCore.GAME_WIDTH;
+                sy = (float) maxH / YGOCore.GAME_HEIGHT;
+                scale = Math.min(sx, sy);
+                gw = (int) (YGOCore.GAME_WIDTH * scale);
+                gh = (int) (YGOCore.GAME_HEIGHT * scale);
+            } else {
+                gw = maxW;
+                gh = maxH;
+            }
+            //fix touch point
+            int left = (maxW - gw) / 2;
+            int top = (maxH - gh) / 2;
+            //if(huawei and liuhai){
+            // left-=liuhai
+            // }
+            return new GameSize(gw, gh, left, top);
         }
 
         @Override
@@ -134,9 +146,8 @@ public class App extends GameApplication{
         }
     }
 
-    public static GameConfig genConfig(){
+    public static GameConfig genConfig() {
         GameConfig config = new GameConfig();
-        config.setKeepScale(AppsSettings.get().isKeepScale());
         config.setNativeInitOptions(AppsSettings.get().getNativeInitOptions());
         config.setLockScreenOrientation(AppsSettings.get().isLockScreenOrientation());
         config.setSensorRefresh(AppsSettings.get().isSensorRefresh());

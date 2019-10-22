@@ -9,7 +9,9 @@ import androidx.annotation.Keep;
 
 import java.nio.ByteBuffer;
 
-public class YGOCore{
+public class YGOCore {
+    public static final float GAME_WIDTH = 1024.0f;
+    public static final float GAME_HEIGHT = 640.0f;
     public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
     public static final String EXTRA_PID = "extras.mypid";
@@ -18,10 +20,10 @@ public class YGOCore{
     private static YGOCore sYGOCore;
     private static final boolean DISABLE_THREAD = true;
 
-    public static YGOCore getInstance(){
-        if(sYGOCore == null){
-            synchronized (YGOCore.class){
-                if(sYGOCore == null){
+    public static YGOCore getInstance() {
+        if (sYGOCore == null) {
+            synchronized (YGOCore.class) {
+                if (sYGOCore == null) {
                     sYGOCore = new YGOCore();
                 }
             }
@@ -41,8 +43,8 @@ public class YGOCore{
     private HandlerThread mWorker;
     private Handler H;
 
-    private YGOCore(){
-        if(!DISABLE_THREAD) {
+    private YGOCore() {
+        if (!DISABLE_THREAD) {
             mWorker = new HandlerThread("ygopro_core_work");
             mWorker.start();
             H = new Handler(mWorker.getLooper());
@@ -66,7 +68,7 @@ public class YGOCore{
     }
 
     @Keep
-    public boolean sendTouchEvent(final int action,final int x,final int y,final int id) {
+    public boolean sendTouchEvent(final int action, final int x, final int y, final int id) {
         if (nativeAndroidDevice == 0) {
             Log.w(TAG, "sendTouchEvent fail nativeAndroidDevice = 0");
             return false;
@@ -104,7 +106,7 @@ public class YGOCore{
         return true;
     }
 
-    private void sendTouchInner(int action, int x, int y, int id){
+    private void sendTouchInner(int action, int x, int y, int id) {
         if (nativeAndroidDevice != 0) {
             nativeSendTouch(nativeAndroidDevice, action, x, y, id);
         }

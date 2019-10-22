@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,7 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
     private String spName;
     private Context context;
     private ContentResolver mResolver;
+    private static final String TAG = "kk";
 
     public SharedPreferencesPlus(Context context, String name, int mode) {
         this.spName = name;
@@ -29,15 +31,15 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         return this;
     }
 
-    protected Uri.Builder create(){
+    protected Uri.Builder create() {
         return new Uri.Builder()
                 .scheme("content")
                 .authority(YGOPreferencesProvider.AUTH)
                 .appendPath(spName);
     }
 
-    private Uri create(String type, String key){
-       return create()
+    private Uri create(String type, String key) {
+        return create()
                 .appendPath(type)
                 .appendPath(key).build();
     }
@@ -47,7 +49,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_STRING, key);
         ContentValues contentValues = new ContentValues();
         contentValues.put(YGOPreferencesProvider.COL_VALUE, value);
-        mResolver.update(uri, contentValues, null, null);
+        try {
+            mResolver.update(uri, contentValues, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "putString:" + key + "=" + value, e);
+        }
         return this;
     }
 
@@ -61,7 +67,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_INT, key);
         ContentValues contentValues = new ContentValues();
         contentValues.put(YGOPreferencesProvider.COL_VALUE, value);
-        mResolver.update(uri, contentValues, null, null);
+        try {
+            mResolver.update(uri, contentValues, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "putInt:" + key + "=" + value, e);
+        }
         return this;
     }
 
@@ -70,7 +80,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_LONG, key);
         ContentValues contentValues = new ContentValues();
         contentValues.put(YGOPreferencesProvider.COL_VALUE, value);
-        mResolver.update(uri, contentValues, null, null);
+        try {
+            mResolver.update(uri, contentValues, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "putLong:" + key + "=" + value, e);
+        }
         return this;
     }
 
@@ -79,7 +93,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_FLOAT, key);
         ContentValues contentValues = new ContentValues();
         contentValues.put(YGOPreferencesProvider.COL_VALUE, value);
-        mResolver.update(uri, contentValues, null, null);
+        try {
+            mResolver.update(uri, contentValues, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "putFloat:" + key + "=" + value, e);
+        }
         return this;
     }
 
@@ -88,7 +106,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_BOOLEAN, key);
         ContentValues contentValues = new ContentValues();
         contentValues.put(YGOPreferencesProvider.COL_VALUE, value);
-        mResolver.update(uri, contentValues, null, null);
+        try {
+            mResolver.update(uri, contentValues, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "putBoolean:" + key + "=" + value, e);
+        }
         return this;
     }
 
@@ -96,7 +118,11 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
     public Editor remove(String key) {
         Uri uri = create()
                 .appendPath(key).build();
-        mResolver.delete(uri, null, null);
+        try {
+            mResolver.delete(uri, null, null);
+        } catch (Throwable e) {
+            Log.e(TAG, "remove:" + key, e);
+        }
         return this;
     }
 
@@ -117,7 +143,14 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_STRING, key);
         Cursor cursor = mResolver.query(uri, null, defValue, null, null);
         if (cursor != null) {
-            return cursor.getString(YGOPreferencesProvider.COL_VALUE_INDEX);
+            try {
+                cursor.moveToFirst();
+                return cursor.getString(YGOPreferencesProvider.COL_VALUE_INDEX);
+            } catch (Throwable e) {
+                Log.e(TAG, "getString:" + key, e);
+            } finally {
+                cursor.close();
+            }
         }
         return defValue;
     }
@@ -133,7 +166,14 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_INT, key);
         Cursor cursor = mResolver.query(uri, null, String.valueOf(defValue), null, null);
         if (cursor != null) {
-            return cursor.getInt(YGOPreferencesProvider.COL_VALUE_INDEX);
+            try{
+                cursor.moveToFirst();
+                return cursor.getInt(YGOPreferencesProvider.COL_VALUE_INDEX);
+            } catch (Throwable e) {
+                Log.e(TAG, "getInt:" + key, e);
+            } finally {
+                cursor.close();
+            }
         }
         return defValue;
     }
@@ -143,7 +183,14 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_LONG, key);
         Cursor cursor = mResolver.query(uri, null, String.valueOf(defValue), null, null);
         if (cursor != null) {
-            return cursor.getLong(YGOPreferencesProvider.COL_VALUE_INDEX);
+            try{
+                cursor.moveToFirst();
+                return cursor.getLong(YGOPreferencesProvider.COL_VALUE_INDEX);
+            } catch (Throwable e) {
+                Log.e(TAG, "getLong:" + key, e);
+            } finally {
+                cursor.close();
+            }
         }
         return defValue;
     }
@@ -153,7 +200,14 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_FLOAT, key);
         Cursor cursor = mResolver.query(uri, null, String.valueOf(defValue), null, null);
         if (cursor != null) {
-            return cursor.getFloat(YGOPreferencesProvider.COL_VALUE_INDEX);
+            try{
+                cursor.moveToFirst();
+                return cursor.getFloat(YGOPreferencesProvider.COL_VALUE_INDEX);
+            } catch (Throwable e) {
+                Log.e(TAG, "getFloat:" + key, e);
+            } finally {
+                cursor.close();
+            }
         }
         return defValue;
     }
@@ -163,7 +217,14 @@ public class SharedPreferencesPlus implements SharedPreferences, SharedPreferenc
         Uri uri = create(YGOPreferencesProvider.TYPE_BOOLEAN, key);
         Cursor cursor = mResolver.query(uri, null, String.valueOf(defValue), null, null);
         if (cursor != null) {
-            return cursor.getInt(YGOPreferencesProvider.COL_VALUE_INDEX) > 0;
+            try{
+                cursor.moveToFirst();
+                return cursor.getInt(YGOPreferencesProvider.COL_VALUE_INDEX) > 0;
+            } catch (Throwable e) {
+                Log.e(TAG, "getBoolean:" + key, e);
+            } finally {
+                cursor.close();
+            }
         }
         return defValue;
     }

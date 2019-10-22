@@ -36,7 +36,7 @@ public abstract class GameHost {
 
     public abstract AssetManager getGameAsset();
 
-    public abstract int[] getGameSize(Activity activity);
+    public abstract GameSize getGameSize(Activity activity);
 
     public boolean isDebugMode(){
         return false;

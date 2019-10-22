@@ -12,8 +12,6 @@ public class GameConfig implements Parcelable {
 
     public static final String EXTRA_CONFIG = "ygo_config";
 
-    private boolean keepScale;
-
     private NativeInitOptions nativeInitOptions;
 
     private boolean lockScreenOrientation;
@@ -26,14 +24,6 @@ public class GameConfig implements Parcelable {
     private boolean immerSiveMode;
 
     private boolean enableSoundEffect;
-
-    public boolean isKeepScale() {
-        return keepScale;
-    }
-
-    public void setKeepScale(boolean keepScale) {
-        this.keepScale = keepScale;
-    }
 
     public NativeInitOptions getNativeInitOptions() {
         return nativeInitOptions;
@@ -82,7 +72,6 @@ public class GameConfig implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeByte(this.keepScale ? (byte) 1 : (byte) 0);
         dest.writeParcelable(this.nativeInitOptions, flags);
         dest.writeByte(this.lockScreenOrientation ? (byte) 1 : (byte) 0);
         dest.writeByte(this.sensorRefresh ? (byte) 1 : (byte) 0);
@@ -91,7 +80,6 @@ public class GameConfig implements Parcelable {
     }
 
     public GameConfig() {
-        keepScale = false;
         nativeInitOptions = new NativeInitOptions();
         lockScreenOrientation = false;
         sensorRefresh = true;
@@ -100,7 +88,6 @@ public class GameConfig implements Parcelable {
     }
 
     protected GameConfig(Parcel in) {
-        this.keepScale = in.readByte() != 0;
         this.nativeInitOptions = in.readParcelable(NativeInitOptions.class.getClassLoader());
         this.lockScreenOrientation = in.readByte() != 0;
         this.sensorRefresh = in.readByte() != 0;
