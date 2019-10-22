@@ -1,14 +1,11 @@
 package cn.garymb.ygomobile.core;
 
-import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.widget.Toast;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
@@ -23,11 +20,7 @@ import cn.garymb.ygomobile.interfaces.GameConfig;
 public class YGOCore {
     public static final float GAME_WIDTH = 1024.0f;
     public static final float GAME_HEIGHT = 640.0f;
-    public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
-    public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
-    public static final String EXTRA_PID = "extras.mypid";
     private static final String TAG = "ygomobile";
-    public static int gPid;
     private static YGOCore sYGOCore;
     private static final boolean DISABLE_THREAD = true;
 

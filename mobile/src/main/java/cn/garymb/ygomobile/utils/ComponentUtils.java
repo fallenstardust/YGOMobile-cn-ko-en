@@ -26,6 +26,31 @@ public class ComponentUtils {
         return false;
     }
 
+    public static boolean killActivity(Context context, ComponentName componentName){
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.AppTask> tasks = am.getAppTasks();
+        if (tasks != null) {
+            for (ActivityManager.AppTask taskInfo : tasks) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (componentName.equals(taskInfo.getTaskInfo().topActivity)) {
+                            taskInfo.finishAndRemoveTask();
+                            return true;
+                        }
+                    } else {
+                        if (componentName.equals(taskInfo.getTaskInfo().baseIntent.getComponent())) {
+                            taskInfo.finishAndRemoveTask();
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    //ignore
+                }
+            }
+        }
+        return false;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private static boolean isActivityRunningV21(Context context, ComponentName componentName) {
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);

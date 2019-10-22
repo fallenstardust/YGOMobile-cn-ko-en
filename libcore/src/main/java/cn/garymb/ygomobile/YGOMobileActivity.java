@@ -49,8 +49,6 @@ import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
 import cn.garymb.ygomobile.widget.overlay.OverlayView;
 
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-import static cn.garymb.ygomobile.core.YGOCore.ACTION_START;
-import static cn.garymb.ygomobile.core.YGOCore.ACTION_STOP;
 
 public class YGOMobileActivity extends NativeActivity implements
         IGameActivity,
@@ -168,9 +166,6 @@ public class YGOMobileActivity extends NativeActivity implements
             });
         }
         mHost.onAfterCreate(this);
-        sendBroadcast(new Intent(ACTION_START)
-                .putExtra(YGOCore.EXTRA_PID, Process.myPid())
-                .setPackage(getPackageName()));
     }
 
     @SuppressLint("WakelockTimeout")
@@ -210,10 +205,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void finish() {
-        sendBroadcast(new Intent(ACTION_STOP)
-                .putExtra(YGOCore.EXTRA_PID, Process.myPid())
-                .putExtra("taskId", getTaskId())
-                .setPackage(getPackageName()));
+        mHost.onGameExit(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             finishAndRemoveTask();
         } else {

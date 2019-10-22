@@ -90,7 +90,7 @@ public class MainActivity extends HomeActivity {
         YGOStarter.onResumed(this);
         //如果游戏Activity已经不存在了，则
         if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
-            sendBroadcast(new Intent(YGOCore.ACTION_STOP).setPackage(getPackageName()));
+            ComponentUtils.killActivity(this, new ComponentName(this, YGOMobileActivity.class));
         }
     }
 

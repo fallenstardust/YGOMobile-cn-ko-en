@@ -152,6 +152,9 @@ int main(int argc, char* argv[]) {
 
 #endif //_WIN32
 #ifdef _IRR_ANDROID_PLATFORM_
+    LOGI("clean host");
+	delete ygo::gameUI;
+    delete ygo::gameHost;
 	return;
 #else
 	return EXIT_SUCCESS;

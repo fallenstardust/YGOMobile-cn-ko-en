@@ -106,11 +106,6 @@ class LocalGameHost extends GameHost {
     }
 
     @Override
-    public boolean isAutoKeepGame() {
-        return false;
-    }
-
-    @Override
     public void onBeforeCreate(Activity activity) {
 //        if(AppsSettings.get().isHideHwNotouch()){
 //            HwNotchSizeUtil.setFullScreenWindowLayoutInDisplayCutout(activity);
@@ -119,6 +114,11 @@ class LocalGameHost extends GameHost {
 
     @Override
     public void onAfterCreate(Activity activity) {
+
+    }
+
+    @Override
+    public void onGameExit(Activity activity) {
 
     }
 }

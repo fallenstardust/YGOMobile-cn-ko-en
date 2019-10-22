@@ -42,14 +42,15 @@ public abstract class GameHost {
         return false;
     }
 
-    public boolean isAutoKeepGame(){
-        return true;
-    }
-
     public void onBeforeCreate(Activity activity){
 
     }
+
     public void onAfterCreate(Activity activity){
+
+    }
+
+    public void onGameExit(Activity activity){
 
     }
 

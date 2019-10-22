@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.GET_TASKS"/>
 
     <application>
         <activity
@@ -25,13 +26,6 @@
                 android:name="android.app.lib_name"
                 android:value="YGOMobile"/>
         </activity>
-        <receiver android:name="cn.garymb.ygomobile.GameReceiver"
-                  android:process=":game" >
-            <intent-filter>
-                <action android:name="cn.garymb.ygomobile.game.start"/>
-                <action android:name="cn.garymb.ygomobile.game.stop"/>
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
