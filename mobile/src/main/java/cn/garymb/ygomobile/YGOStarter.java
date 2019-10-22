@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.core.YGOCore;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
@@ -171,15 +172,8 @@ public class YGOStarter {
 //            } else {
 //               options = null;
             }
-            Intent intent = new Intent(activity, YGOMobileActivity.class);
-            if (options != null) {
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(GameConfig.EXTRA_CONFIG, App.genConfig());
             Log.e("YGOStarter","跳转前"+System.currentTimeMillis());
-            activity.startActivity(intent);
+            YGOCore.startGame(activity, options, App.genConfig());
             Log.e("YGOStarter","跳转后"+System.currentTimeMillis());
         }
     }

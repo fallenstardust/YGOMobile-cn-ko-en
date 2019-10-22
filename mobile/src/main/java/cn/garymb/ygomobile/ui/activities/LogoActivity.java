@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.Toast;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -18,6 +19,13 @@ public class LogoActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_logo);
+        int windowsFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE/* 系统UI变化不触发relayout */
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION/* 导航栏悬浮在布局上面 */
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN/* 状态栏悬浮在布局上面 */
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION/* 隐藏导航栏 */
+                | View.SYSTEM_UI_FLAG_FULLSCREEN/* 隐藏状态栏 */
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY/* 沉浸模式 */;
+        getWindow().getDecorView().setSystemUiVisibility(windowsFlags);
         if (AppsSettings.get().isOnlyGame()) {
             YGOStarter.startGame(this, null);
             finish();

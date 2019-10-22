@@ -128,12 +128,12 @@ public class YGOMobileActivity extends NativeActivity implements
         mCore = YGOCore.getInstance();
         mHost = app().getGameHost();
         fullscreen();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            getWindow().setAttributes(lp);
+        }
         if(mGameConfig != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                WindowManager.LayoutParams lp = getWindow().getAttributes();
-                lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-                getWindow().setAttributes(lp);
-            }
             mGameSoundPlayer = new GameSoundPlayer(mHost.getGameAsset());
             if (mGameConfig.isEnableSoundEffect()) {
                 mGameSoundPlayer.initSoundEffectPool();

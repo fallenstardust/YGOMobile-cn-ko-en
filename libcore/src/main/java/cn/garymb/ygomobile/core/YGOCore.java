@@ -1,13 +1,24 @@
 package cn.garymb.ygomobile.core;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.nio.ByteBuffer;
+
+import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.YGOMobileActivity;
+import cn.garymb.ygomobile.interfaces.GameConfig;
 
 public class YGOCore {
     public static final float GAME_WIDTH = 1024.0f;
@@ -166,6 +177,17 @@ public class YGOCore {
         if (nativeAndroidDevice != 0) {
             nativeJoinGame(nativeAndroidDevice, options, length);
         }
+    }
+
+    public static void startGame(Context activity, @Nullable YGOGameOptions options, @NonNull GameConfig gameConfig) {
+        Intent intent = new Intent(activity, YGOMobileActivity.class);
+        if (options != null) {
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(GameConfig.EXTRA_CONFIG, gameConfig);
+        activity.startActivity(intent);
     }
 
     //插入文本（大概是发送消息）
