@@ -1,14 +1,19 @@
 package cn.garymb.ygomobile;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.os.Build;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,13 +26,19 @@ public abstract class GameApplication extends Application implements IrrlichtBri
 
     private static GameApplication sGameApplication;
     private boolean isInitSoundEffectPool=false;
+	private static String sProcessName;
 
     @Override
     public void onCreate() {
         super.onCreate();
+		sProcessName = getCurrentProcessName();
         sGameApplication = this;
 //        Reflection.unseal(this);
 //        initSoundEffectPool();
+    }
+	
+	public static boolean isGameProcess(){
+        return sProcessName != null && sProcessName.endsWith(":game");
     }
 
     public static GameApplication get() {
@@ -111,5 +122,29 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         if (id != null) {
             mSoundEffectPool.play(id, 0.5f, 0.5f, 2, 0, 1.0f);
         }
+    }
+	
+	@SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
+    protected String getCurrentProcessName() {
+        if (Build.VERSION.SDK_INT >= 28) {
+            return getProcessName();
+        }
+        try {
+            Class<?> clazz = Class.forName("android.app.ActivityThread");
+            Method currentProcessName = clazz.getDeclaredMethod("currentProcessName");
+            return (String) currentProcessName.invoke(null);
+        } catch (Throwable e) {
+            Log.w("kk", "currentProcessName", e);
+        }
+        int pid = android.os.Process.myPid();
+        String processName = getPackageName();
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
+            if (info.pid == pid) {
+                processName = info.processName;
+                break;
+            }
+        }
+        return processName;
     }
 }
