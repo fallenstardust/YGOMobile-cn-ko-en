@@ -445,6 +445,10 @@ public class AppsSettings {
         return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
+    public boolean isHideHwNotouch(){
+        return mSharedPreferences.getBoolean(Constants.PREF_HW_HIDE_HOTTOUCH, Constants.PREF_DEF_PREF_HW_HIDE_HOTTOUCH);
+    }
+
     //获得最后卡组绝对路径
     public String getLastDeckPath() {
         String path;

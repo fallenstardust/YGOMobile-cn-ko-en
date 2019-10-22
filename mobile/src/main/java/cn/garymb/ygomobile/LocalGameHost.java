@@ -11,6 +11,7 @@ import cn.garymb.ygomobile.core.YGOCore;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.utils.HwNotchSizeUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 class LocalGameHost extends GameHost {
@@ -107,5 +108,17 @@ class LocalGameHost extends GameHost {
     @Override
     public boolean isAutoKeepGame() {
         return false;
+    }
+
+    @Override
+    public void onBeforeCreate(Activity activity) {
+//        if(AppsSettings.get().isHideHwNotouch()){
+//            HwNotchSizeUtil.setFullScreenWindowLayoutInDisplayCutout(activity);
+//        }
+    }
+
+    @Override
+    public void onAfterCreate(Activity activity) {
+
     }
 }

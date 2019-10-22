@@ -147,6 +147,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
+        bind(Constants.PREF_HW_HIDE_HOTTOUCH, mSettings.isHideHwNotouch());
         isInit = false;
     }
 

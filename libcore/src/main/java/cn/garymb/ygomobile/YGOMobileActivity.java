@@ -140,6 +140,7 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         }
         mScreenKeeper = new ScreenKeeper(this);
+        mHost.onBeforeCreate(this);
         super.onCreate(savedInstanceState);
         if(mGameConfig == null){
             finish();
@@ -166,6 +167,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 }
             });
         }
+        mHost.onAfterCreate(this);
         sendBroadcast(new Intent(ACTION_START)
                 .putExtra(YGOCore.EXTRA_PID, Process.myPid())
                 .setPackage(getPackageName()));

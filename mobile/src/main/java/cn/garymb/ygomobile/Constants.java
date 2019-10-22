@@ -42,6 +42,8 @@ public interface Constants {
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";
     String PERF_TEST_REPLACE_KERNEL = "pref_key_test_replace_kernel";
+    String PREF_HW_HIDE_HOTTOUCH = "pref_key_hw_hide_notouch";
+    boolean PREF_DEF_PREF_HW_HIDE_HOTTOUCH = false;
     int LAST_ROOM_MAX = 10;
     /***
      * 卡组编辑，长按删除对话框

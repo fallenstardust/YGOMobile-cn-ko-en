@@ -46,4 +46,11 @@ public abstract class GameHost {
         return true;
     }
 
+    public void onBeforeCreate(Activity activity){
+
+    }
+    public void onAfterCreate(Activity activity){
+
+    }
+
 }

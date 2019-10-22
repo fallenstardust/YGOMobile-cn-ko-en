@@ -270,4 +270,6 @@
     <string name="unable_to_edit_empty_deck">不可操作空卡组</string>
     <string name="create_new_failed">创建失败</string>
     <string name="about_pref_settings_keep_scale">开启原始比例的游戏画面</string>
+    <string name="about_pref_key_hw_hide_notouch">隐藏HW刘海区域</string>
+    <string name="about_pref_key_hw_hide_notouch_desc">如果你游戏点击不准，请启用这个功能</string>
 </resources>
