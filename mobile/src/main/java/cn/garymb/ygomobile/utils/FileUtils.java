@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -168,6 +169,46 @@ public class FileUtils {
         int len;
         while ((len = in.read(data)) != -1) {
             out.write(data, 0, len);
+        }
+    }
+
+    public static String readAllString(File file) {
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        FileInputStream inputStream = null;
+        byte[] data = new byte[1024];
+        try {
+            inputStream = new FileInputStream(file);
+            int len = inputStream.read(data);
+            return new String(data, 0, len, StandardCharsets.UTF_8).trim();
+        } catch (Throwable e) {
+            //ignore
+        } finally {
+            IOUtils.close(inputStream);
+        }
+        return null;
+    }
+
+    public static void writeAllString(File file, String str) {
+        if (file == null) {
+            return;
+        }
+        FileOutputStream outputStream = null;
+        try {
+            if (file.exists()) {
+                file.delete();
+                file.createNewFile();
+            }
+            outputStream = new FileOutputStream(file);
+            if (str != null) {
+                outputStream.write(str.getBytes(StandardCharsets.UTF_8));
+            }
+            outputStream.flush();
+        } catch (Throwable e) {
+            //ignore
+        } finally {
+            IOUtils.close(outputStream);
         }
     }
 }

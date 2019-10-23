@@ -1,44 +1,67 @@
 package cn.garymb.ygomobile;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Point;
 import android.util.Log;
 
+import java.io.File;
+
 import cn.garymb.ygomobile.core.YGOCore;
+import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
-import cn.garymb.ygomobile.utils.HwNotchSizeUtil;
-import cn.garymb.ygomobile.utils.ScreenUtil;
 
 class LocalGameHost extends GameHost {
     private Context context;
+    private SharedPreferences settings;
+
     LocalGameHost(Context context) {
         super(context);
         this.context = context;
+        settings = context.getSharedPreferences("ygo_settings", Context.MODE_PRIVATE);
+        if(!GameApplication.isGameProcess()){
+            Log.e("kk", "GameHost don't running in game process.");
+        }
     }
 
     @Override
     public String getSetting(String key) {
-        return AppsSettings.get().getSettings(key);
+        if (YGOCore.CONF_LAST_DECK.equals(key)) {
+            return LocalConfig.getInstance(context).getLastDeck();
+        } else if (YGOCore.CONF_LAST_CATEGORY.equals(key)) {
+            return LocalConfig.getInstance(context).getLastCategory();
+        } else {
+            return settings.getString(key, null);
+        }
     }
 
     @Override
     public int getIntSetting(String key, int def) {
-        return AppsSettings.get().getIntSettings(key, def);
+        return settings.getInt(key, def);
     }
 
+    @SuppressLint("ApplySharedPref")
     @Override
     public void saveIntSetting(String key, int value) {
-        AppsSettings.get().saveIntSettings(key, value);
+        settings.edit().putInt(key, value).commit();
     }
 
+    @SuppressLint("ApplySharedPref")
     @Override
     public void saveSetting(String key, String value) {
-        AppsSettings.get().saveSettings(key, value);
+        if (YGOCore.CONF_LAST_DECK.equals(key)) {
+            LocalConfig.getInstance(context).setLastDeck(value);
+        } else if (YGOCore.CONF_LAST_CATEGORY.equals(key)) {
+            LocalConfig.getInstance(context).setLastCategory(value);
+        } else {
+            settings.edit().putString(key, value).commit();
+        }
     }
 
     @Override
@@ -55,11 +78,11 @@ class LocalGameHost extends GameHost {
     }
 
     @Override
-    public GameSize getGameSize(Activity activity) {
-        boolean immerSiveMode = AppsSettings.get().isImmerSiveMode();
-        boolean keepScale = AppsSettings.get().isKeepScale();
+    public GameSize getGameSize(Activity activity, GameConfig config) {
+        boolean immerSiveMode = config.isImmerSiveMode();
+        boolean keepScale = config.isKeepScale();
         int maxW, maxH;
-        int fullW,fullH,actW,actH;
+        int fullW, fullH, actW, actH;
         Point size = new Point();
         activity.getWindowManager().getDefaultDisplay().getRealSize(size);
         fullW = size.x;

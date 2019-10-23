@@ -265,7 +265,7 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private int[] getGameSize() {
-        GameSize gameSize = mHost.getGameSize(this);
+        GameSize gameSize = mHost.getGameSize(this, mGameConfig);
         mGameSize.update(gameSize);
         int w = gameSize.getWidth();
         int h = gameSize.getHeight();

@@ -5,6 +5,9 @@
 #include "AndroidGameHost.h"
 #include "android_tools.h"
 
+#define CONF_LAST_DECK "lastdeck"
+#define CONF_LAST_CATEGORY "lastcategory"
+
 using namespace ygo;
 
 AndroidGameHost::AndroidGameHost(ANDROID_APP _app, jobject _host) {
@@ -27,14 +30,6 @@ void AndroidGameHost::initMethods(JNIEnv *env) {
     java_saveSetting = env->GetMethodID(clazz, "saveSetting", "(Ljava/lang/String;Ljava/lang/String;)V");
     java_getLocalAddr = env->GetMethodID(clazz, "getLocalAddr", "()I");
     env->DeleteLocalRef(clazz);
-}
-
-irr::io::path AndroidGameHost::getLastDeck(JNIEnv *env) {
-    return getSetting(env, "lastdeck");
-}
-
-irr::io::path AndroidGameHost::getLastCategory(JNIEnv *env) {
-    return getSetting(env, "lastcategory");
 }
 
 irr::io::path AndroidGameHost::getSetting(JNIEnv *env, const char *_key) {
@@ -103,11 +98,19 @@ void AndroidGameHost::saveSetting(JNIEnv *env, const char *_key, const char *_va
 }
 
 void AndroidGameHost::setLastDeck(JNIEnv *env, const char* deckname) {
-    saveSetting(env, "lastdeck", deckname);
+    saveSetting(env, CONF_LAST_DECK, deckname);
 }
 
 void AndroidGameHost::setLastCategory(JNIEnv *env, const char* catename) {
-    saveSetting(env, "lastcategory", catename);
+    saveSetting(env, CONF_LAST_CATEGORY, catename);
+}
+
+irr::io::path AndroidGameHost::getLastDeck(JNIEnv *env) {
+    return getSetting(env, CONF_LAST_DECK);
+}
+
+irr::io::path AndroidGameHost::getLastCategory(JNIEnv *env) {
+    return getSetting(env, CONF_LAST_CATEGORY);
 }
 
 int AndroidGameHost::getLocalAddr(JNIEnv *env) {

@@ -14,7 +14,7 @@ import cn.garymb.ygomobile.tool.NetworkController;
 
 @Keep
 public abstract class GameHost {
-    private NetworkController mNetworkController;
+    private final NetworkController mNetworkController;
 
     public GameHost(Context context) {
         mNetworkController = new NetworkController(context);
@@ -36,7 +36,7 @@ public abstract class GameHost {
 
     public abstract AssetManager getGameAsset();
 
-    public abstract GameSize getGameSize(Activity activity);
+    public abstract GameSize getGameSize(Activity activity, GameConfig config);
 
     public boolean isDebugMode(){
         return false;

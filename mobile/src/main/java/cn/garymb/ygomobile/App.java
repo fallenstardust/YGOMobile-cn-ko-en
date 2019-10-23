@@ -33,7 +33,6 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-        gameHost = new LocalGameHost(this);
     }
 
     private void initImgsel() {
@@ -48,6 +47,13 @@ public class App extends GameApplication {
 
     @Override
     public GameHost getGameHost() {
+        if(gameHost == null) {
+            synchronized (this) {
+                if(gameHost == null) {
+                    gameHost = new LocalGameHost(this);
+                }
+            }
+        }
         return gameHost;
     }
 
@@ -58,6 +64,7 @@ public class App extends GameApplication {
         config.setSensorRefresh(AppsSettings.get().isSensorRefresh());
         config.setImmerSiveMode(AppsSettings.get().isImmerSiveMode());
         config.setEnableSoundEffect(AppsSettings.get().isSoundEffect());
+        config.setKeepScale(AppsSettings.get().isKeepScale());
         return config;
     }
 }

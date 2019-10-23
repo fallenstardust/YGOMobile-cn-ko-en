@@ -197,13 +197,6 @@
             android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
             android:process=":game"
             android:priority="1000" />
-
-        <provider
-            android:authorities="${applicationId}.preference"
-            android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
-            android:process=":game"
-            android:exported="false"/>
-
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

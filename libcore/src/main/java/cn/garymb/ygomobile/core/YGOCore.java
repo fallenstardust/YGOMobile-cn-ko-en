@@ -21,6 +21,8 @@ public class YGOCore {
     public static final float GAME_WIDTH = 1024.0f;
     public static final float GAME_HEIGHT = 640.0f;
     private static final String TAG = "ygomobile";
+    public static final String CONF_LAST_DECK = "lastdeck";
+    public static final String CONF_LAST_CATEGORY = "lastcategory";
     private static YGOCore sYGOCore;
     private static final boolean DISABLE_THREAD = true;
 
