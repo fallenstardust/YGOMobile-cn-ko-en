@@ -26,4 +26,5 @@
     <color name="FallNavy">#11113d</color>
     <color name="colorMain">#2196F3</color>
     <color name="background">#ECEFF1</color>
+    <color name="holo_yellow">#ffdf3a</color>
 </resources>

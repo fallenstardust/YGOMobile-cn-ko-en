@@ -45,19 +45,18 @@ public class ResCheckTask extends DeferredCallable<Integer, String> {
     @SuppressLint("StaticFieldLeak")
     private final Activity mActivity;
     private boolean isNewVersion;
-    private boolean mChecking;
-    private OnCompletedListener tmpListener;
+    private volatile int mProgress;
+    private long minTime;
 
-    public ResCheckTask(Activity context) {
+    public ResCheckTask(Activity context, boolean isNewVersion, long minTime) {
         mActivity = context;
         mSettings = AppsSettings.get();
-        int vercode = SystemUtils.getVersion(mActivity);
-        if (mSettings.getAppVersion() < vercode) {
-            mSettings.setAppVersion(vercode);
-            isNewVersion = true;
-        } else {
-            isNewVersion = false;
-        }
+        this.isNewVersion = isNewVersion;
+        this.minTime = minTime;
+    }
+
+    public int getProgress() {
+        return mProgress;
     }
 
     private String getString(@StringRes int resId) {
@@ -68,46 +67,6 @@ public class ResCheckTask extends DeferredCallable<Integer, String> {
         return mActivity.getString(resId, formatArgs);
     }
 
-    public void start(OnCompletedListener listener) {
-        if (mChecking) {
-            tmpListener = listener;
-            return;
-        }
-        mChecking = true;
-        DialogPlus processDialog = DialogPlus.show(mActivity, null, getString(R.string.check_res));
-        VUiKit.defer()
-                .when(this)
-                .progress(processDialog::setMessage)
-                .fail((e) -> {
-                    closeDialog(processDialog);
-                    Log.e(TAG, "check res", e);
-                    onCheckCompleted(listener, ERROR_CORE_OTHER);
-                }).done((err) -> {
-            closeDialog(processDialog);
-            onCheckCompleted(listener, err);
-        });
-    }
-
-    private void closeDialog(Dialog dialog){
-        if (dialog.isShowing()) {
-            try {
-                dialog.dismiss();
-            } catch (Exception ignore) {
-
-            }
-        }
-    }
-
-    private void onCheckCompleted(OnCompletedListener listener, int result) {
-        mChecking = false;
-        if (listener != null) {
-            listener.onCompleted(result, isNewVersion);
-        }
-        if (tmpListener != null) {
-            tmpListener.onCompleted(result, isNewVersion);
-        }
-    }
-
     private void setMessage(String msg) {
         notify(msg);
     }
@@ -116,9 +75,12 @@ public class ResCheckTask extends DeferredCallable<Integer, String> {
     public Integer call() {
         if (Constants.DEBUG)
             Log.d(TAG, "check start");
+        long time = System.currentTimeMillis();
         boolean needsUpdate = isNewVersion;
+        mProgress = 0;
         //core config
         setMessage(getString(R.string.check_things, getString(R.string.core_config)));
+        int error = ERROR_NONE;
         //res
         try {
             AssetManager assetManager = mActivity.getAssets();
@@ -127,99 +89,116 @@ public class ResCheckTask extends DeferredCallable<Integer, String> {
                 Log.d(TAG, "createNoMedia");
             //创建游戏目录
             IOUtils.createNoMedia(resPath);
+            mProgress = 1;
             if (Constants.DEBUG)
                 Log.d(TAG, "checkDirs");
             //检查文件夹
             checkDirs();
+            mProgress = 3;
             if (Constants.DEBUG)
                 Log.d(TAG, "copyCoreConfig");
             //复制游戏配置文件
             int err = copyCoreConfig(assetManager, resPath, needsUpdate);
-            if (err != ERROR_NONE) {
-                return err;
-            }
-            if (AppsSettings.get().isUseExtraCards()) {
-                if (Constants.DEBUG)
-                    Log.d(TAG, "setUseExtraCards");
-                //自定义数据库无效，则用默认的
-                if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
-                    AppsSettings.get().setUseExtraCards(false);
+            if (err == ERROR_NONE) {
+                mProgress = 5;
+                if (AppsSettings.get().isUseExtraCards()) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "setUseExtraCards");
+                    //自定义数据库无效，则用默认的
+                    if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
+                        AppsSettings.get().setUseExtraCards(false);
+                    }
                 }
-            }
+                mProgress = 10;
+                //设置字体
+                ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
+                systemConf.setFontSize(mSettings.getFontSize());
+                if (Constants.DEBUG)
+                    Log.d(TAG, "setFontSize:" + mSettings.getFontSize());
+                systemConf.close();
+                mProgress = 20;
+                //如果是新版本
+                if (needsUpdate) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy ydk/pack/single");
+                    //复制卡组
+                    setMessage(getString(R.string.check_things, getString(R.string.tip_new_deck)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_DECK_DIR_PATH,
+                            mSettings.getDeckDir(), needsUpdate);
+                    //复制卡包
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_PACK_DIR_PATH,
+                            mSettings.get().getPackDeckDir(), needsUpdate);
+                    //复制残局
+                    setMessage(getString(R.string.check_things, getString(R.string.single_lua)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_SINGLE_DIR_PATH,
+                            mSettings.getSingleDir(), needsUpdate);
+                }
+                mProgress = 30;
+                String[] textures1 = mActivity.getAssets().list(Constants.ASSET_SKIN_DIR_PATH);
+                String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
 
-            //设置字体
-            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
-            systemConf.setFontSize(mSettings.getFontSize());
-            if (Constants.DEBUG)
-                Log.d(TAG, "setFontSize:" + mSettings.getFontSize());
-            systemConf.close();
-
-            //如果是新版本
-            if (needsUpdate) {
+                //复制资源文件夹
+                //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
+                if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy skin");
+                    setMessage(getString(R.string.check_things, getString(R.string.game_skins)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_SKIN_DIR_PATH,
+                            mSettings.getCoreSkinPath(), false);//防止覆盖用户的卡背
+                }
+                mProgress = 40;
                 if (Constants.DEBUG)
-                    Log.d(TAG, "copy ydk/pack/single");
-                //复制卡组
-                setMessage(getString(R.string.check_things, getString(R.string.tip_new_deck)));
-                IOUtils.copyFolder(assetManager, Constants.ASSET_DECK_DIR_PATH,
-                        mSettings.getDeckDir(), needsUpdate);
-                //复制卡包
-                IOUtils.copyFolder(assetManager, Constants.ASSET_PACK_DIR_PATH,
-                        mSettings.get().getPackDeckDir(), needsUpdate);
-                //复制残局
-                setMessage(getString(R.string.check_things, getString(R.string.single_lua)));
-                IOUtils.copyFolder(assetManager, Constants.ASSET_SINGLE_DIR_PATH,
-                        mSettings.getSingleDir(), needsUpdate);
-            }
-            String[] textures1 = mActivity.getAssets().list(Constants.ASSET_SKIN_DIR_PATH);
-            String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
-
-            //复制资源文件夹
-            //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
-            if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
+                    Log.d(TAG, "copy font");
+                //复制字体
+                setMessage(getString(R.string.check_things, getString(R.string.font_files)));
+                IOUtils.copyFolder(assetManager, Constants.ASSET_FONTS_DIR_PATH,
+                        mSettings.getFontDirPath(), needsUpdate);
+                mProgress = 50;
+                //复制脚本压缩包
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH)) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy scripts.zip");
+                    setMessage(getString(R.string.check_things, getString(R.string.scripts)));
+                    IOUtils.copyFile(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH,
+                            new File(resPath, Constants.CORE_SCRIPTS_ZIP), needsUpdate);
+                }
+                mProgress = 60;
+                //复制数据库
+                copyCdbFile(assetManager, needsUpdate);
+                //复制卡图压缩包
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_PICS_FILE_PATH)) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy pics.zip");
+                    setMessage(getString(R.string.check_things, getString(R.string.images)));
+                    IOUtils.copyFile(assetManager, Constants.ASSET_PICS_FILE_PATH,
+                            new File(resPath, Constants.CORE_PICS_ZIP), needsUpdate);
+                }
+                mProgress = 80;
                 if (Constants.DEBUG)
-                    Log.d(TAG, "copy skin");
-                setMessage(getString(R.string.check_things, getString(R.string.game_skins)));
-                IOUtils.copyFolder(assetManager, Constants.ASSET_SKIN_DIR_PATH,
-                        mSettings.getCoreSkinPath(), false);//防止覆盖用户的卡背
+                    Log.d(TAG, "copy windbot");
+                //复制人机资源
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DECK_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DECK_PATH).getPath(), needsUpdate);
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DIALOG_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DIALOG_PATH).getPath(), needsUpdate);
+                mProgress = 90;
+                loadData();
+                mProgress = 99;
             }
-            if (Constants.DEBUG)
-                Log.d(TAG, "copy font");
-            //复制字体
-            setMessage(getString(R.string.check_things, getString(R.string.font_files)));
-            IOUtils.copyFolder(assetManager, Constants.ASSET_FONTS_DIR_PATH,
-                    mSettings.getFontDirPath(), needsUpdate);
-            //复制脚本压缩包
-            if (IOUtils.hasAssets(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH)) {
-                if (Constants.DEBUG)
-                    Log.d(TAG, "copy scripts.zip");
-                setMessage(getString(R.string.check_things, getString(R.string.scripts)));
-                IOUtils.copyFile(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH,
-                        new File(resPath, Constants.CORE_SCRIPTS_ZIP), needsUpdate);
-            }
-            //复制数据库
-            copyCdbFile(assetManager, needsUpdate);
-            //复制卡图压缩包
-            if (IOUtils.hasAssets(assetManager, Constants.ASSET_PICS_FILE_PATH)) {
-                if (Constants.DEBUG)
-                    Log.d(TAG, "copy pics.zip");
-                setMessage(getString(R.string.check_things, getString(R.string.images)));
-                IOUtils.copyFile(assetManager, Constants.ASSET_PICS_FILE_PATH,
-                        new File(resPath, Constants.CORE_PICS_ZIP), needsUpdate);
-            }
-            if (Constants.DEBUG)
-                Log.d(TAG, "copy windbot");
-            //复制人机资源
-            IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DECK_DIR_PATH,
-                    new File(resPath, Constants.LIB_WINDBOT_DECK_PATH).getPath(), needsUpdate);
-            IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DIALOG_DIR_PATH,
-                    new File(resPath, Constants.LIB_WINDBOT_DIALOG_PATH).getPath(), needsUpdate);
-            loadData();
         } catch (Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
-            return ERROR_COPY;
+            error = ERROR_COPY;
         }
-        return ERROR_NONE;
+        long tc = (minTime -(System.currentTimeMillis() - time));
+        if(tc >= 0){
+            try {
+                Thread.sleep(tc);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return error;
     }
 
     private void loadData() {
@@ -383,7 +362,7 @@ public class ResCheckTask extends DeferredCallable<Integer, String> {
         FileUtils.writeLines(stringfile, lines, encoding, "\n");
     }
 
-    public interface OnCompletedListener {
+    public interface Callback {
         void onCompleted(int result, boolean isNewVersion);
     }
 }

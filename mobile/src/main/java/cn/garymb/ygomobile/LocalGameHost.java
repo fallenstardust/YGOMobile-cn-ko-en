@@ -16,10 +16,15 @@ import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import libwindbot.windbot.WindBot;
+
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 class LocalGameHost extends GameHost {
     private Context context;
     private SharedPreferences settings;
+    private boolean mInitBot = false;
 
     LocalGameHost(Context context) {
         super(context);
@@ -64,12 +69,28 @@ class LocalGameHost extends GameHost {
         }
     }
 
+    private void initWindBot() {
+        synchronized (this){
+            if(mInitBot){
+                return;
+            }
+            mInitBot = true;
+        }
+        Log.i("路径", context.getFilesDir().getPath());
+        Log.i("路径2", AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
+        try {
+            WindBot.initAndroid(AppsSettings.get().getResourcePath(),
+                    AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME,
+                    AppsSettings.get().getResourcePath() + "/" + CORE_BOT_CONF_PATH);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void runWindbot(String cmd) {
-        Intent intent = new Intent();
-        intent.putExtra("args", cmd);
-        intent.setAction("RUN_WINDBOT");
-        context.sendBroadcast(intent);
+        initWindBot();
+        WindBot.runAndroid(cmd);
     }
 
     @Override

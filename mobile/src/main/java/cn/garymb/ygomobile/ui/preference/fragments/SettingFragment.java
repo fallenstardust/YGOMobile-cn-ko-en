@@ -34,6 +34,7 @@ import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.LogoActivity;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -366,12 +367,18 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.onChooseFileOk(preference, file);
             onPreferenceClick(preference);
         } else if (PREF_GAME_PATH.equalsIgnoreCase(preference.getKey())) {
-            if (!TextUtils.equals(mSettings.getResourcePath(), file)) {
+            boolean needRestart = !TextUtils.equals(mSettings.getResourcePath(), file);
+            mSettings.setResourcePath(file);
+            if (needRestart) {
 //                Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(getActivity(), MainActivity.class).setAction(ACTION_RELOAD));
+                Log.i("kk", "need restart activity");
+                Intent home = new Intent(Intent.ACTION_MAIN);
+                home.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                home.addCategory(Intent.CATEGORY_HOME);
+                Intent my = new Intent(getActivity(), LogoActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getActivity().startActivities(new Intent[]{home, my});
                 getActivity().finish();
             }
-            mSettings.setResourcePath(file);
             super.onChooseFileOk(preference, file);
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
             ((CheckBoxPreference) preference).setChecked(true);

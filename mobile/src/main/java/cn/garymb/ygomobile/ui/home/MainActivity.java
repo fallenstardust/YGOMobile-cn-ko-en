@@ -2,16 +2,11 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,15 +15,14 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 
 import java.io.File;
-import java.io.IOException;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.YGOCore;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.LogoActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -38,50 +32,26 @@ import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.PermissionUtil;
 import libwindbot.windbot.WindBot;
 
-import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.OnCompletedListener;
 
 public class MainActivity extends HomeActivity {
     private static final String TAG = "ResCheckTask";
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
-    ResCheckTask mResCheckTask;
-    private final String[] PERMISSIONS = {
-//            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
-        mResCheckTask = new ResCheckTask(this);
-        //动态权限
-//        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+        Log.i("kk", "MainActivity:onCreate");
+        boolean isNew = getIntent().getBooleanExtra(LogoActivity.EXTRA_NEW_VERSION, false);
+        int err = getIntent().getIntExtra(LogoActivity.EXTRA_ERROR, ResCheckTask.ERROR_NONE);
         //资源复制
-        mResCheckTask.start(this::onCheckCompleted);
-        registerReceiver(mWindBotReceiver, new IntentFilter(Constants.WINDBOT_ACTION));
-    }
-
-    @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//        for(int i=0;i<permissions.length;i++){
-//            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-//                showToast(getString(R.string.tip_no_permission,permissions[i]));
-//                break;
-//            }
-//        }
-
+        onCheckCompleted(err, isNew);
     }
 
     @Override
@@ -94,31 +64,8 @@ public class MainActivity extends HomeActivity {
         }
     }
 
-    public BroadcastReceiver mWindBotReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Constants.WINDBOT_ACTION.equals(intent.getAction())) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    };
-
-    private void initWindBot() {
-        Log.i("路径", getFilesDir().getPath());
-        Log.i("路径2", AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
-        try {
-            WindBot.initAndroid(AppsSettings.get().getResourcePath(),
-                    AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME,
-                    AppsSettings.get().getResourcePath() + "/" + CORE_BOT_CONF_PATH);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mWindBotReceiver);
         YGOStarter.onDestroy(this);
         super.onDestroy();
     }
@@ -126,18 +73,8 @@ public class MainActivity extends HomeActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (ACTION_RELOAD.equals(intent.getAction())) {
-            mResCheckTask.start((error, isNew) -> {
-                if (error < 0) {
-                    enableStart = false;
-                } else {
-                    enableStart = true;
-                }
-                getGameUriManager().doIntent(getIntent());
-            });
-        } else {
-            getGameUriManager().doIntent(intent);
-        }
+        Log.i("kk", "MainActivity:onNewIntent");
+        getGameUriManager().doIntent(intent);
     }
 
     private GameUriManager getGameUriManager() {
@@ -210,7 +147,6 @@ public class MainActivity extends HomeActivity {
         } else {
             enableStart = true;
         }
-        initWindBot();
         if (isNew) {
             if (!getGameUriManager().doIntent(getIntent())) {
                 final DialogPlus dialog = new DialogPlus(this);

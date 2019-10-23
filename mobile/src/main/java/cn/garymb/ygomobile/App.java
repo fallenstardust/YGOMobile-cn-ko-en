@@ -1,7 +1,10 @@
 package cn.garymb.ygomobile;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -13,7 +16,7 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.utils.CrashHandler;
-import jonathanfinerty.once.Once;
+import libwindbot.windbot.WindBot;
 
 public class App extends GameApplication {
     private GameHost gameHost;
@@ -22,7 +25,6 @@ public class App extends GameApplication {
     public void onCreate() {
         super.onCreate();
         if (!isGameProcess()) {
-            Once.initialise(this);
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
             //初始化图片选择器
             initImgsel();
@@ -33,6 +35,7 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
+
     }
 
     private void initImgsel() {

@@ -272,4 +272,5 @@
     <string name="about_pref_settings_keep_scale">开启原始比例的游戏画面</string>
     <string name="about_pref_key_hw_hide_notouch">隐藏HW刘海区域</string>
     <string name="about_pref_key_hw_hide_notouch_desc">如果你游戏点击不准，请启用这个功能</string>
+    <string name="tip_load_ok">加载完成</string>
 </resources>
