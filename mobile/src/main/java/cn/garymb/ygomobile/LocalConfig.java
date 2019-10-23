@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 
@@ -37,10 +38,14 @@ public class LocalConfig {
     }
 
     public String getLastDeck() {
+        String str = null;
         if (lastdeck.exists()) {
-            return FileUtils.readAllString(lastdeck);
+            str = FileUtils.readAllString(lastdeck);
         }
-        return null;
+        if (str == null) {
+            str = "";
+        }
+        return str;
     }
 
     public void setLastDeck(String deck) {
@@ -48,10 +53,14 @@ public class LocalConfig {
     }
 
     public String getLastCategory() {
+        String str = null;
         if (lastcategory.exists()) {
-            return FileUtils.readAllString(lastcategory);
+            str = FileUtils.readAllString(lastcategory);
         }
-        return null;
+        if (str == null) {
+           // str = "";
+        }
+        return str;
     }
 
     public void setLastCategory(String category) {

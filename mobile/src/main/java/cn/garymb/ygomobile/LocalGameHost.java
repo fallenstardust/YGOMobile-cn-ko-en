@@ -37,7 +37,7 @@ class LocalGameHost extends GameHost {
         } else if (YGOCore.CONF_LAST_CATEGORY.equals(key)) {
             return LocalConfig.getInstance(context).getLastCategory();
         } else {
-            return settings.getString(key, null);
+            return settings.getString(key, "");
         }
     }
 

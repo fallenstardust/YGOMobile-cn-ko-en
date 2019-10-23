@@ -440,10 +440,6 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
-    public String getCurLastDeck() {
-        return LocalConfig.getInstance(context).getLastDeck();
-    }
-
     public boolean isHideHwNotouch() {
         return mSharedPreferences.getBoolean(Constants.PREF_HW_HIDE_HOTTOUCH, Constants.PREF_DEF_PREF_HW_HIDE_HOTTOUCH);
     }
@@ -486,7 +482,7 @@ public class AppsSettings {
 
     //获得最后卡组名
     public String getLastDeckName() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
+        return LocalConfig.getInstance(context).getLastDeck();
     }
 
     /* public int resetGameVersion() {

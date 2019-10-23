@@ -195,6 +195,17 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent.hasExtra(GameConfig.EXTRA_CONFIG)) {
+            GameConfig config = getIntent().getParcelableExtra(GameConfig.EXTRA_CONFIG);
+            if (!mGameConfig.equals(config)) {
+                mGameConfig = config;
+                if (config.isEnableSoundEffect()) {
+                    mGameSoundPlayer.initSoundEffectPool();
+                } else {
+                    mGameSoundPlayer.release();
+                }
+            }
+        }
         handleExternalCommand(intent);
     }
 

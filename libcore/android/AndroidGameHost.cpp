@@ -42,9 +42,11 @@ irr::io::path AndroidGameHost::getSetting(JNIEnv *env, const char *_key) {
     if (key) {
         env->DeleteLocalRef(key);
     }
-    const char *chars = env->GetStringUTFChars(value, NULL);
-    ret.append(chars);
-    env->ReleaseStringUTFChars(value, chars);
+    if(value != NULL) {
+        const char *chars = env->GetStringUTFChars(value, NULL);
+        ret.append(chars);
+        env->ReleaseStringUTFChars(value, chars);
+    }
     return ret;
 }
 

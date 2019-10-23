@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.Keep;
 
+import java.util.Objects;
+
 import cn.garymb.ygomobile.NativeInitOptions;
 
 @Keep
@@ -81,6 +83,24 @@ public class GameConfig implements Parcelable {
         sensorRefresh = true;
         immerSiveMode = false;
         enableSoundEffect = true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameConfig config = (GameConfig) o;
+        return lockScreenOrientation == config.lockScreenOrientation &&
+                sensorRefresh == config.sensorRefresh &&
+                keepScale == config.keepScale &&
+                immerSiveMode == config.immerSiveMode &&
+                enableSoundEffect == config.enableSoundEffect &&
+                Objects.equals(nativeInitOptions, config.nativeInitOptions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nativeInitOptions, lockScreenOrientation, sensorRefresh, keepScale, immerSiveMode, enableSoundEffect);
     }
 
     @Override

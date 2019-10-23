@@ -9,6 +9,7 @@ import androidx.annotation.Keep;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class NativeInitOptions implements Parcelable {
 
@@ -97,6 +98,29 @@ public final class NativeInitOptions implements Parcelable {
         buffer.putInt((Integer.reverseBytes(value)));
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NativeInitOptions options = (NativeInitOptions) o;
+        return mOpenglVersion == options.mOpenglVersion &&
+                mIsSoundEffectEnabled == options.mIsSoundEffectEnabled &&
+                mCardQuality == options.mCardQuality &&
+                mIsFontAntiAliasEnabled == options.mIsFontAntiAliasEnabled &&
+                mIsPendulumScaleEnabled == options.mIsPendulumScaleEnabled &&
+                Objects.equals(mWorkPath, options.mWorkPath) &&
+                Objects.equals(mDbList, options.mDbList) &&
+                Objects.equals(mArchiveList, options.mArchiveList) &&
+                Objects.equals(mFontFile, options.mFontFile) &&
+                Objects.equals(mResDir, options.mResDir) &&
+                Objects.equals(mImageDir, options.mImageDir);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mOpenglVersion, mIsSoundEffectEnabled, mWorkPath, mDbList, mArchiveList, mCardQuality, mIsFontAntiAliasEnabled, mIsPendulumScaleEnabled, mFontFile, mResDir, mImageDir);
+    }
 
     @Override
     public int describeContents() {
