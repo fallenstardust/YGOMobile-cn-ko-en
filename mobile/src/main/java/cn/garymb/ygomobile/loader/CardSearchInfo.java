@@ -66,7 +66,7 @@ class CardSearchInfo {
                 return false;
             }
         }
-        if (level != 0) {
+        if (level >= 0) {
             if (card.getStar() != level) {
                 return false;
             }

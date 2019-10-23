@@ -237,18 +237,30 @@ public class ServiceDuelAssistant extends Service {
                 pendingIntent = PendingIntent.getService(this, 2, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                 remoteViews.setOnClickPendingIntent(R.id.buttonStopService, pendingIntent);
 
-                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
-                        NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setSound(null, null);
-                channel.enableLights(false);
-
                 NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                manager.createNotificationChannel(channel);
+
+                NotificationChannel channel = manager.getNotificationChannel(CHANNEL_ID);
+                if(channel != null){
+                    if(channel.getLockscreenVisibility() != Notification.VISIBILITY_SECRET) {
+                        manager.deleteNotificationChannel(CHANNEL_ID);
+                        channel = null;
+                    }
+                }
+                if (channel == null) {
+                    channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
+                            NotificationManager.IMPORTANCE_LOW);
+                    channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+                    channel.setSound(null, null);
+                    channel.setShowBadge(false);
+                    channel.enableLights(false);
+                    manager.createNotificationChannel(channel);
+                }
 
                 Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
                 builder.setSmallIcon(R.drawable.ic_icon);
                 builder.setSound(null);
                 builder.setCustomContentView(remoteViews);
+                builder.setVisibility(Notification.VISIBILITY_SECRET);
                 startForeground(1, builder.build());
             } else {
                 //如果没有通知权限则关闭服务
