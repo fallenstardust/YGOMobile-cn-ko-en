@@ -6,18 +6,18 @@
 
 using namespace ygo;
 
-AndroidGameUI::AndroidGameUI(ANDROID_APP _app, jobject _host) {
-    host = _host;
+AndroidGameUI::AndroidGameUI(ANDROID_APP _app) {
     app = _app;
 }
 
 AndroidGameUI::~AndroidGameUI() {
-    JNIEnv *env = irr::android::getJniEnv(app);
-    env->DeleteGlobalRef(host);
+    app = NULL;
+    //JNIEnv *env = irr::android::getJniEnv(app);
+    //env->DeleteGlobalRef(app->activity->clazz);
 }
 
 void AndroidGameUI::initMethods(JNIEnv *env) {
-    jclass clazz = env->GetObjectClass(host);
+    jclass clazz = env->GetObjectClass(app->activity->clazz);
     java_toggleIME = env->GetMethodID(clazz, "toggleIME", "(ZLjava/lang/String;)V");
     java_performHapticFeedback = env->GetMethodID(clazz, "performHapticFeedback", "()V");
     java_showComboBoxCompat = env->GetMethodID(clazz, "showComboBoxCompat",
@@ -38,7 +38,7 @@ void AndroidGameUI::toggleIME(JNIEnv *env, bool show, const char *_msg) {
         return;
     }
     jstring msg = env->NewStringUTF(_msg);
-    env->CallVoidMethod(host, java_toggleIME, (jboolean) show, msg);
+    env->CallVoidMethod(app->activity->clazz, java_toggleIME, (jboolean) show, msg);
     if (msg) {
         env->DeleteLocalRef(msg);
     }
@@ -48,7 +48,7 @@ void AndroidGameUI::performHapticFeedback(JNIEnv *env) {
     if (!java_performHapticFeedback) {
         return;
     }
-    env->CallVoidMethod(host, java_performHapticFeedback);
+    env->CallVoidMethod(app->activity->clazz, java_performHapticFeedback);
 }
 
 void
@@ -64,7 +64,7 @@ AndroidGameUI::showAndroidComboBoxCompat(JNIEnv *env, bool pShow, char **pConten
         str = env->NewStringUTF(*(pContents + i));
         env->SetObjectArrayElement(array, i, str);
     }
-    env->CallVoidMethod(host, java_showComboBoxCompat, array, (jboolean) pShow,
+    env->CallVoidMethod(app->activity->clazz, java_showComboBoxCompat, array, (jboolean) pShow,
                         (jint) mode);
 
 }
@@ -73,21 +73,21 @@ int AndroidGameUI::getWindowWidth(JNIEnv *env) {
     if (!java_getWindowWidth) {
         return 0;
     }
-    return env->CallIntMethod(host, java_getWindowWidth);
+    return env->CallIntMethod(app->activity->clazz, java_getWindowWidth);
 }
 
 int AndroidGameUI::getWindowHeight(JNIEnv *env) {
     if (!java_getWindowHeight) {
         return 0;
     }
-    return env->CallIntMethod(host, java_getWindowHeight);
+    return env->CallIntMethod(app->activity->clazz, java_getWindowHeight);
 }
 
 irr::android::InitOptions* AndroidGameUI::getInitOptions(JNIEnv *env) {
     if (!java_getInitOptions) {
         return nullptr;
     }
-    jobject buffer = env->CallObjectMethod(host, java_getInitOptions);
+    jobject buffer = env->CallObjectMethod(app->activity->clazz, java_getInitOptions);
     if(buffer) {
         void *data = env->GetDirectBufferAddress(buffer);
         return new irr::android::InitOptions(data);
@@ -100,7 +100,7 @@ irr::android::YGOGameOptions* AndroidGameUI::getJoinOptions(JNIEnv *env) {
     if (!java_getJoinOptions) {
         return nullptr;
     }
-    jobject buffer = env->CallObjectMethod(host, java_getJoinOptions);
+    jobject buffer = env->CallObjectMethod(app->activity->clazz, java_getJoinOptions);
     if(buffer) {
         void *data = env->GetDirectBufferAddress(buffer);
         return new irr::android::YGOGameOptions(data);
@@ -116,21 +116,21 @@ void AndroidGameUI::attachNativeDevice(JNIEnv*env, void* device){
     }
     jint value = (int)device;
     LOGI("attachNativeDevice %d", value);
-    env->CallVoidMethod(host, java_attachNativeDevice, value);
+    env->CallVoidMethod(app->activity->clazz, java_attachNativeDevice, value);
 }
 
 int AndroidGameUI::getWindowLeft(JNIEnv *env) {
     if (!java_getWindowLeft) {
         return 0;
     }
-    return env->CallIntMethod(host, java_getWindowLeft);
+    return env->CallIntMethod(app->activity->clazz, java_getWindowLeft);
 }
 
 int AndroidGameUI::getWindowTop(JNIEnv *env) {
     if (!java_getWindowTop) {
         return 0;
     }
-    return env->CallIntMethod(host, java_getWindowTop);
+    return env->CallIntMethod(app->activity->clazz, java_getWindowTop);
 }
 
 void AndroidGameUI::playSoundEffect(JNIEnv *env, const char *_name) {
@@ -138,7 +138,7 @@ void AndroidGameUI::playSoundEffect(JNIEnv *env, const char *_name) {
         return;
     }
     jstring name = env->NewStringUTF(_name);
-    env->CallVoidMethod(host, java_playSoundEffect, name);
+    env->CallVoidMethod(app->activity->clazz, java_playSoundEffect, name);
     if (name) {
         env->DeleteLocalRef(name);
     }

@@ -13,23 +13,14 @@ import cn.garymb.ygomobile.tool.GameSoundPlayer;
 import cn.garymb.ygomobile.tool.NetworkController;
 
 @Keep
-public abstract class GameHost {
+public abstract class GameHost implements IGameHost{
     private final NetworkController mNetworkController;
 
     public GameHost(Context context) {
         mNetworkController = new NetworkController(context);
     }
 
-    public abstract String getSetting(String key);
-
-    public abstract int getIntSetting(String key, int def);
-
-    public abstract void saveIntSetting(String key, int value);
-
-    public abstract void saveSetting(String key, String value);
-
-    public abstract void runWindbot(String cmd);
-
+    @Override
     public int getLocalAddr() {
         return mNetworkController.getIPAddress();
     }

@@ -4,7 +4,5 @@ package cn.garymb.ygomobile.interfaces;
 import androidx.annotation.Keep;
 
 @Keep
-public interface IGameActivity {
-    GameHost getNativeGameHost();
-    IGameUI getNativeGameUI();
+public interface IGameActivity extends IGameUI, IGameHost{
 }

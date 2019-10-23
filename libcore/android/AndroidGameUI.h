@@ -14,7 +14,6 @@
 namespace ygo {
     class AndroidGameUI {
     private:
-        jobject host;
         jmethodID java_toggleIME;
         jmethodID java_performHapticFeedback;
         jmethodID java_showComboBoxCompat;
@@ -29,7 +28,7 @@ namespace ygo {
 
         ANDROID_APP app;
     public:
-        AndroidGameUI(ANDROID_APP  app, jobject obj);
+        AndroidGameUI(ANDROID_APP  app);
 
         //! destructor
         virtual ~AndroidGameUI();

@@ -44,9 +44,24 @@ void Game::process(irr::SEvent &event) {
 	}
 }
 
+Game::~Game(){
 #ifdef _IRR_ANDROID_PLATFORM_
-AndroidGameHost *gameHost;
-AndroidGameUI *gameUI;
+    if(gameHost != NULL) {
+        delete gameHost;
+        gameHost = NULL;
+    }
+    if(gameUI != NULL) {
+        delete gameUI;
+        gameUI = NULL;
+    }
+#endif
+    if(soundEffectPlayer != NULL){
+		delete soundEffectPlayer;
+		soundEffectPlayer = NULL;
+    }
+}
+
+#ifdef _IRR_ANDROID_PLATFORM_
 bool Game::Initialize(ANDROID_APP app) {
 	this->appMain = app;
 #else
@@ -57,6 +72,11 @@ bool Game::Initialize() {
 
 #ifdef _IRR_ANDROID_PLATFORM_
 	JNIEnv* jni = android::getJniEnv(app);
+	gameHost = new ygo::AndroidGameHost(app);
+	gameHost->initMethods(jni);
+	gameUI = new ygo::AndroidGameUI(app);
+	gameUI->initMethods(jni);
+
 	irr::android::InitOptions* options = gameUI->getInitOptions(jni);
 	if(options == NULL){
 		return false;
@@ -1208,7 +1228,6 @@ void Game::MainLoop() {
 	usleep(500000);
 #endif
 	SaveConfig();
-	delete soundEffectPlayer;
 	usleep(500000);
 //	device->drop();
 }

@@ -10,24 +10,24 @@
 
 using namespace ygo;
 
-AndroidGameHost::AndroidGameHost(ANDROID_APP _app, jobject _host) {
-    host = _host;
+AndroidGameHost::AndroidGameHost(ANDROID_APP _app) {
     app = _app;
 }
 
 AndroidGameHost::~AndroidGameHost() {
-    JNIEnv *env = irr::android::getJniEnv(app);
-    env->DeleteGlobalRef(host);
+    app = NULL;
+//    JNIEnv *env = irr::android::getJniEnv(app);
+//    env->DeleteGlobalRef(app->activity->clazz);
 }
 
 void AndroidGameHost::initMethods(JNIEnv *env) {
-    jclass clazz = env->GetObjectClass(host);
+    jclass clazz = env->GetObjectClass(app->activity->clazz);
     java_getSetting = env->GetMethodID(clazz, "getSetting",
                                        "(Ljava/lang/String;)Ljava/lang/String;");
     java_getIntSetting = env->GetMethodID(clazz, "getIntSetting", "(Ljava/lang/String;I)I");
     java_saveIntSetting = env->GetMethodID(clazz, "saveIntSetting", "(Ljava/lang/String;I)V");
-    java_runWindbot = env->GetMethodID(clazz, "runWindbot", "(Ljava/lang/String;)V");
     java_saveSetting = env->GetMethodID(clazz, "saveSetting", "(Ljava/lang/String;Ljava/lang/String;)V");
+    java_runWindbot = env->GetMethodID(clazz, "runWindbot", "(Ljava/lang/String;)V");
     java_getLocalAddr = env->GetMethodID(clazz, "getLocalAddr", "()I");
     env->DeleteLocalRef(clazz);
 }
@@ -38,7 +38,7 @@ irr::io::path AndroidGameHost::getSetting(JNIEnv *env, const char *_key) {
         return ret;
     }
     jstring key = env->NewStringUTF(_key);
-    jstring value = (jstring) env->CallObjectMethod(host, java_getSetting, key);
+    jstring value = (jstring) env->CallObjectMethod(app->activity->clazz, java_getSetting, key);
     if (key) {
         env->DeleteLocalRef(key);
     }
@@ -55,7 +55,7 @@ int AndroidGameHost::getIntSetting(JNIEnv *env, const char *_key, int defvalue) 
         return 0;
     }
     jstring key = env->NewStringUTF(_key);
-    jint value = env->CallIntMethod(host, java_getIntSetting, key, defvalue);
+    jint value = env->CallIntMethod(app->activity->clazz, java_getIntSetting, key, defvalue);
     if (key) {
         env->DeleteLocalRef(key);
     }
@@ -67,7 +67,7 @@ void AndroidGameHost::saveIntSetting(JNIEnv *env, const char *_key, int value) {
         return;
     }
     jstring key = env->NewStringUTF(_key);
-    env->CallVoidMethod(host, java_saveIntSetting, key, value);
+    env->CallVoidMethod(app->activity->clazz, java_saveIntSetting, key, value);
     if (key) {
         env->DeleteLocalRef(key);
     }
@@ -78,7 +78,7 @@ void AndroidGameHost::runWindbot(JNIEnv *env, const char* _cmd) {
         return;
     }
     jstring cmd = env->NewStringUTF(_cmd);
-    env->CallVoidMethod(host, java_runWindbot, cmd);
+    env->CallVoidMethod(app->activity->clazz, java_runWindbot, cmd);
     if (cmd) {
         env->DeleteLocalRef(cmd);
     }
@@ -90,7 +90,7 @@ void AndroidGameHost::saveSetting(JNIEnv *env, const char *_key, const char *_va
     }
     jstring key = env->NewStringUTF(_key);
     jstring value = env->NewStringUTF(_value);
-    env->CallVoidMethod(host, java_saveSetting, key, value);
+    env->CallVoidMethod(app->activity->clazz, java_saveSetting, key, value);
     if (key) {
         env->DeleteLocalRef(key);
     }
@@ -119,6 +119,6 @@ int AndroidGameHost::getLocalAddr(JNIEnv *env) {
     if (!java_getLocalAddr) {
         return 0;
     }
-    return env->CallIntMethod(host, java_getLocalAddr);
+    return env->CallIntMethod(app->activity->clazz, java_getLocalAddr);
 }
 

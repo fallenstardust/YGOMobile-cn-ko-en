@@ -117,6 +117,7 @@ public:
 #else
 	bool Initialize();
 #endif
+	~Game();
 	void MainLoop();
 	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
@@ -555,7 +556,6 @@ public:
     void setLastDeck(const char* name);
     int getLocalAddr();
 
-
     void playSoundEffect(const char *name);
 
     JNIEnv* getJniEnv();
@@ -590,18 +590,17 @@ public:
 		return y2;
 	}
     void process(irr::SEvent &event);
+#ifdef _IRR_ANDROID_PLATFORM_
+	ygo::AndroidGameHost *gameHost;
+	ygo::AndroidGameUI *gameUI;
+#endif
 private:
 	int touchLeft;
 	int touchTop;
     io::path cardImagePath;
     io::path resourcePath;
     };
-
     extern Game *mainGame;
-#ifdef _IRR_ANDROID_PLATFORM_
-    extern ygo::AndroidGameHost *gameHost;
-	extern ygo::AndroidGameUI *gameUI;
-#endif
 }
 
 #define CARD_IMG_WIDTH		177

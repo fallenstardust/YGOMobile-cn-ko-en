@@ -12,7 +12,6 @@
 namespace ygo {
     class AndroidGameHost {
     private:
-        jobject host;
         jmethodID java_getSetting;
         jmethodID java_getIntSetting;
         jmethodID java_saveIntSetting;
@@ -22,7 +21,7 @@ namespace ygo {
 
         ANDROID_APP app;
     public:
-        AndroidGameHost(ANDROID_APP  app, jobject host);
+        AndroidGameHost(ANDROID_APP  app);
 
         //! destructor
         virtual ~AndroidGameHost();

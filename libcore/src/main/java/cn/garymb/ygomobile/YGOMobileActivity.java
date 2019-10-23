@@ -30,6 +30,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import java.nio.ByteBuffer;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -55,8 +57,7 @@ public class YGOMobileActivity extends NativeActivity implements
         View.OnClickListener,
         PopupWindow.OnDismissListener,
         TextView.OnEditorActionListener,
-        OverlayOvalView.OnDuelOptionsSelectListener,
-        IGameUI {
+        OverlayOvalView.OnDuelOptionsSelectListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
 
     private static boolean DEBUG;
@@ -97,9 +98,12 @@ public class YGOMobileActivity extends NativeActivity implements
     protected EditWindowCompat mGlobalEditText;
     private volatile long lastRefresh;
 
-    private YGOCore mCore;
-    private GameHost mHost;
-    private GameConfig mGameConfig;
+    private @NonNull
+    YGOCore mCore;
+    private @NonNull
+    GameHost mHost;
+    private @NonNull
+    GameConfig mGameConfig;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
     private final GameSize mGameSize = new GameSize();
@@ -113,7 +117,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private GameSoundPlayer mGameSoundPlayer;
     private static final boolean USE_INPUT_QUEEN = true;
     //点击修正
-    private static final boolean RESIZE_WINDOW_LAYOUT= false;
+    private static final boolean RESIZE_WINDOW_LAYOUT = false;
 
     private GameApplication app() {
         return GameApplication.get();
@@ -131,7 +135,7 @@ public class YGOMobileActivity extends NativeActivity implements
             lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
             getWindow().setAttributes(lp);
         }
-        if(mGameConfig != null) {
+        if (mGameConfig != null) {
             mGameSoundPlayer = new GameSoundPlayer(mHost.getGameAsset());
             if (mGameConfig.isEnableSoundEffect()) {
                 mGameSoundPlayer.initSoundEffectPool();
@@ -140,18 +144,18 @@ public class YGOMobileActivity extends NativeActivity implements
         mScreenKeeper = new ScreenKeeper(this);
         mHost.onBeforeCreate(this);
         super.onCreate(savedInstanceState);
-        if(mGameConfig == null){
+        if (mGameConfig == null) {
             finish();
             return;
         }
-        if(DEBUG) {
+        if (DEBUG) {
             Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         }
         if (mGameConfig.isLockScreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
-        if(DEBUG) {
-            Log.i(TAG, "USE_INPUT_QUEEN:" + USE_INPUT_QUEEN+",RESIZE_WINDOW_LAYOUT="+RESIZE_WINDOW_LAYOUT);
+        if (DEBUG) {
+            Log.i(TAG, "USE_INPUT_QUEEN:" + USE_INPUT_QUEEN + ",RESIZE_WINDOW_LAYOUT=" + RESIZE_WINDOW_LAYOUT);
         }
         initExtraView();
 
@@ -172,7 +176,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if(DEBUG) {
+        if (DEBUG) {
             Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         }
         mScreenKeeper.keep();
@@ -216,32 +220,13 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void finish() {
+        mCore.release();
         mHost.onGameExit(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             finishAndRemoveTask();
         } else {
             super.finish();
         }
-    }
-
-    @Override
-    public ByteBuffer getJoinOptions() {
-        Intent intent = getIntent();
-        long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
-        if (System.currentTimeMillis() - time >= YGOGameOptions.TIME_OUT) {
-            if (DEBUG)
-                Log.i(TAG, "command timeout");
-            return null;
-        }
-        if(intent.hasExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY)) {
-            YGOGameOptions options = intent
-                    .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
-            intent.removeExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
-            if (options != null) {
-                return options.toByteBuffer();
-            }
-        }
-        return null;
     }
 
     private void handleExternalCommand(Intent intent) {
@@ -333,15 +318,15 @@ public class YGOMobileActivity extends NativeActivity implements
                     return mCore.sendTouchEvent(event.getAction(), (int) event.getX(), (int) event.getY(), event.getPointerId(0));
                 }
             });
-        } else if(RESIZE_WINDOW_LAYOUT){
+        } else if (RESIZE_WINDOW_LAYOUT) {
             getWindow().setLayout(w, h);
         }
         mSurfaceView.requestFocus();
         mInitView = true;
     }
 
-    private void setGameSize(int w, int h){
-        if(mInitView) {
+    private void setGameSize(int w, int h) {
+        if (mInitView) {
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mClickView.getLayoutParams();
             lp.width = w;
             lp.height = h;
@@ -349,7 +334,7 @@ public class YGOMobileActivity extends NativeActivity implements
             mSurfaceView.setLayoutParams(lp);
             mSurfaceView.getHolder().setFixedSize(w, h);
         }
-        if(RESIZE_WINDOW_LAYOUT){
+        if (RESIZE_WINDOW_LAYOUT) {
             getWindow().setLayout(w, h);
         }
     }
@@ -427,13 +412,13 @@ public class YGOMobileActivity extends NativeActivity implements
                 mCore.refreshTexture();
                 break;
             case OverlayView.MODE_REACT_CHAIN_OPTION:
-                if (DEBUG){
+                if (DEBUG) {
                     Log.d(TAG, "Constants.MODE_REACT_CHAIN_OPTION: " + action);
                 }
                 mCore.reactChain(action);
                 break;
             case OverlayView.MODE_IGNORE_CHAIN_OPTION:
-                if (DEBUG){
+                if (DEBUG) {
                     Log.d(TAG, "Constants.MODE_IGNORE_CHAIN_OPTION: " + action);
                 }
                 mCore.ignoreChain(action);
@@ -453,20 +438,28 @@ public class YGOMobileActivity extends NativeActivity implements
     //endregion
 
     @Override
-    public GameHost getNativeGameHost(){
-        //jni call
-        return mHost;
-    }
-
-    @Override
-    public IGameUI getNativeGameUI() {
-        //jni call
-        return this;
+    public ByteBuffer getJoinOptions() {
+        Intent intent = getIntent();
+        long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
+        if (System.currentTimeMillis() - time >= YGOGameOptions.TIME_OUT) {
+            if (DEBUG)
+                Log.i(TAG, "command timeout");
+            return null;
+        }
+        if (intent.hasExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY)) {
+            YGOGameOptions options = intent
+                    .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
+            intent.removeExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
+            if (options != null) {
+                return options.toByteBuffer();
+            }
+        }
+        return null;
     }
 
     @Override
     public void playSoundEffect(String path) {
-        if(mGameConfig.isEnableSoundEffect()){
+        if (mGameConfig.isEnableSoundEffect()) {
             mGameSoundPlayer.playSoundEffect(path);
         }
     }
@@ -492,7 +485,6 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
 
-
     @Override
     public void showComboBoxCompat(final String[] items, final boolean isShow, final int mode) {
         runOnUiThread(new Runnable() {
@@ -507,8 +499,8 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         });
     }
-	
-	@Override
+
+    @Override
     public void performHapticFeedback() {
         runOnUiThread(new Runnable() {
             @Override
@@ -538,7 +530,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public int getWindowWidth() {
-        if(DEBUG) {
+        if (DEBUG) {
             Log.i(TAG, "getWindowWidth:" + mGameSize.getWidth());
         }
         return mGameSize.getWidth();
@@ -546,7 +538,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public int getWindowHeight() {
-        if(DEBUG) {
+        if (DEBUG) {
             Log.i(TAG, "getWindowHeight:" + mGameSize.getHeight());
         }
         return mGameSize.getHeight();
@@ -564,14 +556,14 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onInputQueueCreated(InputQueue queue) {
-        if(USE_INPUT_QUEEN) {
+        if (USE_INPUT_QUEEN) {
             super.onInputQueueCreated(queue);
         }
     }
 
     @Override
     public void onInputQueueDestroyed(InputQueue queue) {
-        if(USE_INPUT_QUEEN) {
+        if (USE_INPUT_QUEEN) {
             super.onInputQueueDestroyed(queue);
         }
     }
@@ -606,5 +598,35 @@ public class YGOMobileActivity extends NativeActivity implements
             return;
         }
         super.surfaceRedrawNeeded(holder);
+    }
+
+    @Override
+    public String getSetting(String key) {
+        return mHost.getSetting(key);
+    }
+
+    @Override
+    public int getIntSetting(String key, int def) {
+        return mHost.getIntSetting(key, def);
+    }
+
+    @Override
+    public void saveIntSetting(String key, int value) {
+        mHost.saveIntSetting(key, value);
+    }
+
+    @Override
+    public void saveSetting(String key, String value) {
+        mHost.saveSetting(key, value);
+    }
+
+    @Override
+    public void runWindbot(String cmd) {
+        mHost.runWindbot(cmd);
+    }
+
+    @Override
+    public int getLocalAddr() {
+        return mHost.getLocalAddr();
     }
 }
