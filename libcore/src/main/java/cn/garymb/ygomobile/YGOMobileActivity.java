@@ -31,6 +31,8 @@ import java.nio.ByteBuffer;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.controller.NetworkController;
+import cn.garymb.ygomobile.core.GameConfig;
+import cn.garymb.ygomobile.core.GameSize;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lib.R;
 import cn.garymb.ygomobile.utils.SignUtils;
@@ -92,8 +94,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-    private static int sChainControlXPostion = -1;
-    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private Handler handler = new Handler();
     private volatile int mPositionX, mPositionY;
@@ -122,15 +122,16 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
+        }
+        GameConfig config = getIntent().getParcelableExtra(GameConfig.EXTRA_CONFIG);
+        if(config != null) {
+            GameApplication.get().setGameConfig(config);
         }
         fullscreen();
         super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
-        if (sChainControlXPostion < 0) {
-            initPostion();
-        }
+        Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         if (app().isLockSreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
@@ -153,6 +154,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
+    private GameConfig mGameConfig;
     //电池管理
     private PowerManager mPM;
     private PowerManager.WakeLock mLock;
@@ -160,7 +162,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
+        Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);
@@ -188,20 +190,15 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void initPostion() {
-        final Resources res = getResources();
-        sChainControlXPostion = (int) (CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE * app()
-                .getXScale());
-        sChainControlYPostion = (int) (app().getSmallerSize()
-                - CHAIN_CONTROL_PANEL_Y_REVERT_POSITION
-                * app().getYScale() - (res
-                .getDimensionPixelSize(R.dimen.chain_control_button_height) * 2 + res
-                .getDimensionPixelSize(R.dimen.chain_control_margin)));
-    }
-
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent.hasExtra(GameConfig.EXTRA_CONFIG)) {
+            GameConfig config = getIntent().getParcelableExtra(GameConfig.EXTRA_CONFIG);
+            if(config != null) {
+                GameApplication.get().setGameConfig(config);
+            }
+        }
         handleExternalCommand(intent);
     }
 
@@ -245,22 +242,10 @@ public class YGOMobileActivity extends NativeActivity implements
         } else {
             getWindow().getDecorView().setSystemUiVisibility(windowsFlags2);
         }
-        app().attachGame(this);
+        GameSize size = GameApplication.get().getGameSize(this);
         if (USE_SURFACE) {
-            changeGameSize();
-        } else {
-            int[] size = getGameSize();
+            changeGameSize(size);
         }
-    }
-
-    private int[] getGameSize(){
-        //调整padding
-        float xScale = app().getXScale();
-        float yScale = app().getYScale();
-        int w = (int) (app().getGameWidth() * xScale);
-        int h = (int) (app().getGameHeight() * yScale);
-        Log.i("kk", "w1=" + app().getGameWidth() + ",h1=" + app().getGameHeight() + ",w2=" + w + ",h2=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
-        return new int[]{w, h};
     }
 
     @Override
@@ -279,9 +264,9 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void setContentView(View view) {
-        int[] size = getGameSize();
-        int w = size[0];
-        int h = size[1];
+        GameSize size = GameApplication.get().getGameSize(this);
+        int w = size.getWidth();
+        int h = size.getHeight();
         mLayout = new FrameLayout(this);
 //        mLayout.setFitsSystemWindows(true);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
@@ -290,13 +275,12 @@ public class YGOMobileActivity extends NativeActivity implements
             mLayout.addView(mSurfaceView, lp);
             mLayout.addView(view, lp);
             super.setContentView(mLayout);
-            app().attachGame(this);
             getWindow().takeSurface(null);
             replaced = true;
             mSurfaceView.getHolder().addCallback(this);
             mSurfaceView.requestFocus();
             getWindow().setGravity(Gravity.CENTER);
-            changeGameSize();
+            changeGameSize(size);
         } else {
             mLayout.addView(view, lp);
             super.setContentView(mLayout);
@@ -305,13 +289,10 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void changeGameSize(){
+    private void changeGameSize(GameSize gameSize) {
         //游戏大小
-        int[] size = getGameSize();
-        int w = (int) app().getScreenHeight();
-        int h = (int) app().getScreenWidth();
-        int spX = (int) ((w - size[0]) / 2.0f);
-        int spY = (int) ((h - size[1]) / 2.0f);
+        int spX = gameSize.getTouchX();
+        int spY = gameSize.getTouchY();
 //        Log.i("ygo", "Android command 1:posX=" + spX + ",posY=" + spY);
         boolean update = false;
         synchronized (this) {
@@ -504,7 +485,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -514,7 +495,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -524,7 +505,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -534,7 +515,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }

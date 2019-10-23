@@ -4,7 +4,7 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 19
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 22
 		

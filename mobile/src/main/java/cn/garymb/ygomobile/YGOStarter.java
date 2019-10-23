@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.core.GameConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 import cn.garymb.ygomobile.utils.ComponentUtils;
@@ -176,10 +177,25 @@ public class YGOStarter {
                 intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
             }
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(GameConfig.EXTRA_CONFIG, genConfig());
             Log.e("YGOStarter","跳转前"+System.currentTimeMillis());
             activity.startActivity(intent);
             Log.e("YGOStarter","跳转后"+System.currentTimeMillis());
         }
+    }
+
+    private static GameConfig genConfig() {
+        GameConfig config = new GameConfig();
+        config.setNativeInitOptions(AppsSettings.get().getNativeInitOptions());
+        config.setLockScreenOrientation(AppsSettings.get().isLockSreenOrientation());
+        config.setSensorRefresh(AppsSettings.get().isSensorRefresh());
+        config.setImmerSiveMode(AppsSettings.get().isImmerSiveMode());
+        config.setEnableSoundEffect(AppsSettings.get().isSoundEffect());
+        config.setKeepScale(AppsSettings.get().isKeepScale());
+        config.setFontPath(AppsSettings.get().getFontPath());
+        config.setImagePath(AppsSettings.get().getCardImagePath());
+        config.setResourcePath(AppsSettings.get().getResourcePath());
+        return config;
     }
 
     private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();

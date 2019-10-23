@@ -19,9 +19,6 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
-import cn.garymb.ygomobile.ui.preference.SharedPreferencesPlus;
-import cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 
@@ -34,10 +31,8 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
-import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
-import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
@@ -60,12 +55,9 @@ public class AppsSettings {
     private AppsSettings(Context context) {
         this.context = context;
         String name = context.getPackageName() + ".settings";
-        if (App.isGameProcess()) {
-            mSharedPreferences = YGOPreferencesProvider.getOrCreate(context, name);
-        } else {
-            mSharedPreferences = new SharedPreferencesPlus(context, name, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
-        }
-
+        mSharedPreferences = context.getSharedPreferences(name, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
+        //
+        LocalConfig.getInstance(context).updateFromOld(mSharedPreferences);
         Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
         update(context);
     }
@@ -510,10 +502,6 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
-    public String getCurLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
-    }
-
     //获得最后卡组绝对路径
     public String getLastDeckPath() {
         String path;
@@ -538,33 +526,21 @@ public class AppsSettings {
             return;
         }
         //保存最后分类名
-        mSharedPreferences.edit().putString(Constants.PREF_LAST_CATEGORY, DeckUtil.getDeckTypeName(path)).apply();
+        LocalConfig.getInstance(context).setLastCategory(DeckUtil.getDeckTypeName(path));
         //保存最后卡组名
         File lastDeck = new File(path);
         String lastDeckName = IOUtils.tirmName(lastDeck.getName(), YDK_FILE_EX);
-        mSharedPreferences.edit().putString(Constants.PREF_LAST_YDK, lastDeckName).apply();
+        LocalConfig.getInstance(context).setLastDeck(lastDeckName);
     }
 
     //获得最后分类名
     public String getLastCategory() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_CATEGORY, Constants.PREF_DEF_LAST_CATEGORY);
+        return LocalConfig.getInstance(context).getLastCategory();
     }
 
     //获得最后卡组名
     public String getLastDeckName() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_YDK, Constants.PREF_DEF_LAST_YDK);
-    }
-
-    public void saveIntSettings(String key, int value) {
-        mSharedPreferences.edit().putInt(Constants.PREF_START + key, value).apply();
-    }
-
-    public int getIntSettings(String key, int def) {
-        int v = mSharedPreferences.getInt(Constants.PREF_START + key, def);
-        if (v == def) {
-            Log.d("kk", "default " + key + "=" + getVersionString(v));
-        }
-        return v;
+        return LocalConfig.getInstance(context).getLastDeck();
     }
     /* public int resetGameVersion() {
    *   int version = GameConfig.getVersion();
@@ -618,30 +594,6 @@ public class AppsSettings {
         }
         return v;
     }*/
-
-    public void saveSettings(String key, String value) {
-        if ("lastdeck".equals(key)) {
-            Log.e("AppSettings", value);
-            mSharedPreferences.edit().putString(Constants.PREF_LAST_YDK, value).apply();
-        } else if ("lastcategory".equals(key)) {
-            Log.e("AppSettings", value);
-            mSharedPreferences.edit().putString(Constants.PREF_LAST_CATEGORY, value).apply();
-        } else {
-            mSharedPreferences.edit().putString(Constants.PREF_START + key, value).apply();
-        }
-    }
-
-    public String getSettings(String key) {
-        String val;
-        if ("lastdeck".equals(key)) {
-            val = getLastDeckName();
-            return val;
-        } else if ("lastcategory".equals(key)) {
-            val = getLastCategory();
-            return val;
-        }
-        return mSharedPreferences.getString(Constants.PREF_START + key, null);
-    }
 
     public List<String> getLastRoomList() {
         List<String> names = new ArrayList<>();

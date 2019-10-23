@@ -1,12 +1,15 @@
 package cn.garymb.ygomobile;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.TextUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public final class NativeInitOptions {
+public final class NativeInitOptions implements Parcelable {
 
     private static final int BUFFER_MAX_SIZE = 8192;
 
@@ -85,4 +88,64 @@ public final class NativeInitOptions {
     private void putInt(ByteBuffer buffer, int value) {
         buffer.putInt((Integer.reverseBytes(value)));
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NativeInitOptions options = (NativeInitOptions) o;
+        return mOpenglVersion == options.mOpenglVersion &&
+                mIsSoundEffectEnabled == options.mIsSoundEffectEnabled &&
+                mCardQuality == options.mCardQuality &&
+                mIsFontAntiAliasEnabled == options.mIsFontAntiAliasEnabled &&
+                mIsPendulumScaleEnabled == options.mIsPendulumScaleEnabled &&
+                Objects.equals(mWorkPath, options.mWorkPath) &&
+                Objects.equals(mDbList, options.mDbList) &&
+                Objects.equals(mArchiveList, options.mArchiveList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mOpenglVersion, mIsSoundEffectEnabled, mWorkPath, mDbList, mArchiveList, mCardQuality, mIsFontAntiAliasEnabled, mIsPendulumScaleEnabled);
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.mOpenglVersion);
+        dest.writeByte(this.mIsSoundEffectEnabled ? (byte) 1 : (byte) 0);
+        dest.writeString(this.mWorkPath);
+        dest.writeStringList(this.mDbList);
+        dest.writeStringList(this.mArchiveList);
+        dest.writeInt(this.mCardQuality);
+        dest.writeByte(this.mIsFontAntiAliasEnabled ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.mIsPendulumScaleEnabled ? (byte) 1 : (byte) 0);
+    }
+
+    protected NativeInitOptions(Parcel in) {
+        this.mOpenglVersion = in.readInt();
+        this.mIsSoundEffectEnabled = in.readByte() != 0;
+        this.mWorkPath = in.readString();
+        this.mDbList = in.createStringArrayList();
+        this.mArchiveList = in.createStringArrayList();
+        this.mCardQuality = in.readInt();
+        this.mIsFontAntiAliasEnabled = in.readByte() != 0;
+        this.mIsPendulumScaleEnabled = in.readByte() != 0;
+    }
+
+    public static final Parcelable.Creator<NativeInitOptions> CREATOR = new Parcelable.Creator<NativeInitOptions>() {
+        @Override
+        public NativeInitOptions createFromParcel(Parcel source) {
+            return new NativeInitOptions(source);
+        }
+
+        @Override
+        public NativeInitOptions[] newArray(int size) {
+            return new NativeInitOptions[size];
+        }
+    };
 }

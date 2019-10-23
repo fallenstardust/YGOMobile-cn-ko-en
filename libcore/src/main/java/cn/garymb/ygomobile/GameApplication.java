@@ -17,16 +17,35 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import cn.garymb.ygomobile.core.GameConfig;
+import cn.garymb.ygomobile.core.GameSize;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 
 
 public abstract class GameApplication extends Application implements IrrlichtBridge.IrrlichtApplication {
     private SoundPool mSoundEffectPool;
     private Map<String, Integer> mSoundIdMap;
-
+    private GameConfig gameConfig = new GameConfig();
     private static GameApplication sGameApplication;
     private boolean isInitSoundEffectPool=false;
 	private static String sProcessName;
+
+    public boolean setGameConfig(GameConfig gameConfig) {
+        if (!this.gameConfig.equals(gameConfig)) {
+            this.gameConfig = gameConfig;
+            Log.i("kk", "setGameConfig:" + gameConfig);
+            if(gameConfig.isEnableSoundEffect()){
+                initSoundEffectPool();
+                setInitSoundEffectPool(true);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public final GameConfig getGameConfig() {
+        return gameConfig;
+    }
 
     @Override
     public void onCreate() {
@@ -64,16 +83,6 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         isInitSoundEffectPool = initSoundEffectPool;
     }
 
-    public int getGameWidth(){
-        return 1024;
-    }
-
-    public int getGameHeight(){
-        return 640;
-    }
-
-    public abstract boolean isKeepScale();
-
     @SuppressWarnings("deprecation")
     public void initSoundEffectPool() {
         mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -92,29 +101,47 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         }
     }
 
-    public abstract NativeInitOptions getNativeInitOptions();
+    public abstract GameSize getGameSize(Activity activity);
 
-    public abstract float getSmallerSize();
-
-    public abstract boolean isLockSreenOrientation();
-
-    public abstract boolean isSensorRefresh();
-
-    /**
-     * @deprecated
-     */
-    public boolean canNdkCash() {
-        return true;
+    public NativeInitOptions getNativeInitOptions() {
+        return getGameConfig().getNativeInitOptions();
     }
 
-    public void attachGame(Activity activity) {
+    @Override
+    public abstract float getXScale();
 
+    @Override
+    public abstract float getYScale();
+
+    @Override
+    public String getCardImagePath() {
+        return getGameConfig().getImagePath();
+    }
+
+    @Override
+    public String getFontPath() {
+        return getGameConfig().getFontPath();
+    }
+
+    public boolean isKeepScale() {
+        return getGameConfig().isKeepScale();
+    }
+
+    public boolean isLockSreenOrientation() {
+        return getGameConfig().isLockScreenOrientation();
     }
 
     /***
      * 隐藏底部导航栏
      */
-    public abstract boolean isImmerSiveMode();
+    public boolean isImmerSiveMode() {
+        return getGameConfig().isImmerSiveMode();
+    }
+
+    public boolean isSensorRefresh() {
+        return getGameConfig().isSensorRefresh();
+    }
+
 
     @Override
     public void playSoundEffect(String path) {

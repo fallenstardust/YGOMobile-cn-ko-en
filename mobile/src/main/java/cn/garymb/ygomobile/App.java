@@ -1,9 +1,13 @@
 package cn.garymb.ygomobile;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Point;
+import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -12,9 +16,28 @@ import com.bumptech.glide.Glide;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import cn.garymb.ygomobile.core.GameConfig;
+import cn.garymb.ygomobile.core.GameSize;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class App extends GameApplication {
+    private SharedPreferences settings;
+    private GameSize mGameSize = new GameSize();
+
+    public SharedPreferences getSettings() {
+        if (settings == null) {
+            synchronized (this) {
+                if (settings == null) {
+                    settings = getSharedPreferences("ygo_settings", Context.MODE_PRIVATE);
+                }
+            }
+        }
+        if(!isGameProcess()){
+            Log.e("kk", "don't running in game process");
+        }
+        return settings;
+    }
 
     @Override
     public void onCreate() {
@@ -24,105 +47,110 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-        if (AppsSettings.get().isSoundEffect()) {
-            initSoundEffectPool();
-            setInitSoundEffectPool(true);
-        }
         //初始化图片选择器
         initImgsel();
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
     }
 
-    @Override
-    public NativeInitOptions getNativeInitOptions() {
-        NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
-        return options;
-    }
 
     @Override
-    public float getSmallerSize() {
-        return AppsSettings.get().getSmallerSize();
-    }
-
-    @Override
-    public void attachGame(Activity activity) {
-        super.attachGame(activity);
-        AppsSettings.get().update(activity);
+    public GameSize getGameSize(Activity activity) {
+        boolean immerSiveMode = getGameConfig().isImmerSiveMode();
+        boolean keepScale = getGameConfig().isKeepScale();
+        int maxW, maxH;
+        int fullW, fullH, actW, actH;
+        Point size = new Point();
+        activity.getWindowManager().getDefaultDisplay().getRealSize(size);
+        fullW = size.x;
+        fullH = size.y;
+        actW = activity.getWindowManager().getDefaultDisplay().getWidth();
+        actH = activity.getWindowManager().getDefaultDisplay().getHeight();
+        int w1, h1;
+        if (immerSiveMode) {
+            w1 = fullW;
+            h1 = fullH;
+        } else {
+            w1 = actW;
+            h1 = actH;
+        }
+        maxW = Math.max(w1, h1);
+        maxH = Math.min(w1, h1);
+        Log.i("kk", "maxW=" + maxW + ",maxH=" + maxH);
+        float sx, sy, scale;
+        int gw, gh;
+        if (keepScale) {
+            sx = (float) maxW / IrrlichtBridge.GAME_WIDTH;
+            sy = (float) maxH / IrrlichtBridge.GAME_HEIGHT;
+            scale = Math.min(sx, sy);
+            gw = (int) (IrrlichtBridge.GAME_WIDTH * scale);
+            gh = (int) (IrrlichtBridge.GAME_HEIGHT * scale);
+        } else {
+            gw = maxW;
+            gh = maxH;
+        }
+        Log.i("kk", "game=" + gw + "x" + gh);
+        //fix touch point
+        int left = (maxW - gw) / 2;
+        int top = (maxH - gh) / 2;
+        Log.i("kk", "touch fix=" + left + "x" + top);
+        //if(huawei and liuhai){
+        // left-=liuhai
+        // }
+        mGameSize =  new GameSize(gw, gh, left, top);
+        return mGameSize;
     }
 
     @Override
     public float getXScale() {
-        return AppsSettings.get().getXScale(getGameWidth(), getGameHeight());
+        if (mGameSize == null) {
+            //TODO error
+            return 1.0f;
+        }
+        return mGameSize.getWidth() / IrrlichtBridge.GAME_WIDTH;
     }
 
     @Override
     public float getYScale() {
-        return AppsSettings.get().getYScale(getGameWidth(), getGameHeight());
+        if (mGameSize == null) {
+            //TODO error
+            return 1.0f;
+        }
+        return mGameSize.getHeight() / IrrlichtBridge.GAME_HEIGHT;
     }
 
-    @Override
-    public String getCardImagePath() {
-        return AppsSettings.get().getCardImagePath();
-    }
-
-    @Override
-    public String getFontPath() {
-        return AppsSettings.get().getFontPath();
-    }
-
-    @Override
-    public boolean isKeepScale() {
-        return AppsSettings.get().isKeepScale();
-    }
-
+    @SuppressLint("ApplySharedPref")
     @Override
     public void saveSetting(String key, String value) {
-        AppsSettings.get().saveSettings(key, value);
+        if (Constants.CONF_LAST_DECK.equals(key)) {
+            LocalConfig.getInstance(this).setLastDeck(value);
+        } else if (Constants.CONF_LAST_CATEGORY.equals(key)) {
+            LocalConfig.getInstance(this).setLastCategory(value);
+        } else {
+            getSettings().edit().putString(key, value).commit();
+        }
     }
 
     @Override
     public String getSetting(String key) {
-        return AppsSettings.get().getSettings(key);
+        if (Constants.CONF_LAST_DECK.equals(key)) {
+            return LocalConfig.getInstance(this).getLastDeck();
+        } else if (Constants.CONF_LAST_CATEGORY.equals(key)) {
+            return LocalConfig.getInstance(this).getLastCategory();
+        } else {
+            return getSettings().getString(key, null);
+        }
     }
 
     @Override
     public int getIntSetting(String key, int def) {
-        return AppsSettings.get().getIntSettings(key, def);
+        return getSettings().getInt(key, def);
     }
 
+    @SuppressLint("ApplySharedPref")
     @Override
     public void saveIntSetting(String key, int value) {
-        AppsSettings.get().saveIntSettings(key, value);
-    }
-
-    @Override
-    public float getScreenWidth() {
-        return AppsSettings.get().getScreenWidth();
-    }
-
-    @Override
-    public boolean isLockSreenOrientation() {
-        return AppsSettings.get().isLockSreenOrientation();
-    }
-
-    @Override
-    public boolean canNdkCash() {
-        return false;
-    }
-
-    @Override
-    public boolean isImmerSiveMode() {
-        return AppsSettings.get().isImmerSiveMode();
-    }
-
-    public boolean isSensorRefresh() {
-        return AppsSettings.get().isSensorRefresh();
-    }
-
-    @Override
-    public float getScreenHeight() {
-        return AppsSettings.get().getScreenHeight();
+        getSettings().edit().putInt(key, value).commit();
     }
 
     @Override

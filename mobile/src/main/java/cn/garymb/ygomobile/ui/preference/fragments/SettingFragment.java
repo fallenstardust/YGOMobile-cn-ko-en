@@ -198,14 +198,14 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     }
                 }
                 //如果是音效开关
-                if (preference.getKey().equals(PREF_SOUND_EFFECT)) {
-                    //如果打勾开启音效
-                    if (checkBoxPreference.isChecked()) {
-                        //如果未初始化音效
-                        if (App.get().isInitSoundEffectPool())
-                            App.get().initSoundEffectPool();
-                    }
-                }
+//                if (preference.getKey().equals(PREF_SOUND_EFFECT)) {
+//                    //如果打勾开启音效
+//                    if (checkBoxPreference.isChecked()) {
+//                        //如果未初始化音效
+//                        if (App.get().isInitSoundEffectPool())
+//                            App.get().initSoundEffectPool();
+//                    }
+//                }
                 return true;
             }
             boolean rs = super.onPreferenceChange(preference, value);

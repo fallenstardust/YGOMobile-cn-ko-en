@@ -23,6 +23,8 @@ import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
  * @author mabin
  */
 public final class IrrlichtBridge {
+    public static final float GAME_WIDTH = 1024.0f;
+    public static final float GAME_HEIGHT = 640.0f;
     public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
     public static final String EXTRA_PID = "extras.mypid";
@@ -168,10 +170,6 @@ public final class IrrlichtBridge {
         int getIntSetting(String key,int def);
 
         void saveIntSetting(String key,int value);
-
-        float getScreenWidth();
-
-        float getScreenHeight();
 
         void playSoundEffect(String path);
 		

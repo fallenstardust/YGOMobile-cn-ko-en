@@ -114,56 +114,6 @@ irr::io::path getExternalFilesDir(ANDROID_APP app) {
 	return ret;
 }
 
-float getScreenHeight(ANDROID_APP app) {
-	float ret;
-	if (!app || !app->activity || !app->activity->vm)
-		return ret;
-
-	JNIEnv* jni = 0;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
-	if (!jni)
-		return ret;
-	// Retrieves NativeActivity.
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
-			"getApplication", "()Landroid/app/Application;");
-	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
-	jclass classApp = jni->GetObjectClass(application);
-	jmethodID resdirMethod = jni->GetMethodID(classApp, "getScreenHeight",
-			"()F");
-	ret = jni->CallFloatMethod(application, resdirMethod);
-	jni->DeleteLocalRef(classApp);
-	jni->DeleteLocalRef(ClassNativeActivity);
-	app->activity->vm->DetachCurrentThread();
-	return ret;
-}
-
-float getScreenWidth(ANDROID_APP app) {
-	float ret;
-	if (!app || !app->activity || !app->activity->vm)
-		return ret;
-
-	JNIEnv* jni = 0;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
-	if (!jni)
-		return ret;
-	// Retrieves NativeActivity.
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
-			"getApplication", "()Landroid/app/Application;");
-	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
-	jclass classApp = jni->GetObjectClass(application);
-	jmethodID resdirMethod = jni->GetMethodID(classApp, "getScreenWidth",
-			"()F");
-	ret = jni->CallFloatMethod(application, resdirMethod);
-	jni->DeleteLocalRef(classApp);
-	jni->DeleteLocalRef(ClassNativeActivity);
-	app->activity->vm->DetachCurrentThread();
-	return ret;
-}
-
 irr::io::path getDBDir(ANDROID_APP app) {
 	irr::io::path ret;
 	if (!app || !app->activity || !app->activity->vm)

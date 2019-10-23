@@ -75,21 +75,7 @@ private:
 static unsigned char signed_buff[16] = { 0x30, 0x82, 0x2, 0x41, 0x30, 0x82, 0x1,
 		0xAA, 0xA0, 0x3, 0x2, 0x1, 0x2, 0x2, 0x4, 0x53 };
 
-struct SDisplayMetrics {
-	irr::s32 widthPixels;
-	irr::s32 heightPixels;
-	irr::f32 density;
-	irr::s32 densityDpi;
-	irr::f32 scaledDensity;
-	irr::f32 xdpi;
-	irr::f32 ydpi;
-};
 /* jni utils*/
-// Access SDisplayMetrics
-extern float getScreenWidth(ANDROID_APP app);
-
-extern float getScreenHeight(ANDROID_APP app);
-
 // Get SDCard path.
 extern irr::io::path getExternalStorageDir(ANDROID_APP app);
 
