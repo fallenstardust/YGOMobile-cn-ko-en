@@ -36,10 +36,14 @@ public class LocalConfig {
     }
 
     public String getLastDeck() {
+        String str = null;
         if (lastdeck.exists()) {
-            return FileUtils.readAllString(lastdeck);
+            str = FileUtils.readAllString(lastdeck);
         }
-        return null;
+        if(str == null){
+            str = Constants.PREF_DEF_LAST_CATEGORY;
+        }
+        return str;
     }
 
     public void setLastDeck(String deck) {
@@ -47,10 +51,14 @@ public class LocalConfig {
     }
 
     public String getLastCategory() {
+        String str = null;
         if (lastcategory.exists()) {
-            return FileUtils.readAllString(lastcategory);
+            str = FileUtils.readAllString(lastcategory);
         }
-        return null;
+        if(str == null){
+            str = Constants.PREF_DEF_LAST_YDK;
+        }
+        return str;
     }
 
     public void setLastCategory(String category) {
