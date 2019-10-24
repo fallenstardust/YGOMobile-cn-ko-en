@@ -29,6 +29,10 @@ public abstract class GameApplication extends Application {
         return sProcessName != null && sProcessName.endsWith(":game");
     }
 
+    public static String getAppProcessName() {
+        return sProcessName;
+    }
+
     @SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
     protected String getCurrentProcessName() {
         if (Build.VERSION.SDK_INT >= 28) {

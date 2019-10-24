@@ -5,6 +5,7 @@ import android.view.Gravity;
 import cn.garymb.ygomobile.lite.BuildConfig;
 
 public interface Constants {
+    String ACTION_WINDBOT = "RUN_WINDBOT";
     boolean DEBUG = BuildConfig.DEBUG;
     String PREF_START = "game_pref_";
     String PREF_LAST_DECK_PATH = "pref_last_deck_path";

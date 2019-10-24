@@ -12,6 +12,7 @@ import android.graphics.Point;
 import android.os.Build;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.minidns.record.A;
 
@@ -24,6 +25,7 @@ import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.rom.RomIdentifier;
 import libwindbot.windbot.WindBot;
@@ -41,7 +43,7 @@ class LocalGameHost extends GameHost {
         super(context);
         this.context = context;
         settings = context.getSharedPreferences("ygo_settings", Context.MODE_PRIVATE);
-        if(!GameApplication.isGameProcess()){
+        if (!GameApplication.isGameProcess()) {
             Log.e("kk", "GameHost don't running in game process.");
         }
     }
@@ -80,29 +82,37 @@ class LocalGameHost extends GameHost {
         }
     }
 
-    private void initWindBot() {
-        synchronized (this){
-            if(mInitBot){
-                return;
-            }
-            mInitBot = true;
-        }
-        Log.i("路径", context.getFilesDir().getPath());
-        Log.i("路径2", AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
-        try {
-            WindBot.initAndroid(AppsSettings.get().getResourcePath(),
-                    AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME,
-                    AppsSettings.get().getResourcePath() + "/" + CORE_BOT_CONF_PATH);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void initWindbot(NativeInitOptions options, GameConfig config) {
+//        if (options.mDbList.size() == 0) {
+//            return;
+//        }
+//        String cdb = options.mDbList.get(0);
+//        Log.i("kk", "cdb=" + cdb);
+//        try {
+//            WindBot.initAndroid(AppsSettings.get().getResourcePath(),
+//                    cdb,
+//                    options.mResDir + "/" + CORE_BOT_CONF_PATH);
+//            mInitBot = true;
+//        } catch (Throwable e) {
+//            e.printStackTrace();
+//            Log.i("kk", "initAndroid", e);
+//        }
     }
 
     @Override
     public void runWindbot(String cmd) {
-        initWindBot();
-        WindBot.runAndroid(cmd);
+//        if (mInitBot) {
+//            WindBot.runAndroid(cmd);
+//        } else {
+//            VUiKit.show(context, "run bot error");
+//        }
+        Intent intent = new Intent(Constants.WINDBOT_ACTION);
+        intent.putExtra("args", cmd);
+        intent.setPackage(context.getPackageName());
+        context.sendBroadcast(intent);
     }
+
 
     @Override
     public AssetManager getGameAsset() {
@@ -185,7 +195,7 @@ class LocalGameHost extends GameHost {
         DialogPlus dlg = new DialogPlus(activity);
         dlg.setTitle("Report");
         dlg.setMessage("You need to collect the data of your model and the settings of the full screen / screen, and send the screenshot of the current interface to the author.");
-        dlg.setLeftButtonListener((d, id)->{
+        dlg.setLeftButtonListener((d, id) -> {
             //
             dlg.dismiss();
             showDialog(activity, config);
@@ -201,9 +211,9 @@ class LocalGameHost extends GameHost {
         DialogPlus dlg = new DialogPlus(activity);
         dlg.setView(R.layout.dialog_report);
         GameSize size = mGameSize;
-        if(size == null){
+        if (size == null) {
             size = getGameSize(activity, config);
-            Log.i("kk", "gen size "+size);
+            Log.i("kk", "gen size " + size);
         }
         ((TextView) dlg.findViewById(R.id.tv_model)).setText(Build.MODEL + "/" + Build.PRODUCT);
         ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE);

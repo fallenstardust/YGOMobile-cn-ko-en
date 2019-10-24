@@ -171,6 +171,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 }
             });
         }
+        mHost.initWindbot(mGameConfig.getNativeInitOptions(), mGameConfig);
         mHost.onAfterCreate(this);
     }
 

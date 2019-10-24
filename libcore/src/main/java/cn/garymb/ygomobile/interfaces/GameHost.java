@@ -9,6 +9,7 @@ import android.net.wifi.WifiInfo;
 
 import androidx.annotation.Keep;
 
+import cn.garymb.ygomobile.NativeInitOptions;
 import cn.garymb.ygomobile.tool.GameSoundPlayer;
 import cn.garymb.ygomobile.tool.NetworkController;
 
@@ -49,4 +50,5 @@ public abstract class GameHost implements IGameHost{
 
     }
 
+    public abstract void initWindbot(NativeInitOptions options, GameConfig config);
 }

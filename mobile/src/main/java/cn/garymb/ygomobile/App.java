@@ -35,7 +35,15 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-
+        if(getPackageName().equals(getAppProcessName())){
+            registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String args = intent.getStringExtra("args");
+                    WindBot.runAndroid(args);
+                }
+            }, new IntentFilter(Constants.ACTION_WINDBOT));
+        }
     }
 
     private void initImgsel() {

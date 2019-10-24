@@ -23,9 +23,13 @@ import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
+import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
 import ocgcore.ConfigManager;
 import ocgcore.DataManager;
+
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class LogoActivity extends BaseActivity {
     public static final String EXTRA_NEW_VERSION = "isNew";
@@ -90,6 +94,7 @@ public class LogoActivity extends BaseActivity {
     }
 
     private void onCheckCompleted(boolean isNew, int err) {
+        initWindBot();
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(EXTRA_NEW_VERSION, isNew);
         intent.putExtra(EXTRA_ERROR, err);
@@ -97,6 +102,18 @@ public class LogoActivity extends BaseActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void initWindBot() {
+        Log.i("kk", "files=" + getFilesDir().getPath());
+        Log.i("kk", "cdb=" + AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME);
+        try {
+            WindBot.initAndroid(AppsSettings.get().getResourcePath(),
+                    AppsSettings.get().getDataBasePath() + "/" + DATABASE_NAME,
+                    AppsSettings.get().getResourcePath() + "/" + CORE_BOT_CONF_PATH);
+        } catch (Throwable e) {
+            Log.e("kk", "init windbot", e);
+        }
     }
 
     @Override
