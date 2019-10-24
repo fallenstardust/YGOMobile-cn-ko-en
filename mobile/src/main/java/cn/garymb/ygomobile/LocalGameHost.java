@@ -217,7 +217,7 @@ class LocalGameHost extends GameHost {
         }
         ((TextView) dlg.findViewById(R.id.tv_model)).setText(Build.MODEL + "/" + Build.PRODUCT);
         ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE);
-        ((TextView) dlg.findViewById(R.id.tv_rom)).setText(String.valueOf(RomIdentifier.getRomType(activity)));
+        ((TextView) dlg.findViewById(R.id.tv_rom)).setText(String.valueOf(RomIdentifier.getRomInfo(activity).getRom()));
         ((TextView) dlg.findViewById(R.id.tv_rom_ver)).setText(RomIdentifier.getRomInfo(activity).getVersion());
         ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText(ScreenUtil.hasNotchInformation(activity) ? "Yes" : "No");
         ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText(ScreenUtil.isNavigationBarShown(activity) ? "Yes" : "No");
