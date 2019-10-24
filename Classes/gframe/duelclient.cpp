@@ -3925,7 +3925,7 @@ void DuelClient::BeginRefreshHost() {
 	event_base* broadev = event_base_new();
 #ifdef _IRR_ANDROID_PLATFORM_
 	//get local ip address in android style
-	int ipaddr = android::getLocalAddr(mainGame->appMain);
+	int ipaddr = mainGame->getLocalAddr();
 	if (ipaddr == -1) {
 		return;
 	}

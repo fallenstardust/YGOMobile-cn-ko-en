@@ -172,7 +172,6 @@ public class FileUtils {
         }
     }
 
-
     public static String readAllString(File file) {
         if (file == null || !file.exists()) {
             return null;

@@ -49,6 +49,11 @@ class FileAdapter extends BaseAdapterPlus<File> {
         mOnPathChangedListener = onPathChangedListener;
     }
 
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+        setPath(rootPath);
+    }
+
     private String getRootPath() {
         return "/";
     }

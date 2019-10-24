@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="trasparent_dark_purple">#669933CC</color>
-    <color name="dark_purple">#9933CC</color>
-    <color name="navigator_dir_text_color">#666666</color>
-    <color name="navigator_dir_text_color_selected">#ff8a00</color>
-    <color name="less_trasparent_dark_purple">#339933CC</color>
-    <color name="dark_trasparent_dark_purple">#999933CC</color>
-</resources>

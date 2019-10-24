@@ -11,7 +11,7 @@
 
 namespace ygo {
 
-AndroidSoundEffectPlayer::AndroidSoundEffectPlayer(ANDROID_APP app) :
+AndroidSoundEffectPlayer::AndroidSoundEffectPlayer(ANDROID_APP  app) :
 		m_pAudioTracker(NULL), m_isEnabled(false) {
 	if (m_pAudioTracker == NULL) {
 //		m_pAudioTracker = new OpenSLSoundTracker(app->activity->assetManager);

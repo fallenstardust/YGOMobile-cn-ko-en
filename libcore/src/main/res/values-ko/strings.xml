@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="combobox_choose_item">请选择其中一个</string>
-    <string name="ignore_chain">忽略时点</string>
-    <string name="react_chain">显示时点</string>
-    <string name="refresh_textures">刷新界面</string>
-</resources>

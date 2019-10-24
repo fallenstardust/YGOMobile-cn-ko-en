@@ -40,8 +40,8 @@ public class LocalConfig {
         if (lastdeck.exists()) {
             str = FileUtils.readAllString(lastdeck);
         }
-        if(str == null){
-            str = Constants.PREF_DEF_LAST_CATEGORY;
+        if (str == null) {
+            str = "";
         }
         return str;
     }
@@ -55,8 +55,8 @@ public class LocalConfig {
         if (lastcategory.exists()) {
             str = FileUtils.readAllString(lastcategory);
         }
-        if(str == null){
-            str = Constants.PREF_DEF_LAST_YDK;
+        if (str == null) {
+           // str = "";
         }
         return str;
     }

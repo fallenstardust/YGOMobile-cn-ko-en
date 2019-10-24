@@ -41,7 +41,7 @@ bool CAndroidGUIEditBox::OnEvent(const SEvent& event) {
 inline void CAndroidGUIEditBox::toggleIME(bool pShow) {
 	char hint[256];
 	BufferIO::EncodeUTF8(getText(), hint);
-	android::toggleIME(ygo::mainGame->appMain, pShow, hint);
+	ygo::mainGame->toggleIME(pShow, hint);
 }
 
 } /* namespace gui */

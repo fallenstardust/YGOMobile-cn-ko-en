@@ -3,33 +3,26 @@ package cn.garymb.ygomobile.ui.home;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
-import com.bumptech.glide.Glide;
-import com.yuyh.library.imgsel.ISNav;
-import com.yuyh.library.imgsel.common.ImageLoader;
-
-import java.io.IOException;
+import java.io.File;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.LogoActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -37,119 +30,28 @@ import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.PermissionUtil;
+import libwindbot.windbot.WindBot;
 
-import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class MainActivity extends HomeActivity {
+    private static final String TAG = "ResCheckTask";
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
-    ResCheckTask mResCheckTask;
-    private final String[] PERMISSIONS = {
-//            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         YGOStarter.onCreated(this);
         mImageUpdater = new ImageUpdater(this);
-        //动态权限
-//        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
+        Log.i("kk", "MainActivity:onCreate");
+        boolean isNew = getIntent().getBooleanExtra(LogoActivity.EXTRA_NEW_VERSION, false);
+        int err = getIntent().getIntExtra(LogoActivity.EXTRA_ERROR, ResCheckTask.ERROR_NONE);
         //资源复制
-        checkRes();
-    }
-
-    @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//        for(int i=0;i<permissions.length;i++){
-//            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-//                showToast(getString(R.string.tip_no_permission,permissions[i]));
-//                break;
-//            }
-//        }
-
-    }
-
-    private void checkRes() {
-        checkResourceDownload((error, isNew) -> {
-            if (error < 0) {
-                enableStart = false;
-            } else {
-                enableStart = true;
-            }
-            if (isNew) {
-                if (!getGameUriManager().doIntent(getIntent())) {
-                    final DialogPlus dialog = new DialogPlus(this);
-                    dialog.showTitleBar();
-                    dialog.setTitle(getString(R.string.settings_about_change_log));
-                    dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
-                    dialog.setLeftButtonText(R.string.help);
-                    dialog.setLeftButtonListener((dlg, i) -> {
-                        dialog.setContentView(R.layout.dialog_help);
-                        dialog.setTitle(R.string.question);
-                        dialog.hideButton();
-                        dialog.show();
-                        View viewDialog = dialog.getContentView();
-                        Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
-                        Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
-
-                        btnMasterRule.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
-                            dialog.dismiss();
-                        });
-                        btnTutorial.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
-                            dialog.dismiss();
-                        });
-                    });
-                    dialog.setRightButtonText(R.string.OK);
-                    dialog.setRightButtonListener((dlg, i) -> {
-                        dlg.dismiss();
-                        //mImageUpdater
-                        if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
-                            if (!mImageUpdater.isRunning()) {
-                                mImageUpdater.start();
-                            }
-                        }
-                    });
-                    /*DialogPlus dialog = new DialogPlus(this)
-                            .setTitleText(getString(R.string.settings_about_change_log))
-                            .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
-                            .hideButton()
-                            .setOnCloseLinster((dlg) -> {
-                                dlg.dismiss();
-                                //mImageUpdater
-                                if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
-                                    if (!mImageUpdater.isRunning()) {
-                                        mImageUpdater.start();
-                                    }
-                                }
-                            });*/
-                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialogInterface) {
-                            PermissionUtil.isServicePermission(MainActivity.this, true);
-
-                        }
-                    });
-                    dialog.show();
-                }
-            } else {
-                PermissionUtil.isServicePermission(MainActivity.this, true);
-                getGameUriManager().doIntent(getIntent());
-            }
-
-        });
+        onCheckCompleted(err, isNew);
     }
 
     @Override
@@ -158,7 +60,7 @@ public class MainActivity extends HomeActivity {
         YGOStarter.onResumed(this);
         //如果游戏Activity已经不存在了，则
         if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
-            sendBroadcast(new Intent(IrrlichtBridge.ACTION_STOP).setPackage(getPackageName()));
+            ComponentUtils.killActivity(this, new ComponentName(this, YGOMobileActivity.class));
         }
     }
 
@@ -166,25 +68,13 @@ public class MainActivity extends HomeActivity {
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if (mResCheckTask != null)
-            mResCheckTask.unregisterMReceiver();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (ACTION_RELOAD.equals(intent.getAction())) {
-            checkResourceDownload((error, isNew) -> {
-                if (error < 0) {
-                    enableStart = false;
-                } else {
-                    enableStart = true;
-                }
-                getGameUriManager().doIntent(getIntent());
-            });
-        } else {
-            getGameUriManager().doIntent(intent);
-        }
+        Log.i("kk", "MainActivity:onNewIntent");
+        getGameUriManager().doIntent(intent);
     }
 
     private GameUriManager getGameUriManager() {
@@ -192,16 +82,6 @@ public class MainActivity extends HomeActivity {
             mGameUriManager = new GameUriManager(this);
         }
         return mGameUriManager;
-    }
-
-    @Override
-    protected void checkResourceDownload(ResCheckListener listener) {
-        mResCheckTask = new ResCheckTask(this, listener);
-        if (Build.VERSION.SDK_INT >= 11) {
-            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } else {
-            mResCheckTask.execute();
-        }
     }
 
     @Override
@@ -217,31 +97,37 @@ public class MainActivity extends HomeActivity {
     public void updateImages() {
         Log.e("MainActivity", "重置资源");
         DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
-        dialog.show();
+        final AssetManager assetManager = getAssets();
+        String resPath = AppsSettings.get().getResourcePath();
         VUiKit.defer().when(() -> {
             Log.e("MainActivity", "开始复制");
             try {
                 IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
-                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_PICS_FILE_PATH)) {
+                    IOUtils.copyFile(assetManager, Constants.ASSET_PICS_FILE_PATH,
+                            new File(resPath, Constants.CORE_PICS_ZIP), true);
                 }
-                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH)) {
+                    IOUtils.copyFile(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH,
+                            new File(resPath, Constants.CORE_SCRIPTS_ZIP), true);
                 }
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
-                        AppsSettings.get().getResourcePath(), true);
+                IOUtils.copyFile(assetManager, Constants.ASSET_CARDS_CDB_FILE_PATH,
+                        new File(AppsSettings.get().getDataBasePath(), Constants.DATABASE_NAME), true);
 
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
-                        AppsSettings.get().getResourcePath(), true);
+                IOUtils.copyFile(assetManager, Constants.ASSET_STRING_CONF_FILE_PATH,
+                        new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH), true);
 
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.WINDBOT_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
+                IOUtils.copyFolder(assetManager, Constants.ASSET_SKIN_DIR_PATH,
                         AppsSettings.get().getCoreSkinPath(), false);
-            } catch (IOException e) {
+
+                IOUtils.copyFolder(assetManager, Constants.ASSET_FONTS_DIR_PATH,
+                        AppsSettings.get().getFontDirPath(), false);
+
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DECK_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DECK_PATH).getPath(), true);
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DIALOG_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DIALOG_PATH).getPath(), true);
+            } catch (Throwable e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);
             }
@@ -255,4 +141,72 @@ public class MainActivity extends HomeActivity {
                 Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
             });*/
 
+    private void onCheckCompleted(int error, boolean isNew) {
+        if (error < 0) {
+            enableStart = false;
+        } else {
+            enableStart = true;
+        }
+        if (isNew) {
+            if (!getGameUriManager().doIntent(getIntent())) {
+                final DialogPlus dialog = new DialogPlus(this);
+                dialog.showTitleBar();
+                dialog.setTitle(getString(R.string.settings_about_change_log));
+                dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
+                dialog.setLeftButtonText(R.string.help);
+                dialog.setLeftButtonListener((dlg, i) -> {
+                    dialog.setContentView(R.layout.dialog_help);
+                    dialog.setTitle(R.string.question);
+                    dialog.hideButton();
+                    dialog.show();
+                    View viewDialog = dialog.getContentView();
+                    Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
+                    Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
+
+                    btnMasterRule.setOnClickListener((v) -> {
+                        WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                        dialog.dismiss();
+                    });
+                    btnTutorial.setOnClickListener((v) -> {
+                        WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
+                        dialog.dismiss();
+                    });
+                });
+                dialog.setRightButtonText(R.string.OK);
+                dialog.setRightButtonListener((dlg, i) -> {
+                    dlg.dismiss();
+                    //mImageUpdater
+                    if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+                        if (!mImageUpdater.isRunning()) {
+                            mImageUpdater.start();
+                        }
+                    }
+                });
+                    /*DialogPlus dialog = new DialogPlus(this)
+                            .setTitleText(getString(R.string.settings_about_change_log))
+                            .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
+                            .hideButton()
+                            .setOnCloseLinster((dlg) -> {
+                                dlg.dismiss();
+                                //mImageUpdater
+                                if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+                                    if (!mImageUpdater.isRunning()) {
+                                        mImageUpdater.start();
+                                    }
+                                }
+                            });*/
+                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        PermissionUtil.isServicePermission(MainActivity.this, true);
+
+                    }
+                });
+                dialog.show();
+            }
+        } else {
+            PermissionUtil.isServicePermission(MainActivity.this, true);
+            getGameUriManager().doIntent(getIntent());
+        }
+    }
 }

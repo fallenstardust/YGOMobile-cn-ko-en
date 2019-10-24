@@ -3,6 +3,7 @@ IRRLICHT_LIB_PATH := $(LOCAL_PATH)/../../lib/Android/$(TARGET_ARCH_ABI)
 
 include $(CLEAR_VARS)
 
+#LOCAL_SHORT_COMMANDS := true
 LOCAL_MODULE := Irrlicht
 IRRLICHT_LIB_NAME := lib$(LOCAL_MODULE).a
 

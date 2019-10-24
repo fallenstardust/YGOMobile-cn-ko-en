@@ -19,6 +19,12 @@
             android:persistent="false"
             android:title="@string/about_pref_settings_keep_scale" />
 
+      <!--  <CheckBoxPreference
+            android:key="pref_key_hw_hide_notouch"
+            android:persistent="false"
+            android:title="@string/about_pref_key_hw_hide_notouch"
+            android:summary="@string/about_pref_key_hw_hide_notouch_desc"/>
+-->
         <ListPreference
             android:entries="@array/opengl_version"
             android:entryValues="@array/opengl_version_value"

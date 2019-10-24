@@ -179,13 +179,13 @@ void DeckBuilder::Terminate() {
 	if(catesel >= 0)
 	    BufferIO::CopyWStr(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory, 64);
 	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-		android::setLastCategory(mainGame->appMain, linebuf);
+	    mainGame->setLastCategory(linebuf);
 		//irr:os::Printer::log("setLastCategory", linebuf);
 	int decksel = mainGame->cbDBDecks->getSelected();
 	if(decksel >= 0)
 	    BufferIO::CopyWStr(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck, 64);
 		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-		android::setLastDeck(mainGame->appMain, linebuf);
+		mainGame->setLastDeck(linebuf);
 		//os::Printer::log("setLastDeck", linebuf);
 	mainGame->SaveConfig();
 	if(exit_on_return)
@@ -1116,10 +1116,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
         	s32 y = event.MouseInput.Y;
         	irr::core::position2di pos(x, y);
         	if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
-                mainGame->gMutex.lock();
-        		mainGame->textFont->setTransparency(true);
+        		mainGame->refreshTexture();
         		mainGame->ClearChatMsg();
-                mainGame->gMutex.unlock();
         		break;
         	}//touch the pic of detail to refresh textfonts
 			is_starting_dragging = false;

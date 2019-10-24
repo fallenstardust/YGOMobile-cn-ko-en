@@ -508,8 +508,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         YGOStarter.startGame(this, options);
     }
 
-    protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
-
     protected abstract void openGame();
 
     public abstract void updateImages();

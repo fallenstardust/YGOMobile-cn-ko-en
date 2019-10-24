@@ -14,11 +14,11 @@ void UpdateDeck() {
     char linebuf[256];
 	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), mainGame->gameConf.lastcategory, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-    android::setLastCategory(mainGame->appMain, linebuf);
+	mainGame->setLastCategory(linebuf);
 
 	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()), mainGame->gameConf.lastdeck, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-	android::setLastDeck(mainGame->appMain, linebuf);
+	mainGame->setLastDeck(linebuf);
 		
 	char deckbuf[1024];
 	char* pdeck = deckbuf;
@@ -372,7 +372,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				char arg3[32];
 				sprintf(arg3, " Port=%d", mainGame->gameConf.serverport);
 				sprintf(args, "%s%s%s", arg1, arg2, arg3);
-				android::runWindbot(mainGame->appMain, args);
+				mainGame->runWindbot(args);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport))
 					break;
 				if(!DuelClient::StartClient(0x7f000001, mainGame->gameConf.serverport)) {

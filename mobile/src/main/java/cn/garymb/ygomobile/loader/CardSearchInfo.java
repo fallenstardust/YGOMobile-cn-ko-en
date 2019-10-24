@@ -66,7 +66,7 @@ class CardSearchInfo {
                 return false;
             }
         }
-        if (level != 0) {
+        if (level >= 0) {
             if (card.getStar() != level) {
                 return false;
             }
@@ -173,7 +173,7 @@ class CardSearchInfo {
                 }
             }
         }
-        //TODO setcode
+        //setcode
         if (setcode > 0) {
             if (!card.isSetCode(setcode)) {
                 return false;

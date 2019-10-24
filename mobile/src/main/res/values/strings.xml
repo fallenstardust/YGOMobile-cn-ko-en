@@ -273,4 +273,7 @@
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
     <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
+    <string name="about_pref_key_hw_hide_notouch">Hide Hw notouch</string>
+    <string name="about_pref_key_hw_hide_notouch_desc">If the click   has problem in your game, turn on this.</string>
+    <string name="tip_load_ok">load completed.</string>
 </resources>

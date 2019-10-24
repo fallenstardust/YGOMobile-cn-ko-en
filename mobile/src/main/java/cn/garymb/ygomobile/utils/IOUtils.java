@@ -48,7 +48,7 @@ public class IOUtils {
         if (file == null || !file.exists()) return;
         if (file.isFile()) {
             file.delete();
-        } else if(file.isDirectory()){
+        } else if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {
                 for (File f : files) {
@@ -61,19 +61,6 @@ public class IOUtils {
 
     public static boolean rename(String src, String to) {
         return new File(src).renameTo(new File(to));
-    }
-
-    public static boolean isDirectory(Context context, String assets) {
-        String[] files = new String[0];
-        try {
-            files = context.getAssets().list(assets);
-        } catch (IOException e) {
-
-        }
-        if (files != null && files.length > 0) {
-            return true;
-        }
-        return false;
     }
 
     public static String tirmName(String name, String ex) {
@@ -106,70 +93,80 @@ public class IOUtils {
         return new File(path).getName();
     }
 
-    public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update) throws IOException {
-        AssetManager am = context.getAssets();
-        String[] files = am.list(assets);
-        if (files == null) {
+    public static boolean copyFile(AssetManager mgr, String path, File file, boolean update) {
+        if (Constants.DEBUG)
+            Log.d(TAG, "copyFile:" + path + "-->" + file.getAbsolutePath());
+        InputStream inputStream = null;
+        boolean ret = false;
+        try {
+            inputStream = mgr.open(path);
+            if(update || !file.exists()) {
+                createFolderByFile(file);
+                ret = copyToFile(mgr.open(path), file.getAbsolutePath());
+            }else{
+                ret = true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close(inputStream);
+        }
+        return ret;
+    }
+
+    public static int copyFolder(AssetManager mgr, String srcDir, String dstDir, boolean update) {
+        String[] files = null;
+        try {
+            files = mgr.list(srcDir);
+        } catch (IOException e) {
             return 0;
         }
-        if (files.length == 0) {
-            //is file
-            String file = getName(assets);
-            File tofile = new File(toPath, file);
-            if (update || !tofile.exists()) {
+        if (files == null || files.length == 0) {
+            if (Constants.DEBUG)
+                Log.w(TAG, "copy dir:" + srcDir + "-->" + dstDir+", not files");
+            return 0;
+        }
+        File dir = new File(dstDir);
+        createFolder(dir);
+        if (Constants.DEBUG)
+            Log.i(TAG, "copy dir:" + srcDir + "-->" + dstDir+", count="+files.length);
+        int count = 0;
+        for (String file : files) {
+            String assetPath = join(srcDir, file);
+            File toPath = new File(dstDir, file);
+            if (update || !toPath.exists()) {
                 if (Constants.DEBUG)
-                    Log.i(TAG, "copy1:" + assets + "-->" + tofile);
-                createFolderByFile(tofile);
+                    Log.d(TAG, "copy file:" + assetPath + "-->" + toPath.getAbsolutePath());
                 InputStream inputStream = null;
                 try {
-                    inputStream = am.open(assets);
-                }catch (Exception e){
-
-                }
-                if(inputStream != null) {
-                    copyToFile(inputStream, tofile.getAbsolutePath());
-                }else{
-                    return 0;
-                }
-            }
-            return 1;
-        } else {
-            int count = 0;
-            File toDir = new File(toPath);
-            createFolder(toDir);
-            for (String file : files) {
-                String path = join(assets, file);
-                if (isDirectory(context, path)) {
-                    if (Constants.DEBUG)
-                        Log.i(TAG, "copy dir:" + path + "-->" + join(toPath, file));
-                    createFolderByFile(new File(toPath, file));
-                    count += copyFilesFromAssets(context, path, join(toPath, file), update);
-                } else {
-                    File f = new File(join(toPath, file));
-                    createFolderByFile(f);
-                    if (update || !f.exists()) {
-                        if (Constants.DEBUG)
-                            Log.d(TAG, "copy2:" + path + "-->" + f.getAbsolutePath());
-                        copyToFile(am.open(path), f.getAbsolutePath());
-                    } else {
-                        if (Constants.DEBUG)
-                            Log.d(TAG, "copy ignore:" + path + "-->" + f.getAbsolutePath());
+                    inputStream = mgr.open(assetPath);
+                    if (copyToFile(inputStream, toPath.getAbsolutePath())) {
+                        count++;
                     }
-                    count++;
+                }catch (IOException e){
+                    e.printStackTrace();
+                }finally {
+                    close(inputStream);
                 }
+            } else {
+                count++;
+                if (Constants.DEBUG)
+                    Log.d(TAG, "copy ignore:" + assetPath + "-->" + toPath.getAbsolutePath());
             }
-            return count;
         }
+        return count;
     }
+
     public static void createFolderByFile(File file) {
         File dir = file.getParentFile();
         if (dir != null && !dir.exists()) {
             dir.mkdirs();
         }
     }
+
     public static boolean createFolder(File file) {
         if (!file.exists()) {
-           return file.mkdirs();
+            return file.mkdirs();
         }
         return false;
     }
@@ -182,30 +179,27 @@ public class IOUtils {
         }
     }
 
-    public static boolean hasAssets(Context context, String name) {
+    public static boolean hasAssets(AssetManager mgr, String name) {
         try {
-            context.getAssets().open(name);
+            mgr.open(name);
         } catch (IOException e) {
             return false;
         }
         return true;
     }
 
-    public static void copyToFile(InputStream in, String file) {
+    public static boolean copyToFile(InputStream in, String file) {
         FileOutputStream outputStream = null;
         try {
-//            File dir = new File(file).getParentFile();
-//            if (dir != null && !dir.exists()) {
-//                dir.mkdirs();
-//            }
             outputStream = new FileOutputStream(file);
             copy(in, outputStream);
         } catch (Exception e) {
-
+            return false;
         } finally {
             close(outputStream);
             close(in);
         }
+        return true;
     }
 
     public static boolean createNoMedia(String path) {
@@ -238,13 +232,12 @@ public class IOUtils {
                 os.write(buffer, 0, len);
             }
         } finally {
-            if (os!=null)
-            os.close();
+            if (os != null)
+                os.close();
             is.close();
         }
         return new File(outPath);
     }
-
 
 
 }

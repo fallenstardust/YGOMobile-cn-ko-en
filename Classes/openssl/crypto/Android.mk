@@ -532,4 +532,5 @@ LOCAL_SRC_FILES += $(non_arm_src_files)
 LOCAL_LDLIBS += -ldl
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libcrypto_static
+#LOCAL_SHORT_COMMANDS := true
 include $(BUILD_STATIC_LIBRARY)

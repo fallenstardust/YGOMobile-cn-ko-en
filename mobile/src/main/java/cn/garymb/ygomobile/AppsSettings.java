@@ -3,11 +3,9 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Point;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.WindowManager;
 
 import org.json.JSONArray;
 
@@ -31,8 +29,10 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
+import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
@@ -43,23 +43,22 @@ import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
+/**
+ * 单进程
+ */
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
     private Context context;
     private SharedPreferences mSharedPreferences;
-    private float mDensity;
-    private final Point mScreenSize = new Point();
-    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;
         String name = context.getPackageName() + ".settings";
         mSharedPreferences = context.getSharedPreferences(name, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
+        Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
         //
         LocalConfig.getInstance(context).updateFromOld(mSharedPreferences);
-        Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
-        update(context);
     }
 
     public static void init(Context context) {
@@ -76,15 +75,6 @@ public class AppsSettings {
         return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 
-    public void update(Context context) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        //应用尺寸
-        wm.getDefaultDisplay().getSize(mScreenSize);
-        //屏幕尺寸
-        wm.getDefaultDisplay().getRealSize(mRealScreenSize);
-        mDensity = context.getResources().getDisplayMetrics().density;
-    }
-
     public int getAppVersion() {
         return mSharedPreferences.getInt(PREF_VERSION, 0);
     }
@@ -95,12 +85,6 @@ public class AppsSettings {
 
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
-    }
-
-    public float getSmallerSize() {
-        float w = getScreenWidth();
-        float h = getScreenHeight();
-        return h < w ? h : w;
     }
 
     public boolean isDialogDelete() {
@@ -134,56 +118,8 @@ public class AppsSettings {
         return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
-    public float getXScale(int w, int h) {
-        if(isKeepScale()){
-            float sx = getScreenHeight() / w;
-            float sy = getScreenWidth() / h;
-            return Math.min(sx, sy);
-        }
-        return getScreenHeight() / w;
-    }
-
-    public float getYScale(int w, int h) {
-        if(isKeepScale()){
-            //固定比例，取最小值
-            float sx = getScreenHeight() / w;
-            float sy = getScreenWidth() / h;
-            return Math.min(sx, sy);
-        }
-        return getScreenWidth() / h;
-    }
-
-    public boolean isKeepScale(){
+    public boolean isKeepScale() {
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
-    }
-
-    public float getScreenWidth() {
-        int w, h;
-        if (isImmerSiveMode()) {
-            w = mRealScreenSize.x;
-            h = mRealScreenSize.y;
-        } else {
-            w = mScreenSize.x;
-            h = mScreenSize.y;
-        }
-        return Math.min(w, h);
-    }
-
-    public float getScreenHeight() {
-        int w, h;
-        if (isImmerSiveMode()) {
-            w = mRealScreenSize.x;
-            h = mRealScreenSize.y;
-        } else {
-            w = mScreenSize.x;
-            h = mScreenSize.y;
-        }
-        int ret = Math.max(w, h);
-        if(isImmerSiveMode()){
-            //刘海高度
-            ret -= getNotchHeight();
-        }
-        return ret;
     }
 
     /**
@@ -199,6 +135,9 @@ public class AppsSettings {
         options.mIsPendulumScaleEnabled = isPendulumScale();
         options.mIsSoundEffectEnabled = isSoundEffect();
         options.mOpenglVersion = getOpenglVersion();
+        options.mFontFile = getFontPath();
+        options.mResDir = getResourcePath();
+        options.mImageDir = getCardImagePath();
         if (Constants.DEBUG) {
             Log.i("Irrlicht", "option=" + options);
         }
@@ -338,7 +277,11 @@ public class AppsSettings {
      */
     public int getCardQuality() {
         try {
-            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_IMAGE_QUALITY, "" + Constants.PREF_DEF_IMAGE_QUALITY));
+            String val = mSharedPreferences.getString(Constants.PREF_IMAGE_QUALITY, "" + Constants.PREF_DEF_IMAGE_QUALITY);
+            if(val == null){
+                return Constants.PREF_DEF_IMAGE_QUALITY;
+            }
+            return Integer.valueOf(val);
         } catch (Exception e) {
             return Constants.PREF_DEF_IMAGE_QUALITY;
         }
@@ -385,12 +328,12 @@ public class AppsSettings {
         }
     }
 
-    public boolean isLockSreenOrientation() {
+    public boolean isLockScreenOrientation() {
         return mSharedPreferences.getBoolean(PREF_LOCK_SCREEN, Constants.PREF_DEF_LOCK_SCREEN);
     }
 
-    public void setLockSreenOrientation(boolean lockSreenOrientation) {
-        mSharedPreferences.edit().putBoolean(PREF_LOCK_SCREEN, lockSreenOrientation).apply();
+    public void setLockScreenOrientation(boolean lockScreenOrientation) {
+        mSharedPreferences.edit().putBoolean(PREF_LOCK_SCREEN, lockScreenOrientation).apply();
     }
 
     /***
@@ -494,12 +437,15 @@ public class AppsSettings {
      * 隐藏底部导航栏
      */
     public boolean isImmerSiveMode() {
-        return true;
-        //return mSharedPreferences.getBoolean(PREF_IMMERSIVE_MODE, PREF_DEF_IMMERSIVE_MODE);
+        return mSharedPreferences.getBoolean(PREF_IMMERSIVE_MODE, PREF_DEF_IMMERSIVE_MODE);
     }
 
     public boolean isSensorRefresh() {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
+    }
+
+    public boolean isHideHwNotouch() {
+        return mSharedPreferences.getBoolean(Constants.PREF_HW_HIDE_HOTTOUCH, Constants.PREF_DEF_PREF_HW_HIDE_HOTTOUCH);
     }
 
     //获得最后卡组绝对路径
@@ -542,6 +488,7 @@ public class AppsSettings {
     public String getLastDeckName() {
         return LocalConfig.getInstance(context).getLastDeck();
     }
+
     /* public int resetGameVersion() {
    *   int version = GameConfig.getVersion();
    *    if (getIntSettings(Constants.PREF_GAME_VERSION, 0) == 0) {

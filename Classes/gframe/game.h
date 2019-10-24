@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <vector>
 #include <list>
+#include <android/AndroidGameHost.h>
+#include <android/AndroidGameUI.h>
 #include "IYGOSoundEffectPlayer.h"
 
 namespace ygo {
@@ -115,6 +117,7 @@ public:
 #else
 	bool Initialize();
 #endif
+	~Game();
 	void MainLoop();
 	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
@@ -146,7 +149,11 @@ public:
 	void WaitFrameSignal(int frame);
 	void DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, int>* lflist);
 	void DrawDeckBd();
+#ifdef _IRR_ANDROID_PLATFORM_
+	void LoadConfig(JNIEnv*env, irr::android::InitOptions* options);
+#else
 	void LoadConfig();
+#endif
 	void SaveConfig();
 	void ShowCardInfo(int code);
 	void ClearCardInfo(int player = 0);
@@ -541,12 +548,34 @@ public:
 	s32 ogles2BlendTexture;
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
+
+    void showAndroidComboBoxCompat(bool show, char** list, int count, int mode = 0);
+    void perfromHapticFeedback();
+    void toggleIME(bool show, char* msg);
+    void setLastCategory(const char* category);
+    void setLastDeck(const char* name);
+    int getLocalAddr();
+
+    void playSoundEffect(const char *name);
+
+    JNIEnv* getJniEnv();
 #endif
-	void setPositionFix(core::position2di fix){
-		InputFix = fix;
+    void refreshTexture();
+    void runWindbot(const char* cmd);
+    io::path getCardImagePath(){
+        return cardImagePath;
+    }
+    io::path getResourcePath(){
+        return resourcePath;
+    }
+
+	void setPositionFix(int left, int top){
+		touchLeft = left;
+		touchTop = top;
 	}
+	
 	float optX(float x) {
-		float x2 = x - InputFix.X;
+		float x2 = x - touchLeft;
 		if (x2 < 0) {
 			return 0;
 		}
@@ -554,19 +583,24 @@ public:
 	}
 
 	float optY(float y) {
-		float y2 = y - InputFix.Y;
+		float y2 = y - touchTop;
 		if (y2 < 0) {
 			return 0;
 		}
 		return y2;
 	}
     void process(irr::SEvent &event);
+#ifdef _IRR_ANDROID_PLATFORM_
+	ygo::AndroidGameHost *gameHost;
+	ygo::AndroidGameUI *gameUI;
+#endif
 private:
-	core::position2di InputFix;
+	int touchLeft;
+	int touchTop;
+    io::path cardImagePath;
+    io::path resourcePath;
     };
-
     extern Game *mainGame;
-
 }
 
 #define CARD_IMG_WIDTH		177
@@ -757,8 +791,8 @@ private:
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
 
 #ifdef _IRR_ANDROID_PLATFORM_
-#define GAME_WIDTH 1024
-#define GAME_HEIGHT 640
+#define GAME_WIDTH 1024.0f
+#define GAME_HEIGHT 640.0f
 #else
 #define GAME_WIDTH 1280
 #define GAME_HEIGHT 720

@@ -6,6 +6,7 @@
  */
 
 #include "SoundPoolWrapperTracker.h"
+#include "../../Classes/gframe/game.h"
 
 namespace ygo {
 
@@ -39,20 +40,9 @@ SoundPoolWrapperTracker::~SoundPoolWrapperTracker() {
 
 void* audioPlayThread(void* param) {
 	SoundPoolWrapperTracker* spwt = (SoundPoolWrapperTracker*) param;
-	ANDROID_APP app = spwt->getMainApp();
 	Signal* signal = (Signal*)spwt->getPlaySignal();
-	JNIEnv* jni = 0;
 	pthread_mutex_t soundlock = spwt->getSoundLock();
 	std::list<irr::io::path>* sounds = (std::list<irr::io::path>*)spwt->getSounds();
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
-			"getApplication", "()Landroid/app/Application;");
-	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
-	jclass classApp = jni->GetObjectClass(application);
-	jmethodID playSoundMethod = jni->GetMethodID(classApp, "playSoundEffect",
-			"(Ljava/lang/String;)V");
 	while (!spwt->m_isTerminated) {
 		signal->Wait();
 		if (signal->GetNoWait()) {
@@ -63,12 +53,7 @@ void* audioPlayThread(void* param) {
 			if (*iter != NULL) {
 				const char * pathStr = (*iter).c_str();
 				if (pathStr != NULL && pathStr[0] != '\0') {
-					jstring pathString = jni->NewStringUTF((*iter).c_str());
-					jni->CallVoidMethod(application, playSoundMethod,
-							pathString);
-					if (pathString) {
-						jni->DeleteLocalRef(pathString);
-					}
+					ygo::mainGame->playSoundEffect(pathStr);
 				}
 			}
 		}
@@ -76,9 +61,6 @@ void* audioPlayThread(void* param) {
 		pthread_mutex_unlock(&soundlock);
 		signal->Reset();
 	}
-	jni->DeleteLocalRef(classApp);
-	jni->DeleteLocalRef(ClassNativeActivity);
-	app->activity->vm->DetachCurrentThread();
 	delete signal;
 	return NULL;
 }

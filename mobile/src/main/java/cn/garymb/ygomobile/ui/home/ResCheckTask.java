@@ -1,199 +1,215 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.StringRes;
+
+import org.jdeferred.DeferredCallable;
+import org.jdeferred.DeferredFutureTask;
+import org.jdeferred.android.DeferredAsyncTask;
+
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
-import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
 import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
-import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+import static cn.garymb.ygomobile.Constants.DEBUG;
 
-public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
+public class ResCheckTask extends DeferredCallable<Integer, String> {
     private static final String TAG = "ResCheckTask";
     public static final int ERROR_NONE = 0;
     public static final int ERROR_CORE_CONFIG = -1;
     public static final int ERROR_COPY = -2;
     public static final int ERROR_CORE_CONFIG_LOST = -3;
-    protected int mError = ERROR_NONE;
+    public static final int ERROR_CORE_OTHER = -4;
+
     private AppsSettings mSettings;
-    private Context mContext;
-    private ResCheckListener mListener;
-    private DialogPlus dialog = null;
-    private Handler handler;
+    @SuppressLint("StaticFieldLeak")
+    private final Activity mActivity;
     private boolean isNewVersion;
-    MessageReceiver mReceiver = new MessageReceiver();
+    private volatile int mProgress;
+    private long minTime;
 
-    @SuppressWarnings("deprecation")
-    public ResCheckTask(Context context, ResCheckListener listener) {
-        mContext = context;
-        mListener = listener;
-        handler = new Handler(context.getMainLooper());
+    public ResCheckTask(Activity context, boolean isNewVersion, long minTime) {
+        mActivity = context;
         mSettings = AppsSettings.get();
+        this.isNewVersion = isNewVersion;
+        this.minTime = minTime;
     }
 
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        dialog = DialogPlus.show(mContext, null, mContext.getString(R.string.check_res));
-        int vercode = SystemUtils.getVersion(mContext);
-        if (mSettings.getAppVersion() < vercode) {
-            mSettings.setAppVersion(vercode);
-            isNewVersion = true;
-        } else {
-            isNewVersion = false;
-        }
+    public int getProgress() {
+        return mProgress;
     }
 
-    @Override
-    protected void onPostExecute(final Integer result) {
-        super.onPostExecute(result);
-        //关闭异常
-        if (dialog.isShowing()) {
-            try {
-                dialog.dismiss();
-            } catch (Exception e) {
+    private String getString(@StringRes int resId) {
+        return mActivity.getString(resId);
+    }
 
-            }
-        }
-        if (mListener != null) {
-            mListener.onResCheckFinished(result, isNewVersion);
-        }
+    private String getString(@StringRes int resId, Object... formatArgs) {
+        return mActivity.getString(resId, formatArgs);
     }
 
     private void setMessage(String msg) {
-        handler.post(() -> {
-            dialog.setMessage(msg);
-        });
-    }
-
-    public static String getDatapath(String path) {
-        if (TextUtils.isEmpty(ASSETS_PATH)) {
-            return path;
-        }
-        if (path.startsWith(ASSETS_PATH)) {
-            return path;
-        }
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        return ASSETS_PATH + path;
+        notify(msg);
     }
 
     @Override
-    protected Integer doInBackground(Void... params) {
+    public Integer call() {
         if (Constants.DEBUG)
             Log.d(TAG, "check start");
+        long time = System.currentTimeMillis();
         boolean needsUpdate = isNewVersion;
+        mProgress = 0;
         //core config
-        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.core_config)));
+        setMessage(getString(R.string.check_things, getString(R.string.core_config)));
+        int error = ERROR_NONE;
         //res
         try {
+            AssetManager assetManager = mActivity.getAssets();
             String resPath = mSettings.getResourcePath();
+            if (Constants.DEBUG)
+                Log.d(TAG, "createNoMedia");
             //创建游戏目录
             IOUtils.createNoMedia(resPath);
+            mProgress = 1;
+            if (Constants.DEBUG)
+                Log.d(TAG, "checkDirs");
             //检查文件夹
             checkDirs();
+            mProgress = 3;
+            if (Constants.DEBUG)
+                Log.d(TAG, "copyCoreConfig");
             //复制游戏配置文件
-            copyCoreConfig(resPath, needsUpdate);
-            if (AppsSettings.get().isUseExtraCards()) {
-                //自定义数据库无效，则用默认的
-                if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
-                    AppsSettings.get().setUseExtraCards(false);
+            int err = copyCoreConfig(assetManager, resPath, needsUpdate);
+            if (err == ERROR_NONE) {
+                mProgress = 5;
+                if (AppsSettings.get().isUseExtraCards()) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "setUseExtraCards");
+                    //自定义数据库无效，则用默认的
+                    if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
+                        AppsSettings.get().setUseExtraCards(false);
+                    }
                 }
-            }
+                mProgress = 10;
+                //设置字体
+                ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
+                systemConf.setFontSize(mSettings.getFontSize());
+                if (Constants.DEBUG)
+                    Log.d(TAG, "setFontSize:" + mSettings.getFontSize());
+                systemConf.close();
+                mProgress = 20;
+                //如果是新版本
+                if (needsUpdate) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy ydk/pack/single");
+                    //复制卡组
+                    setMessage(getString(R.string.check_things, getString(R.string.tip_new_deck)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_DECK_DIR_PATH,
+                            mSettings.getDeckDir(), needsUpdate);
+                    //复制卡包
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_PACK_DIR_PATH,
+                            mSettings.get().getPackDeckDir(), needsUpdate);
+                    //复制残局
+                    setMessage(getString(R.string.check_things, getString(R.string.single_lua)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_SINGLE_DIR_PATH,
+                            mSettings.getSingleDir(), needsUpdate);
+                }
+                mProgress = 30;
+                String[] textures1 = mActivity.getAssets().list(Constants.ASSET_SKIN_DIR_PATH);
+                String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
 
-            //设置字体
-            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
-            systemConf.setFontSize(mSettings.getFontSize());
-            systemConf.close();
-
-            //如果是新版本
-            if (needsUpdate) {
-                //复制卡组
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
-                        mSettings.getDeckDir(), needsUpdate);
-                //复制卡包
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
-                        mSettings.get().getPackDeckDir(), needsUpdate);
-                //复制残局
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
-                        mSettings.getSingleDir(), needsUpdate);
+                //复制资源文件夹
+                //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
+                if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy skin");
+                    setMessage(getString(R.string.check_things, getString(R.string.game_skins)));
+                    IOUtils.copyFolder(assetManager, Constants.ASSET_SKIN_DIR_PATH,
+                            mSettings.getCoreSkinPath(), false);//防止覆盖用户的卡背
+                }
+                mProgress = 40;
+                if (Constants.DEBUG)
+                    Log.d(TAG, "copy font");
+                //复制字体
+                setMessage(getString(R.string.check_things, getString(R.string.font_files)));
+                IOUtils.copyFolder(assetManager, Constants.ASSET_FONTS_DIR_PATH,
+                        mSettings.getFontDirPath(), needsUpdate);
+                mProgress = 50;
+                //复制脚本压缩包
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH)) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy scripts.zip");
+                    setMessage(getString(R.string.check_things, getString(R.string.scripts)));
+                    IOUtils.copyFile(assetManager, Constants.ASSET_SCRIPTS_FILE_PATH,
+                            new File(resPath, Constants.CORE_SCRIPTS_ZIP), needsUpdate);
+                }
+                mProgress = 60;
+                //复制数据库
+                copyCdbFile(assetManager, needsUpdate);
+                //复制卡图压缩包
+                if (IOUtils.hasAssets(assetManager, Constants.ASSET_PICS_FILE_PATH)) {
+                    if (Constants.DEBUG)
+                        Log.d(TAG, "copy pics.zip");
+                    setMessage(getString(R.string.check_things, getString(R.string.images)));
+                    IOUtils.copyFile(assetManager, Constants.ASSET_PICS_FILE_PATH,
+                            new File(resPath, Constants.CORE_PICS_ZIP), needsUpdate);
+                }
+                mProgress = 80;
+                if (Constants.DEBUG)
+                    Log.d(TAG, "copy windbot");
+                //复制人机资源
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DECK_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DECK_PATH).getPath(), needsUpdate);
+                IOUtils.copyFolder(assetManager, Constants.ASSET_WINDBOT_DIALOG_DIR_PATH,
+                        new File(resPath, Constants.LIB_WINDBOT_DIALOG_PATH).getPath(), needsUpdate);
+                mProgress = 90;
+                loadData();
+                mProgress = 99;
             }
-            String[] textures1 = mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
-            String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
-
-            //复制资源文件夹
-            //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
-            if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
-                        mSettings.getCoreSkinPath(), false);
-            }
-            //复制字体
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
-                    mSettings.getFontDirPath(), needsUpdate);
-            //复制脚本压缩包
-            if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                        resPath, needsUpdate);
-            }
-            //复制数据库
-            copyCdbFile(needsUpdate);
-            //复制卡图压缩包
-            if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
-                        resPath, needsUpdate);
-            }
-            //复制人机资源
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    resPath, needsUpdate);//mContext.getFilesDir().getPath()
-            han.sendEmptyMessage(0);
-
-            loadData();
         } catch (Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
-            return ERROR_COPY;
+            error = ERROR_COPY;
         }
-        return ERROR_NONE;
+        long tc = (minTime -(System.currentTimeMillis() - time));
+        if(tc >= 0){
+            try {
+                Thread.sleep(tc);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return error;
     }
 
     private void loadData() {
-        setMessage(mContext.getString(R.string.loading));
+        setMessage(getString(R.string.loading));
+        if (Constants.DEBUG)
+            Log.d(TAG, "loadData");
+        //复制人机资源
         DataManager.get().load(false);
     }
 
-    void copyCdbFile(boolean needsUpdate) throws IOException {
+    private void copyCdbFile(AssetManager mgr, boolean needsUpdate) {
         File dbFile = new File(mSettings.getDataBasePath(), DATABASE_NAME);
         //如果数据库存在
         if (dbFile.exists()) {
@@ -203,8 +219,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             else
                 return;
         }
-        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
-        IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
+        setMessage(mActivity.getString(R.string.check_things, mActivity.getString(R.string.cards_cdb)));
+        IOUtils.copyFile(mgr, Constants.ASSET_CARDS_CDB_FILE_PATH, dbFile, needsUpdate);
     }
 
     public static boolean checkDataBase(String path) {
@@ -321,10 +337,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         return null;
     }
 
-    private int copyCoreConfig(String toPath, boolean needsUpdate) {
+    private int copyCoreConfig(AssetManager assetManager, String toPath, boolean needsUpdate) {
         try {
-            String path = getDatapath("conf");
-            int count = IOUtils.copyFilesFromAssets(mContext, path, toPath, needsUpdate);
+            int count = IOUtils.copyFolder(assetManager, Constants.ASSET_CONF_PATH, toPath, needsUpdate);
             if (count < 3) {
                 return ERROR_CORE_CONFIG_LOST;
             }
@@ -334,10 +349,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             fixString(stringfile.getAbsolutePath());
             fixString(botfile.getAbsolutePath());
             return ERROR_NONE;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "copy", e);
-            mError = ERROR_COPY;
             return ERROR_COPY;
         }
     }
@@ -348,52 +362,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         FileUtils.writeLines(stringfile, lines, encoding, "\n");
     }
 
-    public interface ResCheckListener {
-        void onResCheckFinished(int result, boolean isNewVersion);
+    public interface Callback {
+        void onCompleted(int result, boolean isNewVersion);
     }
-
-    public void checkWindbot() {
-        Log.i("路径", mContext.getFilesDir().getPath());
-        Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
-        try {
-            WindBot.initAndroid(mSettings.getResourcePath(),
-                    mSettings.getDataBasePath() + "/" + DATABASE_NAME,
-                    mSettings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("RUN_WINDBOT");
-        mContext.registerReceiver(mReceiver, filter);
-    }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    }
-
-    public void unregisterMReceiver() {
-        mContext.unregisterReceiver(mReceiver);
-    }
-
-    Handler han = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            // TODO: Implement this method
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    checkWindbot();
-                    break;
-            }
-        }
-    };
-
 }
