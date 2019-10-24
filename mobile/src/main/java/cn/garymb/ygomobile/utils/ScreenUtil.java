@@ -34,6 +34,25 @@ public class ScreenUtil {
         void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
     }
 
+    public static boolean hasNotchInformation(Activity activity) {
+        if (isNotchVivo(activity)) {
+            return true;
+        } else if (isNotchOPPO(activity)) {
+            return true;
+        } else if (isNotchHuawei(activity)) {
+            return true;
+        } else if (isNotchXiaomi(activity)) {
+            return true;
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                DisplayCutout cutout = activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
+                return cutout != null;
+            } else {
+                return false;
+            }
+        }
+    }
+
 
     //是否是刘海屏
     public static void findNotchInformation(Activity activity, FindNotchInformation findNotchInformation) {
@@ -77,14 +96,14 @@ public class ScreenUtil {
                     List<Rect> rects = cutout.getBoundingRects();
                     if (rects == null || rects.size() == 0) {
                         try {
-                            FileLogUtil.writeAndTime("Android P刘海：  rects:"+(rects==null));
+                            FileLogUtil.writeAndTime("Android P刘海：  rects:" + (rects == null));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                         findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
                     } else {
                         try {
-                            FileLogUtil.writeAndTime("Android P刘海：  刘海存在，个数为"+rects.size());
+                            FileLogUtil.writeAndTime("Android P刘海：  刘海存在，个数为" + rects.size());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -283,16 +302,17 @@ public class ScreenUtil {
     }
 
 
-    public static int getCurrentNavigationBarHeight(Activity activity){
-        if(isNavigationBarShown(activity)){
+    public static int getCurrentNavigationBarHeight(Activity activity) {
+        if (isNavigationBarShown(activity)) {
             return getNavigationBarHeight(activity);
-        } else{
+        } else {
             return 0;
         }
     }
 
     /**
      * 非全面屏下 虚拟按键是否打开
+     *
      * @param activity
      */
     public static boolean isNavigationBarShown(Activity activity) {
@@ -303,6 +323,7 @@ public class ScreenUtil {
 
     /**
      * 非全面屏下 虚拟键高度(无论是否隐藏)
+     *
      * @param context
      */
     public static int getNavigationBarHeight(Context context) {

@@ -2,12 +2,18 @@ package cn.garymb.ygomobile;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Point;
+import android.os.Build;
 import android.util.Log;
+import android.widget.TextView;
+
+import org.minidns.record.A;
 
 import java.io.File;
 
@@ -16,6 +22,10 @@ import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.interfaces.GameSize;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.ScreenUtil;
+import cn.garymb.ygomobile.utils.rom.RomIdentifier;
 import libwindbot.windbot.WindBot;
 
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
@@ -120,7 +130,7 @@ class LocalGameHost extends GameHost {
         }
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
-        Log.i("kk", "maxW=" + maxW + ",maxH=" + maxH);
+        Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
         float sx, sy, scale;
         int gw, gh;
         if (keepScale) {
@@ -141,7 +151,9 @@ class LocalGameHost extends GameHost {
         //if(huawei and liuhai){
         // left-=liuhai
         // }
-        return new GameSize(gw, gh, left, top);
+        GameSize gameSize = new GameSize(gw, gh, left, top);
+        gameSize.setScreen(fullW, fullH, actW, actH);
+        return gameSize;
     }
 
     @Override
@@ -164,5 +176,39 @@ class LocalGameHost extends GameHost {
     @Override
     public void onGameExit(Activity activity) {
 
+    }
+
+    @Override
+    public void onGameReport(Activity activity, GameConfig config) {
+        DialogPlus dlg = new DialogPlus(activity);
+        dlg.setTitle("Report");
+        dlg.setMessage("You need to collect the data of your model and the settings of the full screen / screen, and send the screenshot of the current interface to the author.");
+        dlg.setLeftButtonListener((d, id)->{
+            //
+            dlg.dismiss();
+            showDialog(activity, config);
+        });
+        dlg.setRightButtonListener((d, id) -> {
+            dlg.dismiss();
+        });
+        dlg.show();
+    }
+
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
+    private void showDialog(Activity activity, GameConfig config) {
+        DialogPlus dlg = new DialogPlus(activity);
+        dlg.setView(R.layout.dialog_report);
+        GameSize size = getGameSize(activity, config);
+        ((TextView) dlg.findViewById(R.id.tv_model)).setText(Build.MODEL + "/" + Build.PRODUCT);
+        ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE);
+        ((TextView) dlg.findViewById(R.id.tv_rom)).setText(String.valueOf(RomIdentifier.getRomType(activity)));
+        ((TextView) dlg.findViewById(R.id.tv_rom_ver)).setText(RomIdentifier.getRomInfo(activity).getVersion());
+        ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText(ScreenUtil.hasNotchInformation(activity) ? "Yes" : "No");
+        ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText(ScreenUtil.isNavigationBarShown(activity) ? "Yes" : "No");
+        ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("real:%dx%d, cur=%dx%d", size.getFullW(), size.getFullH(), size.getActW(), size.getActH()));
+        dlg.findViewById(R.id.btn_ok).setOnClickListener((v) -> {
+            dlg.dismiss();
+        });
+        dlg.show();
     }
 }

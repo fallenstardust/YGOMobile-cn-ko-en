@@ -28,4 +28,6 @@ public interface IGameUI {
     ByteBuffer getJoinOptions();
 
     void playSoundEffect(String path);
+
+    void onReportProblem();
 }

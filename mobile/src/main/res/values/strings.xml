@@ -276,4 +276,11 @@
     <string name="about_pref_key_hw_hide_notouch">Hide Hw notouch</string>
     <string name="about_pref_key_hw_hide_notouch_desc">If the click   has problem in your game, turn on this.</string>
     <string name="tip_load_ok">load completed.</string>
+    <string name="lb_nav_bar">Show Nav Bar:</string>
+    <string name="lb_model">Model:</string>
+    <string name="lb_android">Android:</string>
+    <string name="lb_rom">ROM:</string>
+    <string name="lb_rom_version">ROM Version:</string>
+    <string name="lb_cut_screen">Cut Screen:</string>
+    <string name="lb_cut_screen_state">Cut Screen State:</string>
 </resources>

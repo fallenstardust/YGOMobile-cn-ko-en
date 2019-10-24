@@ -45,4 +45,8 @@ public abstract class GameHost implements IGameHost{
 
     }
 
+    public void onGameReport(Activity activity, GameConfig config){
+
+    }
+
 }

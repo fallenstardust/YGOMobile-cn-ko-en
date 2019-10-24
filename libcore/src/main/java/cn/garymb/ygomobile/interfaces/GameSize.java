@@ -6,6 +6,11 @@ public class GameSize {
     private int touchX;
     private int touchY;
 
+    private int fullW;
+    private int fullH;
+    private int actW;
+    private int actH;
+
     public void update(GameSize size) {
         synchronized (this) {
             this.width = size.width;
@@ -44,6 +49,29 @@ public class GameSize {
         synchronized (this) {
             return touchY;
         }
+    }
+
+    public int getFullW() {
+        return fullW;
+    }
+
+    public int getFullH() {
+        return fullH;
+    }
+
+    public int getActW() {
+        return actW;
+    }
+
+    public int getActH() {
+        return actH;
+    }
+
+    public void setScreen(int fullW, int fullH, int actW, int actH) {
+        this.fullW = width;
+        this.fullH = fullH;
+        this.actW = actW;
+        this.actH = actH;
     }
 
     public GameSize() {

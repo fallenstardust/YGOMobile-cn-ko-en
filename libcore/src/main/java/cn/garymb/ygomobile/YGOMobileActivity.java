@@ -60,6 +60,8 @@ public class YGOMobileActivity extends NativeActivity implements
         OverlayOvalView.OnDuelOptionsSelectListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
 
+    private long mLastReportTime;
+
     private static boolean DEBUG;
 
     private static final int MAX_REFRESH = 30 * 1000;
@@ -628,5 +630,19 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public int getLocalAddr() {
         return mHost.getLocalAddr();
+    }
+
+    @Override
+    public void onReportProblem() {
+        if (System.currentTimeMillis() - mLastReportTime < 3000) {
+            return;
+        }
+        mLastReportTime = System.currentTimeMillis();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mHost.onGameReport(YGOMobileActivity.this, mGameConfig);
+            }
+        });
     }
 }
