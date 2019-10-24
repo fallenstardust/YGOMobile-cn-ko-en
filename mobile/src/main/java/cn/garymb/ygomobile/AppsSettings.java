@@ -277,7 +277,11 @@ public class AppsSettings {
      */
     public int getCardQuality() {
         try {
-            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_IMAGE_QUALITY, "" + Constants.PREF_DEF_IMAGE_QUALITY));
+            String val = mSharedPreferences.getString(Constants.PREF_IMAGE_QUALITY, "" + Constants.PREF_DEF_IMAGE_QUALITY);
+            if(val == null){
+                return Constants.PREF_DEF_IMAGE_QUALITY;
+            }
+            return Integer.valueOf(val);
         } catch (Exception e) {
             return Constants.PREF_DEF_IMAGE_QUALITY;
         }
@@ -328,8 +332,8 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_LOCK_SCREEN, Constants.PREF_DEF_LOCK_SCREEN);
     }
 
-    public void setLockSreenOrientation(boolean lockSreenOrientation) {
-        mSharedPreferences.edit().putBoolean(PREF_LOCK_SCREEN, lockSreenOrientation).apply();
+    public void setLockScreenOrientation(boolean lockScreenOrientation) {
+        mSharedPreferences.edit().putBoolean(PREF_LOCK_SCREEN, lockScreenOrientation).apply();
     }
 
     /***
