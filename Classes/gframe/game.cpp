@@ -269,14 +269,13 @@ bool Game::Initialize() {
 	wchar_t strbuf[256];
 	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", PRO_VERSION >> 12, (PRO_VERSION >> 4) & 0xff, PRO_VERSION & 0xf);
 #ifdef _IRR_ANDROID_PLATFORM_
-	wMainMenu = env->addWindow(rect<s32>(370 * xScale, 150 * yScale, 650 * xScale, 520 * yScale), false, strbuf);
+	wMainMenu = env->addWindow(rect<s32>(370 * xScale, 150 * yScale, 650 * xScale, 465 * yScale), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
 	btnLanMode = env->addButton(rect<s32>(15 * xScale, 30 * yScale, 265 * xScale, 80 * yScale), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
 	btnSingleMode = env->addButton(rect<s32>(15 * xScale, 85 * yScale, 265 * xScale, 135 * yScale), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201));
 	btnReplayMode = env->addButton(rect<s32>(15 * xScale, 140 * yScale, 265 * xScale, 190 * yScale), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
 	btnDeckEdit = env->addButton(rect<s32>(15 * xScale, 195 * yScale, 265 * xScale, 245 * yScale), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
-	btnReport = env->addButton(rect<s32>(15 * xScale, 250 * yScale, 265 * xScale, 300 * yScale), wMainMenu, BUTTON_REPORT, dataManager.GetSysString(1800));
-	btnModeExit = env->addButton(rect<s32>(15 * xScale, 305 * yScale, 265 * xScale, 355 * yScale), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
+	btnModeExit = env->addButton(rect<s32>(15 * xScale, 250 * yScale, 265 * xScale, 300 * yScale), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
 
 	//lan mode
 	wLanWindow = env->addWindow(rect<s32>(200 * xScale, 80 * yScale, 820 * xScale, 590 * yScale), false, dataManager.GetSysString(1200));
@@ -496,10 +495,10 @@ bool Game::Initialize() {
 	scrTabSystem->setSmallStep(1);
 	scrTabSystem->setVisible(false);
 	posY = 0;
-	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
+	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260* xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 60;
-	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
+	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260* xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
 	posY += 60;
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
@@ -513,10 +512,13 @@ bool Game::Initialize() {
     posY += 60;
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
     chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
-	posY += 60;
-	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
+    posY += 60;
+    chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
-	elmTabSystemLast = chkPreferExpansionScript;
+    posY += 60;
+    btnReport = env->addButton(rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), tabSystem, BUTTON_REPORT, dataManager.GetSysString(1800));
+
+    elmTabSystemLast = btnReport;
 	//show scroll
 	s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
 	s32 tabSystemHeight = 300 * yScale;
