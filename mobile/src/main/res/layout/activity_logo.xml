@@ -7,18 +7,23 @@
     android:background="#38000000"
     android:gravity="center">
 
-    <FrameLayout
+    <cn.garymb.ygomobile.ui.widget.SquareFrameLayout
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="wrap_content"
         android:gravity="center">
 
-        <ImageView
-            android:id="@+id/logo"
-            android:layout_width="380dp"
-            android:layout_height="380dp"
-            android:layout_gravity="top|center_horizontal"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_launcher3" />
+        <cn.garymb.ygomobile.ui.widget.SquareFrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:layout_gravity="top|center_horizontal"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_launcher3" />
+        </cn.garymb.ygomobile.ui.widget.SquareFrameLayout>
 
         <LinearLayout
             android:id="@+id/ly_loading"
@@ -46,5 +51,5 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal" />
         </LinearLayout>
-    </FrameLayout>
+    </cn.garymb.ygomobile.ui.widget.SquareFrameLayout>
 </LinearLayout>
