@@ -92,6 +92,10 @@ public class GameSize {
                 ", height=" + height +
                 ", touchX=" + touchX +
                 ", touchY=" + touchY +
+                ", fullW=" + fullW +
+                ", fullH=" + fullH +
+                ", actW=" + actW +
+                ", actH=" + actH +
                 '}';
     }
 }

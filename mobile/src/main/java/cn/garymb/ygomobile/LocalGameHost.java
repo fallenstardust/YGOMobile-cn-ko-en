@@ -35,6 +35,7 @@ class LocalGameHost extends GameHost {
     private Context context;
     private SharedPreferences settings;
     private boolean mInitBot = false;
+    private GameSize mGameSize;
 
     LocalGameHost(Context context) {
         super(context);
@@ -153,6 +154,7 @@ class LocalGameHost extends GameHost {
         // }
         GameSize gameSize = new GameSize(gw, gh, left, top);
         gameSize.setScreen(fullW, fullH, actW, actH);
+        mGameSize = gameSize;
         return gameSize;
     }
 
@@ -198,14 +200,18 @@ class LocalGameHost extends GameHost {
     private void showDialog(Activity activity, GameConfig config) {
         DialogPlus dlg = new DialogPlus(activity);
         dlg.setView(R.layout.dialog_report);
-        GameSize size = getGameSize(activity, config);
+        GameSize size = mGameSize;
+        if(size == null){
+            size = getGameSize(activity, config);
+            Log.i("kk", "gen size "+size);
+        }
         ((TextView) dlg.findViewById(R.id.tv_model)).setText(Build.MODEL + "/" + Build.PRODUCT);
         ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE);
         ((TextView) dlg.findViewById(R.id.tv_rom)).setText(String.valueOf(RomIdentifier.getRomType(activity)));
         ((TextView) dlg.findViewById(R.id.tv_rom_ver)).setText(RomIdentifier.getRomInfo(activity).getVersion());
         ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText(ScreenUtil.hasNotchInformation(activity) ? "Yes" : "No");
         ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText(ScreenUtil.isNavigationBarShown(activity) ? "Yes" : "No");
-        ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("real:%dx%d, cur=%dx%d", size.getFullW(), size.getFullH(), size.getActW(), size.getActH()));
+        ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("real:%dx%d, cur=%dx%d, game=%dx%d", size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), size.getWidth(), size.getHeight()));
         dlg.findViewById(R.id.btn_ok).setOnClickListener((v) -> {
             dlg.dismiss();
         });
