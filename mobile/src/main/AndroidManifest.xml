@@ -195,7 +195,6 @@
         <!--android:priority="1000"-->
         <service
             android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
-            android:process=":game"
             android:priority="1000" />
     </application>
 

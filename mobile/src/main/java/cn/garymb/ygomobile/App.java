@@ -30,8 +30,8 @@ public class App extends GameApplication {
             initImgsel();
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
+            AppsSettings.init(this);
         }
-        AppsSettings.init(this);
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
