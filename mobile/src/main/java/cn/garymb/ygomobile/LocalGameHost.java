@@ -212,10 +212,6 @@ class LocalGameHost extends GameHost {
             showDialog(activity, config);
         });
         dlg.setRightButtonListener((d, id) -> {
-            Intent intent = new Intent();
-            intent.setAction(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("https://ygo233.com/bugs"));
-            context.startActivity(intent);
             dlg.dismiss();
         });
         dlg.show();
@@ -243,7 +239,15 @@ class LocalGameHost extends GameHost {
 
         ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("r:%dx%d,a=%dx%d,k=%s, g=%dx%d,c=%dx%d",
                 size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), config.isKeepScale()?"Y":"N", size.getWidth(), size.getHeight(), size.getTouchX(), size.getTouchY()));
-        dlg.findViewById(R.id.btn_ok).setOnClickListener((v) -> {
+        dlg.findViewById(R.id.btn_report).setOnClickListener((v) -> {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse("https://ygo233.com/bugs"));
+            context.startActivity(intent);
+            dlg.dismiss();
+        });
+        dlg.findViewById(R.id.btn_cancel).setOnClickListener((v) -> {
             dlg.dismiss();
         });
         dlg.show();

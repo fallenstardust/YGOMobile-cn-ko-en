@@ -43,7 +43,7 @@
                 android:text="@string/loading"
                 android:layout_marginBottom="5dp"
                 android:textSize="14sp"
-                android:textColor="@color/holo_yellow" />
+                android:textColor="@color/white" />
 
             <com.daimajia.numberprogressbar.NumberProgressBar
                 android:id="@+id/number_progress_bar"

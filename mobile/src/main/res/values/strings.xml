@@ -237,6 +237,7 @@
     <string name="Update_Found">Found New Version</string>
     <string name="OK">OK</string>
     <string name="Cancel">Cancel</string>
+    <string name="Feedback">Feedback</string>
     <string name="Checking_Update">Now Checking Update</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
     <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
@@ -283,5 +284,5 @@
     <string name="lb_version">Version:</string>
     <string name="lb_model">Model:</string>
     <string name="lb_cut_screen">Notch/height</string>
-    <string name="user_notice">At once you think you find a BUG(s).pls screenshooting immediately.after Dueling end,click [Report] then [OK] to screenshoot the inform then touch [WEB Report] to commit BUG detail and upload the 2(or more) screenshootings</string>
+    <string name="user_notice">At once you think you find a BUG(s).pls screenshooting immediately.after Dueling end,re-click [Feedback] then [OK] to screenshoot the inform then touch [Feedback] to commit BUG detail and upload the 2(or more) screenshootings</string>
 </resources>
