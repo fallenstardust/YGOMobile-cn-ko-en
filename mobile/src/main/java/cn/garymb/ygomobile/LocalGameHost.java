@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Point;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.widget.TextView;
@@ -211,6 +212,10 @@ class LocalGameHost extends GameHost {
             showDialog(activity, config);
         });
         dlg.setRightButtonListener((d, id) -> {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("https://ygo233.com/bugs"));
+            context.startActivity(intent);
             dlg.dismiss();
         });
         dlg.show();
