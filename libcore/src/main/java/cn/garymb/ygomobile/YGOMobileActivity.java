@@ -24,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
@@ -129,7 +130,7 @@ public class YGOMobileActivity extends NativeActivity implements
         mGameConfig = getIntent().getParcelableExtra(GameConfig.EXTRA_CONFIG);
         mCore = YGOCore.getInstance();
         mHost = app().getGameHost();
-        fullscreen();
+        fullscreen(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             WindowManager.LayoutParams lp = getWindow().getAttributes();
             lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
@@ -164,7 +165,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
                     if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                        fullscreen();
+                        fullscreen(true);
                     }
                 }
             });
@@ -250,15 +251,17 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void fullscreen() {
+    private void fullscreen(boolean resize) {
         if (mGameConfig.isImmerSiveMode()) {
             //沉浸模式
             getWindow().getDecorView().setSystemUiVisibility(windowsFlags);
         } else {
             getWindow().getDecorView().setSystemUiVisibility(windowsFlags2);
         }
-        int[] size = getGameSize();
-        setGameSize(size[0], size[1]);
+        if(resize){
+            int[] size = getGameSize();
+            setGameSize(size[0], size[1]);
+        }
     }
 
     private int[] getGameSize() {
@@ -364,7 +367,7 @@ public class YGOMobileActivity extends NativeActivity implements
     public void onWindowFocusChanged(boolean hasFocus) {
 //        Log.e("YGOMobileActivity","窗口变化"+hasFocus);
         if (hasFocus) {
-            fullscreen();
+            fullscreen(true);
             mContentView.setHapticFeedbackEnabled(true);
         } else {
             mContentView.setHapticFeedbackEnabled(false);

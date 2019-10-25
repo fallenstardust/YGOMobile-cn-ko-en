@@ -7,6 +7,7 @@ import android.os.Build;
 import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.View;
+import android.view.WindowInsets;
 
 import androidx.annotation.RequiresApi;
 
@@ -34,33 +35,8 @@ public class ScreenUtil {
         void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
     }
 
-    public static boolean hasNotchInformation(Activity activity) {
-        if (isNotchVivo(activity)) {
-            return true;
-        } else if (isNotchOPPO(activity)) {
-            return true;
-        } else if (isNotchHuawei(activity)) {
-            return true;
-        } else if (isNotchXiaomi(activity)) {
-            return true;
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                DisplayCutout cutout = activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
-                if (cutout == null) {
-                    return false;
-                }
-                List<Rect> rects = cutout.getBoundingRects();
-                return rects != null && rects.size() > 0;
-            } else {
-                return false;
-            }
-        }
-    }
-
-
     //是否是刘海屏
     public static void findNotchInformation(Activity activity, FindNotchInformation findNotchInformation) {
-
         if (isNotchVivo(activity)) {
             findNotchInformation.onNotchInformation(true, getNotchHeightVivo(activity), NOTCH_TYPE_PHONE_VIVO);
         } else if (isNotchOPPO(activity)) {
@@ -314,10 +290,14 @@ public class ScreenUtil {
         }
     }
 
+    public static boolean hasNavigationBar(Activity activity) {
+        //虚拟键的view,为空或者不可见时是隐藏状态
+        View view = activity.findViewById(android.R.id.navigationBarBackground);
+        return view != null;
+    }
+
     /**
      * 非全面屏下 虚拟按键是否打开
-     *
-     * @param activity
      */
     public static boolean isNavigationBarShown(Activity activity) {
         //虚拟键的view,为空或者不可见时是隐藏状态

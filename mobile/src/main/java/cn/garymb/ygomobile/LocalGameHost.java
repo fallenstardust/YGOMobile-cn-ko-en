@@ -136,14 +136,15 @@ class LocalGameHost extends GameHost {
             w1 = fullW;
             h1 = fullH;
         } else {
+            //全面屏，非沉浸模式，自动隐藏虚拟键，需要适配
             w1 = actW;
             h1 = actH;
         }
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
-        boolean hasNotouch = ScreenUtil.hasNotchInformation(activity);
-        if(hasNotouch && immerSiveMode){
-            maxW -= config.getNotouchHeight();
+        int notchHeight = config.getNotchHeight();
+        if(notchHeight > 0 && immerSiveMode){
+            maxW -= notchHeight;
         }
         Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
         float sx, sy, scale;
@@ -162,9 +163,10 @@ class LocalGameHost extends GameHost {
         //fix touch point
         int left = (maxW - gw) / 2;
         int top = (maxH - gh) / 2;
-        if(hasNotouch && !immerSiveMode){
+        if(notchHeight > 0 && !immerSiveMode){
+            left += notchHeight;
             //fix touch
-            left = (maxW - gw - config.getNotouchHeight()) / 2;
+            //left = (maxW - gw - config.getNotchHeight()) / 2;
         }
         Log.i("kk", "touch fix=" + left + "x" + top);
         //if(huawei and liuhai){
@@ -223,11 +225,17 @@ class LocalGameHost extends GameHost {
             size = getGameSize(activity, config);
             Log.i("kk", "gen size " + size);
         }
+        ((TextView) dlg.findViewById(R.id.tv_version)).setText(BuildConfig.VERSION_NAME + "/" + BuildConfig.VERSION_CODE);
         ((TextView) dlg.findViewById(R.id.tv_model)).setText(Build.MODEL + "/" + Build.PRODUCT);
-        ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE+" ("+Build.VERSION.SDK_INT+")");
+        ((TextView) dlg.findViewById(R.id.tv_android)).setText(Build.VERSION.RELEASE + " (" + Build.VERSION.SDK_INT + ")");
         ((TextView) dlg.findViewById(R.id.tv_rom)).setText(String.valueOf(RomIdentifier.getRomInfo(activity)));
-        ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText(ScreenUtil.hasNotchInformation(activity) ? "Yes/("+config.getNotouchHeight()+")" : "No");
-        ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText(ScreenUtil.isNavigationBarShown(activity) ? "Yes" : "No");
+        ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText((config.getNotchHeight() > 0) ? "Yes/" + config.getNotchHeight() : "No");
+        if (ScreenUtil.hasNavigationBar(activity)) {
+            ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText("Yes/" + (ScreenUtil.isNavigationBarShown(activity) ? "Show" : "Hide"));
+        } else {
+            ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText("No");
+        }
+
         ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("r:%dx%d,a=%dx%d,k=%s, g=%dx%d,c=%dx%d",
                 size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), config.isKeepScale()?"Y":"N", size.getWidth(), size.getHeight(), size.getTouchX(), size.getTouchY()));
         dlg.findViewById(R.id.btn_ok).setOnClickListener((v) -> {

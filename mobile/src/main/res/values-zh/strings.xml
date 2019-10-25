@@ -280,4 +280,5 @@
     <string name="lb_rom_version">ROM Version:</string>
     <string name="lb_cut_screen">Cut Screen:</string>
     <string name="lb_cut_screen_state">Cut Screen State:</string>
+    <string name="lb_version">Version:</string>
 </resources>

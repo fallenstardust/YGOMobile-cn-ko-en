@@ -29,14 +29,14 @@ public class GameConfig implements Parcelable {
 
     private boolean enableSoundEffect;
 
-    private int notouchHeight;
+    private int notchHeight;
 
-    public int getNotouchHeight() {
-        return notouchHeight;
+    public int getNotchHeight() {
+        return notchHeight;
     }
 
-    public void setNotouchHeight(int notouchHeight) {
-        this.notouchHeight = notouchHeight;
+    public void setNotchHeight(int notchHeight) {
+        this.notchHeight = notchHeight;
     }
 
     public NativeInitOptions getNativeInitOptions() {
@@ -127,7 +127,7 @@ public class GameConfig implements Parcelable {
         dest.writeByte(this.keepScale ? (byte) 1 : (byte) 0);
         dest.writeByte(this.immerSiveMode ? (byte) 1 : (byte) 0);
         dest.writeByte(this.enableSoundEffect ? (byte) 1 : (byte) 0);
-        dest.writeInt(this.notouchHeight);
+        dest.writeInt(this.notchHeight);
     }
 
     protected GameConfig(Parcel in) {
@@ -137,7 +137,7 @@ public class GameConfig implements Parcelable {
         this.keepScale = in.readByte() != 0;
         this.immerSiveMode = in.readByte() != 0;
         this.enableSoundEffect = in.readByte() != 0;
-        this.notouchHeight = in.readInt();
+        this.notchHeight = in.readInt();
     }
 
     public static final Creator<GameConfig> CREATOR = new Creator<GameConfig>() {
@@ -161,7 +161,7 @@ public class GameConfig implements Parcelable {
                 ", keepScale=" + keepScale +
                 ", immerSiveMode=" + immerSiveMode +
                 ", enableSoundEffect=" + enableSoundEffect +
-                ", notouchHeight=" + notouchHeight +
+                ", notchHeight=" + notchHeight +
                 '}';
     }
 }
