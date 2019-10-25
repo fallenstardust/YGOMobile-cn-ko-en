@@ -16,6 +16,7 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 import libwindbot.windbot.WindBot;
 
 public class App extends GameApplication {

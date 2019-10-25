@@ -141,7 +141,8 @@ class LocalGameHost extends GameHost {
         }
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
-        if(immerSiveMode){
+        boolean hasNotouch = ScreenUtil.hasNotchInformation(activity);
+        if(hasNotouch && immerSiveMode){
             maxW -= config.getNotouchHeight();
         }
         Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
@@ -161,7 +162,7 @@ class LocalGameHost extends GameHost {
         //fix touch point
         int left = (maxW - gw) / 2;
         int top = (maxH - gh) / 2;
-        if(!immerSiveMode){
+        if(hasNotouch && !immerSiveMode){
             //fix touch
             left = (maxW - gw - config.getNotouchHeight()) / 2;
         }

@@ -46,7 +46,11 @@ public class ScreenUtil {
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 DisplayCutout cutout = activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
-                return cutout != null;
+                if (cutout == null) {
+                    return false;
+                }
+                List<Rect> rects = cutout.getBoundingRects();
+                return rects != null && rects.size() > 0;
             } else {
                 return false;
             }

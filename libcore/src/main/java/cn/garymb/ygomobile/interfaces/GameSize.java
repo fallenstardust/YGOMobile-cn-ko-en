@@ -81,8 +81,8 @@ public class GameSize {
     public GameSize(int width, int height, int touchX, int touchY) {
         this.width = width;
         this.height = height;
-        this.touchX = touchX;
-        this.touchY = touchY;
+        this.touchX = touchX < 0 ? 0 : touchX;
+        this.touchY = touchY < 0 ? 0 : touchY;
     }
 
     @Override
