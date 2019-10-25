@@ -430,6 +430,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->deckBuilder.Initialize();
 				break;
 			}
+
 			case BUTTON_YES: {
 				mainGame->HideElement(mainGame->wQuery);
 				if(prev_operation == BUTTON_DELETE_REPLAY) {

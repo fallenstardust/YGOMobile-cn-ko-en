@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="combobox_choose_item">Select one item</string>
+
+    <string name="ignore_chain">Ignore All Timing</string>
+    <string name="react_chain">Show All Timing</string>
+    <string name="refresh_textures">Refresh Textures</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="chain_control_button_width">70dip</dimen>
+    <dimen name="chain_control_button_height">30dip</dimen>
+    <dimen name="chain_control_margin">10dip</dimen>
+</resources>

@@ -30,6 +30,7 @@ void AndroidGameUI::initMethods(JNIEnv *env) {
     java_attachNativeDevice = env->GetMethodID(clazz, "attachNativeDevice", "(I)V");
     java_getJoinOptions = env->GetMethodID(clazz, "getJoinOptions", "()Ljava/nio/ByteBuffer;");
     java_playSoundEffect = env->GetMethodID(clazz, "playSoundEffect", "(Ljava/lang/String;)V");
+    java_onReportProblem = env->GetMethodID(clazz, "onReportProblem", "()V");
     env->DeleteLocalRef(clazz);
 }
 
@@ -142,4 +143,11 @@ void AndroidGameUI::playSoundEffect(JNIEnv *env, const char *_name) {
     if (name) {
         env->DeleteLocalRef(name);
     }
+}
+
+void AndroidGameUI::onReportProblem(JNIEnv *env) {
+    if (!java_onReportProblem) {
+        return;
+    }
+    env->CallVoidMethod(app->activity->clazz, java_onReportProblem);
 }

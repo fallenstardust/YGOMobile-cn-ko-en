@@ -495,10 +495,10 @@ bool Game::Initialize() {
 	scrTabSystem->setSmallStep(1);
 	scrTabSystem->setVisible(false);
 	posY = 0;
-	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
+	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260* xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 60;
-	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
+	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260* xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
 	posY += 60;
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
@@ -512,10 +512,13 @@ bool Game::Initialize() {
     posY += 60;
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
     chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
-	posY += 60;
-	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
+    posY += 60;
+    chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
-	elmTabSystemLast = chkPreferExpansionScript;
+    posY += 60;
+    btnReport = env->addButton(rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), tabSystem, BUTTON_REPORT, dataManager.GetSysString(1800));
+
+    elmTabSystemLast = btnReport;
 	//show scroll
 	s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
 	s32 tabSystemHeight = 300 * yScale;
@@ -1804,6 +1807,10 @@ void Game::playSoundEffect(const char *path){
 
 JNIEnv* Game::getJniEnv(){
 	return android::getJniEnv(appMain);
+}
+
+void Game::onReportProblem(){
+    gameUI->onReportProblem(getJniEnv());
 }
 
 #endif

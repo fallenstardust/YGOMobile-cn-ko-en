@@ -16,6 +16,7 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 import cn.garymb.ygomobile.interfaces.GameHost;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.ScreenUtil;
 import libwindbot.windbot.WindBot;
 
 public class App extends GameApplication {
@@ -30,12 +31,20 @@ public class App extends GameApplication {
             initImgsel();
 //        QbSdk.initX5Environment(this, null);
 //        QbSdk.setCurrentID("");
+            AppsSettings.init(this);
         }
-        AppsSettings.init(this);
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-
+        if(getPackageName().equals(getAppProcessName())){
+            registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String args = intent.getStringExtra("args");
+                    WindBot.runAndroid(args);
+                }
+            }, new IntentFilter(Constants.ACTION_WINDBOT));
+        }
     }
 
     private void initImgsel() {
@@ -62,6 +71,7 @@ public class App extends GameApplication {
 
     public static GameConfig genConfig() {
         GameConfig config = new GameConfig();
+        config.setNotchHeight(AppsSettings.get().getNotchHeight());
         config.setNativeInitOptions(AppsSettings.get().getNativeInitOptions());
         config.setLockScreenOrientation(AppsSettings.get().isLockScreenOrientation());
         config.setSensorRefresh(AppsSettings.get().isSensorRefresh());

@@ -1800,6 +1800,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+			case BUTTON_REPORT:{
+#ifdef _IRR_ANDROID_PLATFORM_
+				mainGame->onReportProblem();
+#endif
+				break;
+			}
 			}
 			break;
 		}
@@ -1837,6 +1843,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+
  			case CHECKBOX_DRAW_FIELD_SPELL: {
  			    mainGame->gameConf.draw_field_spell = mainGame->chkDrawFieldSpell->isChecked() ? 1 : 0;
 				return true;
