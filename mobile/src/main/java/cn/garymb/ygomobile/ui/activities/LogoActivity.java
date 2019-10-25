@@ -64,10 +64,15 @@ public class LogoActivity extends BaseActivity {
     }
 
     private void startLoad() {
+        if(ly_loading.getVisibility() == View.VISIBLE){
+            return;
+        }
         ly_loading.setVisibility(View.VISIBLE);
         int vercode = SystemUtils.getVersion(this);
         boolean isNewVersion;
-        if (AppsSettings.get().getAppVersion() < vercode) {
+        int oldVer = AppsSettings.get().getAppVersion();
+        Log.i("ygomobile", "check version old=" + oldVer + ", new=" + vercode);
+        if (oldVer < vercode) {
             AppsSettings.get().setAppVersion(vercode);
             isNewVersion = true;
         } else {
@@ -75,7 +80,6 @@ public class LogoActivity extends BaseActivity {
         }
         ResCheckTask resCheckTask = new ResCheckTask(this, isNewVersion, 1000);
         number_progress_bar.setMax(100);
-        long time = System.currentTimeMillis();
         VUiKit.defer()
                 .when(resCheckTask)
                 .progress((str) -> {

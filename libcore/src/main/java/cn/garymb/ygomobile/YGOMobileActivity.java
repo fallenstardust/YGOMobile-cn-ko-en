@@ -171,6 +171,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
         mHost.initWindbot(mGameConfig.getNativeInitOptions(), mGameConfig);
         mHost.onAfterCreate(this);
+        sendBroadcast(new Intent(YGOCore.ACTION_START).putExtra(YGOCore.EXTRA_PID, Process.myPid()).setPackage(getPackageName()));
     }
 
     @SuppressLint("WakelockTimeout")
@@ -223,6 +224,7 @@ public class YGOMobileActivity extends NativeActivity implements
     public void finish() {
         mCore.release();
         mHost.onGameExit(this);
+        sendBroadcast(new Intent(YGOCore.ACTION_END).putExtra(YGOCore.EXTRA_PID, Process.myPid()).setPackage(getPackageName()));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             finishAndRemoveTask();
         } else {

@@ -26,6 +26,14 @@
                 android:name="android.app.lib_name"
                 android:value="YGOMobile"/>
         </activity>
+        <receiver
+            android:name="cn.garymb.ygomobile.AutoQuitReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="ygocore.action.game_start" />
+                <action android:name="ygocore.action.game_end" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
