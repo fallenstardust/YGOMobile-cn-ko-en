@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +37,8 @@ public class RomIdentifier {
                 new FuntouchOsChecker(),
                 new FlymeChecker(),
                 new EuiChecker(),
-                new AmigoOsChecker()
+                new AmigoOsChecker(),
+                new GoogleChecker()
         };
     }
 
@@ -58,6 +60,7 @@ public class RomIdentifier {
 
         // 优先检查 Manufacturer
         String manufacturer = Build.MANUFACTURER;
+        Log.i("kk", "manufacturer="+manufacturer);
         for (IChecker checker : checkers) {
             if (checker.checkManufacturer(manufacturer)) {
                 // 检查完 Manufacturer 后, 再核对一遍应用列表

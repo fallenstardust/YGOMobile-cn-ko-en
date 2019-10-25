@@ -68,7 +68,7 @@ public class GameSize {
     }
 
     public void setScreen(int fullW, int fullH, int actW, int actH) {
-        this.fullW = width;
+        this.fullW = fullW;
         this.fullH = fullH;
         this.actW = actW;
         this.actH = actH;

@@ -47,4 +47,12 @@ public class ROMInfo {
     public String getVersion() {
         return version;
     }
+
+    @Override
+    public String toString() {
+        if(version != null){
+            return rom+"/"+version;
+        }
+        return String.valueOf(rom);
+    }
 }

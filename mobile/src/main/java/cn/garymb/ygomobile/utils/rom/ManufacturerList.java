@@ -24,4 +24,6 @@ interface ManufacturerList {
     String VIVO = "vivo";        // vivo
 
     String AMIGO = "amigo";      // 金立 // todo
+
+    String GOOGLE = "Google";
 }

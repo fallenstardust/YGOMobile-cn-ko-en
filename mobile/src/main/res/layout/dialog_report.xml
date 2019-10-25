@@ -89,30 +89,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/white"
-            android:text="@string/lb_rom_version"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/tv_rom_ver"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            tools:text="9.0.0" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@color/white"
             android:text="@string/lb_cut_screen"
             android:textSize="12sp" />
 
