@@ -163,8 +163,8 @@ class LocalGameHost extends GameHost {
         //fix touch point
         int left = (maxW - gw) / 2;
         int top = (maxH - gh) / 2;
-        if(notchHeight > 0 && !immerSiveMode){
-            left += notchHeight;
+        if (notchHeight > 0 && !immerSiveMode) {
+            //left += (fullW - actW) / 2;
             //fix touch
             //left = (maxW - gw - config.getNotchHeight()) / 2;
         }
