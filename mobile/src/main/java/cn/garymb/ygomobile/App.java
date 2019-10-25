@@ -70,6 +70,7 @@ public class App extends GameApplication {
 
     public static GameConfig genConfig() {
         GameConfig config = new GameConfig();
+        config.setNotouchHeight(AppsSettings.get().getNotchHeight());
         config.setNativeInitOptions(AppsSettings.get().getNativeInitOptions());
         config.setLockScreenOrientation(AppsSettings.get().isLockScreenOrientation());
         config.setSensorRefresh(AppsSettings.get().isSensorRefresh());

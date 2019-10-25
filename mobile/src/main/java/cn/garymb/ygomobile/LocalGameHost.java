@@ -141,6 +141,9 @@ class LocalGameHost extends GameHost {
         }
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
+        if(immerSiveMode){
+            maxH -= config.getNotouchHeight();
+        }
         Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
         float sx, sy, scale;
         int gw, gh;
@@ -221,7 +224,8 @@ class LocalGameHost extends GameHost {
         ((TextView) dlg.findViewById(R.id.tv_rom_ver)).setText(RomIdentifier.getRomInfo(activity).getVersion());
         ((TextView) dlg.findViewById(R.id.tv_cut_screen)).setText(ScreenUtil.hasNotchInformation(activity) ? "Yes" : "No");
         ((TextView) dlg.findViewById(R.id.tv_nav_bar)).setText(ScreenUtil.isNavigationBarShown(activity) ? "Yes" : "No");
-        ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("real:%dx%d, cur=%dx%d, game=%dx%d", size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), size.getWidth(), size.getHeight()));
+        ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("real:%dx%d, cur=%dx%d, game=%dx%d, notouch=%d",
+                size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), size.getWidth(), size.getHeight(), config.getNotouchHeight()));
         dlg.findViewById(R.id.btn_ok).setOnClickListener((v) -> {
             dlg.dismiss();
         });

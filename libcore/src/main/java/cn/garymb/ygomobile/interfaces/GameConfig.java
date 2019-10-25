@@ -29,6 +29,16 @@ public class GameConfig implements Parcelable {
 
     private boolean enableSoundEffect;
 
+    private int notouchHeight;
+
+    public int getNotouchHeight() {
+        return notouchHeight;
+    }
+
+    public void setNotouchHeight(int notouchHeight) {
+        this.notouchHeight = notouchHeight;
+    }
+
     public NativeInitOptions getNativeInitOptions() {
         return nativeInitOptions;
     }
@@ -103,6 +113,7 @@ public class GameConfig implements Parcelable {
         return Objects.hash(nativeInitOptions, lockScreenOrientation, sensorRefresh, keepScale, immerSiveMode, enableSoundEffect);
     }
 
+
     @Override
     public int describeContents() {
         return 0;
@@ -116,6 +127,7 @@ public class GameConfig implements Parcelable {
         dest.writeByte(this.keepScale ? (byte) 1 : (byte) 0);
         dest.writeByte(this.immerSiveMode ? (byte) 1 : (byte) 0);
         dest.writeByte(this.enableSoundEffect ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.notouchHeight);
     }
 
     protected GameConfig(Parcel in) {
@@ -125,6 +137,7 @@ public class GameConfig implements Parcelable {
         this.keepScale = in.readByte() != 0;
         this.immerSiveMode = in.readByte() != 0;
         this.enableSoundEffect = in.readByte() != 0;
+        this.notouchHeight = in.readInt();
     }
 
     public static final Creator<GameConfig> CREATOR = new Creator<GameConfig>() {
@@ -138,4 +151,17 @@ public class GameConfig implements Parcelable {
             return new GameConfig[size];
         }
     };
+
+    @Override
+    public String toString() {
+        return "GameConfig{" +
+                "nativeInitOptions=" + nativeInitOptions +
+                ", lockScreenOrientation=" + lockScreenOrientation +
+                ", sensorRefresh=" + sensorRefresh +
+                ", keepScale=" + keepScale +
+                ", immerSiveMode=" + immerSiveMode +
+                ", enableSoundEffect=" + enableSoundEffect +
+                ", notouchHeight=" + notouchHeight +
+                '}';
+    }
 }
