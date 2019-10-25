@@ -18,6 +18,10 @@ import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.interfaces.GameConfig;
 
 public class YGOCore {
+    public static final String ACTION_START = "ygocore.action.game_start";
+    public static final String ACTION_END = "ygocore.action.game_end";
+    public static final String EXTRA_PID = "pid";
+    
     public static final float GAME_WIDTH = 1024.0f;
     public static final float GAME_HEIGHT = 640.0f;
     private static final String TAG = "ygomobile";
