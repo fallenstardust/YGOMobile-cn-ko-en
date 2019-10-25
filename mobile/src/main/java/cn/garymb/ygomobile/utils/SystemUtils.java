@@ -9,6 +9,8 @@ import android.view.Display;
 
 import java.lang.reflect.Method;
 
+import cn.garymb.ygomobile.lite.BuildConfig;
+
 public class SystemUtils {
     public static String getVersionName(Context context) {
         PackageInfo packageInfo = null;
@@ -23,15 +25,15 @@ public class SystemUtils {
     }
 
     public static int getVersion(Context context) {
-        PackageInfo packageInfo = null;
-        try {
-            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-        } catch (PackageManager.NameNotFoundException e) {
-        }
-        if (packageInfo != null) {
-            return packageInfo.versionCode;
-        }
-        return 0;
+//        PackageInfo packageInfo = null;
+//        try {
+//            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+//        } catch (PackageManager.NameNotFoundException e) {
+//        }
+//        if (packageInfo != null) {
+//            return packageInfo.versionCode;
+//        }
+        return BuildConfig.VERSION_CODE;
     }
 
     public static DisplayMetrics getHasVirtualDisplayMetrics(Activity context) {
