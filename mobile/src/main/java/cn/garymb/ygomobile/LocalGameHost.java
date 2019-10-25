@@ -203,8 +203,8 @@ class LocalGameHost extends GameHost {
     @Override
     public void onGameReport(Activity activity, GameConfig config) {
         DialogPlus dlg = new DialogPlus(activity);
-        dlg.setTitle("Report");
-        dlg.setMessage("You need to collect the data of your model and the settings of the full screen / screen, and send the screenshot of the current interface to the author.");
+        dlg.setTitle(R.string.tip);
+        dlg.setMessage(R.string.user_notice);
         dlg.setLeftButtonListener((d, id) -> {
             //
             dlg.dismiss();
