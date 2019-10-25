@@ -142,7 +142,7 @@ class LocalGameHost extends GameHost {
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
         if(immerSiveMode){
-            maxH -= config.getNotouchHeight();
+            maxW -= config.getNotouchHeight();
         }
         Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
         float sx, sy, scale;
