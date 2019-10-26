@@ -283,6 +283,6 @@
     <string name="lb_rom">ROM:</string>
     <string name="lb_version">Version:</string>
     <string name="lb_model">Model:</string>
-    <string name="lb_cut_screen">Notch/height</string>
+    <string name="lb_cut_screen">hasNotch/height</string>
     <string name="user_notice">At once you think you find a BUG(s).pls screenshooting immediately.after Dueling end,re-click [Feedback] then [OK] to screenshoot the inform then touch [Feedback] to commit BUG detail and upload the 2(or more) screenshootings</string>
 </resources>

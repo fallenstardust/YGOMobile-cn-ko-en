@@ -272,9 +272,9 @@
     <string name="unable_to_edit_empty_deck">사용할 수 없는 빈 구역</string>
     <string name="create_new_failed">생성실패</string>
     <string name="about_pref_settings_keep_scale">원래 해상도 스케일 디스플레이</string>
-    <string name="about_pref_key_hw_hide_notouch">Hide HW notch</string>
-    <string name="about_pref_key_hw_hide_notouch_desc">If has touching problem in your game, turn on this.</string>
-    <string name="tip_load_ok">load completed</string>
+    <string name="about_pref_key_hw_hide_notouch">HW 노치 숨기기</string>
+    <string name="about_pref_key_hw_hide_notouch_desc">만약 게임에 문제가 있다면 이것을 켜주세요.</string>
+    <string name="tip_load_ok">불러오기 완료</string>
     <string name="lb_android">Android:</string>
     <string name="lb_rom_version">ROM Version:</string>
     <string name="lb_nav_bar">Show Nav Bar:</string>
@@ -282,5 +282,5 @@
     <string name="lb_version">Version:</string>
     <string name="lb_model">Model:</string>
     <string name="lb_cut_screen">Notch/height</string>
-    <string name="user_notice">At once you think you find a BUG(s).pls screenshooting immediately.after Dueling end,re-click [Feedback] then [OK] to screenshoot the inform then touch [Feedback] to commit BUG detail and upload the 2(or more) screenshootings</string>
+    <string name="user_notice">만약 버그를 발견했다고 생각하시면 듀얼 종료후 스크린샷을 남기셔서 [피드백] 버튼을 눌러주신후 버그에 대한 상세한 내용과 스크린샷 2장 이상을 [피드백] 에 첨부 해주세요.</string>
 </resources>
