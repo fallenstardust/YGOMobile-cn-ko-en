@@ -59,7 +59,7 @@
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
     <string name="settings_test_options">实验选项</string>
     <string name="settings_test_replace_kernel">替换内核</string>
-    <string name="settings_game_immersive_mode">隐藏虚拟键</string>
+    <string name="settings_game_immersive_mode">沉浸式游戏界面</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">头像图片</string>
     <string name="restart_app">请重启本应用</string>
@@ -230,7 +230,7 @@
     <string name="ClickLinkArrows">点亮箭头</string>
     <string name="tip_no_permission" formatted="false">权限 %s 被你禁止了</string>
     <string name="Already_Lastest">已经是最新版本</string>
-    <string name="about_immersive_mode">开启它的同时画面会变为沉浸式</string>
+    <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
     <string name="Download">下载</string>
     <string name="Downloading">下载中，请稍候</string>
     <string name="Update_Found">发现新版本</string>
