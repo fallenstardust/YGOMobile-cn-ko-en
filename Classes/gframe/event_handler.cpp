@@ -2014,7 +2014,7 @@ void ClientField::GetHoverField(int x, int y) {
 			if(x >= ofRect.UpperLeftCorner.X + (cardSize + cardSpace) * 5 * mainGame->xScale)
 				hovered_sequence = 0;
 			else
-				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / ((cardSize + cardSpace) * 5 * mainGame->xScale);
+				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / (int)((cardSize + cardSpace) * 5 * mainGame->xScale);
 		}
 	} else {
 		double screenx = x / (GAME_WIDTH * mainGame->xScale) * 1.35  - 0.90;
