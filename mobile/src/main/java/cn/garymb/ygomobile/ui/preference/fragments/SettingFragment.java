@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
+import cn.garymb.ygomobile.utils.PermissionUtil;
 import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
@@ -192,6 +193,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
                     if (checkBoxPreference.isChecked()) {
+                        PermissionUtil.isServicePermission(getActivity(), true);
                         getActivity().startService(new Intent(getActivity(), ServiceDuelAssistant.class));
                     } else {
                         getActivity().stopService(new Intent(getActivity(), ServiceDuelAssistant.class));
