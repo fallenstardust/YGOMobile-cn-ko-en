@@ -44,6 +44,7 @@
                 android:layout_width="@dimen/label_width_middle"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:singleLine="true"
                 android:text="@string/server_ip"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/gold" />
@@ -67,6 +68,7 @@
             <TextView
                 android:layout_width="41dp"
                 android:layout_height="wrap_content"
+                android:singleLine="true"
                 android:text="@string/server_port"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/gold" />
