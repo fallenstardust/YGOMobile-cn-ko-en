@@ -89,6 +89,7 @@
                         android:layout_width="@dimen/label_width_middle"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
                         android:text="@string/server_ip"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/item_title" />
