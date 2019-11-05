@@ -33,6 +33,7 @@ import libwindbot.windbot.WindBot;
 
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+import static cn.garymb.ygomobile.Constants.URL_FEEDBACK;
 
 class LocalGameHost extends GameHost {
     private Context context;
@@ -144,7 +145,7 @@ class LocalGameHost extends GameHost {
         maxW = Math.max(w1, h1);
         maxH = Math.min(w1, h1);
         int notchHeight = config.getNotchHeight();
-        if(notchHeight > 0 && immerSiveMode){
+        if (notchHeight > 0 && immerSiveMode) {
             maxW -= notchHeight;
         }
         Log.i("kk", "real=" + fullW + "x" + fullH + ",cur=" + actW + "x" + actH + ",use=" + maxW + "x" + maxH);
@@ -238,12 +239,12 @@ class LocalGameHost extends GameHost {
         }
 
         ((TextView) dlg.findViewById(R.id.tv_screen_size)).setText(String.format("r:%dx%d,a=%dx%d,k=%s, g=%dx%d,c=%dx%d",
-                size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), config.isKeepScale()?"Y":"N", size.getWidth(), size.getHeight(), size.getTouchX(), size.getTouchY()));
+                size.getFullW(), size.getFullH(), size.getActW(), size.getActH(), config.isKeepScale() ? "Y" : "N", size.getWidth(), size.getHeight(), size.getTouchX(), size.getTouchY()));
         dlg.findViewById(R.id.btn_report).setOnClickListener((v) -> {
             Intent intent = new Intent();
             intent.setAction(Intent.ACTION_VIEW);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.setData(Uri.parse("https://ygo233.com/bugs"));
+            intent.setData(Uri.parse(Constants.URL_FEEDBACK));
             context.startActivity(intent);
             dlg.dismiss();
         });
