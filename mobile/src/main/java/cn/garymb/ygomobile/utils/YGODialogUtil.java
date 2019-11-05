@@ -264,7 +264,6 @@ public class YGODialogUtil {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            deckList.remove(deckFile);
                         }
                         YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
