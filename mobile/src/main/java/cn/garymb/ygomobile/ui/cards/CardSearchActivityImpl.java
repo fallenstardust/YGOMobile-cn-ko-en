@@ -25,12 +25,13 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ourygo.util.DuelAssistantManagement;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ourygo.service.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -60,7 +61,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         setContentView(R.layout.activity_search);
 
         if(TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))){
-            ServiceDuelAssistant.cardSearchMessage="";
+            DuelAssistantManagement.getInstance().setCardSearchMessage("");
         }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -105,15 +106,15 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)){
-            currentCardSearchMessage=ServiceDuelAssistant.cardSearchMessage;
+        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(DuelAssistantManagement.getInstance().getCardSearchMessage())){
+            currentCardSearchMessage= DuelAssistantManagement.getInstance().getCardSearchMessage();
             intentSearch();
         }
     }
 
     private void intentSearch(){
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        mCardSelector.search(ServiceDuelAssistant.cardSearchMessage);
+        mCardSelector.search(DuelAssistantManagement.getInstance().getCardSearchMessage());
     }
 
     protected void setListeners() {

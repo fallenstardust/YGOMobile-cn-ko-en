@@ -10,7 +10,7 @@
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
+            android:targetClass="cn.garymb.ygomobile.mycard.MyCardActivity"
             android:targetPackage="cn.garymb.ygomobile" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>

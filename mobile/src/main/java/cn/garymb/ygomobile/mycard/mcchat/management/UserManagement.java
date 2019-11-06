@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat.management;
+package cn.garymb.ygomobile.mycard.mcchat.management;
 
 public class UserManagement {
     private static UserManagement um = new UserManagement();

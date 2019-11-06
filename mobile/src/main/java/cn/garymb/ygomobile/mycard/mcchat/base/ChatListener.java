@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat;
+package cn.garymb.ygomobile.mycard.mcchat.base;
 
 import org.jivesoftware.smack.packet.Message;
 

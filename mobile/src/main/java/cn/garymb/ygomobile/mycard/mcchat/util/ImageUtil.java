@@ -1,18 +1,13 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat.util;
+package cn.garymb.ygomobile.mycard.mcchat.util;
 
 import android.content.Context;
-import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import cn.garymb.ygomobile.lite.R;
 

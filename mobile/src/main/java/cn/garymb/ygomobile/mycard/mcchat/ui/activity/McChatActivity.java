@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat;
+package cn.garymb.ygomobile.mycard.mcchat.ui.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -15,12 +15,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.jivesoftware.smack.packet.Message;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
+import cn.garymb.ygomobile.mycard.mcchat.base.ChatListener;
+import cn.garymb.ygomobile.mycard.mcchat.adapter.ChatAdapter;
+import cn.garymb.ygomobile.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
-public class McchatActivity extends Activity implements ChatListener {
+public class McChatActivity extends Activity implements ChatListener {
 
     private EditText main_send_message;
     private ImageButton main_send;
@@ -85,7 +86,7 @@ public class McchatActivity extends Activity implements ChatListener {
         su = ServiceManagement.getDx();
         cadp = new ChatAdapter(this, su.getData());
         su.addListener(this);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(McchatActivity.this, LinearLayoutManager.VERTICAL, false);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(McChatActivity.this, LinearLayoutManager.VERTICAL, false);
         linearLayoutManager.setStackFromEnd(true); //关键 设置此项，当软键盘弹出时，布局会自动顶上去，在结合AndroidManifest.xml设置属性
         main_rec.setLayoutManager(linearLayoutManager);
         main_rec.setAdapter(cadp);
@@ -101,13 +102,13 @@ public class McchatActivity extends Activity implements ChatListener {
             public void onClick(View p1) {
                 String message = main_send_message.getText().toString().trim();
                 if (message.equals("")) {
-                    Util.show(McchatActivity.this, getString(R.string.noting_to_send));
+                    YGOUtil.show( getString(R.string.noting_to_send));
                 } else {
                     try {
                         su.sendMessage(message);
                         main_send_message.setText("");
                     } catch (Exception e) {
-                        Util.show(McchatActivity.this, getString(R.string.sending_failed));
+                        YGOUtil.show( getString(R.string.sending_failed));
                     }
                 }
                 // TODO: Implement this method

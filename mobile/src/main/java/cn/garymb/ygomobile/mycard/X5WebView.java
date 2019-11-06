@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.mycard;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat.util;
+package cn.garymb.ygomobile.mycard.mcchat.util;
 
 /**
  * 连接监听类
@@ -12,8 +12,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.mycard.mcchat.management.UserManagement;
 
 
 public class TaxiConnectionListener implements ConnectionListener {

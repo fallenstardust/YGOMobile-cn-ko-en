@@ -36,9 +36,8 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.LogoActivity;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ourygo.service.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -48,7 +47,6 @@ import cn.garymb.ygomobile.utils.PermissionUtil;
 import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
-import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
@@ -195,9 +193,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
                     if (checkBoxPreference.isChecked()) {
                         PermissionUtil.isServicePermission(getActivity(), true);
-                        getActivity().startService(new Intent(getActivity(), ServiceDuelAssistant.class));
+                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
                     } else {
-                        getActivity().stopService(new Intent(getActivity(), ServiceDuelAssistant.class));
+                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
                     }
                 }
                 //如果是音效开关

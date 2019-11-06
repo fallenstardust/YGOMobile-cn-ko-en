@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat.view;
+package cn.garymb.ygomobile.mycard.mcchat.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;

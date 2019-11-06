@@ -61,7 +61,7 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
+import cn.garymb.ygomobile.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
@@ -71,8 +71,7 @@ import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
-
-import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
@@ -224,8 +223,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
-        //ServiceDuelAssistant
-        startDuelService(this);
+        //DuelAssistantService
+        YGOUtil.startDuelService(this);
 
         //萌卡
         StartMycard();

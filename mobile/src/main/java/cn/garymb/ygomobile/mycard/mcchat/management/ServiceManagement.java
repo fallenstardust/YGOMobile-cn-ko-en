@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat.management;
+package cn.garymb.ygomobile.mycard.mcchat.management;
 
 import android.annotation.SuppressLint;
 import android.os.Handler;
@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
-import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.TaxiConnectionListener;
+import cn.garymb.ygomobile.mycard.mcchat.base.ChatListener;
+import cn.garymb.ygomobile.mycard.mcchat.bean.ChatMessage;
+import cn.garymb.ygomobile.mycard.mcchat.util.TaxiConnectionListener;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 
 public class ServiceManagement {

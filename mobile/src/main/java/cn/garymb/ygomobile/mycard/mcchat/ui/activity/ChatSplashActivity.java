@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat;
+package cn.garymb.ygomobile.mycard.mcchat.ui.activity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -20,12 +20,13 @@ import org.jivesoftware.smack.XMPPException;
 import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
+import cn.garymb.ygomobile.mycard.MyCardActivity;
+import cn.garymb.ygomobile.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.mycard.mcchat.management.UserManagement;
 
-public class SplashActivity extends Activity {
+import cn.garymb.ygomobile.utils.YGOUtil;
+
+public class ChatSplashActivity extends Activity {
 
     ServiceManagement su;
     ProgressBar sp_jz;
@@ -43,10 +44,10 @@ public class SplashActivity extends Activity {
                     su.setIsConnected(false);
                     sp_jz.setVisibility(View.GONE);
                     sp_tv.setText(getString(R.string.logining_failed));
-                    Util.show(SplashActivity.this, getString(R.string.failed_reason) + msg.obj);
+                    YGOUtil.show(YGOUtil.s(R.string.failed_reason) + msg.obj);
                     break;
                 case 1:
-                    startActivity(new Intent(SplashActivity.this, McchatActivity.class));
+                    startActivity(new Intent(ChatSplashActivity.this, McChatActivity.class));
                     finish();
                     break;
                 case 2:
@@ -65,7 +66,7 @@ public class SplashActivity extends Activity {
                 case 5:
 					/*sp_jz.setVisibility(View.GONE);
 					sp_tv.setText("用户名或密码为空");*/
-                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
+                    startActivity(new Intent(ChatSplashActivity.this, MyCardActivity.class));
                     finish();
 
                     break;

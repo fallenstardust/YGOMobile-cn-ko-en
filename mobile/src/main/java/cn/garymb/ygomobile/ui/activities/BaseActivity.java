@@ -10,8 +10,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -20,18 +22,36 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.feihua.dialogutils.util.DialogUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ourygo.base.OnDuelClipBoardListener;
+import cn.garymb.ygomobile.ourygo.service.DuelAssistantService;
+import cn.garymb.ygomobile.ourygo.util.DuelAssistantManagement;
+import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 
-public class BaseActivity extends AppCompatActivity {
+public class BaseActivity extends AppCompatActivity  {
     protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
     private boolean mExitAnim = true;
     private boolean mEnterAnim = true;
 
     private Toast mToast;
+    private DialogUtils dialogUtils;
 
     protected String[] getPermissions() {
         return PERMISSIONS;
@@ -48,6 +68,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+         dialogUtils=DialogUtils.getdx(this);
     }
 
     protected void setupActionBar() {
@@ -73,6 +94,8 @@ public class BaseActivity extends AppCompatActivity {
             }
             onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
         }
+
+
     }
 
     public Activity getActivity() {

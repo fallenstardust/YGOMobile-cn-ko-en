@@ -14,29 +14,40 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 
+import com.feihua.dialogutils.util.DialogUtils;
+
 import java.io.File;
+import java.io.FileInputStream;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ourygo.base.OnDuelClipBoardListener;
+import cn.garymb.ygomobile.ourygo.util.DuelAssistantManagement;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.LogoActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.PermissionUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import libwindbot.windbot.WindBot;
 
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
 
-public class MainActivity extends HomeActivity {
+public class MainActivity extends HomeActivity implements OnDuelClipBoardListener {
     private static final String TAG = "ResCheckTask";
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
@@ -52,6 +63,11 @@ public class MainActivity extends HomeActivity {
         int err = getIntent().getIntExtra(LogoActivity.EXTRA_ERROR, ResCheckTask.ERROR_NONE);
         //资源复制
         onCheckCompleted(err, isNew);
+//        if (DuelAssistantManagement.getInstance().isStart()){
+//            DuelAssistantManagement.getInstance().checkMessage(YGOUtil.getCopyMessage(),this);
+//            Log.e("BaseActivity","检测复制内容"+YGOUtil.getCopyMessage());
+//        }
+
     }
 
     @Override
@@ -62,6 +78,10 @@ public class MainActivity extends HomeActivity {
         if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
             ComponentUtils.killActivity(this, new ComponentName(this, YGOMobileActivity.class));
         }
+        if (DuelAssistantManagement.getInstance().isStart()){
+            DuelAssistantManagement.getInstance().checkMessage(YGOUtil.getCopyMessage(),this);
+        }
+
     }
 
     @Override
@@ -211,4 +231,106 @@ public class MainActivity extends HomeActivity {
             getGameUriManager().doIntent(getIntent());
         }
     }
+
+    @Override
+    public void onDeckCode(String deckCode,boolean isDebounce) {
+        if (isDebounce)
+            return;
+        DialogPlus dialogPlus=new DialogPlus(this);
+        dialogPlus.setMessage("检测到卡组，是否保存？");
+        dialogPlus.setLeftButtonText("保存");
+        dialogPlus.setRightButtonText("取消");
+        dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                DeckUtil.saveDeck(MainActivity.this,deckCode,false);
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.show();
+    }
+
+    @Override
+    public void onDeckUrl(String deckUrl,boolean isDebounce) {
+        if (isDebounce)
+            return;
+
+        DialogPlus dialogPlus=new DialogPlus(this);
+        dialogPlus.setMessage("检测到卡组，是否保存？");
+        dialogPlus.setLeftButtonText("保存");
+        dialogPlus.setRightButtonText("取消");
+        dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                DeckUtil.saveDeck(MainActivity.this,deckUrl,true);
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.show();
+    }
+
+    @Override
+    public void onCardQuery(String cardNameKey,boolean isDebounce) {
+    }
+
+    @Override
+    public void onDuelPassword(String password,boolean isDebounce) {
+        if (isDebounce)
+            return;
+
+        DialogPlus dialogPlus=new DialogPlus(this);
+        dialogPlus.setTitle(password);
+        dialogPlus.setMessage("检测到决斗密码，是否加入房间？");
+        dialogPlus.setLeftButtonText("加入");
+        dialogPlus.setRightButtonText("取消");
+        dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
+                VUiKit.defer().when(() -> {
+                    ServerList assetList = ServerListManager.readList(MainActivity.this.getAssets().open(ASSET_SERVER_LIST));
+                    ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+                    if (fileList == null) {
+                        return assetList;
+                    }
+                    if (fileList.getVercode() < assetList.getVercode()) {
+                        xmlFile.delete();
+                        return assetList;
+                    }
+                    return fileList;
+                }).done((list) -> {
+                    if (list != null) {
+                        ServerInfo serverInfo = list.getServerInfoList().get(0);
+                        YGOUtil.duelIntent(MainActivity.this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
+                    }
+                });
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialogPlus.show();
+    }
+
+    @Override
+    public boolean isEffective() {
+        return YGOUtil.isContextExisted(this);
+    }
+
 }

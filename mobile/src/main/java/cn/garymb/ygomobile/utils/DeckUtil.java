@@ -1,7 +1,10 @@
 package cn.garymb.ygomobile.utils;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +19,13 @@ import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ourygo.service.DuelAssistantService;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 
 public class DeckUtil {
 
@@ -121,5 +128,29 @@ public class DeckUtil {
             return ydk1.getName().compareTo(ydk2.getName());
         }
     };
+
+    public static void saveDeck(Context context,String deckMessage,boolean isUrl){
+        if (isUrl) {
+            Deck deckInfo = new Deck(YGOUtil.s(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+            File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+            Intent startdeck = new Intent(context, DeckManagerActivity.getDeckManager());
+            startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+            startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(startdeck);
+        } else {
+            //如果是卡组文本
+            try {
+                //以当前时间戳作为卡组名保存卡组
+                File file = DeckUtils.save(YGOUtil.s(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                Intent startdeck = new Intent(context, DeckManagerActivity.getDeckManager());
+                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(startdeck);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(context, YGOUtil.s(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 }

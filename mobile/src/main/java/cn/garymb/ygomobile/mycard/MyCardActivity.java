@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.mycard;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -38,7 +38,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
+import cn.garymb.ygomobile.mycard.mcchat.ui.activity.ChatSplashActivity;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -310,7 +310,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
                 break;
             case R.id.action_chat:
-                startActivity(new Intent(MyCardActivity.this, SplashActivity.class));
+                startActivity(new Intent(MyCardActivity.this, ChatSplashActivity.class));
                 break;
             default:
                 return false;

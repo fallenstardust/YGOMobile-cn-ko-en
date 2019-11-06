@@ -1,8 +1,8 @@
-package cn.garymb.ygomobile.ui.mycard.mcchat;
+package cn.garymb.ygomobile.mycard.mcchat.bean;
 
 import org.jivesoftware.smack.packet.Message;
 
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.mycard.mcchat.management.ServiceManagement;
 
 
 public class ChatMessage {

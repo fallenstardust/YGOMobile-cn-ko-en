@@ -32,7 +32,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
+import cn.garymb.ygomobile.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 

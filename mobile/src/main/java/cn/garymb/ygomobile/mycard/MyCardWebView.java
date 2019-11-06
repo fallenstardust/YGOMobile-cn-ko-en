@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.mycard;
 
 import android.content.Context;
 import android.util.AttributeSet;
