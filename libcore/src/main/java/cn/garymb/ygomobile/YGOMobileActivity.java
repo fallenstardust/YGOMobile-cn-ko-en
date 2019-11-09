@@ -223,11 +223,6 @@ public class YGOMobileActivity extends NativeActivity implements
             app().attachGame(this);
             if (USE_SURFACE) {
                 changeGameSize();
-            } else {
-                int[] size = getGameSize();
-                if (app().isKeepScale()) {
-                    getWindow().setLayout(size[0], size[1]);
-                }
             }
         }
     }
@@ -277,7 +272,6 @@ public class YGOMobileActivity extends NativeActivity implements
             getWindow().setGravity(Gravity.CENTER);
         } else {
             mLayout.addView(view, lp);
-            getWindow().setLayout(w, h);
             getWindow().setGravity(Gravity.CENTER);
             super.setContentView(mLayout);
         }
@@ -302,13 +296,6 @@ public class YGOMobileActivity extends NativeActivity implements
         if (update) {
 //            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
             IrrlichtBridge.setInputFix(mPositionX, mPositionY);
-        }
-        if (app().isKeepScale()) {
-            //设置为屏幕宽高
-            getWindow().setLayout(w, h);
-        } else {
-            //拉伸，画布设置为游戏宽高
-            getWindow().setLayout(size[0], size[1]);
         }
     }
 
