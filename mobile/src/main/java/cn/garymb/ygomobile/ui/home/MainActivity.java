@@ -138,14 +138,15 @@ public class MainActivity extends HomeActivity {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            PermissionUtil.isServicePermission(MainActivity.this, true);
-
+                            if (AppsSettings.get().isServiceDuelAssistant())
+                                PermissionUtil.isServicePermission(MainActivity.this, true);
                         }
                     });
                     dialog.show();
                 }
             } else {
-                PermissionUtil.isServicePermission(MainActivity.this, true);
+                if (AppsSettings.get().isServiceDuelAssistant())
+                    PermissionUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
 
