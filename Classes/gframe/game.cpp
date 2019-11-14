@@ -427,7 +427,25 @@ bool Game::Initialize() {
 	posY += 60;
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
-	elmTabHelperLast = chkWaitChain;
+	posY += 60;
+	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1282));
+	chkEnableSound->setChecked(gameConf.enable_sound);
+	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
+	scrSoundVolume->setMax(100);
+	scrSoundVolume->setMin(0);
+	scrSoundVolume->setPos(gameConf.sound_volume * 100);
+	scrSoundVolume->setLargeStep(1);
+	scrSoundVolume->setSmallStep(1);
+	posY += 60;
+	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1283));
+	chkEnableMusic->setChecked(gameConf.enable_music);
+	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
+	scrMusicVolume->setMax(100);
+	scrMusicVolume->setMin(0);
+	scrMusicVolume->setPos(gameConf.music_volume * 100);
+	scrMusicVolume->setLargeStep(1);
+	scrMusicVolume->setSmallStep(1);
+	elmTabHelperLast = chkEnableMusic;
 	//show scroll
 	s32 tabHelperLastY = elmTabHelperLast->getRelativePosition().LowerRightCorner.Y;
 	s32 tabHelperHeight = 300 * yScale;
@@ -941,9 +959,7 @@ bool Game::Initialize() {
 	btnCancelOrFinish = env->addButton(rect<s32>(205 * xScale, 220 * yScale, 305 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
 	soundManager = Utils::make_unique<SoundManager>();
-	soundManager->Init(50, 50, true, true, nullptr);//临时设置
-	/* 建设中......
-	if(!soundManager->Init(gameConf.soundVolume, gameConf.musicVolume, gameConf.enablesound, gameConf.enablemusic, nullptr)) {
+	if(!soundManager->Init(gameConf.sound_volume, gameConf.music_volume, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
 		chkEnableSound->setChecked(false);
 		chkEnableSound->setEnabled(false);
 		chkEnableSound->setVisible(false);
@@ -952,10 +968,7 @@ bool Game::Initialize() {
 		chkEnableMusic->setVisible(false);
 		scrSoundVolume->setVisible(false);
 		scrMusicVolume->setVisible(false);
-		chkMusicMode->setEnabled(false);
-		chkMusicMode->setVisible(false);
 	}
-	*/
 #endif
 	//leave/surrender/exit
 	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
@@ -1465,6 +1478,10 @@ void Game::LoadConfig() {
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
+	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 0);
+	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 0);
+	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 0);
+	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 0);
 	//defult Setting without checked
     gameConf.hide_setname = 0;
 	gameConf.hide_hint_button = 0;
@@ -1504,6 +1521,15 @@ void Game::SaveConfig() {
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
+	gameConf.enable_sound = chkEnableSound->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "enable_sound", gameConf.enable_sound);
+	gameConf.enable_music = chkEnableMusic->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
+
+	//gameConf.sound_volume = 
+	//    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
+	//gameConf.music_volume = 
+	//    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
 
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);

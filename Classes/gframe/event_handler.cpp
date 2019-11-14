@@ -1844,6 +1844,16 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+			case CHECKBOX_ENABLE_SOUND: {
+				mainGame->soundManager->EnableSounds(mainGame->chkEnableSound->isChecked());
+				return true;
+				break;
+			}
+			case CHECKBOX_ENABLE_MUSIC: {
+				mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
+				return true;
+				break;
+			}
 			}
 			break;
 		}
@@ -1882,6 +1892,14 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				}
 				u32 pos = mainGame->scrCardText->getPos();
 				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->textFont, mainGame->showingtext, pos);
+				return true;
+				break;
+			}
+			case SCROLL_VOLUME: {
+				mainGame->gameConf.sound_volume = (double)mainGame->scrSoundVolume->getPos() / 100;
+				mainGame->gameConf.music_volume = (double)mainGame->scrMusicVolume->getPos() / 100;
+				mainGame->soundManager->SetSoundVolume(mainGame->gameConf.sound_volume);
+				mainGame->soundManager->SetMusicVolume(mainGame->gameConf.music_volume);
 				return true;
 				break;
 			}
