@@ -940,6 +940,22 @@ bool Game::Initialize() {
 	//cancel or finish
 	btnCancelOrFinish = env->addButton(rect<s32>(205 * xScale, 220 * yScale, 305 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
+	soundManager = Utils::make_unique<SoundManager>();
+	soundManager->Init(50, 50, true, true, nullptr);//临时设置
+	/* 建设中......
+	if(!soundManager->Init(gameConf.soundVolume, gameConf.musicVolume, gameConf.enablesound, gameConf.enablemusic, nullptr)) {
+		chkEnableSound->setChecked(false);
+		chkEnableSound->setEnabled(false);
+		chkEnableSound->setVisible(false);
+		chkEnableMusic->setChecked(false);
+		chkEnableMusic->setEnabled(false);
+		chkEnableMusic->setVisible(false);
+		scrSoundVolume->setVisible(false);
+		scrMusicVolume->setVisible(false);
+		chkMusicMode->setEnabled(false);
+		chkMusicMode->setVisible(false);
+	}
+	*/
 #endif
 	//leave/surrender/exit
 	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
@@ -1095,6 +1111,16 @@ void Game::MainLoop() {
 #endif
 		gMutex.lock();
 		if(dInfo.isStarted) {
+			if(dInfo.isFinished && showcardcode == 1)
+				soundManager->PlayBGM(SoundManager::BGM::WIN);
+			else if(dInfo.isFinished && (showcardcode == 2 || showcardcode == 3))
+				soundManager->PlayBGM(SoundManager::BGM::LOSE);
+			else if(dInfo.lp[0] > 0 && dInfo.lp[0] <= dInfo.lp[1] / 2)
+				soundManager->PlayBGM(SoundManager::BGM::DISADVANTAGE);
+			else if(dInfo.lp[0] > 0 && dInfo.lp[0] >= dInfo.lp[1] * 2)
+				soundManager->PlayBGM(SoundManager::BGM::ADVANTAGE);
+			else
+				soundManager->PlayBGM(SoundManager::BGM::DUEL);
 			DrawBackImage(imageManager.tBackGround);
 			DrawBackGround();
 			DrawCards();
@@ -1103,12 +1129,14 @@ void Game::MainLoop() {
 			driver->setMaterial(irr::video::IdentityMaterial);
 			driver->clearZBuffer();
 		} else if(is_building) {
+			soundManager->PlayBGM(SoundManager::BGM::DECK);
 			DrawBackImage(imageManager.tBackGround_deck);
 #ifdef _IRR_ANDROID_PLATFORM_
 			driver->enableMaterial2D(true);
 			DrawDeckBd();
 			driver->enableMaterial2D(false);
 		} else {
+			soundManager->PlayBGM(SoundManager::BGM::MENU);
 			DrawBackImage(imageManager.tBackGround_menu);
 		}
 		driver->enableMaterial2D(true);
