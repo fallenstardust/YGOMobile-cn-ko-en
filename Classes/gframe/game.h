@@ -5,6 +5,7 @@
 #include "client_field.h"
 #include "deck_con.h"
 #include "menu_handler.h"
+#include "sound_manager.h"
 #include <unordered_map>
 #include <vector>
 #include <list>
@@ -166,7 +167,12 @@ public:
 		irr::gui::IGUIElement* focus = env->getFocus();
 		return focus && focus->hasType(type);
 	}
+
+	template<typename T>
+	static std::vector<T> TokenizeString(T input, const T& token);
+
 // don't merge
+	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
 	Signal frameSignal;
 	Signal actionSignal;
@@ -220,6 +226,7 @@ public:
 	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::scene::ICameraSceneNode* camera;
+	std::vector<Utils::IrrArchiveHelper> archives;
 	//GUI
 	irr::gui::IGUIEnvironment* env;
 	irr::gui::CGUITTFont* guiFont;
@@ -566,6 +573,20 @@ private:
     };
 
     extern Game *mainGame;
+
+	template<typename T>
+	inline std::vector<T> Game::TokenizeString(T input, const T & token) {
+		std::vector<T> res;
+		std::size_t pos;
+		while((pos = input.find(token)) != T::npos) {
+			if(pos != 0)
+				res.push_back(input.substr(0, pos));
+			input = input.substr(pos + 1);
+		}
+		if(input.size())
+			res.push_back(input);
+		return res;
+	}
 
 }
 

@@ -66,6 +66,14 @@ inline int _wtoi(const wchar_t * s) {
 #endif
 #endif
 
+#ifndef TEXT
+#ifdef UNICODE
+#define TEXT(x) L##x
+#else
+#define TEXT(x) x
+#endif // UNICODE
+#endif
+
 #include <irrlicht.h>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <GLES/gl.h>
