@@ -1,5 +1,6 @@
 #include "sound_manager.h"
 #include "config.h"
+#include "game.h"
 
 namespace ygo {
 
@@ -80,11 +81,39 @@ void SoundManager::PlaySoundEffect(SFX sound) {
         {DICE, "./sound/diceroll.wav"},
         {NEXT_TURN, "./sound/nextturn.wav"},
         {PHASE, "./sound/phase.wav"},
+        {BUTTON, "./sound/button.wav"},
+        {INFO, "./sound/info.wav"},
+        {QUESTION, "./sound/question.wav"},
+        {CARD_PICK, "./sound/cardpick.wav"},
+        {CARD_DROP, "./sound/carddrop.wav"},
         {PLAYER_ENTER, "./sound/playerenter.wav"},
         {CHAT, "./sound/chatmessage.wav"}
     };
     if (!soundsEnabled) return;
     if (sfx) sfx->play(fx.at(sound), false);
+}
+void SoundManager::PlayDialogSound(irr::gui::IGUIElement * element) {
+	if(element == mainGame->wMessage) {
+		PlaySoundEffect(SoundManager::SFX::INFO);
+	} else if(element == mainGame->wQuery) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wSurrender) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wOptions) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wANAttribute) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wANCard) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wANNumber) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wANRace) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wReplaySave) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	} else if(element == mainGame->wFTSelect) {
+		PlaySoundEffect(SoundManager::SFX::QUESTION);
+	}
 }
 void SoundManager::PlayMusic(const std::string& song, bool loop) {
 	if(!musicEnabled) return;
@@ -98,7 +127,7 @@ void SoundManager::PlayBGM(BGM scene) {
 		bgm_scene = scene;
 		int bgm = (std::uniform_int_distribution<>(0, count - 1))(rnd);
 		std::string BGMName = "./sound/BGM/" + list[bgm];
-		PlayMusic(BGMName, true);
+		PlayMusic(BGMName, false);
 	}
 }
 void SoundManager::StopBGM() {

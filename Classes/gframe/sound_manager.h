@@ -32,6 +32,11 @@ public:
 		DICE,
 		NEXT_TURN,
 		PHASE,
+		BUTTON,
+		INFO,
+		QUESTION,
+		CARD_PICK,
+		CARD_DROP,
 		PLAYER_ENTER,
 		CHAT
 	};
@@ -48,6 +53,7 @@ public:
 	bool Init(double sounds_volume, double music_volume, bool sounds_enabled, bool music_enabled, void* payload = nullptr);
 	void RefreshBGMList();
 	void PlaySoundEffect(SFX sound);
+	void PlayDialogSound(irr::gui::IGUIElement * element);
 	void PlayMusic(const std::string& song, bool loop);
 	void PlayBGM(BGM scene);
 	void StopBGM();

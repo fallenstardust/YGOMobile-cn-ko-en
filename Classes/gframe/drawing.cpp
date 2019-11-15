@@ -1135,6 +1135,7 @@ void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
 	fadingList.push_back(fu);
 }
 void Game::PopupElement(irr::gui::IGUIElement * element, int hideframe) {
+	mainGame->soundManager->PlayDialogSound(element);
 	element->getParent()->bringToFront(element);
 	if(!is_building)
 		dField.panel = element;

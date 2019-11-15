@@ -81,8 +81,8 @@ bool Game::Initialize() {
 	setPositionFix(appPosition);
 	device->setProcessReceiver(this);
 
-	soundEffectPlayer = new AndroidSoundEffectPlayer(app);
-	soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
+	//soundEffectPlayer = new AndroidSoundEffectPlayer(app);
+	//soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
 	app->onInputEvent = android::handleInput;
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
@@ -433,7 +433,7 @@ bool Game::Initialize() {
 	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
 	scrSoundVolume->setMax(100);
 	scrSoundVolume->setMin(0);
-	scrSoundVolume->setPos(gameConf.sound_volume * 100);
+	scrSoundVolume->setPos(gameConf.sound_volume);
 	scrSoundVolume->setLargeStep(1);
 	scrSoundVolume->setSmallStep(1);
 	posY += 60;
@@ -442,7 +442,7 @@ bool Game::Initialize() {
 	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
 	scrMusicVolume->setMax(100);
 	scrMusicVolume->setMin(0);
-	scrMusicVolume->setPos(gameConf.music_volume * 100);
+	scrMusicVolume->setPos(gameConf.music_volume);
 	scrMusicVolume->setLargeStep(1);
 	scrMusicVolume->setSmallStep(1);
 	elmTabHelperLast = chkEnableMusic;
@@ -959,7 +959,7 @@ bool Game::Initialize() {
 	btnCancelOrFinish = env->addButton(rect<s32>(205 * xScale, 220 * yScale, 305 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
 	soundManager = Utils::make_unique<SoundManager>();
-	if(!soundManager->Init(gameConf.sound_volume, gameConf.music_volume, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
+	if(!soundManager->Init((double)gameConf.sound_volume / 100, (double)gameConf.music_volume / 100, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
 		chkEnableSound->setChecked(false);
 		chkEnableSound->setEnabled(false);
 		chkEnableSound->setVisible(false);
@@ -1226,7 +1226,7 @@ void Game::MainLoop() {
 	usleep(500000);
 #endif
 	SaveConfig();
-	delete soundEffectPlayer;
+	//delete soundEffectPlayer;
 	usleep(500000);
 //	device->drop();
 }
@@ -1526,10 +1526,10 @@ void Game::SaveConfig() {
 	gameConf.enable_music = chkEnableMusic->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
 
-	//gameConf.sound_volume = 
-	//    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
-	//gameConf.music_volume = 
-	//    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
+	gameConf.sound_volume = (double)scrSoundVolume->getPos();
+	    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
+	gameConf.music_volume = (double)scrMusicVolume->getPos();
+	    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
 
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
@@ -1638,10 +1638,12 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 	chatType[0] = player;
 	switch(player) {
 	case 0: //from host
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.hostname);
 		chatMsg[0].append(L": ");
 		break;
 	case 1: //from client
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname);
 		chatMsg[0].append(L": ");
 		break;
@@ -1650,6 +1652,7 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		chatMsg[0].append(L": ");
 		break;
 	case 3: //client tag
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname_tag);
 		chatMsg[0].append(L": ");
 		break;
@@ -1658,6 +1661,7 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		chatMsg[0].append(L": ");
 		break;
 	case 8: //system custom message, no prefix.
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(L"[System]: ");
 		break;
 	case 9: //error message

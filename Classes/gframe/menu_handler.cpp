@@ -55,15 +55,19 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		}
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
+			if(id < 110)
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+			else
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			switch(id) {
 			case BUTTON_MODE_EXIT: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->SaveConfig();
 				mainGame->device->closeDevice();
 				break;
 			}
 			case BUTTON_LAN_MODE: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->btnCreateHost->setEnabled(true);
 				mainGame->btnJoinHost->setEnabled(true);
 				mainGame->btnJoinCancel->setEnabled(true);
@@ -92,6 +96,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					int status = evutil_getaddrinfo(hostname, port, &hints, &answer);
 					if(status != 0) {
 						mainGame->gMutex.lock();
+						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1412));
 						mainGame->gMutex.unlock();
 						break;
@@ -112,7 +117,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_JOIN_CANCEL: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				if(exit_on_return)
@@ -120,12 +125,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_LAN_REFRESH: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::BeginRefreshHost();
 				break;
 			}
 			case BUTTON_CREATE_HOST: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->btnHostConfirm->setEnabled(true);
 				mainGame->btnHostCancel->setEnabled(true);
 				mainGame->HideElement(mainGame->wLanWindow);
@@ -133,7 +138,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HOST_CONFIRM: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				bot_mode = false;
 				BufferIO::CopyWStr(mainGame->ebServerName->getText(), mainGame->gameConf.gamename, 20);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport))
@@ -147,7 +152,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HOST_CANCEL: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->btnCreateHost->setEnabled(true);
 				mainGame->btnJoinHost->setEnabled(true);
 				mainGame->btnJoinCancel->setEnabled(true);
@@ -156,18 +161,18 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_DUELIST: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->cbDeckSelect->setEnabled(true);
 				DuelClient::SendPacketToServer(CTOS_HS_TODUELIST);
 				break;
 			}
 			case BUTTON_HP_OBSERVER: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::SendPacketToServer(CTOS_HS_TOOBSERVER);
 				break;
 			}
 			case BUTTON_HP_KICK: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				int id = 0;
 				while(id < 4) {
 					if(mainGame->btnHostPrepKick[id] == caller)
@@ -180,7 +185,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_READY: {
-			    mainGame->soundEffectPlayer->doPressButton();
+			    //mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
 					!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 					break;
@@ -192,19 +197,19 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_NOTREADY: {
-		    	mainGame->soundEffectPlayer->doPressButton();
+		    	//mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
 				break;
 			}
 			case BUTTON_HP_START: {
-		    	mainGame->soundEffectPlayer->doPressButton();
+		    	//mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::SendPacketToServer(CTOS_HS_START);
 				break;
 			}
 			case BUTTON_HP_CANCEL: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				DuelClient::StopClient();
 				mainGame->btnCreateHost->setEnabled(true);
 				mainGame->btnJoinHost->setEnabled(true);
@@ -223,7 +228,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_REPLAY_MODE: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wMainMenu);
 				mainGame->ShowElement(mainGame->wReplay);
 				mainGame->ebRepStartTurn->setText(L"1");
@@ -232,7 +237,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SINGLE_MODE: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wMainMenu);
 				mainGame->ShowElement(mainGame->wSinglePlay);
 				mainGame->RefreshSingleplay();
@@ -240,7 +245,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_LOAD_REPLAY: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 					if(mainGame->lstReplayList->getSelected() == -1)
 						break;
 					if(!ReplayMode::cur_replay.OpenReplay(mainGame->lstReplayList->getListItem(mainGame->lstReplayList->getSelected())))
@@ -293,7 +298,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CANCEL_REPLAY: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wReplay);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				break;
@@ -406,7 +411,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_LOAD_SINGLEPLAY: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->lstSinglePlayList->getSelected() == -1)
 					break;
 				mainGame->singleSignal.SetNoWait(false);
@@ -414,14 +419,14 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CANCEL_SINGLEPLAY: {
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				mainGame->HideElement(mainGame->wSinglePlay);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				break;
 			}
 			case BUTTON_DECK_EDIT: {
 				mainGame->RefreshCategoryDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
-				mainGame->soundEffectPlayer->doPressButton();
+				//mainGame->soundEffectPlayer->doPressButton();
 				if(mainGame->cbDBCategory->getSelected() != -1 && mainGame->cbDBDecks->getSelected() != -1) {
 					deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 					mainGame->ebDeckname->setText(L"");
