@@ -121,6 +121,8 @@ void SoundManager::PlayMusic(const std::string& song, bool loop) {
     if (bgm) bgmCurrent = bgm->play(song, loop);
 }
 void SoundManager::PlayBGM(BGM scene) {
+	if(!mainGame->chkMusicMode->isChecked())
+		scene = BGM::ALL;
 	auto& list = BGMList[scene];
 	int count = list.size();
 	if (musicEnabled && (scene != bgm_scene || !bgm->exists(bgmCurrent)) && count > 0) {

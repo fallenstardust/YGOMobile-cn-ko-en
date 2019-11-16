@@ -51,10 +51,12 @@ struct Config {
 	int quick_animation;
 	int auto_save_replay;
 	int prefer_expansion_script;
+	//sound
 	bool enable_sound;
 	bool enable_music;
 	double sound_volume;
 	double music_volume;
+	double music_mode;
 };
 
 struct DuelInfo {
@@ -275,10 +277,12 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
+	//sound
 	irr::gui::IGUICheckBox* chkEnableSound;
 	irr::gui::IGUICheckBox* chkEnableMusic;
 	irr::gui::IGUIScrollBar* scrSoundVolume;
 	irr::gui::IGUIScrollBar* scrMusicVolume;
+	irr::gui::IGUICheckBox* chkMusicMode;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;

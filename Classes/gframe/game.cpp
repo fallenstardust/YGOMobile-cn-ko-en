@@ -445,7 +445,10 @@ bool Game::Initialize() {
 	scrMusicVolume->setPos(gameConf.music_volume);
 	scrMusicVolume->setLargeStep(1);
 	scrMusicVolume->setSmallStep(1);
-	elmTabHelperLast = chkEnableMusic;
+	posY += 60;
+	chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1284));
+	chkMusicMode->setChecked(gameConf.music_mode != 0);
+	elmTabHelperLast = chkMusicMode;
 	//show scroll
 	s32 tabHelperLastY = elmTabHelperLast->getRelativePosition().LowerRightCorner.Y;
 	s32 tabHelperHeight = 300 * yScale;
@@ -968,6 +971,8 @@ bool Game::Initialize() {
 		chkEnableMusic->setVisible(false);
 		scrSoundVolume->setVisible(false);
 		scrMusicVolume->setVisible(false);
+		chkMusicMode->setEnabled(false);
+		chkMusicMode->setVisible(false);
 	}
 #endif
 	//leave/surrender/exit
@@ -1482,6 +1487,7 @@ void Game::LoadConfig() {
 	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 50);
 	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 1);
 	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 50);
+	gameConf.music_mode = android::getIntSetting(appMain, "music_mode", 1);
 	//defult Setting without checked
     gameConf.hide_setname = 0;
 	gameConf.hide_hint_button = 0;
@@ -1525,6 +1531,8 @@ void Game::SaveConfig() {
 	    android::saveIntSetting(appMain, "enable_sound", gameConf.enable_sound);
 	gameConf.enable_music = chkEnableMusic->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
+	gameConf.music_mode = chkMusicMode->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "music_mode", gameConf.music_mode);
 
 	gameConf.sound_volume = (double)scrSoundVolume->getPos();
 	    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
