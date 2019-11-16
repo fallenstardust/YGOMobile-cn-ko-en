@@ -1478,10 +1478,10 @@ void Game::LoadConfig() {
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
-	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 0);
-	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 0);
-	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 0);
-	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 0);
+	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 1);
+	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 50);
+	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 1);
+	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 50);
 	//defult Setting without checked
     gameConf.hide_setname = 0;
 	gameConf.hide_hint_button = 0;
