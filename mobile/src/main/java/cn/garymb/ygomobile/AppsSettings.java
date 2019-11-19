@@ -415,6 +415,10 @@ public class AppsSettings {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
     }
 
+    public String getSoundPath() {
+        return new File(getResourcePath(), Constants.CORE_SOUND_PATH).getAbsolutePath();
+    }
+
     public String getCoreSkinPath() {
         return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
     }

@@ -16,6 +16,7 @@
     <string name="images">images</string>
     <string name="single_lua">single files</string>
     <string name="font_files">font files</string>
+    <string name="game_sound">sound files</string>
     <string name="game_skins">skin files</string>
     <string name="coping_pendulum_image">Coping pendulum image</string>
     <string name="dialog_select_font">Select a font file</string>

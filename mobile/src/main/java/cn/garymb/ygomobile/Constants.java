@@ -66,6 +66,7 @@ public interface Constants {
     String CORE_CUSTOM_LIMIT_PATH = "expansions/lflist.conf";
     String CORE_SYSTEM_PATH = "system.conf";
     String CORE_BOT_CONF_PATH = "bot.conf";
+    String CORE_SOUND_PATH = "sound";
     String CORE_SKIN_PATH = "textures";
     String CORE_SKIN_PENDULUM_PATH = CORE_SKIN_PATH + "/extra";
     String CORE_DECK_PATH = "deck";

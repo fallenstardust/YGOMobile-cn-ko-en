@@ -45,10 +45,12 @@
             android:key="pref_settings_read_ex"
             android:persistent="true"
             android:title="@string/title_use_ex" />
+        <!-- 启用游戏音效
         <CheckBoxPreference
             android:key="pref_key_game_sound_effect"
             android:persistent="true"
             android:title="@string/settings_game_enable_sound_effect" />
+        -->
         <CheckBoxPreference
             android:key="pref_key_game_screen_orientation"
             android:persistent="true"

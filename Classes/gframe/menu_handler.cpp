@@ -62,6 +62,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case BUTTON_MODE_EXIT: {
 				//mainGame->soundEffectPlayer->doPressButton();
+				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
 				mainGame->device->closeDevice();
 				break;

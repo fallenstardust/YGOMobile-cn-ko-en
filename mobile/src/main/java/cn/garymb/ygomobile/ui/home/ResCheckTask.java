@@ -146,10 +146,19 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
+            String[] sound1 = mContext.getAssets().list(getDatapath(Constants.CORE_SOUND_PATH));
+            String[] sound2 = new File(mSettings.getSoundPath()).list();
+
             String[] textures1 = mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
             String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
 
             //复制资源文件夹
+            //如果sound文件夹不存在/sound资源数量不够/是更新则复制,但是不强制复制
+            if (sound2 == null || (sound1 != null && sound1.length > sound2.length) || needsUpdate) {
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_sound)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SOUND_PATH),
+                        mSettings.getSoundPath(), false);
+            }
             //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
             if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
