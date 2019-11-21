@@ -8,7 +8,7 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 353001116
+        versionCode 353001121
         versionName "3.5.3"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
@@ -22,15 +22,15 @@ android {
     }
     productFlavors {
         cn {
-            manifestPlaceholders = [PGYER_APPID: "dd147e8542b85a64111d98290892d8bd"]
+            manifestPlaceholders = [PGYER_APPID: "5be72b17bccbc9898012d35f713c57ff"]
         }
         en {
             applicationIdSuffix ".EN"
-            manifestPlaceholders = [PGYER_APPID: "242ad8311ed1c943f48cfc8238d06210"]
+            manifestPlaceholders = [PGYER_APPID: "c94918f2b9ca85a0b77567ca53218121"]
         }
         ko {
             applicationIdSuffix ".KO"
-            manifestPlaceholders = [PGYER_APPID: "8e985218b1f02bda5fa456557c886f54"]
+            manifestPlaceholders = [PGYER_APPID: "885b0ff6e389b741aff1d62011f9a8ac"]
         }
     }
     buildTypes {
@@ -104,7 +104,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //
     implementation(name: 'paysdk-release-1.2.4', ext: 'aar')
-    implementation "com.pgyersdk:sdk:3.0.5"
+    implementation "com.pgyersdk:sdk:3.0.11"
     //dialog库
     implementation(name: 'dialogutils2-release', ext: 'aar')
     //recyclerview的adapter库
