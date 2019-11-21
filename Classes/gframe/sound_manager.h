@@ -56,8 +56,11 @@ public:
 	void PlayDialogSound(irr::gui::IGUIElement * element);
 	void PlayMusic(const std::string& song, bool loop);
 	void PlayBGM(BGM scene);
+	void StopSound();
 	void StopBGM();
 	bool PlayChant(unsigned int code);
+	void PlayCustomSound(char* SoundName);
+	void PlayCustomBGM(char* BGMName);
 	void SetSoundVolume(double volume);
 	void SetMusicVolume(double volume);
 	void EnableSounds(bool enable);

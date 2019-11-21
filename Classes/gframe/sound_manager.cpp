@@ -52,9 +52,18 @@ void SoundManager::RefreshBGMDir(path_string path, BGM scene) {
 void SoundManager::RefreshChantsList() {
 	for(auto& file : Utils::FindfolderFiles(TEXT("./sound/chants"), { TEXT("mp3"), TEXT("ogg"), TEXT("wav") })) {
 		auto scode = Utils::GetFileName(TEXT("./sound/chants/") + file);
-		unsigned int code = std::stoi(scode);
-		if(code && !ChantsList.count(code))
-			ChantsList[code] = Utils::ToUTF8IfNeeded(file);
+		try {
+			unsigned int code = std::stoi(scode);
+			if (code && !ChantsList.count(code))
+				ChantsList[code] = Utils::ToUTF8IfNeeded(file);
+		}
+		catch (std::exception& e) {
+			char buf[1040];
+			auto fileName = Utils::ToUTF8IfNeeded(TEXT("./sound/chants/") + file);
+			sprintf(buf, "[文件名只能为卡片ID]: %s", fileName.c_str());
+			Utils::Deletefile(fileName);
+			mainGame->ErrorLog(buf);
+		}
 	}
 }
 void SoundManager::PlaySoundEffect(SFX sound) {
@@ -132,15 +141,28 @@ void SoundManager::PlayBGM(BGM scene) {
 		PlayMusic(BGMName, false);
 	}
 }
+void SoundManager::StopSound() {
+	sfx->stopAll();
+}
 void SoundManager::StopBGM() {
     bgm->stopAll();
 }
 bool SoundManager::PlayChant(unsigned int code) {
 	if(ChantsList.count(code)) {
-        if (bgm) bgm->play("./sound/chants/" + ChantsList[code], false);
+		if (bgm) PlayMusic("./sound/chants/" + ChantsList[code], false);
 		return true;
 	}
 	return false;
+}
+void SoundManager::PlayCustomSound(char* SoundName) {
+	if (!soundsEnabled) return;
+	if (access(SoundName, 0) != 0) return;
+	if (sfx) sfx->play(SoundName, false);
+}
+void SoundManager::PlayCustomBGM(char* BGMName) {
+	if (!musicEnabled || !mainGame->chkMusicMode->isChecked()) return;
+	if (access(BGMName, 0) != 0) return;
+	if (bgm) PlayMusic(BGMName, false);
 }
 void SoundManager::SetSoundVolume(double volume) {
     if (sfx) sfx->setVolume(volume);
@@ -150,6 +172,9 @@ void SoundManager::SetMusicVolume(double volume) {
 }
 void SoundManager::EnableSounds(bool enable) {
 	soundsEnabled = enable;
+	if(!soundsEnabled) {
+		StopSound();
+	}
 }
 void SoundManager::EnableMusic(bool enable) {
 	musicEnabled = enable;
