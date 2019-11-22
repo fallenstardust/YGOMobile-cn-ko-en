@@ -70,6 +70,7 @@ private:
     std::vector<std::string> BGMList[8];
     std::map<unsigned int, std::string> ChantsList;
     int bgm_scene = -1;
+	bool bgm_process;
     std::mt19937 rnd;
     std::unique_ptr<YGOpen::OpenALSingleton> openal;
     std::unique_ptr<YGOpen::OpenALSoundLayer> sfx;

@@ -9,6 +9,7 @@ bool SoundManager::Init(double sounds_volume, double music_volume, bool sounds_e
 	musicEnabled = music_enabled;
 	rnd.seed(time(0));
 	bgm_scene = -1;
+	bgm_process = true;
 	RefreshBGMList();
 	RefreshChantsList();
     try {
@@ -134,7 +135,7 @@ void SoundManager::PlayBGM(BGM scene) {
 		scene = BGM::ALL;
 	auto& list = BGMList[scene];
 	int count = list.size();
-	if (musicEnabled && (scene != bgm_scene || !bgm->exists(bgmCurrent)) && count > 0) {
+	if (musicEnabled && (scene != bgm_scene || !bgm->exists(bgmCurrent)) && bgm_process && count > 0) {
 		bgm_scene = scene;
 		int bgm = (std::uniform_int_distribution<>(0, count - 1))(rnd);
 		std::string BGMName = "./sound/BGM/" + list[bgm];
@@ -149,7 +150,11 @@ void SoundManager::StopBGM() {
 }
 bool SoundManager::PlayChant(unsigned int code) {
 	if(ChantsList.count(code)) {
-		if (bgm) PlayMusic("./sound/chants/" + ChantsList[code], false);
+		if (bgm) {
+			bgm_process = false;
+			PlayMusic("./sound/chants/" + ChantsList[code], false);
+			bgm_process = true;
+		}
 		return true;
 	}
 	return false;
@@ -162,7 +167,11 @@ void SoundManager::PlayCustomSound(char* SoundName) {
 void SoundManager::PlayCustomBGM(char* BGMName) {
 	if (!musicEnabled || !mainGame->chkMusicMode->isChecked()) return;
 	if (access(BGMName, 0) != 0) return;
-	if (bgm) PlayMusic(BGMName, false);
+	if (bgm) {
+		bgm_process = false;
+		PlayMusic(BGMName, false);
+		bgm_process = true;
+	}
 }
 void SoundManager::SetSoundVolume(double volume) {
     if (sfx) sfx->setVolume(volume);
