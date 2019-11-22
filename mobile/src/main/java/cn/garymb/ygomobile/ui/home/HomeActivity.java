@@ -43,6 +43,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -166,14 +167,14 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     }
 
                     @Override
-                    public void downloadSuccessful(Uri uri) {
+                    public void downloadSuccessful(File file) {
                         builder.dismiss();
-                        PgyUpdateManager.installApk(uri);
+                        PgyUpdateManager.installApk(file);
                     }
 
                     @Override
-                    public void onProgressUpdate(Integer... integers) {
-                        builder.getProgressBar2().setProgress(integers[0]);
+                    public void onProgressUpdate(Integer... file) {
+                        builder.getProgressBar2().setProgress(file[0]);
                     }
                 })
                 .register();
