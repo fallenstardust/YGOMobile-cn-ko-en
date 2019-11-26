@@ -7,11 +7,11 @@ android {
         minSdkVersion 16
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 22
-		/*
+
         ndk {
             moduleName "YGOMobile"
             abiFilters "armeabi-v7a"//,"x86"
-        }*/
+        }
     }
 
     externalNativeBuild {
