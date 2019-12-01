@@ -2174,7 +2174,13 @@ int32 scriptlib::card_is_able_to_remove(lua_State *L) {
 	uint32 p = pcard->pduel->game_field->core.reason_player;
 	if(lua_gettop(L) >= 2)
 		p = lua_tointeger(L, 2);
-	if(pcard->is_removeable(p))
+	uint8 pos = POS_FACEUP;
+	if(lua_gettop(L) >= 3)
+		pos = lua_tointeger(L, 3);
+	uint32 reason = REASON_EFFECT;
+	if(lua_gettop(L) >= 4)
+		reason = lua_tointeger(L, 4);
+	if(pcard->is_removeable(p, pos, reason))
 		lua_pushboolean(L, 1);
 	else
 		lua_pushboolean(L, 0);
@@ -2241,7 +2247,10 @@ int32 scriptlib::card_is_able_to_remove_as_cost(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 p = pcard->pduel->game_field->core.reason_player;
-	if(pcard->is_removeable_as_cost(p))
+	uint8 pos = POS_FACEUP;
+	if(lua_gettop(L) >= 2)
+		pos = lua_tointeger(L, 2);
+	if(pcard->is_removeable_as_cost(p, pos))
 		lua_pushboolean(L, 1);
 	else
 		lua_pushboolean(L, 0);
@@ -2714,6 +2723,16 @@ int32 scriptlib::card_is_can_remove_counter(lua_State *L) {
 	uint32 count = lua_tointeger(L, 4);
 	uint32 reason = lua_tointeger(L, 5);
 	lua_pushboolean(L, pcard->pduel->game_field->is_player_can_remove_counter(playerid, pcard, 0, 0, countertype, count, reason));
+	return 1;
+}
+int32 scriptlib::card_is_can_overlay(lua_State *L) {
+	check_param_count(L, 1);
+	check_param(L, PARAM_TYPE_CARD, 1);
+	card* pcard = *(card**) lua_touserdata(L, 1);
+	uint8 playerid = pcard->pduel->game_field->core.reason_player;
+	if(lua_gettop(L) > 1 && !lua_isnil(L, 2))
+		playerid = lua_tointeger(L, 2);
+	lua_pushboolean(L, pcard->is_capable_overlay(playerid));
 	return 1;
 }
 int32 scriptlib::card_is_can_be_fusion_material(lua_State *L) {
