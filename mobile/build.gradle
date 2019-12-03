@@ -13,7 +13,7 @@ android {
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
-            abiFilters "armeabi-v7a"
+            abiFilters "armeabi-v7a","x86"
         }
     }
     compileOptions {
@@ -114,5 +114,5 @@ dependencies {
     //图片选择
     implementation 'com.yuyh.imgsel:library:2.0.6'
     //跨进程SharedPreferencesPlus工具
-    implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
+    implementation 'com.github.zhangliangming:PreferencesProvider:v1.3''
 }
