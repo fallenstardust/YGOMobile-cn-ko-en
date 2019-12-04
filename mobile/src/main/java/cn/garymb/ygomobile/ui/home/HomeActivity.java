@@ -1,9 +1,9 @@
 package cn.garymb.ygomobile.ui.home;
 
 import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -41,7 +41,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -125,12 +124,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //初始化bugly
-        Bugly.init(getApplicationContext(), "0b6f110306", true);
+        ApplicationInfo appInfo = null;
+        try {
+            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        String msg=appInfo.metaData.getString("BUGLY_APPID");
+        Bugly.init(this, msg, true);
         //check update
-        Beta.checkUpgrade(false,true);
+        Beta.checkUpgrade(false, false);
         //ServiceDuelAssistant
         startDuelService(this);
-
         //萌卡
         StartMycard();
         checkNotch();
