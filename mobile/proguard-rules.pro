@@ -39,3 +39,6 @@
 -dontwarn java.lang.invoke.**
 -dontwarn org.slf4j.**
 -dontwarn org.chromium.**
+-dontwarn com.tencent.bugly.**
+-keep public class com.tencent.bugly.**{*;}
+-keep class android.support.**{*;}

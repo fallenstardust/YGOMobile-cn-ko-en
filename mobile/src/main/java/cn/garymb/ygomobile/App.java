@@ -30,8 +30,6 @@ public class App extends GameApplication {
         }
         //初始化图片选择器
         initImgsel();
-//        QbSdk.initX5Environment(this, null);
-//        QbSdk.setCurrentID("");
     }
 
     @Override

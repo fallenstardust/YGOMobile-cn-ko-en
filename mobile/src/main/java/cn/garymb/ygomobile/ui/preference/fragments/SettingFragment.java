@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
+import com.tencent.bugly.beta.Beta;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -231,7 +232,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            HomeActivity.checkPgyerUpdateSilent(getActivity(), true, true, true);
+            Beta.checkUpgrade();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
