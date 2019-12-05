@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tr_transparent_background">
+
+    <RelativeLayout
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:background="@drawable/window">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:textColor="@color/gold"
+            android:textSize="20dp"
+            android:tag="beta_title" />
+
+        <ImageView
+            android:id="@+id/iv_upgrade_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_title"
+            android:tag="beta_upgrade_banner"/>
+
+        <TextView
+            android:id="@+id/tv_upgrade_feature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="5dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingBottom="5dp"
+            android:text="Title"
+            android:textColor="@color/white"
+            android:textSize="15dp"
+            android:layout_below="@id/tv_title"
+            android:tag="beta_upgrade_feature"/>
+
+
+        <Button
+            android:id="@+id/tv_upgrade_confirm"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/button_n"
+            android:layout_below="@id/tv_upgrade_feature"
+            android:gravity="center"
+            android:text="@string/Download"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textSize="15dp"
+            android:visibility="visible"
+            android:tag="beta_confirm_button"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:tag="beta_upgrade_info" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:tag="beta_cancel_button" />
+    </RelativeLayout>
+</RelativeLayout>

@@ -124,14 +124,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //初始化bugly
-        ApplicationInfo appInfo = null;
-        try {
-            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        String msg=appInfo.metaData.getString("BUGLY_APPID");
-        Bugly.init(this, msg, true);
+        initBugly();
         //check update
         Beta.checkUpgrade(false, false);
         //ServiceDuelAssistant
@@ -498,6 +491,17 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         } else {
             tv.setVisibility(View.GONE);
         }
+    }
+
+    public void initBugly(){
+        ApplicationInfo appInfo = null;
+        try {
+            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        String msg=appInfo.metaData.getString("BUGLY_APPID");
+        Bugly.init(this, msg, true);
     }
 
     public boolean joinQQGroup(String key) {
