@@ -38,7 +38,7 @@
             android:text="Feature"
             android:textColor="@color/white"
             android:textSize="15dp"
-            android:layout_below="@id/tv_title"
+            android:layout_below="@id/iv_upgrade_banner"
             android:tag="beta_upgrade_feature"/>
 
 

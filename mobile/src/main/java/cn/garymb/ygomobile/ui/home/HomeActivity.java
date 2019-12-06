@@ -493,14 +493,21 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         }
     }
 
-    public void initBugly(){
+    public void initBugly() {
+        Beta.initDelay = 0;
+        Beta.showInterruptedStrategy = true;
+        Beta.largeIconId = R.drawable.ic_icon_round;
+        Beta.defaultBannerId = R.drawable.ic_icon_round;
+        Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
+        Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
+        Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
         ApplicationInfo appInfo = null;
         try {
             appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        String msg=appInfo.metaData.getString("BUGLY_APPID");
+        String msg = appInfo.metaData.getString("BUGLY_APPID");
         Bugly.init(this, msg, true);
     }
 
