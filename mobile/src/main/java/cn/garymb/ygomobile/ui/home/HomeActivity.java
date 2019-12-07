@@ -34,6 +34,7 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
+import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -123,8 +124,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         QbSdk.initX5Environment(this, cb);
         //trpay
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
-        //初始化bugly
-        initBugly();
         //check update
         Beta.checkUpgrade(false, false);
         //ServiceDuelAssistant
@@ -491,24 +490,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         } else {
             tv.setVisibility(View.GONE);
         }
-    }
-
-    public void initBugly() {
-        Beta.initDelay = 0;
-        Beta.showInterruptedStrategy = true;
-        Beta.largeIconId = R.drawable.ic_icon_round;
-        Beta.defaultBannerId = R.drawable.ic_icon_round;
-        Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
-        Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
-        Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
-        ApplicationInfo appInfo = null;
-        try {
-            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        String msg = appInfo.metaData.getString("BUGLY_APPID");
-        Bugly.init(this, msg, true);
     }
 
     public boolean joinQQGroup(String key) {

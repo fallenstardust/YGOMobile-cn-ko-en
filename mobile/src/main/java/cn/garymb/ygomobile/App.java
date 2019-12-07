@@ -4,14 +4,19 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
+import com.tencent.bugly.Bugly;
+import com.tencent.bugly.beta.Beta;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class App extends GameApplication {
@@ -30,6 +35,8 @@ public class App extends GameApplication {
         }
         //初始化图片选择器
         initImgsel();
+        //初始化bugly
+        initBugly();
     }
 
     @Override
@@ -139,5 +146,23 @@ public class App extends GameApplication {
                 Glide.with(context).load(path).into(imageView);
             }
         });
+    }
+
+    public void initBugly() {
+        Beta.initDelay = 0;
+        Beta.showInterruptedStrategy = true;
+        Beta.largeIconId = R.drawable.ic_icon_round;
+        Beta.defaultBannerId = R.drawable.ic_icon_round;
+        Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
+        Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
+        Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
+        ApplicationInfo appInfo = null;
+        try {
+            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        String msg = appInfo.metaData.getString("BUGLY_APPID");
+        Bugly.init(this, msg, true);
     }
 }
