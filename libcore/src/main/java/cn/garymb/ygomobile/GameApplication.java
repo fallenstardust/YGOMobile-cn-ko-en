@@ -16,18 +16,15 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 
 
 public abstract class GameApplication extends Application implements IrrlichtBridge.IrrlichtApplication {
-    private SoundPool mSoundEffectPool;
-    private Map<String, Integer> mSoundIdMap;
 
     private static GameApplication sGameApplication;
-    private boolean isInitSoundEffectPool=false;
 
     @Override
     public void onCreate() {
         super.onCreate();
         sGameApplication = this;
 //        Reflection.unseal(this);
-//        initSoundEffectPool();
+
     }
 
     public static GameApplication get() {
@@ -42,15 +39,6 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     @Override
     public void onTerminate() {
         super.onTerminate();
-        mSoundEffectPool.release();
-    }
-
-    public boolean isInitSoundEffectPool() {
-        return isInitSoundEffectPool;
-    }
-
-    protected void setInitSoundEffectPool(boolean initSoundEffectPool) {
-        isInitSoundEffectPool = initSoundEffectPool;
     }
 
     public int getGameWidth(){
@@ -62,24 +50,6 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     }
 
     public abstract boolean isKeepScale();
-
-    @SuppressWarnings("deprecation")
-    public void initSoundEffectPool() {
-        mSoundEffectPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
-        AssetManager am = getAssets();
-        String[] sounds;
-        mSoundIdMap = new HashMap<String, Integer>();
-        try {
-            sounds = am.list("sound");
-            for (String sound : sounds) {
-                String path = "sound" + File.separator + sound;
-                mSoundIdMap
-                        .put(path, mSoundEffectPool.load(am.openFd(path), 1));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public abstract NativeInitOptions getNativeInitOptions();
 
@@ -105,11 +75,4 @@ public abstract class GameApplication extends Application implements IrrlichtBri
      */
     public abstract boolean isImmerSiveMode();
 
-    @Override
-    public void playSoundEffect(String path) {
-        Integer id = mSoundIdMap.get(path);
-        if (id != null) {
-            mSoundEffectPool.play(id, 0.5f, 0.5f, 2, 0, 1.0f);
-        }
-    }
 }

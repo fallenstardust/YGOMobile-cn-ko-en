@@ -42,9 +42,6 @@ public:
 	inline bool isFontAntiAliasEnabled() {
 		return m_font_aa_enabled;
 	}
-	inline bool isSoundEffectEnabled() {
-		return m_se_enabled;
-	}
 	inline bool isPendulumScaleEnabled() {
 		return m_ps_enabled;
 	}
@@ -68,7 +65,6 @@ private:
 	int cdb_count;
 	int zip_count;
     bool m_font_aa_enabled;
-    bool m_se_enabled;
     bool m_ps_enabled;
 };
 
@@ -170,8 +166,6 @@ extern void saveSetting(ANDROID_APP app, const char* key, const char* value);
 
 //Retrive font antialias options
 extern bool getFontAntiAlias(ANDROID_APP app);
-
-extern bool isSoundEffectEnabled(ANDROID_APP app);
 
 //Show Android compat gui;
 extern void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow,

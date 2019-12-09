@@ -29,10 +29,6 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-        if (AppsSettings.get().isSoundEffect()) {
-            initSoundEffectPool();
-            setInitSoundEffectPool(true);
-        }
         //初始化图片选择器
         initImgsel();
         //初始化bugly

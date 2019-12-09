@@ -18,13 +18,11 @@ inline static void ReadString(irr::io::path &path, char*& p) {
 }
 
 InitOptions::InitOptions(void*data) :
-		m_opengles_version(0), m_card_quality(0), m_font_aa_enabled(TRUE), m_se_enabled(
-				TRUE) {
+		m_opengles_version(0), m_card_quality(0), m_font_aa_enabled(TRUE) {
 	if (data != NULL) {
 		char* rawdata = (char*)data;
 		int tmplength = 0;
 		m_opengles_version = BufferIO::ReadInt32(rawdata);
-		m_se_enabled = BufferIO::ReadInt32(rawdata) > 0;
 		
 		m_card_quality = BufferIO::ReadInt32(rawdata);
 		m_font_aa_enabled = BufferIO::ReadInt32(rawdata) > 0;
@@ -799,35 +797,6 @@ int getLocalAddr(ANDROID_APP app) {
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 	return addr;
-}
-
-bool isSoundEffectEnabled(ANDROID_APP app) {
-	bool isEnabled = false;
-	if (!app || !app->activity || !app->activity->vm)
-		return isEnabled;
-	JNIEnv* jni = 0;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
-	if (!jni)
-		return true;
-	// Retrieves NativeActivity.
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
-			"getApplication", "()Landroid/app/Application;");
-	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
-	jclass classApp = jni->GetObjectClass(application);
-	jmethodID MethodCheckSE = jni->GetMethodID(classApp, "isSoundEffectEnabled",
-			"()Z");
-	jboolean result = jni->CallBooleanMethod(application, MethodCheckSE);
-	if (result > 0) {
-		isEnabled = true;
-	} else {
-		isEnabled = false;
-	}
-	jni->DeleteLocalRef(ClassNativeActivity);
-	jni->DeleteLocalRef(classApp);
-	app->activity->vm->DetachCurrentThread();
-	return isEnabled;
 }
 
 void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow, char** pContents,
