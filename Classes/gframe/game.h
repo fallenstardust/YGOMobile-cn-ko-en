@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 #include <list>
-#include "IYGOSoundEffectPlayer.h"
 
 namespace ygo {
 
@@ -549,7 +548,6 @@ public:
 	float xScale;
     float yScale;
 
-	IYGOSoundEffectPlayer* soundEffectPlayer;
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
 	int glversion;

@@ -11,7 +11,6 @@
 #include "single_mode.h"
 
 #ifdef _IRR_ANDROID_PLATFORM_
-#include <android/AndroidSoundEffectPlayer.h>
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
 #include <android/CAndroidGUISkin.h>
@@ -81,8 +80,6 @@ bool Game::Initialize() {
 	setPositionFix(appPosition);
 	device->setProcessReceiver(this);
 
-	//soundEffectPlayer = new AndroidSoundEffectPlayer(app);
-	//soundEffectPlayer->setSEEnabled(options->isSoundEffectEnabled());
 	app->onInputEvent = android::handleInput;
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);

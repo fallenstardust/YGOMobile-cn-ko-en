@@ -48,9 +48,6 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/android/CAndroidGUISkin.cpp \
 				$(LOCAL_PATH)/android/CustomShaderConstantSetCallBack.cpp \
 				$(LOCAL_PATH)/android/YGOGameOptions.cpp \
-				$(LOCAL_PATH)/android/AndroidSoundEffectPlayer.cpp \
-				$(LOCAL_PATH)/android/OpenSLSoundTracker.cpp \
-				$(LOCAL_PATH)/android/SoundPoolWrapperTracker.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIEditBox.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIButton.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIComboBox.cpp \
