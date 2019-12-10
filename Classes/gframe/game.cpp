@@ -1163,6 +1163,7 @@ void Game::MainLoop() {
 		driver->enableMaterial2D(false);
 #else
 		} else {
+			soundManager->PlayBGM(SoundManager::BGM::MENU);
 			DrawBackImage(imageManager.tBackGround_menu);
 		}
 		DrawGUI();
@@ -1231,7 +1232,6 @@ void Game::MainLoop() {
 	usleep(500000);
 #endif
 	SaveConfig();
-	//delete soundEffectPlayer;
 	usleep(500000);
 //	device->drop();
 }

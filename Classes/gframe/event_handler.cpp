@@ -57,9 +57,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_REPLAY_START: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(!mainGame->dInfo.isReplay)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->btnReplayStart->setVisible(false);
 				mainGame->btnReplayPause->setVisible(true);
 				mainGame->btnReplayStep->setVisible(false);
@@ -68,9 +68,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_REPLAY_PAUSE: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(!mainGame->dInfo.isReplay)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->btnReplayStart->setVisible(true);
 				mainGame->btnReplayPause->setVisible(false);
 				mainGame->btnReplayStep->setVisible(true);
@@ -79,16 +79,16 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_REPLAY_STEP: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(!mainGame->dInfo.isReplay)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				ReplayMode::Pause(false, true);
 				break;
 			}
 			case BUTTON_REPLAY_EXIT: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(!mainGame->dInfo.isReplay)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				ReplayMode::StopReplay();
 				break;
 			}
@@ -101,16 +101,16 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_REPLAY_UNDO: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(!mainGame->dInfo.isReplay)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				ReplayMode::Undo();
 				break;
 			}
 			case BUTTON_REPLAY_SAVE: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(mainGame->ebRSName->getText()[0] == 0)
 					break;
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->actionParam = 1;
 				mainGame->HideElement(mainGame->wReplaySave);
 				mainGame->replaySignal.Set();
@@ -124,7 +124,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_LEAVE_GAME: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::EQUIP);
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if(mainGame->dInfo.isSingleMode) {
 					mainGame->singleSignal.SetNoWait(true);
 					SingleMode::StopPlay(false);
@@ -272,25 +272,21 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_POS_AU: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				DuelClient::SetResponseI(POS_FACEUP_ATTACK);
 				mainGame->HideElement(mainGame->wPosSelect, true);
 				break;
 			}
 			case BUTTON_POS_AD: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				DuelClient::SetResponseI(POS_FACEDOWN_ATTACK);
 				mainGame->HideElement(mainGame->wPosSelect, true);
 				break;
 			}
 			case BUTTON_POS_DU: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				DuelClient::SetResponseI(POS_FACEUP_DEFENSE);
 				mainGame->HideElement(mainGame->wPosSelect, true);
 				break;
 			}
 			case BUTTON_POS_DD: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				DuelClient::SetResponseI(POS_FACEDOWN_DEFENSE);
 				mainGame->HideElement(mainGame->wPosSelect, true);
 				break;
@@ -370,7 +366,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CMD_SHUFFLE: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::SHUFFLE);
 				mainGame->btnShuffle->setVisible(false);
 				DuelClient::SetResponseI(8);
 				DuelClient::SendResponse();
@@ -568,7 +563,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CMD_SHOWLIST: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->wCmdMenu->setVisible(false);
 				selectable_cards.clear();
 				wchar_t formatBuffer[2048];
@@ -796,7 +790,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CARD_SEL_OK: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->stCardListTip->setVisible(false);
 				if(mainGame->dInfo.isReplay) {
 					mainGame->HideElement(mainGame->wCardSelect);
@@ -826,7 +819,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CARD_DISP_OK: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->HideElement(mainGame->wCardDisplay);
 				break;
 			}
@@ -1821,6 +1813,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
 			case BUTTON_CLEAR_LOG: {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->lstLog->clear();
 				mainGame->logParam.clear();
 				return true;

@@ -60,11 +60,7 @@ void SoundManager::RefreshChantsList() {
 				ChantsList[code] = Utils::ToUTF8IfNeeded(file);
 		}
 		catch (std::exception& e) {
-			char buf[1040];
-			auto fileName = Utils::ToUTF8IfNeeded(TEXT("./sound/chants/") + file);
-			sprintf(buf, "[文件名只能为卡片ID]: %s", fileName.c_str());
-			Utils::Deletefile(fileName);
-			mainGame->ErrorLog(buf);
+			Utils::Deletefile(Utils::ToUTF8IfNeeded(TEXT("./sound/chants/") + file));
 		}
 	}
 }
@@ -80,6 +76,7 @@ void SoundManager::PlaySoundEffect(SFX sound) {
         {DESTROYED, "./sound/destroyed.wav"},
         {BANISHED, "./sound/banished.wav"},
         {TOKEN, "./sound/token.wav"},
+        {NEGATE, "./sound/negate.wav"},
         {ATTACK, "./sound/attack.wav"},
         {DIRECT_ATTACK, "./sound/directattack.wav"},
         {DRAW, "./sound/draw.wav"},
@@ -92,6 +89,7 @@ void SoundManager::PlaySoundEffect(SFX sound) {
         {DICE, "./sound/diceroll.wav"},
         {NEXT_TURN, "./sound/nextturn.wav"},
         {PHASE, "./sound/phase.wav"},
+        {SOUND_MENU, "./sound/menu.wav"},
         {BUTTON, "./sound/button.wav"},
         {INFO, "./sound/info.wav"},
         {QUESTION, "./sound/question.wav"},
@@ -105,25 +103,25 @@ void SoundManager::PlaySoundEffect(SFX sound) {
 }
 void SoundManager::PlayDialogSound(irr::gui::IGUIElement * element) {
 	if(element == mainGame->wMessage) {
-		PlaySoundEffect(SoundManager::SFX::INFO);
+		PlaySoundEffect(INFO);
 	} else if(element == mainGame->wQuery) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wSurrender) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wOptions) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wANAttribute) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wANCard) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wANNumber) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wANRace) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wReplaySave) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	} else if(element == mainGame->wFTSelect) {
-		PlaySoundEffect(SoundManager::SFX::QUESTION);
+		PlaySoundEffect(QUESTION);
 	}
 }
 void SoundManager::PlayMusic(const std::string& song, bool loop) {

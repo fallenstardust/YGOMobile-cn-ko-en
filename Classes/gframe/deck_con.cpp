@@ -703,7 +703,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CLOSE_DECKMANAGER: {
-
             		mainGame->HideElement(mainGame->wDeckManage);
             		break;
 			}
@@ -1143,7 +1142,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			if(!is_draging) {
 				if(hovered_pos == 0 || hovered_seq == -1)
 					break;
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
 				if(hovered_pos == 1) {
 					pop_main(hovered_seq);
 				} else if(hovered_pos == 2) {
@@ -1160,6 +1159,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						push_side(pointer);
 				}
 			} else {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
 				if(click_pos == 1) {
 					push_side(draging_pointer);
 				} else if(click_pos == 2) {

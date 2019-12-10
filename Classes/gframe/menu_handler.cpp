@@ -56,7 +56,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			if(id < 110)
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::SOUND_MENU);
 			else
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			switch(id) {
