@@ -403,7 +403,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
-                        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        String uri;
+                        if (cardInfo.Alias != 0) {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
+                        } else {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        }
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }
 

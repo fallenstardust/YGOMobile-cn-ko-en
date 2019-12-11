@@ -51,16 +51,16 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     private ImageLoader mImageLoader;
 
     private String intentSearchMessage;
-    private boolean isFirstCardSearch=true;
-    private String currentCardSearchMessage="";
+    private boolean isFirstCardSearch = true;
+    private String currentCardSearchMessage = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        if(TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))){
-            ServiceDuelAssistant.cardSearchMessage="";
+        if (TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))) {
+            ServiceDuelAssistant.cardSearchMessage = "";
         }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -98,20 +98,20 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             mCardLoader.loadData();
             mCardSelector.initItems();
             intentSearch();
-            isFirstCardSearch=false;
+            isFirstCardSearch = false;
         });
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)){
-            currentCardSearchMessage=ServiceDuelAssistant.cardSearchMessage;
+        if (!isFirstCardSearch && !currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)) {
+            currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
             intentSearch();
         }
     }
 
-    private void intentSearch(){
+    private void intentSearch() {
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
         mCardSelector.search(ServiceDuelAssistant.cardSearchMessage);
     }
@@ -269,7 +269,12 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                 mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
-                        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        String uri;
+                        if (cardInfo.Alias != 0) {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
+                        } else {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        }
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }
 

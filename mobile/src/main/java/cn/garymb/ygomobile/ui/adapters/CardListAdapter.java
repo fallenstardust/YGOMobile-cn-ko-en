@@ -19,6 +19,7 @@ import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
+import ocgcore.data.CardData;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
@@ -162,7 +163,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         //卡片类型
         holder.cardType.setText(CardUtils.getAllTypeString(item, mStringManager));
         if (holder.codeView != null) {
-            holder.codeView.setText(String.format("%08d", item.Code));
+            if(item.Alias != 0) {
+                holder.codeView.setText(String.format("%08d", item.Alias));
+            } else {
+                holder.codeView.setText(String.format("%08d", item.Code));
+            }
         }
         bindMenu(holder, position);
     }
