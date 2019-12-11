@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
+import ocgcore.data.CardData;
 import ocgcore.enums.CardType;
 
 /***
@@ -42,7 +43,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private TextView cardcode;
     private View lb_setcode;
     private ImageLoader imageLoader;
-    private View mImageOpen,atkdefView;
+    private View mImageOpen, atkdefView;
 
     private BaseActivity mContext;
     private StringManager mStringManager;
@@ -121,10 +122,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 mListener.onOpenUrl(cardInfo);
             }
         });
-        bind(R.id.lastone).setOnClickListener((v)->{
+        bind(R.id.lastone).setOnClickListener((v) -> {
             onPreCard();
         });
-        bind(R.id.nextone).setOnClickListener((v)->{
+        bind(R.id.nextone).setOnClickListener((v) -> {
             onNextCard();
         });
     }
@@ -163,7 +164,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
-        cardcode.setText(String.format("%08d", cardInfo.Code));
+        if (cardInfo.Alias != 0) {
+            cardcode.setText(String.format("%08d", cardInfo.Alias));
+        } else {
+            cardcode.setText(String.format("%08d", cardInfo.Code));
+        }
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
         otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));
@@ -196,7 +201,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             atkdefView.setVisibility(View.VISIBLE);
             monsterlayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
-            String star = "★"+ cardInfo.getStar();
+            String star = "★" + cardInfo.getStar();
            /* for (int i = 0; i < cardInfo.getStar(); i++) {
                 star += "★";
             }*/
@@ -241,49 +246,49 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
-    public void onPreCard(){
+    public void onPreCard() {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
         if (position == 0) {
-            getContext().showToast( "已经是第一张啦", Toast.LENGTH_SHORT);
+            getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
         } else {
-			int index = position ;
-            do{
-				if(index==0){
-                    getContext().showToast( "已经是第一张啦", Toast.LENGTH_SHORT);
+            int index = position;
+            do {
+                if (index == 0) {
+                    getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
                     return;
-				}else{
+                } else {
                     index--;
-				}
-			}while(provider.getCard(index)==null||provider.getCard(index).Name==null||provider.getCard(position).Name.equals(provider.getCard(index).Name));
-			
+                }
+            } while (provider.getCard(index) == null || provider.getCard(index).Name == null || provider.getCard(position).Name.equals(provider.getCard(index).Name));
+
             bind(provider.getCard(index), index, provider);
-            if(position == 1){
-                getContext().showToast( "已经是第一张啦", Toast.LENGTH_SHORT);
+            if (position == 1) {
+                getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
             }
         }
     }
 
-    public void onNextCard(){
+    public void onNextCard() {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
         if (position < provider.getCardsCount() - 1) {
-			int index = position ;
-            do{			
-				if(index==provider.getCardsCount() - 1){
+            int index = position;
+            do {
+                if (index == provider.getCardsCount() - 1) {
                     getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
-					return;
-				}else{
+                    return;
+                } else {
                     index++;
-				}
-			}while(provider.getCard(index)==null||provider.getCard(index).Name==null||provider.getCard(position).Name.equals(provider.getCard(index).Name));
-			
+                }
+            } while (provider.getCard(index) == null || provider.getCard(index).Name == null || provider.getCard(position).Name.equals(provider.getCard(index).Name));
+
             bind(provider.getCard(index), index, provider);
-            if(position == provider.getCardsCount() - 1){
-                getContext().showToast( "已经是最后一张啦", Toast.LENGTH_SHORT);
+            if (position == provider.getCardsCount() - 1) {
+                getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
             }
         } else {
-            getContext().showToast( "已经是最后一张啦", Toast.LENGTH_SHORT);
+            getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
         }
     }
 
