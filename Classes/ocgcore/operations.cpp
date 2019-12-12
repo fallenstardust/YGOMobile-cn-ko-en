@@ -2386,6 +2386,17 @@ int32 field::sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget
 			returns.ivalue[0] = 0;
 			return TRUE;
 		}
+		effect_set eset;
+ 		for(auto& pcard : *set_cards) {
+			eset.clear();
+			pcard->filter_effect(EFFECT_SSET_COST, &eset);
+			for(int32 i = 0; i < eset.size(); ++i) {
+				if(eset[i]->operation) {
+					core.sub_solving_event.push_back(nil_event);
+					add_process(PROCESSOR_EXECUTE_OPERATION, 0, eset[i], 0, setplayer, 0);
+				}
+			}
+		}
 		core.set_group_pre_set.clear();
 		core.set_group_set.clear();
 		core.set_group_used_zones = 0;
@@ -4692,7 +4703,7 @@ int32 field::operation_replace(uint16 step, effect* replace_effect, group* targe
 	}
 	case 1: {
 		if (returns.ivalue[0]) {
-			if(!target->current.reason_effect->is_self_destroy_related()) {
+			if(!(target->current.reason_effect && target->current.reason_effect->is_self_destroy_related())) {
 				targets->container.erase(target);
 				target->current.reason = target->temp.reason;
 				target->current.reason_effect = target->temp.reason_effect;
@@ -4758,7 +4769,7 @@ int32 field::operation_replace(uint16 step, effect* replace_effect, group* targe
 		if (returns.ivalue[0]) {
 			for (auto cit = targets->container.begin(); cit != targets->container.end();) {
 				auto rm = cit++;
-				if (replace_effect->get_value(*rm) && !(*rm)->current.reason_effect->is_self_destroy_related()) {
+				if(replace_effect->get_value(*rm) && !((*rm)->current.reason_effect && (*rm)->current.reason_effect->is_self_destroy_related())) {
 					(*rm)->current.reason = (*rm)->temp.reason;
 					(*rm)->current.reason_effect = (*rm)->temp.reason_effect;
 					(*rm)->current.reason_player = (*rm)->temp.reason_player;
