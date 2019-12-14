@@ -35,7 +35,6 @@ typedef struct ALCloopback {
 static void ALCloopback_Construct(ALCloopback *self, ALCdevice *device);
 static DECLARE_FORWARD(ALCloopback, ALCbackend, void, Destruct)
 static ALCenum ALCloopback_open(ALCloopback *self, const ALCchar *name);
-static void ALCloopback_close(ALCloopback *self);
 static ALCboolean ALCloopback_reset(ALCloopback *self);
 static ALCboolean ALCloopback_start(ALCloopback *self);
 static void ALCloopback_stop(ALCloopback *self);
@@ -59,12 +58,8 @@ static ALCenum ALCloopback_open(ALCloopback *self, const ALCchar *name)
 {
     ALCdevice *device = STATIC_CAST(ALCbackend, self)->mDevice;
 
-    al_string_copy_cstr(&device->DeviceName, name);
+    alstr_copy_cstr(&device->DeviceName, name);
     return ALC_NO_ERROR;
-}
-
-static void ALCloopback_close(ALCloopback* UNUSED(self))
-{
 }
 
 static ALCboolean ALCloopback_reset(ALCloopback *self)
@@ -92,7 +87,7 @@ ALCbackendFactory *ALCloopbackFactory_getFactory(void);
 static ALCboolean ALCloopbackFactory_init(ALCloopbackFactory *self);
 static DECLARE_FORWARD(ALCloopbackFactory, ALCbackendFactory, void, deinit)
 static ALCboolean ALCloopbackFactory_querySupport(ALCloopbackFactory *self, ALCbackend_Type type);
-static void ALCloopbackFactory_probe(ALCloopbackFactory *self, enum DevProbe type);
+static void ALCloopbackFactory_probe(ALCloopbackFactory *self, enum DevProbe type, al_string *outnames);
 static ALCbackend* ALCloopbackFactory_createBackend(ALCloopbackFactory *self, ALCdevice *device, ALCbackend_Type type);
 DEFINE_ALCBACKENDFACTORY_VTABLE(ALCloopbackFactory);
 
@@ -115,7 +110,7 @@ static ALCboolean ALCloopbackFactory_querySupport(ALCloopbackFactory* UNUSED(sel
     return ALC_FALSE;
 }
 
-static void ALCloopbackFactory_probe(ALCloopbackFactory* UNUSED(self), enum DevProbe UNUSED(type))
+static void ALCloopbackFactory_probe(ALCloopbackFactory* UNUSED(self), enum DevProbe UNUSED(type), al_string* UNUSED(outnames))
 {
 }
 

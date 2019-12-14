@@ -1,6 +1,6 @@
 /**
  * OpenAL cross platform audio library
- * Copyright (C) 2013 by Anis A. Hireche, Nasca Octavian Paul
+ * Copyright (C) 2018 by Raul Herraiz.
  * This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -18,182 +18,215 @@
  * Or go to http://www.gnu.org/copyleft/lgpl.html
  */
 
+#include "config.h"
+
+#include <math.h>
 #include <stdlib.h>
 
-#include "config.h"
-#include "alu.h"
-#include "alFilter.h"
-#include "alError.h"
 #include "alMain.h"
 #include "alAuxEffectSlot.h"
+#include "alError.h"
+#include "alu.h"
+#include "filters/defs.h"
 
-
-/* Auto-wah is simply a low-pass filter with a cutoff frequency that shifts up
- * or down depending on the input signal, and a resonant peak at the cutoff.
- *
- * Currently, we assume a cutoff frequency range of 20hz (no amplitude) to
- * 20khz (peak gain). Peak gain is assumed to be in normalized scale.
- */
+#define MIN_FREQ 20.0f
+#define MAX_FREQ 2500.0f
+#define Q_FACTOR 5.0f
 
 typedef struct ALautowahState {
     DERIVE_FROM_TYPE(ALeffectState);
 
-    /* Effect gains for each channel */
-    ALfloat Gain[MAX_OUTPUT_CHANNELS];
-
     /* Effect parameters */
     ALfloat AttackRate;
     ALfloat ReleaseRate;
-    ALfloat Resonance;
+    ALfloat ResonanceGain;
     ALfloat PeakGain;
-    ALfloat GainCtrl;
-    ALfloat Frequency;
+    ALfloat FreqMinNorm;
+    ALfloat BandwidthNorm;
+    ALfloat env_delay;
 
-    /* Samples processing */
-    ALfilterState LowPass;
+    /* Filter components derived from the envelope. */
+    struct {
+        ALfloat cos_w0;
+        ALfloat alpha;
+    } Env[BUFFERSIZE];
+
+    struct {
+        /* Effect filters' history. */
+        struct {
+            ALfloat z1, z2;
+        } Filter;
+
+        /* Effect gains for each output channel */
+        ALfloat CurrentGains[MAX_OUTPUT_CHANNELS];
+        ALfloat TargetGains[MAX_OUTPUT_CHANNELS];
+    } Chans[MAX_EFFECT_CHANNELS];
+
+    /* Effects buffers */
+    alignas(16) ALfloat BufferOut[BUFFERSIZE];
 } ALautowahState;
+
+static ALvoid ALautowahState_Destruct(ALautowahState *state);
+static ALboolean ALautowahState_deviceUpdate(ALautowahState *state, ALCdevice *device);
+static ALvoid ALautowahState_update(ALautowahState *state, const ALCcontext *context, const ALeffectslot *slot, const ALeffectProps *props);
+static ALvoid ALautowahState_process(ALautowahState *state, ALsizei SamplesToDo, const ALfloat (*restrict SamplesIn)[BUFFERSIZE], ALfloat (*restrict SamplesOut)[BUFFERSIZE], ALsizei NumChannels);
+DECLARE_DEFAULT_ALLOCATORS(ALautowahState)
+
+DEFINE_ALEFFECTSTATE_VTABLE(ALautowahState);
+
+static void ALautowahState_Construct(ALautowahState *state)
+{
+    ALeffectState_Construct(STATIC_CAST(ALeffectState, state));
+    SET_VTABLE2(ALautowahState, ALeffectState, state);
+}
 
 static ALvoid ALautowahState_Destruct(ALautowahState *state)
 {
     ALeffectState_Destruct(STATIC_CAST(ALeffectState,state));
 }
 
-static ALboolean ALautowahState_deviceUpdate(ALautowahState *state, ALCdevice *device)
+static ALboolean ALautowahState_deviceUpdate(ALautowahState *state, ALCdevice *UNUSED(device))
 {
-    state->Frequency = (ALfloat)device->Frequency;
+    /* (Re-)initializing parameters and clear the buffers. */
+    ALsizei i, j;
+
+    state->AttackRate    = 1.0f;
+    state->ReleaseRate   = 1.0f;
+    state->ResonanceGain = 10.0f;
+    state->PeakGain      = 4.5f;
+    state->FreqMinNorm   = 4.5e-4f;
+    state->BandwidthNorm = 0.05f;
+    state->env_delay     = 0.0f;
+
+    memset(state->Env, 0, sizeof(state->Env));
+
+    for(i = 0;i < MAX_EFFECT_CHANNELS;i++)
+    {
+        for(j = 0;j < MAX_OUTPUT_CHANNELS;j++)
+            state->Chans[i].CurrentGains[j] = 0.0f;
+        state->Chans[i].Filter.z1 = 0.0f;
+        state->Chans[i].Filter.z2 = 0.0f;
+    }
+
     return AL_TRUE;
 }
 
-static ALvoid ALautowahState_update(ALautowahState *state, const ALCdevice *device, const ALeffectslot *slot, const ALeffectProps *props)
+static ALvoid ALautowahState_update(ALautowahState *state, const ALCcontext *context, const ALeffectslot *slot, const ALeffectProps *props)
 {
-    ALfloat attackTime, releaseTime;
+    const ALCdevice *device = context->Device;
+    ALfloat ReleaseTime;
+    ALsizei i;
 
-    attackTime = props->Autowah.AttackTime * state->Frequency;
-    releaseTime = props->Autowah.ReleaseTime * state->Frequency;
+    ReleaseTime = clampf(props->Autowah.ReleaseTime, 0.001f, 1.0f);
 
-    state->AttackRate = powf(1.0f/GAIN_SILENCE_THRESHOLD, 1.0f/attackTime);
-    state->ReleaseRate = powf(GAIN_SILENCE_THRESHOLD/1.0f, 1.0f/releaseTime);
-    state->PeakGain = props->Autowah.PeakGain;
-    state->Resonance = props->Autowah.Resonance;
+    state->AttackRate    = expf(-1.0f / (props->Autowah.AttackTime*device->Frequency));
+    state->ReleaseRate   = expf(-1.0f / (ReleaseTime*device->Frequency));
+    /* 0-20dB Resonance Peak gain */
+    state->ResonanceGain = sqrtf(log10f(props->Autowah.Resonance)*10.0f / 3.0f);
+    state->PeakGain      = 1.0f - log10f(props->Autowah.PeakGain/AL_AUTOWAH_MAX_PEAK_GAIN);
+    state->FreqMinNorm   = MIN_FREQ / device->Frequency;
+    state->BandwidthNorm = (MAX_FREQ-MIN_FREQ) / device->Frequency;
 
-    ComputeAmbientGains(device->Dry, slot->Params.Gain, state->Gain);
+    STATIC_CAST(ALeffectState,state)->OutBuffer = device->FOAOut.Buffer;
+    STATIC_CAST(ALeffectState,state)->OutChannels = device->FOAOut.NumChannels;
+    for(i = 0;i < MAX_EFFECT_CHANNELS;i++)
+        ComputePanGains(&device->FOAOut, IdentityMatrixf.m[i], slot->Params.Gain,
+                        state->Chans[i].TargetGains);
 }
 
-static ALvoid ALautowahState_process(ALautowahState *state, ALuint SamplesToDo, const ALfloat (*restrict SamplesIn)[BUFFERSIZE], ALfloat (*restrict SamplesOut)[BUFFERSIZE], ALuint NumChannels)
+static ALvoid ALautowahState_process(ALautowahState *state, ALsizei SamplesToDo, const ALfloat (*restrict SamplesIn)[BUFFERSIZE], ALfloat (*restrict SamplesOut)[BUFFERSIZE], ALsizei NumChannels)
 {
-    ALuint it, kt;
-    ALuint base;
+    const ALfloat attack_rate = state->AttackRate;
+    const ALfloat release_rate = state->ReleaseRate;
+    const ALfloat res_gain = state->ResonanceGain;
+    const ALfloat peak_gain = state->PeakGain;
+    const ALfloat freq_min = state->FreqMinNorm;
+    const ALfloat bandwidth = state->BandwidthNorm;
+    ALfloat env_delay;
+    ALsizei c, i;
 
-    for(base = 0;base < SamplesToDo;)
+    env_delay = state->env_delay;
+    for(i = 0;i < SamplesToDo;i++)
     {
-        ALfloat temps[256];
-        ALuint td = minu(256, SamplesToDo-base);
-        ALfloat gain = state->GainCtrl;
+        ALfloat w0, sample, a;
 
-        for(it = 0;it < td;it++)
+        /* Envelope follower described on the book: Audio Effects, Theory,
+         * Implementation and Application.
+         */
+        sample = peak_gain * fabsf(SamplesIn[0][i]);
+        a = (sample > env_delay) ? attack_rate : release_rate;
+        env_delay = lerp(sample, env_delay, a);
+
+        /* Calculate the cos and alpha components for this sample's filter. */
+        w0 = minf((bandwidth*env_delay + freq_min), 0.46f) * F_TAU;
+        state->Env[i].cos_w0 = cosf(w0);
+        state->Env[i].alpha = sinf(w0)/(2.0f * Q_FACTOR);
+    }
+    state->env_delay = env_delay;
+
+    for(c = 0;c < MAX_EFFECT_CHANNELS; c++)
+    {
+        /* This effectively inlines BiquadFilter_setParams for a peaking
+         * filter and BiquadFilter_processC. The alpha and cosine components
+         * for the filter coefficients were previously calculated with the
+         * envelope. Because the filter changes for each sample, the
+         * coefficients are transient and don't need to be held.
+         */
+        ALfloat z1 = state->Chans[c].Filter.z1;
+        ALfloat z2 = state->Chans[c].Filter.z2;
+
+        for(i = 0;i < SamplesToDo;i++)
         {
-            ALfloat smp = SamplesIn[0][it+base];
+            const ALfloat alpha = state->Env[i].alpha;
+            const ALfloat cos_w0 = state->Env[i].cos_w0;
+            ALfloat input, output;
             ALfloat a[3], b[3];
-            ALfloat alpha, w0;
-            ALfloat amplitude;
-            ALfloat cutoff;
 
-            /* Similar to compressor, we get the current amplitude of the
-             * incoming signal, and attack or release to reach it. */
-            amplitude = fabsf(smp);
-            if(amplitude > gain)
-                gain = minf(gain*state->AttackRate, amplitude);
-            else if(amplitude < gain)
-                gain = maxf(gain*state->ReleaseRate, amplitude);
-            gain = maxf(gain, GAIN_SILENCE_THRESHOLD);
+            b[0] =  1.0f + alpha*res_gain;
+            b[1] = -2.0f * cos_w0;
+            b[2] =  1.0f - alpha*res_gain;
+            a[0] =  1.0f + alpha/res_gain;
+            a[1] = -2.0f * cos_w0;
+            a[2] =  1.0f - alpha/res_gain;
 
-            /* FIXME: What range does the filter cover? */
-            cutoff = lerp(20.0f, 20000.0f, minf(gain/state->PeakGain, 1.0f));
-
-            /* The code below is like calling ALfilterState_setParams with
-             * ALfilterType_LowPass. However, instead of passing a bandwidth,
-             * we use the resonance property for Q. This also inlines the call.
-             */
-            w0 = F_TAU * cutoff / state->Frequency;
-
-            /* FIXME: Resonance controls the resonant peak, or Q. How? Not sure
-             * that Q = resonance*0.1. */
-            alpha = sinf(w0) / (2.0f * state->Resonance*0.1f);
-            b[0] = (1.0f - cosf(w0)) / 2.0f;
-            b[1] =  1.0f - cosf(w0);
-            b[2] = (1.0f - cosf(w0)) / 2.0f;
-            a[0] =  1.0f + alpha;
-            a[1] = -2.0f * cosf(w0);
-            a[2] =  1.0f - alpha;
-
-            state->LowPass.a1 = a[1] / a[0];
-            state->LowPass.a2 = a[2] / a[0];
-            state->LowPass.b1 = b[1] / a[0];
-            state->LowPass.b2 = b[2] / a[0];
-            state->LowPass.input_gain = b[0] / a[0];
-
-            temps[it] = ALfilterState_processSingle(&state->LowPass, smp);
+            input = SamplesIn[c][i];
+            output = input*(b[0]/a[0]) + z1;
+            z1 = input*(b[1]/a[0]) - output*(a[1]/a[0]) + z2;
+            z2 = input*(b[2]/a[0]) - output*(a[2]/a[0]);
+            state->BufferOut[i] = output;
         }
-        state->GainCtrl = gain;
+        state->Chans[c].Filter.z1 = z1;
+        state->Chans[c].Filter.z2 = z2;
 
-        for(kt = 0;kt < NumChannels;kt++)
-        {
-            ALfloat gain = state->Gain[kt];
-            if(!(fabsf(gain) > GAIN_SILENCE_THRESHOLD))
-                continue;
-
-            for(it = 0;it < td;it++)
-                SamplesOut[kt][base+it] += gain * temps[it];
-        }
-
-        base += td;
+        /* Now, mix the processed sound data to the output. */
+        MixSamples(state->BufferOut, NumChannels, SamplesOut, state->Chans[c].CurrentGains,
+                   state->Chans[c].TargetGains, SamplesToDo, 0, SamplesToDo);
     }
 }
 
-DECLARE_DEFAULT_ALLOCATORS(ALautowahState)
+typedef struct AutowahStateFactory {
+    DERIVE_FROM_TYPE(EffectStateFactory);
+} AutowahStateFactory;
 
-DEFINE_ALEFFECTSTATE_VTABLE(ALautowahState);
-
-
-typedef struct ALautowahStateFactory {
-    DERIVE_FROM_TYPE(ALeffectStateFactory);
-} ALautowahStateFactory;
-
-static ALeffectState *ALautowahStateFactory_create(ALautowahStateFactory *UNUSED(factory))
+static ALeffectState *AutowahStateFactory_create(AutowahStateFactory *UNUSED(factory))
 {
     ALautowahState *state;
 
-    state = ALautowahState_New(sizeof(*state));
+    NEW_OBJ0(state, ALautowahState)();
     if(!state) return NULL;
-    SET_VTABLE2(ALautowahState, ALeffectState, state);
-
-    state->AttackRate = 1.0f;
-    state->ReleaseRate = 1.0f;
-    state->Resonance = 2.0f;
-    state->PeakGain = 1.0f;
-    state->GainCtrl = 1.0f;
-
-    ALfilterState_clear(&state->LowPass);
 
     return STATIC_CAST(ALeffectState, state);
 }
 
-DEFINE_ALEFFECTSTATEFACTORY_VTABLE(ALautowahStateFactory);
+DEFINE_EFFECTSTATEFACTORY_VTABLE(AutowahStateFactory);
 
-ALeffectStateFactory *ALautowahStateFactory_getFactory(void)
+EffectStateFactory *AutowahStateFactory_getFactory(void)
 {
-    static ALautowahStateFactory AutowahFactory = { { GET_VTABLE2(ALautowahStateFactory, ALeffectStateFactory) } };
+    static AutowahStateFactory AutowahFactory = { { GET_VTABLE2(AutowahStateFactory, EffectStateFactory) } };
 
-    return STATIC_CAST(ALeffectStateFactory, &AutowahFactory);
+    return STATIC_CAST(EffectStateFactory, &AutowahFactory);
 }
 
-
-void ALautowah_setParami(ALeffect *UNUSED(effect), ALCcontext *context, ALenum UNUSED(param), ALint UNUSED(val))
-{ SET_ERROR_AND_RETURN(context, AL_INVALID_ENUM); }
-void ALautowah_setParamiv(ALeffect *effect, ALCcontext *context, ALenum param, const ALint *vals)
-{
-    ALautowah_setParami(effect, context, param, vals[0]);
-}
 void ALautowah_setParamf(ALeffect *effect, ALCcontext *context, ALenum param, ALfloat val)
 {
     ALeffectProps *props = &effect->Props;
@@ -201,45 +234,60 @@ void ALautowah_setParamf(ALeffect *effect, ALCcontext *context, ALenum param, AL
     {
         case AL_AUTOWAH_ATTACK_TIME:
             if(!(val >= AL_AUTOWAH_MIN_ATTACK_TIME && val <= AL_AUTOWAH_MAX_ATTACK_TIME))
-                SET_ERROR_AND_RETURN(context, AL_INVALID_VALUE);
+                SETERR_RETURN(context, AL_INVALID_VALUE,,"Autowah attack time out of range");
             props->Autowah.AttackTime = val;
             break;
 
         case AL_AUTOWAH_RELEASE_TIME:
             if(!(val >= AL_AUTOWAH_MIN_RELEASE_TIME && val <= AL_AUTOWAH_MAX_RELEASE_TIME))
-                SET_ERROR_AND_RETURN(context, AL_INVALID_VALUE);
+                SETERR_RETURN(context, AL_INVALID_VALUE,,"Autowah release time out of range");
             props->Autowah.ReleaseTime = val;
             break;
 
         case AL_AUTOWAH_RESONANCE:
             if(!(val >= AL_AUTOWAH_MIN_RESONANCE && val <= AL_AUTOWAH_MAX_RESONANCE))
-                SET_ERROR_AND_RETURN(context, AL_INVALID_VALUE);
+                SETERR_RETURN(context, AL_INVALID_VALUE,,"Autowah resonance out of range");
             props->Autowah.Resonance = val;
             break;
 
         case AL_AUTOWAH_PEAK_GAIN:
             if(!(val >= AL_AUTOWAH_MIN_PEAK_GAIN && val <= AL_AUTOWAH_MAX_PEAK_GAIN))
-                SET_ERROR_AND_RETURN(context, AL_INVALID_VALUE);
+                SETERR_RETURN(context, AL_INVALID_VALUE,,"Autowah peak gain out of range");
             props->Autowah.PeakGain = val;
             break;
 
         default:
-            SET_ERROR_AND_RETURN(context, AL_INVALID_ENUM);
+            alSetError(context, AL_INVALID_ENUM, "Invalid autowah float property 0x%04x", param);
     }
 }
+
 void ALautowah_setParamfv(ALeffect *effect, ALCcontext *context, ALenum param, const ALfloat *vals)
 {
     ALautowah_setParamf(effect, context, param, vals[0]);
 }
 
-void ALautowah_getParami(const ALeffect *UNUSED(effect), ALCcontext *context, ALenum UNUSED(param), ALint *UNUSED(val))
-{ SET_ERROR_AND_RETURN(context, AL_INVALID_ENUM); }
-void ALautowah_getParamiv(const ALeffect *effect, ALCcontext *context, ALenum param, ALint *vals)
+void ALautowah_setParami(ALeffect *UNUSED(effect), ALCcontext *context, ALenum param, ALint UNUSED(val))
 {
-    ALautowah_getParami(effect, context, param, vals);
+    alSetError(context, AL_INVALID_ENUM, "Invalid autowah integer property 0x%04x", param);
 }
+
+void ALautowah_setParamiv(ALeffect *UNUSED(effect), ALCcontext *context, ALenum param, const ALint *UNUSED(vals))
+{
+    alSetError(context, AL_INVALID_ENUM, "Invalid autowah integer vector property 0x%04x", param);
+}
+
+void ALautowah_getParami(const ALeffect *UNUSED(effect), ALCcontext *context, ALenum param, ALint *UNUSED(val))
+{
+    alSetError(context, AL_INVALID_ENUM, "Invalid autowah integer property 0x%04x", param);
+}
+void ALautowah_getParamiv(const ALeffect *UNUSED(effect), ALCcontext *context, ALenum param, ALint *UNUSED(vals))
+{
+    alSetError(context, AL_INVALID_ENUM, "Invalid autowah integer vector property 0x%04x", param);
+}
+
 void ALautowah_getParamf(const ALeffect *effect, ALCcontext *context, ALenum param, ALfloat *val)
 {
+
     const ALeffectProps *props = &effect->Props;
     switch(param)
     {
@@ -260,9 +308,11 @@ void ALautowah_getParamf(const ALeffect *effect, ALCcontext *context, ALenum par
             break;
 
         default:
-            SET_ERROR_AND_RETURN(context, AL_INVALID_ENUM);
+            alSetError(context, AL_INVALID_ENUM, "Invalid autowah float property 0x%04x", param);
     }
+
 }
+
 void ALautowah_getParamfv(const ALeffect *effect, ALCcontext *context, ALenum param, ALfloat *vals)
 {
     ALautowah_getParamf(effect, context, param, vals);

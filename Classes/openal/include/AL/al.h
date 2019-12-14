@@ -21,16 +21,6 @@ extern "C" {
  #define AL_APIENTRY
 #endif
 
-#ifdef ANDROID
- #include <android/log.h>
- #define LOG_TAG "OPENAL"
- #ifndef ALOG
-  #define  ALOG(...) __android_log_print(ANDROID_LOG_INFO,"OpenAL",__VA_ARGS__)
- #endif
-#else
- #define ALOG printf
-#endif
-
 
 /** Deprecated macro. */
 #define OPENAL
