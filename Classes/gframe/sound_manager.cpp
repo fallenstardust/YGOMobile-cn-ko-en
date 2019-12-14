@@ -152,7 +152,7 @@ void SoundManager::StopBGM() {
 bool SoundManager::PlayChant(unsigned int code) {
     CardData cd;
     if(dataManager.GetData(code, &cd) && (cd.alias != 0))
-        code=cd.alias;
+        code = cd.alias;
 
 	if(ChantsList.count(code)) {
 		if (bgm) {
