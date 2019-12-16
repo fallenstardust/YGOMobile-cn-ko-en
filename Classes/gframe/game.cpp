@@ -610,14 +610,17 @@ bool Game::Initialize() {
 	btnDisplayOK = env->addButton(rect<s32>(300 * xScale, 265 * yScale, 380 * xScale, 290 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
 #endif
 	//announce number
-	wANNumber = env->addWindow(rect<s32>(550 * xScale, 200 * yScale, 780 * xScale, 355 * yScale), false, L"");
+	wANNumber = env->addWindow(rect<s32>(550 * xScale, 200 * yScale, 780 * xScale, 450 * yScale), false, L"");
 	wANNumber->getCloseButton()->setVisible(false);
 	wANNumber->setVisible(false);
-#ifdef _IRR_ANDROID_PLATFORM_
 	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(40 * xScale, 30 * yScale, 190 * xScale, 65 * yScale), wANNumber, -1);
-#endif
 	cbANNumber->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnANNumberOK = env->addButton(rect<s32>(70 * xScale, 95 * yScale, 160 * xScale, 145 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
+	for(int i = 0; i < 12; ++i) {
+		myswprintf(strbuf, L"%d", i + 1);
+		btnANNumber[i] = env->addButton(rect<s32>((20 + 50 * (i % 4)) * xScale, (40 + 50 * (i / 4)) * yScale, (60 + 50 * (i % 4)) * xScale, (80 + 50 * (i / 4)) * yScale), wANNumber, BUTTON_ANNUMBER_1 + i, strbuf);
+		btnANNumber[i]->setIsPushButton(true);
+	}
+	btnANNumberOK = env->addButton(rect<s32>(600 * xScale, 60 * yScale, 730 * xScale, 100 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
 	//announce card
 	wANCard = env->addWindow(rect<s32>(400 * xScale, 100 * yScale, 800 * xScale, 400 * yScale), false, L"");
 	wANCard->getCloseButton()->setVisible(false);
