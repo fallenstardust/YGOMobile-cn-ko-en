@@ -541,7 +541,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     //卡组复制
     public static final String[] DeckTextKey = new String[]{"#main"};
     public static String DeckText = "";
-    public String oldmsg = "";
+    public static String oldmsg = "";
     private ClipboardManager cm;
 
     public void getClipboard() {
@@ -641,7 +641,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                 Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
                 startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(startdeck);
             } else {
                 //如果是卡组文本
@@ -650,7 +649,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
                     Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(startdeck);
                 } catch (IOException e) {
                     e.printStackTrace();
