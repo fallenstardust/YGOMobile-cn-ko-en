@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -147,15 +148,17 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     @Override
-    protected void onStart(){
+    protected void onStart() {
         super.onStart();
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                getClipboard();
-            }
-        }, 500);
+    if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    getClipboard();
+                }
+            }, 500);
+        }
     }
 
     //检查是否有刘海

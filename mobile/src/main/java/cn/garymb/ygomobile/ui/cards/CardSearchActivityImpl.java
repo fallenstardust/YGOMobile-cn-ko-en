@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -28,6 +29,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
@@ -60,7 +62,11 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         setContentView(R.layout.activity_search);
 
         if (TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))) {
-            ServiceDuelAssistant.cardSearchMessage = "";
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                currentCardSearchMessage = HomeActivity.cardSearchMessage;
+            } else {
+                currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+            }
         }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -105,15 +111,23 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch && !currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)) {
-            currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+        if (!isFirstCardSearch && !currentCardSearchMessage.equals(HomeActivity.cardSearchMessage)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                currentCardSearchMessage = HomeActivity.cardSearchMessage;
+            } else {
+                currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+            }
             intentSearch();
         }
     }
 
     private void intentSearch() {
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        mCardSelector.search(ServiceDuelAssistant.cardSearchMessage);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            currentCardSearchMessage = HomeActivity.cardSearchMessage;
+        } else {
+            currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+        }
     }
 
     protected void setListeners() {
