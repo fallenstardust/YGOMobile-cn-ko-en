@@ -150,7 +150,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             public void run() {
                 getClipboard();
             }
-        }, 1000);
+        }, 500);
     }
 
     //检查是否有刘海
@@ -629,6 +629,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             dialog.dismiss();
         });
         dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
             //如果是卡组url
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
