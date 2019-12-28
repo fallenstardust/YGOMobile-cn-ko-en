@@ -1,13 +1,16 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -32,9 +35,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
-import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -42,6 +43,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -50,7 +53,9 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
@@ -60,9 +65,11 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
@@ -71,6 +78,7 @@ import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -137,6 +145,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     protected void onResume() {
         super.onResume();
         BacktoDuel();
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                getClipboard();
+            }
+        }, 1000);
     }
 
     //检查是否有刘海
@@ -503,5 +518,202 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             // 未安装手Q或安装的版本不支持
             return false;
         }
+    }
+
+    /***
+     * 剪贴板监听复制内容
+     */
+    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP + "://" + Constants.URI_HOST;
+    //卡查关键字
+    public static final String[] cardSearchKey = new String[]{"?", "？"};
+    //加房关键字
+    public static final String[] passwordPrefix = {
+            "M,", "m,",
+            "T,",
+            "PR,", "pr,",
+            "AI,", "ai,",
+            "LF2,", "lf2,",
+            "M#", "m#",
+            "T#", "t#",
+            "PR#", "pr#",
+            "NS#", "ns#",
+            "S#", "s#",
+            "AI#", "ai#",
+            "LF2#", "lf2#",
+            "R#", "r#"
+    };
+
+    //卡查内容
+    public static String cardSearchMessage = "";
+    //卡组复制
+    public static final String[] DeckTextKey = new String[]{"#main"};
+    public static String DeckText = "";
+    private ClipboardManager cm;
+
+    public void getClipboard() {
+        cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clipData = cm.getPrimaryClip();
+        if (clipData == null)
+            return;
+        ClipData.Item cs = clipData.getItemAt(0);
+        final String clipMessage;
+        if (cs.getText() != null) {
+            clipMessage = cs.getText().toString();
+        } else {
+            clipMessage = null;
+        }
+        //如果复制的内容为空则不执行下面的代码
+        if (TextUtils.isEmpty(clipMessage)) {
+            return;
+        }
+        //如果复制的内容是多行作为卡组去判断
+        if (clipMessage.contains("\n")) {
+            for (String s : DeckTextKey) {
+                //只要包含其中一个关键字就视为卡组
+                if (clipMessage.contains(s)) {
+                    Log.i("剪贴板saveDeck", clipMessage);
+                    saveDeck(clipMessage, false);
+                    return;
+                }
+            }
+            return;
+        }
+        //如果是卡组url
+        int deckStart = clipMessage.indexOf(DECK_URL_PREFIX);
+        if (deckStart != -1) {
+            Log.i("剪贴板url", clipMessage);
+            saveDeck(clipMessage.substring(deckStart + DECK_URL_PREFIX.length(), clipMessage.length()), true);
+            return;
+        }
+
+        int start = -1;
+        int end = -1;
+        String passwordPrefixKey = null;
+        for (String s : passwordPrefix) {
+            start = clipMessage.indexOf(s);
+            passwordPrefixKey = s;
+            if (start != -1) {
+                break;
+            }
+        }
+        if (start != -1) {
+            Log.i("剪贴板join", clipMessage);
+            //如果密码含有空格，则以空格结尾
+            end = clipMessage.indexOf(" ", start);
+            //如果不含有空格则取片尾所有
+            if (end == -1) {
+                end = clipMessage.length();
+            } else {
+                //如果只有密码前缀而没有密码内容则不跳转
+                if (end - start == passwordPrefixKey.length())
+                    return;
+            }
+            QuickjoinRoom(clipMessage, start, end);
+        } else {
+            for (String s : cardSearchKey) {
+                Log.i("剪贴板？", clipMessage);
+                int cardSearchStart = clipMessage.indexOf(s);
+                if (cardSearchStart != -1) {
+                    //卡查内容
+                    cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
+                    //如果复制的文本里带？号后面没有内容则不跳转
+                    if (TextUtils.isEmpty(cardSearchMessage)) {
+                        return;
+                    }
+                    //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
+                    if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
+                        return;
+                    }
+                    Log.i("剪贴板cardSearchMessage", cardSearchMessage);
+                    Intent intent = new Intent(this, CardSearchAcitivity.class);
+                    intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
+                    startActivity(intent);
+                }
+            }
+        }
+    }
+
+    private void saveDeck(String deckMessage, boolean isUrl) {
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(R.string.find_deck_text);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.save_n_open);
+        dialog.show();
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            //如果是卡组url
+            if (isUrl) {
+                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(startdeck);
+            } else {
+                //如果是卡组文本
+                try {
+                    //以当前时间戳作为卡组名保存卡组
+                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                    Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(startdeck);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void QuickjoinRoom(String ss, int start, int end) {
+        final String password = ss.substring(start, ss.length());
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(getString(R.string.quick_join) + password + "\"");
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.join);
+        dialog.show();
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
+            ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);
+            mServerListManager.syncLoadData();
+            File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
+            VUiKit.defer().when(() -> {
+                ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));
+                ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+                if (fileList == null) {
+                    return assetList;
+                }
+                if (fileList.getVercode() < assetList.getVercode()) {
+                    xmlFile.delete();
+                    return assetList;
+                }
+                return fileList;
+            }).done((list) -> {
+                if (list != null) {
+                    ServerInfo serverInfo = list.getServerInfoList().get(0);
+                    duelIntent(this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
+                }
+            });
+        });
+
+    }
+
+    //决斗跳转
+    public static void duelIntent(Context context, String ip, int dk, String name, String password) {
+        Intent intent1 = new Intent("ygomobile.intent.action.GAME");
+        intent1.putExtra("host", ip);
+        intent1.putExtra("port", dk);
+        intent1.putExtra("user", name);
+        intent1.putExtra("room", password);
+        intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent1);
     }
 }
