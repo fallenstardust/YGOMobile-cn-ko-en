@@ -627,6 +627,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
         dialog.setMessage(R.string.find_deck_text);
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
         dialog.setLeftButtonText(R.string.Cancel);
         dialog.setRightButtonText(R.string.save_n_open);
         dialog.show();
@@ -663,6 +664,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
         dialog.setMessage(getString(R.string.quick_join) + password + "\"");
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
         dialog.setLeftButtonText(R.string.Cancel);
         dialog.setRightButtonText(R.string.join);
         dialog.show();
