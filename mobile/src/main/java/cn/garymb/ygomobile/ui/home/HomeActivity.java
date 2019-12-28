@@ -667,6 +667,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             dialog.dismiss();
         });
         dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
             ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
             ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);
             mServerListManager.syncLoadData();
@@ -685,21 +686,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             }).done((list) -> {
                 if (list != null) {
                     ServerInfo serverInfo = list.getServerInfoList().get(0);
-                    duelIntent(this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
+                    joinGame(serverInfo, password);
                 }
             });
         });
 
-    }
-
-    //决斗跳转
-    public static void duelIntent(Context context, String ip, int dk, String name, String password) {
-        Intent intent1 = new Intent("ygomobile.intent.action.GAME");
-        intent1.putExtra("host", ip);
-        intent1.putExtra("port", dk);
-        intent1.putExtra("user", name);
-        intent1.putExtra("room", password);
-        intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent1);
     }
 }
