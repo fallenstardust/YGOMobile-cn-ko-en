@@ -3610,7 +3610,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			mainGame->cbANNumber->setVisible(true);
 			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 95 * mainGame->yScale, 160 * mainGame->xScale, 145 * mainGame->yScale));
 			recti pos = mainGame->wANNumber->getRelativePosition();
-			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 95 * mainGame->yScale;
+			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 150 * mainGame->yScale;
 			mainGame->wANNumber->setRelativePosition(pos);
 		}
 		if(select_hint)
