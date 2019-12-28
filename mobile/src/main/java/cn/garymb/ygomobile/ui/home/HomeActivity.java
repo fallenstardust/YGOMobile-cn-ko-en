@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -528,19 +527,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     public static final String[] cardSearchKey = new String[]{"?", "？"};
     //加房关键字
     public static final String[] passwordPrefix = {
-            "M,", "m,",
-            "T,",
-            "PR,", "pr,",
-            "AI,", "ai,",
-            "LF2,", "lf2,",
-            "M#", "m#",
-            "T#", "t#",
-            "PR#", "pr#",
-            "NS#", "ns#",
-            "S#", "s#",
-            "AI#", "ai#",
-            "LF2#", "lf2#",
-            "R#", "r#"
+            "M,", "m,", "T,", "PR,", "pr,", "AI,", "ai,", "LF2,", "lf2,", "M#", "m#", "T#", "t#",
+            "PR#", "pr#", "NS#", "ns#", "S#", "s#", "AI#", "ai#", "LF2#", "lf2#", "R#", "r#"
     };
 
     //卡查内容
@@ -548,6 +536,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     //卡组复制
     public static final String[] DeckTextKey = new String[]{"#main"};
     public static String DeckText = "";
+    public String oldmsg = "";
     private ClipboardManager cm;
 
     public void getClipboard() {
@@ -563,15 +552,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             clipMessage = null;
         }
         //如果复制的内容为空则不执行下面的代码
-        if (TextUtils.isEmpty(clipMessage)) {
+        if (TextUtils.isEmpty(clipMessage) || clipMessage.equals(oldmsg)) {
             return;
         }
+        oldmsg = clipMessage;
         //如果复制的内容是多行作为卡组去判断
         if (clipMessage.contains("\n")) {
             for (String s : DeckTextKey) {
                 //只要包含其中一个关键字就视为卡组
                 if (clipMessage.contains(s)) {
-                    Log.i("剪贴板saveDeck", clipMessage);
                     saveDeck(clipMessage, false);
                     return;
                 }
@@ -581,7 +570,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //如果是卡组url
         int deckStart = clipMessage.indexOf(DECK_URL_PREFIX);
         if (deckStart != -1) {
-            Log.i("剪贴板url", clipMessage);
             saveDeck(clipMessage.substring(deckStart + DECK_URL_PREFIX.length(), clipMessage.length()), true);
             return;
         }
@@ -597,7 +585,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             }
         }
         if (start != -1) {
-            Log.i("剪贴板join", clipMessage);
             //如果密码含有空格，则以空格结尾
             end = clipMessage.indexOf(" ", start);
             //如果不含有空格则取片尾所有
@@ -611,7 +598,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             QuickjoinRoom(clipMessage, start, end);
         } else {
             for (String s : cardSearchKey) {
-                Log.i("剪贴板？", clipMessage);
                 int cardSearchStart = clipMessage.indexOf(s);
                 if (cardSearchStart != -1) {
                     //卡查内容
@@ -624,7 +610,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
                         return;
                     }
-                    Log.i("剪贴板cardSearchMessage", cardSearchMessage);
                     Intent intent = new Intent(this, CardSearchAcitivity.class);
                     intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
                     startActivity(intent);
