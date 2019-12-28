@@ -144,6 +144,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     protected void onResume() {
         super.onResume();
         BacktoDuel();
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -690,6 +695,5 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 }
             });
         });
-
     }
 }
