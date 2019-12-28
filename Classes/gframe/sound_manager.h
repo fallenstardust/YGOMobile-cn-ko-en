@@ -69,6 +69,7 @@ public:
 private:
     std::vector<std::string> BGMList[9];
     std::map<unsigned int, std::string> ChantsList;
+    std::string bgm_PlayingName;
     int bgm_scene = -1;
 	bool bgm_process;
     std::mt19937 rnd;
