@@ -73,21 +73,39 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
-import cn.garymb.ygomobile.utils.AlipayPayUtils;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
+    //卡查关键字
+    public static final String[] cardSearchKey = new String[]{"?", "？"};
+    //加房关键字
+    public static final String[] passwordPrefix = {
+            "M,", "m,", "T,", "PR,", "pr,", "AI,", "ai,", "LF2,", "lf2,", "M#", "m#", "T#", "t#",
+            "PR#", "pr#", "NS#", "ns#", "S#", "s#", "AI#", "ai#", "LF2#", "lf2#", "R#", "r#"
+    };
+    //卡组复制
+    public static final String[] DeckTextKey = new String[]{"#main"};
+    /***
+     * 剪贴板监听复制内容
+     */
+    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP + "://" + Constants.URI_HOST;
+    //卡查内容
+    public static String cardSearchMessage = "";
+    public static String DeckText = "";
+    public static String oldmsg = "";
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
     ShimmerTextView tv;
     Shimmer shimmer;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
+    private ClipboardManager cm;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -150,7 +168,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     protected void onStart() {
         super.onStart();
-    if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
@@ -245,18 +263,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 dialog.setTitle(R.string.logo_text);
                 dialog.show();
                 View viewDialog = dialog.getContentView();
-                Button btnalipay = viewDialog.findViewById(R.id.button_alipay);
-                Button btnwechat = viewDialog.findViewById(R.id.button_wechat);
+                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
                 Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
 
-                btnalipay.setOnClickListener((v) -> {
-                    AlipayPayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
-                    dialog.dismiss();
-//                Intent intent = new Intent(this, AboutActivity.class);
-                    //               startActivity(intent);
-                });
-                btnwechat.setOnClickListener((v) -> {
-                    AlipayPayUtils.inputMoney(HomeActivity.this);
+                btnTrpay.setOnClickListener((v) -> {
+                    PayUtils.inputMoney(HomeActivity.this);
                     dialog.dismiss();
                 });
                 btnpaypal.setOnClickListener((v) -> {
@@ -526,26 +537,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             return false;
         }
     }
-
-    /***
-     * 剪贴板监听复制内容
-     */
-    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP + "://" + Constants.URI_HOST;
-    //卡查关键字
-    public static final String[] cardSearchKey = new String[]{"?", "？"};
-    //加房关键字
-    public static final String[] passwordPrefix = {
-            "M,", "m,", "T,", "PR,", "pr,", "AI,", "ai,", "LF2,", "lf2,", "M#", "m#", "T#", "t#",
-            "PR#", "pr#", "NS#", "ns#", "S#", "s#", "AI#", "ai#", "LF2#", "lf2#", "R#", "r#"
-    };
-
-    //卡查内容
-    public static String cardSearchMessage = "";
-    //卡组复制
-    public static final String[] DeckTextKey = new String[]{"#main"};
-    public static String DeckText = "";
-    public static String oldmsg = "";
-    private ClipboardManager cm;
 
     public void getClipboard() {
         cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);

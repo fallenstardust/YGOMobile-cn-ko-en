@@ -27,6 +27,49 @@
         android:weightSum="1">
 
         <LinearLayout
+            android:layout_width="286dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            android:gravity="left"
+            android:orientation="vertical">
+
+            <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+                android:id="@+id/shimmer_tv"
+                android:layout_width="150dp"
+                android:layout_height="60dp"
+
+                android:background="@drawable/blue"
+                android:gravity="center"
+                android:text="@string/return_to_duel"
+                android:textColor="@color/item_title"
+                android:textSize="20sp"
+                android:visibility="visible" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="17dp" />
+
+            <ImageView
+                android:id="@+id/btn_mycard"
+                android:layout_width="50dp"
+                android:layout_height="60dp"
+                android:gravity="bottom"
+                android:src="@drawable/mycard" />
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="20dp"
+                android:gravity="bottom|center_horizontal"
+                android:text="@string/mycard"
+                android:textSize="10sp" />
+        </LinearLayout>
+        <LinearLayout
             android:layout_width="75dp"
             android:layout_height="match_parent"
             android:orientation="vertical">
@@ -57,50 +100,6 @@
                 android:gravity="bottom|center_horizontal"
                 android:text="@string/Function_Menu"
                 android:textSize="10sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="50dp"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="50dp"
-                android:layout_height="17dp" />
-
-            <ImageView
-                android:id="@+id/btn_mycard"
-                android:layout_width="50dp"
-                android:layout_height="60dp"
-                android:gravity="bottom"
-                android:src="@drawable/mycard" />
-
-            <TextView
-                android:layout_width="50dp"
-                android:layout_height="20dp"
-                android:gravity="bottom|center_horizontal"
-                android:text="@string/mycard"
-                android:textSize="10sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="bottom"
-            android:gravity="right"
-            android:orientation="horizontal">
-
-            <cn.garymb.ygomobile.ui.widget.ShimmerTextView
-                android:id="@+id/shimmer_tv"
-                android:layout_width="150dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center"
-                android:background="@drawable/blue"
-                android:gravity="center"
-                android:text="@string/return_to_duel"
-                android:textColor="@color/item_title"
-                android:textSize="20sp"
-                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

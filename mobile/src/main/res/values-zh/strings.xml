@@ -247,7 +247,7 @@
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
     <string name="invalid_shortcut">无效的快捷方式</string>
-    <string name="return_to_duel">返回决斗☞</string>
+    <string name="return_to_duel">点此返回决斗</string>
     <string name="Start_ServiceDuelAssistant">开启决斗助手</string>
     <string name="about_DuelAssistant">复制约战房间号直接加房
         \n复制“？”+关键词直接查询卡片

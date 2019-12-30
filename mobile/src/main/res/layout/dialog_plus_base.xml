@@ -44,9 +44,9 @@
             android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
             android:layout_gravity="center_horizontal|center_vertical"
             android:layout_marginBottom="5dp"
+            android:layout_weight="1"
             android:minWidth="200dp"
             android:orientation="horizontal">
 
@@ -76,17 +76,6 @@
                 tools:visibility="visible" />
 
         </LinearLayout>
-
-
-        <ProgressBar
-            android:id="@+id/pb2"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="100px"
-            android:layout_gravity="center_horizontal|center_vertical"
-            android:progressDrawable="@drawable/background_lp_progress_bar"
-            android:visibility="gone"
-            tools:visibility="visible" />
 
 
         <LinearLayout

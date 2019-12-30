@@ -2,8 +2,6 @@ package cn.garymb.ygomobile.utils;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.view.Gravity;
@@ -13,44 +11,51 @@ import com.base.bj.paysdk.domain.TrPayResult;
 import com.base.bj.paysdk.listener.PayResultListener;
 import com.base.bj.paysdk.utils.TrPay;
 
-import java.net.URLEncoder;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.UUID;
 
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
+import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
+import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 
-import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
-public class AlipayPayUtils {
+public class PayUtils {
     /***
-     *支付宝
-     */
-    public static boolean openAlipayPayPage(Context context, String qrcode) {
-        try {
-            qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
-        } catch (Exception e) {
-        }
-        try {
-            final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
-            openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+     *支付宝（弃用
 
-    private static void openUri(Context context, String s) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
-    }
+     public static boolean openAlipayPayPage(Context context, String qrcode) {
+     try {
+     qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
+     } catch (Exception e) {
+     }
+     try {
+     final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
+     openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
+     return true;
+     } catch (Exception e) {
+     e.printStackTrace();
+     }
+     return false;
+     }
+
+     private static void openUri(Context context, String s) {
+     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
+     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+     context.startActivity(intent);
+     }*/
 
     /***
-     *微信支付（图灵trpay）
+     *  图灵trpay
      */
     public static void inputMoney(Activity activity) {
         DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("输入微信捐赠金额(元)");
+        dialog.setTitle("输入捐赠金额(元)");
         EditText editText = new EditText(activity);
         editText.setGravity(Gravity.TOP | Gravity.LEFT);
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -66,7 +71,7 @@ public class AlipayPayUtils {
                 long money = Long.parseLong(message);
                 if (money != 0) {
                     money = money * 100;
-                    WeChatPay(activity, money);
+                    callPay(activity, money);
                     dlg.dismiss();
                 }
             }
@@ -74,10 +79,10 @@ public class AlipayPayUtils {
     }
 
 
-    public static void WeChatPay(Activity activity, Long money) {
+    public static void callPay(Activity activity, Long money) {
         String id = UUID.randomUUID() + "";
         String notifyurl = "192.168.1.1";
-        TrPay.getInstance(activity).callWxPay("感谢您对YGOMobile的支持", id, money, "", notifyurl, AlipayPayUtils.getIMEI(activity), new PayResultListener() {
+        TrPay.getInstance(activity).callPay("感谢您对YGOMobile的支持", id, money, "", notifyurl, PayUtils.getID(activity), new PayResultListener() {
             public void onPayFinish(Context context, String outtradeno, int resultCode, String resultString, int payType, Long amount, String tradename) {
                 if (resultCode == TrPayResult.RESULT_CODE_SUCC.getId()) {
                 } else if (resultCode == TrPayResult.RESULT_CODE_FAIL.getId()) {
@@ -86,10 +91,9 @@ public class AlipayPayUtils {
         });
     }
 
-    public static String getIMEI(Context context) {
+    public static String getID(Context context) {
         TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         String imei = telephonyManager.getDeviceId();
-
         return imei;
     }
 }

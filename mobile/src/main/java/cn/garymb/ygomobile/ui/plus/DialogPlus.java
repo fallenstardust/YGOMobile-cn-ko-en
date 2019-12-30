@@ -67,7 +67,6 @@ public class DialogPlus extends Dialog {
         mButtonLayout = $(R.id.layout_button);
         mTitleLayout = $(R.id.layout_title);
         mProgressBar = $(R.id.pb1);
-        mProgressBar2 = $(R.id.pb2);
         setOnCloseLinster((dlg) -> {
             dlg.dismiss();
         });

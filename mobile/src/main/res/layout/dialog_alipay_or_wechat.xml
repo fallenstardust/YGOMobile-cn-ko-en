@@ -5,15 +5,28 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/button_alipay"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/alipay" />
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/button_paypal"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/paypal" />
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="20dp"
+                android:gravity="bottom|center_horizontal"
+                android:text="Paypal"
+                android:textSize="25px" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="@dimen/label_width_middle"
@@ -21,30 +34,31 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/gold" />
 
-        <Button
-            android:id="@+id/button_wechat"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/wechat" />
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="@dimen/label_width_middle"
-            android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:textColor="@color/gold" />
+            <Button
+                android:id="@+id/button_trpay"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/trpay" />
 
-        <Button
-            android:id="@+id/button_paypal"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/paypal" />
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="20dp"
+                android:gravity="bottom|center_horizontal"
+                android:text="支付宝/微信"
+                android:textSize="25px" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:paddingTop="20dp"
+        android:paddingTop="10dp"
         android:text="@string/donatefor"
         android:textSize="25px" />
 </LinearLayout>
