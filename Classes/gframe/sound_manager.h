@@ -67,7 +67,7 @@ public:
 	void EnableMusic(bool enable);
 
 private:
-    std::vector<std::string> BGMList[8];
+    std::vector<std::string> BGMList[9];
     std::map<unsigned int, std::string> ChantsList;
     int bgm_scene = -1;
 	bool bgm_process;

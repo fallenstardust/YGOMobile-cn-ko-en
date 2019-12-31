@@ -363,6 +363,8 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EFFECT_PIERCE					203
 #define EFFECT_BATTLE_DESTROY_REDIRECT	204
 #define EFFECT_BATTLE_DAMAGE_TO_EFFECT	205
+#define EFFECT_BOTH_BATTLE_DAMAGE		206
+#define EFFECT_ALSO_BATTLE_DAMAGE		207
 #define EFFECT_TOSS_COIN_REPLACE		220
 #define EFFECT_TOSS_DICE_REPLACE		221
 #define EFFECT_FUSION_MATERIAL			230
@@ -518,4 +520,6 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EVENT_REMOVE_COUNTER		0x20000
 #define EVENT_CUSTOM				0x10000000
 
+#define DOUBLE_DAMAGE				0x80000000
+#define HALF_DAMAGE					0x80000001
 #endif /* EFFECT_H_ */
