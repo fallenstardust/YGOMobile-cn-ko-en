@@ -34,7 +34,7 @@ public class Util {
     }
 
     public static void startDuelService(Context context) {
-        if (AppsSettings.get().isServiceDuelAssistant()) {
+        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT != Build.VERSION_CODES.Q) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
                 if (dialogPlus == null)

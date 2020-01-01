@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.home;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -13,13 +12,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
-
-import com.bumptech.glide.Glide;
-import com.yuyh.library.imgsel.ISNav;
-import com.yuyh.library.imgsel.common.ImageLoader;
 
 import java.io.IOException;
 
@@ -44,10 +38,6 @@ import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class MainActivity extends HomeActivity {
-    private GameUriManager mGameUriManager;
-    private ImageUpdater mImageUpdater;
-    private boolean enableStart;
-    ResCheckTask mResCheckTask;
     private final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
@@ -55,6 +45,10 @@ public class MainActivity extends HomeActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
     };
+    ResCheckTask mResCheckTask;
+    private GameUriManager mGameUriManager;
+    private ImageUpdater mImageUpdater;
+    private boolean enableStart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,14 +132,14 @@ public class MainActivity extends HomeActivity {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            if (AppsSettings.get().isServiceDuelAssistant())
+                            if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT != Build.VERSION_CODES.Q)
                                 PermissionUtil.isServicePermission(MainActivity.this, true);
                         }
                     });
                     dialog.show();
                 }
             } else {
-                if (AppsSettings.get().isServiceDuelAssistant())
+                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT != Build.VERSION_CODES.Q)
                     PermissionUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
@@ -242,6 +236,9 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
+
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
+                        AppsSettings.get().getSoundPath(), false);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);
