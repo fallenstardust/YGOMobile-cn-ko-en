@@ -19,87 +19,91 @@
         android:layout_height="match_parent"
         android:scrollbars="none" />
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/bottombar"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:weightSum="1">
 
-        <LinearLayout
-            android:layout_width="286dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="bottom"
-            android:gravity="left"
-            android:orientation="vertical">
 
-            <cn.garymb.ygomobile.ui.widget.ShimmerTextView
-                android:id="@+id/shimmer_tv"
-                android:layout_width="150dp"
-                android:layout_height="60dp"
-
-                android:background="@drawable/blue"
-                android:gravity="center"
-                android:text="@string/return_to_duel"
-                android:textColor="@color/item_title"
-                android:textSize="20sp"
-                android:visibility="visible" />
-        </LinearLayout>
+        <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+            android:id="@+id/shimmer_tv"
+            android:layout_width="150dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center|left"
+            android:layout_marginEnd="0dp"
+            android:background="@drawable/blue"
+            android:gravity="center"
+            android:text="@string/return_to_duel"
+            android:textColor="@color/item_title"
+            android:textSize="20sp"
+            android:visibility="visible" />
 
         <LinearLayout
-            android:layout_width="50dp"
+            android:layout_width="125dp"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="50dp"
-                android:layout_height="17dp" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/btn_mycard"
-                android:layout_width="50dp"
-                android:layout_height="60dp"
-                android:gravity="bottom"
-                android:src="@drawable/mycard" />
-
-            <TextView
-                android:layout_width="50dp"
-                android:layout_height="20dp"
-                android:gravity="bottom|center_horizontal"
-                android:text="@string/mycard"
-                android:textSize="10sp" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="75dp"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <com.nightonke.boommenu.BoomMenuButton
-                android:id="@+id/bmb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:background="@drawable/buttonfunction"
-                app:bmb_buttonEnum="textOutsideCircle"
-                app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
-                app:bmb_dimColor="#80000000"
-                app:bmb_normalColor="@android:color/transparent"
-                app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="17dp" />
 
                 <ImageView
-                    android:id="@+id/cube"
-                    android:layout_width="40dp"
-                    android:layout_height="41dp"
-                    android:layout_gravity="center"
-                    app:srcCompat="@drawable/cube" />
-            </com.nightonke.boommenu.BoomMenuButton>
+                    android:id="@+id/btn_mycard"
+                    android:layout_width="50dp"
+                    android:layout_height="60dp"
+                    android:gravity="bottom"
+                    android:src="@drawable/mycard" />
 
-            <TextView
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="20dp"
+                    android:gravity="bottom|center_horizontal"
+                    android:text="@string/mycard"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="75dp"
-                android:layout_height="20dp"
-                android:gravity="bottom|center_horizontal"
-                android:text="@string/Function_Menu"
-                android:textSize="10sp" />
+                android:layout_height="match_parent"
+                android:layout_marginEnd="0dp"
+                android:orientation="vertical">
+
+                <com.nightonke.boommenu.BoomMenuButton
+                    android:id="@+id/bmb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/buttonfunction"
+                    app:bmb_buttonEnum="textOutsideCircle"
+                    app:bmb_buttonPlaceEnum="buttonPlace_sc_9_1"
+                    app:bmb_dimColor="#80000000"
+                    app:bmb_normalColor="@android:color/transparent"
+                    app:bmb_piecePlaceEnum="piecePlace_dot_9_1">
+
+                    <ImageView
+                        android:id="@+id/cube"
+                        android:layout_width="40dp"
+                        android:layout_height="41dp"
+                        android:layout_gravity="center"
+                        app:srcCompat="@drawable/cube" />
+                </com.nightonke.boommenu.BoomMenuButton>
+
+                <TextView
+                    android:layout_width="75dp"
+                    android:layout_height="20dp"
+                    android:gravity="bottom|center_horizontal"
+                    android:text="@string/Function_Menu"
+                    android:textSize="10sp" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </RelativeLayout>
 </FrameLayout>
