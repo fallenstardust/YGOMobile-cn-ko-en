@@ -87,7 +87,7 @@
 
                     <TextView
                         android:id="@+id/textView"
-                        android:layout_width="@dimen/label_width_middle"
+                        android:layout_width="70dp"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:text="@string/server_ip"
@@ -142,7 +142,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="@dimen/label_width_middle"
+                    android:layout_width="70dp"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:text="@string/server_user"
