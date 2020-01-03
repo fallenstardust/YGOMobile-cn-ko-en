@@ -142,7 +142,7 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
-    //String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
+    String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
     String PAYPAL_URL = "https://www.paypal.me/YGOmobile3";
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";

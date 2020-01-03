@@ -215,9 +215,9 @@
     <string name="category_name">Deck Category</string>
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
-    <string name="join_helper_tip">you can move your favourite sever on top
-        \nthen join helper will acquiescently start in it
-        \npls click to APP permission to find me and open the "Pop-ups"
+    <string name="join_helper_tip1">you can move your favourite sever on top
+        \nthen join helper will acquiescently start in it</string>
+    <string name="join_helper_tip2">\npls click to APP permission to find me and open the "Pop-ups"
         \nand keep the soft run in the background</string>
     <string name="EXPAND_STATUS_BAR">Apply expand status bar\n then DuelAssiatant will work normally</string>
     <string name="SYSTEM_ALERT_WINDOW">Apply Display over other APPs\n then DuelAssiatant will work normally</string>

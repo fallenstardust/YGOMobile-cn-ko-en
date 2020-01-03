@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.view.Gravity;
@@ -11,44 +13,37 @@ import com.base.bj.paysdk.domain.TrPayResult;
 import com.base.bj.paysdk.listener.PayResultListener;
 import com.base.bj.paysdk.utils.TrPay;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.net.URLEncoder;
 import java.util.UUID;
 
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.bean.ServerList;
-import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
-import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
 
 public class PayUtils {
     /***
      *支付宝（弃用
+     */
+    public static boolean openAlipayPayPage(Context context, String qrcode) {
+        try {
+            qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
+        } catch (Exception e) {
+        }
+        try {
+            final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
+            openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
-     public static boolean openAlipayPayPage(Context context, String qrcode) {
-     try {
-     qrcode = URLEncoder.encode(ALIPAY_URL, "utf-8");
-     } catch (Exception e) {
-     }
-     try {
-     final String alipayqr = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=" + qrcode;
-     openUri(context, alipayqr + "%3F_s%3Dweb-other&_t=" + System.currentTimeMillis());
-     return true;
-     } catch (Exception e) {
-     e.printStackTrace();
-     }
-     return false;
-     }
-
-     private static void openUri(Context context, String s) {
-     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
-     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-     context.startActivity(intent);
-     }*/
+    private static void openUri(Context context, String s) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
 
     /***
      *  图灵trpay

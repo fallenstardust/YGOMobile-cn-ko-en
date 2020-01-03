@@ -263,9 +263,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 dialog.setTitle(R.string.logo_text);
                 dialog.show();
                 View viewDialog = dialog.getContentView();
+                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
                 Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
                 Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
-
+                btnAlipay.setOnClickListener((v) -> {
+                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+                    dialog.dismiss();
+                });
                 btnTrpay.setOnClickListener((v) -> {
                     PayUtils.inputMoney(HomeActivity.this);
                     dialog.dismiss();

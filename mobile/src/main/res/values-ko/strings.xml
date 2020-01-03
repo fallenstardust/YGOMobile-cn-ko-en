@@ -212,9 +212,9 @@
     <string name="category_name">덱 카테고리</string>
     <string name="save_quit">저장하고 종료하십시오.</string>
     <string name="tip_reset_game_res">게임 리소스대이터 리셋 완료.</string>
-    <string name="join_helper_tip">서버의 우선 순위를 위로 드래그하여 수정할 수 있습니다.
-        \n사용자 지역에 적합한 ping이 낮은 서버를 추가합니다.
-        \n아래의 버튼을 사용하여 "애플리케이션 관리"를 엽니다
+    <string name="join_helper_tip1">서버의 우선 순위를 위로 드래그하여 수정할 수 있습니다.
+        \n사용자 지역에 적합한 ping이 낮은 서버를 추가합니다.</string>
+    <string name="join_helper_tip2">\n아래의 버튼을 사용하여 "애플리케이션 관리"를 엽니다
         \n그후 YGOMobile의 다른앱 표시 권한이 혀용되어 있는지 확인하십시오.</string>
     <string name="EXPAND_STATUS_BAR">알림을 켜려면 알림 권한이 필요합니다.
         \n기능을 제대로 사용하려면 알림 권한이 필요합니다.</string>

@@ -214,9 +214,9 @@
     <string name="category_name">卡组分类</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
-    <string name="join_helper_tip">你可以把常约战的服务器拖到第一位
-        \n之后快捷加房时就会加入置顶的服务器
-        \n使用此功能须开启本软件悬浮窗
+    <string name="join_helper_tip1">你可以把常约战的服务器拖到第一位
+        \n之后快捷加房时就会加入置顶的服务器</string>
+    <string name="join_helper_tip2">\n使用此功能须开启本软件悬浮窗
         \n并确保本软件后台运行中</string>
     <string name="EXPAND_STATUS_BAR">需要开启通知权限\n开启权限才能正常使用决斗助手功能</string>
     <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n开启权限才能正常使用决斗助手功能</string>

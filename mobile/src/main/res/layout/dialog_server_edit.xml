@@ -13,6 +13,7 @@
             android:layout_width="@dimen/label_width_middle"
             android:layout_height="wrap_content"
             android:text="@string/server_name"
+            android:textSize="38px"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/gold" />
 
@@ -25,6 +26,7 @@
             android:inputType="textNoSuggestions"
             android:maxLines="1"
             android:singleLine="true"
+            android:textSize="38px"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/holo_blue_bright" />
     </LinearLayout>
@@ -45,6 +47,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:text="@string/server_ip"
+                android:textSize="38px"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/gold" />
 
@@ -55,6 +58,7 @@
                 android:hint="@string/must_info"
                 android:inputType="textNoSuggestions"
                 android:maxLines="1"
+                android:textSize="38px"
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/holo_blue_bright" />
@@ -68,6 +72,7 @@
                 android:layout_width="41dp"
                 android:layout_height="wrap_content"
                 android:text="@string/server_port"
+                android:textSize="38px"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/gold" />
 
@@ -77,6 +82,7 @@
                 android:layout_height="wrap_content"
                 android:digits="1234567890"
                 android:maxLines="1"
+                android:textSize="38px"
                 android:singleLine="true"
                 android:text="0"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
@@ -94,6 +100,7 @@
             android:layout_width="@dimen/label_width_middle"
             android:layout_height="wrap_content"
             android:text="@string/server_user"
+            android:textSize="38px"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/gold" />
 
@@ -105,6 +112,7 @@
             android:hint="@string/must_info"
             android:inputType="textNoSuggestions"
             android:maxLines="1"
+            android:textSize="38px"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@android:color/holo_green_light" />
