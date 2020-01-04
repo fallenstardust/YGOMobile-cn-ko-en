@@ -29,7 +29,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="68dp"
+                android:layout_height="70dp"
                 android:layout_gravity="bottom"
                 android:layout_marginLeft="10dp"
                 android:layout_marginBottom="2dp"
@@ -136,7 +136,7 @@
                             android:id="@+id/cube2"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
-                            android:layout_gravity="top|center"
+                            android:layout_gravity="center"
                             app:srcCompat="@drawable/cube" />
                     </com.nightonke.boommenu.BoomMenuButton>
 
