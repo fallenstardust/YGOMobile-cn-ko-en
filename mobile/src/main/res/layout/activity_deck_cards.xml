@@ -90,7 +90,7 @@
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
                         android:text="@string/searchresult"
-                        android:textSize="10sp" />
+                        android:textSize="35px" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -112,7 +112,7 @@
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
                         android:text="@string/card_search"
-                        android:textSize="10sp" />
+                        android:textSize="35px"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -147,7 +147,7 @@
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
                         android:text="@string/Function_Menu"
-                        android:textSize="10sp" />
+                        android:textSize="35px" />
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>
