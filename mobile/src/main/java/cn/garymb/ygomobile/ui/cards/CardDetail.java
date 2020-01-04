@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.app.Dialog;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +11,10 @@ import android.widget.Toast;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.activities.PhotoViewActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
-import ocgcore.data.CardData;
 import ocgcore.enums.CardType;
 
 /***
@@ -160,7 +159,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         cardImage.setOnClickListener((v) -> {
-            PhotoViewActivity.showImage(context, cardInfo.Code, cardInfo.Name);
+            Dialog dialog = new Dialog(context);
+            dialog.setContentView(R.layout.dialog_photo);
+            dialog.show();
+            ImageView photoView = dialog.findViewById(R.id.photoView);
+            imageLoader.bindImage(photoView, cardInfo.Code, null, true);
+
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
