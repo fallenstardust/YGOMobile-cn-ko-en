@@ -37,11 +37,11 @@
             android:gravity="center"
             android:text="@string/return_to_duel"
             android:textColor="@color/item_title"
-            android:textSize="20sp"
+            android:textSize="60px"
             android:visibility="visible" />
 
         <LinearLayout
-            android:layout_width="125dp"
+            android:layout_width="135dp"
             android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
             android:orientation="horizontal">
@@ -57,8 +57,9 @@
 
                 <ImageView
                     android:id="@+id/btn_mycard"
-                    android:layout_width="60dp"
+                    android:layout_width="50dp"
                     android:layout_height="60dp"
+                    android:layout_gravity="center|bottom"
                     android:gravity="bottom"
                     android:src="@drawable/mycard" />
 
@@ -78,7 +79,7 @@
 
                 <com.nightonke.boommenu.BoomMenuButton
                     android:id="@+id/bmb"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:background="@drawable/buttonfunction"
@@ -97,7 +98,7 @@
                 </com.nightonke.boommenu.BoomMenuButton>
 
                 <TextView
-                    android:layout_width="75dp"
+                    android:layout_width="70dp"
                     android:layout_height="20dp"
                     android:gravity="bottom|center_horizontal"
                     android:text="@string/Function_Menu"
