@@ -2,5 +2,5 @@
     android:id="@+id/photoView"
     android:layout_width="421dp"
     android:layout_height="614dp"
-    android:layout_gravity="center_vertical"
+    android:layout_gravity="center"
     android:background="@color/tr_transparent_background" />
