@@ -51,16 +51,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private CardListProvider mProvider;
     private OnCardClickListener mListener;
 
-    public interface OnCardClickListener {
-        void onOpenUrl(Card cardInfo);
-
-        void onAddMainCard(Card cardInfo);
-
-        void onAddSideCard(Card cardInfo);
-
-        void onClose();
-    }
-
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
         mContext = context;
@@ -154,6 +144,26 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mListener = listener;
     }
 
+    public void bind(Card cardInfo, final int position, final CardListProvider provider) {
+        curPosition = position;
+        mProvider = provider;
+        if (cardInfo != null) {
+            setCardInfo(cardInfo);
+        }
+    }
+
+    public int getCurPosition() {
+        return curPosition;
+    }
+
+    public CardListProvider getProvider() {
+        return mProvider;
+    }
+
+    public Card getCardInfo() {
+        return mCardInfo;
+    }
+
     private void setCardInfo(Card cardInfo) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
@@ -163,8 +173,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             dialog.setContentView(R.layout.dialog_photo);
             dialog.show();
             ImageView photoView = dialog.findViewById(R.id.photoView);
+            photoView.setOnClickListener(View -> {
+                dialog.dismiss();
+            });
             imageLoader.bindImage(photoView, cardInfo.Code, null, true);
-
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
@@ -230,26 +242,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
-    public void bind(Card cardInfo, final int position, final CardListProvider provider) {
-        curPosition = position;
-        mProvider = provider;
-        if (cardInfo != null) {
-            setCardInfo(cardInfo);
-        }
-    }
-
-    public int getCurPosition() {
-        return curPosition;
-    }
-
-    public CardListProvider getProvider() {
-        return mProvider;
-    }
-
-    public Card getCardInfo() {
-        return mCardInfo;
-    }
-
     public void onPreCard() {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
@@ -298,6 +290,16 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private <T extends View> T bind(int id) {
         return (T) findViewById(id);
+    }
+
+    public interface OnCardClickListener {
+        void onOpenUrl(Card cardInfo);
+
+        void onAddMainCard(Card cardInfo);
+
+        void onAddSideCard(Card cardInfo);
+
+        void onClose();
     }
 
     public static class DefaultOnCardClickListener implements OnCardClickListener {
