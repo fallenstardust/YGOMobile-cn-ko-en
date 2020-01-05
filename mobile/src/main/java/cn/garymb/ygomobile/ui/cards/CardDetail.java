@@ -1,12 +1,13 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.app.Dialog;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.feihua.dialogutils.util.DialogUtils;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -50,6 +51,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Card mCardInfo;
     private CardListProvider mProvider;
     private OnCardClickListener mListener;
+    private DialogUtils dialog;
+    private ImageView photoView;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
@@ -168,13 +171,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
+        dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {
-            Dialog dialog = new Dialog(context);
-            dialog.setContentView(R.layout.dialog_photo);
-            dialog.show();
-            ImageView photoView = dialog.findViewById(R.id.photoView);
+            View view = dialog.initDialog(context, R.layout.dialog_photo);
+            ImageView photoView = view.findViewById(R.id.photoView);
             photoView.setOnClickListener(View -> {
-                dialog.dismiss();
+                dialog.dis();
             });
             imageLoader.bindImage(photoView, cardInfo.Code, null, true);
         });
