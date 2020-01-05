@@ -565,6 +565,10 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_COMBO_BOX_CHANGED: {
 			switch(id) {
+			case COMBOBOX_BOT_RULE: {
+				mainGame->RefreshBot();
+				break;
+			}
 			case COMBOBOX_HP_CATEGORY: {
 				int catesel = mainGame->cbCategorySelect->getSelected();
 				if(catesel == 3) {
@@ -601,10 +605,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					mainGame->cbCategorySelect->setEnabled(true);
 					mainGame->cbDeckSelect->setEnabled(true);
 				}
-				break;
-			}
-			case CHECKBOX_BOT_OLD_RULE: {
-				mainGame->RefreshBot();
 				break;
 			}
 			}
