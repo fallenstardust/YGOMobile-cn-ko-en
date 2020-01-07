@@ -1,0 +1,42 @@
+{
+  "welcome": [
+    "안녕. 난 인싸야."
+  ],
+  "deckerror": [
+    "{0}이(가) 맞지 않습니다."
+  ],
+  "duelstart": [
+    "듀얼을 시작하지."
+  ],
+  "newturn": [
+    "다음은 내 무대다."
+  ],
+  "endturn": [
+    "턴 종료야."
+  ],
+  "directattack": [
+    "직접 공격!"
+  ],
+  "attack": [
+    "공격!"
+  ],
+  "ondirectattack": [
+    "으윽...!"
+  ],
+  "facedownmonstername": "몬스터",
+  "activate": [
+    "나는 이 카드를 발동하겠어."
+  ],
+  "summon": [
+    "Strong! Infinite!",
+    "{0}를 소환! Show me the Money!",
+    "{0}이 히든 카드다!",
+    "나는 이 카드를 좋아하지! {0}!"
+  ],
+  "setmonster": [
+    "Set!"
+  ],
+  "chaining": [
+    "체인하겠어!"
+  ]
+}
