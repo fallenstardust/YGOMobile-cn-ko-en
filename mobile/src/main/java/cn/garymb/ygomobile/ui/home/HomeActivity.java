@@ -98,7 +98,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     //卡查内容
     public static String cardSearchMessage = "";
     public static String DeckText = "";
-    public static String oldmsg = "";
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
     ShimmerTextView tv;
@@ -555,10 +554,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             clipMessage = null;
         }
         //如果复制的内容为空则不执行下面的代码
-        if (TextUtils.isEmpty(clipMessage) || clipMessage.equals(oldmsg)) {
+        if (TextUtils.isEmpty(clipMessage)) {
             return;
         }
-        oldmsg = clipMessage;
+        clipData = ClipData.newPlainText("", "");
+        cm.setPrimaryClip(clipData);
         //如果复制的内容是多行作为卡组去判断
         if (clipMessage.contains("\n")) {
             for (String s : DeckTextKey) {
