@@ -37,7 +37,7 @@
             android:gravity="center"
             android:text="@string/return_to_duel"
             android:textColor="@color/item_title"
-            android:textSize="60px"
+            android:textSize="50px"
             android:visibility="visible" />
 
         <LinearLayout
@@ -66,9 +66,10 @@
                 <TextView
                     android:layout_width="60dp"
                     android:layout_height="20dp"
-                    android:gravity="bottom|center_horizontal"
+                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:text="@string/mycard"
-                    android:textSize="35px" />
+                    android:textSize="30px" />
             </LinearLayout>
 
             <LinearLayout
@@ -100,9 +101,10 @@
                 <TextView
                     android:layout_width="70dp"
                     android:layout_height="20dp"
-                    android:gravity="bottom|center_horizontal"
+                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:text="@string/Function_Menu"
-                    android:textSize="35px" />
+                    android:textSize="30px" />
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
