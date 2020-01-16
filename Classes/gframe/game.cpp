@@ -426,7 +426,7 @@ bool Game::Initialize() {
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
 	posY += 60;
-	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1282));
+	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
 	chkEnableSound->setChecked(gameConf.enable_sound);
 	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
 	scrSoundVolume->setMax(100);
@@ -435,7 +435,7 @@ bool Game::Initialize() {
 	scrSoundVolume->setLargeStep(1);
 	scrSoundVolume->setSmallStep(1);
 	posY += 60;
-	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1283));
+	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
 	chkEnableMusic->setChecked(gameConf.enable_music);
 	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
 	scrMusicVolume->setMax(100);
@@ -444,7 +444,7 @@ bool Game::Initialize() {
 	scrMusicVolume->setLargeStep(1);
 	scrMusicVolume->setSmallStep(1);
 	posY += 60;
-	chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1284));
+	chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1281));
 	chkMusicMode->setChecked(gameConf.music_mode != 0);
 	elmTabHelperLast = chkMusicMode;
 	//show scroll
@@ -482,7 +482,7 @@ bool Game::Initialize() {
 	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1366));
 	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
 	posY += 60;
-    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1279));
+    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
     chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
     posY += 60;
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
@@ -883,7 +883,7 @@ bool Game::Initialize() {
 	env->addStaticText(dataManager.GetSysString(1353), rect<s32>(360 * xScale, 240 * yScale, 570 * xScale, 260 * yScale), false, true, wReplay);
 	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(360 * xScale, 270 * yScale, 460 * xScale, 310 * yScale), wReplay, -1);
 	ebRepStartTurn->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnExportDeck = env->addButton(rect<s32>(470 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1281));
+	btnExportDeck = env->addButton(rect<s32>(470 * xScale, 270 * yScale, 570 * xScale, 310 * yScale), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1282));
 	//single play window
 	wSinglePlay = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1201));
 	wSinglePlay->getCloseButton()->setVisible(false);
