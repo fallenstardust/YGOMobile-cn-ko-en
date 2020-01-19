@@ -90,7 +90,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -99,13 +98,16 @@
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_ot"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:textSize="12sp" />
 
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_scale"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
@@ -119,12 +121,14 @@
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_limit_list"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_limit"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -138,11 +142,12 @@
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_category"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btn_linkmarker"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -155,6 +160,7 @@
 
             <cn.garymb.ygomobile.ui.widget.SearchableSpinner
                 android:id="@+id/sp_setcode"
+                style="@style/itemSpinnerStyle"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/label_width_small"
                 app:searchTitle="@string/label_set" />
@@ -167,6 +173,7 @@
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_type_card"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1" />
@@ -180,6 +187,7 @@
 
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_type_st"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
@@ -199,12 +207,14 @@
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_level"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_attribute"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
@@ -217,12 +227,14 @@
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_type_monster"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_type_monster2"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />

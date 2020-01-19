@@ -37,39 +37,39 @@
                 android:weightSum="1">
 
                 <LinearLayout
-                    android:padding="5dp"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/item_and_text_height"
+                    android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/item_and_text_height">
+                    android:padding="5dp">
 
-                <TextView
-                    android:textSize="12sp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/deck_name"
-                    android:textColor="@color/holo_blue_light" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/deck_name"
+                        android:textColor="@color/holo_blue_light" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        android:layout_marginTop="2dp"
-                        android:textColor="@color/white"
-                        android:textStyle="bold"
-                        android:text="@string/select_deck"
-                        android:textSize="18sp"
                         android:id="@+id/tv_deck"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/select_deck"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:textSize="18sp"/>
 
                 </LinearLayout>
+
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/toolbar_list"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/item_height"
-                    android:visibility="gone"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="60dp"
@@ -88,8 +88,7 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/searchresult"
-                        android:textSize="30px" />
+                        android:text="@string/searchresult" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -109,8 +108,7 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/card_search"
-                        android:textSize="30px"/>
+                        android:text="@string/card_search" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -144,8 +142,7 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/Function_Menu"
-                        android:textSize="30px" />
+                        android:text="@string/Function_Menu" />
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>
