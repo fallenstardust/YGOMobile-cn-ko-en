@@ -829,16 +829,7 @@ int32 scriptlib::duel_swap_sequence(lua_State *L) {
 		&& location == LOCATION_MZONE && pcard2->current.location == location
 		&& pcard1->is_affect_by_effect(pduel->game_field->core.reason_effect)
 		&& pcard2->is_affect_by_effect(pduel->game_field->core.reason_effect)) {
-		uint8 s1 = pcard1->current.sequence, s2 = pcard2->current.sequence;
-		pduel->game_field->remove_card(pcard1);
-		pduel->game_field->remove_card(pcard2);
-		pduel->game_field->add_card(player, pcard1, location, s2);
-		pduel->game_field->add_card(player, pcard2, location, s1);
-		pduel->write_buffer8(MSG_SWAP);
-		pduel->write_buffer32(pcard1->data.code);
-		pduel->write_buffer32(pcard2->get_info_location());
-		pduel->write_buffer32(pcard2->data.code);
-		pduel->write_buffer32(pcard1->get_info_location());
+		pduel->game_field->swap_card(pcard1, pcard2);
 		field::card_set swapped;
 		swapped.insert(pcard1);
 		swapped.insert(pcard2);
@@ -4305,59 +4296,6 @@ int32 scriptlib::duel_get_battled_count(lua_State *L) {
 int32 scriptlib::duel_is_able_to_enter_bp(lua_State *L) {
 	duel* pduel = interpreter::get_duel_info(L);
 	lua_pushboolean(L, pduel->game_field->is_able_to_enter_bp());
-	return 1;
-}
-int32 scriptlib::duel_venom_swamp_check(lua_State *L) {
-	check_param_count(L, 2);
-	check_param(L, PARAM_TYPE_CARD, 2);
-	card* pcard = *(card**) lua_touserdata(L, 2);
-	if(pcard->get_counter(0x9) == 0 || pcard->is_affected_by_effect(EFFECT_SWAP_AD) || pcard->is_affected_by_effect(EFFECT_REVERSE_UPDATE)) {
-		lua_pushboolean(L, 0);
-		return 1;
-	}
-	uint32 base = pcard->get_base_attack();
-	pcard->temp.base_attack = base;
-	pcard->temp.attack = base;
-	int32 up = 0, upc = 0;
-	effect_set eset;
-	effect* peffect = 0;
-	pcard->filter_effect(EFFECT_UPDATE_ATTACK, &eset, FALSE);
-	pcard->filter_effect(EFFECT_SET_ATTACK, &eset, FALSE);
-	pcard->filter_effect(EFFECT_SET_ATTACK_FINAL, &eset);
-	for (int32 i = 0; i < eset.size(); ++i) {
-		switch (eset[i]->code) {
-		case EFFECT_UPDATE_ATTACK: {
-			if (eset[i]->type & EFFECT_TYPE_SINGLE && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
-				up += eset[i]->get_value(pcard);
-			else
-				upc += eset[i]->get_value(pcard);
-			if(pcard->temp.attack > 0)
-				peffect = eset[i];
-			break;
-		}
-		case EFFECT_SET_ATTACK:
-			base = eset[i]->get_value(pcard);
-			if (eset[i]->type & EFFECT_TYPE_SINGLE && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
-				up = 0;
-			break;
-		case EFFECT_SET_ATTACK_FINAL:
-			if (eset[i]->type & EFFECT_TYPE_SINGLE && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE)) {
-				base = eset[i]->get_value(pcard);
-				up = 0;
-				upc = 0;
-				peffect = 0;
-			}
-			break;
-		}
-		pcard->temp.attack = base + up + upc;
-	}
-	int32 atk = pcard->temp.attack;
-	pcard->temp.base_attack = 0xffffffff;
-	pcard->temp.attack = 0xffffffff;
-	if((atk <= 0) && peffect && (peffect->handler->get_code() == 54306223))
-		lua_pushboolean(L, 1);
-	else
-		lua_pushboolean(L, 0);
 	return 1;
 }
 int32 scriptlib::duel_swap_deck_and_grave(lua_State *L) {

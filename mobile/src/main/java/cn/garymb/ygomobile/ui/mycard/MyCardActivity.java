@@ -39,6 +39,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
+import cn.garymb.ygomobile.utils.ActivityUtils;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -58,7 +59,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             switch (msg.what) {
                 case TYPE_MC_LOGIN:
                     String[] ss = (String[]) msg.obj;
-                    if (!TextUtils.isEmpty(ss[1])) {
+                    if (!TextUtils.isEmpty(ss[1]) && ActivityUtils.isActivityExist(MyCardActivity.this)) {
                         Glide.with(MyCardActivity.this).load(Uri.parse(ss[1])).into(mHeadView);
                     }
                     mNameView.setText(ss[0]);

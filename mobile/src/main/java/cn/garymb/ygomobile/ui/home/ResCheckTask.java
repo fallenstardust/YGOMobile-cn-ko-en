@@ -15,6 +15,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -46,7 +47,42 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private DialogPlus dialog = null;
     private Handler handler;
     private boolean isNewVersion;
-    MessageReceiver mReceiver = new MessageReceiver();
+    private WeakReference<Context> weakReference;
+    private MessageReceiver mReceiver;
+
+    public ResCheckTask(Context context) {
+        this.weakReference = new WeakReference<>(context);
+    }
+
+    public void regesterReceiver() {
+        mReceiver = new MessageReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction("RUN_WINDBOT");
+
+        if (weakReference != null && weakReference.get() != null){
+            Context context = weakReference.get();
+            context.registerReceiver(mReceiver, intentFilter);
+        }
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args = intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    }
+
+    public void unregisterMReceiver() {
+        if(weakReference != null && weakReference.get() != null) {
+            Context context = weakReference.get();
+            context.unregisterReceiver(mReceiver);
+        }
+    }
 
     @SuppressWarnings("deprecation")
     public ResCheckTask(Context context, ResCheckListener listener) {
@@ -376,26 +412,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mContext.registerReceiver(mReceiver, filter);
     }
 
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    }
-
-    public void unregisterMReceiver() {
-        mContext.unregisterReceiver(mReceiver);
-    }
-
     Handler han = new Handler() {
 
         @Override
         public void handleMessage(Message msg) {
-            // TODO: Implement this method
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:

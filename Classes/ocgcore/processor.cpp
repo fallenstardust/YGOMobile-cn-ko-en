@@ -1606,41 +1606,41 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 		chain newchain;
 		if(core.ignition_priority_chains.size())
 			core.select_chains.swap(core.ignition_priority_chains);
-		for(auto evit = core.point_event.begin(); evit != core.instant_event.end(); ++evit) {
-			if(evit == core.point_event.end())
-				evit = core.instant_event.begin();
-			auto pr = effects.activate_effect.equal_range(evit->event_code);
-			for(auto eit = pr.first; eit != pr.second;) {
-				effect* peffect = eit->second;
-				++eit;
-				peffect->set_activate_location();
-				if(!peffect->is_flag(EFFECT_FLAG_DELAY) && peffect->is_chainable(priority) && peffect->is_activateable(priority, *evit)) {
-					card* phandler = peffect->get_handler();
-					newchain.flag = 0;
-					newchain.chain_id = infos.field_id++;
-					newchain.evt = *evit;
-					newchain.triggering_effect = peffect;
-					newchain.set_triggering_state(phandler);
-					newchain.triggering_player = priority;
-					core.select_chains.push_back(newchain);
+		for(const auto* ev_list : { &core.point_event, &core.instant_event }) {
+			for(const auto& ev : *ev_list) {
+				auto pr = effects.activate_effect.equal_range(ev.event_code);
+				for(auto eit = pr.first; eit != pr.second;) {
+					effect* peffect = eit->second;
+					++eit;
+					peffect->set_activate_location();
+					if(!peffect->is_flag(EFFECT_FLAG_DELAY) && peffect->is_chainable(priority) && peffect->is_activateable(priority, ev)) {
+						card* phandler = peffect->get_handler();
+						newchain.flag = 0;
+						newchain.chain_id = infos.field_id++;
+						newchain.evt = ev;
+						newchain.triggering_effect = peffect;
+						newchain.set_triggering_state(phandler);
+						newchain.triggering_player = priority;
+						core.select_chains.push_back(newchain);
+					}
 				}
-			}
-			pr = effects.quick_o_effect.equal_range(evit->event_code);
-			for(auto eit = pr.first; eit != pr.second;) {
-				effect* peffect = eit->second;
-				++eit;
-				peffect->set_activate_location();
-				if(peffect->is_chainable(priority) && peffect->is_activateable(priority, *evit)) {
-					card* phandler = peffect->get_handler();
-					newchain.flag = 0;
-					newchain.chain_id = infos.field_id++;
-					newchain.evt = *evit;
-					newchain.triggering_effect = peffect;
-					newchain.set_triggering_state(phandler);
-					newchain.triggering_player = priority;
-					core.select_chains.push_back(newchain);
-					core.delayed_quick_tmp.erase(std::make_pair(peffect, *evit));
-					core.delayed_quick_break.erase(std::make_pair(peffect, *evit));
+				pr = effects.quick_o_effect.equal_range(ev.event_code);
+				for(auto eit = pr.first; eit != pr.second;) {
+					effect* peffect = eit->second;
+					++eit;
+					peffect->set_activate_location();
+					if(peffect->is_chainable(priority) && peffect->is_activateable(priority, ev)) {
+						card* phandler = peffect->get_handler();
+						newchain.flag = 0;
+						newchain.chain_id = infos.field_id++;
+						newchain.evt = ev;
+						newchain.triggering_effect = peffect;
+						newchain.set_triggering_state(phandler);
+						newchain.triggering_player = priority;
+						core.select_chains.push_back(newchain);
+						core.delayed_quick_tmp.erase(std::make_pair(peffect, ev));
+						core.delayed_quick_break.erase(std::make_pair(peffect, ev));
+					}
 				}
 			}
 		}
@@ -3394,6 +3394,44 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 							}
 						}
 					}
+					effect_set eset;
+					core.attacker->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					core.attack_target->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					filter_player_effect(pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					filter_player_effect(1 - pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					eset.sort();
+					for(uint8 p = 0; p < 2; ++p) {
+						bool double_dam = false;
+						bool half_dam = false;
+						int32 dam_value = -1;
+						for(uint32 i = 0; i < eset.size(); ++i) {
+							int32 val = -1;
+							if(!eset[i]->is_flag(EFFECT_FLAG_PLAYER_TARGET)) {
+								pduel->lua->add_param(p, PARAM_TYPE_INT);
+								val = eset[i]->get_value(1);
+							} else if(eset[i]->is_target_player(p))
+								val = eset[i]->get_value();
+							if(val == 0) {
+								dam_value = 0;
+								break;
+							} else if(val > 0)
+								dam_value = val;
+							else if(val == DOUBLE_DAMAGE)
+								double_dam = true;
+							else if(val == HALF_DAMAGE)
+								half_dam = true;
+						}
+						if(double_dam && half_dam) {
+							double_dam = false;
+							half_dam = false;
+						}
+						if(double_dam)
+							core.battle_damage[p] *= 2;
+						if(half_dam)
+							core.battle_damage[p] /= 2;
+						if(dam_value >= 0 && core.battle_damage[p] > 0)
+							core.battle_damage[p] = dam_value;
+					}
 					if(core.attacker->is_affected_by_effect(EFFECT_NO_BATTLE_DAMAGE)
 						|| core.attack_target->is_affected_by_effect(EFFECT_AVOID_BATTLE_DAMAGE, core.attacker)
 						|| is_player_affected_by_effect(pd, EFFECT_AVOID_BATTLE_DAMAGE))
@@ -3474,6 +3512,45 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 					core.battle_damage[1 - damp] = 0;
 				}
 			}
+		}
+		effect_set eset;
+		reason_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+		if(dam_card)
+			dam_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+		filter_player_effect(damp, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+		filter_player_effect(1 - damp, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+		eset.sort();
+		for(uint8 p = 0; p < 2; ++p) {
+			bool double_dam = false;
+			bool half_dam = false;
+			int32 dam_value = -1;
+			for(uint32 i = 0; i < eset.size(); ++i) {
+				int32 val = -1;
+				if(!eset[i]->is_flag(EFFECT_FLAG_PLAYER_TARGET)) {
+					pduel->lua->add_param(p, PARAM_TYPE_INT);
+					val = eset[i]->get_value(1);
+				} else if(eset[i]->is_target_player(p))
+					val = eset[i]->get_value();
+				if(val == 0) {
+					dam_value = 0;
+					break;
+				} else if(val > 0)
+					dam_value = val;
+				else if(val == DOUBLE_DAMAGE)
+					double_dam = true;
+				else if(val == HALF_DAMAGE)
+					half_dam = true;
+			}
+			if(double_dam && half_dam) {
+				double_dam = false;
+				half_dam = false;
+			}
+			if(double_dam)
+				core.battle_damage[p] *= 2;
+			if(half_dam)
+				core.battle_damage[p] /= 2;
+			if(dam_value >= 0 && core.battle_damage[p] > 0)
+				core.battle_damage[p] = dam_value;
 		}
 		if(reason_card->is_affected_by_effect(EFFECT_NO_BATTLE_DAMAGE)
 			|| dam_card && dam_card->is_affected_by_effect(EFFECT_AVOID_BATTLE_DAMAGE, reason_card)

@@ -1063,48 +1063,14 @@ int32 field::swap_control(uint16 step, effect* reason_effect, uint8 reason_playe
 		card* pcard1 = *targets1->it;
 		card* pcard2 = *targets2->it;
 		uint8 p1 = pcard1->current.controler, p2 = pcard2->current.controler;
-		uint8 s1 = pcard1->current.sequence, s2 = pcard2->current.sequence;
 		uint8 new_s1 = core.units.begin()->arg4, new_s2 = returns.bvalue[2];
-		uint32 info1 = pcard1->get_info_location(), info2 = pcard2->get_info_location();
-		remove_card(pcard1);
-		remove_card(pcard2);
-		add_card(p2, pcard1, LOCATION_MZONE, new_s2);
-		add_card(p1, pcard2, LOCATION_MZONE, new_s1);
+		swap_card(pcard1, pcard2, new_s1, new_s2);
 		pcard1->reset(RESET_CONTROL, RESET_EVENT);
 		pcard2->reset(RESET_CONTROL, RESET_EVENT);
 		set_control(pcard1, p2, reset_phase, reset_count);
 		set_control(pcard2, p1, reset_phase, reset_count);
 		pcard1->set_status(STATUS_ATTACK_CANCELED, TRUE);
 		pcard2->set_status(STATUS_ATTACK_CANCELED, TRUE);
-		if(s1 == new_s1 && s2 == new_s2) {
-			pduel->write_buffer8(MSG_SWAP);
-			pduel->write_buffer32(pcard1->data.code);
-			pduel->write_buffer32(info1);
-			pduel->write_buffer32(pcard2->data.code);
-			pduel->write_buffer32(info2);
-		} else if(s1 == new_s1) {
-			pduel->write_buffer8(MSG_MOVE);
-			pduel->write_buffer32(pcard1->data.code);
-			pduel->write_buffer32(info1);
-			pduel->write_buffer32(pcard1->get_info_location());
-			pduel->write_buffer32(0);
-			pduel->write_buffer8(MSG_MOVE);
-			pduel->write_buffer32(pcard2->data.code);
-			pduel->write_buffer32(info2);
-			pduel->write_buffer32(pcard2->get_info_location());
-			pduel->write_buffer32(0);
-		} else {
-			pduel->write_buffer8(MSG_MOVE);
-			pduel->write_buffer32(pcard2->data.code);
-			pduel->write_buffer32(info2);
-			pduel->write_buffer32(pcard2->get_info_location());
-			pduel->write_buffer32(0);
-			pduel->write_buffer8(MSG_MOVE);
-			pduel->write_buffer32(pcard1->data.code);
-			pduel->write_buffer32(info1);
-			pduel->write_buffer32(pcard1->get_info_location());
-			pduel->write_buffer32(0);
-		}
 		++targets1->it;
 		++targets2->it;
 		core.units.begin()->step = 0;
@@ -1415,7 +1381,8 @@ int32 field::equip(uint16 step, uint8 equip_player, card * equip_card, card * ta
 			return FALSE;
 		}
 		if(equip_card->equiping_target) {
-			equip_card->cancel_card_target(equip_card->equiping_target);
+			equip_card->effect_target_cards.erase(equip_card->equiping_target);
+			equip_card->equiping_target->effect_target_owner.erase(equip_card);
 			equip_card->unequip();
 			equip_card->enable_field_effect(false);
 			return FALSE;
@@ -2385,7 +2352,7 @@ int32 field::sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget
 		card_set* set_cards = new card_set;
 		core.operated_set.clear();
 		for(auto& target : ptarget->container) {
-			if((!(target->data.type & TYPE_FIELD) && get_useable_count(NULL, toplayer, LOCATION_SZONE, setplayer, LOCATION_REASON_TOFIELD) <= 0)
+			if((!(target->data.type & TYPE_FIELD) && get_useable_count(target, toplayer, LOCATION_SZONE, setplayer, LOCATION_REASON_TOFIELD) <= 0)
 			        || (target->data.type & TYPE_MONSTER && !target->is_affected_by_effect(EFFECT_MONSTER_SSET))
 			        || (target->current.location == LOCATION_SZONE)
 			        || (!is_player_can_sset(setplayer, target))
@@ -2420,16 +2387,12 @@ int32 field::sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget
 	case 1: {
 		card_set* set_cards = (card_set*)ptarget;
 		card* target = *set_cards->begin();
-		uint32 flag;
-		int32 ct = get_useable_count(target, toplayer, LOCATION_SZONE, setplayer, LOCATION_REASON_TOFIELD, 0xff, &flag);
-		if(ct <= 0) {
-			core.units.begin()->step = 2;
-			return FALSE;
-		}
 		if(target->data.type & TYPE_FIELD) {
 			returns.bvalue[2] = 5;
 			return FALSE;
 		}
+		uint32 flag;
+		get_useable_count(target, toplayer, LOCATION_SZONE, setplayer, LOCATION_REASON_TOFIELD, 0xff, &flag);
 		flag |= core.set_group_used_zones;
 		if(setplayer == toplayer) {
 			flag = ((flag & 0xff) << 8) | 0xffff00ff;
