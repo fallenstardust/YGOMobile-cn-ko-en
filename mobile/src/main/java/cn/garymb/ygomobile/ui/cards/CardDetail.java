@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
@@ -25,6 +26,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -75,6 +77,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private LinearLayout ll_bar;
     private ProgressBar pb_loading;
     private TextView tv_loading;
+    private boolean isDownloadCardImage=true;
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -84,19 +87,21 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_DOWNLOAD_CARD_IMAGE_OK:
-                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
+                    isDownloadCardImage=true;
+                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, null, true);
                     imageLoader.bindImage(cardImage, msg.arg1, null, true);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
-                    tv_loading.setText("下载高清卡图中 "+msg.arg1+"%");
+                    tv_loading.setText("下载高清卡图中 " + msg.arg1 + "%");
                     pb_loading.setProgress(msg.arg1);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION:
-                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
+                    isDownloadCardImage=true;
+                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    YGOUtil.show("下载失败，原因为"+msg.obj);
+                    YGOUtil.show("下载失败，原因为" + msg.obj);
                     break;
 
             }
@@ -303,39 +308,76 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             dialog.dis();
         });
 
+        photoView.setOnLongClickListener(new View.OnLongClickListener() {
+
+            @Override
+            public boolean onLongClick(View v) {
+                if (!isDownloadCardImage)
+                    return false;
+                DialogPlus dialogPlus = new DialogPlus(context);
+                dialogPlus.setMessage("是否重新下载高清卡图？");
+                dialogPlus.setLeftButtonText("重新下载");
+                dialogPlus.setRightButtonText("取消");
+                dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        ll_bar.setVisibility(View.VISIBLE);
+                        ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
+                        downloadCardImage(code, file);
+                    }
+                });
+                dialogPlus.show();
+                return true;
+            }
+
+
+        });
+
         //先显示普通卡片大图，判断如果没有高清图就下载
         imageLoader.bindImage(photoView, code, null, true);
 
         if (!file.exists()) {
             ll_bar.setVisibility(View.VISIBLE);
-            ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.in_from_top));
-            DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
-                @Override
-                public void onDownloadSuccess(File file) {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                    message.arg1 = code;
-                    handler.sendMessage(message);
-                }
-
-                @Override
-                public void onDownloading(int progress) {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
-                    message.arg1 = progress;
-                    handler.sendMessage(message);
-                }
-
-                @Override
-                public void onDownloadFailed(Exception e) {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-                    message.obj = e.toString();
-                    handler.sendMessage(message);
-                }
-            });
+            ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
+            downloadCardImage(code, file);
         }
 
+    }
+
+    private void downloadCardImage(int code, File file) {
+        isDownloadCardImage=false;
+        DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+            @Override
+            public void onDownloadSuccess(File file) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                message.arg1 = code;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onDownloading(int progress) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                message.arg1 = progress;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onDownloadFailed(Exception e) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                message.obj = e.toString();
+                handler.sendMessage(message);
+            }
+        });
     }
 
     public void onPreCard() {
