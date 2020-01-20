@@ -77,9 +77,9 @@ import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     //卡查关键字
@@ -152,7 +152,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //check update
         Beta.checkUpgrade(false, false);
         //ServiceDuelAssistant
-        startDuelService(this);
+        YGOUtil.startDuelService(this);
         //萌卡
         StartMycard();
         checkNotch();

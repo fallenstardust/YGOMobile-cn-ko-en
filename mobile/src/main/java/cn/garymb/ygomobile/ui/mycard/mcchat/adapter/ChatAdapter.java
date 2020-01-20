@@ -19,7 +19,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
@@ -84,8 +84,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
             @Override
             public boolean onLongClick(View p1) {
-                Util.fzMessage(context, cm.getMessage());
-                Util.show(context, "已复制到剪贴板");
+                YGOUtil.copyMessage(context, cm.getMessage());
+                YGOUtil.show( "已复制到剪贴板");
                 // TODO: Implement this method
                 return true;
             }
@@ -94,7 +94,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
             @Override
             public void onClick(View p1) {
-                Util.closeKeyboard((Activity) context);
+                YGOUtil.closeKeyboard((Activity) context);
                 // TODO: Implement this method
             }
         });

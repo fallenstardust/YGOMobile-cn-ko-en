@@ -1,24 +1,25 @@
 package cn.garymb.ygomobile.utils;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.telephony.TelephonyManager;
-import android.text.InputType;
-import android.view.Gravity;
-import android.widget.EditText;
+        import android.annotation.SuppressLint;
+        import android.app.Activity;
+        import android.content.Context;
+        import android.content.Intent;
+        import android.net.Uri;
+        import android.telephony.TelephonyManager;
+        import android.text.InputType;
+        import android.view.Gravity;
+        import android.widget.EditText;
 
-import com.base.bj.paysdk.domain.TrPayResult;
-import com.base.bj.paysdk.listener.PayResultListener;
-import com.base.bj.paysdk.utils.TrPay;
+        import com.base.bj.paysdk.domain.TrPayResult;
+        import com.base.bj.paysdk.listener.PayResultListener;
+        import com.base.bj.paysdk.utils.TrPay;
 
-import java.net.URLEncoder;
-import java.util.UUID;
+        import java.net.URLEncoder;
+        import java.util.UUID;
 
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
+        import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
-import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
+        import static cn.garymb.ygomobile.Constants.ALIPAY_URL;
 
 public class PayUtils {
     /***
@@ -88,7 +89,7 @@ public class PayUtils {
 
     public static String getID(Context context) {
         TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        String imei = telephonyManager.getDeviceId();
+        @SuppressLint("MissingPermission") String imei = telephonyManager.getDeviceId();
         return imei;
     }
 }

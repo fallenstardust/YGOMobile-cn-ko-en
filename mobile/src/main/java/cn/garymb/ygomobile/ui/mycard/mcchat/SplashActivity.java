@@ -23,7 +23,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class SplashActivity extends Activity {
 
@@ -43,7 +43,7 @@ public class SplashActivity extends Activity {
                     su.setIsConnected(false);
                     sp_jz.setVisibility(View.GONE);
                     sp_tv.setText(getString(R.string.logining_failed));
-                    Util.show(SplashActivity.this, getString(R.string.failed_reason) + msg.obj);
+                    YGOUtil.show( getString(R.string.failed_reason) + msg.obj);
                     break;
                 case 1:
                     startActivity(new Intent(SplashActivity.this, McchatActivity.class));

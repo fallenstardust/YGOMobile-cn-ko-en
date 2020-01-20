@@ -117,5 +117,7 @@ dependencies {
     //Tencent bugly
     implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
     implementation 'com.tencent.bugly:nativecrashreport:latest.release'
+    //http请求库
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
 
 }

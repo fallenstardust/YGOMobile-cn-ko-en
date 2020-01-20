@@ -1,19 +1,33 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.annotation.SuppressLint;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.feihua.dialogutils.util.DialogUtils;
 
+import java.io.File;
+
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
+import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -22,6 +36,11 @@ import ocgcore.enums.CardType;
  * 卡片详情
  */
 public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
+
+    private static final int TYPE_DOWNLOAD_CARD_IMAGE_OK = 0;
+    private static final int TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION = 1;
+    private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
+
     private static final String TAG = "CardDetail";
     private ImageView cardImage;
     private TextView name;
@@ -53,6 +72,36 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private OnCardClickListener mListener;
     private DialogUtils dialog;
     private ImageView photoView;
+    private LinearLayout ll_bar;
+    private ProgressBar pb_loading;
+    private TextView tv_loading;
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_DOWNLOAD_CARD_IMAGE_OK:
+                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
+                    ll_bar.setVisibility(View.GONE);
+                    imageLoader.bindImage(photoView, msg.arg1, null, true);
+                    break;
+                case TYPE_DOWNLOAD_CARD_IMAGE_ING:
+                    tv_loading.setText("下载高清卡图中 "+msg.arg1+"%");
+                    pb_loading.setProgress(msg.arg1);
+                    break;
+                case TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION:
+                    ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
+                    ll_bar.setVisibility(View.GONE);
+                    YGOUtil.show("下载失败，原因为"+msg.obj);
+                    break;
+
+            }
+        }
+    };
+
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
@@ -173,12 +222,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {
-            View view = dialog.initDialog(context, R.layout.dialog_photo);
-            ImageView photoView = view.findViewById(R.id.photoView);
-            photoView.setOnClickListener(View -> {
-                dialog.dis();
-            });
-            imageLoader.bindImage(photoView, cardInfo.Code, null, true);
+            showCardImageDetail(cardInfo.Code);
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
@@ -242,6 +286,55 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             monsterlayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
         }
+    }
+
+    private void showCardImageDetail(int code) {
+        AppsSettings appsSettings = AppsSettings.get();
+        File file = new File(appsSettings.getCardImagePath(code));
+        View view = dialog.initDialog(context, R.layout.dialog_photo);
+        dialog.setDialogWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        photoView = view.findViewById(R.id.photoView);
+        ll_bar = view.findViewById(R.id.ll_bar);
+        pb_loading = view.findViewById(R.id.pb_loading);
+        tv_loading = view.findViewById(R.id.tv_name);
+        pb_loading.setMax(100);
+        photoView.setOnClickListener(View -> {
+            dialog.dis();
+        });
+
+        //先显示普通卡片大图，判断如果没有高清图就下载
+        imageLoader.bindImage(photoView, code, null, true);
+
+        if (!file.exists()) {
+            ll_bar.setVisibility(View.VISIBLE);
+            ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.in_from_top));
+            DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+                @Override
+                public void onDownloadSuccess(File file) {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                    message.arg1 = code;
+                    handler.sendMessage(message);
+                }
+
+                @Override
+                public void onDownloading(int progress) {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                    message.arg1 = progress;
+                    handler.sendMessage(message);
+                }
+
+                @Override
+                public void onDownloadFailed(Exception e) {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                    message.obj = e.toString();
+                    handler.sendMessage(message);
+                }
+            });
+        }
+
     }
 
     public void onPreCard() {
@@ -327,4 +420,5 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         }
     }
+
 }

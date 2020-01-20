@@ -1,11 +1,22 @@
 package cn.garymb.ygomobile.utils;
 
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
 
 public class YGOUtil {
 
@@ -20,4 +31,43 @@ public class YGOUtil {
     public static String s(int stringId){
         return App.get().getResources().getString(stringId);
     }
+
+    public static String getCardImageDetailUrl(int code){
+        return "https://code.mycard.moe/fallenstardust/ygoimage/raw/master/"+code+".jpg";
+    }
+
+
+    //关闭输入法
+    public static void closeKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputMethodManager == null)
+            return;
+        View view = activity.getCurrentFocus();
+        if (view == null)
+            return;
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken()
+                , InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
+
+    //复制字符串到剪贴板
+    public static void copyMessage(Context context, String message) {
+        ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        cmb.setPrimaryClip(ClipData.newPlainText(null, message));//复制命令
+    }
+
+    public static void startDuelService(Context context) {
+        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
+                if (dialogPlus == null)
+                    context.startForegroundService(new Intent(context, ServiceDuelAssistant.class));
+                else
+                    dialogPlus.show();
+            } else {
+                context.startService(new Intent(context, ServiceDuelAssistant.class));
+            }
+        }
+    }
+
 }

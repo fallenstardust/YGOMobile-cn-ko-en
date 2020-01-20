@@ -336,6 +336,16 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_IMAGE_QUALITY, "" + quality);
     }
 
+
+    /**
+     * 根据卡密获取卡图的路径
+     * @param code 卡密
+     * @return
+     */
+    public String getCardImagePath(int code){
+        return new File(getCardImagePath(),code+".jpg").getAbsolutePath();
+    }
+
     /***
      * 图片文件夹
      */
