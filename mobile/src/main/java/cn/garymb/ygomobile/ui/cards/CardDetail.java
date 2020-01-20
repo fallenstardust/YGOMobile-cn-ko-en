@@ -90,13 +90,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     imageLoader.bindImage(cardImage, msg.arg1, null, true);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
-                    tv_loading.setText("下载高清卡图中 "+msg.arg1+"%");
+                    tv_loading.setText(msg.arg1+"%");
                     pb_loading.setProgress(msg.arg1);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION:
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    YGOUtil.show("下载失败，原因为"+msg.obj);
+                    YGOUtil.show("error"+msg.obj);
                     break;
 
             }
