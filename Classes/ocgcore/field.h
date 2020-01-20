@@ -185,6 +185,7 @@ struct processor {
 	event_list point_event;
 	event_list instant_event;
 	event_list queue_event;
+	event_list delayed_activate_event;
 	event_list full_event;
 	event_list used_event;
 	event_list single_event;
@@ -679,6 +680,7 @@ public:
 #define TIMING_BATTLE_PHASE			0x1000000
 #define TIMING_EQUIP				0x2000000
 #define TIMING_BATTLE_STEP_END		0x4000000
+#define TIMING_BATTLED				0x8000000
 
 #define GLOBALFLAG_DECK_REVERSE_CHECK	0x1
 #define GLOBALFLAG_BRAINWASHING_CHECK	0x2
