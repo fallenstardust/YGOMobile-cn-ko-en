@@ -14,19 +14,19 @@
     <LinearLayout
         android:visibility="gone"
         android:id="@+id/ll_bar"
-        android:background="@color/gray"
+        android:background="@drawable/radius"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_name"
-            android:textColor="@color/black"
+            android:textColor="@color/white"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="5dp"
             android:gravity="center"
             android:textStyle="bold"
-            android:text="下载高清卡图中"
+            android:text="@string/Download"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
