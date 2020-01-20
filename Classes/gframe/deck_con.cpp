@@ -6,7 +6,6 @@
 #include "myfilesystem.h"
 #include "game.h"
 #include "duelclient.h"
-#include <algorithm>
 
 namespace ygo {
 

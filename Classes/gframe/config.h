@@ -92,6 +92,7 @@ inline int _wtoi(const wchar_t * s) {
 #include <time.h>
 #include <thread>
 #include <mutex>
+#include <algorithm>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/bufferio_android.h>
 #else
