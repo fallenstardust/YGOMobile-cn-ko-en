@@ -1,10 +1,12 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat.util;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
@@ -22,7 +24,12 @@ public class Util {
     //关闭输入法
     public static void closeKeyboard(Activity activity) {
         InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow((activity).getCurrentFocus().getWindowToken()
+        if (inputMethodManager == null)
+            return;
+        View view = activity.getCurrentFocus();
+        if (view == null)
+            return;
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken()
                 , InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
@@ -30,7 +37,7 @@ public class Util {
     //复制字符串到剪贴板
     public static void fzMessage(Context context, String message) {
         ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        cmb.setText(message);//复制命令
+        cmb.setPrimaryClip(ClipData.newPlainText(null, message));//复制命令
     }
 
     public static void startDuelService(Context context) {

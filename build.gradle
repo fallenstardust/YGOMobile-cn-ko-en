@@ -9,7 +9,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.3'
         //classpath 'me.tatarka:gradle-retrolambda:3.2.5'
-    }
+    }d
 }
 
 ext {
@@ -23,7 +23,6 @@ allprojects {
         jcenter()
         google()
         maven { url "https://jitpack.io" }
-        maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
     }
 }
 

@@ -884,18 +884,18 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         List<File> files = getYdkFiles();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         String name = curYdk != null ? curYdk.getName() : null;
-        Collections.sort(files, new Comparator<File>() {
-            @Override
-            public int compare(File ydk1, File ydk2) {
-                if (ydk1.isDirectory() && ydk2.isFile())
-                    return -1;
-                if (ydk1.isFile() && ydk2.isDirectory())
-                    return 1;
-                return ydk1.getName().compareTo(ydk2.getName());
-            }
-        });
         int index = -1;
         if (files != null) {
+            Collections.sort(files, new Comparator<File>() {
+                @Override
+                public int compare(File ydk1, File ydk2) {
+                    if (ydk1.isDirectory() && ydk2.isFile())
+                        return -1;
+                    if (ydk1.isFile() && ydk2.isDirectory())
+                        return 1;
+                    return ydk1.getName().compareTo(ydk2.getName());
+                }
+            });
             int i = 0;
             for (File file : files) {
                 if (name != null && TextUtils.equals(name, file.getName())) {
