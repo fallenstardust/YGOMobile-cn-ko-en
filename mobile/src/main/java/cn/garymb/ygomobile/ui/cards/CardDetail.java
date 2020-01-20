@@ -87,6 +87,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context,R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, null, true);
+                    imageLoader.bindImage(cardImage, msg.arg1, null, true);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
                     tv_loading.setText("下载高清卡图中 "+msg.arg1+"%");
