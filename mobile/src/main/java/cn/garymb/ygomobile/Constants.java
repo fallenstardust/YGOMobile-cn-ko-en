@@ -28,10 +28,8 @@ public interface Constants {
     int PREF_DEF_OPENGL_VERSION = 1;
     String PREF_PENDULUM_SCALE = "pref_key_game_lab_pendulum_scale";
     boolean PREF_DEF_PENDULUM_SCALE = true;
-    String PREF_SOUND_EFFECT = "pref_key_game_sound_effect";
-    boolean PREF_DEF_SOUND_EFFECT = true;
     String PREF_START_SERVICEDUELASSISTANT = "pref_key_start_serviceduelassistant";
-    boolean PREF_DEF_START_SERVICEDUELASSISTANT = true;
+    boolean PREF_DEF_START_SERVICEDUELASSISTANT = false;
     String PREF_LOCK_SCREEN = "pref_key_game_screen_orientation";
     boolean PREF_DEF_LOCK_SCREEN = false;
     String PREF_IMMERSIVE_MODE = "pref_key_immersive_mode";
@@ -66,6 +64,7 @@ public interface Constants {
     String CORE_CUSTOM_LIMIT_PATH = "expansions/lflist.conf";
     String CORE_SYSTEM_PATH = "system.conf";
     String CORE_BOT_CONF_PATH = "bot.conf";
+    String CORE_SOUND_PATH = "sound";
     String CORE_SKIN_PATH = "textures";
     String CORE_SKIN_PENDULUM_PATH = CORE_SKIN_PATH + "/extra";
     String CORE_DECK_PATH = "deck";
@@ -116,6 +115,9 @@ public interface Constants {
     String PREF_DECK_MANAGER_V2 = "pref_settings_deck_manager_v2";
     boolean DEF_PREF_DECK_MANAGER_V2 = false;
 
+    String PREF_KEEP_SCALE = "pref_settings_keep_scale";
+    boolean DEF_PREF_KEEP_SCALE = false;
+
     int REQUEST_CUT_IMG = 0x1000 + 0x10;
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
     int REQUEST_CHOOSE_IMG = 0x1000 + 0x21;
@@ -141,6 +143,7 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
+    String PAYPAL_URL = "https://www.paypal.me/YGOmobile3";
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
@@ -157,7 +160,7 @@ public interface Constants {
     /***
      * 长按删除
      */
-    long LONG_PRESS_DRAG = 900;
+    long LONG_PRESS_DRAG = 600;
     /***
      * adb shell am start -n cn.garymb.ygomobile/cn.garymb.ygomobile.ui.home.MainActivity -a ygomobile.intent.action.DECK --es android.intent.extra.TEXT 青眼白龙.ydk
      * <p>

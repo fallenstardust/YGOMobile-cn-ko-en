@@ -30,7 +30,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -60,7 +60,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         setContentView(R.layout.activity_search);
 
         if(TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))){
-            ServiceDuelAssistant.cardSearchMessage="";
+            DuelAssistantService.cardSearchMessage="";
         }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -105,15 +105,15 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(ServiceDuelAssistant.cardSearchMessage)){
-            currentCardSearchMessage=ServiceDuelAssistant.cardSearchMessage;
+        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(DuelAssistantService.cardSearchMessage)){
+            currentCardSearchMessage=DuelAssistantService.cardSearchMessage;
             intentSearch();
         }
     }
 
     private void intentSearch(){
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        mCardSelector.search(ServiceDuelAssistant.cardSearchMessage);
+        mCardSelector.search(DuelAssistantService.cardSearchMessage);
     }
 
     protected void setListeners() {

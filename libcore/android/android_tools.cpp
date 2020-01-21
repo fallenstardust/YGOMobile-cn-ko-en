@@ -18,13 +18,11 @@ inline static void ReadString(irr::io::path &path, char*& p) {
 }
 
 InitOptions::InitOptions(void*data) :
-		m_opengles_version(0), m_card_quality(0), m_font_aa_enabled(TRUE), m_se_enabled(
-				TRUE) {
+		m_opengles_version(0), m_card_quality(0), m_font_aa_enabled(TRUE) {
 	if (data != NULL) {
 		char* rawdata = (char*)data;
 		int tmplength = 0;
 		m_opengles_version = BufferIO::ReadInt32(rawdata);
-		m_se_enabled = BufferIO::ReadInt32(rawdata) > 0;
 		
 		m_card_quality = BufferIO::ReadInt32(rawdata);
 		m_font_aa_enabled = BufferIO::ReadInt32(rawdata) > 0;
@@ -356,7 +354,53 @@ irr::io::path getResourcePath(ANDROID_APP app) {
 	return ret;
 }
 
+float getXScale(ANDROID_APP app){
+	float ret = 1;
+	if (!app || !app->activity || !app->activity->vm)
+		return ret;
+	JNIEnv* jni = 0;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return ret;
+	// Retrieves NativeActivity.
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+											  "getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID glversionMethod = jni->GetMethodID(classApp, "getXScale",
+												 "()F");
+	ret = jni->CallFloatMethod(application, glversionMethod);
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+	return ret;
+}
 
+float getYScale(ANDROID_APP app){
+	float ret = 1;
+	if (!app || !app->activity || !app->activity->vm)
+		return ret;
+	JNIEnv* jni = 0;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return ret;
+	// Retrieves NativeActivity.
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+											  "getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID glversionMethod = jni->GetMethodID(classApp, "getYScale",
+												 "()F");
+	ret = jni->CallFloatMethod(application, glversionMethod);
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+	return ret;
+}
 
 //Retrive last deck name.
 irr::io::path getLastDeck(ANDROID_APP app) {
@@ -697,20 +741,29 @@ void toggleGlobalIME(ANDROID_APP app, bool pShow) {
 	app->activity->vm->DetachCurrentThread();
 }
 
-void initJavaBridge(ANDROID_APP app, void* handle) {
+core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 	if (!app || !app->activity || !app->activity->vm)
-		return;
+		return core::position2di(0, 0);
 	JNIEnv* jni = 0;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
 	jmethodID MethodSetHandle = jni->GetMethodID(ClassNativeActivity,
-			"setNativeHandle", "(I)V");
+												 "setNativeHandle", "(I)V");
 	jint code = (int) handle;
 	jni->CallVoidMethod(lNativeActivity, MethodSetHandle, code);
+
+
+	jmethodID methodX = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionX", "()I");
+    jint posX = jni->CallIntMethod(lNativeActivity, methodX);
+	jmethodID methodY = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionY", "()I");
+	jint posY = jni->CallIntMethod(lNativeActivity, methodY);
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
-	return;
+	__android_log_print(ANDROID_LOG_INFO, "ygo", "Android command initJavaBridge posX=%d, posY=%d", posX, posY);
+	return core::position2di((int)posX, (int)posY);
 }
 
 InitOptions* getInitOptions(ANDROID_APP app) {
@@ -744,35 +797,6 @@ int getLocalAddr(ANDROID_APP app) {
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 	return addr;
-}
-
-bool isSoundEffectEnabled(ANDROID_APP app) {
-	bool isEnabled = false;
-	if (!app || !app->activity || !app->activity->vm)
-		return isEnabled;
-	JNIEnv* jni = 0;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
-	if (!jni)
-		return true;
-	// Retrieves NativeActivity.
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
-			"getApplication", "()Landroid/app/Application;");
-	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
-	jclass classApp = jni->GetObjectClass(application);
-	jmethodID MethodCheckSE = jni->GetMethodID(classApp, "isSoundEffectEnabled",
-			"()Z");
-	jboolean result = jni->CallBooleanMethod(application, MethodCheckSE);
-	if (result > 0) {
-		isEnabled = true;
-	} else {
-		isEnabled = false;
-	}
-	jni->DeleteLocalRef(ClassNativeActivity);
-	jni->DeleteLocalRef(classApp);
-	app->activity->vm->DetachCurrentThread();
-	return isEnabled;
 }
 
 void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow, char** pContents,

@@ -15,6 +15,7 @@
     <string name="images">图片</string>
     <string name="single_lua">残局文件</string>
     <string name="font_files">字体文件</string>
+    <string name="game_sound">音效文件</string>
     <string name="game_skins">皮肤文件</string>
     <string name="coping_pendulum_image">复制灵摆数字图片</string>
     <string name="dialog_select_font">请选择一个字体文件</string>
@@ -59,7 +60,7 @@
     <string name="settings_game_diy_card_db">使用自定义数据库</string>
     <string name="settings_test_options">实验选项</string>
     <string name="settings_test_replace_kernel">替换内核</string>
-    <string name="settings_game_immersive_mode">适配非16:9分辨率的屏幕</string>
+    <string name="settings_game_immersive_mode">沉浸式游戏界面</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">头像图片</string>
     <string name="restart_app">请重启本应用</string>
@@ -213,12 +214,12 @@
     <string name="category_name">卡组分类</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>
-    <string name="join_helper_tip">你可以把常约战的服务器拖到第一位
-        \n之后快捷加房时就会加入置顶的服务器
-        \n使用此功能须开启本软件悬浮窗
+    <string name="join_helper_tip1">你可以把常约战的服务器拖到第一位
+        \n之后快捷加房时就会加入置顶的服务器</string>
+    <string name="join_helper_tip2">\n使用此功能须开启本软件悬浮窗
         \n并确保本软件后台运行中</string>
-    <string name="EXPAND_STATUS_BAR">需要开启通知权限\n开启通知权限才能正常使用功能</string>
-    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n开启悬浮窗权限才能正常使用功能</string>
+    <string name="EXPAND_STATUS_BAR">需要开启通知权限\n开启权限才能正常使用决斗助手功能</string>
+    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n开启权限才能正常使用决斗助手功能</string>
     <string name="OpenTIP">快捷加房使用方法</string>
     <string name="Open_Alert_Window">去打开悬浮窗</string>
     <string name="Function_Menu">功能菜单</string>
@@ -230,7 +231,7 @@
     <string name="ClickLinkArrows">点亮箭头</string>
     <string name="tip_no_permission" formatted="false">权限 %s 被你禁止了</string>
     <string name="Already_Lastest">已经是最新版本</string>
-    <string name="about_immersive_mode">开关它来适配非16:9的分辨率屏幕，有的机型需要先在手机设置隐藏刘海</string>
+    <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
     <string name="Download">下载</string>
     <string name="Downloading">下载中，请稍候</string>
     <string name="Update_Found">发现新版本</string>
@@ -246,8 +247,6 @@
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
     <string name="invalid_shortcut">无效的快捷方式</string>
-    <string name="return_to_duel">返回决斗☞</string>
-
     <string name="homepage">主页</string>
     <string name="other_funstion">其他功能</string>
     <string name="query_exception">查询失败</string>
@@ -272,6 +271,7 @@
     <string name="duel_mode_match">比赛模式</string>
     <string name="complete_setting">完成设置</string>
 
+    <string name="return_to_duel">点此返回决斗</string>
     <string name="Start_ServiceDuelAssistant">开启决斗助手</string>
     <string name="about_DuelAssistant">复制约战房间号直接加房
         \n复制“？”+关键词直接查询卡片
@@ -294,4 +294,5 @@
     <string name="donot_editor_bot_Deck">请不要更改/删除AI卡组否则会导致人机模式无法正常使用</string>
     <string name="unable_to_edit_empty_deck">不可操作空卡组</string>
     <string name="create_new_failed">创建失败</string>
+    <string name="about_pref_settings_keep_scale">开启原始比例的游戏画面</string>
 </resources>

@@ -51,8 +51,8 @@ public class YGODialogUtil {
     private static Dialog ygoDialog;
 
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
-        DialogUtils du = DialogUtils.getdx(context);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, 0);
+        DialogUtils du = DialogUtils.getInstance(context);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select);
         RecyclerView rv_type, rv_deck;
 
         rv_deck = viewDialog.findViewById(R.id.rv_deck);
@@ -169,7 +169,7 @@ public class YGODialogUtil {
             public void onClick(View v) {
                 du.dialogl(context.getString(R.string.new_deck),
                         new String[]{context.getString(R.string.category_name),
-                                context.getString(R.string.deck_name)}, R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                context.getString(R.string.deck_name)}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -222,8 +222,7 @@ public class YGODialogUtil {
                 List<DeckType> otherType = getOtherTypeList();
 
                 du.dialogl(context.getString(please_select_target_category),
-                        getStringType(otherType),
-                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -251,8 +250,7 @@ public class YGODialogUtil {
                 List<DeckType> otherType = getOtherTypeList();
 
                 du.dialogl(context.getString(please_select_target_category),
-                        getStringType(otherType),
-                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        getStringType(otherType)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
@@ -264,7 +262,6 @@ public class YGODialogUtil {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            deckList.remove(deckFile);
                         }
                         YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);

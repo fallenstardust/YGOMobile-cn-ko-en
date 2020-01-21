@@ -1,0 +1,35 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion 16
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 22
+
+        ndk {
+            moduleName "YGOMobile"
+            abiFilters "armeabi-v7a"//,"x86"
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "../libcore/jni/Android.mk"
+        }
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['../libcore/src/main/assets']
+            java.srcDirs = ['../libcore/src/main/java']
+            res.srcDirs = ['../libcore/src/main/res']
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//    implementation "me.weishu:free_reflection:2.1.0"
+}

@@ -8,9 +8,7 @@
 #ifndef INTERPRETER_H_
 #define INTERPRETER_H_
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+#include "lua.hpp"
 #include "common.h"
 #include <unordered_map>
 #include <list>

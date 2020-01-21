@@ -18,6 +18,8 @@ ClientField::ClientField() {
 	hovered_controler = 0;
 	hovered_location = 0;
 	hovered_sequence = 0;
+	selectable_field = 0;
+	selected_field = 0;
 	deck_act = false;
 	grave_act = false;
 	remove_act = false;
@@ -603,7 +605,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 	bool quickmode = true;
 	mainGame->gMutex.lock();
 	for(auto option : select_options) {
-		if(mainGame->guiFont->getDimension(dataManager.GetDesc(option)).Width > 310 * mainGame->xScale) {
+		if(mainGame->guiFont->getDimension(dataManager.GetDesc(option)).Width > 370 * mainGame->xScale) {
 			quickmode = false;
 			break;
 		}

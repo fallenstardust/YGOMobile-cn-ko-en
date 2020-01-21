@@ -17,6 +17,7 @@ import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -48,7 +49,42 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private DialogUtils dialog = null;
     private Handler handler;
     private boolean isNewVersion;
-    MessageReceiver mReceiver = new MessageReceiver();
+    private WeakReference<Context> weakReference;
+    private MessageReceiver mReceiver;
+
+    public ResCheckTask(Context context) {
+        this.weakReference = new WeakReference<>(context);
+    }
+
+    public void regesterReceiver() {
+        mReceiver = new MessageReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction("RUN_WINDBOT");
+
+        if (weakReference != null && weakReference.get() != null){
+            Context context = weakReference.get();
+            context.registerReceiver(mReceiver, intentFilter);
+        }
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args = intent.getStringExtra("args");
+                WindBot.runAndroid(args);
+            }
+        }
+    }
+
+    public void unregisterMReceiver() {
+        if(weakReference != null && weakReference.get() != null) {
+            Context context = weakReference.get();
+            context.unregisterReceiver(mReceiver);
+        }
+    }
 
     @SuppressWarnings("deprecation")
     public ResCheckTask(Context context, ResCheckListener listener) {
@@ -61,7 +97,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        dialog = DialogUtils.getdx(mContext);
+        dialog = DialogUtils.getInstance(mContext);
         dialog.dialogj1( null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
         if (mSettings.getAppVersion() < vercode) {
@@ -90,7 +126,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private void setMessage(String msg) {
         handler.post(() -> {
-            dialog.setToast(msg);
+            dialog.setMessage(msg);
         });
     }
 
@@ -149,10 +185,19 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
+            String[] sound1 = mContext.getAssets().list(getDatapath(Constants.CORE_SOUND_PATH));
+            String[] sound2 = new File(mSettings.getSoundPath()).list();
+
             String[] textures1 = mContext.getAssets().list(getDatapath(Constants.CORE_SKIN_PATH));
             String[] textures2 = new File(mSettings.getCoreSkinPath()).list();
 
             //复制资源文件夹
+            //如果sound文件夹不存在/sound资源数量不够/是更新则复制,但是不强制复制
+            if (sound2 == null || (sound1 != null && sound1.length > sound2.length) || needsUpdate) {
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_sound)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SOUND_PATH),
+                        mSettings.getSoundPath(), false);
+            }
             //如果textures文件夹不存在/textures资源数量不够/是更新则复制,但是不强制复制
             if (textures2 == null || (textures1 != null && textures1.length > textures2.length) || needsUpdate) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.game_skins)));
@@ -370,26 +415,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mContext.registerReceiver(mReceiver, filter);
     }
 
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    }
-
-    public void unregisterMReceiver() {
-        mContext.unregisterReceiver(mReceiver);
-    }
-
     Handler han = new Handler() {
 
         @Override
         public void handleMessage(Message msg) {
-            // TODO: Implement this method
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:

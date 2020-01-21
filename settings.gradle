@@ -1,2 +1,2 @@
-include ':libcore', ':mobile'
+include ':libcore', ':mobile', ':libygo'
 //include ':app'

@@ -7,13 +7,13 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:3.5.3'
         //classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
 }
 
 ext {
-    compileSdkVersion = 28
+    compileSdkVersion = 29
     //buildToolsVersion = compileSdkVersion+".0.0"
     supportVersion = "27.1.0"
 }

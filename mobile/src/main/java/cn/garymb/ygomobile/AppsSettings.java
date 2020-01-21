@@ -1,20 +1,17 @@
 package cn.garymb.ygomobile;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Environment;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.Log;
-
-import com.zlm.libs.preferences.PreferencesProviderUtils;
+import android.view.WindowManager;
 
 import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,15 +20,14 @@ import java.util.Locale;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.SystemUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
@@ -39,6 +35,7 @@ import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
@@ -53,8 +50,9 @@ public class AppsSettings {
     private static AppsSettings sAppsSettings;
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
-    private float mScreenHeight, mScreenWidth, mDensity;
-
+    private float mDensity;
+    private final Point mScreenSize = new Point();
+    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;
@@ -79,52 +77,12 @@ public class AppsSettings {
     }
 
     public void update(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        //应用尺寸
+        wm.getDefaultDisplay().getSize(mScreenSize);
+        //屏幕尺寸
+        wm.getDefaultDisplay().getRealSize(mRealScreenSize);
         mDensity = context.getResources().getDisplayMetrics().density;
-        mScreenHeight = context.getResources().getDisplayMetrics().heightPixels;
-        mScreenWidth = context.getResources().getDisplayMetrics().widthPixels;
-
-        if (isImmerSiveMode() && context instanceof Activity) {
-            DisplayMetrics dm = SystemUtils.getHasVirtualDisplayMetrics((Activity) context);
-            if (dm != null) {
-
-                int height = Math.max(dm.widthPixels, dm.heightPixels);
-                Log.e("YGOMobileLog", "类地址" + System.identityHashCode(this));
-
-                int notchHeight = getNotchHeight();
-
-                try {
-                    FileLogUtil.writeAndTime("是否沉浸:  " + isImmerSiveMode());
-                    FileLogUtil.writeAndTime("原始长:  " + mScreenHeight);
-                    FileLogUtil.writeAndTime("原始宽:  " + mScreenWidth);
-                    FileLogUtil.writeAndTime("界面长:  " + dm.heightPixels);
-                    FileLogUtil.writeAndTime("界面宽:  " + dm.widthPixels);
-                    FileLogUtil.writeAndTime("刘海长:  " + notchHeight);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                height -= notchHeight;
-
-                try {
-                    FileLogUtil.writeAndTime("处理后height值：  " + height);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if (mScreenHeight > mScreenWidth) {
-                    mScreenHeight = height;
-                } else {
-                    mScreenWidth = height;
-                }
-                try {
-                    FileLogUtil.writeAndTime("转换后长:  " + mScreenHeight);
-                    FileLogUtil.writeAndTime("转换后宽:  " + mScreenWidth);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }
     }
 
     public int getAppVersion() {
@@ -135,17 +93,14 @@ public class AppsSettings {
         mSharedPreferences.putInt(PREF_VERSION, ver);
     }
 
-
     public PreferenceFragmentPlus.SharedPreferencesPlus getSharedPreferences() {
         return mSharedPreferences;
     }
 
     public float getSmallerSize() {
-        return mScreenHeight < mScreenWidth ? mScreenHeight : mScreenWidth;
-    }
-
-    public float getScreenWidth() {
-        return Math.min(mScreenWidth, mScreenHeight);
+        float w = getScreenWidth();
+        float h = getScreenHeight();
+        return h < w ? h : w;
     }
 
     public boolean isDialogDelete() {
@@ -179,16 +134,56 @@ public class AppsSettings {
         return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
-    public float getXScale() {
-        return getScreenHeight() / (float) Constants.CORE_SKIN_BG_SIZE[0];
+    public float getXScale(int w, int h) {
+        if(isKeepScale()){
+            float sx = getScreenHeight() / w;
+            float sy = getScreenWidth() / h;
+            return Math.min(sx, sy);
+        }
+        return getScreenHeight() / w;
     }
 
-    public float getYScale() {
-        return getScreenWidth() / (float) Constants.CORE_SKIN_BG_SIZE[1];
+    public float getYScale(int w, int h) {
+        if(isKeepScale()){
+            //固定比例，取最小值
+            float sx = getScreenHeight() / w;
+            float sy = getScreenWidth() / h;
+            return Math.min(sx, sy);
+        }
+        return getScreenWidth() / h;
+    }
+
+    public boolean isKeepScale(){
+        return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
+    }
+
+    public float getScreenWidth() {
+        int w, h;
+        if (isImmerSiveMode()) {
+            w = mRealScreenSize.x;
+            h = mRealScreenSize.y;
+        } else {
+            w = mScreenSize.x;
+            h = mScreenSize.y;
+        }
+        return Math.min(w, h);
     }
 
     public float getScreenHeight() {
-        return Math.max(mScreenWidth, mScreenHeight);
+        int w, h;
+        if (isImmerSiveMode()) {
+            w = mRealScreenSize.x;
+            h = mRealScreenSize.y;
+        } else {
+            w = mScreenSize.x;
+            h = mScreenSize.y;
+        }
+        int ret = Math.max(w, h);
+        if(isImmerSiveMode()){
+            //刘海高度
+            ret -= getNotchHeight();
+        }
+        return ret;
     }
 
     /**
@@ -202,7 +197,6 @@ public class AppsSettings {
         options.mCardQuality = getCardQuality();
         options.mIsFontAntiAliasEnabled = isFontAntiAlias();
         options.mIsPendulumScaleEnabled = isPendulumScale();
-        options.mIsSoundEffectEnabled = isSoundEffect();
         options.mOpenglVersion = getOpenglVersion();
         if (Constants.DEBUG) {
             Log.i("Irrlicht", "option=" + options);
@@ -265,20 +259,6 @@ public class AppsSettings {
                 }
             }
         }
-    }
-
-    /***
-     * 音效
-     */
-    public boolean isSoundEffect() {
-        return mSharedPreferences.getBoolean(Constants.PREF_SOUND_EFFECT, Constants.PREF_DEF_SOUND_EFFECT);
-    }
-
-    /***
-     * 音效
-     */
-    public void setSoundEffect(boolean soundEffect) {
-        mSharedPreferences.putBoolean(Constants.PREF_SOUND_EFFECT, soundEffect);
     }
 
     /***
@@ -356,6 +336,16 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_IMAGE_QUALITY, "" + quality);
     }
 
+
+    /**
+     * 根据卡密获取卡图的路径
+     * @param code 卡密
+     * @return
+     */
+    public String getCardImagePath(int code){
+        return new File(getCardImagePath(),code+".jpg").getAbsolutePath();
+    }
+
     /***
      * 图片文件夹
      */
@@ -418,6 +408,10 @@ public class AppsSettings {
      */
     public void setUseExtraCards(boolean useExtraCards) {
         mSharedPreferences.putBoolean(Constants.PREF_USE_EXTRA_CARD_CARDS, useExtraCards);
+    }
+
+    public String getSoundPath() {
+        return new File(getResourcePath(), Constants.CORE_SOUND_PATH).getAbsolutePath();
     }
 
     public String getCoreSkinPath() {

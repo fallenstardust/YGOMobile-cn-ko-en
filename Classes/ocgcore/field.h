@@ -185,6 +185,7 @@ struct processor {
 	event_list point_event;
 	event_list instant_event;
 	event_list queue_event;
+	event_list delayed_activate_event;
 	event_list full_event;
 	event_list used_event;
 	event_list single_event;
@@ -273,6 +274,7 @@ struct processor {
 	card* limit_link_card;
 	int32 limit_link_minc;
 	int32 limit_link_maxc;
+	uint8 not_material;
 	uint8 attack_cancelable;
 	uint8 attack_rollback;
 	uint8 effect_damage_step;
@@ -362,6 +364,7 @@ public:
 	void add_card(uint8 playerid, card* pcard, uint8 location, uint8 sequence, uint8 pzone = FALSE);
 	void remove_card(card* pcard);
 	void move_card(uint8 playerid, card* pcard, uint8 location, uint8 sequence, uint8 pzone = FALSE);
+	void swap_card(card* pcard1, card* pcard2, uint8 new_sequence1, uint8 new_sequence2);
 	void swap_card(card* pcard1, card* pcard2);
 	void set_control(card* pcard, uint8 playerid, uint16 reset_phase, uint8 reset_count);
 	card* get_field_card(uint32 playerid, uint32 location, uint32 sequence);
@@ -377,6 +380,8 @@ public:
 	int32 get_mzone_limit(uint8 playerid, uint8 uplayer, uint32 reason);
 	int32 get_szone_limit(uint8 playerid, uint8 uplayer, uint32 reason);
 	uint32 get_linked_zone(int32 playerid);
+	uint32 get_rule_zone_fromex(int32 playerid, card* pcard);
+	void filter_must_use_mzone(uint8 playerid, uint8 uplayer, uint32 reason, card* pcard, uint32* flag);
 	void get_linked_cards(uint8 self, uint8 s, uint8 o, card_set* cset);
 	int32 check_extra_link(int32 playerid);
 	int32 check_extra_link(int32 playerid, card* pcard, int32 sequence);
@@ -471,7 +476,7 @@ public:
 	int32 is_player_can_send_to_grave(uint8 playerid, card* pcard);
 	int32 is_player_can_send_to_hand(uint8 playerid, card* pcard);
 	int32 is_player_can_send_to_deck(uint8 playerid, card* pcard);
-	int32 is_player_can_remove(uint8 playerid, card* pcard);
+	int32 is_player_can_remove(uint8 playerid, card* pcard, uint32 reason);
 	int32 is_chain_negatable(uint8 chaincount);
 	int32 is_chain_disablable(uint8 chaincount);
 	int32 is_chain_disabled(uint8 chaincount);
@@ -675,6 +680,7 @@ public:
 #define TIMING_BATTLE_PHASE			0x1000000
 #define TIMING_EQUIP				0x2000000
 #define TIMING_BATTLE_STEP_END		0x4000000
+#define TIMING_BATTLED				0x8000000
 
 #define GLOBALFLAG_DECK_REVERSE_CHECK	0x1
 #define GLOBALFLAG_BRAINWASHING_CHECK	0x2

@@ -16,7 +16,7 @@ import cn.garymb.ygomobile.lite.R;
 public class OYDialogUtil {
 
     public static void dialogcreateRoom(Activity activity, ServerInfo serverInfo){
-        DialogUtils du=DialogUtils.getdx(activity);
+        DialogUtils du=DialogUtils.getInstance(activity);
         View v=du.dialogBottomSheet(R.layout.dialog_create_room);
         TextView tv_room,tv_ip,tv_port,tv_mode,tv_lflist,tv_password;
         Button bt_copy_room;

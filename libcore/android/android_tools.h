@@ -42,9 +42,6 @@ public:
 	inline bool isFontAntiAliasEnabled() {
 		return m_font_aa_enabled;
 	}
-	inline bool isSoundEffectEnabled() {
-		return m_se_enabled;
-	}
 	inline bool isPendulumScaleEnabled() {
 		return m_ps_enabled;
 	}
@@ -68,7 +65,6 @@ private:
 	int cdb_count;
 	int zip_count;
     bool m_font_aa_enabled;
-    bool m_se_enabled;
     bool m_ps_enabled;
 };
 
@@ -115,7 +111,7 @@ extern void toggleGlobalIME(ANDROID_APP app, bool pShow);
 extern void toggleIME(ANDROID_APP app, bool pShow, const char* hint);
 
 //Init Java Irrlicht world.
-extern void initJavaBridge(ANDROID_APP app, void* handle);
+extern core::position2di initJavaBridge(ANDROID_APP app, void* handle);
 
 //Cause a haptic feedback.
 extern void perfromHapticFeedback(ANDROID_APP app);
@@ -140,6 +136,10 @@ extern int getCardQuality(ANDROID_APP app);
 
 //Retrive local ip address(mostly for wifi only);
 extern int getLocalAddr(ANDROID_APP app);
+
+extern float getXScale(ANDROID_APP app);
+
+extern float getYScale(ANDROID_APP app);
 
 //Retrive font path.
 extern irr::io::path getFontPath(ANDROID_APP app);
@@ -166,8 +166,6 @@ extern void saveSetting(ANDROID_APP app, const char* key, const char* value);
 
 //Retrive font antialias options
 extern bool getFontAntiAlias(ANDROID_APP app);
-
-extern bool isSoundEffectEnabled(ANDROID_APP app);
 
 //Show Android compat gui;
 extern void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow,

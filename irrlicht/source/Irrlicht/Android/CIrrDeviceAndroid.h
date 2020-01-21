@@ -56,6 +56,8 @@ namespace irr
 		
 		virtual E_DEVICE_TYPE getType() const;
 
+		core::array<EKEY_CODE> KeyMap;
+
 	private:
 		
 		static void handleAndroidCommand(ANDROID_APP app, int32_t cmd);
@@ -80,7 +82,6 @@ namespace irr
 
 		video::SExposedVideoData ExposedVideoData;
 
-		core::array<EKEY_CODE> KeyMap;
 	};
 
 } // end namespace irr

@@ -12,7 +12,13 @@
             <!--android:title="@string/settings_about_check_update"/>-->
         <Preference
             android:key="pref_key_change_log"
-            android:title="@string/settings_about_change_log"/>
+            android:title="@string/settings_about_change_log" />
+
+        <CheckBoxPreference
+            android:key="pref_settings_keep_scale"
+            android:persistent="false"
+            android:title="@string/about_pref_settings_keep_scale"/>
+
         <ListPreference
             android:entries="@array/opengl_version"
             android:entryValues="@array/opengl_version_value"
@@ -33,11 +39,7 @@
         <CheckBoxPreference
             android:key="pref_settings_read_ex"
             android:persistent="true"
-            android:title="@string/title_use_ex"/>
-        <CheckBoxPreference
-            android:key="pref_key_game_sound_effect"
-            android:persistent="true"
-            android:title="@string/settings_game_enable_sound_effect"/>
+            android:title="@string/title_use_ex" />
         <CheckBoxPreference
             android:key="pref_key_game_screen_orientation"
             android:persistent="true"

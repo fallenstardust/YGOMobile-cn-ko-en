@@ -24,13 +24,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <uses-sdk
-        tools:overrideLibrary="com.toptoche.searchablespinnerlibrary"/>
+        tools:overrideLibrary="com.toptoche.searchablespinnerlibrary"
+        tools:ignore="MultipleUsesSdk" />
     <application
         android:name="cn.garymb.ygomobile.App"
         android:allowBackup="false"
         android:icon="@drawable/ic_icon"
         android:label="@string/app_name"
         android:largeHeap="true"
+        android:roundIcon="@drawable/ic_icon_round"
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme"
@@ -98,14 +100,6 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme"/>
         <activity
-            android:name="cn.garymb.ygomobile.ui.activities.AboutActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/settings_about"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
-        <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:label="@string/settings"
@@ -158,11 +152,6 @@
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize"/>
-        <activity
-            android:name="cn.garymb.ygomobile.ui.activities.PhotoViewActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"/>
 		<!--<activity-->
             <!--android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"-->
             <!--android:configChanges="orientation|keyboardHidden|navigation|screenSize"-->
@@ -180,7 +169,7 @@
         <activity android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"/>
 
         <service
-            android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
+            android:name="cn.garymb.ygomobile.ui.plus.DuelAssistantService"
             android:priority="1000"/>
 
     <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
@@ -198,4 +187,29 @@
         </activity>
     </application>
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission
+        android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-sdk tools:overrideLibrary="com.toptoche.searchablespinnerlibrary"
+        tools:ignore="MultipleUsesSdk" />
 </manifest>

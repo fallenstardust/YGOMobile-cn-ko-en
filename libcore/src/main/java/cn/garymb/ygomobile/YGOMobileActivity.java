@@ -19,7 +19,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -77,7 +80,11 @@ public class YGOMobileActivity extends NativeActivity implements
     private GameApplication mApp;
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
-
+    private volatile int mPositionX, mPositionY;
+    private FrameLayout mLayout;
+    private SurfaceView mSurfaceView;
+    private boolean replaced = false;
+    private static boolean USE_SURFACE = true;
 
 //    public static int notchHeight;
 
@@ -99,11 +106,14 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
+        if(USE_SURFACE) {
+            mSurfaceView = new SurfaceView(this);
+        }
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
+        super.onCreate(savedInstanceState);
+        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
             initPostion();
         }
@@ -211,6 +221,81 @@ public class YGOMobileActivity extends NativeActivity implements
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
+            if (USE_SURFACE) {
+                changeGameSize();
+            }
+        }
+    }
+
+    private int[] getGameSize(){
+        //调整padding
+        float xScale = app().getXScale();
+        float yScale = app().getYScale();
+        int w = (int) (app().getGameWidth() * xScale);
+        int h = (int) (app().getGameHeight() * yScale);
+        Log.i("kk", "w1=" + app().getGameWidth() + ",h1=" + app().getGameHeight() + ",w2=" + w + ",h2=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
+        return new int[]{w, h};
+    }
+
+    @Override
+    public int getPositionX() {
+        synchronized (this) {
+            return mPositionX;
+        }
+    }
+
+    @Override
+    public int getPositionY() {
+        synchronized (this) {
+            return mPositionY;
+        }
+    }
+
+    @Override
+    public void setContentView(View view) {
+        int[] size = getGameSize();
+        int w = size[0];
+        int h = size[1];
+        mLayout = new FrameLayout(this);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
+        lp.gravity = Gravity.CENTER;
+        if (USE_SURFACE) {
+            mLayout.addView(mSurfaceView, lp);
+            mLayout.addView(view, lp);
+            super.setContentView(mLayout);
+            app().attachGame(this);
+            changeGameSize();
+            getWindow().takeSurface(null);
+            replaced = true;
+            mSurfaceView.getHolder().addCallback(this);
+            mSurfaceView.requestFocus();
+            getWindow().setGravity(Gravity.CENTER);
+        } else {
+            mLayout.addView(view, lp);
+            getWindow().setGravity(Gravity.CENTER);
+            super.setContentView(mLayout);
+        }
+    }
+
+    private void changeGameSize(){
+        //游戏大小
+        int[] size = getGameSize();
+        int w = (int) app().getScreenHeight();
+        int h = (int) app().getScreenWidth();
+        int spX = (int) ((w - size[0]) / 2.0f);
+        int spY = (int) ((h - size[1]) / 2.0f);
+//        Log.i("ygo", "Android command 1:posX=" + spX + ",posY=" + spY);
+        boolean update = false;
+        synchronized (this) {
+            if (spX != mPositionX || spY != mPositionY) {
+                mPositionX = spX;
+                mPositionY = spY;
+                update = true;
+            }
+        }
+        if (update) {
+//            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
+            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
         }
     }
 
@@ -387,5 +472,45 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public void setNativeHandle(int nativeHandle) {
         IrrlichtBridge.sNativeHandle = nativeHandle;
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
+        }
+        super.surfaceCreated(holder);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
+        }
+        super.surfaceChanged(holder, format, width, height);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
+        }
+        super.surfaceDestroyed(holder);
+    }
+
+    @Override
+    public void surfaceRedrawNeeded(SurfaceHolder holder) {
+        if(USE_SURFACE) {
+            if (!replaced) {
+                return;
+            }
+        }
+        super.surfaceRedrawNeeded(holder);
     }
 }

@@ -208,7 +208,7 @@ public class OYUtil {
             @Override
             public void onClick(View p1)
             {
-                final DialogUtils du=DialogUtils.getdx(context);
+                final DialogUtils du=DialogUtils.getInstance(context);
                 Button b1=du.dialogt1(toast,exception);
                 b1.setText((R.string.copy_exception));
                 b1.setOnClickListener(new View.OnClickListener(){

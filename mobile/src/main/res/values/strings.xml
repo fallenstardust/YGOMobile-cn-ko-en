@@ -21,6 +21,7 @@
     <string name="images">images</string>
     <string name="single_lua">single files</string>
     <string name="font_files">font files</string>
+    <string name="game_sound">sound files</string>
     <string name="game_skins">skin files</string>
     <string name="coping_pendulum_image">Coping pendulum image</string>
     <string name="dialog_select_font">Select a font file</string>
@@ -177,7 +178,7 @@
     <string name="delete_server_info">delete this server info?</string>
     <string name="exit_edit_mode">Exit Edit Mode</string>
     <string name="logo_text">Thank you all for your support.</string>
-    <string name="start_game_error">Join game fail</string>
+    <string name="start_game_error">Join game failed</string>
     <string name="set_font_size">In game font size</string>
     <string name="copy_to_clipbroad">Copy to clipbroad</string>
     <string name="deck_share_head">share deck by ygomobile.</string>
@@ -219,12 +220,12 @@
     <string name="category_name">Deck Category</string>
     <string name="save_quit">Save and quit</string>
     <string name="tip_reset_game_res">Reset game resources completed</string>
-    <string name="join_helper_tip">you can move your favourite sever on top
-        \nthen join helper will acquiescently start in it
-        \npls click to APP permission to find me and open the "Pop-ups"
+    <string name="join_helper_tip1">you can move your favourite sever on top
+        \nthen join helper will acquiescently start in it</string>
+    <string name="join_helper_tip2">\npls click to APP permission to find me and open the "Pop-ups"
         \nand keep the soft run in the background</string>
-    <string name="EXPAND_STATUS_BAR">Apply expand status bar\n then soft will work normally</string>
-    <string name="SYSTEM_ALERT_WINDOW">Apply Display over other APPs\n then soft will work normally</string>
+    <string name="EXPAND_STATUS_BAR">Apply expand status bar\n then DuelAssiatant will work normally</string>
+    <string name="SYSTEM_ALERT_WINDOW">Apply Display over other APPs\n then DuelAssiatant will work normally</string>
     <string name="OpenTIP">about Quick Join in Game</string>
     <string name="Open_Alert_Window">To Open Pop-ups</string>
     <string name="Function_Menu">MENU</string>
@@ -236,7 +237,7 @@
     <string name="ClickLinkArrows">click link arrows</string>
     <string name="Already_Lastest">Already be the Lastest Version</string>
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
-    <string name="about_immersive_mode">switch it to optimize the screen resolution which isnot 16:9</string>
+    <string name="about_immersive_mode">it will hide virtual-key</string>
     <string name="Download">Download</string>
     <string name="Downloading">Now Downloading</string>
     <string name="Update_Found">Found New Version</string>
@@ -301,4 +302,5 @@
     <string name="screenshoot">Screenshoot</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
+    <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
 </resources>

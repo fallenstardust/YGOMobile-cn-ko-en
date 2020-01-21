@@ -189,7 +189,7 @@ void CIrrDeviceAndroid::restoreWindow()
 
 core::position2di CIrrDeviceAndroid::getWindowPosition()
 {
-	return core::position2di(0, 0);
+	return core::position2di(0,0);
 }
 
 E_DEVICE_TYPE CIrrDeviceAndroid::getType() const

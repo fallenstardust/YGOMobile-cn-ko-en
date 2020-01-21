@@ -4,8 +4,10 @@
 #include "../Classes/gframe/os.h"
 #include <unistd.h>
 #include <pthread.h>
+#include <Android/CIrrDeviceAndroid.h>
 #include "../android/YGOGameOptions.h"
 #include "../Classes/gframe/game.h"
+#include <android/log.h>
 
 using namespace irr;
 using namespace gui;
@@ -289,6 +291,14 @@ static void* join_game_thread(void* param) {
 			event.KeyInput.Key = KEY_KEY_A;
 			device->postEventFromUser(event);
 		}
+	}
+}
+
+JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetInputFix(
+		JNIEnv* env, jclass clazz, jint handle, jint x, jint y) {
+	if(ygo::mainGame) {
+		__android_log_print(ANDROID_LOG_INFO, "ygo", "setInputFix posX=%d, posY=%d", x, y);
+		ygo::mainGame->setPositionFix(core::position2di(x, y));
 	}
 }
 

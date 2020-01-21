@@ -65,8 +65,7 @@ import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
-
-import static cn.garymb.ygomobile.ui.mycard.mcchat.util.Util.startDuelService;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     protected SwipeMenuRecyclerView mServerList;
@@ -136,7 +135,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //autoupadte checking
         checkPgyerUpdateSilent(getContext(), false, false, false);
         //ServiceDuelAssistant
-        startDuelService(this);
+        YGOUtil.startDuelService(this);
 
         //萌卡
         StartMycard();

@@ -59,6 +59,8 @@ public final class IrrlichtBridge {
 
     private static native void nativeJoinGame(int handle, ByteBuffer buffer, int length);
 
+    private static native void nativeSetInputFix(int handle, int x, int y);
+
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
 
@@ -118,6 +120,10 @@ public final class IrrlichtBridge {
         }
     }
 
+    public static void setInputFix(int x, int y){
+        nativeSetInputFix(sNativeHandle, x, y);
+    }
+
     public static void cancelChain() {
         nativeCancelChain(sNativeHandle);
     }
@@ -166,10 +172,12 @@ public final class IrrlichtBridge {
         float getScreenWidth();
 
         float getScreenHeight();
-
-        void playSoundEffect(String path);
 		
 		void runWindbot(String args);
+
+        float getXScale();
+
+        float getYScale();
 		
 //        float getSmallerSize();
 //        float getXScale();
@@ -198,5 +206,9 @@ public final class IrrlichtBridge {
         int getLocalAddress();
 
         void setNativeHandle(int nativeHandle);
+
+        int getPositionX();
+
+        int getPositionY();
     }
 }

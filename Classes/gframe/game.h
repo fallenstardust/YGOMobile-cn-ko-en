@@ -5,10 +5,10 @@
 #include "client_field.h"
 #include "deck_con.h"
 #include "menu_handler.h"
+#include "sound_manager.h"
 #include <unordered_map>
 #include <vector>
 #include <list>
-#include "IYGOSoundEffectPlayer.h"
 
 namespace ygo {
 
@@ -37,6 +37,7 @@ struct Config {
 	int chkWaitChain;
 	int chkIgnore1;
 	int chkIgnore2;
+	int default_rule;
 	int hide_setname;
 	int hide_hint_button;
 	int control_mode;
@@ -50,6 +51,12 @@ struct Config {
 	int quick_animation;
 	int auto_save_replay;
 	int prefer_expansion_script;
+	//sound
+	bool enable_sound;
+	bool enable_music;
+	double sound_volume;
+	double music_volume;
+	double music_mode;
 };
 
 struct DuelInfo {
@@ -93,6 +100,7 @@ struct BotInfo {
 	wchar_t desc[256];
 	bool support_master_rule_3;
 	bool support_new_master_rule;
+	bool support_master_rule_2020;
 };
 
 struct FadingUnit {
@@ -107,7 +115,7 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game {
+class Game :IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -166,7 +174,12 @@ public:
 		irr::gui::IGUIElement* focus = env->getFocus();
 		return focus && focus->hasType(type);
 	}
+
+	template<typename T>
+	static std::vector<T> TokenizeString(T input, const T& token);
+
 // don't merge
+	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
 	Signal frameSignal;
 	Signal actionSignal;
@@ -220,6 +233,7 @@ public:
 	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::scene::ICameraSceneNode* camera;
+	std::vector<Utils::IrrArchiveHelper> archives;
 	//GUI
 	irr::gui::IGUIEnvironment* env;
 	irr::gui::CGUITTFont* guiFont;
@@ -264,6 +278,12 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
+	//sound
+	irr::gui::IGUICheckBox* chkEnableSound;
+	irr::gui::IGUICheckBox* chkEnableMusic;
+	irr::gui::IGUIScrollBar* scrSoundVolume;
+	irr::gui::IGUIScrollBar* scrMusicVolume;
+	irr::gui::IGUICheckBox* chkMusicMode;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -331,7 +351,7 @@ public:
 	irr::gui::IGUIStaticText* stBotInfo;
 	irr::gui::IGUIButton* btnStartBot;
 	irr::gui::IGUIButton* btnBotCancel;
-	irr::gui::IGUICheckBox* chkBotOldRule;
+	irr::gui::IGUIComboBox* cbBotRule;
 	irr::gui::IGUICheckBox* chkBotHand;
 	irr::gui::IGUICheckBox* chkBotNoCheckDeck;
 	irr::gui::IGUICheckBox* chkBotNoShuffleDeck;
@@ -393,6 +413,7 @@ public:
 	//announce number
 	irr::gui::IGUIWindow* wANNumber;
 	irr::gui::IGUIComboBox* cbANNumber;
+	irr::gui::IGUIButton* btnANNumber[12];
 	irr::gui::IGUIButton* btnANNumberOK;
 	//announce card
 	irr::gui::IGUIWindow* wANCard;
@@ -528,8 +549,8 @@ public:
 	//cancel or finish
 	irr::gui::IGUIButton* btnCancelOrFinish;
 	float xScale;
-	float yScale;
-	IYGOSoundEffectPlayer* soundEffectPlayer;
+    float yScale;
+
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
 	int glversion;
@@ -541,10 +562,44 @@ public:
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
 #endif
+	void setPositionFix(core::position2di fix){
+		InputFix = fix;
+	}
+	float optX(float x) {
+		float x2 = x - InputFix.X;
+		if (x2 < 0) {
+			return 0;
+		}
+		return x2;
+	}
 
-};
+	float optY(float y) {
+		float y2 = y - InputFix.Y;
+		if (y2 < 0) {
+			return 0;
+		}
+		return y2;
+	}
+    void process(irr::SEvent &event);
+private:
+	core::position2di InputFix;
+    };
 
-extern Game* mainGame;
+    extern Game *mainGame;
+
+	template<typename T>
+	inline std::vector<T> Game::TokenizeString(T input, const T & token) {
+		std::vector<T> res;
+		std::size_t pos;
+		while((pos = input.find(token)) != T::npos) {
+			if(pos != 0)
+				res.push_back(input.substr(0, pos));
+			input = input.substr(pos + 1);
+		}
+		if(input.size())
+			res.push_back(input);
+		return res;
+	}
 
 }
 
@@ -609,7 +664,7 @@ extern Game* mainGame;
 #define BUTTON_CANCEL_SINGLEPLAY	152
 #define LISTBOX_BOT_LIST			153
 #define BUTTON_BOT_START			154
-#define CHECKBOX_BOT_OLD_RULE		155
+#define COMBOBOX_BOT_RULE			155
 #define EDITBOX_CHAT				199
 
 #define BUTTON_MSG_OK				200
@@ -666,9 +721,18 @@ extern Game* mainGame;
 #define BUTTON_CHAIN_WHENAVAIL		266
 #define BUTTON_CANCEL_OR_FINISH		267
 #define BUTTON_PHASE				268
-#define BUTTON_CLEAR_LOG			270
-#define LISTBOX_LOG					271
-#define SCROLL_CARDTEXT				280
+#define BUTTON_ANNUMBER_1			270
+#define BUTTON_ANNUMBER_2			271
+#define BUTTON_ANNUMBER_3			272
+#define BUTTON_ANNUMBER_4			273
+#define BUTTON_ANNUMBER_5			274
+#define BUTTON_ANNUMBER_6			275
+#define BUTTON_ANNUMBER_7			276
+#define BUTTON_ANNUMBER_8			277
+#define BUTTON_ANNUMBER_9			278
+#define BUTTON_ANNUMBER_10			279
+#define BUTTON_ANNUMBER_11			280
+#define BUTTON_ANNUMBER_12			281
 #define BUTTON_DISPLAY_0			290
 #define BUTTON_DISPLAY_1			291
 #define BUTTON_DISPLAY_2			292
@@ -719,12 +783,19 @@ extern Game* mainGame;
 #define BUTTON_DM_CANCEL			342
 #define BUTTON_CLOSE_DECKMANAGER	343
 #define COMBOBOX_LFLIST				349
-
+#define BUTTON_CLEAR_LOG			350
+#define LISTBOX_LOG					351
+#define SCROLL_CARDTEXT				352
 #define CHECKBOX_AUTO_SEARCH		360
 #define CHECKBOX_DRAW_FIELD_SPELL	361
 #define CHECKBOX_MULTI_KEYWORDS		372
 #define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DISABLE_CHAT		364
+
+#define SCROLL_VOLUME				365
+#define CHECKBOX_ENABLE_SOUND		366
+#define CHECKBOX_ENABLE_MUSIC		367
+
 #define CHECKBOX_QUICK_ANIMATION	369
 #define SCROLL_TAB_HELPER			370
 #define SCROLL_TAB_SYSTEM			371
@@ -734,6 +805,14 @@ extern Game* mainGame;
 #define DEFAULT_DUEL_RULE			4
 
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
+
+#ifdef _IRR_ANDROID_PLATFORM_
+#define GAME_WIDTH 1024
+#define GAME_HEIGHT 640
+#else
+#define GAME_WIDTH 1280
+#define GAME_HEIGHT 720
+#endif
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000

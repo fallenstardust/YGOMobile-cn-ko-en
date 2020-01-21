@@ -18,7 +18,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.Util;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class McchatActivity extends Activity implements ChatListener {
 
@@ -101,13 +101,13 @@ public class McchatActivity extends Activity implements ChatListener {
             public void onClick(View p1) {
                 String message = main_send_message.getText().toString().trim();
                 if (message.equals("")) {
-                    Util.show(McchatActivity.this, getString(R.string.noting_to_send));
+                    YGOUtil.show( getString(R.string.noting_to_send));
                 } else {
                     try {
                         su.sendMessage(message);
                         main_send_message.setText("");
                     } catch (Exception e) {
-                        Util.show(McchatActivity.this, getString(R.string.sending_failed));
+                        YGOUtil.show( getString(R.string.sending_failed));
                     }
                 }
                 // TODO: Implement this method

@@ -6,16 +6,15 @@ android {
 
     defaultConfig {
         applicationId "cn.ourygo.ygomobile"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 22
         versionCode 330601002
         versionName "@string/app_version_name"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
-            abiFilters "armeabi-v7a"
+            abiFilters "armeabi-v7a","x86"
         }
-//        ndk { abiFilters "armeabi", "armeabi-v7a", "mips" }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -23,19 +22,20 @@ android {
     }
     productFlavors {
         cn {
-            manifestPlaceholders=[PGYER_APPID:"dd147e8542b85a64111d98290892d8bd"]
+            manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
             applicationIdSuffix ".EN"
-            manifestPlaceholders=[PGYER_APPID:"242ad8311ed1c943f48cfc8238d06210"]
+            manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
             applicationIdSuffix ".KO"
-            manifestPlaceholders=[PGYER_APPID:"8e985218b1f02bda5fa456557c886f54"]
+            manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }
     buildTypes {
         debug {
+            applicationIdSuffix ".debug"
             shrinkResources false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -84,7 +84,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:3.7.0'
     implementation 'com.github.chrisbanes.photoview:library:1.2.4'
     //dialog库
-    implementation 'com.github.feihuaduo:DialogUtils:1.8.9'
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.9.3'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
@@ -107,9 +107,6 @@ dependencies {
 
     //
     implementation(name: 'paysdk-release-1.2.4', ext: 'aar')
-    implementation "com.pgyersdk:sdk:3.0.5"
-    //dialog库
-    implementation(name: 'dialogutils2-release', ext: 'aar')
     //recyclerview的adapter库
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -118,4 +115,8 @@ dependencies {
     implementation 'com.yuyh.imgsel:library:2.0.6'
     //跨进程SharedPreferencesPlus工具
     implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
+    //Tencent bugly
+    implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
+    implementation 'com.tencent.bugly:nativecrashreport:latest.release'
+
 }

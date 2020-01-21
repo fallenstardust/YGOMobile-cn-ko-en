@@ -39,6 +39,8 @@ int32 scriptlib::debug_add_card(lua_State *L) {
 	if(pduel->game_field->is_location_useable(playerid, location, sequence)) {
 		card* pcard = pduel->new_card(code);
 		pcard->owner = owner;
+		if(location == LOCATION_EXTRA && position == 0)
+			position = POS_FACEDOWN_DEFENSE;
 		pcard->sendto_param.position = position;
 		if(location == LOCATION_PZONE) {
 			int32 seq = pduel->game_field->core.duel_rule >= 4 ? sequence * 4 : sequence + 6;
@@ -200,4 +202,23 @@ int32 scriptlib::debug_show_hint(lua_State *L) {
 	pduel->bufferlen += len;
 	pduel->write_buffer8(0);
 	return 0;
+}
+
+static const struct luaL_Reg debuglib[] = {
+	{ "Message", scriptlib::debug_message },
+	{ "AddCard", scriptlib::debug_add_card },
+	{ "SetPlayerInfo", scriptlib::debug_set_player_info },
+	{ "PreSummon", scriptlib::debug_pre_summon },
+	{ "PreEquip", scriptlib::debug_pre_equip },
+	{ "PreSetTarget", scriptlib::debug_pre_set_target },
+	{ "PreAddCounter", scriptlib::debug_pre_add_counter },
+	{ "ReloadFieldBegin", scriptlib::debug_reload_field_begin },
+	{ "ReloadFieldEnd", scriptlib::debug_reload_field_end },
+	{ "SetAIName", scriptlib::debug_set_ai_name },
+	{ "ShowHint", scriptlib::debug_show_hint },
+	{ NULL, NULL }
+};
+void scriptlib::open_debuglib(lua_State *L) {
+	luaL_newlib(L, debuglib);
+	lua_setglobal(L, "Debug");
 }

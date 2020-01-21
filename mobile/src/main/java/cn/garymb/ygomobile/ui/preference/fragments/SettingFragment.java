@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
+import com.tencent.bugly.beta.Beta;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -34,10 +35,9 @@ import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -61,13 +61,13 @@ import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_PATH;
 import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
-import static cn.garymb.ygomobile.Constants.PREF_SOUND_EFFECT;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
@@ -122,7 +122,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity())
                 + "(" + SystemUtils.getVersion(getActivity()) + ")");
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
-        bind(PREF_SOUND_EFFECT, mSettings.isSoundEffect());
         bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -146,6 +145,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(SETTINGS_CARD_BG, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
+        bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
         isInit = false;
     }
 
@@ -190,18 +190,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
                     if (checkBoxPreference.isChecked()) {
-                        getActivity().startService(new Intent(getActivity(), ServiceDuelAssistant.class));
+                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
                     } else {
-                        getActivity().stopService(new Intent(getActivity(), ServiceDuelAssistant.class));
-                    }
-                }
-                //如果是音效开关
-                if (preference.getKey().equals(PREF_SOUND_EFFECT)) {
-                    //如果打勾开启音效
-                    if (checkBoxPreference.isChecked()) {
-                        //如果未初始化音效
-                        if (App.get().isInitSoundEffectPool())
-                            App.get().initSoundEffectPool();
+                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
                     }
                 }
                 return true;
@@ -228,7 +219,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            HomeActivity.checkPgyerUpdateSilent(getActivity(), true, true, true);
+            Beta.checkUpgrade();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;

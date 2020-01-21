@@ -108,7 +108,7 @@ public class YGOServerFragemnt extends Fragment {
     private void initView(View v) {
         rv_service_list = v.findViewById(R.id.rv_service_list);
 
-        du = DialogUtils.getdx(getActivity());
+        du = DialogUtils.getInstance(getActivity());
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
         rv_service_list.setLayoutManager(linearLayoutManager);

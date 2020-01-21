@@ -539,6 +539,15 @@ public:
 	virtual bool OnEvent(const SEvent& event) = 0;
 };
 
+class IProcessEventReceiver
+{
+public:
+
+	//! Destructor
+	virtual ~IProcessEventReceiver() {}
+
+	virtual void process(SEvent& event) = 0;
+};
 
 //! Information on a joystick, returned from @ref irr::IrrlichtDevice::activateJoysticks()
 struct SJoystickInfo
