@@ -198,7 +198,7 @@
         <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
         <!--android:priority="1000"-->
         <service
-            android:name="cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant"
+            android:name="cn.garymb.ygomobile.ui.plus.DuelAssistantService"
             android:priority="1000" />
 
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->

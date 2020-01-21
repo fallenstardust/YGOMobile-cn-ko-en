@@ -35,16 +35,14 @@ import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
-import cn.garymb.ygomobile.utils.PermissionUtil;
 import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
@@ -192,9 +190,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
                     if (checkBoxPreference.isChecked()) {
-                        getActivity().startService(new Intent(getActivity(), ServiceDuelAssistant.class));
+                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
                     } else {
-                        getActivity().stopService(new Intent(getActivity(), ServiceDuelAssistant.class));
+                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
                     }
                 }
                 return true;

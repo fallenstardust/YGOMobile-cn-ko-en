@@ -151,7 +151,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //check update
         Beta.checkUpgrade(false, false);
-        //ServiceDuelAssistant
+        //DuelAssistantService
         YGOUtil.startDuelService(this);
         //萌卡
         StartMycard();

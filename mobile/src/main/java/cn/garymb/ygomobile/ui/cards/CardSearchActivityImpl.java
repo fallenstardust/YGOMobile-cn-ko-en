@@ -32,7 +32,7 @@ import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -65,7 +65,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 currentCardSearchMessage = HomeActivity.cardSearchMessage;
             } else {
-                currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+                currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
             }
         }
         Toolbar toolbar = $(R.id.toolbar);
@@ -115,7 +115,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 currentCardSearchMessage = HomeActivity.cardSearchMessage;
             } else {
-                currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+                currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
             }
             intentSearch();
         }
@@ -126,7 +126,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             currentCardSearchMessage = HomeActivity.cardSearchMessage;
         } else {
-            currentCardSearchMessage = ServiceDuelAssistant.cardSearchMessage;
+            currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
         }
     }
 

@@ -49,9 +49,9 @@ import cn.garymb.ygomobile.utils.PermissionUtil;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 
-public class ServiceDuelAssistant extends Service {
+public class DuelAssistantService extends Service {
 
-    private final static String TAG = "ServiceDuelAssistant";
+    private final static String TAG = "DuelAssistantService";
     private static final String CHANNEL_ID = "YGOMobile";
     private static final String CHANNEL_NAME = "Duel_Assistant";
     private final static String DUEL_ASSISTANT_SERVICE_ACTION = "YGOMOBILE:ACTION_DUEL_ASSISTANT_SERVICE";
@@ -193,7 +193,7 @@ public class ServiceDuelAssistant extends Service {
                         return;
                 }
                 //如果有悬浮窗权限再显示
-                if (PermissionUtil.isServicePermission(ServiceDuelAssistant.this, false))
+                if (PermissionUtil.isServicePermission(DuelAssistantService.this, false))
                     joinRoom(clipMessage, start, end);
             } else {
                 for (String s : cardSearchKey) {
@@ -209,7 +209,7 @@ public class ServiceDuelAssistant extends Service {
                         if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
                             return;
                         }
-                        Intent intent = new Intent(ServiceDuelAssistant.this, CardSearchAcitivity.class);
+                        Intent intent = new Intent(DuelAssistantService.this, CardSearchAcitivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
                         startActivity(intent);
@@ -253,7 +253,7 @@ public class ServiceDuelAssistant extends Service {
             } else {
                 //如果没有通知权限则关闭服务
                 stopForeground(true);
-                stopService(new Intent(ServiceDuelAssistant.this, ServiceDuelAssistant.class));
+                stopService(new Intent(DuelAssistantService.this, DuelAssistantService.class));
             }
         }
     }
@@ -278,7 +278,7 @@ public class ServiceDuelAssistant extends Service {
                         break;
 
                     case CMD_START_GAME:
-                        Intent intent2 = new Intent(ServiceDuelAssistant.this, MainActivity.class);
+                        Intent intent2 = new Intent(DuelAssistantService.this, MainActivity.class);
                         intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent2);
                         break;
@@ -348,7 +348,7 @@ public class ServiceDuelAssistant extends Service {
                 if (isUrl) {
                     Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                    Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
                     startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                     startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(startdeck);
@@ -357,13 +357,13 @@ public class ServiceDuelAssistant extends Service {
                     try {
                         //以当前时间戳作为卡组名保存卡组
                         File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                        Intent startdeck = new Intent(ServiceDuelAssistant.this, DeckManagerActivity.getDeckManager());
+                        Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
                         startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                         startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(startdeck);
                     } catch (IOException e) {
                         e.printStackTrace();
-                        Toast.makeText(ServiceDuelAssistant.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -400,14 +400,14 @@ public class ServiceDuelAssistant extends Service {
                     isdis = false;
                     mWindowManager.removeView(mFloatLayout);
                 }
-                ServerListAdapter mServerListAdapter = new ServerListAdapter(ServiceDuelAssistant.this);
+                ServerListAdapter mServerListAdapter = new ServerListAdapter(DuelAssistantService.this);
 
-                ServerListManager mServerListManager = new ServerListManager(ServiceDuelAssistant.this, mServerListAdapter);
+                ServerListManager mServerListManager = new ServerListManager(DuelAssistantService.this, mServerListAdapter);
                 mServerListManager.syncLoadData();
 
                 File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
                 VUiKit.defer().when(() -> {
-                    ServerList assetList = ServerListManager.readList(ServiceDuelAssistant.this.getAssets().open(ASSET_SERVER_LIST));
+                    ServerList assetList = ServerListManager.readList(DuelAssistantService.this.getAssets().open(ASSET_SERVER_LIST));
                     ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
                     if (fileList == null) {
                         return assetList;
@@ -422,7 +422,7 @@ public class ServiceDuelAssistant extends Service {
 
                         ServerInfo serverInfo = list.getServerInfoList().get(0);
 
-                        duelIntent(ServiceDuelAssistant.this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
+                        duelIntent(DuelAssistantService.this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
 
                     }
                 });

@@ -14,9 +14,8 @@ import androidx.core.content.ContextCompat;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 
 public class YGOUtil {
 
@@ -32,6 +31,11 @@ public class YGOUtil {
         return App.get().getResources().getString(stringId);
     }
 
+    /**
+     * 根据卡密获取高清图下载地址
+     * @param code  卡密
+     * @return  高清图url
+     */
     public static String getCardImageDetailUrl(int code){
         return "https://code.mycard.moe/fallenstardust/ygoimage/raw/master/"+code+".jpg";
     }
@@ -53,6 +57,8 @@ public class YGOUtil {
     //复制字符串到剪贴板
     public static void copyMessage(Context context, String message) {
         ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cmb==null)
+            return;
         cmb.setPrimaryClip(ClipData.newPlainText(null, message));//复制命令
     }
 
@@ -61,11 +67,11 @@ public class YGOUtil {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
                 if (dialogPlus == null)
-                    context.startForegroundService(new Intent(context, ServiceDuelAssistant.class));
+                    context.startForegroundService(new Intent(context, DuelAssistantService.class));
                 else
                     dialogPlus.show();
             } else {
-                context.startService(new Intent(context, ServiceDuelAssistant.class));
+                context.startService(new Intent(context, DuelAssistantService.class));
             }
         }
     }

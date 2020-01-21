@@ -69,10 +69,9 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.ServiceDuelAssistant;
+import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
-import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
@@ -799,7 +798,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             @Override
             public void onClick(View v) {
                 du.dis();
-                stopService(new Intent(DeckManagerActivityImpl.this, ServiceDuelAssistant.class));
+                stopService(new Intent(DeckManagerActivityImpl.this, DuelAssistantService.class));
                 YGOUtil.copyMessage(DeckManagerActivityImpl.this, et_code.getText().toString().trim());
                 showToast(getString(R.string.deck_text_copyed));
                 //复制完毕开启决斗助手
