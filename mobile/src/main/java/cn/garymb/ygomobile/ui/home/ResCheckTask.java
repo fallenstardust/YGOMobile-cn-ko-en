@@ -15,7 +15,6 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -35,54 +34,31 @@ import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
-    private static final String TAG = "ResCheckTask";
     public static final int ERROR_NONE = 0;
     public static final int ERROR_CORE_CONFIG = -1;
     public static final int ERROR_COPY = -2;
     public static final int ERROR_CORE_CONFIG_LOST = -3;
+    private static final String TAG = "ResCheckTask";
     protected int mError = ERROR_NONE;
+    MessageReceiver mReceiver = new MessageReceiver();
     private AppsSettings mSettings;
     private Context mContext;
+    Handler han = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    checkWindbot();
+                    break;
+            }
+        }
+    };
     private ResCheckListener mListener;
     private DialogPlus dialog = null;
     private Handler handler;
     private boolean isNewVersion;
-    private WeakReference<Context> weakReference;
-    private MessageReceiver mReceiver;
-
-    public ResCheckTask(Context context) {
-        this.weakReference = new WeakReference<>(context);
-    }
-
-    public void regesterReceiver() {
-        mReceiver = new MessageReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-
-        intentFilter.addAction("RUN_WINDBOT");
-
-        if (weakReference != null && weakReference.get() != null){
-            Context context = weakReference.get();
-            context.registerReceiver(mReceiver, intentFilter);
-        }
-    }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
-    }
-
-    public void unregisterMReceiver() {
-        if(weakReference != null && weakReference.get() != null) {
-            Context context = weakReference.get();
-            context.unregisterReceiver(mReceiver);
-        }
-    }
 
     @SuppressWarnings("deprecation")
     public ResCheckTask(Context context, ResCheckListener listener) {
@@ -90,6 +66,81 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mListener = listener;
         handler = new Handler(context.getMainLooper());
         mSettings = AppsSettings.get();
+    }
+
+    public static String getDatapath(String path) {
+        if (TextUtils.isEmpty(ASSETS_PATH)) {
+            return path;
+        }
+        if (path.startsWith(ASSETS_PATH)) {
+            return path;
+        }
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        return ASSETS_PATH + path;
+    }
+
+    public static boolean checkDataBase(String path) {
+        if (!new File(path).exists()) {
+            return false;
+        }
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase(path, null,
+                    SQLiteDatabase.OPEN_READWRITE);
+            Cursor cursor = db.rawQuery("select * from datas,texts where datas.id=texts.id limit 1;", null);
+            if (cursor == null) {
+                return false;
+            }
+            cursor.close();
+        } catch (Exception e) {
+            return false;
+        } finally {
+            IOUtils.close(db);
+        }
+        return true;
+    }
+
+    public static void doSomeTrickOnDatabase(String myPath)
+            throws SQLiteException {
+        SQLiteDatabase db = null;
+        db = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+        try {
+            db.rawQuery("select * from datas where datas._id = 0;", null);
+            db.close();
+            return;
+        } catch (Exception e) {
+
+        }
+        try {
+            db.beginTransaction();
+            db.execSQL("ALTER TABLE datas RENAME TO datas_backup;");
+            db.execSQL("CREATE TABLE datas (_id integer PRIMARY KEY, ot integer, alias integer, setcode integer, type integer,"
+                    + " atk integer, def integer, level integer, race integer, attribute integer, category integer);");
+            db.execSQL("INSERT INTO datas (_id, ot, alias, setcode, type, atk, def, level, race, attribute, category) "
+                    + "SELECT id, ot, alias, setcode, type, atk, def, level, race, attribute, category FROM datas_backup;");
+            db.execSQL("DROP TABLE datas_backup;");
+            db.execSQL("ALTER TABLE texts RENAME TO texts_backup;");
+            db.execSQL("CREATE TABLE texts (_id integer PRIMARY KEY, name varchar(128), \"desc\" varchar(1024),"
+                    + " str1 varchar(256), str2 varchar(256), str3 varchar(256), str4 varchar(256), str5 varchar(256),"
+                    + " str6 varchar(256), str7 varchar(256), str8 varchar(256), str9 varchar(256), str10 varchar(256),"
+                    + " str11 varchar(256), str12 varchar(256), str13 varchar(256), str14 varchar(256), str15 varchar(256), str16 varchar(256));");
+            db.execSQL("INSERT INTO texts (_id, name, \"desc\", str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, str13, str14, str15, str16)"
+                    + " SELECT id, name, \"desc\", str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, str13, str14, str15, str16 FROM texts_backup;");
+            db.execSQL("DROP TABLE texts_backup;");
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        if (db != null) {
+            db.close();
+        }
+    }
+
+    public void unregisterMReceiver() {
+        mContext.unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -125,19 +176,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         handler.post(() -> {
             dialog.setMessage(msg);
         });
-    }
-
-    public static String getDatapath(String path) {
-        if (TextUtils.isEmpty(ASSETS_PATH)) {
-            return path;
-        }
-        if (path.startsWith(ASSETS_PATH)) {
-            return path;
-        }
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        return ASSETS_PATH + path;
     }
 
     @Override
@@ -252,64 +290,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
     }
 
-    public static boolean checkDataBase(String path) {
-        if (!new File(path).exists()) {
-            return false;
-        }
-        SQLiteDatabase db = null;
-        try {
-            db = SQLiteDatabase.openDatabase(path, null,
-                    SQLiteDatabase.OPEN_READWRITE);
-            Cursor cursor = db.rawQuery("select * from datas,texts where datas.id=texts.id limit 1;", null);
-            if (cursor == null) {
-                return false;
-            }
-            cursor.close();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            IOUtils.close(db);
-        }
-        return true;
-    }
-
-    public static void doSomeTrickOnDatabase(String myPath)
-            throws SQLiteException {
-        SQLiteDatabase db = null;
-        db = SQLiteDatabase.openDatabase(myPath, null,
-                SQLiteDatabase.OPEN_READWRITE);
-        try {
-            db.rawQuery("select * from datas where datas._id = 0;", null);
-            db.close();
-            return;
-        } catch (Exception e) {
-
-        }
-        try {
-            db.beginTransaction();
-            db.execSQL("ALTER TABLE datas RENAME TO datas_backup;");
-            db.execSQL("CREATE TABLE datas (_id integer PRIMARY KEY, ot integer, alias integer, setcode integer, type integer,"
-                    + " atk integer, def integer, level integer, race integer, attribute integer, category integer);");
-            db.execSQL("INSERT INTO datas (_id, ot, alias, setcode, type, atk, def, level, race, attribute, category) "
-                    + "SELECT id, ot, alias, setcode, type, atk, def, level, race, attribute, category FROM datas_backup;");
-            db.execSQL("DROP TABLE datas_backup;");
-            db.execSQL("ALTER TABLE texts RENAME TO texts_backup;");
-            db.execSQL("CREATE TABLE texts (_id integer PRIMARY KEY, name varchar(128), \"desc\" varchar(1024),"
-                    + " str1 varchar(256), str2 varchar(256), str3 varchar(256), str4 varchar(256), str5 varchar(256),"
-                    + " str6 varchar(256), str7 varchar(256), str8 varchar(256), str9 varchar(256), str10 varchar(256),"
-                    + " str11 varchar(256), str12 varchar(256), str13 varchar(256), str14 varchar(256), str15 varchar(256), str16 varchar(256));");
-            db.execSQL("INSERT INTO texts (_id, name, \"desc\", str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, str13, str14, str15, str16)"
-                    + " SELECT id, name, \"desc\", str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, str13, str14, str15, str16 FROM texts_backup;");
-            db.execSQL("DROP TABLE texts_backup;");
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-        }
-        if (db != null) {
-            db.close();
-        }
-    }
-
     private void checkDirs() {
         String[] dirs = {
                 //脚本文件夹
@@ -393,10 +373,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         FileUtils.writeLines(stringfile, lines, encoding, "\n");
     }
 
-    public interface ResCheckListener {
-        void onResCheckFinished(int result, boolean isNewVersion);
-    }
-
     public void checkWindbot() {
         Log.i("路径", mContext.getFilesDir().getPath());
         Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
@@ -412,17 +388,18 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mContext.registerReceiver(mReceiver, filter);
     }
 
-    Handler han = new Handler() {
+    public interface ResCheckListener {
+        void onResCheckFinished(int result, boolean isNewVersion);
+    }
 
+    public class MessageReceiver extends BroadcastReceiver {
         @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    checkWindbot();
-                    break;
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("RUN_WINDBOT")) {
+                String args = intent.getStringExtra("args");
+                WindBot.runAndroid(args);
             }
         }
-    };
-
+    }
 }
