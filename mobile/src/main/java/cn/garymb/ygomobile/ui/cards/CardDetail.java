@@ -29,6 +29,7 @@ import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -356,10 +357,18 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-                Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                message.arg1 = code;
-                handler.sendMessage(message);
+                if (file.length()<100*1024){
+                    FileUtils.deleteFile(file);
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                    message.obj = "未找到高清图或下载不完整，请长按重新下载";
+                    handler.sendMessage(message);
+                }else {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                    message.arg1 = code;
+                    handler.sendMessage(message);
+                }
             }
 
             @Override
@@ -372,6 +381,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             @Override
             public void onDownloadFailed(Exception e) {
+                //下载失败后删除下载的文件
+                FileUtils.deleteFile(file);
+                downloadCardImage(code,file);
+
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
                 message.obj = e.toString();
