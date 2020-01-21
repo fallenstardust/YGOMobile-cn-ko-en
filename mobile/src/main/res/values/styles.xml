@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="BaseTheme" parent="Theme.AppCompat"></style>
+    <style name="BaseTheme" parent="Theme.AppCompat" />
 
-    <style name="AppBaseTheme" parent="BaseTheme"></style>
+    <style name="AppBaseTheme" parent="BaseTheme" />
 
     <style name="AppTheme" parent="AppBaseTheme">
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -78,7 +78,7 @@
         <item name="android:colorBackground">@color/colorPrimary</item>
     </style>
 
-    <style name="AppTheme.PopupOverlay.Dark" parent="ThemeOverlay.AppCompat.Dark"></style>
+    <style name="AppTheme.PopupOverlay.Dark" parent="ThemeOverlay.AppCompat.Dark" />
 
     <style name="Link_Marker">
         <item name="android:layout_width">match_parent</item>

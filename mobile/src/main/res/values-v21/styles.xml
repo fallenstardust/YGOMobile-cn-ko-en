@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+
+
+		<item name="android:windowSoftInputMode">stateHidden|adjustPan</item>
+		<item name="android:windowContentTransitions">true</item>
+		<item name="android:windowDrawsSystemBarBackgrounds">true</item>
+		<item name="android:statusBarColor">@android:color/transparent</item>
+<!--		将布局延伸到状态栏-->
+		<item name="android:windowTranslucentStatus">true</item>
+
+		<item name="colorPrimary">@color/colorPrimary</item>
+		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+		<item name="colorAccent">@color/colorAccent</item>
+		<item name="android:windowBackground">@color/windowBackgroud</item>
+		<item name="android:windowActionBar">false</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="windowActionBar">false</item>
+		<item name="windowNoTitle">true</item>
+
+	</style>
+
+	
+	<style name="SearchTheme" parent="@style/AppTheme">
+		<!--toolbar菜单项图标的颜色-->
+		<item name="android:textColorSecondary">@android:color/white</item>
+	</style>
+
+	<style name="StatusBarTransparentTheme" parent="@style/AppTheme"> 
+		<item name="android:statusBarColor">@android:color/transparent</item> 
+	</style>
+
+
+</resources>
+

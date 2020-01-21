@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="42dp"
+    android:layout_height="@dimen/toolbar_and_statusbar_height"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingLeft="@dimen/main_margin"
     android:paddingRight="@dimen/main_margin"
+    android:gravity="bottom"
     android:orientation="vertical">
 
     <RelativeLayout
+        android:layout_marginBottom="5dp"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:background="@drawable/click_background"
-        android:id="@+id/iv_back"
-        android:layout_centerVertical="true"
-        app:srcCompat="@drawable/ic_keyboard_backspace_black_24dp"
-        android:layout_width="22dp"
-        android:layout_height="22dp" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:background="@drawable/click_background"
+            android:id="@+id/iv_back"
+            android:layout_centerVertical="true"
+            app:srcCompat="@drawable/ic_keyboard_backspace_black_24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_title"
@@ -34,6 +35,6 @@
     <View
         android:background="@color/colorAccentLight"
         android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        android:layout_height="1dp" />
 
 </LinearLayout>

@@ -23,7 +23,7 @@ allprojects {
         jcenter()
         google()
         maven { url "https://jitpack.io" }
-        maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
+//        maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
         //smack
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'

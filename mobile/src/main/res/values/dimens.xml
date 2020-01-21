@@ -53,6 +53,9 @@
 
     <dimen name="corner_radius">8dp</dimen>
     <dimen name="main_margin">20dp</dimen>
-    
+
+
+    <dimen name="toolbar_height">40dp</dimen>
+    <dimen name="toolbar_and_statusbar_height">60dp</dimen>
     
 </resources>

@@ -7,11 +7,16 @@
 
     <!--<include-->
         <!--layout="@layout/content_toolbar"/>-->
+    <LinearLayout
+        android:gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_and_statusbar_height">
     <RelativeLayout
+        android:layout_marginBottom="5dp"
         android:layout_marginLeft="@dimen/main_margin"
         android:layout_marginRight="@dimen/main_margin"
         android:layout_width="match_parent"
-        android:layout_height="35dp">
+        android:layout_height="wrap_content">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:layout_centerVertical="true"
@@ -44,6 +49,7 @@
 
     </RelativeLayout>
 
+    </LinearLayout>
     <View
         android:layout_marginLeft="@dimen/main_margin"
         android:layout_marginRight="@dimen/main_margin"
