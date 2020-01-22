@@ -275,4 +275,5 @@
     <string name="tip_redownload">카드를 다시 다운로드하겠습니까?</string>
     <string name="already_top">첫번째</string>
     <string name="already_end">마지막</string>
+    <string name="tip_expansions_image">카드의 고화질 이미지가 없습니다.</string>
 </resources>
