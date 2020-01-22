@@ -188,7 +188,7 @@
     <string name="reset_game_res">Reset Resources</string>
     <string name="downloading_images">Downloading images</string>
     <string name="download_image_progress" formatted="false">Downloading card image %d/%d</string>
-    <string name="download_image_error" formatted="false">Download fail %d</string>
+    <string name="download_image_error" formatted="false">Download fail, Long press to retry</string>
     <string name="downloading_images_ok">Download images ok</string>
     <string name="tip_istunning">YGOPro is Running</string>
     <string name="edit">Edit</string>
@@ -296,11 +296,14 @@
     <string name="please_select_target_category">please select target category</string>
     <string name="delete_confirm">will delete all deck of this Category</string>
     <string name="no_deck_is_selected">no_deck_is_selected</string>
-    <string name="done">done！</string>
+    <string name="done">done\！</string>
     <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work properly</string>
     <string name="code_share">Code Share</string>
     <string name="screenshoot">Screenshoot</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
     <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
+    <string name="already_top">Already the first card</string>
+    <string name="already_end">Already the last card</string>
+    <string name="tip_redownload">Redownload\?</string>
 </resources>

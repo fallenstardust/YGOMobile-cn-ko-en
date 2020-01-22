@@ -183,7 +183,7 @@
     <string name="reset_game_res">重置资源</string>
     <string name="downloading_images">上次任务正在停止，请稍后再试</string>
     <string name="download_image_progress" formatted="false">正在下载卡图 %d/%d</string>
-    <string name="download_image_error" formatted="false">共 %d 张图片下载失败</string>
+    <string name="download_image_error" formatted="false">图片下载失败长按重试</string>
     <string name="downloading_images_ok">图片下载完成</string>
     <string name="tip_istunning">游戏已运行</string>
     <string name="edit">编辑</string>
@@ -295,4 +295,7 @@
     <string name="unable_to_edit_empty_deck">不可操作空卡组</string>
     <string name="create_new_failed">创建失败</string>
     <string name="about_pref_settings_keep_scale">开启原始比例的游戏画面</string>
+    <string name="already_top">已经是第一张啦</string>
+    <string name="already_end">已经是最后一张啦</string>
+    <string name="tip_redownload">重新下载？</string>
 </resources>

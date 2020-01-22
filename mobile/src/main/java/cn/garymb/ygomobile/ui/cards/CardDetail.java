@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -77,7 +79,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private LinearLayout ll_bar;
     private ProgressBar pb_loading;
     private TextView tv_loading;
-    private boolean isDownloadCardImage=true;
+    private boolean isDownloadCardImage = true;
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -87,21 +89,21 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_DOWNLOAD_CARD_IMAGE_OK:
-                    isDownloadCardImage=true;
+                    isDownloadCardImage = true;
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, null, true);
                     imageLoader.bindImage(cardImage, msg.arg1, null, true);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
-                    tv_loading.setText(msg.arg1+"%");
+                    tv_loading.setText(msg.arg1 + "%");
                     pb_loading.setProgress(msg.arg1);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION:
-                    isDownloadCardImage=true;
+                    isDownloadCardImage = true;
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    YGOUtil.show("error"+msg.obj);
+                    YGOUtil.show("error" + msg.obj);
                     break;
 
             }
@@ -315,9 +317,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (!isDownloadCardImage)
                     return false;
                 DialogPlus dialogPlus = new DialogPlus(context);
-                dialogPlus.setMessage("是否重新下载高清卡图？");
-                dialogPlus.setLeftButtonText("重新下载");
-                dialogPlus.setRightButtonText("取消");
+                dialogPlus.setMessage(R.string.tip_redownload);
+                dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+                dialogPlus.setLeftButtonText(R.string.Download);
+                dialogPlus.setRightButtonText(R.string.Cancel);
                 dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -352,14 +355,22 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     private void downloadCardImage(int code, File file) {
-        isDownloadCardImage=false;
+        isDownloadCardImage = false;
         DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-                Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                message.arg1 = code;
-                handler.sendMessage(message);
+                if (file.length() < 50 * 1024) {
+                    FileUtils.deleteFile(file);
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                    message.obj = context.getString(R.string.download_image_error);
+                    handler.sendMessage(message);
+                } else {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                    message.arg1 = code;
+                    handler.sendMessage(message);
+                }
             }
 
             @Override
@@ -372,6 +383,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             @Override
             public void onDownloadFailed(Exception e) {
+                //下载失败后删除下载的文件
+                FileUtils.deleteFile(file);
+                downloadCardImage(code, file);
+
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
                 message.obj = e.toString();
@@ -384,12 +399,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
         if (position == 0) {
-            getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
+            getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
         } else {
             int index = position;
             do {
                 if (index == 0) {
-                    getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
+                    getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
                     return;
                 } else {
                     index--;
@@ -398,7 +413,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             bind(provider.getCard(index), index, provider);
             if (position == 1) {
-                getContext().showToast("已经是第一张啦", Toast.LENGTH_SHORT);
+                getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
             }
         }
     }
@@ -410,7 +425,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             int index = position;
             do {
                 if (index == provider.getCardsCount() - 1) {
-                    getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
+                    getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
                     return;
                 } else {
                     index++;
@@ -419,10 +434,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             bind(provider.getCard(index), index, provider);
             if (position == provider.getCardsCount() - 1) {
-                getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
+                getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
             }
         } else {
-            getContext().showToast("已经是最后一张啦", Toast.LENGTH_SHORT);
+            getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
         }
     }
 
