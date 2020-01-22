@@ -40,6 +40,8 @@
             android:id="@+id/tv_add_setting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="right"
+            android:padding="10dp"
             android:text="@string/add_setting"
             android:textSize="10sp" />
     </RelativeLayout>
@@ -65,6 +67,7 @@
             android:layout_height="wrap_content"/>
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:padding="10dp"
             android:background="@drawable/click_background"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"

@@ -13,7 +13,7 @@ android {
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
-            abiFilters "armeabi-v7a","x86"
+            abiFilters "armeabi-v7a"//,"x86"
         }
     }
     compileOptions {
@@ -35,7 +35,7 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix ".debug"
+//            applicationIdSuffix ".debug"
             shrinkResources false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

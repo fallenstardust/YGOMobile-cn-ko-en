@@ -59,6 +59,7 @@
             android:layout_height="wrap_content" />
 
         <androidx.appcompat.widget.AppCompatButton
+            android:textColor="@color/white"
             android:background="@drawable/button_background"
             android:text="@string/complete_setting"
             android:layout_width="match_parent"
