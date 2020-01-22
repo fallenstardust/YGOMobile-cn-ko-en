@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.CardManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -311,7 +312,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
 
         photoView.setOnLongClickListener(new View.OnLongClickListener() {
-
             @Override
             public boolean onLongClick(View v) {
                 if (!isDownloadCardImage)
@@ -356,43 +356,46 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void downloadCardImage(int code, File file) {
         isDownloadCardImage = false;
-        DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
-            @Override
-            public void onDownloadSuccess(File file) {
-                if (file.length() < 50 * 1024) {
-                    FileUtils.deleteFile(file);
+        CardManager cdb = new CardManager(file.getAbsolutePath(), null);
+        if (cdb.getCard(code) != null) {
+            DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+                @Override
+                public void onDownloadSuccess(File file) {
+                    if (file.length() < 50 * 1024) {
+                        FileUtils.deleteFile(file);
+                        Message message = new Message();
+                        message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                        message.obj = context.getString(R.string.download_image_error);
+                        handler.sendMessage(message);
+                    } else {
+                        Message message = new Message();
+                        message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                        message.arg1 = code;
+                        handler.sendMessage(message);
+                    }
+                }
+
+                @Override
+                public void onDownloading(int progress) {
                     Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-                    message.obj = context.getString(R.string.download_image_error);
-                    handler.sendMessage(message);
-                } else {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                    message.arg1 = code;
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                    message.arg1 = progress;
                     handler.sendMessage(message);
                 }
-            }
 
-            @Override
-            public void onDownloading(int progress) {
-                Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
-                message.arg1 = progress;
-                handler.sendMessage(message);
-            }
+                @Override
+                public void onDownloadFailed(Exception e) {
+                    //下载失败后删除下载的文件
+                    FileUtils.deleteFile(file);
+                    downloadCardImage(code, file);
 
-            @Override
-            public void onDownloadFailed(Exception e) {
-                //下载失败后删除下载的文件
-                FileUtils.deleteFile(file);
-                downloadCardImage(code, file);
-
-                Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-                message.obj = e.toString();
-                handler.sendMessage(message);
-            }
-        });
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                    message.obj = e.toString();
+                    handler.sendMessage(message);
+                }
+            });
+        }
     }
 
     public void onPreCard() {
