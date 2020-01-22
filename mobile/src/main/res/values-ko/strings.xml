@@ -181,7 +181,7 @@
     <string name="reset_game_res">리소스 리셋</string>
     <string name="downloading_images">Downloading images</string>
     <string name="download_image_progress" formatted="false">Downloading card image %d/%d</string>
-    <string name="download_image_error" formatted="false">Download fail %d</string>
+    <string name="download_image_error" formatted="false">다운로드 실패\,다시 시도하려면 길게 눌러주십시오.</string>
     <string name="downloading_images_ok">Download images ok</string>
     <string name="tip_istunning">ygopro실행중...</string>
     <string name="edit">수정</string>
@@ -272,4 +272,7 @@
     <string name="unable_to_edit_empty_deck">사용할 수 없는 빈 구역</string>
     <string name="create_new_failed">생성실패</string>
     <string name="about_pref_settings_keep_scale">원래 해상도 스케일 디스플레이</string>
+    <string name="tip_redownload">카드를 다시 다운로드하겠습니까?</string>
+    <string name="already_top">첫번째</string>
+    <string name="already_end">마지막</string>
 </resources>
