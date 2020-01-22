@@ -47,6 +47,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
 
     private static final String TAG = "CardDetail";
+    private final CardManager cardManager;
     private ImageView cardImage;
     private TextView name;
     private TextView desc;
@@ -139,7 +140,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         attrView = bind(R.id.card_attribute);
         lb_setcode = bind(R.id.label_setcode);
 
-
+        cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
+        //加载数据库中所有卡片卡片
+        cardManager.loadCards();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -331,71 +334,70 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        ll_bar.setVisibility(View.VISIBLE);
-                        ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
+
                         downloadCardImage(code, file);
                     }
                 });
                 dialogPlus.show();
                 return true;
             }
-
-
         });
 
         //先显示普通卡片大图，判断如果没有高清图就下载
         imageLoader.bindImage(photoView, code, null, true);
 
         if (!file.exists()) {
-            ll_bar.setVisibility(View.VISIBLE);
-            ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
             downloadCardImage(code, file);
         }
 
     }
 
     private void downloadCardImage(int code, File file) {
+        if (cardManager.getCard(code) == null) {
+            YGOUtil.show("先行卡没有高清卡图");
+            return;
+        }
         isDownloadCardImage = false;
-        CardManager cdb = new CardManager(file.getAbsolutePath(), null);
-        if (cdb.getCard(code) != null) {
-            DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
-                @Override
-                public void onDownloadSuccess(File file) {
-                    if (file.length() < 50 * 1024) {
-                        FileUtils.deleteFile(file);
-                        Message message = new Message();
-                        message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-                        message.obj = context.getString(R.string.download_image_error);
-                        handler.sendMessage(message);
-                    } else {
-                        Message message = new Message();
-                        message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                        message.arg1 = code;
-                        handler.sendMessage(message);
-                    }
-                }
-
-                @Override
-                public void onDownloading(int progress) {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
-                    message.arg1 = progress;
-                    handler.sendMessage(message);
-                }
-
-                @Override
-                public void onDownloadFailed(Exception e) {
-                    //下载失败后删除下载的文件
+        ll_bar.setVisibility(View.VISIBLE);
+        ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
+        DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+            @Override
+            public void onDownloadSuccess(File file) {
+                if (file.length() < 50 * 1024) {
                     FileUtils.deleteFile(file);
-                    downloadCardImage(code, file);
-
                     Message message = new Message();
                     message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-                    message.obj = e.toString();
+                    message.obj = context.getString(R.string.download_image_error);
+                    handler.sendMessage(message);
+                } else {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                    message.arg1 = code;
                     handler.sendMessage(message);
                 }
-            });
-        }
+            }
+
+            @Override
+            public void onDownloading(int progress) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                message.arg1 = progress;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onDownloadFailed(Exception e) {
+                //下载失败后删除下载的文件
+                FileUtils.deleteFile(file);
+                downloadCardImage(code, file);
+
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                message.obj = e.toString();
+                handler.sendMessage(message);
+            }
+        });
+
     }
 
     public void onPreCard() {
