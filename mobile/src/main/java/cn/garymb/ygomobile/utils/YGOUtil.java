@@ -15,7 +15,8 @@ import androidx.core.content.ContextCompat;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
+import com.ourygo.assistant.service.DuelAssistantService;
+import com.ourygo.assistant.util.Util;
 
 public class YGOUtil {
 
@@ -63,16 +64,8 @@ public class YGOUtil {
     }
 
     public static void startDuelService(Context context) {
-        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                DialogPlus dialogPlus = PermissionUtil.isNotificationPermission(context);
-                if (dialogPlus == null)
-                    context.startForegroundService(new Intent(context, DuelAssistantService.class));
-                else
-                    dialogPlus.show();
-            } else {
-                context.startService(new Intent(context, DuelAssistantService.class));
-            }
+        if (AppsSettings.get().isServiceDuelAssistant()) {
+            Util.startDuelService(context);
         }
     }
 

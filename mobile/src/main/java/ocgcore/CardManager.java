@@ -2,6 +2,7 @@ package ocgcore;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -125,6 +126,8 @@ public class CardManager {
         cardDataHashMap.clear();
         int count = readAllCards(AppsSettings.get().getDataBaseFile(), cardDataHashMap);
         Log.i("Irrlicht", "load defualt cdb:" + count);
+        if (TextUtils.isEmpty(exDbPath))
+            return;
         if (AppsSettings.get().isReadExpansions()) {
             File dir = new File(exDbPath);
             if (dir.exists()) {

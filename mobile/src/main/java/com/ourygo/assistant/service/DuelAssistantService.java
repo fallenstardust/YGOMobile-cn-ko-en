@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.plus;
+package com.ourygo.assistant.service;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -44,6 +44,7 @@ import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.PermissionUtil;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;

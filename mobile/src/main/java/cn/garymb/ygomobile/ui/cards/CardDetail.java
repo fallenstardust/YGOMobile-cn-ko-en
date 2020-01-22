@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,7 +48,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
 
     private static final String TAG = "CardDetail";
-    private final CardManager cardManager;
+    private static CardManager cardManager;
     private ImageView cardImage;
     private TextView name;
     private TextView desc;
@@ -140,9 +141,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         attrView = bind(R.id.card_attribute);
         lb_setcode = bind(R.id.label_setcode);
 
-        cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
-        //加载数据库中所有卡片卡片
-        cardManager.loadCards();
+        if (cardManager == null) {
+            Log.e("CardDetail","加载卡片信息");
+            cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
+            //加载数据库中所有卡片卡片
+            cardManager.loadCards();
+        }
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
