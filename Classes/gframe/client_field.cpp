@@ -411,7 +411,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
-		if(mainGame->dInfo.curMsg != MSG_SORT_CHAIN && mainGame->dInfo.curMsg != MSG_SORT_CARD) {
+		if(mainGame->dInfo.curMsg != MSG_SORT_CARD) {
 			// text
 			wchar_t formatBuffer[2048];
 			if(conti_selecting)
