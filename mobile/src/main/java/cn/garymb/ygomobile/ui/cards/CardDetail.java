@@ -321,7 +321,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         photoView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (!isDownloadCardImage)
+                if (!isDownloadCardImage || cardManager.getCard(code) == null)
                     return false;
                 DialogPlus dialogPlus = new DialogPlus(context);
                 dialogPlus.setMessage(R.string.tip_redownload);
@@ -338,7 +338,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-
                         downloadCardImage(code, file);
                     }
                 });
@@ -358,7 +357,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void downloadCardImage(int code, File file) {
         if (cardManager.getCard(code) == null) {
-            YGOUtil.show("先行卡没有高清卡图");
+            YGOUtil.show(context.getString(R.string.tip_expansions_image));
             return;
         }
         isDownloadCardImage = false;

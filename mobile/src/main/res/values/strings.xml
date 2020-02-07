@@ -277,4 +277,5 @@
     <string name="already_top">Already the first card</string>
     <string name="already_end">Already the last card</string>
     <string name="tip_redownload">Redownload\?</string>
+    <string name="tip_expansions_image">no Large image for pre-released data</string>
 </resources>
