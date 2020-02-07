@@ -35,6 +35,10 @@ import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
+import com.ourygo.assistant.service.DuelAssistantService;
+import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
@@ -81,30 +85,17 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
-public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
-    //卡查关键字
-    public static final String[] cardSearchKey = new String[]{"?", "？"};
-    //加房关键字
-    public static final String[] passwordPrefix = {
-            "M,", "m,", "T,", "PR,", "pr,", "AI,", "ai,", "LF2,", "lf2,", "M#", "m#", "T#", "t#",
-            "PR#", "pr#", "NS#", "ns#", "S#", "s#", "AI#", "ai#", "LF2#", "lf2#", "R#", "r#"
-    };
-    //卡组复制
-    public static final String[] DeckTextKey = new String[]{"#main"};
-    /***
-     * 剪贴板监听复制内容
-     */
-    private final static String DECK_URL_PREFIX = Constants.SCHEME_APP + "://" + Constants.URI_HOST;
-    //卡查内容
-    public static String cardSearchMessage = "";
-    public static String DeckText = "";
+public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
+
+    private static final int ID_MAINACTIVITY = 0;
+
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
     ShimmerTextView tv;
     Shimmer shimmer;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
-    private ClipboardManager cm;
+    private DuelAssistantManagement duelAssistantManagement;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -151,8 +142,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //check update
         Beta.checkUpgrade(false, false);
-        //DuelAssistantService
-        YGOUtil.startDuelService(this);
+       //初始化决斗助手
+        initDuelAssistant();
         //萌卡
         StartMycard();
         checkNotch();
@@ -164,18 +155,58 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         BacktoDuel();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    private void duelAssistantCheck() {
+        if (AppsSettings.get().isServiceDuelAssistant()) {
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    getClipboard();
+                    duelAssistantManagement.checkClip(ID_MAINACTIVITY);
                 }
             }, 500);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        duelAssistantCheck();
+    }
+
+    @Override
+    public void onJoinRoom(String password, int id) {
+        if (id == ID_MAINACTIVITY) {
+            QuickjoinRoom(password);
+        }
+    }
+
+    @Override
+    public void onCardSearch(String key, int id) {
+        if (id == ID_MAINACTIVITY) {
+            Intent intent = new Intent(this, CardSearchAcitivity.class);
+            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onSaveDeck(String message, boolean isUrl, int id) {
+        if (id == ID_MAINACTIVITY) {
+            saveDeck(message,isUrl);
+        }
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(this);
+    }
+
+
+    private void initDuelAssistant() {
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
+        duelAssistantManagement.init(getApplicationContext());
+        duelAssistantManagement.addDuelAssistantListener(this);
+        YGOUtil.startDuelService(this);
     }
 
     //检查是否有刘海
@@ -196,6 +227,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     protected void onDestroy() {
         super.onDestroy();
+       duelAssistantManagement.removeDuelAssistantListener(this);
         EventBus.getDefault().unregister(this);
     }
 
@@ -541,86 +573,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         }
     }
 
-    public void getClipboard() {
-        cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clipData = cm.getPrimaryClip();
-        if (clipData == null)
-            return;
-        ClipData.Item cs = clipData.getItemAt(0);
-        final String clipMessage;
-        if (cs.getText() != null) {
-            clipMessage = cs.getText().toString();
-        } else {
-            clipMessage = null;
-        }
-        //如果复制的内容为空则不执行下面的代码
-        if (TextUtils.isEmpty(clipMessage)) {
-            return;
-        }
-        clipData = ClipData.newPlainText("", "");
-        cm.setPrimaryClip(clipData);
-        //如果复制的内容是多行作为卡组去判断
-        if (clipMessage.contains("\n")) {
-            for (String s : DeckTextKey) {
-                //只要包含其中一个关键字就视为卡组
-                if (clipMessage.contains(s)) {
-                    saveDeck(clipMessage, false);
-                    return;
-                }
-            }
-            return;
-        }
-        //如果是卡组url
-        int deckStart = clipMessage.indexOf(DECK_URL_PREFIX);
-        if (deckStart != -1) {
-            saveDeck(clipMessage.substring(deckStart + DECK_URL_PREFIX.length(), clipMessage.length()), true);
-            return;
-        }
-
-        int start = -1;
-        int end = -1;
-        String passwordPrefixKey = null;
-        for (String s : passwordPrefix) {
-            start = clipMessage.indexOf(s);
-            passwordPrefixKey = s;
-            if (start != -1) {
-                break;
-            }
-        }
-        if (start != -1) {
-            //如果密码含有空格，则以空格结尾
-            end = clipMessage.indexOf(" ", start);
-            //如果不含有空格则取片尾所有
-            if (end == -1) {
-                end = clipMessage.length();
-            } else {
-                //如果只有密码前缀而没有密码内容则不跳转
-                if (end - start == passwordPrefixKey.length())
-                    return;
-            }
-            QuickjoinRoom(clipMessage, start, end);
-        } else {
-            for (String s : cardSearchKey) {
-                int cardSearchStart = clipMessage.indexOf(s);
-                if (cardSearchStart != -1) {
-                    //卡查内容
-                    cardSearchMessage = clipMessage.substring(cardSearchStart + s.length(), clipMessage.length());
-                    //如果复制的文本里带？号后面没有内容则不跳转
-                    if (TextUtils.isEmpty(cardSearchMessage)) {
-                        return;
-                    }
-                    //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
-                    if (cardSearchMessage.contains("=") && clipMessage.contains(".")) {
-                        return;
-                    }
-                    Intent intent = new Intent(this, CardSearchAcitivity.class);
-                    intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, cardSearchMessage);
-                    startActivity(intent);
-                }
-            }
-        }
-    }
-
     private void saveDeck(String deckMessage, boolean isUrl) {
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
@@ -657,19 +609,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         });
     }
 
-    private void QuickjoinRoom(String ss, int start, int end) {
-        final String password = ss.substring(start, ss.length());
+    private void QuickjoinRoom(String password) {
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
         dialog.setMessage(getString(R.string.quick_join) + password + "\"");
         dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonText(R.string.Cancel);
-        dialog.setRightButtonText(R.string.join);
+        dialog.setRightButtonText(R.string.Cancel);
+        dialog.setLeftButtonText(R.string.join);
         dialog.show();
-        dialog.setLeftButtonListener((dlg, s) -> {
+        dialog.setRightButtonListener((dlg, s) -> {
             dialog.dismiss();
         });
-        dialog.setRightButtonListener((dlg, s) -> {
+        dialog.setLeftButtonListener((dlg, s) -> {
             dialog.dismiss();
             ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
             ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);

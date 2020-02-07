@@ -30,7 +30,9 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
-import cn.garymb.ygomobile.utils.PermissionUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
+import com.ourygo.assistant.util.PermissionUtil;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
@@ -133,14 +135,14 @@ public class MainActivity extends HomeActivity {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
                             if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-                                PermissionUtil.isServicePermission(MainActivity.this, true);
+                                YGOUtil.isServicePermission(MainActivity.this, true);
                         }
                     });
                     dialog.show();
                 }
             } else {
                 if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-                    PermissionUtil.isServicePermission(MainActivity.this, true);
+                    YGOUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
 

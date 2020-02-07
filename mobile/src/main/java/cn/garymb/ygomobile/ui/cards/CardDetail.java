@@ -393,7 +393,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             public void onDownloadFailed(Exception e) {
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(file);
-                downloadCardImage(code, file);
+//                downloadCardImage(code, file);
 
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;

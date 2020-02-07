@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -18,6 +17,7 @@ import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,10 +29,8 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import com.ourygo.assistant.service.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -43,30 +41,31 @@ import ocgcore.data.LimitList;
 class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack {
 
     protected DrawerLayout mDrawerlayout;
-    private RecyclerView mListView;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapater;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
     protected StringManager mStringManager = DataManager.get().getStringManager();
     protected LimitManager mLimitManager = DataManager.get().getLimitManager();
+    private RecyclerView mListView;
     private ImageLoader mImageLoader;
 
     private String intentSearchMessage;
     private boolean isFirstCardSearch = true;
     private String currentCardSearchMessage = "";
+    private DuelAssistantManagement duelAssistantManagement;
+    private CardDetail mCardDetail;
+    private DialogPlus mDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
         if (TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                currentCardSearchMessage = HomeActivity.cardSearchMessage;
-            } else {
-                currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
-            }
+
+            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
+
         }
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -111,23 +110,17 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch && !currentCardSearchMessage.equals(HomeActivity.cardSearchMessage)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                currentCardSearchMessage = HomeActivity.cardSearchMessage;
-            } else {
-                currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
-            }
+        if (!isFirstCardSearch && !currentCardSearchMessage.equals(duelAssistantManagement.getCardSearchMessage())) {
+
+            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
+
             intentSearch();
         }
     }
 
     private void intentSearch() {
 //        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            currentCardSearchMessage = HomeActivity.cardSearchMessage;
-        } else {
-            currentCardSearchMessage = DuelAssistantService.cardSearchMessage;
-        }
+        currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
     }
 
     protected void setListeners() {
@@ -268,9 +261,6 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     protected void onCardLongClick(View view, int pos) {
 
     }
-
-    private CardDetail mCardDetail;
-    private DialogPlus mDialog;
 
     private boolean isShowCard() {
         return mDialog != null && mDialog.isShowing();
