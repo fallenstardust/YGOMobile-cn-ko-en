@@ -51,7 +51,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     private ImageLoader mImageLoader;
 
     private String intentSearchMessage;
-    private boolean isFirstCardSearch = true;
+    private boolean isInitCdbOk = false;
     private String currentCardSearchMessage = "";
     private DuelAssistantManagement duelAssistantManagement;
     private CardDetail mCardDetail;
@@ -62,11 +62,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
-        if (TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))) {
-
-            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
-
-        }
+        intentSearchMessage = getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
         enableBackHome();
@@ -102,25 +98,32 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             isLoad = true;
             mCardLoader.loadData();
             mCardSelector.initItems();
-            intentSearch();
-            isFirstCardSearch = false;
+            //数据库初始化完毕后搜索被传入的关键字
+            intentSearch(intentSearchMessage);
+            isInitCdbOk = true;
         });
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch && !currentCardSearchMessage.equals(duelAssistantManagement.getCardSearchMessage())) {
-
-            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
-
-            intentSearch();
+        //数据库初始化完毕并且决斗助手的卡查关键字未被搜索过就卡查
+        if (isInitCdbOk && !currentCardSearchMessage.equals(duelAssistantManagement.getCardSearchMessage())) {
+            intentSearch(null);
         }
     }
 
-    private void intentSearch() {
-//        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
+    private void intentSearch(String searchMessage) {
+        //如果要求搜索的关键字为空，就搜索决斗助手保存的卡查关键字
+        if (TextUtils.isEmpty(searchMessage)){
+            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
+        }else {
+            currentCardSearchMessage=searchMessage;
+        }
+        //卡查关键字为空不卡查
+        if (TextUtils.isEmpty(currentCardSearchMessage))
+            return;
+        mCardSelector.search(currentCardSearchMessage);
     }
 
     protected void setListeners() {

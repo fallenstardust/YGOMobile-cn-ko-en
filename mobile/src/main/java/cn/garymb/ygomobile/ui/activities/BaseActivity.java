@@ -62,17 +62,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        try {
-            FileLogUtil.writeAndTime("开始显示");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         if (Build.VERSION.SDK_INT<Build.VERSION_CODES.M|| !startPermissionsActivity()){
-            try {
-                FileLogUtil.writeAndTime("不申请权限");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
         }
     }
@@ -221,11 +211,6 @@ public class BaseActivity extends AppCompatActivity {
         String[] PERMISSIONS = getPermissions();
         if (PERMISSIONS == null || PERMISSIONS.length == 0)
             return false;
-        try {
-            FileLogUtil.writeAndTime("申请权限");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
     }
 

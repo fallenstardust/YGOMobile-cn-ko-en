@@ -7,6 +7,10 @@ import android.text.TextUtils;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
 
+import java.io.IOException;
+
+import cn.garymb.ygomobile.utils.FileLogUtil;
+
 public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedListener {
 
     public static final int ID_CLIP_LISTENER=-1;
@@ -58,6 +62,11 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
         //如果复制的内容为空则不执行下面的代码
         if (TextUtils.isEmpty(clipMessage)) {
             return;
+        }
+        try {
+            FileLogUtil.writeAndTime("剪贴板监听触发："+clipMessage);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         if (onClipChangedListener!=null)
             onClipChangedListener.onClipChanged(clipMessage,false,ID_CLIP_LISTENER);

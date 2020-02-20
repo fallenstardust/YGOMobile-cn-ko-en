@@ -59,11 +59,6 @@ public class PermissionsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
-            try {
-                FileLogUtil.writeAndTime("所有权限已获取");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             allPermissionsGranted();
         }else {
             mChecker = PermissionsChecker.getPermissionsChecker(this);
@@ -78,18 +73,9 @@ public class PermissionsActivity extends AppCompatActivity {
             String[] permissions = getPermissions();
             if (mChecker.lacksPermissions(permissions)) {
                 requestPermissions(permissions); // 请求权限
-                try {
-                    FileLogUtil.writeAndTime("onResume请求权限");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             } else {
                 allPermissionsGranted(); // 全部权限都已获取
-                try {
-                    FileLogUtil.writeAndTime("onResume所有权限已获取");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+
             }
         } else {
             isRequireCheck = true;
@@ -124,19 +110,9 @@ public class PermissionsActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE && hasAllPermissionsGranted(grantResults)) {
-            try {
-                FileLogUtil.writeAndTime("权限请求回调：所有权限已获取");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             isRequireCheck = true;
             allPermissionsGranted();
         } else {
-            try {
-                FileLogUtil.writeAndTime("权限请求回调：权限未得到");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             isRequireCheck = false;
             showMissingPermissionDialog(getNoPermission(permissions,grantResults));
         }

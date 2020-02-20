@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -161,6 +162,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    try {
+                        FileLogUtil.writeAndTime("主页决斗助手检查");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     duelAssistantManagement.checkClip(ID_MAINACTIVITY);
                 }
             }, 500);
@@ -176,6 +182,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onJoinRoom(String password, int id) {
         if (id == ID_MAINACTIVITY) {
+            try {
+                FileLogUtil.writeAndTime("主页加房触发");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             QuickjoinRoom(password);
         }
     }
@@ -183,6 +194,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ID_MAINACTIVITY) {
+            try {
+                FileLogUtil.writeAndTime("主页卡查触发");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             Intent intent = new Intent(this, CardSearchAcitivity.class);
             intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
             startActivity(intent);
@@ -192,6 +208,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onSaveDeck(String message, boolean isUrl, int id) {
         if (id == ID_MAINACTIVITY) {
+            try {
+                FileLogUtil.writeAndTime("主页保存卡组触发");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             saveDeck(message,isUrl);
         }
     }
@@ -214,11 +235,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
             @Override
             public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
-                try {
-                    FileLogUtil.writeAndTime("检查刘海" + isNotch + "   " + notchHeight);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 AppsSettings.get().setNotchHeight(notchHeight);
             }
         });
