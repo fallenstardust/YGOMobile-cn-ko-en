@@ -630,13 +630,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         dialog.setTitle(R.string.question);
         dialog.setMessage(getString(R.string.quick_join) + password + "\"");
         dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setRightButtonText(R.string.Cancel);
-        dialog.setLeftButtonText(R.string.join);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.join);
         dialog.show();
         dialog.setRightButtonListener((dlg, s) -> {
-            dialog.dismiss();
-        });
-        dialog.setLeftButtonListener((dlg, s) -> {
             dialog.dismiss();
             ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
             ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);
@@ -659,6 +656,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                     joinGame(serverInfo, password);
                 }
             });
+        });
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
         });
     }
 }
