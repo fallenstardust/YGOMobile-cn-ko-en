@@ -39,6 +39,11 @@ import ocgcore.enums.LimitType;
 
 public class CardSearcher implements View.OnClickListener {
 
+    final String[] BtnVals = new String[9];
+    protected StringManager mStringManager;
+    protected LimitManager mLimitManager;
+    protected AppsSettings mSettings;
+    int lineKey;
     private EditText prefixWord;
     private EditText suffixWord;
     private Spinner otSpinner;
@@ -48,7 +53,6 @@ public class CardSearcher implements View.OnClickListener {
     private Spinner typeMonsterSpinner;
     private Spinner typeMonsterSpinner2;
     private Spinner typeSTSpinner;
-
     private Spinner setcodeSpinner;
     private Spinner categorySpinner;
     private Spinner raceSpinner;
@@ -64,12 +68,6 @@ public class CardSearcher implements View.OnClickListener {
     private View layout_monster;
     private ICardLoader dataLoader;
     private Context mContext;
-    protected StringManager mStringManager;
-    protected LimitManager mLimitManager;
-    protected AppsSettings mSettings;
-
-    final String[] BtnVals = new String[9];
-    int lineKey;
 
     public CardSearcher(View view, ICardLoader dataLoader) {
         this.view = view;
@@ -252,9 +250,9 @@ public class CardSearcher implements View.OnClickListener {
         initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
-                CardType.Dual, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token,CardType.No_Effect
+                CardType.Dual, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token
         });
-        initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner
+        initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner, CardType.Non_Effect
         });
         initTypeSpinners(typeSTSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.QuickPlay, CardType.Ritual,
                 CardType.Continuous, CardType.Equip, CardType.Field, CardType.Counter
