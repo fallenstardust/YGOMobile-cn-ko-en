@@ -103,7 +103,11 @@ public class Card extends CardData implements Parcelable {
     public boolean isSetCode(long _setcode) {
         long[] setcodes = getSetCode();
         for (long setcode : setcodes) {
-            if (setcode == _setcode) {
+            String setcode16=Long.toHexString(setcode);
+            if (setcode16.length()==4){
+                if (setcode16.endsWith(Long.toHexString(_setcode)))
+                    return true;
+            }else if (setcode == _setcode) {
                 return true;
             }
         }

@@ -130,64 +130,54 @@ class CardSearchInfo {
         if (types.length > 0) {
             boolean st = false;
             for (long cardType : types) {
-//                if (cardType == CardType.Spell.value() || cardType == CardType.Trap.value()) {
-//                    st = true;
-//                    break;
-//                }
-                //非效果怪兽
-                if (cardType == CardType.Non_Effect.value()) {
-                    //如果不是融合/仪式/同调/超量/连接
-                    if ((card.Type & CardType.Fusion.value()) != CardType.Fusion.value()
-                            && (card.Type & CardType.Ritual.value()) != CardType.Ritual.value()
-                            && (card.Type & CardType.Synchro.value()) != CardType.Synchro.value()
-                            && (card.Type & CardType.Xyz.value()) != CardType.Xyz.value()
-                            && (card.Type & CardType.Link.value()) != CardType.Link.value()
-                    )
-                        return false;
-                } else if ((card.Type & cardType) != cardType) {
-                    return false;
+                if (cardType == CardType.Spell.value() || cardType == CardType.Trap.value()) {
+                    st = true;
+                    break;
                 }
             }
-//
-//            for (long type : types) {
-//                if (type > 0) {
-//                    if (st) {
-//                        //魔法
-//                        if (type == CardType.Normal.value()) {
-//                            //通常
-//                            if (card.isType(CardType.Normal)) {
-//                                //带通常的魔法陷阱
-//                                if (card.Type != (CardType.Spell.value() | CardType.Normal.value())
-//                                        && card.Type != (CardType.Trap.value() | CardType.Normal.value())) {
-//                                    return false;
-//                                }
-//                            } else {
-//                                //只有魔法/陷阱
-//                                if (card.Type != CardType.Spell.value() && card.Type != CardType.Trap.value())
-//                                    return false;
-//                            }
-//                            continue;
-//                        }
-//                    }
-//                    if ((card.Type & type) != type) {
-//                        return false;
-//                    }
-//                    //如果是效果怪兽
-//                    if (type == CardType.Effect.value()) {
-//                        if ((card.Type & CardType.Effect.value()) == CardType.Effect.value()) {
-//                            //如果是融合/仪式/同调/超量/连接
-//                            if ((card.Type & CardType.Fusion.value()) == CardType.Fusion.value()
-//                                    || (card.Type & CardType.Ritual.value()) == CardType.Ritual.value()
-//                                    || (card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
-//                                    || (card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
-//                                    || (card.Type & CardType.Link.value()) == CardType.Link.value()
-//                                    )
-//                                return false;
-//                        }
-//                    }
-//
-//                }
-//            }
+
+            for (long type : types) {
+                if (type > 0) {
+                    if (st) {
+                        //魔法
+                        if (type == CardType.Normal.value()) {
+                            //通常
+                            if (card.isType(CardType.Normal)) {
+                                //带通常的魔法陷阱
+                                if (card.Type != (CardType.Spell.value() | CardType.Normal.value())
+                                        && card.Type != (CardType.Trap.value() | CardType.Normal.value())) {
+                                    return false;
+                                }
+                            } else {
+                                //只有魔法/陷阱
+                                if (card.Type != CardType.Spell.value() && card.Type != CardType.Trap.value())
+                                    return false;
+                            }
+                            continue;
+                        }
+                    }
+                    //如果是效果怪兽
+                    if (type == CardType.Effect.value()) {
+                        if ((card.Type & CardType.Effect.value()) == CardType.Effect.value()) {
+                            //如果是融合/仪式/同调/超量/连接
+                            if ((card.Type & CardType.Fusion.value()) == CardType.Fusion.value()
+                                    || (card.Type & CardType.Ritual.value()) == CardType.Ritual.value()
+                                    || (card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
+                                    || (card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
+                                    || (card.Type & CardType.Link.value()) == CardType.Link.value()
+                                    )
+                                return false;
+                        }
+                    }else  if (type == CardType.Non_Effect.value()) {
+                        //非效果怪兽
+                        if ((card.Type & CardType.Effect.value()) == CardType.Effect.value())
+                            return false;
+                    }else  if ((card.Type & type) != type) {
+                        return false;
+                    }
+
+                }
+            }
         }
         //TODO setcode
         if (setcode > 0) {
