@@ -368,7 +368,10 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
     @Override
     public void onJoinRoom(String password, int id) {
         if (id== ClipManagement.ID_CLIP_LISTENER) {
-            joinRoom(password);
+            //如果有悬浮窗权限再显示
+            if (PermissionUtil.isServicePermission(this)) {
+                joinRoom(password);
+            }
         }
     }
 

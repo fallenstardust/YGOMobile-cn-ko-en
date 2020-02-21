@@ -46,8 +46,19 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
     //获取剪贴板内容
     public String getClipMessage() {
         ClipData clipData = clipboardManager.getPrimaryClip();
-        if (clipData == null)
+        if (clipData == null) {
+            try {
+                FileLogUtil.writeAndTime("剪贴板为空");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return null;
+        }
+        try {
+            FileLogUtil.writeAndTime("剪贴板内容获取："+clipData.getItemAt(0).getText().toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return clipData.getItemAt(0).getText().toString();
     }
 

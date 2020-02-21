@@ -110,11 +110,8 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                 if (end - start == passwordPrefixKey.length())
                     return false;
             }
-            //如果有悬浮窗权限再显示
-            if (PermissionUtil.isServicePermission(context)) {
                 onJoinRoom(message.substring(start, end), id);
                 return true;
-            }
         }
         return false;
     }
