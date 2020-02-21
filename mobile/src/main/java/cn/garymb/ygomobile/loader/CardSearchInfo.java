@@ -156,7 +156,7 @@ class CardSearchInfo {
                             continue;
                         }
                     }
-                    //如果是效果怪兽
+                    //效果怪兽
                     if (type == CardType.Effect.value()) {
                         if ((card.Type & CardType.Effect.value()) == CardType.Effect.value()) {
                             //如果是融合/仪式/同调/超量/连接
@@ -167,6 +167,8 @@ class CardSearchInfo {
                                     || (card.Type & CardType.Link.value()) == CardType.Link.value()
                                     )
                                 return false;
+                        }else {
+                            return false;
                         }
                     }else  if (type == CardType.Non_Effect.value()) {
                         //非效果怪兽
