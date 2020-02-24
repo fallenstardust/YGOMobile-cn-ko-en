@@ -1903,7 +1903,7 @@ void card::reset(uint32 id, uint32 reset_type) {
 			}
 		}
 		if(id & RESET_TURN_SET) {
-			effect* peffect = std::get<effect*>(refresh_control_status());
+			effect* peffect = std::get<1>(refresh_control_status());
 			if(peffect && (!(peffect->type & EFFECT_TYPE_SINGLE) || peffect->condition)) {
 				effect* new_effect = pduel->new_effect();
 				new_effect->id = peffect->id;
