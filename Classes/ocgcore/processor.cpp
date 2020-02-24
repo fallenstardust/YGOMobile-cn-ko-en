@@ -4852,8 +4852,8 @@ int32 field::adjust_step(uint16 step) {
 				if(!pcard) continue;
 				uint8 cur = pcard->current.controler;
 				auto res = pcard->refresh_control_status();
-				uint8 ref = std::get<uint8>(res);
-				effect* peffect = std::get<effect*>(res);
+				uint8 ref = std::get<0>(res);
+				effect* peffect = std::get<1>(res);
 				if(cur != ref && pcard->is_capable_change_control()) {
 					core.control_adjust_set[p].insert(pcard);
 					if(peffect && (!(peffect->type & EFFECT_TYPE_SINGLE) || peffect->condition))
