@@ -1,17 +1,12 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -37,7 +32,6 @@ import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-import com.ourygo.assistant.service.DuelAssistantService;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
@@ -143,7 +137,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //check update
         Beta.checkUpgrade(false, false);
-       //初始化决斗助手
+        //初始化决斗助手
         initDuelAssistant();
         //萌卡
         StartMycard();
@@ -182,11 +176,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onJoinRoom(String password, int id) {
         if (id == ID_MAINACTIVITY) {
-            try {
-                FileLogUtil.writeAndTime("主页加房触发");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             QuickjoinRoom(password);
         }
     }
@@ -194,11 +183,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ID_MAINACTIVITY) {
-            try {
-                FileLogUtil.writeAndTime("主页卡查触发");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             Intent intent = new Intent(this, CardSearchAcitivity.class);
             intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
             startActivity(intent);
@@ -208,12 +192,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onSaveDeck(String message, boolean isUrl, int id) {
         if (id == ID_MAINACTIVITY) {
-            try {
-                FileLogUtil.writeAndTime("主页保存卡组触发");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            saveDeck(message,isUrl);
+            saveDeck(message, isUrl);
         }
     }
 
@@ -243,7 +222,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     protected void onDestroy() {
         super.onDestroy();
-       duelAssistantManagement.removeDuelAssistantListener(this);
+        duelAssistantManagement.removeDuelAssistantListener(this);
         EventBus.getDefault().unregister(this);
     }
 

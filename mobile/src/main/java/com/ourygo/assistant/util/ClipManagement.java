@@ -54,11 +54,6 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
             }
             return null;
         }
-        try {
-            FileLogUtil.writeAndTime("剪贴板内容获取："+clipData.getItemAt(0).getText().toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         return clipData.getItemAt(0).getText().toString();
     }
 
@@ -73,11 +68,6 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
         //如果复制的内容为空则不执行下面的代码
         if (TextUtils.isEmpty(clipMessage)) {
             return;
-        }
-        try {
-            FileLogUtil.writeAndTime("剪贴板监听触发："+clipMessage);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         if (onClipChangedListener!=null)
             onClipChangedListener.onClipChanged(clipMessage,false,ID_CLIP_LISTENER);

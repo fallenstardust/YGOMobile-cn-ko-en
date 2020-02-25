@@ -68,7 +68,7 @@ public class DuelAssistantManagement implements OnClipChangedListener {
     public boolean deckCheck(String message, int id) {
         //如果复制的内容是多行作为卡组去判断
         if (message.contains("\n")) {
-            for (String s : Record.CARD_SEARCH_KEY) {
+            for (String s : Record.DeckTextKey) {
                 //只要包含其中一个关键字就视为卡组
                 if (message.contains(s)) {
                     onSaveDeck(message, false, id);
