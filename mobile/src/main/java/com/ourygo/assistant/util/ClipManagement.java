@@ -54,7 +54,10 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
             }
             return null;
         }
-        return clipData.getItemAt(0).getText().toString();
+        CharSequence charSequence=clipData.getItemAt(0).getText();
+        if (charSequence!=null)
+            return charSequence.toString();
+        return null;
     }
 
     public void clear(){
