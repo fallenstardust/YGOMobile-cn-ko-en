@@ -88,14 +88,6 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
         <activity
-            android:name="cn.garymb.ygomobile.ui.activities.AboutActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/settings_about"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
-        <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:label="@string/settings"
@@ -148,11 +140,6 @@
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.activities.PhotoViewActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"

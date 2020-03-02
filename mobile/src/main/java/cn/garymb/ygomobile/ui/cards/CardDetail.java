@@ -242,10 +242,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
-        if (cardInfo.Alias != 0) {
-            cardcode.setText(String.format("%08d", cardInfo.Alias));
-        } else {
+        int t = cardInfo.Alias - cardInfo.Code;
+        if (t > 10 || t < -10) {
             cardcode.setText(String.format("%08d", cardInfo.Code));
+        } else {
+            cardcode.setText(String.format("%08d", cardInfo.Alias));
         }
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));

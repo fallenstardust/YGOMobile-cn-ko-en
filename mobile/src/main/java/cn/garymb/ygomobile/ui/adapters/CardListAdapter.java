@@ -163,10 +163,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         //卡片类型
         holder.cardType.setText(CardUtils.getAllTypeString(item, mStringManager));
         if (holder.codeView != null) {
-            if(item.Alias != 0) {
-                holder.codeView.setText(String.format("%08d", item.Alias));
-            } else {
+            int t = item.Alias - item.Code;
+            if (t > 10 || t < -10) {
                 holder.codeView.setText(String.format("%08d", item.Code));
+            } else {
+                holder.codeView.setText(String.format("%08d", item.Alias));
             }
         }
         bindMenu(holder, position);

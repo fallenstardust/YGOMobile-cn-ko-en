@@ -277,10 +277,11 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         String uri;
-                        if (cardInfo.Alias != 0) {
-                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
-                        } else {
+                        int t = cardInfo.Alias - cardInfo.Code;
+                        if (t > 10 || t < -10) {
                             uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        } else {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
                         }
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }

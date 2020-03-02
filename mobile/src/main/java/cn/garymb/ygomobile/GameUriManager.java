@@ -68,8 +68,8 @@ public class GameUriManager {
 
     private String getDeckName(Uri uri) {
         String path = uri.getPath();
-        Log.i("kk", "path="+path);
-        if(path != null) {
+        Log.i("kk", "path=" + path);
+        if (path != null) {
             int index = path.lastIndexOf("/");
             if (index > 0) {
                 String name = path.substring(index + 1);
@@ -126,7 +126,7 @@ public class GameUriManager {
             activity.startActivity(startdeck);
         } else if ("content".equals(uri.getScheme())) {
             try {
-                File dir = Constants.COPY_YDK_FILE?new File(AppsSettings.get().getDeckDir()):new File(getActivity().getApplicationInfo().dataDir, "cache");
+                File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
                 File ydk = getDeckFile(dir, getDeckName(uri));
                 ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
                 if (pfd == null) {
