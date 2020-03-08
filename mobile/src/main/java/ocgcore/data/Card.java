@@ -8,6 +8,17 @@ import ocgcore.enums.CardType;
 
 public class Card extends CardData implements Parcelable {
     public static final int SETCODE_MAX = 4;
+    public static final Creator<Card> CREATOR = new Creator<Card>() {
+        @Override
+        public Card createFromParcel(Parcel source) {
+            return new Card(source);
+        }
+
+        @Override
+        public Card[] newArray(int size) {
+            return new Card[size];
+        }
+    };
     public String Name;
     public String Desc;
 
@@ -24,11 +35,6 @@ public class Card extends CardData implements Parcelable {
 
     public Card(int code) {
         super(code);
-    }
-
-    public Card type(long type) {
-        this.Type = type;
-        return this;
     }
 
     public Card(CardData cardData) {
@@ -49,20 +55,14 @@ public class Card extends CardData implements Parcelable {
         }
     }
 
-    public int getStar() {
-        return (Level & 0xff);
+    protected Card(Parcel in) {
+        super(in);
+        this.Name = in.readString();
+        this.Desc = in.readString();
     }
 
     public static boolean isType(long Type, CardType type) {
         return ((Type & type.value()) != 0);
-    }
-
-    public boolean isType(CardType type) {
-        return ((Type & type.value()) != 0);
-    }
-
-    public boolean onlyType(CardType type) {
-        return (Type == type.value());
     }
 
     public static boolean isSpellTrap(long Type) {
@@ -71,6 +71,23 @@ public class Card extends CardData implements Parcelable {
 
     public static boolean isExtraCard(long Type) {
         return (isType(Type, CardType.Fusion) || isType(Type, CardType.Synchro) || isType(Type, CardType.Xyz) || isType(Type, CardType.Link));
+    }
+
+    public Card type(long type) {
+        this.Type = type;
+        return this;
+    }
+
+    public int getStar() {
+        return (Level & 0xff);
+    }
+
+    public boolean isType(CardType type) {
+        return ((Type & type.value()) != 0);
+    }
+
+    public boolean onlyType(CardType type) {
+        return (Type == type.value());
     }
 
     public boolean isSpellTrap() {
@@ -101,15 +118,12 @@ public class Card extends CardData implements Parcelable {
     }
 
     public boolean isSetCode(long _setcode) {
+        int settype = (int) _setcode & 0xfff;
+        int setsubtype = (int) _setcode & 0xf000;
         long[] setcodes = getSetCode();
         for (long setcode : setcodes) {
-            String setcode16=Long.toHexString(setcode);
-            if (setcode16.length()==4){
-                if (setcode16.endsWith(Long.toHexString(_setcode)))
-                    return true;
-            }else if (setcode == _setcode) {
+            if (((int) setcode & 0xfff) == settype && ((int) setcode & 0xf000 & setsubtype) == setsubtype)
                 return true;
-            }
         }
         return false;
     }
@@ -133,7 +147,6 @@ public class Card extends CardData implements Parcelable {
                 '}';
     }
 
-
     @Override
     public int describeContents() {
         return 0;
@@ -145,22 +158,4 @@ public class Card extends CardData implements Parcelable {
         dest.writeString(this.Name);
         dest.writeString(this.Desc);
     }
-
-    protected Card(Parcel in) {
-        super(in);
-        this.Name = in.readString();
-        this.Desc = in.readString();
-    }
-
-    public static final Creator<Card> CREATOR = new Creator<Card>() {
-        @Override
-        public Card createFromParcel(Parcel source) {
-            return new Card(source);
-        }
-
-        @Override
-        public Card[] newArray(int size) {
-            return new Card[size];
-        }
-    };
 }
