@@ -113,6 +113,7 @@ public class SearchableListDialog extends DialogFragment implements
         outState.putSerializable("item", _searchableItem);
         super.onSaveInstanceState(outState);
     }
+
     // Change End
     public void setTitle(String strTitle) {
         _strTitle = strTitle;
@@ -146,8 +147,8 @@ public class SearchableListDialog extends DialogFragment implements
         _searchView.setOnQueryTextListener(this);
         _searchView.setOnCloseListener(this);
         _searchView.clearFocus();
-        int id =_searchView.getContext().getResources().getIdentifier("android:id/search_src_text", null, null);
-        TextView textView1= (TextView)_searchView.findViewById(id);
+        int id = _searchView.getContext().getResources().getIdentifier("android:id/search_src_text", null, null);
+        TextView textView1 = (TextView) _searchView.findViewById(id);
         textView1.setTextColor(Color.parseColor("#ff8800"));
         InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context
                 .INPUT_METHOD_SERVICE);

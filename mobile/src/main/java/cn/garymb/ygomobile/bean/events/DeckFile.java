@@ -8,6 +8,7 @@ public class DeckFile extends TextSelect {
 
     private String name;
     private String path;
+    private Long date;
 
     public DeckFile(String path) {
         this.path = path;
@@ -23,6 +24,7 @@ public class DeckFile extends TextSelect {
         path = file.getAbsolutePath();
         name = file.getName();
         name = name.substring(0, name.lastIndexOf("."));
+        date = file.lastModified();
         super.setName(name);
         setObject(this);
     }
@@ -42,5 +44,7 @@ public class DeckFile extends TextSelect {
     public void setPath(String path) {
         this.path = path;
     }
+
+    public Long getDate() { return date; }
 
 }

@@ -49,7 +49,11 @@ public class DeckUtil {
                 }
             }
         }
-        Collections.sort(deckList, nameCom);
+        if (path.equals(AppsSettings.get().getPackDeckDir())) {
+            Collections.sort(deckList, dateCom);
+        } else {
+            Collections.sort(deckList, nameCom);
+        }
         return deckList;
     }
 
@@ -119,6 +123,13 @@ public class DeckUtil {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
             return ydk1.getName().compareTo(ydk2.getName());
+        }
+    };
+
+    static Comparator dateCom = new Comparator<DeckFile>() {
+        @Override
+        public int compare(DeckFile ydk1, DeckFile ydk2) {
+            return ydk2.getDate().compareTo(ydk1.getDate());
         }
     };
 
