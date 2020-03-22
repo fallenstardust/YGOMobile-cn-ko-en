@@ -28,11 +28,10 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
-
-import com.ourygo.assistant.util.PermissionUtil;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
@@ -219,6 +218,9 @@ public class MainActivity extends HomeActivity {
             Log.e("MainActivity", "开始复制");
             try {
                 IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
+
+                FileUtils.delFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
+
                 if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
                     IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
                             AppsSettings.get().getResourcePath(), true);

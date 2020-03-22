@@ -15,11 +15,11 @@ import java.util.List;
 
 public class FileUtils {
 
-    public static boolean deleteFile(File file){
-        if(file.isFile()){
+    public static boolean deleteFile(File file) {
+        if (file.isFile()) {
             try {
                 file.delete();
-            }catch (Throwable e){
+            } catch (Throwable e) {
                 return false;
             }
         }
@@ -83,14 +83,14 @@ public class FileUtils {
         FileOutputStream outputStream = null;
         try {
             File dir = out.getParentFile();
-            if(!dir.exists()){
+            if (!dir.exists()) {
                 dir.mkdirs();
             }
             outputStream = new FileOutputStream(out);
             copy(in, outputStream);
         } catch (Throwable e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             IOUtils.close(outputStream);
             IOUtils.close(in);
         }
@@ -101,7 +101,7 @@ public class FileUtils {
         FileInputStream inputStream = null;
         try {
             File dir = out.getParentFile();
-            if(!dir.exists()){
+            if (!dir.exists()) {
                 dir.mkdirs();
             }
             inputStream = new FileInputStream(in);
@@ -109,7 +109,7 @@ public class FileUtils {
             copy(inputStream, outputStream);
         } catch (Throwable e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             IOUtils.close(outputStream);
             IOUtils.close(inputStream);
         }
@@ -120,14 +120,14 @@ public class FileUtils {
         //判断复制后的路径是否含有文件名,如果没有则加上
         if (!isName) {
             //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
-            String abb[]=oldPath.split("/");
+            String abb[] = oldPath.split("/");
             newPath = newPath + "/" + abb[abb.length - 1];
         }
 
-        FileInputStream fis=new FileInputStream(oldPath);
-        FileOutputStream fos=new FileOutputStream(newPath);
-        byte[] buf=new byte[1024];
-        int len=0;
+        FileInputStream fis = new FileInputStream(oldPath);
+        FileOutputStream fos = new FileOutputStream(newPath);
+        byte[] buf = new byte[1024];
+        int len = 0;
         while ((len = fis.read(buf)) != -1) {
             fos.write(buf, 0, len);
         }
@@ -142,21 +142,21 @@ public class FileUtils {
         //判断复制后的路径是否含有文件名,如果没有则加上
         if (!isName) {
             //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
-            String abb[]=oldPath.split("/");
+            String abb[] = oldPath.split("/");
             newPath = newPath + "/" + abb[abb.length - 1];
         }
 
-        FileInputStream fis=new FileInputStream(oldPath);
-        FileOutputStream fos=new FileOutputStream(newPath);
-        byte[] buf=new byte[1024];
-        int len=0;
+        FileInputStream fis = new FileInputStream(oldPath);
+        FileOutputStream fos = new FileOutputStream(newPath);
+        byte[] buf = new byte[1024];
+        int len = 0;
         while ((len = fis.read(buf)) != -1) {
             fos.write(buf, 0, len);
         }
         fos.close();
         fis.close();
         //删除文件
-        File file=new File(oldPath);
+        File file = new File(oldPath);
         if (file.exists() && file.isFile()) {
             file.delete();
         }
@@ -169,5 +169,22 @@ public class FileUtils {
         while ((len = in.read(data)) != -1) {
             out.write(data, 0, len);
         }
+    }
+
+    //删除文件（String Path）
+    public static void delFile(String s) {
+        File file = new File(s);
+
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                File f = files[i];
+                deleteFile(f);
+            }
+            //file.delete();
+        } else if (file.exists()) {
+            file.delete();
+        }
+
     }
 }
