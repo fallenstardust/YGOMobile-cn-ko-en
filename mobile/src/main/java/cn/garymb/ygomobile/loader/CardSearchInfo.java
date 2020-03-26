@@ -155,6 +155,12 @@ class CardSearchInfo {
                             }
                             continue;
                         }
+                    } else {
+                        //排除通常怪兽里的token卡
+                        if (type == CardType.Normal.value()) {
+                            if ((card.Type & CardType.Token.value()) == CardType.Token.value())
+                                return false;
+                        }
                     }
                     //效果怪兽
                     if (type == CardType.Effect.value()) {
@@ -165,16 +171,16 @@ class CardSearchInfo {
                                     || (card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
                                     || (card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
                                     || (card.Type & CardType.Link.value()) == CardType.Link.value()
-                                    )
+                            )
                                 return false;
-                        }else {
+                        } else {
                             return false;
                         }
-                    }else  if (type == CardType.Non_Effect.value()) {
+                    } else if (type == CardType.Non_Effect.value()) {
                         //非效果怪兽
                         if ((card.Type & CardType.Effect.value()) == CardType.Effect.value())
                             return false;
-                    }else  if ((card.Type & type) != type) {
+                    } else if ((card.Type & type) != type) {
                         return false;
                     }
 
