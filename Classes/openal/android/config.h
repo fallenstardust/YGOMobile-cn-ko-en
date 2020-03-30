@@ -93,7 +93,7 @@
 #define HAVE_MODFF
 
 /* Define if we have the log2f function */
-/* #undef HAVE_LOG2F */
+#define HAVE_LOG2F
 
 /* Define if we have the cbrtf function */
 #define HAVE_CBRTF
