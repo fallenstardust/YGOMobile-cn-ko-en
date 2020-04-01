@@ -4,13 +4,13 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 22
+        targetSdkVersion 28
 
         ndk {
             moduleName "YGOMobile"
-            abiFilters "armeabi-v7a"//,"x86"
+            abiFilters "armeabi-v7a","x86"
         }
     }
 
