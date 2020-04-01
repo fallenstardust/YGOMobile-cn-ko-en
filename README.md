@@ -13,7 +13,9 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
     Windows: https://dl.google.com/android/ndk/android-ndk-r9d-windows-x86_64.zip
     
     目前最新ndk
-	https://developer.android.google.cn/ndk/downloads/
+    https://dl.google.com/android/repository/android-ndk-r15b-windows-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r15b-darwin-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r15b-linux-x86_64.zip
     
 重要
 ---------------------------------------------
