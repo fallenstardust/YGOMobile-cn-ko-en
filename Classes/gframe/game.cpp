@@ -1504,6 +1504,8 @@ void Game::LoadConfig() {
 	gameConf.search_multiple_keywords = 1;
 	gameConf.defaultOT = 1;
 	gameConf.auto_search_limit = 1;
+	//enable errorLog
+	enable_log = 3;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
 }
