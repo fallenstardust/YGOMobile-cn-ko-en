@@ -2,10 +2,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="@string/settings_game">
-        <Preference
+        <!--Preference
             android:key="pref_key_game_res_path"
             android:persistent="true"
-            android:title="@string/settings_game_res_path" />
+            android:title="@string/settings_game_res_path" /-->
         <Preference
             android:key="pref_key_about_check_update"
             android:persistent="true"
@@ -13,6 +13,17 @@
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log" />
+
+        <CheckBoxPreference
+            android:key="pref_settings_read_ex"
+            android:persistent="true"
+            android:title="@string/title_use_ex" />
+
+        <CheckBoxPreference
+            android:key="pref_key_start_serviceduelassistant"
+            android:persistent="true"
+            android:summary="@string/about_DuelAssistant"
+            android:title="@string/Start_ServiceDuelAssistant" />
 
         <CheckBoxPreference
             android:key="pref_settings_keep_scale"
@@ -36,15 +47,6 @@
             android:persistent="true"
             android:summary="@string/only_game_tip"
             android:title="@string/settings_pref_settings_only_game"/-->
-        <CheckBoxPreference
-            android:key="pref_key_start_serviceduelassistant"
-            android:persistent="true"
-            android:summary="@string/about_DuelAssistant"
-            android:title="@string/Start_ServiceDuelAssistant" />
-        <CheckBoxPreference
-            android:key="pref_settings_read_ex"
-            android:persistent="true"
-            android:title="@string/title_use_ex" />
         <CheckBoxPreference
             android:key="pref_key_game_screen_orientation"
             android:persistent="true"
