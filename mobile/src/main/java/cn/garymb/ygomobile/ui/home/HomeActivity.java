@@ -433,21 +433,28 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         builder.setLeftButtonText(R.string.join_game);
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
-            //保存名字
-            String name = editText.getText().toString();
-            if (!TextUtils.isEmpty(name)) {
-                List<String> items = simpleListAdapter.getItems();
-                int index = items.indexOf(name);
-                if (index >= 0) {
-                    items.remove(index);
-                    items.add(0, name);
-                } else {
-                    items.add(0, name);
+            if (ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+                Toast toast = Toast.makeText(getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                openGame();
+            } else {
+                //保存名字
+                String name = editText.getText().toString();
+                if (!TextUtils.isEmpty(name)) {
+                    List<String> items = simpleListAdapter.getItems();
+                    int index = items.indexOf(name);
+                    if (index >= 0) {
+                        items.remove(index);
+                        items.add(0, name);
+                    } else {
+                        items.add(0, name);
+                    }
+                    AppsSettings.get().setLastRoomList(items);
+                    simpleListAdapter.notifyDataSetChanged();
                 }
-                AppsSettings.get().setLastRoomList(items);
-                simpleListAdapter.notifyDataSetChanged();
+                joinGame(serverInfo, name);
             }
-            joinGame(serverInfo, name);
         });
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
