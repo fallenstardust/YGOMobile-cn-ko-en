@@ -210,13 +210,17 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
             systemConf.setFontSize(mSettings.getFontSize());
             systemConf.close();
+            //原目录文件路径
+            String deck = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH;
+            String replay = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_REPLAY_PATH;
+            String textures = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
+            String pics = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
 
-            InputStream fisdeck = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH);
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
-                IOUtils.copyToFile(fisdeck, mContext.getExternalFilesDir(Constants.CORE_DECK_PATH).getAbsolutePath());
+
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
                         mSettings.getDeckDir(), needsUpdate);
                 //复制卡包
@@ -266,7 +270,14 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    resPath, needsUpdate);//mContext.getFilesDir().getPath()
+                    resPath, needsUpdate);
+            //复制原目录文件
+            FileUtils.copyDir(deck, mSettings.getDeckDir());
+            FileUtils.copyDir(replay, resPath + "/" + Constants.CORE_REPLAY_PATH);
+            FileUtils.copyDir(textures, mSettings.getCoreSkinPath());
+            FileUtils.copyDir(pics, mSettings.getCardImagePath());
+
+
             han.sendEmptyMessage(0);
 
             loadData();

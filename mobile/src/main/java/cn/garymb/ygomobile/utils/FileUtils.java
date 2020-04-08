@@ -170,6 +170,28 @@ public class FileUtils {
             out.write(data, 0, len);
         }
     }
+    //复制文件夹全部文件
+    public static void copyDir(String oldPath, String newPath) throws IOException {
+        File file = new File(oldPath);
+        //文件名称列表
+        String[] filePath = file.list();
+
+        if (!(new File(newPath)).exists()) {
+            (new File(newPath)).mkdir();
+        }
+
+        for (int i = 0; i < filePath.length; i++) {
+            if ((new File(oldPath + file.separator + filePath[i])).isDirectory()) {
+                copyDir(oldPath  + file.separator  + filePath[i], newPath  + file.separator + filePath[i]);
+            }
+
+            if (new File(oldPath  + file.separator + filePath[i]).isFile()) {
+                if (!(new File(newPath + file.separator + filePath[i]).exists()))
+                    copyFile(oldPath + file.separator + filePath[i], newPath + file.separator + filePath[i], true);
+            }
+
+        }
+    }
 
     //删除文件（String Path）
     public static void delFile(String s) {
