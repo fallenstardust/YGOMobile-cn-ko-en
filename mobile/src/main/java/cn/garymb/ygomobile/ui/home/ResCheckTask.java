@@ -8,13 +8,17 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -32,6 +36,7 @@ import ocgcore.DataManager;
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+import static cn.garymb.ygomobile.Constants.PREF_DEF_GAME_DIR;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_NONE = 0;
@@ -206,10 +211,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             systemConf.setFontSize(mSettings.getFontSize());
             systemConf.close();
 
+            InputStream fisdeck = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH);
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
+                IOUtils.copyToFile(fisdeck, mContext.getExternalFilesDir(Constants.CORE_DECK_PATH).getAbsolutePath());
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
                         mSettings.getDeckDir(), needsUpdate);
                 //复制卡包
