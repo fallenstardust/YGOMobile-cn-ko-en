@@ -277,7 +277,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             FileUtils.copyDir(textures, mSettings.getCoreSkinPath());
             FileUtils.copyDir(pics, mSettings.getCardImagePath());
 
-
             han.sendEmptyMessage(0);
 
             loadData();

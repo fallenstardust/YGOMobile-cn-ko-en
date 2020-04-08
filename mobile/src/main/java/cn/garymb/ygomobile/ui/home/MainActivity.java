@@ -162,7 +162,7 @@ public class MainActivity extends HomeActivity {
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if (mResCheckTask != null)
+        if (mResCheckTask.mReceiver != null)
             mResCheckTask.unregisterMReceiver();
     }
 
