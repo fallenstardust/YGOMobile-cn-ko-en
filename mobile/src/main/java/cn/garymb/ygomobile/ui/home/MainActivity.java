@@ -35,6 +35,10 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.ORI_PICS;
+import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
+import static cn.garymb.ygomobile.Constants.ORI_TEXTURES;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
@@ -243,6 +247,12 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
                         AppsSettings.get().getSoundPath(), false);
+
+                //复制原目录文件
+                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir());
+                FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH);
+                FileUtils.copyDir(ORI_TEXTURES, AppsSettings.get().getCoreSkinPath());
+                FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath());
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);

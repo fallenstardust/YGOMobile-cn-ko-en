@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile;
 
+import android.os.Environment;
 import android.view.Gravity;
 
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -150,6 +151,12 @@ public interface Constants {
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";
+
+    //原目录文件路径
+    String ORI_DECK = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH;
+    String ORI_REPLAY = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_REPLAY_PATH;
+    String ORI_TEXTURES = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
+    String ORI_PICS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
 
     long LOG_TIME = 2 * 1000;
     /***

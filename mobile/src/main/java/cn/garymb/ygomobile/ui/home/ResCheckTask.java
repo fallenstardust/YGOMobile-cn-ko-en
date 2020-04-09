@@ -36,6 +36,10 @@ import ocgcore.DataManager;
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.ORI_PICS;
+import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
+import static cn.garymb.ygomobile.Constants.ORI_TEXTURES;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_GAME_DIR;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
@@ -210,11 +214,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
             systemConf.setFontSize(mSettings.getFontSize());
             systemConf.close();
-            //原目录文件路径
-            String deck = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH;
-            String replay = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_REPLAY_PATH;
-            String textures = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
-            String pics = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
 
             //如果是新版本
             if (needsUpdate) {
@@ -272,10 +271,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
             //复制原目录文件
-            FileUtils.copyDir(deck, mSettings.getDeckDir());
-            FileUtils.copyDir(replay, resPath + "/" + Constants.CORE_REPLAY_PATH);
-            FileUtils.copyDir(textures, mSettings.getCoreSkinPath());
-            FileUtils.copyDir(pics, mSettings.getCardImagePath());
+            FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir());
+            FileUtils.copyDir(ORI_REPLAY, resPath + "/" + Constants.CORE_REPLAY_PATH);
+            FileUtils.copyDir(ORI_TEXTURES, mSettings.getCoreSkinPath());
+            FileUtils.copyDir(ORI_PICS, mSettings.getCardImagePath());
 
             han.sendEmptyMessage(0);
 
