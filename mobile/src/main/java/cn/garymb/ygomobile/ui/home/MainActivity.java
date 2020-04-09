@@ -249,10 +249,9 @@ public class MainActivity extends HomeActivity {
                         AppsSettings.get().getSoundPath(), false);
 
                 //复制原目录文件
-                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir());
-                FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH);
-                FileUtils.copyDir(ORI_TEXTURES, AppsSettings.get().getCoreSkinPath());
-                FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath());
+                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+                FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
+                FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);
