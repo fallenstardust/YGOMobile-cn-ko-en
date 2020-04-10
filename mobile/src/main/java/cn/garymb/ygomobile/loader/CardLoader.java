@@ -38,7 +38,7 @@ public class CardLoader implements ICardLoader {
 
         void onLimitListChanged(LimitList limitList);
 
-        void onSearchResult(List<Card> Cards);
+        void onSearchResult(List<Card> Cards, boolean isHide);
 
         void onResetSearch();
     }
@@ -143,13 +143,13 @@ public class CardLoader implements ICardLoader {
             return tmp;
         }).fail((e) -> {
             if (mCallBack != null) {
-                mCallBack.onSearchResult(null);
+                mCallBack.onSearchResult(null, false);
             }
             Log.e("kk", "search", e);
             wait.dismiss();
         }).done((tmp) -> {
             if (mCallBack != null) {
-                mCallBack.onSearchResult(tmp);
+                mCallBack.onSearchResult(tmp, false);
             }
             wait.dismiss();
         });

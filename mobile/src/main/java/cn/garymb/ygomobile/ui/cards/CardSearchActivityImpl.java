@@ -115,10 +115,10 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
 
     private void intentSearch(String searchMessage) {
         //如果要求搜索的关键字为空，就搜索决斗助手保存的卡查关键字
-        if (TextUtils.isEmpty(searchMessage)){
+        if (TextUtils.isEmpty(searchMessage)) {
             currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
-        }else {
-            currentCardSearchMessage=searchMessage;
+        } else {
+            currentCardSearchMessage = searchMessage;
         }
         //卡查关键字为空不卡查
         if (TextUtils.isEmpty(currentCardSearchMessage))
@@ -191,7 +191,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     }
 
     @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
         mCardListAdapater.set(cardInfos);
         mCardListAdapater.notifyDataSetChanged();

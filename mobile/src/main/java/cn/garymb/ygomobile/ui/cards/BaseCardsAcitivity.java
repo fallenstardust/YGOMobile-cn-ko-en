@@ -117,8 +117,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
         finish();
     }
 
-    @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
         mCardListAdapater.set(cardInfos);
         mCardListAdapater.notifyDataSetChanged();

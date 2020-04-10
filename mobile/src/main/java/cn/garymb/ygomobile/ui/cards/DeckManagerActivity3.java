@@ -147,7 +147,7 @@ public class DeckManagerActivity3 extends BaseActivity implements OnItemDragList
     }
 
     @Override
-    public void onSearchResult(List<Card> Cards) {
+    public void onSearchResult(List<Card> Cards, boolean isHide) {
 
     }
 
