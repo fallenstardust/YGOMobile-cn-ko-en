@@ -58,6 +58,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
@@ -285,7 +286,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 for (int i = 0; i < id.size(); i++)
                     Favorite.add(id.valueAt(i));
             }
-            onSearchResult(Favorite);
+            onSearchResult(Favorite, true);
         });
     }
 
@@ -357,10 +358,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         }
     }
 
-    @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
         super.onSearchResult(cardInfos);
-        showResult(false);
+        if (!isHide)
+            showResult(false);
     }
 
     @Override
