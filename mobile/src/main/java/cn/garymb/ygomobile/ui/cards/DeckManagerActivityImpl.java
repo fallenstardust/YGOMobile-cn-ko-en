@@ -280,13 +280,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             //设置收藏夹
             ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
             systemConf.read();
-            Card id = new Card();
-            if (systemConf.mLines != null)
-                for(int i = 0; i < systemConf.mLines.size(); i++)
-                    id = mCardLoader.readCards(systemConf.mLines.valueAt(i));
-                    Favorite.add(id);
-
-                onSearchResult(Favorite);
+            SparseArray<Card> id = mCardLoader.readCards(systemConf.mLines);
+            if (id != null) {
+                for (int i = 0; i < id.size(); i++)
+                    Favorite.add(id.valueAt(i));
+            }
+            onSearchResult(Favorite);
         });
     }
 
