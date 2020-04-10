@@ -1,8 +1,5 @@
 package ocgcore;
 
-import android.util.Log;
-import android.util.SparseArray;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -13,21 +10,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-import cn.garymb.ygomobile.bean.DeckInfo;
-import cn.garymb.ygomobile.bean.events.CardInfoEvent;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardLoader;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
-import ocgcore.data.Card;
-import ocgcore.data.LimitList;
 
 public class ConfigManager implements Closeable {
 
-    public List<String> mLines = new ArrayList<>();
+    public List<Integer> mLines = new ArrayList<>();
     private File file;
 
     ConfigManager(File file) {
@@ -49,10 +37,11 @@ public class ConfigManager implements Closeable {
             BufferedReader reader = new BufferedReader(in);
             String line = null;
             while ((line = reader.readLine()) != null) {
-                mLines.add(line);
+                if (line.startsWith("#"))
+                    continue;
+                mLines.add(Integer.parseInt(line));
             }
         } catch (Exception e) {
-
         } finally {
             IOUtils.close(in);
             IOUtils.close(inputStream);
@@ -96,10 +85,6 @@ public class ConfigManager implements Closeable {
             }
             tmp.renameTo(file);
         }
-    }
-
-    public void convertToCardInfos(CardLoader cardLoader, LimitList limitList) {
-        SparseArray<Card> tmp = cardLoader.readCards(mLines, limitList);
     }
     /*//已弃用通过system.conf设置字体大小
     public void setFontSize(int size) {

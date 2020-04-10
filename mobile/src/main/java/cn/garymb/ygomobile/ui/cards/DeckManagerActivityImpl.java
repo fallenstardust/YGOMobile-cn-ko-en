@@ -35,6 +35,7 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.ourygo.assistant.service.DuelAssistantService;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -69,7 +70,6 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import com.ourygo.assistant.service.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -77,6 +77,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -101,6 +102,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
     private boolean isExit = false;
+    List<Card> Favorite = new ArrayList<Card>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -275,6 +277,16 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             initDecksListSpinners(mDeckSpinner, rs.source);
             //设置当前卡组
             setCurDeck(rs);
+            //设置收藏夹
+            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
+            systemConf.read();
+            Card id = new Card();
+            if (systemConf.mLines != null)
+                for(int i = 0; i < systemConf.mLines.size(); i++)
+                    id = mCardLoader.readCards(systemConf.mLines.valueAt(i));
+                    Favorite.add(id);
+
+                onSearchResult(Favorite);
         });
     }
 

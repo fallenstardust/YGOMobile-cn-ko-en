@@ -75,6 +75,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mListener = listener;
         handler = new Handler(context.getMainLooper());
         mSettings = AppsSettings.get();
+        checkWindbot();
     }
 
     public static String getDatapath(String path) {
@@ -215,7 +216,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             systemConf.read();
             //systemConf.setFontSize(mSettings.getFontSize());//已弃用
             systemConf.close();
-
 
             //如果是新版本
             if (needsUpdate) {
