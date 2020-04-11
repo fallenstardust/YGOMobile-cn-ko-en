@@ -32,6 +32,8 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.ConfigManager;
+import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
@@ -55,6 +57,8 @@ public class MainActivity extends HomeActivity {
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
 
+    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +68,8 @@ public class MainActivity extends HomeActivity {
 //        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
         //资源复制
         checkRes();
+        //加载收藏夹
+        favConf.read();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})

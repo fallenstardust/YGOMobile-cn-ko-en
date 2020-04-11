@@ -278,9 +278,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             //设置当前卡组
             setCurDeck(rs);
             //设置收藏夹
-            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
-            systemConf.read();
-            SparseArray<Card> id = mCardLoader.readCards(systemConf.mLines);
+            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines);
             if (id != null) {
                 for (int i = 0; i < id.size(); i++)
                     Favorite.add(id.valueAt(i));
@@ -356,9 +354,10 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             }
         }
     }
+
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        super.onSearchResult(cardInfos,isHide);
+        super.onSearchResult(cardInfos, isHide);
         if (!isHide)
             showResult(false);
     }

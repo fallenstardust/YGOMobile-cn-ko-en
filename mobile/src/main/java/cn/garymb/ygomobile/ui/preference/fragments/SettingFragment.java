@@ -175,9 +175,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 } catch (Exception e) {
 
                 }
-                ConfigManager configManager = DataManager.openConfig(mSettings.getSystemConfig());
-                //configManager.setFontSize(size);//已弃用
-                configManager.close();
             }
             if (preference instanceof CheckBoxPreference) {
                 CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;

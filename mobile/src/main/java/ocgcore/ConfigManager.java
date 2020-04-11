@@ -15,7 +15,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 
 public class ConfigManager implements Closeable {
 
-    public List<Integer> mLines = new ArrayList<>();
+    public static List<Integer> mLines = new ArrayList<>();
     private File file;
 
     ConfigManager(File file) {

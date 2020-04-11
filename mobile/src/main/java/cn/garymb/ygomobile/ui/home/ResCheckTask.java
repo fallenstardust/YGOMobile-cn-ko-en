@@ -211,12 +211,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 }
             }
 
-            //设置收藏夹
-            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
-            systemConf.read();
-            //systemConf.setFontSize(mSettings.getFontSize());//已弃用
-            systemConf.close();
-
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
