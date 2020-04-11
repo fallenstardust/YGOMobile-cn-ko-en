@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -187,6 +188,23 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         bind(R.id.nextone).setOnClickListener((v) -> {
             onNextCard();
         });
+        bind(R.id.image_fav).setOnClickListener((v) -> {
+            doMyFavorites(getCardInfo());
+        });
+    }
+
+    private void doMyFavorites(Card cardInfo) {
+        ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
+        Integer code = cardInfo.Code;
+        if (favConf.mLines.contains(code)) {
+            favConf.mLines.remove(code);
+            favConf.save();
+            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
+        } else {
+            favConf.mLines.add(code);
+            favConf.save();
+            mImageFav.setBackgroundResource(R.drawable.ic_fav);
+        }
     }
 
     public ImageView getCardImage() {
@@ -253,7 +271,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         //按是否存在于收藏夹切换显示图标
         if (ConfigManager.mLines.contains(cardInfo.Code)) {
             mImageFav.setBackgroundResource(R.drawable.ic_fav);
-
         } else {
             mImageFav.setBackgroundResource(R.drawable.ic_control_point);
         }

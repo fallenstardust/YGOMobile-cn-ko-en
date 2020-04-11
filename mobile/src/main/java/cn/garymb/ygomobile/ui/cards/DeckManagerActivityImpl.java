@@ -102,7 +102,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
     private boolean isExit = false;
-    List<Card> Favorite = new ArrayList<Card>();
+    public static List<Card> Favorite = new ArrayList<Card>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
