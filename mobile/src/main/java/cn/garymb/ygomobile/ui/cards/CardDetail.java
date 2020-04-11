@@ -34,6 +34,8 @@ import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
+import ocgcore.ConfigManager;
+import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -69,7 +71,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private TextView cardcode;
     private View lb_setcode;
     private ImageLoader imageLoader;
-    private View mImageOpen, atkdefView;
+    private View mImageFav, atkdefView;
 
     private BaseActivity mContext;
     private StringManager mStringManager;
@@ -130,7 +132,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardAtk = bind(R.id.card_atk);
         cardDef = bind(R.id.card_def);
         atkdefView = bind(R.id.layout_atkdef2);
-        mImageOpen = bind(R.id.image_control);
+        mImageFav = bind(R.id.image_fav);
 
         monsterlayout = bind(R.id.layout_monster);
         race = bind(R.id.card_race);
@@ -142,7 +144,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         lb_setcode = bind(R.id.label_setcode);
 
         if (cardManager == null) {
-            Log.e("CardDetail","加载卡片信息");
+            Log.e("CardDetail", "加载卡片信息");
             cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
             //加载数据库中所有卡片卡片
             cardManager.loadCards();
@@ -247,6 +249,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             cardcode.setText(String.format("%08d", cardInfo.Code));
         } else {
             cardcode.setText(String.format("%08d", cardInfo.Alias));
+        }
+        //按是否存在于收藏夹切换显示图标
+        if (ConfigManager.mLines.contains(cardInfo.Code)) {
+            mImageFav.setBackgroundResource(R.drawable.ic_fav);
+
+        } else {
+            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
         }
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
