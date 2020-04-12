@@ -48,15 +48,15 @@ public class ConfigManager implements Closeable {
             IOUtils.close(inputStream);
         }
     }
-
+    //暂时弃用
     public boolean isLoad() {
         return mLines.size() > 0;
     }
 
     public void save(String words) {
-        if (!isLoad()) {
-            read();
-        }
+        //if (!isLoad()) {
+        //    read();
+        //}
         OutputStreamWriter out = null;
         FileOutputStream outputStream = null;
         File tmp = new File(file.getAbsolutePath() + ".tmp");
