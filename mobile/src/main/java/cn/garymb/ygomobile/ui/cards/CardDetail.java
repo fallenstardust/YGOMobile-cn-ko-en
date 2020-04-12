@@ -213,7 +213,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             favConf.mLines.remove(code);
             mImageFav.setBackgroundResource(R.drawable.ic_control_point);
         } else {
-            favConf.mLines.add(code);
+            favConf.mLines.add(0, code);
             mImageFav.setBackgroundResource(R.drawable.ic_fav);
         }
         favConf.save("#Favorite");
