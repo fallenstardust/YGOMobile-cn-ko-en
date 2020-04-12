@@ -4,9 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,9 +23,11 @@ import androidx.annotation.NonNull;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -40,6 +42,8 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
+
+import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
 
 /***
  * 卡片详情
@@ -86,6 +90,14 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private ProgressBar pb_loading;
     private TextView tv_loading;
     private boolean isDownloadCardImage = true;
+    private CallBack mCallBack;
+
+
+    public interface CallBack {
+        void onSearchStart();
+
+        void onSearchResult(List<Card> Cards, boolean isHide);
+    }
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -193,18 +205,28 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
     }
 
-    private void doMyFavorites(Card cardInfo) {
+    public void doMyFavorites(Card cardInfo) {
+        CardLoader mCardLoader = new CardLoader(context);
         ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
         Integer code = cardInfo.Code;
         if (favConf.mLines.contains(code)) {
             favConf.mLines.remove(code);
-            favConf.save();
             mImageFav.setBackgroundResource(R.drawable.ic_control_point);
         } else {
             favConf.mLines.add(code);
-            favConf.save();
             mImageFav.setBackgroundResource(R.drawable.ic_fav);
         }
+        favConf.save("#Favorite");
+        favConf.read();
+        Favorite.clear();
+        SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines);
+        if (id != null) {
+            for (int i = 0; i < id.size(); i++)
+                Favorite.add(id.valueAt(i));
+        }
+        if (mCallBack != null)
+            mCallBack.onSearchResult(Favorite, true);
+
     }
 
     public ImageView getCardImage() {
@@ -230,6 +252,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     public void setOnCardClickListener(OnCardClickListener listener) {
         mListener = listener;
+    }
+
+    public void setCallBack(CallBack callBack) {
+        mCallBack = callBack;
     }
 
     public void bind(Card cardInfo, final int position, final CardListProvider provider) {

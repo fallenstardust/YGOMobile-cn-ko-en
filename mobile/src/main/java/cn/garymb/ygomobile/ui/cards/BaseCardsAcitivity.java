@@ -142,7 +142,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
 
     }
 
-    public void AnimationShake2(){
+    public void AnimationShake2() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
         findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }

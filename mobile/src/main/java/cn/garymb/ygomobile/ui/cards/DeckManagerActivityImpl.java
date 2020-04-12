@@ -159,6 +159,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             //最后卡组
             _file = new File(mSettings.getLastDeckPath());
         }
+        Favorite.clear();
         init(_file);
         EventBus.getDefault().register(this);
         tv_deck.setOnClickListener(new View.OnClickListener() {
@@ -436,6 +437,19 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     public void onAddMainCard(Card cardInfo) {
                         addMainCard(cardInfo);
                     }
+                });
+                mCardDetail.setCallBack(new CardDetail.CallBack() {
+                    @Override
+                    public void onSearchStart() {
+
+                    }
+
+                    @Override
+                    public void onSearchResult(List<Card> Cards, boolean isHide) {
+                        DeckManagerActivityImpl.this.onSearchResult(Cards, isHide);
+                    }
+
+                    ;
                 });
             }
             mCardDetail.showAdd();

@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import cn.garymb.ygomobile.utils.IOUtils;
 
@@ -52,7 +53,7 @@ public class ConfigManager implements Closeable {
         return mLines.size() > 0;
     }
 
-    public void save() {
+    public void save(String words) {
         if (!isLoad()) {
             read();
         }
@@ -64,9 +65,13 @@ public class ConfigManager implements Closeable {
             outputStream = new FileOutputStream(tmp);
             out = new OutputStreamWriter(outputStream, "utf-8");
             BufferedWriter writer = new BufferedWriter(out);
+            if (words != null || words != "") {
+                writer.write(words);
+                writer.newLine();
+            }
             int count = mLines.size();
             for (int i = 0; i < count; i++) {
-                writer.write(mLines.get(i));
+                writer.write((mLines.get(i)).toString());
                 if (i < count - 1) {
                     writer.newLine();
                 }
@@ -86,14 +91,15 @@ public class ConfigManager implements Closeable {
             tmp.renameTo(file);
         }
     }
-    /*//已弃用通过system.conf设置字体大小
+
+    //已弃用通过system.conf设置字体大小
     public void setFontSize(int size) {
         if (!isLoad()) {
             read();
         }
         int count = mLines.size();
         for (int i = 0; i < count; i++) {
-            String line = mLines.get(i);
+            String line = mLines.get(i).toString();
             if (line == null) continue;
             line = line.toLowerCase(Locale.US);
             if (line.contains("textfont")) {
@@ -104,11 +110,11 @@ public class ConfigManager implements Closeable {
                     String newline = key + "= ";
                     String[] vs = val.trim().split(" ");
                     newline += vs[0] + " " + size;
-                    mLines.add(i, newline);
+                    mLines.add(i, Integer.parseInt(newline));
                     mLines.remove(i + 1);
                 }
             }
         }
-        save();
-    }*/
+        save("");
+    }
 }
