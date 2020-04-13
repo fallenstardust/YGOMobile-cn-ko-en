@@ -96,6 +96,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private AppCompatSpinner mDeckSpinner;
     private TextView tv_deck;
+    private TextView tv_result_count;
     private SimpleSpinnerAdapter mSimpleSpinnerAdapter;
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
@@ -109,6 +110,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         super.onCreate(savedInstanceState);
 
         tv_deck = $(R.id.tv_deck);
+        tv_result_count = $(R.id.result_count);
         mDeckSpinner = $(R.id.toolbar_list);
         mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mLimitSpinner = $(R.id.sp_limit_list);
@@ -359,6 +361,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
         super.onSearchResult(cardInfos, isHide);
+        tv_result_count.setText(String.valueOf(cardInfos.size()));
         if (!isHide)
             showResult(false);
     }
