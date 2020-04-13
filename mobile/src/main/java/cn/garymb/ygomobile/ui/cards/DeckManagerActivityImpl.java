@@ -279,7 +279,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             //设置当前卡组
             setCurDeck(rs);
             //设置收藏夹
-            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines);
+            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
             if (id != null) {
                 for (int i = 0; i < id.size(); i++)
                     Favorite.add(id.valueAt(i));

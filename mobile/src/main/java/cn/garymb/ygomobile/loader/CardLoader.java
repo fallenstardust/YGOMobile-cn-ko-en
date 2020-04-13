@@ -58,19 +58,24 @@ public class CardLoader implements ICardLoader {
         }
     }
 
-    public SparseArray<Card> readCards(List<Integer> ids) {
-        return readCards(ids, mLimitList);
+    public SparseArray<Card> readCards(List<Integer> ids, boolean isSorted) {
+        return readCards(ids, mLimitList, isSorted);
     }
 
-    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList) {
+    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList, boolean isSorted) {
         if (!isOpen()) {
             return null;
         }
         SparseArray<Card> map = new SparseArray<>();
-        for (Integer id : ids) {
-            if (id != 0) {
-                map.put(id, mCardManager.getCard(id));
+        if (isSorted) {
+            for (Integer id : ids) {
+                if (id != 0) {
+                    map.put(id, mCardManager.getCard(id));
+                }
             }
+        } else {
+            for (int i = 0; i < ids.size(); i++)
+                map.put(i, mCardManager.getCard(ids.get(i)));
         }
         return map;
     }
