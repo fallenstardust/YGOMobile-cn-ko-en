@@ -7,6 +7,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -56,15 +58,18 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     private DuelAssistantManagement duelAssistantManagement;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
+    private Button btn_search;
+    private TextView mResult_count;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        mResult_count = findViewById(R.id.search_result_count);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         intentSearchMessage = getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        Toolbar toolbar = $(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        Toolbar toolbar = $(R.id.toolbar);
+//        setSupportActionBar(toolbar);
         enableBackHome();
         mDrawerlayout = $(R.id.drawer_layout);
         mImageLoader = ImageLoader.get(this);
@@ -73,7 +78,11 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         mCardListAdapater.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
         mListView.setAdapter(mCardListAdapater);
-//
+        btn_search = $(R.id.btn_search);
+        btn_search.setOnClickListener((v) -> {
+            showSearch(true);
+        });
+/*
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerlayout, toolbar, R.string.search_open, R.string.search_close);
         toggle.setDrawerIndicatorEnabled(false);
@@ -82,7 +91,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             onBack();
         });
         toggle.syncState();
-        //
+        */
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
@@ -194,6 +203,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
         mCardListAdapater.set(cardInfos);
+        mResult_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapater.notifyDataSetChanged();
         if (cardInfos != null && cardInfos.size() > 0) {
             mListView.smoothScrollToPosition(0);

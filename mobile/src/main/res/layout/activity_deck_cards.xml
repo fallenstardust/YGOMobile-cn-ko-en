@@ -187,7 +187,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_marginRight="10dp"
                     android:background="@drawable/radius"
-                    android:gravity="right"
+                    android:gravity="center_horizontal"
                     android:text="0"
                     android:textColor="@color/gold"
                     android:textStyle="bold" />

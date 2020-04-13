@@ -129,8 +129,8 @@
 
             <ImageView
             android:id="@+id/image_fav"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_gravity="bottom|right"
             android:paddingRight="5dp"
             android:scaleType="center"
