@@ -39,14 +39,15 @@
                     android:layout_weight="1"
                     android:textSize="12sp" />
 
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/sp_scale"
-                    style="@style/itemSpinnerStyle"
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn_my_fav"
                     android:layout_width="0dp"
-                    android:layout_height="@dimen/label_width_small"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:visibility="invisible" />
+                    android:background="@color/transparent"
+                    android:text="@string/my_favorites"
+                    android:visibility="visible" />
+
             </LinearLayout>
 
             <LinearLayout
@@ -82,6 +83,29 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/sp_scale"
+                    style="@style/itemSpinnerStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/label_width_small"
+                    android:layout_weight="1"
+                    android:visibility="invisible" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/label_width_small"
+                android:orientation="horizontal">
+
+                <cn.garymb.ygomobile.ui.widget.SearchableSpinner
+                    android:id="@+id/sp_setcode"
+                    style="@style/itemSpinnerStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/label_width_small"
+                    android:layout_weight="1"
+                    app:searchTitle="@string/label_set" />
+
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btn_linkmarker"
                     android:layout_width="0dp"
@@ -92,14 +116,6 @@
                     android:visibility="visible" />
 
             </LinearLayout>
-
-            <cn.garymb.ygomobile.ui.widget.SearchableSpinner
-                android:id="@+id/sp_setcode"
-                style="@style/itemSpinnerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/label_width_small"
-                app:searchTitle="@string/label_set" />
-
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -223,7 +239,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
+                android:layout_marginLeft="10dp"
                 android:layout_weight="1">
 
                 <androidx.appcompat.widget.AppCompatEditText
@@ -256,7 +272,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
+                android:layout_marginLeft="10dp"
                 android:layout_weight="1">
 
                 <androidx.appcompat.widget.AppCompatEditText
