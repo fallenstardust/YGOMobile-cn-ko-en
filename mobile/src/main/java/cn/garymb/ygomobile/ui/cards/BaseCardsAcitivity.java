@@ -28,7 +28,7 @@ import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 
-public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack {
+public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
     protected DrawerLayout mDrawerlayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -58,6 +58,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector.setCallBack(this);
     }
 
     protected int getDimen(int id) {

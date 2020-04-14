@@ -277,4 +277,5 @@
     <string name="already_end">마지막</string>
     <string name="tip_expansions_image">카드의 고화질 이미지가 없습니다.</string>
     <string name="tip_return_to_duel">이미 돌아 가기 현재 게임</string>
+    <string name="my_favorites">즐겨 찾기★</string>
 </resources>
