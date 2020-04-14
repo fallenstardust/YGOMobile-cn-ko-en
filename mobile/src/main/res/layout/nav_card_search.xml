@@ -25,71 +25,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:layout_weight="1">
-
-                <androidx.appcompat.widget.AppCompatEditText
-                    android:id="@+id/edt_word1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:hint="@string/hit_keyword1"
-                    android:imeOptions="actionSearch"
-                    android:inputType="textNoSuggestions"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/gold" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:background="@drawable/button_bg"
-                android:text="@string/search" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:layout_weight="1">
-
-                <androidx.appcompat.widget.AppCompatEditText
-                    android:id="@+id/edt_word2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/hit_keyword2"
-                    android:imeOptions="actionSearch"
-                    android:inputType="textNoSuggestions"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/gold" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_reset"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:background="@drawable/button_bg"
-                android:text="@string/reset" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <LinearLayout
@@ -152,7 +87,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@drawable/button_bg"
+                    android:background="@color/transparent"
                     android:text="@string/linkmarker"
                     android:visibility="visible" />
 
@@ -278,6 +213,71 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:layout_weight="1">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_word1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:hint="@string/hit_keyword1"
+                    android:imeOptions="actionSearch"
+                    android:inputType="textNoSuggestions"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColorHint="@color/gold" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/button_bg"
+                android:text="@string/search" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:layout_weight="1">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_word2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hit_keyword2"
+                    android:imeOptions="actionSearch"
+                    android:inputType="textNoSuggestions"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColorHint="@color/gold" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_reset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/button_bg"
+                android:text="@string/reset" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

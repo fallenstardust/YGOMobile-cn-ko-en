@@ -106,7 +106,7 @@
     <string name="label_level">레벨/랭크/링크</string>
     <string name="label_attr">속성</string>
     <string name="label_category">카테고리</string>
-    <string name="linkmarker">링크마커</string>>
+    <string name="linkmarker">◀링크마커▶</string>>
     <string name="searching">카드검색</string>
     <string name="card_faq">뽜큐</string>
     <string name="no_webbrowser">웹브라우저를 사용하지 않습니다.</string>

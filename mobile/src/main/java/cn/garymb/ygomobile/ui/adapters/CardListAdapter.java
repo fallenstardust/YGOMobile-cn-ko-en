@@ -108,9 +108,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             holder.cardLevel.setVisibility(View.VISIBLE);
             holder.layout_atk.setVisibility(View.VISIBLE);
             holder.layout_def.setVisibility(View.VISIBLE);
-            if (item.isType(CardType.Link)) {
-                holder.cardLevel.setVisibility(View.INVISIBLE);
-            }
 //            holder.view_bar.setVisibility(View.VISIBLE);
             String star = "★"+ item.getStar();
             /*for (int i = 0; i < item.getStar(); i++) {
@@ -124,15 +121,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             }
             holder.cardAtk.setText((item.Attack < 0 ? "?" : String.valueOf(item.Attack)));
             if (item.isType(CardType.Link)) {
+                holder.cardLevel.setVisibility(View.INVISIBLE);
                 holder.cardDef.setText(item.getStar() < 0 ? "?" : "LINK-" + String.valueOf(item.getStar()));
                 holder.TextDef.setText("");
             } else {
                 holder.cardDef.setText((item.Defense < 0 ? "?" : String.valueOf(item.Defense)));
                 holder.TextDef.setText("DEF/");
-/*            }
-                if(item.isType(CardType.Link)) {
-                    holder.TextDef.setText(" ");
-*/
             }
 
 
