@@ -128,6 +128,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
                 holder.TextDef.setText("");
             } else {
                 holder.cardDef.setText((item.Defense < 0 ? "?" : String.valueOf(item.Defense)));
+                holder.TextDef.setText("DEF/");
 /*            }
                 if(item.isType(CardType.Link)) {
                     holder.TextDef.setText(" ");
