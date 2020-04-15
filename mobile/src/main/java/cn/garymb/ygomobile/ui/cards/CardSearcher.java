@@ -149,6 +149,8 @@ public class CardSearcher implements View.OnClickListener {
                 }
                 if (mCallBack != null)
                     mCallBack.onSearchResult(Favorite, false);
+
+                DeckManagerActivityImpl.isSearchResult = false;
             }
         });
 
@@ -543,6 +545,7 @@ public class CardSearcher implements View.OnClickListener {
                     , getSelect(typeMonsterSpinner2));
             lineKey = 0;
         }
+        DeckManagerActivityImpl.isSearchResult = true;
     }
 
     private void resetAll() {

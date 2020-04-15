@@ -219,13 +219,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         favConf.save("#Favorite");
         favConf.read();
         Favorite.clear();
-        SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
-        if (id != null) {
-            for (int i = 0; i < id.size(); i++)
-                Favorite.add(id.valueAt(i));
+        if (!DeckManagerActivityImpl.isSearchResult) {
+            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
+            if (id != null) {
+                for (int i = 0; i < id.size(); i++)
+                    Favorite.add(id.valueAt(i));
+            }
+            if (mCallBack != null)
+                mCallBack.onSearchResult(Favorite, true);
         }
-        if (mCallBack != null)
-            mCallBack.onSearchResult(Favorite, true);
 
     }
 

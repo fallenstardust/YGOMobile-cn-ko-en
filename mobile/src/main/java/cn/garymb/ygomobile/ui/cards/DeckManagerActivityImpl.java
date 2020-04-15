@@ -103,6 +103,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
     private boolean isExit = false;
+    public static boolean isSearchResult;
     public static List<Card> Favorite = new ArrayList<Card>();
 
     @Override
@@ -287,6 +288,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                     Favorite.add(id.valueAt(i));
             }
             onSearchResult(Favorite, true);
+            isSearchResult = false;
         });
     }
 
