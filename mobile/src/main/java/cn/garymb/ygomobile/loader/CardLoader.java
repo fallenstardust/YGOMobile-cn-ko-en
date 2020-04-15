@@ -22,6 +22,7 @@ import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class CardLoader implements ICardLoader {
@@ -124,27 +125,33 @@ public class CardLoader implements ICardLoader {
         Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
         VUiKit.defer().when(() -> {
             List<Card> tmp = new ArrayList<Card>();
+            List<Card> monster = new ArrayList<Card>();
+            List<Card> spell = new ArrayList<Card>();
+            List<Card> trap = new ArrayList<Card>();
             SparseArray<Card> cards = mCardManager.getAllCards();
             int count = cards.size();
             for (int i = 0; i < count; i++) {
                 Card card = cards.valueAt(i);
                 if (searchInfo == null || searchInfo.check(card)) {
-                    tmp.add(card);
+                    if (searchInfo != null && card.Name.equals(searchInfo.word)) {
+                        cards.remove(i);
+                        tmp.add(card);
+                    } else if (card.isType(CardType.Monster)) {
+                        monster.add(card);
+                    } else if (card.isType(CardType.Spell)) {
+                        spell.add(card);
+                    } else if (card.isType(CardType.Trap)) {
+                        trap.add(card);
+                    }
                 }
             }
-            if (searchInfo != null && searchInfo.getInCards() != null) {
-                final List<Integer> ids = searchInfo.getInCards();
-                Collections.sort(tmp, new Comparator<Card>() {
-                    @Override
-                    public int compare(Card o1, Card o2) {
-                        int index1 = ids.indexOf(Integer.valueOf(o1.Code));
-                        int index2 = ids.indexOf(Integer.valueOf(o2.Code));
-                        return index1 - index2;
-                    }
-                });
-            } else {
-                Collections.sort(tmp, ASC);
-            }
+            Collections.sort(tmp, ASCode);
+            Collections.sort(monster, ASC);
+            Collections.sort(spell, ASCode);
+            Collections.sort(trap, ASCode);
+            tmp.addAll(monster);
+            tmp.addAll(spell);
+            tmp.addAll(trap);
             return tmp;
         }).fail((e) -> {
             if (mCallBack != null) {
@@ -159,6 +166,15 @@ public class CardLoader implements ICardLoader {
             wait.dismiss();
         });
     }
+
+    private Comparator<Card> ASCode = new Comparator<Card>() {
+        @Override
+        public int compare(Card o1, Card o2) {
+            int index1 = (Integer.valueOf(o1.Code).intValue());
+            int index2 = (Integer.valueOf(o2.Code).intValue());
+            return index1 - index2;
+        }
+    };
 
     private Comparator<Card> ASC = new Comparator<Card>() {
         @Override
