@@ -40,7 +40,7 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
-class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack {
+class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
 
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
@@ -95,6 +95,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {

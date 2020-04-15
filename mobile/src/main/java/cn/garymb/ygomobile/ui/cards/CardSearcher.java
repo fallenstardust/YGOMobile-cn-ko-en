@@ -80,6 +80,8 @@ public class CardSearcher implements View.OnClickListener {
     CardLoader mCardLoader;
 
     public interface CallBack {
+        void onSearchStart();
+
         void onSearchResult(List<Card> Cards, boolean isHide);
     }
 
@@ -147,8 +149,10 @@ public class CardSearcher implements View.OnClickListener {
                     for (int i = 0; i < id.size(); i++)
                         Favorite.add(id.valueAt(i));
                 }
-                if (mCallBack != null)
+                if (mCallBack != null) {
+                    mCallBack.onSearchStart();
                     mCallBack.onSearchResult(Favorite, false);
+                }
 
                 DeckManagerActivityImpl.isSearchResult = false;
             }
