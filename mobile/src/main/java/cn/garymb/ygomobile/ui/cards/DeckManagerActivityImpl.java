@@ -446,15 +446,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 mCardDetail.setCallBack(new CardDetail.CallBack() {
                     @Override
                     public void onSearchStart() {
-
                     }
 
                     @Override
                     public void onSearchResult(List<Card> Cards, boolean isHide) {
                         DeckManagerActivityImpl.this.onSearchResult(Cards, isHide);
                     }
-
-                    ;
                 });
             }
             mCardDetail.showAdd();

@@ -302,6 +302,16 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                         mDialog.dismiss();
                     }
                 });
+                mCardDetail.setCallBack(new CardDetail.CallBack() {
+                    @Override
+                    public void onSearchStart() {
+                    }
+
+                    @Override
+                    public void onSearchResult(List<Card> Cards, boolean isHide) {
+                        CardSearchActivityImpl.this.onSearchResult(Cards, isHide);
+                    }
+                });
             }
             if (mDialog == null) {
                 mDialog = new DialogPlus(this);
