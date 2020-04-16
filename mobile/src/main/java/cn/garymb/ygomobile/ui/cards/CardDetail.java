@@ -93,6 +93,40 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private boolean isDownloadCardImage = true;
     private CallBack mCallBack;
 
+    public static int[] enImgs = new int[]{
+            R.drawable.left_top_1,
+            R.drawable.top_1,
+            R.drawable.right_top_1,
+            R.drawable.left_1,
+            0,
+            R.drawable.right_1,
+            R.drawable.left_bottom_1,
+            R.drawable.bottom_1,
+            R.drawable.right_bottom_1,
+    };
+    public static int[] disImgs = new int[]{
+            R.drawable.left_top_0,
+            R.drawable.top_0,
+            R.drawable.right_top_0,
+            R.drawable.left_0,
+            0,
+            R.drawable.right_0,
+            R.drawable.left_bottom_0,
+            R.drawable.bottom_0,
+            R.drawable.right_bottom_0,
+    };
+    public static int[] ids = new int[]{
+            R.id.iv_7,
+            R.id.iv_8,
+            R.id.iv_9,
+            R.id.iv_4,
+            0,
+            R.id.iv_6,
+            R.id.iv_1,
+            R.id.iv_2,
+            R.id.iv_3,
+    };
+
 
     public interface CallBack {
         void onSearchStart();
@@ -266,7 +300,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         curPosition = position;
         mProvider = provider;
         if (cardInfo != null) {
-            setCardInfo(cardInfo);
+            setCardInfo(cardInfo, view);
         }
     }
 
@@ -282,41 +316,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
-    private void setCardInfo(Card cardInfo) {
+    private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
-        int[] enImgs = new int[]{
-                R.drawable.left_bottom_1,
-                R.drawable.bottom_1,
-                R.drawable.right_bottom_1,
-                R.drawable.left_1,
-                0,
-                R.drawable.right_1,
-                R.drawable.left_top_1,
-                R.drawable.top_1,
-                R.drawable.right_top_1,
-        };
-        int[] disImgs = new int[]{
-                R.drawable.left_bottom_0,
-                R.drawable.bottom_0,
-                R.drawable.right_bottom_0,
-                R.drawable.left_0,
-                0,
-                R.drawable.right_0,
-                R.drawable.left_top_0,
-                R.drawable.top_0,
-                R.drawable.right_top_0,
-        };
-        int[] ids = new int[]{
-                R.id.iv_1,
-                R.id.iv_2,
-                R.id.iv_3,
-                R.id.iv_4,
-                R.id.iv_6,
-                R.id.iv_7,
-                R.id.iv_8,
-                R.id.iv_9,
-        };
-        View linkarrow = new View(mContext);
+
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         dialog = DialogUtils.getdx(context);
@@ -382,17 +384,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 level.setTextColor(context.getResources().getColor(R.color.star));
             }
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
+            //连接怪兽设置
             if (cardInfo.isType(CardType.Link)) {
                 cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
-                String LineKey = String.valueOf(cardInfo.Defense);
-                for (int i = 0; i < 9; i++) {
-                    String arrow = String.valueOf(LineKey.indexOf(i));
-                    if (arrow.equals("1")) {
-                        linkarrow.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
-                    } else {
-                        linkarrow.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
-                    }
-                }
+                showLinkArrows(cardInfo, view);
             } else {
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
@@ -402,6 +397,22 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             race.setVisibility(View.GONE);
             monsterlayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
+            linkArrow.setVisibility(View.GONE);
+        }
+    }
+
+    public void showLinkArrows(Card cardInfo, View view){
+        String lk = Integer.toBinaryString(cardInfo.Defense);
+        String Linekey = String.format("%09d", Integer.parseInt(lk));
+        for (int i = 0; i < ids.length; i++) {
+            String arrow = Linekey.substring(i, i + 1);
+            if (i != 4) {
+                if ("1".equals(arrow)) {
+                    view.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
+                } else {
+                    view.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
+                }
+            }
         }
     }
 
