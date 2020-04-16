@@ -73,6 +73,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private View faq;
     private View addMain;
     private View addSide;
+    private View linkArrow;
     private TextView cardcode;
     private View lb_setcode;
     private ImageLoader imageLoader;
@@ -140,6 +141,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         close = bind(R.id.btn_close);
         cardcode = bind(R.id.card_code);
         level = bind(R.id.card_level);
+        linkArrow = bind(R.id.detail_link_arrows);
         type = bind(R.id.card_type);
         faq = bind(R.id.btn_faq);
         cardAtk = bind(R.id.card_atk);
@@ -282,6 +284,39 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void setCardInfo(Card cardInfo) {
         if (cardInfo == null) return;
+        int[] enImgs = new int[]{
+                R.drawable.left_bottom_1,
+                R.drawable.bottom_1,
+                R.drawable.right_bottom_1,
+                R.drawable.left_1,
+                0,
+                R.drawable.right_1,
+                R.drawable.left_top_1,
+                R.drawable.top_1,
+                R.drawable.right_top_1,
+        };
+        int[] disImgs = new int[]{
+                R.drawable.left_bottom_0,
+                R.drawable.bottom_0,
+                R.drawable.right_bottom_0,
+                R.drawable.left_0,
+                0,
+                R.drawable.right_0,
+                R.drawable.left_top_0,
+                R.drawable.top_0,
+                R.drawable.right_top_0,
+        };
+        int[] ids = new int[]{
+                R.id.iv_1,
+                R.id.iv_2,
+                R.id.iv_3,
+                R.id.iv_4,
+                R.id.iv_6,
+                R.id.iv_7,
+                R.id.iv_8,
+                R.id.iv_9,
+        };
+        View linkarrow = new View(mContext);
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         dialog = DialogUtils.getdx(context);
@@ -327,9 +362,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
         if (cardInfo.isType(CardType.Monster)) {
             if (cardInfo.isType(CardType.Link)) {
-                level.setVisibility(View.INVISIBLE);
+                level.setVisibility(View.GONE);
+                linkArrow.setVisibility(View.VISIBLE);
             } else {
                 level.setVisibility(View.VISIBLE);
+                linkArrow.setVisibility(View.GONE);
             }
             atkdefView.setVisibility(View.VISIBLE);
             monsterlayout.setVisibility(View.VISIBLE);
@@ -347,6 +384,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             if (cardInfo.isType(CardType.Link)) {
                 cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+                String LineKey = String.valueOf(cardInfo.Defense);
+                for (int i = 0; i < 9; i++) {
+                    String arrow = String.valueOf(LineKey.indexOf(i));
+                    if (arrow.equals("1")) {
+                        linkarrow.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
+                    } else {
+                        linkarrow.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
+                    }
+                }
             } else {
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
