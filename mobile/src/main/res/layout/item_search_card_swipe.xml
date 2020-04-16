@@ -93,6 +93,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
+                <include
+                    android:id="@+id/search_link_arrows"
+                    layout="@layout/item_linkmaker_small"
+                    android:visibility="gone" />
+
                 <TextView
                     android:id="@+id/card_level"
                     android:layout_width="match_parent"

@@ -110,10 +110,16 @@
             android:textColor="@color/item_title"
             android:textIsSelectable="true"
             tools:text="name" />
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal">
+
+            <include
+                android:id="@+id/detail_link_arrows"
+                layout="@layout/item_linkmaker_small"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/card_level"
@@ -128,13 +134,13 @@
                 tools:text="★4" />
 
             <ImageView
-            android:id="@+id/image_fav"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="bottom|right"
-            android:paddingRight="5dp"
-            android:scaleType="center"
-            android:background="@drawable/ic_control_point" />
+                android:id="@+id/image_fav"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="bottom|right"
+                android:background="@drawable/ic_control_point"
+                android:paddingRight="5dp"
+                android:scaleType="center" />
         </FrameLayout>
 
         <LinearLayout
@@ -183,8 +189,6 @@
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/white"
                         tools:text="Test" />
-
-
                 </LinearLayout>
 
                 <LinearLayout
