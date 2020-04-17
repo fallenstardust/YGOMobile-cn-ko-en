@@ -13,13 +13,14 @@ import org.greenrobot.eventbus.EventBus;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.cards.CardDetail;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
-import ocgcore.data.CardData;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
@@ -31,6 +32,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     private boolean mItemBg;
     private ImageLoader imageLoader;
     private boolean mEnableSwipe = false;
+    private BaseActivity mContext;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {
         super(context);
@@ -109,7 +111,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             holder.layout_atk.setVisibility(View.VISIBLE);
             holder.layout_def.setVisibility(View.VISIBLE);
 //            holder.view_bar.setVisibility(View.VISIBLE);
-            String star = "★"+ item.getStar();
+            String star = "★" + item.getStar();
             /*for (int i = 0; i < item.getStar(); i++) {
                 star += "★";
             }*/
@@ -121,10 +123,13 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             }
             holder.cardAtk.setText((item.Attack < 0 ? "?" : String.valueOf(item.Attack)));
             if (item.isType(CardType.Link)) {
-                holder.cardLevel.setVisibility(View.INVISIBLE);
+                holder.cardLevel.setVisibility(View.GONE);
+                holder.linkArrow.setVisibility(View.VISIBLE);
                 holder.cardDef.setText(item.getStar() < 0 ? "?" : "LINK-" + String.valueOf(item.getStar()));
                 holder.TextDef.setText("");
+                BaseActivity.showLinkArrows(item, holder.linkArrow);
             } else {
+                holder.linkArrow.setVisibility(View.GONE);
                 holder.cardDef.setText((item.Defense < 0 ? "?" : String.valueOf(item.Defense)));
                 holder.TextDef.setText("DEF/");
             }
@@ -135,6 +140,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 //                holder.view_bar.setVisibility(View.INVISIBLE);
 //            }
             holder.cardLevel.setVisibility(View.INVISIBLE);
+            holder.linkArrow.setVisibility(View.GONE);
             holder.layout_atk.setVisibility(View.GONE);
             holder.layout_def.setVisibility(View.GONE);
         }
@@ -215,6 +221,7 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
     View layout_atk;
     View layout_def;
     View view_bar;
+    View linkArrow;
     TextView codeView;
     View btnMain, btnSide;
     SwipeHorizontalMenuLayout mMenuLayout;
@@ -237,6 +244,7 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
         btnMain = $(R.id.btn_add_main);
         btnSide = $(R.id.btn_add_side);
         mMenuLayout = $(R.id.swipe_layout);
+        linkArrow = $(R.id.search_link_arrows);
 //            File outFile = new File(AppsSettings.get().getCoreSkinPath(), Constants.UNKNOWN_IMAGE);
 //            ImageLoader.get().$(context, outFile, cardImage, outFile.getName().endsWith(Constants.BPG), 0, null);
     }

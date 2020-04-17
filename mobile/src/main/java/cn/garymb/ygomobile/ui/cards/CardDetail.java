@@ -92,42 +92,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private TextView tv_loading;
     private boolean isDownloadCardImage = true;
     private CallBack mCallBack;
-
-    public static int[] enImgs = new int[]{
-            R.drawable.right_top_1,
-            R.drawable.top_1,
-            R.drawable.left_top_1,
-            R.drawable.right_1,
-            0,
-            R.drawable.left_1,
-            R.drawable.right_bottom_1,
-            R.drawable.bottom_1,
-            R.drawable.left_bottom_1
-    };
-    public static int[] disImgs = new int[]{
-            R.drawable.right_top_0,
-            R.drawable.top_0,
-            R.drawable.left_top_0,
-            R.drawable.right_0,
-            0,
-            R.drawable.left_0,
-            R.drawable.right_bottom_0,
-            R.drawable.bottom_0,
-            R.drawable.left_bottom_0,
-    };
-    public static int[] ids = new int[]{
-            R.id.iv_9,
-            R.id.iv_8,
-            R.id.iv_7,
-            R.id.iv_6,
-            0,
-            R.id.iv_4,
-            R.id.iv_3,
-            R.id.iv_2,
-            R.id.iv_1
-    };
-
-
     public interface CallBack {
         void onSearchStart();
 
@@ -363,13 +327,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             lb_setcode.setVisibility(View.VISIBLE);
         }
         if (cardInfo.isType(CardType.Monster)) {
-            if (cardInfo.isType(CardType.Link)) {
-                level.setVisibility(View.GONE);
-                linkArrow.setVisibility(View.VISIBLE);
-            } else {
-                level.setVisibility(View.VISIBLE);
-                linkArrow.setVisibility(View.GONE);
-            }
             atkdefView.setVisibility(View.VISIBLE);
             monsterlayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
@@ -386,9 +343,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             //连接怪兽设置
             if (cardInfo.isType(CardType.Link)) {
+                level.setVisibility(View.GONE);
+                linkArrow.setVisibility(View.VISIBLE);
                 cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
-                showLinkArrows(cardInfo, view);
+                BaseActivity.showLinkArrows(cardInfo, view);
             } else {
+                level.setVisibility(View.VISIBLE);
+                linkArrow.setVisibility(View.GONE);
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
             race.setText(mStringManager.getRaceString(cardInfo.Race));
@@ -398,21 +359,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             monsterlayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
-        }
-    }
-
-    public void showLinkArrows(Card cardInfo, View view){
-        String lk = Integer.toBinaryString(cardInfo.Defense);
-        String Linekey = String.format("%09d", Integer.parseInt(lk));
-        for (int i = 0; i < ids.length; i++) {
-            String arrow = Linekey.substring(i, i + 1);
-            if (i != 4) {
-                if ("1".equals(arrow)) {
-                    view.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
-                } else {
-                    view.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
-                }
-            }
         }
     }
 
