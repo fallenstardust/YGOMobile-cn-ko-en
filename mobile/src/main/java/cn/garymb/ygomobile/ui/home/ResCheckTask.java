@@ -270,7 +270,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
             FileUtils.copyDir(ORI_REPLAY, resPath + "/" + Constants.CORE_REPLAY_PATH, false);
             FileUtils.copyDir(ORI_TEXTURES, mSettings.getCoreSkinPath(), true);
-            FileUtils.copyDir(ORI_PICS, mSettings.getCardImagePath(), false);
+            //FileUtils.copyDir(ORI_PICS, mSettings.getCardImagePath(), false);
 
             han.sendEmptyMessage(0);
 

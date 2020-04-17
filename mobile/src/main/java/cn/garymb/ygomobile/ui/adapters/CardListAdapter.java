@@ -14,7 +14,6 @@ import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.cards.CardDetail;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.utils.CardUtils;
@@ -116,6 +115,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
                 star += "★";
             }*/
             holder.cardLevel.setText(star);
+            holder.cardattr.setText(mStringManager.getAttributeString(item.Attribute));
+            holder.cardrace.setText(mStringManager.getRaceString(item.Race));
             if (item.isType(CardType.Xyz)) {
                 holder.cardLevel.setTextColor(getColor(R.color.star_rank));
             } else {
@@ -140,6 +141,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 //                holder.view_bar.setVisibility(View.INVISIBLE);
 //            }
             holder.cardLevel.setVisibility(View.INVISIBLE);
+            holder.cardattr.setVisibility(View.INVISIBLE);
+            holder.cardrace.setVisibility(View.INVISIBLE);
             holder.linkArrow.setVisibility(View.GONE);
             holder.layout_atk.setVisibility(View.GONE);
             holder.layout_def.setVisibility(View.GONE);
@@ -211,6 +214,8 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
     ImageView cardImage;
     TextView cardName;
     TextView cardLevel;
+    TextView cardattr;
+    TextView cardrace;
     TextView cardType;
     TextView cardAtk;
     TextView cardDef;
@@ -235,6 +240,8 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
         cardAtk = $(R.id.card_atk);
         cardDef = $(R.id.card_def);
         cardLevel = $(R.id.card_level);
+        cardattr = $(R.id.card_attr);
+        cardrace = $(R.id.card_race);
         layout_atk = $(R.id.layout_atk);
         layout_def = $(R.id.layout_def);
         view_bar = $(R.id.view_bar);
