@@ -161,7 +161,6 @@ public:
 	effect* unique_effect;
 	uint32 spsummon_code;
 	uint16 spsummon_counter[2];
-	uint16 spsummon_counter_rst[2];
 	uint8 assume_type;
 	uint32 assume_value;
 	card* equiping_target;
@@ -245,7 +244,7 @@ public:
 	int32 get_union_count();
 	int32 get_old_union_count();
 	void xyz_overlay(card_set* materials);
-	void xyz_add(card* mat, card_set* des);
+	void xyz_add(card* mat);
 	void xyz_remove(card* mat);
 	void apply_field_effect();
 	void cancel_field_effect();

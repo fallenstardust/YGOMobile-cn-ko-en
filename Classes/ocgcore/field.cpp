@@ -164,8 +164,6 @@ void field::reload_field_info() {
 		pduel->write_buffer32(peffect->description);
 	}
 }
-// The core of moving cards, and Debug.AddCard() will call this function directly.
-// check Fusion/S/X monster redirection by the rule, set fieldid_r
 void field::add_card(uint8 playerid, card* pcard, uint8 location, uint8 sequence, uint8 pzone) {
 	if (pcard->current.location != 0)
 		return;
@@ -297,13 +295,6 @@ void field::remove_card(card* pcard) {
 	pcard->current.location = 0;
 	pcard->current.sequence = 0;
 }
-// moving cards:
-// 1. draw()
-// 2. discard_deck()
-// 3. swap_control()
-// 4. control_adjust()
-// 5. move_card()
-// check Fusion/S/X monster redirection by the rule
 void field::move_card(uint8 playerid, card* pcard, uint8 location, uint8 sequence, uint8 pzone) {
 	if (!is_location_useable(playerid, location, sequence))
 		return;
@@ -618,7 +609,6 @@ card* field::get_field_card(uint32 playerid, uint32 location, uint32 sequence) {
 	}
 	return 0;
 }
-// return: the given slot in LOCATION_MZONE or all LOCATION_SZONE is available or not
 int32 field::is_location_useable(uint32 playerid, uint32 location, uint32 sequence) {
 	uint32 flag = player[playerid].disabled_location | player[playerid].used_location;
 	if (location == LOCATION_MZONE) {
@@ -2173,32 +2163,15 @@ void field::check_chain_counter(effect* peffect, int32 playerid, int32 chainid, 
 		}
 	}
 }
-void field::set_spsummon_counter(uint8 playerid, bool add, bool chain) {
-	if(add) {
-		core.spsummon_state_count[playerid]++;
-		if(chain)
-			core.spsummon_state_count_rst[playerid]++;
-	} else {
-		if(chain) {
-			core.spsummon_state_count[playerid] -= core.spsummon_state_count_rst[playerid];
-			core.spsummon_state_count_rst[playerid] = 0;
-		} else
-			core.spsummon_state_count[playerid]--;
-	}
+void field::set_spsummon_counter(uint8 playerid) {
+	core.spsummon_state_count[playerid]++;
 	if(core.global_flag & GLOBALFLAG_SPSUMMON_COUNT) {
 		for(auto& peffect : effects.spsummon_count_eff) {
 			card* pcard = peffect->get_handler();
-			if(add) {
-				if(peffect->is_available()) {
-					if(((playerid == pcard->current.controler) && peffect->s_range) || ((playerid != pcard->current.controler) && peffect->o_range)) {
-						pcard->spsummon_counter[playerid]++;
-						if(chain)
-							pcard->spsummon_counter_rst[playerid]++;
-					}
+			if(peffect->is_available()) {
+				if(((playerid == pcard->current.controler) && peffect->s_range) || ((playerid != pcard->current.controler) && peffect->o_range)) {
+					pcard->spsummon_counter[playerid]++;
 				}
-			} else {
-				pcard->spsummon_counter[playerid] -= pcard->spsummon_counter_rst[playerid];
-				pcard->spsummon_counter_rst[playerid] = 0;
 			}
 		}
 	}
@@ -3371,19 +3344,6 @@ int32 field::check_cteffect_hint(effect* peffect, uint8 playerid) {
 	}
 	return FALSE;
 }
-int32 field::check_deck_effect(chain& ch) const {
-	effect* peffect = ch.triggering_effect;
-	card* phandler = peffect->get_handler();
-	if(!peffect->is_flag(EFFECT_FLAG_FIELD_ONLY)
-		&& ch.triggering_location == LOCATION_DECK && (phandler->current.location & LOCATION_DECK)) {
-		if((peffect->type & EFFECT_TYPE_SINGLE) && !peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE)
-			&& peffect->code == EVENT_TO_DECK || (peffect->range & LOCATION_DECK)) {
-			ch.flag |= CHAIN_DECK_EFFECT;
-		} else
-			return FALSE;
-	}
-	return TRUE;
-}
 int32 field::check_hand_trigger(chain& ch) {
 	effect* peffect = ch.triggering_effect;
 	card* phandler = peffect->get_handler();
@@ -3398,23 +3358,6 @@ int32 field::check_hand_trigger(chain& ch) {
 			return FALSE;
 	}
 	return TRUE;
-}
-int32 field::check_trigger_effect(const chain& ch) const {
-	effect* peffect = ch.triggering_effect;
-	card* phandler = peffect->get_handler();
-	if((peffect->type & EFFECT_TYPE_FIELD) && !phandler->is_has_relation(ch))
-		return FALSE;
-	if(peffect->code == EVENT_FLIP && infos.phase == PHASE_DAMAGE)
-		return TRUE;
-	if((phandler->current.location & LOCATION_DECK) && !(ch.flag & CHAIN_DECK_EFFECT))
-		return FALSE;
-	if((ch.triggering_location & (LOCATION_DECK | LOCATION_HAND | LOCATION_EXTRA))
-		&& (ch.triggering_position & POS_FACEDOWN))
-		return TRUE;
-	if(!(phandler->current.location & (LOCATION_DECK | LOCATION_HAND | LOCATION_EXTRA))
-		|| phandler->is_position(POS_FACEUP))
-		return TRUE;
-	return FALSE;
 }
 int32 field::check_spself_from_hand_trigger(const chain& ch) const {
 	effect* peffect = ch.triggering_effect;
