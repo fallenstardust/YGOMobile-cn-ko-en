@@ -244,6 +244,51 @@
                             android:textColor="@android:color/white"
                             tools:text="Test" />
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/detail_p_scale"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="visible">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="5dp"
+                            android:text="@string/label_pendulum"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                            android:textColor="@color/item_title" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center|left"
+                            android:background="@drawable/p_left" />
+
+                        <TextView
+                            android:id="@+id/detail_cardscale"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="2dp"
+                            android:layout_marginRight="2dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"
+                            android:singleLine="true"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            tools:text="13" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center|right"
+                            android:background="@drawable/p_right" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <TextView

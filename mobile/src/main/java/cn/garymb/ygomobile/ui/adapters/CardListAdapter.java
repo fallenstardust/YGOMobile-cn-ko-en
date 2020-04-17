@@ -106,23 +106,26 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         imageLoader.bindImage(holder.cardImage, item.Code);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {
-            holder.cardLevel.setVisibility(View.VISIBLE);
             holder.layout_atk.setVisibility(View.VISIBLE);
             holder.layout_def.setVisibility(View.VISIBLE);
+            holder.layout_star_attr_race_scale.setVisibility(View.VISIBLE);
 //            holder.view_bar.setVisibility(View.VISIBLE);
             String star = "★" + item.getStar();
-            /*for (int i = 0; i < item.getStar(); i++) {
-                star += "★";
-            }*/
             holder.cardLevel.setText(star);
             holder.cardattr.setText(mStringManager.getAttributeString(item.Attribute));
             holder.cardrace.setText(mStringManager.getRaceString(item.Race));
+            holder.cardAtk.setText((item.Attack < 0 ? "?" : String.valueOf(item.Attack)));
             if (item.isType(CardType.Xyz)) {
                 holder.cardLevel.setTextColor(getColor(R.color.star_rank));
             } else {
                 holder.cardLevel.setTextColor(getColor(R.color.star));
             }
-            holder.cardAtk.setText((item.Attack < 0 ? "?" : String.valueOf(item.Attack)));
+            if (item.isType(CardType.Pendulum)) {
+                holder.layout_p_scale.setVisibility(View.VISIBLE);
+                holder.cardScale.setText(String.valueOf(item.LScale));
+            } else {
+                holder.layout_p_scale.setVisibility(View.GONE);
+            }
             if (item.isType(CardType.Link)) {
                 holder.cardLevel.setVisibility(View.GONE);
                 holder.linkArrow.setVisibility(View.VISIBLE);
@@ -140,9 +143,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 //            if (!showCode) {
 //                holder.view_bar.setVisibility(View.INVISIBLE);
 //            }
-            holder.cardLevel.setVisibility(View.INVISIBLE);
-            holder.cardattr.setVisibility(View.INVISIBLE);
-            holder.cardrace.setVisibility(View.INVISIBLE);
+            holder.layout_star_attr_race_scale.setVisibility(View.GONE);
             holder.linkArrow.setVisibility(View.GONE);
             holder.layout_atk.setVisibility(View.GONE);
             holder.layout_def.setVisibility(View.GONE);
@@ -220,12 +221,14 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
     TextView cardAtk;
     TextView cardDef;
     TextView TextDef;
-
+    TextView cardScale;
 
     ImageView rightImage;
     View layout_atk;
     View layout_def;
     View view_bar;
+    View layout_star_attr_race_scale;
+    View layout_p_scale;
     View linkArrow;
     TextView codeView;
     View btnMain, btnSide;
@@ -239,9 +242,12 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
         cardType = $(R.id.card_type);
         cardAtk = $(R.id.card_atk);
         cardDef = $(R.id.card_def);
+        layout_star_attr_race_scale = $(R.id.star_attr_race_scale);
+        layout_p_scale = $(R.id.p_scale);
         cardLevel = $(R.id.card_level);
         cardattr = $(R.id.card_attr);
         cardrace = $(R.id.card_race);
+        cardScale = $(R.id.card_scale);
         layout_atk = $(R.id.layout_atk);
         layout_def = $(R.id.layout_def);
         view_bar = $(R.id.view_bar);

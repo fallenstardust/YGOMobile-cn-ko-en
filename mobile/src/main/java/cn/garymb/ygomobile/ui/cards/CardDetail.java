@@ -74,6 +74,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private View addMain;
     private View addSide;
     private View linkArrow;
+    private View layout_detail_p_scale;
+    private TextView detail_cardscale;
     private TextView cardcode;
     private View lb_setcode;
     private ImageLoader imageLoader;
@@ -92,6 +94,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private TextView tv_loading;
     private boolean isDownloadCardImage = true;
     private CallBack mCallBack;
+
     public interface CallBack {
         void onSearchStart();
 
@@ -148,6 +151,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mImageFav = bind(R.id.image_fav);
 
         monsterlayout = bind(R.id.layout_monster);
+        layout_detail_p_scale = bind(R.id.detail_p_scale);
+        detail_cardscale = bind(R.id.detail_cardscale);
         race = bind(R.id.card_race);
         setname = bind(R.id.card_setname);
         addMain = bind(R.id.btn_add_main);
@@ -339,6 +344,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 level.setTextColor(context.getResources().getColor(R.color.star_rank));
             } else {
                 level.setTextColor(context.getResources().getColor(R.color.star));
+            }
+            if (cardInfo.isType(CardType.Pendulum)) {
+                layout_detail_p_scale.setVisibility(View.VISIBLE);
+                detail_cardscale.setText(String.valueOf(cardInfo.LScale));
+            } else {
+                layout_detail_p_scale.setVisibility(View.GONE);
             }
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             //连接怪兽设置

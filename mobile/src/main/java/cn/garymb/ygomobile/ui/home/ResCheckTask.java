@@ -8,17 +8,13 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -30,17 +26,14 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.ORI_TEXTURES;
-import static cn.garymb.ygomobile.Constants.PREF_DEF_GAME_DIR;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_NONE = 0;
