@@ -94,37 +94,37 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private CallBack mCallBack;
 
     public static int[] enImgs = new int[]{
-            R.drawable.left_top_1,
-            R.drawable.top_1,
             R.drawable.right_top_1,
-            R.drawable.left_1,
-            0,
+            R.drawable.top_1,
+            R.drawable.left_top_1,
             R.drawable.right_1,
-            R.drawable.left_bottom_1,
-            R.drawable.bottom_1,
+            0,
+            R.drawable.left_1,
             R.drawable.right_bottom_1,
+            R.drawable.bottom_1,
+            R.drawable.left_bottom_1
     };
     public static int[] disImgs = new int[]{
-            R.drawable.left_top_0,
-            R.drawable.top_0,
             R.drawable.right_top_0,
-            R.drawable.left_0,
-            0,
+            R.drawable.top_0,
+            R.drawable.left_top_0,
             R.drawable.right_0,
-            R.drawable.left_bottom_0,
-            R.drawable.bottom_0,
+            0,
+            R.drawable.left_0,
             R.drawable.right_bottom_0,
+            R.drawable.bottom_0,
+            R.drawable.left_bottom_0,
     };
     public static int[] ids = new int[]{
-            R.id.iv_7,
-            R.id.iv_8,
             R.id.iv_9,
-            R.id.iv_4,
-            0,
+            R.id.iv_8,
+            R.id.iv_7,
             R.id.iv_6,
-            R.id.iv_1,
-            R.id.iv_2,
+            0,
+            R.id.iv_4,
             R.id.iv_3,
+            R.id.iv_2,
+            R.id.iv_1
     };
 
 
