@@ -121,9 +121,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
                 if (arg0) {
-                    //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
+                      Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
                 } else {
-                    //Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
                 }
             }
 
