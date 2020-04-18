@@ -133,6 +133,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
                 holder.TextDef.setText("");
                 BaseActivity.showLinkArrows(item, holder.linkArrow);
             } else {
+                holder.cardLevel.setVisibility(View.VISIBLE);
                 holder.linkArrow.setVisibility(View.GONE);
                 holder.cardDef.setText((item.Defense < 0 ? "?" : String.valueOf(item.Defense)));
                 holder.TextDef.setText("DEF/");
@@ -143,7 +144,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 //            if (!showCode) {
 //                holder.view_bar.setVisibility(View.INVISIBLE);
 //            }
-            holder.layout_star_attr_race_scale.setVisibility(View.GONE);
+            holder.layout_star_attr_race_scale.setVisibility(View.INVISIBLE);
             holder.linkArrow.setVisibility(View.GONE);
             holder.layout_atk.setVisibility(View.GONE);
             holder.layout_def.setVisibility(View.GONE);

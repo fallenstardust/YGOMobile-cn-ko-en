@@ -93,6 +93,7 @@
                 android:id="@+id/star_attr_race_scale"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:gravity="center_horizontal"
                 android:orientation="horizontal">
 
                 <include
@@ -104,6 +105,7 @@
                     android:id="@+id/card_level"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center"
                     android:maxLines="1"
                     android:shadowColor="@color/black"
                     android:shadowDx="1"
@@ -117,6 +119,7 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center"
                     android:layout_marginLeft="10dp"
                     android:orientation="horizontal">
 

@@ -111,9 +111,10 @@
             android:textIsSelectable="true"
             tools:text="name" />
 
-        <FrameLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:gravity="center|left"
             android:orientation="horizontal">
 
             <include
@@ -123,8 +124,9 @@
 
             <TextView
                 android:id="@+id/card_level"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:gravity="center_vertical"
                 android:maxLines="1"
                 android:paddingLeft="4dp"
@@ -133,15 +135,20 @@
                 android:textColor="@color/star"
                 tools:text="★4" />
 
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
             <ImageView
                 android:id="@+id/image_fav"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_gravity="bottom|right"
+                android:layout_gravity="center"
                 android:background="@drawable/ic_control_point"
                 android:paddingRight="5dp"
                 android:scaleType="center" />
-        </FrameLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
