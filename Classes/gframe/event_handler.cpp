@@ -1065,13 +1065,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			s32 y = event.MouseInput.Y;
 			hovered_location = 0;
 			irr::core::position2di pos(x, y);
-			if (x < (200 * mainGame->xScale) && y < (270 * mainGame->yScale)) {
-                mainGame->gMutex.lock();
-				mainGame->textFont->setTransparency(true);
-				mainGame->ClearChatMsg();
-                mainGame->gMutex.unlock();
-				break;
-			 }//touch the pic of detail to refresh textfonts
 			if(x < 300 * mainGame->xScale)
 				break;
 			if(mainGame->gameConf.control_mode == 1) {
@@ -1995,18 +1988,18 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                return true;
 	            }
 				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
-					/*if(!mainGame->scrTabHelper->isVisible()) {
+					if(!mainGame->scrTabHelper->isVisible()) {
 						break;
-					}*/
+					}
 					is_dragging_tabHelper = true;
 					dragging_tabHelper_start_pos = mainGame->scrTabHelper->getPos();
 					dragging_tabHelper_start_y = event.MouseInput.Y;
 					return true;
 				}
                 if(root->getElementFromPoint(mousepos) == mainGame->tabSystem){
-                    /*if(!mainGame->scrTabSystem->isVisible()) {
+                    if(!mainGame->scrTabSystem->isVisible()) {
                         break;
-                    }*/
+                    }
                     is_dragging_tabSystem = true;
                     dragging_tabSystem_start_pos = mainGame->scrTabSystem->getPos();
                     dragging_tabSystem_start_y = event.MouseInput.Y;
@@ -2045,7 +2038,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     if(pos < 0) pos = 0;
                     if(pos > max) pos = max;
                     mainGame->scrTabHelper->setPos(pos);
-                    mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, tabHelperpos.LowerRightCorner.X, tabHelperpos.LowerRightCorner.Y - event.MouseInput.Y));
+                    mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, tabHelperpos.LowerRightCorner.X, tabHelperpos.LowerRightCorner.Y));
 	            }
                 if(is_dragging_tabSystem) {
                     if(!mainGame->scrTabSystem->isVisible()) {
@@ -2058,7 +2051,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     if(pos < 0) pos = 0;
                     if(pos > max) pos = max;
                     mainGame->scrTabSystem->setPos(pos);
-                    mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, tabSystempos.LowerRightCorner.X, tabSystempos.LowerRightCorner.Y - event.MouseInput.Y));
+                    mainGame->tabSystem->setRelativePosition(recti(0, mainGame->scrTabSystem->getPos() * -1, tabSystempos.LowerRightCorner.X, tabSystempos.LowerRightCorner.Y));
                 }
 	            break;
 	        }
