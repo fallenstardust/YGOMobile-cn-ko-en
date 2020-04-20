@@ -1994,10 +1994,30 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                dragging_cardtext_start_y = event.MouseInput.Y;
 	                return true;
 	            }
+				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
+					/*if(!mainGame->scrTabHelper->isVisible()) {
+						break;
+					}*/
+					is_dragging_tabHelper = true;
+					dragging_tabHelper_start_pos = mainGame->scrTabHelper->getPos();
+					dragging_tabHelper_start_y = event.MouseInput.Y;
+					return true;
+				}
+                if(root->getElementFromPoint(mousepos) == mainGame->tabSystem){
+                    /*if(!mainGame->scrTabSystem->isVisible()) {
+                        break;
+                    }*/
+                    is_dragging_tabSystem = true;
+                    dragging_tabSystem_start_pos = mainGame->scrTabSystem->getPos();
+                    dragging_tabSystem_start_y = event.MouseInput.Y;
+                    return true;
+                }
 	            break;
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
 	            is_dragging_cardtext = false;
+				is_dragging_tabHelper = false;
+                is_dragging_tabSystem = false;
 	            break;
 	        }
 	        case irr::EMIE_MOUSE_MOVED: {
@@ -2014,6 +2034,32 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                mainGame->scrCardText->setPos(pos);
 	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
 	            }
+	            if(is_dragging_tabHelper) {
+					if(!mainGame->scrTabHelper->isVisible()) {
+						is_dragging_tabHelper = false;
+						break;
+					}
+					rect<s32> tabHelperpos = mainGame->tabHelper->getRelativePosition();
+					int pos = dragging_tabHelper_start_pos + (dragging_tabHelper_start_y - event.MouseInput.Y);
+                    int max = mainGame->scrTabHelper->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->scrTabHelper->setPos(pos);
+                    mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, tabHelperpos.LowerRightCorner.X, tabHelperpos.LowerRightCorner.Y - event.MouseInput.Y));
+	            }
+                if(is_dragging_tabSystem) {
+                    if(!mainGame->scrTabSystem->isVisible()) {
+                        is_dragging_tabSystem = false;
+                        break;
+                    }
+                    rect<s32> tabSystempos = mainGame->tabSystem->getRelativePosition();
+                    int pos = dragging_tabSystem_start_pos + (dragging_tabSystem_start_y - event.MouseInput.Y);
+                    int max = mainGame->scrTabSystem->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->scrTabSystem->setPos(pos);
+                    mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, tabSystempos.LowerRightCorner.X, tabSystempos.LowerRightCorner.Y - event.MouseInput.Y));
+                }
 	            break;
 	        }
 	        default: break;

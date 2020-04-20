@@ -12,9 +12,18 @@ namespace ygo {
 
 ClientField::ClientField() {
 	panel = 0;
+	//drag cardtext
 	is_dragging_cardtext = false;
 	dragging_cardtext_start_pos = 0;
 	dragging_cardtext_start_y = 0;
+	//drag tabHelper
+	is_dragging_tabHelper = false;
+	dragging_tabHelper_start_pos = 0;
+	dragging_tabHelper_start_y = 0;
+	//drag tabSystem
+	is_dragging_tabSystem = false;
+	dragging_tabSystem_start_pos = 0;
+	dragging_tabSystem_start_y = 0;
 	hovered_card = 0;
 	clicked_card = 0;
 	highlighting_card = 0;
