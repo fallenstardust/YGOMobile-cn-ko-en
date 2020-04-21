@@ -2050,13 +2050,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         break;
                     }
                     rect<s32> lstLogpos = mainGame->lstLog->getRelativePosition();
-
-                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y) / mainGame->lstLog->getItemCount()) * 10 * mainGame->yScale;
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstLog->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
                     if(pos > max) pos = max;
                     mainGame->lstLog->getVerticalScrollBar()->setPos(pos);
-                    mainGame->lstLog->setRelativePosition(recti(10 * mainGame->xScale, 10 * mainGame->yScale + mainGame->lstLog->getVerticalScrollBar()->getPos() * -1, lstLogpos.LowerRightCorner.X, lstLogpos.LowerRightCorner.Y));
+                    mainGame->lstLog->getItemAt(lstLogpos.UpperLeftCorner.X, mainGame->lstLog->getVerticalScrollBar()->getPos());
                 }
 	            if(is_dragging_tabHelper) {
 					if(!mainGame->scrTabHelper->isVisible()) {
