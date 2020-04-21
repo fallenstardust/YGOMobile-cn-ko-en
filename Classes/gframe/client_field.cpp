@@ -12,11 +12,15 @@ namespace ygo {
 
 ClientField::ClientField() {
 	panel = 0;
-	//drag tab
+	//drag cardtext and lists
 	is_dragging_cardtext = false;
 	is_dragging_lstLog = false;
 	is_dragging_tabHelper = false;
 	is_dragging_tabSystem = false;
+	is_dragging_lstReplayList = false;
+	is_dragging_lstSinglePlayList = false;
+	is_dragging_lstBotList = false;
+	is_dragging_lstDecks = false;
 	dragging_tab_start_pos = 0;
 	dragging_tab_start_y = 0;
 

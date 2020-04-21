@@ -1996,6 +1996,43 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
+                if(root->getElementFromPoint(mousepos) == mainGame->lstReplayList) {
+                    if(!mainGame->lstReplayList->getVerticalScrollBar()->isVisible()) {
+                        break;
+                    }
+                    is_dragging_lstReplayList = true;
+                    dragging_tab_start_pos = mainGame->lstReplayList->getVerticalScrollBar()->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
+                    return true;
+                }
+                if(root->getElementFromPoint(mousepos) == mainGame->lstSinglePlayList) {
+                    if(!mainGame->lstSinglePlayList->getVerticalScrollBar()->isVisible()) {
+                        break;
+                    }
+                    is_dragging_lstSinglePlayList = true;
+                    dragging_tab_start_pos = mainGame->lstSinglePlayList->getVerticalScrollBar()->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
+                    return true;
+                }
+                if(root->getElementFromPoint(mousepos) == mainGame->lstBotList) {
+                    if(!mainGame->lstBotList->getVerticalScrollBar()->isVisible()) {
+                        break;
+                    }
+                    is_dragging_lstBotList = true;
+                    dragging_tab_start_pos = mainGame->lstBotList->getVerticalScrollBar()->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
+                    return true;
+                }
+                if(root->getElementFromPoint(mousepos) == mainGame->lstDecks) {
+                    if(!mainGame->lstDecks->getVerticalScrollBar()->isVisible()) {
+                        break;
+                    }
+                    is_dragging_lstDecks = true;
+                    dragging_tab_start_pos = mainGame->lstDecks->getVerticalScrollBar()->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
+                    return true;
+                }
+
 				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
 					if(!mainGame->scrTabHelper->isVisible()) {
 						break;
@@ -2026,6 +2063,10 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                 }//touch the pic of detail to refresh textfonts
 	            is_dragging_cardtext = false;
                 is_dragging_lstLog = false;
+                is_dragging_lstReplayList = false;
+                is_dragging_lstSinglePlayList = false;
+                is_dragging_lstBotList = false;
+                is_dragging_lstDecks = false;
 	            is_dragging_tabHelper = false;
 	            is_dragging_tabSystem = false;
 	            break;
@@ -2056,6 +2097,58 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     if(pos > max) pos = max;
                     mainGame->lstLog->getVerticalScrollBar()->setPos(pos);
                     mainGame->lstLog->getItemAt(lstLogpos.UpperLeftCorner.X, mainGame->lstLog->getVerticalScrollBar()->getPos());
+                }
+                if(is_dragging_lstReplayList) {
+                    if(!mainGame->lstReplayList->getVerticalScrollBar()->isVisible()) {
+                        is_dragging_lstReplayList = false;
+                        break;
+                    }
+                    rect<s32> lstReplayListpos = mainGame->lstReplayList->getRelativePosition();
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
+                    int max = mainGame->lstReplayList->getVerticalScrollBar()->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->lstReplayList->getVerticalScrollBar()->setPos(pos);
+                    mainGame->lstReplayList->getItemAt(lstReplayListpos.UpperLeftCorner.X, mainGame->lstReplayList->getVerticalScrollBar()->getPos());
+                }
+                if(is_dragging_lstSinglePlayList) {
+                    if(!mainGame->lstSinglePlayList->getVerticalScrollBar()->isVisible()) {
+                        is_dragging_lstSinglePlayList = false;
+                        break;
+                    }
+                    rect<s32> lstSinglePlayListpos = mainGame->lstSinglePlayList->getRelativePosition();
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
+                    int max = mainGame->lstSinglePlayList->getVerticalScrollBar()->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->lstSinglePlayList->getVerticalScrollBar()->setPos(pos);
+                    mainGame->lstSinglePlayList->getItemAt(lstSinglePlayListpos.UpperLeftCorner.X, mainGame->lstSinglePlayList->getVerticalScrollBar()->getPos());
+                }
+                if(is_dragging_lstBotList) {
+                    if(!mainGame->lstBotList->getVerticalScrollBar()->isVisible()) {
+                        is_dragging_lstBotList = false;
+                        break;
+                    }
+                    rect<s32> lstBotListpos = mainGame->lstBotList->getRelativePosition();
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
+                    int max = mainGame->lstBotList->getVerticalScrollBar()->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->lstBotList->getVerticalScrollBar()->setPos(pos);
+                    mainGame->lstBotList->getItemAt(lstBotListpos.UpperLeftCorner.X, mainGame->lstBotList->getVerticalScrollBar()->getPos());
+                }
+                if(is_dragging_lstDecks) {
+                    if(!mainGame->lstDecks->getVerticalScrollBar()->isVisible()) {
+                        is_dragging_lstDecks = false;
+                        break;
+                    }
+                    rect<s32> lstDeckspos = mainGame->lstDecks->getRelativePosition();
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
+                    int max = mainGame->lstDecks->getVerticalScrollBar()->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->lstDecks->getVerticalScrollBar()->setPos(pos);
+                    mainGame->lstDecks->getItemAt(lstDeckspos.UpperLeftCorner.X, mainGame->lstDecks->getVerticalScrollBar()->getPos());
                 }
 	            if(is_dragging_tabHelper) {
 					if(!mainGame->scrTabHelper->isVisible()) {
