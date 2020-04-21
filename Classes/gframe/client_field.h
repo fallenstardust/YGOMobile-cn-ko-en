@@ -119,14 +119,10 @@ public:
 
 	irr::gui::IGUIElement* panel;
 	bool is_dragging_cardtext;
-	int dragging_cardtext_start_pos;
-	int dragging_cardtext_start_y;
-    bool is_dragging_tabHelper;
-    int dragging_tabHelper_start_pos;
-    int dragging_tabHelper_start_y;
-    bool is_dragging_tabSystem;
-    int dragging_tabSystem_start_pos;
-    int dragging_tabSystem_start_y;
+	bool is_dragging_tabHelper;
+	bool is_dragging_tabSystem;
+	int dragging_tab_start_pos;
+	int dragging_tab_start_y;
     std::vector<int> ancard;
 	int hovered_controler;
 	int hovered_location;

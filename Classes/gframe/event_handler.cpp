@@ -1983,17 +1983,17 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                    break;
 	                }
 	                is_dragging_cardtext = true;
-	                dragging_cardtext_start_pos = mainGame->scrCardText->getPos();
-	                dragging_cardtext_start_y = event.MouseInput.Y;
+	                dragging_tab_start_pos = mainGame->scrCardText->getPos();
+	                dragging_tab_start_y = event.MouseInput.Y;
 	                return true;
 	            }
 				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
 					if(!mainGame->scrTabHelper->isVisible()) {
 						break;
 					}
-					is_dragging_tabHelper = true;
-					dragging_tabHelper_start_pos = mainGame->scrTabHelper->getPos();
-					dragging_tabHelper_start_y = event.MouseInput.Y;
+                    is_dragging_tabHelper = true;
+					dragging_tab_start_pos = mainGame->scrTabHelper->getPos();
+					dragging_tab_start_y = event.MouseInput.Y;
 					return true;
 				}
                 if(root->getElementFromPoint(mousepos) == mainGame->tabSystem){
@@ -2001,8 +2001,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         break;
                     }
                     is_dragging_tabSystem = true;
-                    dragging_tabSystem_start_pos = mainGame->scrTabSystem->getPos();
-                    dragging_tabSystem_start_y = event.MouseInput.Y;
+                    dragging_tab_start_pos = mainGame->scrTabSystem->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
 	            break;
@@ -2016,8 +2016,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     break;
                 }//touch the pic of detail to refresh textfonts
 	            is_dragging_cardtext = false;
-				is_dragging_tabHelper = false;
-                is_dragging_tabSystem = false;
+	            is_dragging_tabHelper = false;
+	            is_dragging_tabSystem = false;
 	            break;
 	        }
 	        case irr::EMIE_MOUSE_MOVED: {
@@ -2027,7 +2027,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                    break;
 	                }
 	                int step = mainGame->guiFont->getDimension(L"A").Height + mainGame->guiFont->getKerningHeight();
-	                int pos = dragging_cardtext_start_pos + (dragging_cardtext_start_y - event.MouseInput.Y) / step;
+	                int pos = dragging_tab_start_pos + (dragging_tab_start_y - event.MouseInput.Y) / step;
 	                int max = mainGame->scrCardText->getMax();
 	                if(pos < 0) pos = 0;
 	                if(pos > max) pos = max;
@@ -2040,7 +2040,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 						break;
 					}
 					rect<s32> tabHelperpos = mainGame->tabHelper->getRelativePosition();
-					int pos = dragging_tabHelper_start_pos + (dragging_tabHelper_start_y - event.MouseInput.Y);
+					int pos = dragging_tab_start_pos + (dragging_tab_start_y - event.MouseInput.Y);
                     int max = mainGame->scrTabHelper->getMax();
                     if(pos < 0) pos = 0;
                     if(pos > max) pos = max;
@@ -2053,7 +2053,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         break;
                     }
                     rect<s32> tabSystempos = mainGame->tabSystem->getRelativePosition();
-                    int pos = dragging_tabSystem_start_pos + (dragging_tabSystem_start_y - event.MouseInput.Y);
+                    int pos = dragging_tab_start_pos + (dragging_tab_start_y - event.MouseInput.Y);
                     int max = mainGame->scrTabSystem->getMax();
                     if(pos < 0) pos = 0;
                     if(pos > max) pos = max;
@@ -2271,28 +2271,28 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnActivate->setVisible(true);
 		mainGame->btnActivate->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnActivate->setVisible(false);
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
 		mainGame->btnSummon->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnSummon->setVisible(false);
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
 		mainGame->btnSPSummon->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnSPSummon->setVisible(false);
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
 		mainGame->btnMSet->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnMSet->setVisible(false);
 	if(flag & COMMAND_SSET) {
@@ -2303,7 +2303,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnSSet->setVisible(true);
 		mainGame->btnSSet->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnSSet->setVisible(false);
 	if(flag & COMMAND_REPOS) {
@@ -2316,35 +2316,35 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnRepos->setVisible(true);
 		mainGame->btnRepos->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnRepos->setVisible(false);
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnAttack->setVisible(false);
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
 		mainGame->btnShowList->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnShowList->setVisible(false);
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
 		mainGame->btnOperation->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnOperation->setVisible(false);
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
 		mainGame->btnReset->setRelativePosition(position2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 51 * mainGame->yScale;
+		height += 61 * mainGame->yScale;
 #endif
 	} else mainGame->btnReset->setVisible(false);
 	panel = mainGame->wCmdMenu;
