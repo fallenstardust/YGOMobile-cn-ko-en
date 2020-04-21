@@ -119,6 +119,7 @@ public:
 
 	irr::gui::IGUIElement* panel;
 	bool is_dragging_cardtext;
+	bool is_dragging_lstLog;
 	bool is_dragging_tabHelper;
 	bool is_dragging_tabSystem;
 	int dragging_tab_start_pos;

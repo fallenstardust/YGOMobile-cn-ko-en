@@ -14,6 +14,7 @@ ClientField::ClientField() {
 	panel = 0;
 	//drag tab
 	is_dragging_cardtext = false;
+	is_dragging_lstLog = false;
 	is_dragging_tabHelper = false;
 	is_dragging_tabSystem = false;
 	dragging_tab_start_pos = 0;

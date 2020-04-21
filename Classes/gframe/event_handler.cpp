@@ -1987,6 +1987,15 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                dragging_tab_start_y = event.MouseInput.Y;
 	                return true;
 	            }
+                if(root->getElementFromPoint(mousepos) == mainGame->lstLog) {
+                    if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
+                        break;
+                    }
+                    is_dragging_lstLog = true;
+                    dragging_tab_start_pos = mainGame->lstLog->getVerticalScrollBar()->getPos();
+                    dragging_tab_start_y = event.MouseInput.Y;
+                    return true;
+                }
 				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
 					if(!mainGame->scrTabHelper->isVisible()) {
 						break;
@@ -2016,6 +2025,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     break;
                 }//touch the pic of detail to refresh textfonts
 	            is_dragging_cardtext = false;
+                is_dragging_lstLog = false;
 	            is_dragging_tabHelper = false;
 	            is_dragging_tabSystem = false;
 	            break;
@@ -2034,6 +2044,20 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                mainGame->scrCardText->setPos(pos);
 	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
 	            }
+                if(is_dragging_lstLog) {
+                    if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
+                        is_dragging_lstLog = false;
+                        break;
+                    }
+                    rect<s32> lstLogpos = mainGame->lstLog->getRelativePosition();
+
+                    int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y) / mainGame->lstLog->getItemCount()) * 10 * mainGame->yScale;
+                    int max = mainGame->lstLog->getVerticalScrollBar()->getMax();
+                    if(pos < 0) pos = 0;
+                    if(pos > max) pos = max;
+                    mainGame->lstLog->getVerticalScrollBar()->setPos(pos);
+                    mainGame->lstLog->setRelativePosition(recti(10 * mainGame->xScale, 10 * mainGame->yScale + mainGame->lstLog->getVerticalScrollBar()->getPos() * -1, lstLogpos.LowerRightCorner.X, lstLogpos.LowerRightCorner.Y));
+                }
 	            if(is_dragging_tabHelper) {
 					if(!mainGame->scrTabHelper->isVisible()) {
 						is_dragging_tabHelper = false;
