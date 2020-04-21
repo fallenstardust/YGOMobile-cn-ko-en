@@ -1974,10 +1974,10 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		break;
 	}
 	case irr::EET_MOUSE_INPUT_EVENT: {
+        IGUIElement* root = mainGame->env->getRootGUIElement();
+        position2di mousepos = position2di(event.MouseInput.X, event.MouseInput.Y);
 	    switch(event.MouseInput.Event) {
 	        case irr::EMIE_LMOUSE_PRESSED_DOWN: {
-	            IGUIElement* root = mainGame->env->getRootGUIElement();
-	            position2di mousepos = position2di(event.MouseInput.X, event.MouseInput.Y);
 	            if(root->getElementFromPoint(mousepos) == mainGame->stText) {
 	                if(!mainGame->scrCardText->isVisible()) {
 	                    break;
@@ -2008,6 +2008,13 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	            break;
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
+                if (root->getElementFromPoint(mousepos) == mainGame->stText) {
+                    mainGame->gMutex.lock();
+                    mainGame->textFont->setTransparency(true);
+                    mainGame->ClearChatMsg();
+                    mainGame->gMutex.unlock();
+                    break;
+                }//touch the pic of detail to refresh textfonts
 	            is_dragging_cardtext = false;
 				is_dragging_tabHelper = false;
                 is_dragging_tabSystem = false;
