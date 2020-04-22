@@ -893,7 +893,7 @@ bool Game::Initialize() {
 		chkBotHand = env->addCheckBox(false, rect<s32>(360 * xScale, 140 * yScale, 560 * xScale, 170 * yScale), tabBot, -1, dataManager.GetSysString(1384));
 		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 180 * yScale, 560 * xScale, 210 * yScale), tabBot, -1, dataManager.GetSysString(1229));
 		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(360 * xScale, 220 * yScale, 560 * xScale, 250 * yScale), tabBot, -1, dataManager.GetSysString(1230));
-	} else { // avoid null pointer
+	} else { // avoid null object reference
 		btnStartBot = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnBotCancel = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnStartBot->setVisible(false);
