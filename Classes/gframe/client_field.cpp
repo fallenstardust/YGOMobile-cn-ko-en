@@ -24,6 +24,7 @@ ClientField::ClientField() {
 	is_dragging_CardDisplay = false;
 	is_dragging_tabHelper = false;
 	is_dragging_tabSystem = false;
+	is_selectable = true;
 	dragging_tab_start_pos = 0;
     dragging_tab_start_x = 0;
 	dragging_tab_start_y = 0;

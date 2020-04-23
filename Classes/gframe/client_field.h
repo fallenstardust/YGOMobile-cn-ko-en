@@ -129,6 +129,7 @@ public:
     bool is_dragging_CardDisplay;
     bool is_dragging_tabHelper;
     bool is_dragging_tabSystem;
+    bool is_selectable;
     int dragging_tab_start_pos;
     int dragging_tab_start_x;
 	int dragging_tab_start_y;
