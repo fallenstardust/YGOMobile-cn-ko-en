@@ -1981,7 +1981,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
         int presstime, leftuptime;
 	    switch(event.MouseInput.Event) {
 	        case irr::EMIE_LMOUSE_PRESSED_DOWN: {
-                presstime = os::Timer::getTime();
+                presstime = mainGame->device->getTimer()->getTime();
                 char logPresstime[256];
                 sprintf(logPresstime, "按下time=%d", presstime);
                 os::Printer::log(logPresstime);
@@ -2093,7 +2093,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	            break;
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
-	            leftuptime = os::Timer::getTime();
+	            leftuptime = mainGame->device->getTimer()->getTime();
                 char logleftuptime[256];
                 sprintf(logleftuptime, "放开time=%d", leftuptime);
                 os::Printer::log(logleftuptime);
@@ -2105,7 +2105,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     mainGame->gMutex.unlock();
                     break;
                 }//touch the target place to refresh textfonts
-                if(leftuptime - presstime > 200) {
+                if(leftuptime - presstime > 100 || presstime - leftuptime > 100) {
                     is_selectable = false;
                 } else {
                     is_selectable = true;
