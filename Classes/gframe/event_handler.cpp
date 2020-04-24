@@ -1978,13 +1978,10 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	case irr::EET_MOUSE_INPUT_EVENT: {
         IGUIElement* root = mainGame->env->getRootGUIElement();
         position2di mousepos = position2di(event.MouseInput.X, event.MouseInput.Y);
-        int presstime, leftuptime;
+        u32 static presstime, leftuptime;
 	    switch(event.MouseInput.Event) {
 	        case irr::EMIE_LMOUSE_PRESSED_DOWN: {
-                presstime = mainGame->device->getTimer()->getTime();
-                char logPresstime[256];
-                sprintf(logPresstime, "按下time=%d", presstime);
-                os::Printer::log(logPresstime);
+                presstime = mainGame->device->getTimer()->getRealTime();
 	            //vertical scrollbar
 	            if(root->getElementFromPoint(mousepos) == mainGame->stText) {
 	                if(!mainGame->scrCardText->isVisible()) {
@@ -2093,10 +2090,6 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	            break;
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
-	            leftuptime = mainGame->device->getTimer()->getTime();
-                char logleftuptime[256];
-                sprintf(logleftuptime, "放开time=%d", leftuptime);
-                os::Printer::log(logleftuptime);
                 if (root->getElementFromPoint(mousepos) == mainGame->stText ||
                     root->getElementFromPoint(mousepos) == mainGame->wHostPrepare) {
                     mainGame->gMutex.lock();
@@ -2105,10 +2098,11 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     mainGame->gMutex.unlock();
                     break;
                 }//touch the target place to refresh textfonts
-                if(leftuptime - presstime > 100 || presstime - leftuptime > 100) {
-                    is_selectable = false;
-                } else {
+                leftuptime = mainGame->device->getTimer()->getRealTime();
+                if(leftuptime - presstime > 0 && leftuptime - presstime < 200) {
                     is_selectable = true;
+                } else {
+                    is_selectable = false;
                 }
 
 	            is_dragging_cardtext = false;
