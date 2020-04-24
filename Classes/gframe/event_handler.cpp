@@ -1883,7 +1883,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			switch(id) {
 			case LISTBOX_LOG: {
 				int sel = mainGame->lstLog->getSelected();
-				if(sel != -1 && (int)mainGame->logParam.size() >= sel && mainGame->logParam[sel]) {
+				if(sel != -1 && (int)mainGame->logParam.size() >= sel && mainGame->logParam[sel] && is_selectable) {
 					mainGame->wInfos->setActiveTab(0);
 				}
 				return true;
