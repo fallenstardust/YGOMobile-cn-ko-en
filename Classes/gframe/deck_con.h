@@ -60,6 +60,7 @@ public:
 	int click_pos;
 	bool is_draging;
 	bool is_starting_dragging;
+	int drag_start_pos;
 	int dragx;
 	int dragy;
 	size_t pre_mainc;

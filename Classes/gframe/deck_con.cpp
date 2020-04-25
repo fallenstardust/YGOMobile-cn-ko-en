@@ -1,3 +1,4 @@
+
 #include "config.h"
 #include "deck_con.h"
 #include "data_manager.h"
@@ -145,6 +146,7 @@ void DeckBuilder::Initialize() {
 	hovered_pos = 0;
 	hovered_seq = -1;
 	is_lastcard = 0;
+	drag_start_pos = 0;
 	is_draging = false;
 	is_starting_dragging = false;
 	prev_deck = mainGame->cbDBDecks->getSelected();
@@ -1077,6 +1079,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 			}
 			is_starting_dragging = true;
+			if(mainGame->scrFilter->isVisible()) {
+				drag_start_pos = mainGame->scrFilter->getPos();
+                break;
+			}
 			break;
 		}
 		case irr::EMIE_LMOUSE_LEFT_UP: {
@@ -1204,6 +1210,15 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				is_starting_dragging = false;
 			}
 			mouse_pos.set(event.MouseInput.X, event.MouseInput.Y);
+			int dragpos = drag_start_pos + (dragy - mouse_pos.Y);
+			if(dragpos > 0) {
+			    if(mainGame->scrFilter->getPos() < mainGame->scrFilter->getMax())
+			        mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() + 1));
+			} else {
+			    if(mainGame->scrFilter->getPos() > 0)
+			        mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() - 1));
+			}
+
 			GetHoveredCard();
 			break;
 		}
@@ -1298,16 +1313,26 @@ void DeckBuilder::GetHoveredCard() {
 					is_lastcard = 1;
 			}
 		}
-	} else if(x >= 810 * mainGame->xScale && x <= 995 * mainGame->xScale && y >= 165 * mainGame->yScale && y <= 626 * mainGame->yScale) {
-		hovered_pos = 4;
-		hovered_seq = (y - 165 * mainGame->yScale) / (66 * mainGame->yScale);
-		int pos = mainGame->scrFilter->getPos() + hovered_seq;
-		if(pos >= (int)results.size()) {
-			hovered_seq = -1;
-			hovered_code = 0;
-		} else {
-			hovered_code = results[pos]->first;
-		}
+	} else if(x >= 810 * mainGame->xScale && x <= 995 * mainGame->xScale && y >= 165 * mainGame->yScale && y <= 626 * mainGame->yScale) {//搜索结果
+        hovered_pos = 4;
+        hovered_seq = (y - 165 * mainGame->yScale) / (66 * mainGame->yScale);
+		int pos = mainGame->scrFilter->getPos();
+	    if(x >= 860 * mainGame->xScale && x <= 900 * mainGame->xScale){
+		    if(pos >= (int)results.size()) {
+			    hovered_seq = -1;
+			    hovered_code = 0;
+		    } else {
+			    hovered_code = results[pos]->first;
+		    }
+        }
+        if(x > 900 * mainGame->xScale && x <= 995 * mainGame->xScale){
+            if(pos >= (int)results.size()) {
+                hovered_seq = -1;
+                hovered_code = 0;
+            } else {
+                mainGame->ShowCardInfo(results[pos]->first);
+            }
+	    }
 	}
 	if(is_draging) {
 		dragx = x;
