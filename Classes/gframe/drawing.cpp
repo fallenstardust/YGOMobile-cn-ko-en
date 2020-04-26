@@ -1306,15 +1306,15 @@ void Game::DrawDeckBd() {
 		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
 		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
 			driver->draw2DRectangle(0x80000000, recti(806 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1019 * mainGame->xScale, (230 + i * 66) * mainGame->yScale));
-		DrawThumb(ptr, position2di(855 * mainGame->xScale, (165 + i * 66) * mainGame->yScale), deckBuilder.filterList);
+		DrawThumb(ptr, position2di(805 * mainGame->xScale, (165 + i * 66) * mainGame->yScale), deckBuilder.filterList);
 		if(ptr->second.type & TYPE_MONSTER) {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			if(!(ptr->second.type & TYPE_LINK)) {
 				const wchar_t* form = L"\u2605";
 				if(ptr->second.type & TYPE_XYZ) form = L"\u2606";
 				myswprintf(textBuffer, L"%ls/%ls %ls%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), form, ptr->second.level);
-				DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 				if(ptr->second.attack < 0 && ptr->second.defense < 0)
 					myswprintf(textBuffer, L"?/?");
 				else if(ptr->second.attack < 0)
@@ -1324,7 +1324,7 @@ void Game::DrawDeckBd() {
 				else myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
 			} else {
 				myswprintf(textBuffer, L"%ls/%ls LINK-%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), ptr->second.level);
-				DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 955 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);		
+				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 955 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 				if(ptr->second.attack < 0)
 					myswprintf(textBuffer, L"?/-");
 				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
@@ -1340,12 +1340,12 @@ void Game::DrawDeckBd() {
 				mywcscat(textBuffer, L" [TCG]");
 			else if((ptr->second.ot & 0x7) == 4)
 				mywcscat(textBuffer, L" [Custom]");
-			DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 		} else {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			const wchar_t* ptype = dataManager.FormatType(ptr->second.type);
-			DrawShadowText(textFont, ptype, recti(904 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+			DrawShadowText(textFont, ptype, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			textBuffer[0] = 0;
 			if((ptr->second.ot & 0x3) == 1)
 				mywcscat(textBuffer, L"[OCG]");
@@ -1353,7 +1353,7 @@ void Game::DrawDeckBd() {
 				mywcscat(textBuffer, L"[TCG]");
 			else if((ptr->second.ot & 0x7) == 4)
 				mywcscat(textBuffer, L"[Custom]");
-			DrawShadowText(textFont, textBuffer, recti(904 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 		}
 	}
 #endif
