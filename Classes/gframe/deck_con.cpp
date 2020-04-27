@@ -1225,6 +1225,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
                 drag_start_pos = 0;
             }
 			GetHoveredCard();
+            char log_hovered_card[256];
+            sprintf(log_hovered_card, "卡名=%ls,scrfilterpos=%d", dataManager.GetName(hovered_code),(mainGame->scrFilter->getPos()));
+            os::Printer::log(log_hovered_card);
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
@@ -1321,7 +1324,7 @@ void DeckBuilder::GetHoveredCard() {
 	} else if(x >= 805 * mainGame->xScale && x <= 995 * mainGame->xScale && y >= 165 * mainGame->yScale && y <= 626 * mainGame->yScale) {
         hovered_pos = 4;
         hovered_seq = (y - 165 * mainGame->yScale) / (66 * mainGame->yScale);
-		int pos = mainGame->scrFilter->getPos();
+		int pos = mainGame->scrFilter->getPos() + hovered_seq;
 		if(pos >= (int)results.size()) {
 			hovered_seq = -1;
 			hovered_code = 0;
