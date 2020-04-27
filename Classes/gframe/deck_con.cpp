@@ -1215,12 +1215,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			    char log_dragpos[256];
 			    sprintf(log_dragpos, "dragpos=%d", dragpos);
 			    os::Printer::log(log_dragpos);
-			    if(dragpos != 0) {
+			    if(dragpos > 0) {
 			        if(mainGame->scrFilter->getPos() < mainGame->scrFilter->getMax())
-			         mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() + 1));
-			    } else{
+			            mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() + 1));
+			    } else if(dragpos < 0){
 			        if(mainGame->scrFilter->getPos() > 0)
-			         mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() - 1));
+			            mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() - 1));
 			    }
                 drag_start_pos = 0;
             }
