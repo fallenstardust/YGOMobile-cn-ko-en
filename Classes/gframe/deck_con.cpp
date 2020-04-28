@@ -146,7 +146,6 @@ void DeckBuilder::Initialize() {
 	hovered_pos = 0;
 	hovered_seq = -1;
 	is_lastcard = 0;
-	drag_start_pos = 0;
 	is_draging = false;
 	is_starting_dragging = false;
 	prev_deck = mainGame->cbDBDecks->getSelected();
@@ -1211,7 +1210,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			mouse_pos.set(event.MouseInput.X, event.MouseInput.Y);
             if(hovered_pos == 4) {
-			    int dragpos = drag_start_pos + (dragy - mouse_pos.Y);
+			    int dragpos = dragy - mouse_pos.Y;
 			    char log_dragpos[256];
 			    sprintf(log_dragpos, "dragpos=%d", dragpos);
 			    os::Printer::log(log_dragpos);
@@ -1221,8 +1220,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			    } else if(dragpos < 0){
 			        if(mainGame->scrFilter->getPos() > 0)
 			            mainGame->scrFilter->setPos((mainGame->scrFilter->getPos() - 1));
+			    } else {
+
 			    }
-                drag_start_pos = 0;
             }
 			GetHoveredCard();
             char log_hovered_card[256];
@@ -1326,10 +1326,12 @@ void DeckBuilder::GetHoveredCard() {
         hovered_seq = (y - 165 * mainGame->yScale) / (66 * mainGame->yScale);
 		int pos = mainGame->scrFilter->getPos() + hovered_seq;
 		if(pos >= (int)results.size()) {
-			hovered_seq = -1;
-			hovered_code = 0;
-		} else {
-			hovered_code = results[pos]->first;
+		    hovered_seq = -1;
+		    hovered_code = 0;
+		} else if(x >= 805 * mainGame->xScale && x <= 850 * mainGame->xScale) {
+		    hovered_code = results[pos]->first;
+		} else if(x > 850 * mainGame->xScale && x <= 995 * mainGame->xScale) {
+		    mainGame->ShowCardInfo(results[pos]->first);
 		}
 	}
 	if(is_draging) {
