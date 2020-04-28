@@ -1078,10 +1078,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 			}
 			is_starting_dragging = true;
-			if(mainGame->scrFilter->isVisible()) {
-				drag_start_pos = mainGame->scrFilter->getPos();
-                break;
-			}
 			break;
 		}
 		case irr::EMIE_LMOUSE_LEFT_UP: {
