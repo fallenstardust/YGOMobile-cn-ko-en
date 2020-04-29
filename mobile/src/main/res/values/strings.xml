@@ -280,4 +280,7 @@
     <string name="tip_expansions_image">no Large image for pre-released data</string>
     <string name="tip_return_to_duel">Current game has been Returned</string>
     <string name="my_favorites">myFav★</string>
+    <string name="ypk_installed">expansion file installed</string>
+    <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
+    <string name="ypk_failed_bcos">expansion file install failed, because\:</string>
 </resources>
