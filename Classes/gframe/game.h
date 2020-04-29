@@ -175,6 +175,13 @@ public:
 		return focus && focus->hasType(type);
 	}
 
+	void TrimText(irr::gui::IGUIElement* editbox) const {
+	    irr::core::stringw text(editbox->getText());
+	    text.trim();
+	    editbox->setText(text.c_str());
+	}
+
+
 	template<typename T>
 	static std::vector<T> TokenizeString(T input, const T& token);
 
