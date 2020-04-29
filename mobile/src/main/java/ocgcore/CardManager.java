@@ -135,7 +135,7 @@ public class CardManager {
                     @Override
                     public boolean accept(File dir, String name) {
                         File file = new File(dir, name);
-                        return file.isFile() && (name.endsWith(".cdb") || name.endsWith(".zip"));
+                        return file.isFile() && ((name.endsWith(".cdb") || (name.endsWith(".zip") || name.endsWith(".ypk"))));
                     }
                 });
                 //读取全部卡片
@@ -143,7 +143,7 @@ public class CardManager {
                     for (File file : files) {
                         if (file.getName().endsWith(".cdb")) {
                             count = readAllCards(file, cardDataHashMap);
-                        } else if (file.getName().endsWith(".zip")) {
+                        } else if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
                             Log.e("CardManager", "读取压缩包");
                             try {
                                 for (File file1 : readZipCdb(file.getAbsolutePath())) {

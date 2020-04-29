@@ -257,6 +257,17 @@ public class AppsSettings {
                         pathList.add(file.getAbsolutePath());
                     }
                 }
+                File[] ypks = expansionsDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".ypk");
+                    }
+                });
+                if (ypks != null) {
+                    for (File file : ypks) {
+                        pathList.add(file.getAbsolutePath());
+                    }
+                }
             }
         }
     }

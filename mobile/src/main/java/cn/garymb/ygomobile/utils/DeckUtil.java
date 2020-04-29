@@ -96,7 +96,7 @@ public class DeckUtil {
         }
         files = appsSettings.getExpansionsPath().listFiles();
         for (File file : files) {
-            if (file.isFile() && file.getName().endsWith(".zip")) {
+            if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
                 ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
                 Enumeration entries = zipFile.entries();
                 while (entries.hasMoreElements()) {

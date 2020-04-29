@@ -1,6 +1,7 @@
 package ocgcore;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.BufferedReader;
@@ -52,7 +53,8 @@ public class StringManager implements Closeable {
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && file.getName().endsWith(".zip")) {
+                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
+                        Log.e("StringManager", "读取压缩包");
                         try {
                             ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
                             ZipEntry entry = zipFile.getEntry(Constants.CORE_STRING_PATH);

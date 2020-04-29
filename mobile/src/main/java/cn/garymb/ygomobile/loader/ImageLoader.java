@@ -227,7 +227,7 @@ public class ImageLoader implements Closeable {
             File[] files = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS).listFiles();
             if (files != null) {
                 for (File file :files) {
-                    if (file.isFile() && file.getName().endsWith(".zip")) {
+                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
                         ZipEntry entry = null;
                         InputStream inputStream = null;
                         ByteArrayOutputStream outputStream = null;

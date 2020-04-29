@@ -1300,11 +1300,11 @@ void Game::LoadExpansions() {
 		return;
 	while((dirp = readdir(dir)) != NULL) {
 		size_t len = strlen(dirp->d_name);
-		if(len < 5 || strcasecmp(dirp->d_name + len - 4, ".zip") != 0)
+		if(len < 5 || strcasecmp(dirp->d_name + len - 4, ".zip") != 0 ||strcasecmp(dirp->d_name + len - 4, ".ypk") != 0)
 			continue;
 		char upath[1024];
 		sprintf(upath, "./expansions/%s", dirp->d_name);
-		dataManager.FileSystem->addFileArchive(upath, true, false);
+		dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
 	}
 	closedir(dir);
 #endif
