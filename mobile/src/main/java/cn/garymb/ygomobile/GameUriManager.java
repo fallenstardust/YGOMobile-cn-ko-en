@@ -130,17 +130,18 @@ public class GameUriManager {
                 }
                 activity.startActivity(startdeck);
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
+                File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + file.getName().toLowerCase(Locale.US));
                 try {
-                    FileUtils.copyDir(file.getAbsolutePath(), AppsSettings.get().getExpansionsPath().toString(), true);
-                    if (!AppsSettings.get().isReadExpansions()) {
-                        activity.startActivity(startSeting);
-                        Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
-                    } else {
-                        DataManager.get().load(true);
-                        Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
-                    }
-                } catch (Exception e) {
+                    FileUtils.copyFile(file, ypk);
+                } catch (Throwable e) {
                     Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                }
+                if (!AppsSettings.get().isReadExpansions()) {
+                    activity.startActivity(startSeting);
+                    Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                } else {
+                    DataManager.get().load(true);
+                    Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                 }
             }
         } else if ("content".equals(uri.getScheme())) {
