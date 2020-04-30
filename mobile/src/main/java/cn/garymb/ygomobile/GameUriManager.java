@@ -131,7 +131,7 @@ public class GameUriManager {
                 activity.startActivity(startdeck);
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
                 try {
-                    FileUtils.moveFile(file.getAbsolutePath(), AppsSettings.get().getExpansionsPath().toString(), false);
+                    FileUtils.copyDir(file.getAbsolutePath(), AppsSettings.get().getExpansionsPath().toString(), true);
                     if (!AppsSettings.get().isReadExpansions()) {
                         activity.startActivity(startSeting);
                         Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
