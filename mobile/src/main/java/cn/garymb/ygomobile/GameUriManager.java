@@ -169,26 +169,28 @@ public class GameUriManager {
                 }
             } else if (urifile.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
                 try {
+                    File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + urifile.getName().toLowerCase(Locale.US));
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
                     if (pfd == null) {
                         return;
                     } else {
                         try {
-                            FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), AppsSettings.get().getExpansionsPath());
-                            if (!AppsSettings.get().isReadExpansions()) {
-                                activity.startActivity(startSeting);
-                                Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
-                            } else {
-                                DataManager.get().load(true);
-                                Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
-                            }
-                        } catch (Exception e) {
+                            FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), ypk);
+                        } catch (Throwable e) {
                             Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
                         } finally {
                             pfd.close();
                         }
                     }
                 } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+                if (!AppsSettings.get().isReadExpansions()) {
+                    activity.startActivity(startSeting);
+                    Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                } else {
+                    DataManager.get().load(true);
+                    Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                 }
             }
         } else {
