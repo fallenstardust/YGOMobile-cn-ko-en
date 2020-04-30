@@ -1057,7 +1057,7 @@ void Game::DrawSpec() {
 			if(!showChat && i > 2)
 				continue;
 			int w = textFont->getDimension(chatMsg[i].c_str()).Width;
-			driver->draw2DRectangle(recti(305 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, (307 + w) * mainGame->xScale, (616 - 20 * i) * mainGame->yScale), 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
+			driver->draw2DRectangle(recti(305 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 307 * mainGame->xScale + w, (616 - 20 * i) * mainGame->yScale), 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
 			textFont->draw(chatMsg[i].c_str(), rect<s32>(305 * mainGame->xScale, (595 - 20 * i) * mainGame->yScale, 1020 * mainGame->xScale, (615 - 20 * i) * mainGame->yScale), 0xff000000, false, false);
 			textFont->draw(chatMsg[i].c_str(), rect<s32>(306 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 1021 * mainGame->xScale, (616 - 20 * i) * mainGame->yScale), chatColor[chatType[i]], false, false);
 		}
