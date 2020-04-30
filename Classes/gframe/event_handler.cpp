@@ -1978,12 +1978,13 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	case irr::EET_MOUSE_INPUT_EVENT: {
         IGUIElement* root = mainGame->env->getRootGUIElement();
         position2di mousepos = position2di(event.MouseInput.X, event.MouseInput.Y);
+		irr::gui::IGUIElement* eventElement = root->getElementFromPoint(mousepos);
         u32 static presstime, leftuptime;
 	    switch(event.MouseInput.Event) {
 	        case irr::EMIE_LMOUSE_PRESSED_DOWN: {
                 presstime = mainGame->device->getTimer()->getRealTime();
 	            //vertical scrollbar
-	            if(root->getElementFromPoint(mousepos) == mainGame->stText) {
+	            if(eventElement == mainGame->stText) {
 	                if(!mainGame->scrCardText->isVisible()) {
 	                    break;
 	                }
@@ -1992,7 +1993,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                dragging_tab_start_y = event.MouseInput.Y;
 	                return true;
 	            }
-                if(root->getElementFromPoint(mousepos) == mainGame->lstLog) {
+                if(eventElement == mainGame->lstLog) {
                     if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
                         break;
                     }
@@ -2001,7 +2002,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
-                if(root->getElementFromPoint(mousepos) == mainGame->lstReplayList) {
+                if(eventElement == mainGame->lstReplayList) {
                     if(!mainGame->lstReplayList->getVerticalScrollBar()->isVisible()) {
                         break;
                     }
@@ -2010,7 +2011,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
-                if(root->getElementFromPoint(mousepos) == mainGame->lstSinglePlayList) {
+                if(eventElement == mainGame->lstSinglePlayList) {
                     if(!mainGame->lstSinglePlayList->getVerticalScrollBar()->isVisible()) {
                         break;
                     }
@@ -2019,7 +2020,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
-                if(root->getElementFromPoint(mousepos) == mainGame->lstBotList) {
+                if(eventElement == mainGame->lstBotList) {
                     if(!mainGame->lstBotList->getVerticalScrollBar()->isVisible()) {
                         break;
                     }
@@ -2028,7 +2029,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
-                if(root->getElementFromPoint(mousepos) == mainGame->lstDecks) {
+                if(eventElement == mainGame->lstDecks) {
                     if(!mainGame->lstDecks->getVerticalScrollBar()->isVisible()) {
                         break;
                     }
@@ -2037,7 +2038,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     dragging_tab_start_y = event.MouseInput.Y;
                     return true;
                 }
-				if(root->getElementFromPoint(mousepos) == mainGame->lstANCard) {
+				if(eventElement == mainGame->lstANCard) {
 					if(!mainGame->lstANCard->getVerticalScrollBar()->isVisible()) {
 						break;
 					}
@@ -2046,7 +2047,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					dragging_tab_start_y = event.MouseInput.Y;
 					return true;
 				}
-				if(root->getElementFromPoint(mousepos) == mainGame->tabHelper){
+				if(eventElement == mainGame->tabHelper){
 					if(!mainGame->scrTabHelper->isVisible()) {
 						break;
 					}
@@ -2055,7 +2056,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					dragging_tab_start_y = event.MouseInput.Y;
 					return true;
 				}
-                if(root->getElementFromPoint(mousepos) == mainGame->tabSystem){
+                if(eventElement == mainGame->tabSystem){
                     if(!mainGame->scrTabSystem->isVisible()) {
                         break;
                     }
@@ -2066,8 +2067,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                 }
                 //horizontal scollbar
                 for(int i=0; i<5; i++) {
-                    if(root->getElementFromPoint(mousepos) == mainGame->btnCardSelect[i] ||
-                        root->getElementFromPoint(mousepos) == mainGame->stCardPos[i]) {
+                    if(eventElement == mainGame->btnCardSelect[i] ||
+                        eventElement == mainGame->stCardPos[i]) {
                             if(!mainGame->scrCardList->isVisible()) {
                                 break;
                             }
@@ -2076,8 +2077,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                             dragging_tab_start_x = event.MouseInput.X;
                      return true;
                     }
-                    if(root->getElementFromPoint(mousepos) == mainGame->btnCardDisplay[i] ||
-                        root->getElementFromPoint(mousepos) == mainGame->stDisplayPos[i]) {
+                    if(eventElement == mainGame->btnCardDisplay[i] ||
+                        eventElement == mainGame->stDisplayPos[i]) {
                         if(!mainGame->scrDisplayList->isVisible()) {
                             break;
                         }
@@ -2090,12 +2091,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	            break;
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
-                if (root->getElementFromPoint(mousepos) == mainGame->stText ||
-                    root->getElementFromPoint(mousepos) == mainGame->wHostPrepare ||
-                    root->getElementFromPoint(mousepos) == mainGame->imgCard ||
-                    root->getElementFromPoint(mousepos) == mainGame->wReplay ||
-                    root->getElementFromPoint(mousepos) == mainGame->wSinglePlay ||
-                    root->getElementFromPoint(mousepos) == mainGame->wLanWindow) {
+                if (eventElement == mainGame->stText ||
+                    eventElement == mainGame->wHostPrepare ||
+                    eventElement == mainGame->imgCard ||
+                    eventElement == mainGame->wReplay ||
+                    eventElement == mainGame->wSinglePlay ||
+                    eventElement == mainGame->wLanWindow) {
                     mainGame->gMutex.lock();
                     mainGame->textFont->setTransparency(true);
                     mainGame->ClearChatMsg();
