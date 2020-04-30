@@ -268,6 +268,8 @@ void field::send_to(card_set* targets, effect* reason_effect, uint32 reason, uin
 			p = reason_player;
 		if(destination & (LOCATION_GRAVE | LOCATION_REMOVED) || p == PLAYER_NONE)
 			p = pcard->owner;
+		if(destination == LOCATION_GRAVE && pcard->current.location == LOCATION_REMOVED)
+			pcard->current.reason |= REASON_RETURN;
 		uint32 pos = position;
 		if(destination != LOCATION_REMOVED)
 			pos = POS_FACEUP;
@@ -3768,7 +3770,7 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 			pduel->delete_group(targets);
 			return TRUE;
 		}
-		card_set leave_p, destroying;
+		card_set leave_p;
 		for(auto& pcard : targets->container) {
 			if((pcard->current.location & LOCATION_ONFIELD) && !pcard->is_status(STATUS_SUMMON_DISABLED) && !pcard->is_status(STATUS_ACTIVATE_DISABLED)) {
 				raise_single_event(pcard, 0, EVENT_LEAVE_FIELD_P, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
@@ -3816,8 +3818,6 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 		}
 		if(leave_p.size())
 			raise_event(&leave_p, EVENT_LEAVE_FIELD_P, reason_effect, reason, reason_player, 0, 0);
-		if(destroying.size())
-			raise_event(&destroying, EVENT_DESTROY, reason_effect, reason, reason_player, 0, 0);
 		process_single_event();
 		process_instant_event();
 		return FALSE;
@@ -4128,7 +4128,7 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 		core.units.begin()->ptarget = param->targets;
 		targets = param->targets;
 		delete param;
-		card_set tohand, todeck, tograve, remove, discard, released, destroyed, retgrave;
+		card_set tohand, todeck, tograve, remove, discard, released, destroyed;
 		card_set equipings, overlays;
 		for(auto& pcard : targets->container) {
 			uint8 nloc = pcard->current.location;
@@ -4161,14 +4161,9 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 				todeck.insert(pcard);
 				raise_single_event(pcard, 0, EVENT_TO_DECK, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
 			}
-			if(nloc == LOCATION_GRAVE) {
-				if(pcard->current.reason & REASON_RETURN) {
-					retgrave.insert(pcard);
-					raise_single_event(pcard, 0, EVENT_RETURN_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-				} else {
-					tograve.insert(pcard);
-					raise_single_event(pcard, 0, EVENT_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
-				}
+			if(nloc == LOCATION_GRAVE && !(pcard->current.reason & REASON_RETURN)) {
+				tograve.insert(pcard);
+				raise_single_event(pcard, 0, EVENT_TO_GRAVE, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
 			}
 			if(nloc == LOCATION_REMOVED || ((pcard->data.type & TYPE_TOKEN) && pcard->sendto_param.location == LOCATION_REMOVED)) {
 				remove.insert(pcard);
@@ -4207,8 +4202,6 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 			raise_event(&released, EVENT_RELEASE, reason_effect, reason, reason_player, 0, 0);
 		if(destroyed.size())
 			raise_event(&destroyed, EVENT_DESTROYED, reason_effect, reason, reason_player, 0, 0);
-		if(retgrave.size())
-			raise_event(&retgrave, EVENT_RETURN_TO_GRAVE, reason_effect, reason, reason_player, 0, 0);
 		raise_event(&targets->container, EVENT_MOVE, reason_effect, reason, reason_player, 0, 0);
 		process_single_event();
 		process_instant_event();

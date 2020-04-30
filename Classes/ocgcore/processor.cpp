@@ -1367,7 +1367,7 @@ int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_free
 				clit->set_triggering_state(phandler);
 			}
 			uint8 tp = clit->triggering_player;
-			if(check_hand_trigger(*clit) && check_trigger_effect(*clit)
+			if(check_nonpublic_trigger(*clit) && check_trigger_effect(*clit)
 				&& peffect->is_chainable(tp) && peffect->is_activateable(tp, clit->evt, TRUE)
 				&& check_spself_from_hand_trigger(*clit)) {
 				if(tp == core.current_player)
@@ -1666,9 +1666,9 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 				ch.triggering_player = phandler->current.controler;
 				ch.set_triggering_state(phandler);
 			}
-			if(ch.triggering_player == priority && ch.triggering_location == LOCATION_HAND
-				&& phandler->is_position(POS_FACEDOWN) && !phandler->is_status(STATUS_CHAINING) && phandler->is_has_relation(ch)
-				&& peffect->is_chainable(priority) && peffect->is_activateable(priority, ch.evt, TRUE)
+			if(ch.triggering_player == priority && !phandler->is_status(STATUS_CHAINING)
+				&& (ch.triggering_location == LOCATION_HAND && phandler->is_position(POS_FACEDOWN) || ch.triggering_location == LOCATION_DECK)
+				&& phandler->is_has_relation(ch) && peffect->is_chainable(priority) && peffect->is_activateable(priority, ch.evt, TRUE)
 				&& check_spself_from_hand_trigger(ch))
 				core.select_chains.push_back(ch);
 		}
@@ -3288,7 +3288,7 @@ int32 field::process_damage_step(uint16 step, uint32 new_attack) {
 	return TRUE;
 }
 void field::calculate_battle_damage(effect** pdamchange, card** preason_card, uint8* battle_destroyed) {
-	uint32 aa = core.attacker->get_attack(), ad = core.attacker->get_defense();
+	uint32 aa = core.attacker->get_battle_attack(), ad = core.attacker->get_battle_defense();
 	uint32 da = 0, dd = 0, a = aa, d;
 	uint8 pa = core.attacker->current.controler, pd;
 	uint8 damp = 0;
@@ -3303,8 +3303,8 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 			a = ad;
 	}
 	if(core.attack_target) {
-		da = core.attack_target->get_attack();
-		dd = core.attack_target->get_defense();
+		da = core.attack_target->get_battle_attack();
+		dd = core.attack_target->get_battle_defense();
 		pd = core.attack_target->current.controler;
 		if(core.attack_target->is_position(POS_ATTACK)) {
 			d = da;
@@ -3935,7 +3935,6 @@ int32 field::add_chain(uint16 step) {
 			}
 		}
 		if(peffect->type & EFFECT_TYPE_ACTIVATE) {
-			break_effect();
 			int32 ecode = 0;
 			if(phandler->current.location == LOCATION_HAND) {
 				if(phandler->data.type & TYPE_TRAP)
@@ -4009,7 +4008,6 @@ int32 field::add_chain(uint16 step) {
 		pduel->write_buffer8(clit.triggering_sequence);
 		pduel->write_buffer32(peffect->description);
 		pduel->write_buffer8((uint8)core.current_chain.size() + 1);
-		break_effect();
 		for(auto& ch_lim : core.chain_limit)
 			luaL_unref(pduel->lua->lua_state, LUA_REGISTRYINDEX, ch_lim.function);
 		core.chain_limit.clear();
