@@ -2091,7 +2091,11 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	        }
 	        case irr::EMIE_LMOUSE_LEFT_UP: {
                 if (root->getElementFromPoint(mousepos) == mainGame->stText ||
-                    root->getElementFromPoint(mousepos) == mainGame->wHostPrepare) {
+                    root->getElementFromPoint(mousepos) == mainGame->wHostPrepare ||
+                    root->getElementFromPoint(mousepos) == mainGame->imgCard ||
+                    root->getElementFromPoint(mousepos) == mainGame->wReplay ||
+                    root->getElementFromPoint(mousepos) == mainGame->wSinglePlay ||
+                    root->getElementFromPoint(mousepos) == mainGame->wLanWindow) {
                     mainGame->gMutex.lock();
                     mainGame->textFont->setTransparency(true);
                     mainGame->ClearChatMsg();

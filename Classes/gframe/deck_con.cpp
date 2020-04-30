@@ -1209,21 +1209,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				is_starting_dragging = false;
 			}
 			mouse_pos.set(event.MouseInput.X, event.MouseInput.Y);
-            if(hovered_pos == 4 && mainGame->scrFilter->isVisible()) {
-				int dragpos = dragy - mouse_pos.Y;
-			    char log_dragpos[256];
-			    sprintf(log_dragpos, "dragpos=%d", dragpos);
-			    os::Printer::log(log_dragpos);
-			    if(dragpos > 0 && mainGame->scrFilter->getPos() < mainGame->scrFilter->getMax()) {
+         /*   if(hovered_pos == 4 && mainGame->scrFilter->isVisible()) {
+			    if(dragy - mouse_pos.Y > 0 && mainGame->scrFilter->getPos() < mainGame->scrFilter->getMax()) {
 			        mainGame->scrFilter->setPos(mainGame->scrFilter->getPos() + 1);
-			    } else if(dragpos < 0 && mainGame->scrFilter->getPos() > 0){
+			    } else if(dragy - mouse_pos.Y < 0 && mainGame->scrFilter->getPos() > 0){
 			        mainGame->scrFilter->setPos(mainGame->scrFilter->getPos() - 1);
 			    }
-            }
+            }*/
 			GetHoveredCard();
-            char log_hovered_card[256];
-            sprintf(log_hovered_card, "卡名=%ls,scrfilterpos=%d", dataManager.GetName(hovered_code),(mainGame->scrFilter->getPos()));
-            os::Printer::log(log_hovered_card);
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
