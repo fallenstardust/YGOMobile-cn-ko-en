@@ -21,7 +21,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1350;
+const unsigned short PRO_VERSION = 0x1351;
 
 namespace ygo {
 

@@ -8,7 +8,7 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 370000420
+        versionCode 370000430
         versionName "3.7.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
