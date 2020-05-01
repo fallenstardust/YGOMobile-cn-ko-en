@@ -278,7 +278,7 @@
     <string name="tip_expansions_image">카드의 고화질 이미지가 없습니다.</string>
     <string name="tip_return_to_duel">이미 돌아 가기 현재 게임</string>
     <string name="my_favorites">즐겨 찾기★</string>
-    <string name="ypk_installed">expansion file installed</string>
-    <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
-    <string name="ypk_failed_bcos">expansion file install failed, because\:</string>
+    <string name="ypk_installed">확장팩 설치되어</string>
+    <string name="ypk_go_setting">점검 \"확장팩 사용\" </string>
+    <string name="ypk_failed_bcos">확장팩 설치 실패, 왜냐하면\:</string>
 </resources>
