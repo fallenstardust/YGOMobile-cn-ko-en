@@ -824,7 +824,7 @@ bool Game::Initialize() {
 	for(int i = 0; i < 32; ++i)
 		chkCategory[i] = env->addCheckBox(false, recti((10 + (i % 4) * 90)  * xScale, (10 + (i / 4) * 20) * yScale, (100 + (i % 4) * 90) * xScale, (40 + (i / 4) * 20) * yScale), wCategories, -1, dataManager.GetSysString(1100 + i));
 #ifdef _IRR_ANDROID_PLATFORM_
-	scrFilter = env->addScrollBar(false, recti(990 * xScale, 159 * yScale, 1020 * xScale, 629 * yScale), 0, SCROLL_FILTER);
+	scrFilter = env->addScrollBar(false, recti(980 * xScale, 159 * yScale, 1020 * xScale, 629 * yScale), 0, SCROLL_FILTER);
 #endif
 	scrFilter->setLargeStep(10);
 	scrFilter->setSmallStep(1);

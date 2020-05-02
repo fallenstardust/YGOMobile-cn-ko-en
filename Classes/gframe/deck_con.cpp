@@ -1317,11 +1317,13 @@ void DeckBuilder::GetHoveredCard() {
 		if(pos >= (int)results.size()) {
 			hovered_seq = -1;
 			hovered_code = 0;
-		} else if(x >= 805 * mainGame->xScale && x <= 850 * mainGame->xScale) {
+			//} else if(x >= 805 * mainGame->xScale && x <= 850 * mainGame->xScale) {
+		} else {
 			hovered_code = results[pos]->first;
-		} else if(x > 850 * mainGame->xScale && x <= 995 * mainGame->xScale) {
-		    mainGame->ShowCardInfo(results[pos]->first);
+		//} else if(x > 850 * mainGame->xScale && x <= 995 * mainGame->xScale) {
+		 //   mainGame->ShowCardInfo(results[pos]->first);
 		}
+
 	}
 	if(is_draging) {
 		dragx = x;
