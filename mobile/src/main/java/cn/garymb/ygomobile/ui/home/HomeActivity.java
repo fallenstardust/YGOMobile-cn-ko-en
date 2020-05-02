@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -433,7 +434,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         builder.setLeftButtonText(R.string.join_game);
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
-            if (ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+            if (Build.VERSION.SDK_INT >= 23 && ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
                 Toast toast = Toast.makeText(getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
