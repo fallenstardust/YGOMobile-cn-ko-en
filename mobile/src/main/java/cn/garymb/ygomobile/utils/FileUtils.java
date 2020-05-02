@@ -177,6 +177,9 @@ public class FileUtils {
         //文件名称列表
         String[] filePath = file.list();
 
+        if (filePath == null)
+            return;
+
         if (!(new File(newPath)).exists()) {
             (new File(newPath)).mkdir();
         }
