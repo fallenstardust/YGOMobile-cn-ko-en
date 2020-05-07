@@ -411,6 +411,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     }
                 });
                 dialogPlus.show();
+                imageLoader.bindImage(cardImage, code, null, true);
                 return true;
             }
         });
