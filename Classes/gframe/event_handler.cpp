@@ -2104,7 +2104,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     break;
                 }//touch the target place to refresh textfonts
                 leftuptime = mainGame->device->getTimer()->getRealTime();
-                if(leftuptime - presstime > 0 && leftuptime - presstime < 200) {
+                if(leftuptime - presstime > 0 && leftuptime - presstime < 500) {
                     is_selectable = true;
                 } else {
                     is_selectable = false;
@@ -2243,7 +2243,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     mainGame->tabSystem->setRelativePosition(recti(0, mainGame->scrTabSystem->getPos() * -1, tabSystempos.LowerRightCorner.X, tabSystempos.LowerRightCorner.Y));
                 }
                 //horizontal scrollbar
-                if(is_dragging_CardSelect) {
+                if(is_dragging_CardSelect && !is_selectable) {
                     if(!mainGame->scrCardList->isVisible()) {
                         is_dragging_CardSelect = false;
                         break;
@@ -2316,7 +2316,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					}
 					break;
                 }
-                if(is_dragging_CardDisplay) {
+                if(is_dragging_CardDisplay && !is_selectable) {
                     if(!mainGame->scrDisplayList->isVisible()) {
                         is_dragging_CardDisplay = false;
                         break;
