@@ -1144,16 +1144,18 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         try {
             FileUtils.copyDir(mSettings.getDeckDir(), ORI_DECK, true);
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
         }
+        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
     }
 
     private void doRestoreDeck() {
         try {
             FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
         }
+        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
     }
 
     @Override
