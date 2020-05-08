@@ -181,7 +181,7 @@ public class FileUtils {
             return;
 
         if (!(new File(newPath)).exists()) {
-            (new File(newPath)).mkdir();
+            (new File(newPath)).mkdirs();
         }
 
         for (int i = 0; i < filePath.length; i++) {
