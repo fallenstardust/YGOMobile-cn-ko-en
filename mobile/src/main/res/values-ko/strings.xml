@@ -281,4 +281,9 @@
     <string name="ypk_installed">확장팩 설치되어</string>
     <string name="ypk_go_setting">점검 \"확장팩 사용\" </string>
     <string name="ypk_failed_bcos">확장팩 설치 실패, 왜냐하면\:</string>
+    <string name="deck_back_up">BackUp</string>
+    <string name="deck_restore">Restore</string>
+    <string name="deck_backup_n_restore">BackUp/Restore</string>
+    <string name="deck_explain">BackUp\: back up all decks to Sdcard/ygocore
+        \nRestore\: restore backed up decks</string>
 </resources>

@@ -283,4 +283,9 @@
     <string name="ypk_installed">expansion file installed</string>
     <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
     <string name="ypk_failed_bcos">expansion file install failed, because\:</string>
+    <string name="deck_back_up">BackUp</string>
+    <string name="deck_restore">Restore</string>
+    <string name="deck_backup_n_restore">BackUp/Restore</string>
+    <string name="deck_explain">BackUp\: back up all decks to Sdcard/ygocore
+        \nRestore\: restore backed up decks</string>
 </resources>

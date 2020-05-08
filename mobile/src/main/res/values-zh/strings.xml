@@ -280,4 +280,9 @@
     <string name="ypk_installed">拓展卡包文件已安装</string>
     <string name="ypk_go_setting">这是拓展卡包文件,要使用须启用扩展卡包</string>
     <string name="ypk_failed_bcos">拓展卡包安装失败，原因：</string>
+    <string name="deck_back_up">备份</string>
+    <string name="deck_restore">还原</string>
+    <string name="deck_backup_n_restore">备份/还原</string>
+    <string name="deck_explain">备份：将当前所有卡组备份到内存根目录的ygocore文件夹
+        \n还原：将已在上述备份路径的所有卡组还原到此</string>
 </resources>

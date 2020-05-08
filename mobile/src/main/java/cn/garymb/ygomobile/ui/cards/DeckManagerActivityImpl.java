@@ -2,11 +2,13 @@ package cn.garymb.ygomobile.ui.cards;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -83,6 +85,7 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener {
@@ -619,9 +622,29 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     }
 
     public boolean doMenu(int menuId) {
+        DialogPlus builder = new DialogPlus(this);
         switch (menuId) {
-            case R.id.action_quit:
-                onBackHome();
+            case R.id.action_deck_backup_n_restore:
+                builder.setTitle(R.string.question);
+                builder.setMessage(R.string.deck_explain);
+                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+                builder.setLeftButtonText(R.string.deck_restore);
+                builder.setRightButtonText(R.string.deck_back_up);
+                builder.setRightButtonListener(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        doBackUpDeck();
+                    }
+                });
+                builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        doRestoreDeck();
+                    }
+                });
+                builder.show();
                 break;
 //            case R.id.action_refresh:
 //                mDeckAdapater.notifyDataSetChanged();
@@ -672,7 +695,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
                 break;
             case R.id.action_clear_deck: {
-                DialogPlus builder = new DialogPlus(this);
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.question_clear_deck);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -692,7 +714,6 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 if (mDeckAdapater.getYdkFile().getParent().equals(mSettings.getAiDeckDir())) {
                     Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
-                    DialogPlus builder = new DialogPlus(this);
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.question_delete_deck);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -1090,7 +1111,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
 
         addMenuButton(mMenuIds, menu, R.id.action_unsort, R.string.unsort, R.drawable.unsort);
         addMenuButton(mMenuIds, menu, R.id.action_sort, R.string.sort, R.drawable.sort);
-        addMenuButton(mMenuIds, menu, R.id.action_quit, R.string.quit, R.drawable.quit);
+        addMenuButton(mMenuIds, menu, R.id.action_deck_backup_n_restore, R.string.deck_backup_n_restore, R.drawable.downloadimages);
 
         //设置展开或隐藏的延时。 默认值为 800ms。
         menu.setDuration(150);
@@ -1117,6 +1138,22 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
                 .normalText(str);
         menuButton.addBuilder(builder);
         mMenuIds.put(mMenuIds.size(), menuId);
+    }
+
+    private void doBackUpDeck() {
+        try {
+            FileUtils.copyDir(mSettings.getDeckDir(), ORI_DECK, true);
+        } catch (Throwable e) {
+            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT);
+        }
+    }
+
+    private void doRestoreDeck() {
+        try {
+            FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
+        } catch (Throwable e) {
+            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT);
+        }
     }
 
     @Override

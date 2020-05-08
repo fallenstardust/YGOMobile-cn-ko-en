@@ -259,11 +259,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
-            //复制原目录文件
-            FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
-            FileUtils.copyDir(ORI_REPLAY, resPath + "/" + Constants.CORE_REPLAY_PATH, false);
-            //FileUtils.copyDir(ORI_TEXTURES, mSettings.getCoreSkinPath(), true);
-            //FileUtils.copyDir(ORI_PICS, mSettings.getCardImagePath(), false);
 
             han.sendEmptyMessage(0);
 
