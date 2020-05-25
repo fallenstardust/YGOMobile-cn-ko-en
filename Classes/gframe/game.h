@@ -166,6 +166,8 @@ public:
 	void ErrorLog(const char* msgbuf);
 	void initUtils();
 	void ClearTextures();
+	void CloseGameButtons();
+	void CloseGameWindow();
 	void CloseDuelWindow();
 
 	int LocalPlayer(int player);
