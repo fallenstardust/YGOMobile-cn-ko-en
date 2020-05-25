@@ -488,7 +488,7 @@ bool Game::Initialize() {
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
     chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
 	posY += 60;
-	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
+	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
 	posY += 60;
 	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
@@ -1474,6 +1474,7 @@ void Game::LoadConfig() {
 	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
+	gameConf.draw_single_chain = android::getIntSetting(appMain, "draw_single_chain", 0);
 	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
 	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 1);
 	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 50);
@@ -1520,6 +1521,8 @@ void Game::SaveConfig() {
         android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
+	gameConf.quick_animation = chkDrawSingleChain->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "draw_single_chain", gameConf.draw_single_chain);
 	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
 	gameConf.enable_sound = chkEnableSound->isChecked() ? 1 : 0;
