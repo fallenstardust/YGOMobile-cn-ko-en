@@ -133,7 +133,7 @@
     <string name="card_add_main">+Main Deck</string>
     <string name="card_add_side">+Side Deck</string>
     <string name="deck_main" formatted="false">Main:%d  Monster:%d Spell:%d Trap:%d</string>
-    <string name="deck_extra" formatted="false">Extra:%d  Fusion:%d Synchro:%d Xyx:%d Link:%d</string>
+    <string name="deck_extra" formatted="false">Extra:%d  Fusion:%d Synchro:%d Xyz:%d Link:%d</string>
     <string name="deck_side" formatted="false">Side:%d  Monster:%d Spell:%d Trap:%d</string>
     <string name="card_result">Cards List</string>
     <string name="unsort">Unsort</string>
