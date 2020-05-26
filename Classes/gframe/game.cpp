@@ -1521,7 +1521,7 @@ void Game::SaveConfig() {
         android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
-	gameConf.quick_animation = chkDrawSingleChain->isChecked() ? 1 : 0;
+	gameConf.draw_single_chain = chkDrawSingleChain->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "draw_single_chain", gameConf.draw_single_chain);
 	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
