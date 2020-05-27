@@ -127,7 +127,7 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                     return false;
                 }
                 //如果卡查内容包含“=”并且复制的内容包含“.”不卡查
-                if (cardSearchMessage.contains("=") && message.contains(".")) {
+                if (cardSearchMessage.contains("=") || message.contains(".")) {
                     return false;
                 }
                 onCardSearch(cardSearchMessage, id);
