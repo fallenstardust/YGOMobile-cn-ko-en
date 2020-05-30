@@ -288,4 +288,8 @@
     <string name="deck_backup_n_restore">BackUp/Restore</string>
     <string name="deck_explain">BackUp\: back up all decks to Sdcard/ygocore
         \nRestore\: restore backed up decks</string>
+    <string name="explain_permission">
+        necessary permissions will be applied\:
+        \nPhone Access\: Only get device inform\,no other private inform.
+        \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
 </resources>

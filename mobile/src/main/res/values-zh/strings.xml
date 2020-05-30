@@ -285,4 +285,8 @@
     <string name="deck_backup_n_restore">备份/还原</string>
     <string name="deck_explain">备份：将当前所有卡组备份到内存根目录的ygocore文件夹
         \n还原：将已在上述备份路径的所有卡组还原到此</string>
+    <string name="explain_permission">
+        将申请以下必要权限：
+        \n电话权限：不获得电话号码等个人信息，只获得机型信息用于BUG排查和适配
+        \n存储权限：备份/还原卡组，自定义背景/头像/卡背必需</string>
 </resources>

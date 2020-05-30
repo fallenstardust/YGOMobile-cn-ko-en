@@ -62,16 +62,29 @@ public class PermissionsActivity extends AppCompatActivity {
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
             allPermissionsGranted();
         } else {
-            mChecker = PermissionsChecker.getPermissionsChecker(this);
-            isRequireCheck = true;
+            DialogPlus dialog = new DialogPlus(this);
+            dialog.setTitle(R.string.tip);
+            dialog.setMessage(R.string.explain_permission);
+            dialog.setLeftButtonText(R.string.OK);
+            dialog.setLeftButtonListener((dlg, i) -> {
+                mChecker = PermissionsChecker.getPermissionsChecker(this);
+                isRequireCheck = true;
+                doPermission();
+                dialog.dismiss();
+            });
+            dialog.show();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        doPermission();
+    }
+
+    private void doPermission() {
+        String[] permissions = getPermissions();
         if (isRequireCheck) {
-            String[] permissions = getPermissions();
             if (mChecker.lacksPermissions(permissions)) {
                 requestPermissions(permissions); // 请求权限
             } else {
@@ -82,7 +95,6 @@ public class PermissionsActivity extends AppCompatActivity {
             isRequireCheck = true;
         }
     }
-
     // 返回传递的权限参数
     private String[] getPermissions() {
         return getIntent().getStringArrayExtra(EXTRA_PERMISSIONS);
