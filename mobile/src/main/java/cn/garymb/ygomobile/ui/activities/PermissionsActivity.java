@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 
 /**
@@ -52,7 +53,7 @@ public class PermissionsActivity extends AppCompatActivity {
             ActivityCompat.startActivityForResult(activity, intent, requestCode, null);
             return true;
         }
-            return false;
+        return false;
     }
 
     @Override
@@ -60,7 +61,7 @@ public class PermissionsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
             allPermissionsGranted();
-        }else {
+        } else {
             mChecker = PermissionsChecker.getPermissionsChecker(this);
             isRequireCheck = true;
         }
@@ -114,17 +115,17 @@ public class PermissionsActivity extends AppCompatActivity {
             allPermissionsGranted();
         } else {
             isRequireCheck = false;
-            showMissingPermissionDialog(getNoPermission(permissions,grantResults));
+            showMissingPermissionDialog(getNoPermission(permissions, grantResults));
         }
     }
 
     //获取未同意的权限
-    private List<String> getNoPermission(String[] permissions, int[] grantResults){
-        List<String> permissionList=new ArrayList<>();
-        for (int i=0;i<grantResults.length;i++) {
+    private List<String> getNoPermission(String[] permissions, int[] grantResults) {
+        List<String> permissionList = new ArrayList<>();
+        for (int i = 0; i < grantResults.length; i++) {
             int grantResult = grantResults[i];
             if (grantResult == PackageManager.PERMISSION_DENIED) {
-               permissionList.add(permissions[i]);
+                permissionList.add(permissions[i]);
             }
         }
         return permissionList;
@@ -141,34 +142,31 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     // 显示缺失权限提示
-    private void showMissingPermissionDialog(List<String > permissionList) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(PermissionsActivity.this);
-        builder.setTitle(R.string.help);
-        String noPermission="";
-        for (String s:permissionList)
-            noPermission+="\n"+s;
-        builder.setMessage(getString(R.string.string_help_text)+noPermission);
+    private void showMissingPermissionDialog(List<String> permissionList) {
+        DialogPlus builder = new DialogPlus(PermissionsActivity.this);
+        builder.setTitle(R.string.tip);
+        String noPermission = "";
+        for (String s : permissionList)
+            noPermission += "\n" + s;
+        builder.setMessage(getString(R.string.string_help_text) + noPermission);
 
         // 拒绝, 退出应用
-        builder.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
+        builder.setLeftButtonText(R.string.quit);
+        builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 setResult(PERMISSIONS_DENIED);
                 finish();
             }
         });
-
-        builder.setPositiveButton(R.string.settings, new DialogInterface.OnClickListener() {
+        builder.setRightButtonText(R.string.settings);
+        builder.setRightButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 startAppSettings();
             }
         });
-        Dialog dialog = builder.show();
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.setOnCancelListener((v) -> {
-            finish();
-        });
+        builder.show();
     }
 
     // 启动应用的设置
@@ -186,13 +184,13 @@ public class PermissionsActivity extends AppCompatActivity {
  */
 class PermissionsChecker {
     private final Context mContext;
-    private static  PermissionsChecker sPermissionsChecker;
+    private static PermissionsChecker sPermissionsChecker;
 
     public static PermissionsChecker getPermissionsChecker(Context context) {
-        if(sPermissionsChecker==null){
-            synchronized (PermissionsChecker.class){
-                if(sPermissionsChecker==null){
-                    sPermissionsChecker=new PermissionsChecker(context);
+        if (sPermissionsChecker == null) {
+            synchronized (PermissionsChecker.class) {
+                if (sPermissionsChecker == null) {
+                    sPermissionsChecker = new PermissionsChecker(context);
                 }
             }
         }
