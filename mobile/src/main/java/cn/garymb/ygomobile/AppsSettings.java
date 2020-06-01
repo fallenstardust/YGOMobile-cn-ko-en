@@ -240,9 +240,6 @@ public class AppsSettings {
     }
 
     private void makeZipList(List<String> pathList) {
-        pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
-        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
-        //
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
@@ -270,6 +267,8 @@ public class AppsSettings {
                 }
             }
         }
+        pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
+        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
     }
 
     /***
