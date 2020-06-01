@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.activities;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,18 +11,15 @@ import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 
 /**
  * 权限获取页面
@@ -62,12 +58,12 @@ public class PermissionsActivity extends AppCompatActivity {
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
             allPermissionsGranted();
         } else {
+            mChecker = PermissionsChecker.getPermissionsChecker(this);
             DialogPlus dialog = new DialogPlus(this);
             dialog.setTitle(R.string.tip);
             dialog.setMessage(R.string.explain_permission);
             dialog.setLeftButtonText(R.string.OK);
             dialog.setLeftButtonListener((dlg, i) -> {
-                mChecker = PermissionsChecker.getPermissionsChecker(this);
                 isRequireCheck = true;
                 doPermission();
                 dialog.dismiss();
@@ -95,6 +91,7 @@ public class PermissionsActivity extends AppCompatActivity {
             isRequireCheck = true;
         }
     }
+
     // 返回传递的权限参数
     private String[] getPermissions() {
         return getIntent().getStringArrayExtra(EXTRA_PERMISSIONS);
