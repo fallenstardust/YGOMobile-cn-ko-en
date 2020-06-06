@@ -286,4 +286,9 @@
     <string name="deck_backup_n_restore">백업/복원</string>
     <string name="deck_explain">백업\: sd카드 메모리의 모든 덱을 백업합니다.
         \n복구\: 백업된 덱을 모두 복구합니다.</string>
+    <string name="restore_deck">기기에서 백업된 덱을 발견했습니다. 백업 하시겠습니까\?</string>
+    <string name="explain_permission">
+        앱을 실행하는데 있어서 다음과 같은 권한의 허용이 필요합니다. \(비활성화시 앱이 종료 됨\)
+        \n전화 권한\: 전화 번호와 같은 개인 정보가 아닌 게임의 버그 해결을 위해 휴대전화 모델의 정보만을 얻습니다\.
+        \n저장 권한\: 덱 저장 및 백업 사용자 지정 아바타\, 배경 화면등을 설정하는데 필요합니다\.</string>
 </resources>
