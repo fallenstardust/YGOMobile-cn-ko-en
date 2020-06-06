@@ -12,9 +12,11 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -207,10 +209,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
-
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
-                        mSettings.getDeckDir(), needsUpdate);
+                File deckFiles = new File(mSettings.getDeckDir());
+                if (deckFiles.list().length == 0) {
+                    setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
+                    IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
+                            mSettings.getDeckDir(), needsUpdate);
+                }
                 //复制卡包
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
                         mSettings.get().getPackDeckDir(), needsUpdate);
@@ -263,7 +267,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             han.sendEmptyMessage(0);
 
             loadData();
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
             return ERROR_COPY;

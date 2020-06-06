@@ -6,6 +6,7 @@ import android.content.res.AssetManager;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.Closeable;
 import java.io.File;
@@ -48,7 +49,7 @@ public class IOUtils {
         if (file == null || !file.exists()) return;
         if (file.isFile()) {
             file.delete();
-        } else if(file.isDirectory()){
+        } else if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {
                 for (File f : files) {
@@ -123,12 +124,12 @@ public class IOUtils {
                 InputStream inputStream = null;
                 try {
                     inputStream = am.open(assets);
-                }catch (Exception e){
-
+                } catch (Exception e) {
+                    Toast.makeText(context, "copyFilesFromAssets error" + e, Toast.LENGTH_SHORT).show();
                 }
-                if(inputStream != null) {
+                if (inputStream != null) {
                     copyToFile(inputStream, tofile.getAbsolutePath());
-                }else{
+                } else {
                     return 0;
                 }
             }
@@ -161,15 +162,17 @@ public class IOUtils {
             return count;
         }
     }
+
     public static void createFolderByFile(File file) {
         File dir = file.getParentFile();
         if (dir != null && !dir.exists()) {
             dir.mkdirs();
         }
     }
+
     public static boolean createFolder(File file) {
         if (!file.exists()) {
-           return file.mkdirs();
+            return file.mkdirs();
         }
         return false;
     }
@@ -238,13 +241,12 @@ public class IOUtils {
                 os.write(buffer, 0, len);
             }
         } finally {
-            if (os!=null)
-            os.close();
+            if (os != null)
+                os.close();
             is.close();
         }
         return new File(outPath);
     }
-
 
 
 }
