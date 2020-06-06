@@ -22,6 +22,7 @@ struct ChainInfo {
 	int location;
 	int sequence;
 	bool solved;
+	bool need_distinguish;
 	std::set<ClientCard*> target;
 };
 

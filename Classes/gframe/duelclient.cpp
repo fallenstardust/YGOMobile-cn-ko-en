@@ -2866,6 +2866,17 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->dField.current_chain.sequence = cs;
 		mainGame->dField.GetChainLocation(cc, cl, cs, &mainGame->dField.current_chain.chain_pos);
 		mainGame->dField.current_chain.solved = false;
+		mainGame->dField.current_chain.need_distinguish = false;
+		if(cl & LOCATION_ONFIELD && cc == 1) {
+			for(auto it = mainGame->dField.mzone[cc].begin(); it != mainGame->dField.mzone[cc].end(); ++it) {
+				if(*it && *it != pcard && (*it)->code == pcard->code)
+					mainGame->dField.current_chain.need_distinguish = true;
+			}
+			for(auto it = mainGame->dField.szone[cc].begin(); it != mainGame->dField.szone[cc].end(); ++it) {
+				if(*it && *it != pcard && (*it)->code == pcard->code)
+					mainGame->dField.current_chain.need_distinguish = true;
+			}
+		}
 		mainGame->dField.current_chain.target.clear();
 		int chc = 0;
 		for(auto chit = mainGame->dField.chains.begin(); chit != mainGame->dField.chains.end(); ++chit) {
@@ -2900,7 +2911,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		int ct = BufferIO::ReadInt8(pbuf);
 		if(mainGame->dInfo.isReplay && mainGame->dInfo.isReplaySkiping)
 			return true;
-		if(mainGame->dField.chains.size() > 1 || mainGame->gameConf.draw_single_chain) {
+		if(mainGame->dField.chains.size() > 1 || mainGame->dField.chains.size() == 1 && mainGame->dField.chains[0].need_distinguish || mainGame->gameConf.draw_single_chain) {
 			if (mainGame->dField.last_chain)
 				mainGame->WaitFrameSignal(11);
 			for(int i = 0; i < 5; ++i) {
@@ -3913,6 +3924,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->dField.current_chain.sequence = cs;
 				mainGame->dField.GetChainLocation(cc, cl, cs, &mainGame->dField.current_chain.chain_pos);
 				mainGame->dField.current_chain.solved = false;
+				mainGame->dField.current_chain.need_distinguish = true;
 				int chc = 0;
 				for(auto chit = mainGame->dField.chains.begin(); chit != mainGame->dField.chains.end(); ++chit) {
 					if(cl == 0x10 || cl == 0x20) {
