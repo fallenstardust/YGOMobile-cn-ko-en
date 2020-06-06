@@ -12,9 +12,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import java.io.File;
 import java.io.IOException;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -145,6 +147,31 @@ public class MainActivity extends HomeActivity {
                         public void onDismiss(DialogInterface dialogInterface) {
                             if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
                                 YGOUtil.isServicePermission(MainActivity.this, true);
+                            File oriDeckFiles = new File(ORI_DECK);
+                            File deckFiles = new File(AppsSettings.get().getDeckDir());
+                            if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
+                                DialogPlus dlgpls = new DialogPlus(MainActivity.this);
+                                dlgpls.setTitle(R.string.tip);
+                                dlgpls.setMessage(R.string.restore_deck);
+                                dlgpls.setLeftButtonText(R.string.Cancel);
+                                dlgpls.setLeftButtonListener((dlg, i) -> {
+                                    dlgpls.dismiss();
+                                });
+                                dlgpls.setRightButtonText(R.string.deck_restore);
+                                dlgpls.setRightButtonListener((dlg, i) -> {
+                                    try {
+                                        FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+                                    } catch (Throwable e) {
+                                        Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
+                                    }
+                                    Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
+                                    dlgpls.dismiss();
+                                });
+                                dlgpls.show();
+                            } else {
+                                Toast.makeText(MainActivity.this, "不符合提示备份条件", Toast.LENGTH_SHORT).show();
+                            }
+
                         }
                     });
                     dialog.show();
