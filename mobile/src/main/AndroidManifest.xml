@@ -161,8 +161,9 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity" />
         <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
-        <activity android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity" />
-
+        <activity 
+            android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
+            android:theme="@style/TranslucentTheme"/>
         <activity
             android:name="com.base.bj.paysdk.TrPayAcitivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"

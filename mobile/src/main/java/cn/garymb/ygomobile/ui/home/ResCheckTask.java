@@ -12,11 +12,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -33,9 +31,6 @@ import ocgcore.DataManager;
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
-import static cn.garymb.ygomobile.Constants.ORI_TEXTURES;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_NONE = 0;
