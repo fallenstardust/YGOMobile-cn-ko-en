@@ -1104,14 +1104,11 @@ void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 			btnCardDisplay[i]->setDrawImage(false);
 	}
 	win->setRelativePosition(irr::core::recti(center.X, center.Y, 0, 0));
+    win->setVisible(true);
 	fadingList.push_back(fu);
 }
 void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
-	bool fading = false;
-	for(auto fit = fadingList.begin(); fit != fadingList.end(); ++fit)
-		if(win == fit->guiFading)
-			fading = true;
-	if(!win->isVisible() && !set_action && !fading)
+	if(!win->isVisible() && !set_action)
 		return;
 	FadingUnit fu;
 	fu.fadingSize = win->getRelativePosition();
