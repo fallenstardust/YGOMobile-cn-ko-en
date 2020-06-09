@@ -168,8 +168,6 @@ public class MainActivity extends HomeActivity {
                                     dlgpls.dismiss();
                                 });
                                 dlgpls.show();
-                            } else {
-                                Toast.makeText(MainActivity.this, "不符合提示备份条件", Toast.LENGTH_SHORT).show();
                             }
 
                         }
