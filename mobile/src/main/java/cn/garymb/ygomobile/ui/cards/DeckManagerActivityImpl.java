@@ -1189,10 +1189,12 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
     @Override
     public void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType) {
         String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
-        for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
-                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
-                return;
+        if (currentDeckPath != null) {
+            for (DeckFile deckFile : deckFileList) {
+                if (deckFile.getPath().equals(currentDeckPath)) {
+                    loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
+                    return;
+                }
             }
         }
     }
