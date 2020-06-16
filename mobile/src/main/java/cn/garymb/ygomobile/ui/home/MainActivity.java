@@ -275,9 +275,9 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
-
+                /*
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
-                        AppsSettings.get().getSoundPath(), false);
+                        AppsSettings.get().getSoundPath(), false);*/
 
                 //复制原目录文件
                 if (new File(ORI_DECK).list() != null)

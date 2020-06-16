@@ -108,7 +108,7 @@ public class YGODialogUtil {
                 try {
                     deckList.addAll(DeckUtil.getExpansionsDeckList());
                 } catch (IOException e) {
-                    YGOUtil.show("额外卡库加载失败,愿意为" + e);
+                    YGOUtil.show("额外卡库加载失败,原因为" + e);
                 }
             }
         }
@@ -127,7 +127,7 @@ public class YGODialogUtil {
                         try {
                             deckList.addAll(DeckUtil.getExpansionsDeckList());
                         } catch (IOException e) {
-                            YGOUtil.show("额外卡库加载失败,愿意为" + e);
+                            YGOUtil.show("额外卡库加载失败,原因为" + e);
                         }
                     }
                 }
