@@ -9,7 +9,7 @@ import ocgcore.enums.CardType;
 
 class CardSearchInfo {
     //名字或者描述
-    String word, prefixWord, suffixWord;
+    String keyWord1, keyWord2;
     int attribute;
     int level, ot, pscale = -1;
     long race, category;
@@ -17,9 +17,31 @@ class CardSearchInfo {
     int linkKey;
     List<Integer> inCards;
     long[] types;
-    long setcode;
+    long setcode, keyWordSetcode1, keyWordSetcode2;
 
     CardSearchInfo() {
+    }
+
+    public static boolean containsIgnoreCase(String src, String what) {
+        // https://stackoverflow.com/a/25379180
+        final int length = what.length();
+        if (length == 0)
+            return true; // Empty string is contained
+
+        final char firstLo = Character.toLowerCase(what.charAt(0));
+        final char firstUp = Character.toUpperCase(what.charAt(0));
+
+        for (int i = src.length() - length; i >= 0; i--) {
+            // Quick check before calling the more expensive regionMatches() method:
+            final char ch = src.charAt(i);
+            if (ch != firstLo && ch != firstUp)
+                continue;
+
+            if (src.regionMatches(true, i, what, 0, length))
+                return true;
+        }
+
+        return false;
     }
 
     List<Integer> getInCards() {
@@ -30,37 +52,21 @@ class CardSearchInfo {
         if (inCards != null && !inCards.contains(Integer.valueOf(card.Code))) {
             return false;
         }
-        if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
+        if (!TextUtils.isEmpty(keyWord1)) {
+            if (TextUtils.isDigitsOnly(keyWord1) && keyWord1.length() >= 5) {
                 //code
-                long code = Long.parseLong(word);
+                long code = Long.parseLong(keyWord1);
                 return card.Code == code || card.Alias == code;
-            } else if (!((card.Name != null && card.Name.contains(word))
-                    || (card.Desc != null && card.Desc.contains(word)))) {
+            } else if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord1))
+                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord1))
+                    || (keyWordSetcode1 > 0 && card.isSetCode(keyWordSetcode1)))) {
                 return false;
             }
-        } else if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
-            boolean has = false;
-            int i1 = -1, i2 = -1, i3, i4;
-            if (card.Name != null) {
-                i1 = card.Name.indexOf(prefixWord);
-                i2 = card.Name.indexOf(suffixWord);
-                if (i1 >= 0 && i2 >= 0) {
-                    has = true;
-                }
-            }
-            if (!has) {
-                if (card.Desc != null) {
-                    i3 = card.Desc.indexOf(prefixWord);
-                    i4 = card.Desc.indexOf(suffixWord);
-                    if ((i3 >= 0 && i4 >= 0)
-                            || (i3 >= 0 && i2 >= 0)
-                            || (i1 >= 0 && i4 >= 0)) {
-                        has = true;
-                    }
-                }
-            }
-            if (!has) {
+        }
+        if (!TextUtils.isEmpty(keyWord2)) {
+            if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord2))
+                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord2))
+                    || (keyWordSetcode2 > 0 && card.isSetCode(keyWordSetcode2)))) {
                 return false;
             }
         }
