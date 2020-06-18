@@ -179,6 +179,17 @@ public class StringManager implements Closeable {
         return String.format("0x%x", key);
     }
 
+    public long getSetCode(String key) {
+        for (int i = 0; i < mCardSets.size(); i++) {
+            CardSet cardSet = mCardSets.get(i);
+            String[] setNames = cardSet.getName().split("\\|");
+            if(setNames[0].equalsIgnoreCase(key)){
+                return cardSet.getCode();
+            }
+        }
+        return 0;
+    }
+
     public String getSystemString(int key) {
         return mSystem.get(Integer.valueOf(key));
     }
