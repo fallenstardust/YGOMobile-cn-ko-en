@@ -137,7 +137,6 @@ public class CardLoader implements ICardLoader {
                 Card card = cards.valueAt(i);
                 if (searchInfo == null || searchInfo.check(card)) {
                     if (searchInfo != null && card.Name.equalsIgnoreCase(searchInfo.keyWord1)) {
-                        cards.remove(i);
                         tmp.add(card);
                     } else if (card.isType(CardType.Monster)) {
                         monster.add(card);
