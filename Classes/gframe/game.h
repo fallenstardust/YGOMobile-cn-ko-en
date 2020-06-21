@@ -255,12 +255,16 @@ public:
 	//card image
 	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
+	//bgm image
+	irr::gui::IGUIImage* imgVol;
+	irr::gui::IGUIImage* imgSettings;
+	irr::gui::IGUIImage* imgLog;
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg;
 	irr::gui::IGUIStaticText* stTip;
 	irr::gui::IGUIStaticText* stCardListTip;
 	//infos
-	irr::gui::IGUITabControl* wInfos;
+	irr::gui::IGUIStaticText* wInfos;
 	irr::gui::IGUIStaticText* stName;
 	irr::gui::IGUIStaticText* stInfo;
 	irr::gui::IGUIStaticText* stDataInfo;
@@ -270,6 +274,7 @@ public:
 	irr::gui::IGUIListBox* lstLog;
 	irr::gui::IGUIButton* btnClearLog;
 	irr::gui::IGUIButton* btnSaveLog;
+	irr::gui::IGUIWindow* wSettings;
 	irr::gui::IGUIWindow* tabHelper;
 	irr::gui::IGUIElement* elmTabHelperLast;
 	irr::gui::IGUIScrollBar* scrTabHelper;

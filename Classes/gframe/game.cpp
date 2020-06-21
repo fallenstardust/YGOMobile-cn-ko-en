@@ -345,13 +345,11 @@ bool Game::Initialize() {
 	btnHostPrepStart = env->addButton(rect<s32>(280 * xScale, 380 * yScale, 390 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_START, dataManager.GetSysString(1215));
 	btnHostPrepCancel = env->addButton(rect<s32>(400 * xScale, 380 * yScale, 510 * xScale, 420 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 #endif
-	//img
-	float imgScale=xScale;
-	if (imgScale > yScale) imgScale=yScale;
-	wCardImg = env->addStaticText(L"", rect<s32>(1 * imgScale, 1 * imgScale, ( 1 + CARD_IMG_WIDTH + 20) * imgScale, (1 + CARD_IMG_HEIGHT + 18) * imgScale), true, false, 0, -1, true);
+	//img always use *yScale to keep proportion
+	wCardImg = env->addStaticText(L"", rect<s32>(1 * yScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * yScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
 	wCardImg->setBackgroundColor(0x6011113d);
 	wCardImg->setVisible(false);
-	imgCard = env->addImage(rect<s32>(10 * imgScale, 9 * imgScale, (10 + CARD_IMG_WIDTH) * imgScale, (9 + CARD_IMG_HEIGHT) * imgScale), wCardImg);
+	imgCard = env->addImage(rect<s32>(10 * yScale, 9 * yScale, (10 + CARD_IMG_WIDTH) * yScale, (9 + CARD_IMG_HEIGHT) * yScale), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
@@ -370,35 +368,40 @@ bool Game::Initialize() {
 	btnEP = env->addButton(rect<s32>(320 * xScale, 0 * yScale, 370 * xScale, 30 * yScale), wPhase, BUTTON_EP, L"\xff25\xff30");
 	btnEP->setVisible(false);
 #endif
-	//tab
-	wInfos = env->addTabControl(rect<s32>(1 * xScale, 275 * yScale, 301 * xScale, 639 * yScale), 0, true);
-	wInfos->setTabExtraWidth(16 * xScale);
-	wInfos->setTabHeight(35 * yScale);
+    //tab（changed）
+	wInfos = env->addStaticText(L"", rect<s32>(1 * xScale, 275 * yScale, 260 * xScale, 639 * yScale), true, false, 0, -1, true);
+	wInfos->setBackgroundColor(0xab11113d);
 	wInfos->setVisible(false);
 	//info
-	irr::gui::IGUITab* tabInfo = wInfos->addTab(dataManager.GetSysString(1270));
-	stName = env->addStaticText(L"", rect<s32>(10 * xScale, 10 * yScale, 287 * xScale, 32 * yScale), true, false, tabInfo, -1, false);
+	stName = env->addStaticText(L"", rect<s32>(10 * xScale, 10 * yScale, 246 * xScale, 32 * yScale), true, false, wInfos, -1, false);
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stInfo = env->addStaticText(L"", rect<s32>(15 * xScale, 37 * yScale, 296 * xScale, 60 * yScale), false, true, tabInfo, -1, false);
+	stInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 37 * yScale, 250 * xScale, 60 * yScale), false, true, wInfos, -1, false);
 	stInfo->setOverrideColor(SColor(255, 149, 211, 137));//255, 0, 0, 255
-	stDataInfo = env->addStaticText(L"", rect<s32>(15 * xScale, 60 * yScale, 296 * xScale, 83 * yScale), false, true, tabInfo, -1, false);
+	stDataInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 60 * yScale, 250 * xScale, 83 * yScale), false, true, wInfos, -1, false);
 	stDataInfo->setOverrideColor(SColor(255, 222, 215, 100));//255, 0, 0, 255
-	stSetName = env->addStaticText(L"", rect<s32>(15 * xScale, 83 * yScale, 296 * xScale, 106 * yScale), false, true, tabInfo, -1, false);
+	stSetName = env->addStaticText(L"", rect<s32>(10 * xScale, 83 * yScale, 250 * xScale, 106 * yScale), false, true, wInfos, -1, false);
 	stSetName->setOverrideColor(SColor(255, 255, 152, 42));//255, 0, 0, 255
-	stText = env->addStaticText(L"", rect<s32>(15 * xScale, 106 * yScale, 287 * xScale, 324 * yScale), false, true, tabInfo, -1, false);
+	stText = env->addStaticText(L"", rect<s32>(10 * xScale, 106 * yScale, 250 * xScale, 345 * yScale), false, true, wInfos, -1, false);
 #ifdef _IRR_ANDROID_PLATFORM_
-	scrCardText = env->addScrollBar(false, rect<s32>(425 * xScale, 106 * yScale, 495 * xScale, 580 * yScale), tabInfo, SCROLL_CARDTEXT);
+	scrCardText = env->addScrollBar(false, rect<s32>(235 * xScale, 106 * yScale, 255 * xScale, 345 * yScale), wInfos, SCROLL_CARDTEXT);
 #endif
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
-	//log
-	irr::gui::IGUITab* tabLog =  wInfos->addTab(dataManager.GetSysString(1271));
-	lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 290 * xScale, 290 * yScale), tabLog, LISTBOX_LOG, false);
-	lstLog->setItemHeight(25 * yScale);
-	btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), tabLog, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
-	//helper
-	irr::gui::IGUITab* _tabHelper = wInfos->addTab(dataManager.GetSysString(1298));
+	//setting
+
+	wSettings= env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
+	wSettings->getCloseButton()->setVisible(false);
+	wSettings->setVisible(false);
+	irr::gui::IGUITabControl* tabSetting = env->addTabControl(rect<s32>(0 * xScale, 20 * yScale, 579 * xScale, 419 * yScale), wSettings, true);
+	tabSetting->setTabHeight(40 * yScale);
+    //log
+    irr::gui::IGUITab* tabLog =  tabSetting->addTab(dataManager.GetSysString(1271));
+    lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 790 * xScale, 510 * yScale), wSettings, LISTBOX_LOG, false);
+    lstLog->setItemHeight(25 * yScale);
+    btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), wSettings, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
+
+	irr::gui::IGUITab* _tabHelper = tabSetting->addTab(dataManager.GetSysString(1298));
 	_tabHelper->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
 	tabHelper = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabHelper);
 	tabHelper->setDrawTitlebar(false);
@@ -458,7 +461,7 @@ bool Game::Initialize() {
 	else
 		scrTabHelper->setVisible(false);
 	//system
-	irr::gui::IGUITab* _tabSystem = wInfos->addTab(dataManager.GetSysString(1273));
+	irr::gui::IGUITab* _tabSystem = tabSetting->addTab(dataManager.GetSysString(1273));
 	_tabSystem->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
 	tabSystem = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabSystem);
 	tabSystem->setDrawTitlebar(false);
@@ -569,7 +572,7 @@ bool Game::Initialize() {
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
 #endif
-	//pos selectimgCard->setScaleImage(true);
+	//pos
 	wPosSelect = env->addWindow(rect<s32>(340 * xScale, 200 * yScale, 935 * xScale, 410 * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
@@ -932,12 +935,12 @@ bool Game::Initialize() {
 	wChat->setVisible(false);
 	ebChatInput = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(3 * xScale, 2 * yScale, 710 * xScale, 22 * yScale), wChat, EDITBOX_CHAT);
 	//swap
-	btnSpectatorSwap = env->addButton(rect<s32>(205 * xScale, 100 * yScale, 305 * xScale, 135 * yScale), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
+	btnSpectatorSwap = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 260 * xScale, 135 * yScale), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnSpectatorSwap->setVisible(false);
 	//chain buttons
-	btnChainIgnore = env->addButton(rect<s32>(205 * xScale, 100 * yScale, 305 * xScale, 135 * yScale), 0, BUTTON_CHAIN_IGNORE, dataManager.GetSysString(1292));
-	btnChainAlways = env->addButton(rect<s32>(205 * xScale, 140 * yScale, 305 * xScale, 175 * yScale), 0, BUTTON_CHAIN_ALWAYS, dataManager.GetSysString(1293));
-	btnChainWhenAvail = env->addButton(rect<s32>(205 * xScale, 180 * yScale, 305 * xScale, 215 * yScale), 0, BUTTON_CHAIN_WHENAVAIL, dataManager.GetSysString(1294));
+	btnChainIgnore = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 260 * xScale, 135 * yScale), 0, BUTTON_CHAIN_IGNORE, dataManager.GetSysString(1292));
+	btnChainAlways = env->addButton(rect<s32>(180 * xScale, 140 * yScale, 260 * xScale, 175 * yScale), 0, BUTTON_CHAIN_ALWAYS, dataManager.GetSysString(1293));
+	btnChainWhenAvail = env->addButton(rect<s32>(180 * xScale, 180 * yScale, 260 * xScale, 215 * yScale), 0, BUTTON_CHAIN_WHENAVAIL, dataManager.GetSysString(1294));
 	btnChainIgnore->setIsPushButton(true);
 	btnChainAlways->setIsPushButton(true);
 	btnChainWhenAvail->setIsPushButton(true);
@@ -945,10 +948,10 @@ bool Game::Initialize() {
 	btnChainAlways->setVisible(false);
 	btnChainWhenAvail->setVisible(false);
 	//shuffle
-	btnShuffle = env->addButton(rect<s32>(205 * xScale, 220 * yScale, 305 * xScale, 255 * yScale), 0, BUTTON_CMD_SHUFFLE, dataManager.GetSysString(1297));
+	btnShuffle = env->addButton(rect<s32>(180 * xScale, 220 * yScale, 260 * xScale, 255 * yScale), 0, BUTTON_CMD_SHUFFLE, dataManager.GetSysString(1297));
 	btnShuffle->setVisible(false);
 	//cancel or finish
-	btnCancelOrFinish = env->addButton(rect<s32>(205 * xScale, 220 * yScale, 305 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
+	btnCancelOrFinish = env->addButton(rect<s32>(180 * xScale, 220 * yScale, 260 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
 	soundManager = Utils::make_unique<SoundManager>();
 	if(!soundManager->Init((double)gameConf.sound_volume / 100, (double)gameConf.music_volume / 100, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
@@ -965,7 +968,7 @@ bool Game::Initialize() {
 	}
 #endif
 	//leave/surrender/exit
-	btnLeaveGame = env->addButton(rect<s32>(205 * xScale, 1 * yScale, 305 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
+	btnLeaveGame = env->addButton(rect<s32>(180 * xScale, 1 * yScale, 260 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
 	//tip
 	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
@@ -1602,16 +1605,16 @@ void Game::ShowCardInfo(int code) {
 			wcscat(formatBuffer, scaleBuffer);
 		}
 		stDataInfo->setText(formatBuffer);
-		stSetName->setRelativePosition(rect<s32>(15 * xScale, 83 * yScale, 296 * xScale, 106 * yScale));
-		stText->setRelativePosition(rect<s32>(15 * xScale, (83 + offset) * yScale, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(rect<s32>(277 * xScale, (83 + offset) * yScale, 297 * xScale, 324 * yScale));
+		stSetName->setRelativePosition(rect<s32>(10 * xScale, 83 * yScale, 255 * xScale, 106 * yScale));
+		stText->setRelativePosition(rect<s32>(10 * xScale, (83 + offset) * yScale, 255 * xScale, 345 * yScale));
+		scrCardText->setRelativePosition(rect<s32>(235 * xScale, (83 + offset) * yScale, 255 * xScale, 345 * yScale));
 	} else {
 		myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cd.type));
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
-		stSetName->setRelativePosition(rect<s32>(15 * xScale, 60 * yScale, 296 * xScale, 83 * yScale));
-		stText->setRelativePosition(rect<s32>(15 * xScale, (60 + offset) * yScale, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(rect<s32>(277 * xScale, (60 + offset) * yScale, 297 * xScale, 324 * yScale));
+		stSetName->setRelativePosition(rect<s32>(10 * xScale, 60 * yScale, 255 * xScale, 83 * yScale));
+		stText->setRelativePosition(rect<s32>(10 * xScale, (60 + offset) * yScale, 255 * xScale, 345 * yScale));
+		scrCardText->setRelativePosition(rect<s32>(235 * xScale, (60 + offset) * yScale, 255 * xScale, 345 * yScale));
 	}
 	showingtext = dataManager.GetText(code);
 	const auto& tsize = stText->getRelativePosition();
