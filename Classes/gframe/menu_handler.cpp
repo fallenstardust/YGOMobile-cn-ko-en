@@ -240,6 +240,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->imgCard->setScaleImage(true);
 				mainGame->wCardImg->setVisible(true);
 				mainGame->wInfos->setVisible(true);
+				mainGame->imgSettings->setVisible(true);
 				mainGame->wReplay->setVisible(true);
 				mainGame->wReplayControl->setVisible(true);
 				mainGame->btnReplayStart->setVisible(false);

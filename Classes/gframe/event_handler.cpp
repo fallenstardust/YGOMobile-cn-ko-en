@@ -162,6 +162,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->HideElement(mainGame->wSurrender);
 				break;
 			}
+			case BUTTON_SETTINGS: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->ShowElement(mainGame->wSettings);
+			    break;
+			}
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();

@@ -389,13 +389,17 @@ bool Game::Initialize() {
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
 	//setting
-
-	wSettings= env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
+    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 275 * yScale, 290 * yScale, 300 * yScale), 0, BUTTON_SETTINGS);
+    imgSettings->setImage(imageManager.tAct);
+    //imgSettings->setImageScale(core::vector2df(xScale, yScale));
+    imgSettings->setVisible(false);
+    wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
 	wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
 	irr::gui::IGUITabControl* tabSetting = env->addTabControl(rect<s32>(0 * xScale, 20 * yScale, 579 * xScale, 419 * yScale), wSettings, true);
 	tabSetting->setTabHeight(40 * yScale);
     //log
+    //imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 305 * yScale, 290 * yScale, 330 * yScale), 0, BUTTON_SHOW_LOG);
     irr::gui::IGUITab* tabLog =  tabSetting->addTab(dataManager.GetSysString(1271));
     lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 790 * xScale, 510 * yScale), wSettings, LISTBOX_LOG, false);
     lstLog->setItemHeight(25 * yScale);
@@ -1763,6 +1767,7 @@ void Game::CloseDuelWindow() {
 	wCardImg->setVisible(false);
 	wInfos->setVisible(false);
 	wChat->setVisible(false);
+	imgSettings->setVisible(false);
 	btnSideOK->setVisible(false);
 	btnSideShuffle->setVisible(false);
 	btnSideSort->setVisible(false);
