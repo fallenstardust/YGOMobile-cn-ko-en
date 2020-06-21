@@ -256,9 +256,9 @@ public:
 	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
 	//bgm image
-	irr::gui::IGUIImage* imgVol;
-	irr::gui::IGUIImage* imgSettings;
-	irr::gui::IGUIImage* imgLog;
+	irr::gui::CGUIImageButton* imgVol;
+	irr::gui::CGUIImageButton* imgSettings;
+	irr::gui::CGUIImageButton* imgLog;
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg;
 	irr::gui::IGUIStaticText* stTip;
@@ -804,15 +804,11 @@ private:
 #define LISTBOX_LOG					351
 #define SCROLL_CARDTEXT				352
 #define CHECKBOX_AUTO_SEARCH		360
-#define CHECKBOX_DRAW_FIELD_SPELL	361
-#define CHECKBOX_MULTI_KEYWORDS		372
-#define CHECKBOX_PREFER_EXPANSION	373
+#define CHECKBOX_ENABLE_SOUND		361
+#define CHECKBOX_ENABLE_MUSIC		362
+#define SCROLL_VOLUME				363
 #define CHECKBOX_DISABLE_CHAT		364
-
-#define SCROLL_VOLUME				365
-#define CHECKBOX_ENABLE_SOUND		366
-#define CHECKBOX_ENABLE_MUSIC		367
-
+#define CHECKBOX_DRAW_FIELD_SPELL	368
 #define CHECKBOX_QUICK_ANIMATION	369
 #define SCROLL_TAB_HELPER			370
 #define SCROLL_TAB_SYSTEM			371
