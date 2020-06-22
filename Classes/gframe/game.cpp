@@ -389,10 +389,14 @@ bool Game::Initialize() {
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
 	//setting
-    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 275 * yScale, 290 * yScale, 300 * yScale), 0, BUTTON_SETTINGS);
+    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 290 * xScale, 324 * yScale), false, L"");
+    wPallet->getCloseButton()->setVisible(false);
+    wPallet->setDraggable(false);
+    //wPallet->setDrawTitlebar(false);
+    wPallet->setVisible(false);
+    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 275 * yScale, 295 * yScale, 300 * yScale), wPallet, BUTTON_SETTINGS);
     imgSettings->setImage(imageManager.tAct);
-    //imgSettings->setImageScale(core::vector2df(xScale, yScale));
-    imgSettings->setVisible(false);
+    imgSettings->setImageSize(core::dimension2di(xScale, yScale));
     wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
 	wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
@@ -1767,7 +1771,7 @@ void Game::CloseDuelWindow() {
 	wCardImg->setVisible(false);
 	wInfos->setVisible(false);
 	wChat->setVisible(false);
-	imgSettings->setVisible(false);
+	wPallet->setVisible(false);
 	btnSideOK->setVisible(false);
 	btnSideShuffle->setVisible(false);
 	btnSideSort->setVisible(false);

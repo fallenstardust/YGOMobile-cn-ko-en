@@ -255,7 +255,8 @@ public:
 	//card image
 	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
-	//bgm image
+	//image button
+	irr::gui::IGUIWindow* wPallet;
 	irr::gui::CGUIImageButton* imgVol;
 	irr::gui::CGUIImageButton* imgSettings;
 	irr::gui::CGUIImageButton* imgLog;

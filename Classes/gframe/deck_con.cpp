@@ -134,7 +134,7 @@ void DeckBuilder::Initialize() {
 	mainGame->wSort->setVisible(true);
 	mainGame->btnLeaveGame->setVisible(true);
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
-	mainGame->imgSettings->setVisible(true);
+	mainGame->wPallet->setVisible(true);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
