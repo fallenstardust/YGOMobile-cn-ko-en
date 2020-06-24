@@ -55,6 +55,7 @@ public:
 	irr::video::ITexture* tCardType;
 	irr::video::ITexture* tAvatar[2];
 	irr::video::ITexture* tLPBarFrame;
+	irr::video::ITexture* tSettings;
 	std::list<std::string> support_types;
 };
 

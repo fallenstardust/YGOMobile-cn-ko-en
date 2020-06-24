@@ -389,14 +389,15 @@ bool Game::Initialize() {
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
 	//setting
-    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 290 * xScale, 324 * yScale), false, L"");
+    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 305 * xScale, 635 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
     wPallet->setDraggable(false);
-    //wPallet->setDrawTitlebar(false);
+    wPallet->setDrawTitlebar(false);
+    wPallet->setDrawBackground(false);
     wPallet->setVisible(false);
-    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 275 * yScale, 295 * yScale, 300 * yScale), wPallet, BUTTON_SETTINGS);
-    imgSettings->setImage(imageManager.tAct);
-    imgSettings->setImageSize(core::dimension2di(xScale, yScale));
+    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 40 * yScale, 40 * yScale), wPallet, BUTTON_SETTINGS);
+    imgSettings->setImage(imageManager.tSettings);
+    imgSettings->setImageSize(core::dimension2di(yScale, yScale));
     wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
 	wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
