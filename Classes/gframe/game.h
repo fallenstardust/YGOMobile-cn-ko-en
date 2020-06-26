@@ -255,11 +255,20 @@ public:
 	//card image
 	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
-	//image button
+	//imageButtons pallet
 	irr::gui::IGUIWindow* wPallet;
-	irr::gui::CGUIImageButton* imgVol;
-	irr::gui::CGUIImageButton* imgSettings;
+	//Logs
 	irr::gui::CGUIImageButton* imgLog;
+	irr::gui::IGUIWindow* wLogs;
+	irr::gui::IGUIListBox* lstLog;
+	irr::gui::IGUIButton* btnClearLog;
+	irr::gui::IGUIButton* btnCloseLog;
+	//imageButton BGM
+	irr::gui::CGUIImageButton* imgVol;
+	//Settings
+	irr::gui::CGUIImageButton* imgSettings;
+	irr::gui::IGUIWindow* wSettings;
+	irr::gui::IGUIButton* btnCloseSettings;
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg;
 	irr::gui::IGUIStaticText* stTip;
@@ -272,10 +281,6 @@ public:
 	irr::gui::IGUIStaticText* stSetName;
 	irr::gui::IGUIStaticText* stText;
 	irr::gui::IGUIScrollBar* scrCardText;
-	irr::gui::IGUIListBox* lstLog;
-	irr::gui::IGUIButton* btnClearLog;
-	irr::gui::IGUIButton* btnSaveLog;
-	irr::gui::IGUIWindow* wSettings;
 	irr::gui::IGUIWindow* tabHelper;
 	irr::gui::IGUIElement* elmTabHelperLast;
 	irr::gui::IGUIScrollBar* scrTabHelper;
@@ -804,6 +809,8 @@ private:
 #define BUTTON_CLEAR_LOG			350
 #define LISTBOX_LOG					351
 #define SCROLL_CARDTEXT				352
+#define BUTTON_CLOSE_SETTINGS		353
+#define BUTTON_CLOSE_LOG            354
 #define CHECKBOX_AUTO_SEARCH		360
 #define CHECKBOX_ENABLE_SOUND		361
 #define CHECKBOX_ENABLE_MUSIC		362

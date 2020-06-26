@@ -399,7 +399,14 @@ bool Game::Initialize() {
     imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 55 * yScale, 45 * yScale, 100 * yScale), wPallet, BUTTON_SHOW_LOG);
 	imgLog->setImage(imageManager.tLogs);
 	imgLog->setImageSize(core::dimension2di(yScale, yScale));
-	//vol play/mute
+	wLogs = env->addWindow(rect<s32>(620 * xScale, 10 * yScale, 1020 * xScale, 510 * yScale), false, dataManager.GetSysString(1271));
+    wLogs->getCloseButton()->setVisible(false);
+    wLogs->setVisible(false);
+    lstLog = env->addListBox(rect<s32>(10 * xScale, 60 * yScale, 390 * xScale, 510 * yScale), wLogs, LISTBOX_LOG, false);
+    lstLog->setItemHeight(25 * yScale);
+    btnClearLog = env->addButton(rect<s32>(10 * xScale, 520 * yScale, 80 * xScale, 560 * yScale), wLogs, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
+    btnCloseLog = env->addButton(rect<s32>(100 * xScale, 520 * yScale, 180 * xScale, 560 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
+    //vol play/mute
 	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 110 * yScale, 45 * yScale, 155 * yScale), wPallet, BUTTON_BGM);
 	if (gameConf.enable_music) {
 		imgVol->setImage(imageManager.tPlay);
@@ -411,122 +418,89 @@ bool Game::Initialize() {
 	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 45 * yScale, 45 * yScale), wPallet, BUTTON_SETTINGS);
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setImageSize(core::dimension2di(yScale, yScale));
-    wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
+    wSettings = env->addWindow(rect<s32>(360 * xScale, 100 * yScale, 820 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
 	wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
-	irr::gui::IGUITabControl* tabSetting = env->addTabControl(rect<s32>(0 * xScale, 20 * yScale, 579 * xScale, 419 * yScale), wSettings, true);
-	tabSetting->setTabHeight(40 * yScale);
-    irr::gui::IGUITab* tabLog =  tabSetting->addTab(dataManager.GetSysString(1271));
-    lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 790 * xScale, 510 * yScale), wSettings, LISTBOX_LOG, false);
-    lstLog->setItemHeight(25 * yScale);
-    btnClearLog = env->addButton(rect<s32>(160 * xScale, 300 * yScale, 260 * xScale, 325 * yScale), wSettings, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
-
-	irr::gui::IGUITab* _tabHelper = tabSetting->addTab(dataManager.GetSysString(1298));
-	_tabHelper->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
-	tabHelper = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabHelper);
-	tabHelper->setDrawTitlebar(false);
-	tabHelper->getCloseButton()->setVisible(false);
-	tabHelper->setDrawBackground(false);
-	tabHelper->setDraggable(false);
-	scrTabHelper = env->addScrollBar(false, rect<s32>(242 * xScale, 0 * yScale, 272 * xScale, 300 * yScale), _tabHelper, SCROLL_TAB_HELPER);
-	scrTabHelper->setLargeStep(1);
-	scrTabHelper->setSmallStep(1);
-	scrTabHelper->setVisible(false);
-	int posX = 0;
-	int posY = 0;
-	chkMAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1274));
+	btnCloseSettings =env->addButton(rect<s32>(180 * xScale, 370 * yScale, 280 * xScale, 410 * yScale), wSettings, BUTTON_CLOSE_SETTINGS, dataManager.GetSysString(1211));
+	int posX = 20;
+	int posY = 60;
+	chkMAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1274));
 	chkMAutoPos->setChecked(gameConf.chkMAutoPos != 0);
 	posY += 60;
-	chkSTAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1278));
+	chkSTAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1278));
 	chkSTAutoPos->setChecked(gameConf.chkSTAutoPos != 0);
 	posY += 60;
-	chkRandomPos = env->addCheckBox(false, rect<s32>(posX + 20 * xScale, posY, posX + (20 + 260) * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1275));
+	chkRandomPos = env->addCheckBox(false, rect<s32>(posX + 20 * xScale, posY, posX + (20 + 260) * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1275));
 	chkRandomPos->setChecked(gameConf.chkRandomPos != 0);
 	posY += 60;
-	chkAutoChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1276));
+	chkAutoChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1276));
 	chkAutoChain->setChecked(gameConf.chkAutoChain != 0);
 	posY += 60;
-	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1277));
+	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
+    posY += 60;
+    chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
+    chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
+    posY += 60;
+    chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
+    chkMusicMode->setChecked(gameConf.music_mode != 0);
+    elmTabHelperLast = chkMusicMode;
 	posY += 60;
-	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
+	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
 	chkEnableSound->setChecked(gameConf.enable_sound);
-	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
+	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
 	scrSoundVolume->setMax(100);
 	scrSoundVolume->setMin(0);
 	scrSoundVolume->setPos(gameConf.sound_volume);
 	scrSoundVolume->setLargeStep(1);
 	scrSoundVolume->setSmallStep(1);
 	posY += 60;
-	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
+	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
 	chkEnableMusic->setChecked(gameConf.enable_music);
-	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), tabHelper, SCROLL_VOLUME);
+	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
 	scrMusicVolume->setMax(100);
 	scrMusicVolume->setMin(0);
 	scrMusicVolume->setPos(gameConf.music_volume);
 	scrMusicVolume->setLargeStep(1);
 	scrMusicVolume->setSmallStep(1);
-	posY += 60;
-	chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabHelper, -1, dataManager.GetSysString(1281));
-	chkMusicMode->setChecked(gameConf.music_mode != 0);
-	elmTabHelperLast = chkMusicMode;
-	//show scroll
-	s32 tabHelperLastY = elmTabHelperLast->getRelativePosition().LowerRightCorner.Y;
-	s32 tabHelperHeight = 300 * yScale;
-	if(tabHelperLastY > tabHelperHeight) {
-		scrTabHelper->setMax(tabHelperLastY - tabHelperHeight + 5);
-		scrTabHelper->setPos(0);
-		scrTabHelper->setVisible(true);
-	}
-	else
-		scrTabHelper->setVisible(false);
-	//system
-	irr::gui::IGUITab* _tabSystem = tabSetting->addTab(dataManager.GetSysString(1273));
-	_tabSystem->setRelativePosition(recti(16 * xScale, 49 * yScale, 299 * xScale, 362 * yScale));
-	tabSystem = env->addWindow(recti(0, 0, 250 * xScale, 300 * yScale), false, L"", _tabSystem);
-	tabSystem->setDrawTitlebar(false);
-	tabSystem->getCloseButton()->setVisible(false);
-	tabSystem->setDrawBackground(false);
-	tabSystem->setDraggable(false);
-	scrTabSystem = env->addScrollBar(false, rect<s32>(242 * xScale, 0, 272 * xScale, 300 * yScale), _tabSystem, SCROLL_TAB_SYSTEM);
-	scrTabSystem->setLargeStep(1);
-	scrTabSystem->setSmallStep(1);
-	scrTabSystem->setVisible(false);
-	posY = 0;
-	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
+	posX = 220 * xScale;//another list
+	posY = 60;
+	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 60;
-	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1291));
+	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
 	posY += 60;
-	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1357));
+	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
 	posY += 60;
-	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, -1, dataManager.GetSysString(1366));
+	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1366));
 	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
 	posY += 60;
-    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
+    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
     chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
-    posY += 60;
-    chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
-    chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
 	posY += 60;
-	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
+	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
 	posY += 60;
-	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
+	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
 	elmTabSystemLast = chkPreferExpansionScript;
-	//show scroll
-	s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
-	s32 tabSystemHeight = 300 * yScale;
-	if(tabSystemLastY > tabSystemHeight) {
-		scrTabSystem->setMax(tabSystemLastY - tabSystemHeight + 5);
-		scrTabSystem->setPos(0);
-		scrTabSystem->setVisible(true);
-	} else
-		scrTabSystem->setVisible(false);
-	//
+    //show scroll
+    scrTabSystem = env->addScrollBar(false, rect<s32>(425 * xScale, 60 * yScale, 455 * xScale, 419 * yScale), wSettings, SCROLL_TAB_SYSTEM);
+    scrTabSystem->setLargeStep(1);
+    scrTabSystem->setSmallStep(1);
+    scrTabSystem->setVisible(false);
+    s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
+    s32 tabSystemHeight = 300 * yScale;
+    if(tabSystemLastY > tabSystemHeight) {
+        scrTabSystem->setMax(tabSystemLastY - tabSystemHeight + 5);
+        scrTabSystem->setPos(0);
+        scrTabSystem->setVisible(true);
+    } else {
+        scrTabSystem->setVisible(false);
+    }
+    //
 	wHand = env->addWindow(rect<s32>(500 * xScale, 450 * yScale, 825 * xScale, 605 * yScale), false, L"");
 	wHand->getCloseButton()->setVisible(false);
 	wHand->setDraggable(false);
