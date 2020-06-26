@@ -56,7 +56,10 @@ public:
 	irr::video::ITexture* tAvatar[2];
 	irr::video::ITexture* tLPBarFrame;
 	irr::video::ITexture* tSettings;
-	std::list<std::string> support_types;
+    irr::video::ITexture* tLogs;
+    irr::video::ITexture* tMute;
+    irr::video::ITexture* tPlay;
+    std::list<std::string> support_types;
 };
 
 extern ImageManager imageManager;

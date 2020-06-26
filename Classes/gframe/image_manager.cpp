@@ -34,7 +34,10 @@ bool ImageManager::Initial(const path dir) {
 	tAvatar[0] = driver->getTexture((dir + path("/textures/me.jpg")).c_str());
 	tAvatar[1] = driver->getTexture((dir + path("/textures/opponent.jpg")).c_str());
 	tLPBarFrame = driver->getTexture((dir + path("/textures/lpbarf.png")).c_str());
-	tSettings = driver->getTexture((dir + path("/textures/extra/settings.png")).c_str());
+	tSettings = driver->getTexture((dir + path("/textures/extra/tsettings.png")).c_str());
+	tLogs = driver->getTexture((dir + path("/textures/extra/tlogs.png")).c_str());
+	tMute = driver->getTexture((dir + path("/textures/extra/tmute.png")).c_str());
+	tPlay = driver->getTexture((dir + path("/textures/extra/tplay.png")).c_str());
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());

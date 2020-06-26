@@ -388,23 +388,34 @@ bool Game::Initialize() {
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
-	//setting
-    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 305 * xScale, 635 * yScale), false, L"");
+	//imageButtons pallet
+    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 305 * xScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
     wPallet->setDraggable(false);
     wPallet->setDrawTitlebar(false);
     wPallet->setDrawBackground(false);
     wPallet->setVisible(false);
-    imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 40 * yScale, 40 * yScale), wPallet, BUTTON_SETTINGS);
-    imgSettings->setImage(imageManager.tSettings);
-    imgSettings->setImageSize(core::dimension2di(yScale, yScale));
+    //Logs
+    imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 65 * yScale, 45 * yScale, 110 * yScale), wPallet, BUTTON_SHOW_LOG);
+	imgLog->setImage(imageManager.tLogs);
+	imgLog->setImageSize(core::dimension2di(yScale, yScale));
+	//vol play/mute
+	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 319 * yScale, 45 * yScale, 364 * yScale), wPallet, BUTTON_BGM);
+	if (gameConf.enable_music) {
+		imgVol->setImage(imageManager.tPlay);
+	} else {
+		imgVol->setImage(imageManager.tMute);
+	}
+    imgVol->setImageSize(core::dimension2di(yScale, yScale));
+	//Settings
+	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 45 * yScale, 45 * yScale), wPallet, BUTTON_SETTINGS);
+	imgSettings->setImage(imageManager.tSettings);
+	imgSettings->setImageSize(core::dimension2di(yScale, yScale));
     wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
 	wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
 	irr::gui::IGUITabControl* tabSetting = env->addTabControl(rect<s32>(0 * xScale, 20 * yScale, 579 * xScale, 419 * yScale), wSettings, true);
 	tabSetting->setTabHeight(40 * yScale);
-    //log
-    //imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(265 * yScale, 305 * yScale, 290 * yScale, 330 * yScale), 0, BUTTON_SHOW_LOG);
     irr::gui::IGUITab* tabLog =  tabSetting->addTab(dataManager.GetSysString(1271));
     lstLog = env->addListBox(rect<s32>(10 * xScale, 10 * yScale, 790 * xScale, 510 * yScale), wSettings, LISTBOX_LOG, false);
     lstLog->setItemHeight(25 * yScale);
