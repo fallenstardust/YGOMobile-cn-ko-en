@@ -170,6 +170,7 @@ void DeckBuilder::Terminate() {
 	mainGame->wInfos->setVisible(false);
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
+    mainGame->wSettings->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);
@@ -314,6 +315,21 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_SETTINGS: {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			    mainGame->ShowElement(mainGame->wSettings);
+			    break;
+			}
+			case BUTTON_CLOSE_SETTINGS: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->HideElement(mainGame->wSettings);
+			    break;
+			}
+			case BUTTON_SHOW_LOG: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->ShowElement(mainGame->wLogs);
+			    break;
+			}
+			case BUTTON_CLOSE_LOG: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->HideElement(mainGame->wLogs);
 			    break;
 			}
 			case BUTTON_EFFECT_FILTER: {

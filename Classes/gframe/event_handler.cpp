@@ -167,6 +167,21 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->ShowElement(mainGame->wSettings);
 			    break;
 			}
+			case BUTTON_CLOSE_SETTINGS: {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				mainGame->HideElement(mainGame->wSettings);
+				break;
+			}
+			case BUTTON_SHOW_LOG: {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				mainGame->ShowElement(mainGame->wLogs);
+				break;
+			}
+			case BUTTON_CLOSE_LOG: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->HideElement(mainGame->wLogs);
+			    break;
+			}
 			case BUTTON_BGM: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if (mainGame->gameConf.enable_music) {
