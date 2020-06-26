@@ -311,6 +311,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				Terminate();
 				break;
 			}
+			case BUTTON_SETTINGS: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->ShowElement(mainGame->wSettings);
+			    break;
+			}
 			case BUTTON_EFFECT_FILTER: {
 				mainGame->PopupElement(mainGame->wCategories);
 				break;

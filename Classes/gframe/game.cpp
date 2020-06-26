@@ -396,11 +396,11 @@ bool Game::Initialize() {
     wPallet->setDrawBackground(false);
     wPallet->setVisible(false);
     //Logs
-    imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 65 * yScale, 45 * yScale, 110 * yScale), wPallet, BUTTON_SHOW_LOG);
+    imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 55 * yScale, 45 * yScale, 100 * yScale), wPallet, BUTTON_SHOW_LOG);
 	imgLog->setImage(imageManager.tLogs);
 	imgLog->setImageSize(core::dimension2di(yScale, yScale));
 	//vol play/mute
-	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 319 * yScale, 45 * yScale, 364 * yScale), wPallet, BUTTON_BGM);
+	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 110 * yScale, 45 * yScale, 155 * yScale), wPallet, BUTTON_BGM);
 	if (gameConf.enable_music) {
 		imgVol->setImage(imageManager.tPlay);
 	} else {

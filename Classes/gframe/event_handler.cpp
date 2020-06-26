@@ -167,6 +167,29 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->ShowElement(mainGame->wSettings);
 			    break;
 			}
+			case BUTTON_BGM: {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				if (mainGame->gameConf.enable_music) {
+					mainGame->gameConf.enable_music = false;
+					mainGame->soundManager->StopBGM();
+					mainGame->imgVol->setImage(imageManager.tMute);
+				} else {
+					mainGame->gameConf.enable_music = true;
+					if (mainGame->dInfo.isFinished && mainGame->showcardcode == 1) {
+						mainGame->soundManager->PlayBGM(SoundManager::BGM::WIN);
+					} else if (mainGame->dInfo.isFinished && (mainGame->showcardcode == 2 || mainGame->showcardcode == 3)) {
+						mainGame->soundManager->PlayBGM(SoundManager::BGM::LOSE);
+					} else if (mainGame->dInfo.lp[0] > 0 && mainGame->dInfo.lp[0] <= mainGame->dInfo.lp[1] / 2) {
+						mainGame->soundManager->PlayBGM(SoundManager::BGM::DISADVANTAGE);
+					} else if (mainGame->dInfo.lp[0] > 0 && mainGame->dInfo.lp[0] >= mainGame->dInfo.lp[1] * 2) {
+						mainGame->soundManager->PlayBGM(SoundManager::BGM::ADVANTAGE);
+					} else {
+						mainGame->soundManager->PlayBGM(SoundManager::BGM::DUEL);
+					}
+				}
+				mainGame->imgVol->setImage(imageManager.tPlay);
+				break;
+			}
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();
