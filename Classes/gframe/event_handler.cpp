@@ -163,27 +163,30 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SETTINGS: {
-			    if (mainGame->imgSettings->isEnabled()) {
-                    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    if (!mainGame->imgSettings->isPressed()) {
                     mainGame->ShowElement(mainGame->wSettings);
                     mainGame->imgSettings->setPressed(true);
-                    mainGame->imgSettings->setEnabled(false);
-			    }
+			    } else {
+                    mainGame->HideElement(mainGame->wSettings);
+                    mainGame->imgSettings->setPressed(false);
+                }
 			    break;
 			}
 			case BUTTON_CLOSE_SETTINGS: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->HideElement(mainGame->wSettings);
                 mainGame->imgSettings->setPressed(false);
-                mainGame->imgSettings->setEnabled(true);
 				break;
 			}
 			case BUTTON_SHOW_LOG: {
-                if (mainGame->imgLog->isEnabled()) {
-                    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (!mainGame->imgLog->isPressed()) {
                     mainGame->ShowElement(mainGame->wLogs);
                     mainGame->imgLog->setPressed(true);
-                    mainGame->imgLog->setEnabled(false);
+                } else {
+                    mainGame->HideElement(mainGame->wLogs);
+                    mainGame->imgLog->setPressed(false);
                 }
 				break;
 			}
@@ -191,7 +194,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
                 mainGame->HideElement(mainGame->wLogs);
                 mainGame->imgLog->setPressed(false);
-                mainGame->imgLog->setEnabled(true);
 			    break;
 			}
 			case BUTTON_BGM: {
