@@ -164,7 +164,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_SETTINGS: {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-			    if (!mainGame->imgSettings->isPressed()) {
+			    if (mainGame->imgSettings->isPressed()) {
                     mainGame->ShowElement(mainGame->wSettings);
                     mainGame->imgSettings->setPressed(true);
 			    } else {
@@ -181,7 +181,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_SHOW_LOG: {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-                if (!mainGame->imgLog->isPressed()) {
+                if (mainGame->imgLog->isPressed()) {
                     mainGame->ShowElement(mainGame->wLogs);
                     mainGame->imgLog->setPressed(true);
                 } else {
