@@ -183,7 +183,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			    break;
 			}
 			case BUTTON_BGM: {
-                mainGame->imgVol->setImage(imageManager.tPlay);
 				if (mainGame->gameConf.enable_music) {
 					mainGame->gameConf.enable_music = false;
 					mainGame->soundManager->StopBGM();
@@ -201,7 +200,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					} else {
 						mainGame->soundManager->PlayBGM(SoundManager::BGM::DUEL);
 					}
+                    mainGame->imgVol->setImage(imageManager.tPlay);
 				}
+                mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
 				break;
 			}
 			case BUTTON_CHAIN_IGNORE: {

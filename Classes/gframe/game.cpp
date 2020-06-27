@@ -399,13 +399,13 @@ bool Game::Initialize() {
     imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 55 * yScale, 45 * yScale, 100 * yScale), wPallet, BUTTON_SHOW_LOG);
 	imgLog->setImage(imageManager.tLogs);
 	imgLog->setImageSize(core::dimension2di(yScale, yScale));
-	wLogs = env->addWindow(rect<s32>(620 * xScale, 10 * yScale, 1020 * xScale, 510 * yScale), false, dataManager.GetSysString(1271));
+	wLogs = env->addWindow(rect<s32>(720 * xScale, 10 * yScale, 1020 * xScale, 520 * yScale), false, dataManager.GetSysString(1271));
     wLogs->getCloseButton()->setVisible(false);
     wLogs->setVisible(false);
-    lstLog = env->addListBox(rect<s32>(10 * xScale, 60 * yScale, 390 * xScale, 510 * yScale), wLogs, LISTBOX_LOG, false);
+    lstLog = env->addListBox(rect<s32>(10 * xScale, 20 * yScale, 290 * xScale, 450 * yScale), wLogs, LISTBOX_LOG, false);
     lstLog->setItemHeight(25 * yScale);
-    btnClearLog = env->addButton(rect<s32>(10 * xScale, 520 * yScale, 80 * xScale, 560 * yScale), wLogs, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
-    btnCloseLog = env->addButton(rect<s32>(100 * xScale, 520 * yScale, 180 * xScale, 560 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
+    btnClearLog = env->addButton(rect<s32>(60 * xScale, 460 * yScale, 130 * xScale, 500 * yScale), wLogs, BUTTON_CLEAR_LOG, dataManager.GetSysString(1272));
+    btnCloseLog = env->addButton(rect<s32>(160 * xScale, 460 * yScale, 240 * xScale, 500 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
     //vol play/mute
 	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 110 * yScale, 45 * yScale, 155 * yScale), wPallet, BUTTON_BGM);
 	if (gameConf.enable_music) {
@@ -418,10 +418,9 @@ bool Game::Initialize() {
 	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 45 * yScale, 45 * yScale), wPallet, BUTTON_SETTINGS);
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setImageSize(core::dimension2di(yScale, yScale));
-    wSettings = env->addWindow(rect<s32>(360 * xScale, 100 * yScale, 820 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
-	wSettings->getCloseButton()->setVisible(false);
+    wSettings = env->addWindow(rect<s32>(350 * xScale, 100 * yScale, 830 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
+    wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
-	btnCloseSettings =env->addButton(rect<s32>(180 * xScale, 370 * yScale, 280 * xScale, 410 * yScale), wSettings, BUTTON_CLOSE_SETTINGS, dataManager.GetSysString(1211));
 	int posX = 20;
 	int posY = 60;
 	chkMAutoPos = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1274));
@@ -485,9 +484,11 @@ bool Game::Initialize() {
 	posY += 60;
 	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
-	elmTabSystemLast = chkPreferExpansionScript;
-    //show scroll
-    scrTabSystem = env->addScrollBar(false, rect<s32>(425 * xScale, 60 * yScale, 455 * xScale, 419 * yScale), wSettings, SCROLL_TAB_SYSTEM);
+	btnCloseSettings =env->addButton(rect<s32>(180 * xScale, posY * yScale, 280 * xScale, posY + 40 * yScale), wSettings, BUTTON_CLOSE_SETTINGS, dataManager.GetSysString(1211));
+	elmTabSystemLast = btnCloseSettings;
+	wSettings->setRelativePosition(recti(0 * xScale, 0 * yScale, 480 * xScale, posY + 50 * yScale));
+	//show scroll
+    scrTabSystem = env->addScrollBar(false, rect<s32>(425 * xScale, 60 * yScale, 455 * xScale, 419 * yScale), wSettings, SCROLL_SETTINGS);
     scrTabSystem->setLargeStep(1);
     scrTabSystem->setSmallStep(1);
     scrTabSystem->setVisible(false);
@@ -1758,6 +1759,8 @@ void Game::CloseDuelWindow() {
 	wInfos->setVisible(false);
 	wChat->setVisible(false);
 	wPallet->setVisible(false);
+	wSettings->setVisible(false);
+	wLogs->setVisible(false);
 	btnSideOK->setVisible(false);
 	btnSideShuffle->setVisible(false);
 	btnSideSort->setVisible(false);
