@@ -163,46 +163,45 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SETTINGS: {
-                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-                mainGame->ShowElement(mainGame->wSettings);
+			    if (mainGame->imgSettings->isEnabled()) {
+                    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                    mainGame->ShowElement(mainGame->wSettings);
+                    mainGame->imgSettings->setPressed(true);
+                    mainGame->imgSettings->setEnabled(false);
+			    }
 			    break;
 			}
 			case BUTTON_CLOSE_SETTINGS: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->HideElement(mainGame->wSettings);
+                mainGame->imgSettings->setPressed(false);
+                mainGame->imgSettings->setEnabled(true);
 				break;
 			}
 			case BUTTON_SHOW_LOG: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-				mainGame->ShowElement(mainGame->wLogs);
+                if (mainGame->imgLog->isEnabled()) {
+                    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                    mainGame->ShowElement(mainGame->wLogs);
+                    mainGame->imgLog->setPressed(true);
+                    mainGame->imgLog->setEnabled(false);
+                }
 				break;
 			}
 			case BUTTON_CLOSE_LOG: {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
                 mainGame->HideElement(mainGame->wLogs);
+                mainGame->imgLog->setPressed(false);
+                mainGame->imgLog->setEnabled(true);
 			    break;
 			}
 			case BUTTON_BGM: {
-				if (mainGame->gameConf.enable_music) {
-					mainGame->gameConf.enable_music = false;
-					mainGame->soundManager->StopBGM();
-					mainGame->imgVol->setImage(imageManager.tMute);
-				} else {
-					mainGame->gameConf.enable_music = true;
-					if (mainGame->dInfo.isFinished && mainGame->showcardcode == 1) {
-						mainGame->soundManager->PlayBGM(SoundManager::BGM::WIN);
-					} else if (mainGame->dInfo.isFinished && (mainGame->showcardcode == 2 || mainGame->showcardcode == 3)) {
-						mainGame->soundManager->PlayBGM(SoundManager::BGM::LOSE);
-					} else if (mainGame->dInfo.lp[0] > 0 && mainGame->dInfo.lp[0] <= mainGame->dInfo.lp[1] / 2) {
-						mainGame->soundManager->PlayBGM(SoundManager::BGM::DISADVANTAGE);
-					} else if (mainGame->dInfo.lp[0] > 0 && mainGame->dInfo.lp[0] >= mainGame->dInfo.lp[1] * 2) {
-						mainGame->soundManager->PlayBGM(SoundManager::BGM::ADVANTAGE);
-					} else {
-						mainGame->soundManager->PlayBGM(SoundManager::BGM::DUEL);
-					}
-                    mainGame->imgVol->setImage(imageManager.tPlay);
-				}
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
                 mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
+                mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
+                if (mainGame->gameConf.enable_music)
+                    mainGame->imgVol->setImage(imageManager.tPlay);
+                else
+                    mainGame->imgVol->setImage(imageManager.tMute);
 				break;
 			}
 			case BUTTON_CHAIN_IGNORE: {
@@ -1901,6 +1900,10 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			}
 			case CHECKBOX_ENABLE_MUSIC: {
 				mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
+				if (mainGame->gameConf.enable_music)
+				    mainGame->imgVol->setImage(imageManager.tPlay);
+                else
+                    mainGame->imgVol->setImage(imageManager.tMute);
 				return true;
 				break;
 			}
@@ -1955,7 +1958,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			}
 			case SCROLL_SETTINGS: {
 				rect<s32> pos = mainGame->wSettings->getRelativePosition();
-				mainGame->wSettings->setRelativePosition(recti(0, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
+				mainGame->wSettings->setRelativePosition(recti(350 * mainGame->xScale, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
 				return true;
 				break;
 			}

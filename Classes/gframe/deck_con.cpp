@@ -314,23 +314,35 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SETTINGS: {
-			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-			    mainGame->ShowElement(mainGame->wSettings);
+                if (mainGame->imgSettings->isEnabled()) {
+			        mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			        mainGame->ShowElement(mainGame->wSettings);
+                    mainGame->imgSettings->setPressed(true);
+                    mainGame->imgSettings->setEnabled(false);
+                }
 			    break;
 			}
 			case BUTTON_CLOSE_SETTINGS: {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			    mainGame->HideElement(mainGame->wSettings);
+                mainGame->imgSettings->setPressed(false);
+                mainGame->imgSettings->setEnabled(true);
 			    break;
 			}
 			case BUTTON_SHOW_LOG: {
-			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-			    mainGame->ShowElement(mainGame->wLogs);
+                if (mainGame->imgLog->isEnabled()) {
+			        mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			        mainGame->ShowElement(mainGame->wLogs);
+			        mainGame->imgLog->setPressed(true);
+                    mainGame->imgLog->setEnabled(false);
+                }
 			    break;
 			}
 			case BUTTON_CLOSE_LOG: {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			    mainGame->HideElement(mainGame->wLogs);
+                mainGame->imgLog->setPressed(false);
+                mainGame->imgLog->setEnabled(true);
 			    break;
 			}
 			case BUTTON_EFFECT_FILTER: {
