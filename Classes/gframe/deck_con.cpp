@@ -171,6 +171,7 @@ void DeckBuilder::Terminate() {
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
     mainGame->wSettings->setVisible(false);
+    mainGame->wLogs->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);

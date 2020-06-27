@@ -183,7 +183,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			    break;
 			}
 			case BUTTON_BGM: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->imgVol->setImage(imageManager.tPlay);
 				if (mainGame->gameConf.enable_music) {
 					mainGame->gameConf.enable_music = false;
 					mainGame->soundManager->StopBGM();
@@ -202,7 +202,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->soundManager->PlayBGM(SoundManager::BGM::DUEL);
 					}
 				}
-				mainGame->imgVol->setImage(imageManager.tPlay);
 				break;
 			}
 			case BUTTON_CHAIN_IGNORE: {
@@ -1953,15 +1952,9 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
-			case SCROLL_TAB_HELPER: {
-				rect<s32> pos = mainGame->tabHelper->getRelativePosition();
-				mainGame->tabHelper->setRelativePosition(recti(0, mainGame->scrTabHelper->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
-				return true;
-				break;
-			}
-			case SCROLL_TAB_SYSTEM: {
-				rect<s32> pos = mainGame->tabSystem->getRelativePosition();
-				mainGame->tabSystem->setRelativePosition(recti(0, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
+			case SCROLL_SETTINGS: {
+				rect<s32> pos = mainGame->wSettings->getRelativePosition();
+				mainGame->wSettings->setRelativePosition(recti(0, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
 				return true;
 				break;
 			}
