@@ -347,6 +347,20 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
                 mainGame->imgLog->setPressed(false);
 			    break;
 			}
+			case BUTTON_BGM: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    if (mainGame->gameConf.enable_music) {
+			        mainGame->gameConf.enable_music = false;
+			        mainGame->imgVol->setImage(imageManager.tMute);
+			    } else {
+			        mainGame->gameConf.enable_music = true;
+			        mainGame->imgVol->setImage(imageManager.tPlay);
+			    }
+			    mainGame->imgVol->setImageSize(core::dimension2di(mainGame->yScale, mainGame->yScale));
+			    mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
+			    mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
+			    break;
+			}
 			case BUTTON_EFFECT_FILTER: {
 				mainGame->PopupElement(mainGame->wCategories);
 				break;

@@ -198,12 +198,16 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_BGM: {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (mainGame->gameConf.enable_music) {
+                    mainGame->gameConf.enable_music = false;
+                    mainGame->imgVol->setImage(imageManager.tMute);
+                } else {
+                    mainGame->gameConf.enable_music = true;
+                    mainGame->imgVol->setImage(imageManager.tPlay);
+                }
+                mainGame->imgVol->setImageSize(core::dimension2di(mainGame->yScale, mainGame->yScale));
                 mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
                 mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
-                if (mainGame->gameConf.enable_music)
-                    mainGame->imgVol->setImage(imageManager.tPlay);
-                else
-                    mainGame->imgVol->setImage(imageManager.tMute);
 				break;
 			}
 			case BUTTON_CHAIN_IGNORE: {
@@ -1902,10 +1906,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			}
 			case CHECKBOX_ENABLE_MUSIC: {
 				mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
-				if (mainGame->gameConf.enable_music)
+				if (mainGame->gameConf.enable_music) {
 				    mainGame->imgVol->setImage(imageManager.tPlay);
-                else
+                } else {
                     mainGame->imgVol->setImage(imageManager.tMute);
+                }
+                mainGame->imgVol->setImageSize(core::dimension2di(mainGame->yScale, mainGame->yScale));
 				return true;
 				break;
 			}
