@@ -446,7 +446,6 @@ bool Game::Initialize() {
     posY += 40 * yScale;
     chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
     chkMusicMode->setChecked(gameConf.music_mode != 0);
-    elmTabHelperLast = chkMusicMode;
 	posY += 40 * yScale;
 	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
 	chkEnableSound->setChecked(gameConf.enable_sound);
@@ -925,12 +924,19 @@ bool Game::Initialize() {
 	btnReplaySwap = env->addButton(rect<s32>(5 * xScale, 140 * yScale, 85 * xScale, 180 * yScale), wReplayControl, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnReplayExit = env->addButton(rect<s32>(5 * xScale, 185 * yScale, 85 * xScale, 225 * yScale), wReplayControl, BUTTON_REPLAY_EXIT, dataManager.GetSysString(1347));
 	//chat
+    imgChat = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 319 * yScale, 45 * yScale, 364 * yScale), wPallet, BUTTON_CHATTING);
+    imgChat->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+    if (gameConf.chkIgnore1) {
+        imgChat->setImage(imageManager.tShut);
+    } else {
+        imgChat->setImage(imageManager.tTalk);
+    }
 	wChat = env->addWindow(rect<s32>(305 * xScale, 610 * yScale, 1020 * xScale, 640 * yScale), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
-	ebChatInput = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(3 * xScale, 2 * yScale, 710 * xScale, 22 * yScale), wChat, EDITBOX_CHAT);
+	ebChatInput = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(3 * xScale, 2 * yScale, 710 * xScale, 28 * yScale), wChat, EDITBOX_CHAT);
 	//swap
 	btnSpectatorSwap = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 260 * xScale, 135 * yScale), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnSpectatorSwap->setVisible(false);
@@ -1761,6 +1767,7 @@ void Game::CloseDuelWindow() {
 	wInfos->setVisible(false);
 	wChat->setVisible(false);
 	wPallet->setVisible(false);
+	imgChat->setVisible(true);
 	wSettings->setVisible(false);
 	wLogs->setVisible(false);
 	btnSideOK->setVisible(false);

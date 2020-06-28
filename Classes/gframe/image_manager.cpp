@@ -38,6 +38,8 @@ bool ImageManager::Initial(const path dir) {
 	tLogs = driver->getTexture((dir + path("/textures/extra/tlogs.png")).c_str());
 	tMute = driver->getTexture((dir + path("/textures/extra/tmute.png")).c_str());
 	tPlay = driver->getTexture((dir + path("/textures/extra/tplay.png")).c_str());
+	tTalk = driver->getTexture((dir + path("/textures/extra/ttalk.png")).c_str());
+	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());

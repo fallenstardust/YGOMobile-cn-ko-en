@@ -374,6 +374,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->is_siding = true;
 		mainGame->CloseGameWindow();
 		mainGame->wChat->setVisible(false);
+		mainGame->imgChat->setVisible(false);
 		mainGame->wDeckEdit->setVisible(false);
 		mainGame->wFilter->setVisible(false);
 		mainGame->wSort->setVisible(false);

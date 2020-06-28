@@ -265,6 +265,8 @@ public:
 	irr::gui::IGUIButton* btnCloseLog;
 	//imageButton BGM
 	irr::gui::CGUIImageButton* imgVol;
+	//imageButton Chatting
+    irr::gui::CGUIImageButton* imgChat;
 	//Settings
 	irr::gui::CGUIImageButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
@@ -282,7 +284,6 @@ public:
 	irr::gui::IGUIStaticText* stText;
 	irr::gui::IGUIScrollBar* scrCardText;
 	irr::gui::IGUIWindow* tabHelper;
-	irr::gui::IGUIElement* elmTabHelperLast;
 	irr::gui::IGUIScrollBar* scrTabHelper;
 	irr::gui::IGUICheckBox* chkMAutoPos;
 	irr::gui::IGUICheckBox* chkSTAutoPos;
@@ -821,6 +822,7 @@ private:
 #define BUTTON_SHOW_LOG				367
 #define CHECKBOX_DRAW_FIELD_SPELL	368
 #define CHECKBOX_QUICK_ANIMATION	369
+#define BUTTON_CHATTING             370
 #define SCROLL_SETTINGS			    371
 #define CHECKBOX_MULTI_KEYWORDS		372
 #define CHECKBOX_PREFER_EXPANSION	373

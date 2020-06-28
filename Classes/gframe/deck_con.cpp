@@ -135,6 +135,7 @@ void DeckBuilder::Initialize() {
 	mainGame->btnLeaveGame->setVisible(true);
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
 	mainGame->wPallet->setVisible(true);
+	mainGame->imgChat->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
@@ -170,6 +171,7 @@ void DeckBuilder::Terminate() {
 	mainGame->wInfos->setVisible(false);
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
+    mainGame->imgChat->setVisible(true);
     mainGame->wSettings->setVisible(false);
     mainGame->wLogs->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);
@@ -765,6 +767,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				mainGame->ClearCardInfo();
+                mainGame->imgChat->setVisible(true);
 				char deckbuf[1024];
 				char* pdeck = deckbuf;
 				BufferIO::WriteInt32(pdeck, deckManager.current_deck.main.size() + deckManager.current_deck.extra.size());

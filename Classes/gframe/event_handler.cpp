@@ -209,6 +209,22 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
 				break;
 			}
+			case BUTTON_CHATTING: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				if (mainGame->gameConf.chkIgnore1) {
+					mainGame->gameConf.chkIgnore1 = false;
+					mainGame->imgChat->setImage(imageManager.tTalk);
+				} else {
+					mainGame->gameConf.chkIgnore1 = true;
+					mainGame->imgChat->setImage(imageManager.tShut);
+				}
+				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
+				bool show = mainGame->is_building ? false : !mainGame->chkIgnore1->isChecked();
+				mainGame->wChat->setVisible(show);
+				if(!show)
+					mainGame->ClearChatMsg();
+			    break;
+			}
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();
