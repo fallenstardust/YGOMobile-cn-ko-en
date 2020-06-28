@@ -356,7 +356,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			        mainGame->gameConf.enable_music = true;
 			        mainGame->imgVol->setImage(imageManager.tPlay);
 			    }
-			    mainGame->imgVol->setImageSize(core::dimension2di(mainGame->yScale, mainGame->yScale));
 			    mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
 			    mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
 			    break;
