@@ -397,8 +397,8 @@ bool Game::Initialize() {
     wPallet->setVisible(false);
     //Logs
     imgLog = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 55 * yScale, 45 * yScale, 100 * yScale), wPallet, BUTTON_SHOW_LOG);
+	imgLog->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
 	imgLog->setImage(imageManager.tLogs);
-	imgLog->setImageSize(core::dimension2di(yScale, yScale));
 	imgLog->setIsPushButton(true);
 	wLogs = env->addWindow(rect<s32>(720 * xScale, 5 * yScale, 1020 * xScale, 510 * yScale), false, dataManager.GetSysString(1271));
     wLogs->getCloseButton()->setVisible(false);
@@ -409,16 +409,16 @@ bool Game::Initialize() {
     btnCloseLog = env->addButton(rect<s32>(170 * xScale, 460 * yScale, 240 * xScale, 500 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
     //vol play/mute
 	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 110 * yScale, 45 * yScale, 155 * yScale), wPallet, BUTTON_BGM);
+    imgVol->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
 	if (gameConf.enable_music) {
 		imgVol->setImage(imageManager.tPlay);
 	} else {
 		imgVol->setImage(imageManager.tMute);
 	}
-    imgVol->setImageSize(core::dimension2di(yScale, yScale));
 	//Settings
 	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 0 * yScale, 45 * yScale, 45 * yScale), wPallet, BUTTON_SETTINGS);
+	imgSettings->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
 	imgSettings->setImage(imageManager.tSettings);
-	imgSettings->setImageSize(core::dimension2di(yScale, yScale));
 	imgSettings->setIsPushButton(true);
     wSettings = env->addWindow(rect<s32>(350 * xScale, 100 * yScale, 830 * xScale, 550 * yScale), false, dataManager.GetSysString(1273));
     wSettings->setRelativePosition(recti(350 * xScale, 100 * yScale, 830 * xScale, 550 * yScale));
