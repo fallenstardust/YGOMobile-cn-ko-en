@@ -251,6 +251,7 @@ public:
 	irr::gui::CGUITTFont* numFont;
 	irr::gui::CGUITTFont* adFont;
 	irr::gui::CGUITTFont* lpcFont;
+	irr::gui::CGUITTFont* titleFont;
 	std::map<irr::gui::CGUIImageButton*, int> imageLoading;
 	//card image
 	irr::gui::IGUIStaticText* wCardImg;
@@ -314,6 +315,7 @@ public:
 	irr::gui::IGUIButton* btnReplayMode;
 	irr::gui::IGUIButton* btnTestMode;
 	irr::gui::IGUIButton* btnDeckEdit;
+	irr::gui::IGUIButton* btnSettings;
 	irr::gui::IGUIButton* btnModeExit;
 	//lan
 	irr::gui::IGUIWindow* wLanWindow;

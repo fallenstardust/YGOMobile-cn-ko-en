@@ -207,6 +207,7 @@ bool Game::Initialize() {
 	adFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)12 * yScale, isAntialias, false);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.numfont, (int)48 * yScale, isAntialias, true);
 	guiFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
+    titleFont = irr::gui::CGUITTFont::createTTFont(driver, dataManager.FileSystem, gameConf.textfont, (int)30 * yScale, isAntialias, true);
 	textFont = guiFont;
 	if(!numFont || !textFont) {
 	  os::Printer::log("add font fail ");
@@ -218,19 +219,45 @@ bool Game::Initialize() {
 	newskin->setFont(textFont);
 	env->setSkin(newskin);
 	newskin->drop();
+#ifdef _IRR_ANDROID_PLATFORM_
 	//main menu
 	wchar_t strbuf[256];
 	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", PRO_VERSION >> 12, (PRO_VERSION >> 4) & 0xff, PRO_VERSION & 0xf);
-#ifdef _IRR_ANDROID_PLATFORM_
-	wMainMenu = env->addWindow(rect<s32>(370 * xScale, 150 * yScale, 650 * xScale, 465 * yScale), false, strbuf);
+	wMainMenu = env->addWindow(rect<s32>(450 * xScale, 40 * yScale, 900 * xScale, 600 * yScale), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
-	btnLanMode = env->addButton(rect<s32>(15 * xScale, 30 * yScale, 265 * xScale, 80 * yScale), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
-	btnSingleMode = env->addButton(rect<s32>(15 * xScale, 85 * yScale, 265 * xScale, 135 * yScale), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201));
-	btnReplayMode = env->addButton(rect<s32>(15 * xScale, 140 * yScale, 265 * xScale, 190 * yScale), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
-	btnDeckEdit = env->addButton(rect<s32>(15 * xScale, 195 * yScale, 265 * xScale, 245 * yScale), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
-	btnModeExit = env->addButton(rect<s32>(15 * xScale, 250 * yScale, 265 * xScale, 300 * yScale), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
-
-	//lan mode
+	wMainMenu->setDrawBackground(false);
+	btnLanMode = env->addButton(rect<s32>(15 * xScale, 30 * yScale, 415 * xScale, 106 * yScale), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
+    btnLanMode->setUseAlphaChannel(true);
+    //btnLanMode->setDrawBorder(false);
+    btnLanMode->setImage(imageManager.tTitleBar);
+    btnLanMode->setOverrideFont(titleFont);
+    env->addStaticText(strbuf, rect<s32>(75 * xScale, 35 * yScale, 300 * xScale, 65 * yScale), false, false, wMainMenu);
+	btnSingleMode = env->addButton(rect<s32>(15 * xScale, 110 * yScale, 415 * xScale, 186 * yScale), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201));
+    btnSingleMode->setUseAlphaChannel(true);
+    btnSingleMode->setDrawBorder(false);
+    btnSingleMode->setImage(imageManager.tTitleBar);
+    btnSingleMode->setOverrideFont(titleFont);
+	btnReplayMode = env->addButton(rect<s32>(15 * xScale, 190 * yScale, 415 * xScale, 266 * yScale), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
+    btnReplayMode->setUseAlphaChannel(true);
+    btnReplayMode->setDrawBorder(false);
+    btnReplayMode->setImage(imageManager.tTitleBar);
+    btnReplayMode->setOverrideFont(titleFont);
+	btnDeckEdit = env->addButton(rect<s32>(15 * xScale, 270 * yScale, 415 * xScale, 346 * yScale), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
+    btnDeckEdit->setUseAlphaChannel(true);
+    btnDeckEdit->setDrawBorder(false);
+    btnDeckEdit->setImage(imageManager.tTitleBar);
+    btnDeckEdit->setOverrideFont(titleFont);
+    btnSettings = env->addButton(rect<s32>(15 * xScale, 350 * yScale, 415 * xScale, 426 * yScale), wMainMenu, BUTTON_SETTINGS, dataManager.GetSysString(1273));
+	btnSettings->setUseAlphaChannel(true);
+	btnSettings->setDrawBorder(false);
+	btnSettings->setImage(imageManager.tTitleBar);
+	btnSettings->setOverrideFont(titleFont);
+    btnModeExit = env->addButton(rect<s32>(15 * xScale, 430 * yScale, 415 * xScale, 506 * yScale), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
+	btnModeExit->setUseAlphaChannel(true);
+	btnModeExit->setDrawBorder(false);
+	btnModeExit->setImage(imageManager.tTitleBar);
+	btnModeExit->setOverrideFont(titleFont);
+    //lan mode
 	wLanWindow = env->addWindow(rect<s32>(200 * xScale, 80 * yScale, 820 * xScale, 590 * yScale), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);
 	wLanWindow->setVisible(false);
