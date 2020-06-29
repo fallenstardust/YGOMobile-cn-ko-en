@@ -310,13 +310,13 @@ public:
 	irr::gui::IGUICheckBox* chkMusicMode;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
-	irr::gui::IGUIButton* btnLanMode;
-	irr::gui::IGUIButton* btnSingleMode;
-	irr::gui::IGUIButton* btnReplayMode;
+	irr::gui::CGUIImageButton* btnLanMode;
+	irr::gui::CGUIImageButton* btnSingleMode;
+	irr::gui::CGUIImageButton* btnReplayMode;
 	irr::gui::IGUIButton* btnTestMode;
-	irr::gui::IGUIButton* btnDeckEdit;
-	irr::gui::IGUIButton* btnSettings;
-	irr::gui::IGUIButton* btnModeExit;
+	irr::gui::CGUIImageButton* btnDeckEdit;
+	irr::gui::CGUIImageButton* btnSettings;
+	irr::gui::CGUIImageButton* btnModeExit;
 	//lan
 	irr::gui::IGUIWindow* wLanWindow;
 	irr::gui::IGUIEditBox* ebNickName;

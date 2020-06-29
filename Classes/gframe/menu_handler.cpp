@@ -462,6 +462,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = -1;
 				break;
 			}
+			case BUTTON_SETTINGS: {
+                mainGame->HideElement(mainGame->wMainMenu);
+                mainGame->ShowElement(mainGame->wSettings);
+			    break;
+			}
+			case BUTTON_CLOSE_SETTINGS: {
+                mainGame->HideElement(mainGame->wSettings);
+                mainGame->ShowElement(mainGame->wMainMenu);
+			    break;
+			}
 			}
 			break;
 		}
