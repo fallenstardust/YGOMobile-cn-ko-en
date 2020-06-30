@@ -1896,6 +1896,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
 				bool show = mainGame->is_building ? false : !mainGame->chkIgnore1->isChecked();
+				if (!mainGame->dInfo.isStarted)
+					show = false;
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
