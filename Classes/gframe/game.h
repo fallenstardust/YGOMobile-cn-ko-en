@@ -311,12 +311,18 @@ public:
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::CGUIImageButton* btnLanMode;
+	    irr::gui::IGUIStaticText* textLanMode;
 	irr::gui::CGUIImageButton* btnSingleMode;
+	    irr::gui::IGUIStaticText* textSingleMode;
 	irr::gui::CGUIImageButton* btnReplayMode;
+	    irr::gui::IGUIStaticText* textReplayMode;
 	irr::gui::IGUIButton* btnTestMode;
 	irr::gui::CGUIImageButton* btnDeckEdit;
+        irr::gui::IGUIStaticText* textDeckEdit;
 	irr::gui::CGUIImageButton* btnSettings;
+        irr::gui::IGUIStaticText* textSettings;
 	irr::gui::CGUIImageButton* btnModeExit;
+        irr::gui::IGUIStaticText* textModeExit;
 	//lan
 	irr::gui::IGUIWindow* wLanWindow;
 	irr::gui::IGUIEditBox* ebNickName;
