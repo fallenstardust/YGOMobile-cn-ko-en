@@ -1887,6 +1887,14 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				break;
 			}
 			case CHECKBOX_DISABLE_CHAT: {
+				if (mainGame->gameConf.chkIgnore1) {
+					mainGame->gameConf.chkIgnore1 = false;
+					mainGame->imgChat->setImage(imageManager.tTalk);
+				} else {
+					mainGame->gameConf.chkIgnore1 = true;
+					mainGame->imgChat->setImage(imageManager.tShut);
+				}
+				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
 				bool show = mainGame->is_building ? false : !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
