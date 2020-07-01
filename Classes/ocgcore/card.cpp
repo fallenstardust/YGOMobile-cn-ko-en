@@ -1584,7 +1584,6 @@ void card::enable_field_effect(bool enabled) {
 			reset(RESET_DISABLE, RESET_EVENT);
 	} else
 		set_status(STATUS_EFFECT_ENABLED, FALSE);
-	filter_immune_effect();
 	if (get_status(STATUS_DISABLED | STATUS_FORBIDDEN))
 		return;
 	filter_disable_related_cards();
@@ -1970,26 +1969,17 @@ void card::reset_effect_count() {
 // refresh STATUS_DISABLED based on EFFECT_DISABLE and EFFECT_CANNOT_DISABLE
 // refresh STATUS_FORBIDDEN based on EFFECT_FORBIDDEN
 void card::refresh_disable_status() {
-	// forbidden
-	int32 pre_fb = is_status(STATUS_FORBIDDEN);
 	filter_immune_effect();
+	// forbidden
 	if (is_affected_by_effect(EFFECT_FORBIDDEN))
 		set_status(STATUS_FORBIDDEN, TRUE);
 	else
 		set_status(STATUS_FORBIDDEN, FALSE);
-	int32 cur_fb = is_status(STATUS_FORBIDDEN);
-	if(pre_fb != cur_fb)
-		filter_immune_effect();
 	// disabled
-	int32 pre_dis = is_status(STATUS_DISABLED);
-	filter_immune_effect();
 	if (!is_affected_by_effect(EFFECT_CANNOT_DISABLE) && is_affected_by_effect(EFFECT_DISABLE))
 		set_status(STATUS_DISABLED, TRUE);
 	else
 		set_status(STATUS_DISABLED, FALSE);
-	int32 cur_dis = is_status(STATUS_DISABLED);
-	if(pre_dis != cur_dis)
-		filter_immune_effect();
 }
 std::tuple<uint8, effect*> card::refresh_control_status() {
 	uint8 final = owner;
@@ -2377,44 +2367,40 @@ void card::filter_single_continuous_effect(int32 code, effect_set* eset, uint8 s
 }
 // refresh this->immune_effect
 void card::filter_immune_effect() {
-	effect* peffect;
 	immune_effect.clear();
 	auto rg = single_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 	for (; rg.first != rg.second; ++rg.first) {
-		peffect = rg.first->second;
-		if (peffect->is_available())
-			immune_effect.add_item(peffect);
+		effect* peffect = rg.first->second;
+		immune_effect.add_item(peffect);
 	}
 	for (auto& pcard : equiping_cards) {
 		rg = pcard->equip_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 		for (; rg.first != rg.second; ++rg.first) {
-			peffect = rg.first->second;
-			if (peffect->is_available())
-				immune_effect.add_item(peffect);
+			effect* peffect = rg.first->second;
+			immune_effect.add_item(peffect);
 		}
 	}
 	for (auto& pcard : effect_target_owner) {
 		rg = pcard->target_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 		for (; rg.first != rg.second; ++rg.first) {
-			peffect = rg.first->second;
-			if(peffect->is_target(this) && peffect->is_available())
+			effect* peffect = rg.first->second;
+			if(peffect->is_target(this))
 				immune_effect.add_item(peffect);
 		}
 	}
 	for (auto& pcard : xyz_materials) {
 		rg = pcard->xmaterial_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 		for (; rg.first != rg.second; ++rg.first) {
-			peffect = rg.first->second;
+			effect* peffect = rg.first->second;
 			if (peffect->type & EFFECT_TYPE_FIELD)
 				continue;
-			if (peffect->is_available())
-				immune_effect.add_item(peffect);
+			immune_effect.add_item(peffect);
 		}
 	}
 	rg = pduel->game_field->effects.aura_effect.equal_range(EFFECT_IMMUNE_EFFECT);
 	for (; rg.first != rg.second; ++rg.first) {
-		peffect = rg.first->second;
-		if (peffect->is_target(this) && peffect->is_available())
+		effect* peffect = rg.first->second;
+		if (peffect->is_target(this))
 			immune_effect.add_item(peffect);
 	}
 	immune_effect.sort();
@@ -2629,7 +2615,7 @@ void card::filter_spsummon_procedure(uint8 playerid, effect_set* peset, uint32 s
 			toplayer = playerid;
 		}
 		if(peffect->is_available() && peffect->check_count_limit(playerid) && is_spsummonable(peffect)
-				&& !pduel->game_field->check_unique_onfield(this, toplayer, LOCATION_MZONE)) {
+				&& ((topos & POS_FACEDOWN) || !pduel->game_field->check_unique_onfield(this, toplayer, LOCATION_MZONE))) {
 			effect* sumeffect = pduel->game_field->core.reason_effect;
 			if(!sumeffect)
 				sumeffect = peffect;
@@ -3030,7 +3016,7 @@ int32 card::is_can_be_summoned(uint8 playerid, uint8 ignore_count, effect* peffe
 		effect_set proc;
 		int32 res = filter_summon_procedure(playerid, &proc, ignore_count, min_tribute, zone);
 		if(peffect) {
-			if(res < 0 || !pduel->game_field->is_player_can_summon(peffect->get_value(), playerid, this, playerid)) {
+			if(res < 0 || !check_summon_procedure(peffect, playerid, ignore_count, min_tribute, zone)) {
 				pduel->game_field->restore_lp_cost();
 				return FALSE;
 			}
@@ -3168,7 +3154,9 @@ int32 card::is_can_be_special_summoned(effect* reason_effect, uint32 sumtype, ui
 	if((data.type & TYPE_PENDULUM) && current.location == LOCATION_EXTRA && (current.position & POS_FACEUP)
 		&& (sumtype == SUMMON_TYPE_FUSION || sumtype == SUMMON_TYPE_SYNCHRO || sumtype == SUMMON_TYPE_XYZ))
 		return FALSE;
-	if(((sumpos & POS_FACEDOWN) == 0) && pduel->game_field->check_unique_onfield(this, toplayer, LOCATION_MZONE))
+	if((sumpos & POS_FACEDOWN) && pduel->game_field->is_player_affected_by_effect(sumplayer, EFFECT_DEVINE_LIGHT))
+		sumpos = (sumpos & POS_FACEUP) | ((sumpos & POS_FACEDOWN) >> 1);
+	if(!(sumpos & POS_FACEDOWN) && pduel->game_field->check_unique_onfield(this, toplayer, LOCATION_MZONE))
 		return FALSE;
 	sumtype |= SUMMON_TYPE_SPECIAL;
 	if((sumplayer == 0 || sumplayer == 1) && !pduel->game_field->is_player_can_spsummon(reason_effect, sumtype, sumpos, sumplayer, toplayer, this))
@@ -3228,7 +3216,7 @@ int32 card::is_setable_mzone(uint8 playerid, uint8 ignore_count, effect* peffect
 	effect_set eset;
 	int32 res = filter_set_procedure(playerid, &eset, ignore_count, min_tribute, zone);
 	if(peffect) {
-		if(res < 0 || !pduel->game_field->is_player_can_mset(peffect->get_value(), playerid, this, playerid)) {
+		if(res < 0 || !check_set_procedure(peffect, playerid, ignore_count, min_tribute, zone)) {
 			pduel->game_field->restore_lp_cost();
 			return FALSE;
 		}
@@ -3645,6 +3633,8 @@ int32 card::is_capable_be_battle_target(card* pcard) {
 }
 int32 card::is_capable_be_effect_target(effect* reason_effect, uint8 playerid) {
 	if(is_status(STATUS_SUMMONING) || is_status(STATUS_BATTLE_DESTROYED))
+		return FALSE;
+	if(current.location & (LOCATION_DECK | LOCATION_EXTRA | LOCATION_HAND))
 		return FALSE;
 	effect_set eset;
 	filter_effect(EFFECT_CANNOT_BE_EFFECT_TARGET, &eset);
