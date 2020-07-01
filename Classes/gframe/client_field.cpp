@@ -20,13 +20,8 @@ ClientField::ClientField() {
 	is_dragging_lstBotList = false;
 	is_dragging_lstDecks = false;
 	is_dragging_lstANCard = false;
-	is_dragging_CardSelect = false;
-	is_dragging_CardDisplay = false;
-	is_dragging_tabHelper = false;
-	is_dragging_tabSystem = false;
 	is_selectable = true;
 	dragging_tab_start_pos = 0;
-    dragging_tab_start_x = 0;
 	dragging_tab_start_y = 0;
 
 	hovered_card = 0;
