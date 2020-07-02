@@ -422,7 +422,7 @@ bool Game::Initialize() {
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
 	//imageButtons pallet
-    wPallet = env->addWindow(rect<s32>(265 * xScale, 275 * yScale, 305 * xScale, 639 * yScale), false, L"");
+    wPallet = env->addWindow(rect<s32>(262 * xScale, 275 * yScale, 307 * xScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
     wPallet->setDraggable(false);
     wPallet->setDrawTitlebar(false);
@@ -971,12 +971,12 @@ bool Game::Initialize() {
 	wChat->setVisible(false);
 	ebChatInput = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(3 * xScale, 2 * yScale, 710 * xScale, 28 * yScale), wChat, EDITBOX_CHAT);
 	//swap
-	btnSpectatorSwap = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 260 * xScale, 135 * yScale), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
+	btnSpectatorSwap = env->addButton(rect<s32>(200 * yScale, 100 * yScale, 307 * yScale, 135 * yScale), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnSpectatorSwap->setVisible(false);
 	//chain buttons
-	btnChainIgnore = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 260 * xScale, 135 * yScale), 0, BUTTON_CHAIN_IGNORE, dataManager.GetSysString(1292));
-	btnChainAlways = env->addButton(rect<s32>(180 * xScale, 140 * yScale, 260 * xScale, 175 * yScale), 0, BUTTON_CHAIN_ALWAYS, dataManager.GetSysString(1293));
-	btnChainWhenAvail = env->addButton(rect<s32>(180 * xScale, 180 * yScale, 260 * xScale, 215 * yScale), 0, BUTTON_CHAIN_WHENAVAIL, dataManager.GetSysString(1294));
+	btnChainIgnore = env->addButton(rect<s32>(200 * yScale, 100 * yScale, 307 * yScale, 135 * yScale), 0, BUTTON_CHAIN_IGNORE, dataManager.GetSysString(1292));
+	btnChainAlways = env->addButton(rect<s32>(200 * yScale, 140 * yScale, 307 * yScale, 175 * yScale), 0, BUTTON_CHAIN_ALWAYS, dataManager.GetSysString(1293));
+	btnChainWhenAvail = env->addButton(rect<s32>(200 * yScale, 180 * yScale, 307 * yScale, 215 * yScale), 0, BUTTON_CHAIN_WHENAVAIL, dataManager.GetSysString(1294));
 	btnChainIgnore->setIsPushButton(true);
 	btnChainAlways->setIsPushButton(true);
 	btnChainWhenAvail->setIsPushButton(true);
@@ -984,10 +984,10 @@ bool Game::Initialize() {
 	btnChainAlways->setVisible(false);
 	btnChainWhenAvail->setVisible(false);
 	//shuffle
-	btnShuffle = env->addButton(rect<s32>(180 * xScale, 220 * yScale, 260 * xScale, 255 * yScale), 0, BUTTON_CMD_SHUFFLE, dataManager.GetSysString(1297));
+	btnShuffle = env->addButton(rect<s32>(200 * yScale, 220 * yScale, 307 * yScale, 255 * yScale), 0, BUTTON_CMD_SHUFFLE, dataManager.GetSysString(1297));
 	btnShuffle->setVisible(false);
 	//cancel or finish
-	btnCancelOrFinish = env->addButton(rect<s32>(180 * xScale, 220 * yScale, 260 * xScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
+	btnCancelOrFinish = env->addButton(rect<s32>(200 * yScale, 220 * yScale, 307 * yScale, 275 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
 	soundManager = Utils::make_unique<SoundManager>();
 	if(!soundManager->Init((double)gameConf.sound_volume / 100, (double)gameConf.music_volume / 100, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
@@ -1004,7 +1004,7 @@ bool Game::Initialize() {
 	}
 #endif
 	//leave/surrender/exit
-	btnLeaveGame = env->addButton(rect<s32>(180 * xScale, 1 * yScale, 260 * xScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
+	btnLeaveGame = env->addButton(rect<s32>(200 * yScale, 1 * yScale, 307 * yScale, 80 * yScale), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
 	//tip
 	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
