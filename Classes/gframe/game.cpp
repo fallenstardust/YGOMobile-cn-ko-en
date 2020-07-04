@@ -41,8 +41,6 @@ void Game::process(irr::SEvent &event) {
 #ifdef _IRR_ANDROID_PLATFORM_
 bool Game::Initialize(ANDROID_APP app) {
 	this->appMain = app;
-#else
-bool Game::Initialize() {
 #endif
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
@@ -60,19 +58,12 @@ bool Game::Initialize() {
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
 	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
-#else
-	if(gameConf.use_d3d)
-		params.DriverType = irr::video::EDT_DIRECT3D9;
-	else
-		params.DriverType = irr::video::EDT_OPENGL;
-	params.WindowSize = irr::core::dimension2d<u32>(1280, 720);
 #endif
 
 	device = irr::createDeviceEx(params);
 	if(!device)
 		return false;
 #ifdef _IRR_ANDROID_PLATFORM_
-
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
@@ -126,10 +117,6 @@ bool Game::Initialize() {
 			os::Printer::log("add arrchive fail ", zip_path.c_str());
 		}
 	}
-	
-#else
-	xScale = 1.0;
-	yScale = 1.0;
 #endif
 	LoadConfig();
 	linePatternD3D = 0;
@@ -171,8 +158,6 @@ bool Game::Initialize() {
 		driver->setTextureCreationFlag(irr::video::ETCF_ALLOW_NON_POWER_2, true);
 		driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
 	}
-#else
-	driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
 #endif
 	driver->setTextureCreationFlag(irr::video::ETCF_OPTIMIZED_FOR_QUALITY, true);
 
@@ -422,7 +407,7 @@ bool Game::Initialize() {
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
 	//imageButtons pallet
-    wPallet = env->addWindow(rect<s32>(262 * xScale, 275 * yScale, 307 * xScale, 639 * yScale), false, L"");
+    wPallet = env->addWindow(rect<s32>(262 * yScale, 275 * yScale, 307 * yScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
     wPallet->setDraggable(false);
     wPallet->setDrawTitlebar(false);
