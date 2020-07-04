@@ -387,21 +387,21 @@ bool Game::Initialize(ANDROID_APP app) {
 	btnEP->setVisible(false);
 #endif
     //tab（changed）
-	wInfos = env->addStaticText(L"", rect<s32>(1 * yScale, 275 * yScale, 305 * yScale, 639 * yScale), true, false, 0, -1, true);
+	wInfos = env->addStaticText(L"", rect<s32>(1 * xScale, 275 * yScale, 260 * xScale, 639 * yScale), true, false, 0, -1, true);
 	wInfos->setBackgroundColor(0xab11113d);
 	wInfos->setVisible(false);
 	//info
-	stName = env->addStaticText(L"", rect<s32>(10 * yScale, 10 * yScale, 295 * xScale, 32 * yScale), true, false, wInfos, -1, false);
+	stName = env->addStaticText(L"", rect<s32>(10 * xScale, 10 * yScale, 250 * xScale, 32 * yScale), true, false, wInfos, -1, false);
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stInfo = env->addStaticText(L"", rect<s32>(10 * yScale, 37 * yScale, 295 * yScale, 60 * yScale), false, true, wInfos, -1, false);
+	stInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 37 * yScale, 260 * xScale, 60 * yScale), false, true, wInfos, -1, false);
 	stInfo->setOverrideColor(SColor(255, 149, 211, 137));//255, 0, 0, 255
-	stDataInfo = env->addStaticText(L"", rect<s32>(10 * yScale, 60 * yScale, 295 * yScale, 83 * yScale), false, true, wInfos, -1, false);
+	stDataInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 60 * yScale, 260 * xScale, 83 * yScale), false, true, wInfos, -1, false);
 	stDataInfo->setOverrideColor(SColor(255, 222, 215, 100));//255, 0, 0, 255
-	stSetName = env->addStaticText(L"", rect<s32>(10 * yScale, 83 * yScale, 295 * yScale, 106 * yScale), false, true, wInfos, -1, false);
+	stSetName = env->addStaticText(L"", rect<s32>(10 * xScale, 83 * yScale, 260 * xScale, 106 * yScale), false, true, wInfos, -1, false);
 	stSetName->setOverrideColor(SColor(255, 255, 152, 42));//255, 0, 0, 255
-	stText = env->addStaticText(L"", rect<s32>(10 * yScale, 106 * yScale, 295 * yScale, 345 * yScale), false, true, wInfos, -1, false);
+	stText = env->addStaticText(L"", rect<s32>(10 * xScale, 106 * yScale, 260 * xScale, 345 * yScale), false, true, wInfos, -1, false);
 #ifdef _IRR_ANDROID_PLATFORM_
-	scrCardText = env->addScrollBar(false, rect<s32>(275 * yScale, 106 * yScale, 295 * yScale, 345 * yScale), wInfos, SCROLL_CARDTEXT);
+	scrCardText = env->addScrollBar(false, rect<s32>(238 * xScale, 106 * yScale, 258 * xScale, 639 * yScale), wInfos, SCROLL_CARDTEXT);
 #endif
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
@@ -1626,16 +1626,16 @@ void Game::ShowCardInfo(int code) {
 			wcscat(formatBuffer, scaleBuffer);
 		}
 		stDataInfo->setText(formatBuffer);
-		stSetName->setRelativePosition(rect<s32>(10 * yScale, 83 * yScale, 295 * yScale, 106 * yScale));
-		stText->setRelativePosition(rect<s32>(10 * yScale, (83 + offset) * yScale, 295 * yScale, 345 * yScale));
-		scrCardText->setRelativePosition(rect<s32>(277 * yScale, (83 + offset) * yScale, 302 * yScale, 345 * yScale));
+		stSetName->setRelativePosition(rect<s32>(10 * xScale, 83 * yScale, 250 * xScale, 106 * yScale));
+		stText->setRelativePosition(rect<s32>(10 * xScale, (83 + offset) * yScale, 250 * xScale, 345 * yScale));
+		scrCardText->setRelativePosition(rect<s32>(238 * xScale, (83 + offset) * yScale, 258 * xScale, 345 * yScale));
 	} else {
 		myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cd.type));
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
-		stSetName->setRelativePosition(rect<s32>(10 * yScale, 60 * yScale, 295 * yScale, 106 * yScale));
-		stText->setRelativePosition(rect<s32>(10 * yScale, (60 + offset) * yScale, 295 * yScale, 345 * yScale));
-		scrCardText->setRelativePosition(rect<s32>(277 * yScale, (60 + offset) * yScale, 302 * yScale, 345 * yScale));
+		stSetName->setRelativePosition(rect<s32>(10 * xScale, 60 * yScale, 250 * xScale, 106 * yScale));
+		stText->setRelativePosition(rect<s32>(10 * xScale, (60 + offset) * yScale, 250 * xScale, 345 * yScale));
+		scrCardText->setRelativePosition(rect<s32>(238 * xScale, (60 + offset) * yScale, 258 * xScale, 345 * yScale));
 	}
 	showingtext = dataManager.GetText(code);
 	const auto& tsize = stText->getRelativePosition();

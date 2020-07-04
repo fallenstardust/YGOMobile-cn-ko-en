@@ -2158,7 +2158,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                if(pos < 0) pos = 0;
 	                if(pos > max) pos = max;
 	                mainGame->scrCardText->setPos(pos);
-	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 35, mainGame->guiFont, mainGame->showingtext, pos);
+	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
 	            }
                 if(is_dragging_lstLog) {
                     if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
