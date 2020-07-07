@@ -8,6 +8,7 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
+	tBigPicture = NULL;
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
@@ -82,6 +83,10 @@ void ImageManager::ClearTexture() {
 	}
 	tMap.clear();
 	tThumb.clear();
+	if(tBigPicture != NULL) {
+		driver->removeTexture(tBigPicture);
+		tBigPicture = NULL;
+	}
 }
 void ImageManager::RemoveTexture(int code) {
 	auto tit = tMap.find(code);
@@ -147,6 +152,37 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		return tit->second;
 	else
 		return GetTextureThumb(code);
+}
+irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
+	if(code == 0)
+		return tUnknown;
+	if(tBigPicture != NULL) {
+		driver->removeTexture(tBigPicture);
+		tBigPicture = NULL;
+	}
+	irr::video::ITexture* texture;
+	char file[256];
+	sprintf(file, "expansions/pics/%d.jpg", code);
+	irr::video::IImage* srcimg = driver->createImageFromFile(file);
+	if(srcimg == NULL) {
+		sprintf(file, "pics/%d.jpg", code);
+		srcimg = driver->createImageFromFile(file);
+	}
+	if(srcimg == NULL) {
+		return tUnknown;
+	}
+	if(zoom == 1) {
+		texture = driver->addTexture(file, srcimg);
+	} else {
+		auto origsize = srcimg->getDimension();
+		video::IImage* destimg = driver->createImage(srcimg->getColorFormat(), irr::core::dimension2d<u32>(origsize.Width * zoom, origsize.Height * zoom));
+		//imageScaleNNAA(srcimg, destimg);
+		texture = driver->addTexture(file, destimg);
+		destimg->drop();
+	}
+	srcimg->drop();
+	tBigPicture = texture;
+	return texture;
 }
 irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 	return tUnknown;
