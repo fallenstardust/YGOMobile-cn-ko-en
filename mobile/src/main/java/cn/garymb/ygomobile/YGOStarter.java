@@ -1,16 +1,21 @@
 package cn.garymb.ygomobile;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -26,12 +31,100 @@ import java.util.HashMap;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
+import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.ThreeDLayoutUtil;
+import ocgcore.CardManager;
+import ocgcore.StringManager;
+import ocgcore.data.Card;
+import ocgcore.enums.CardType;
+
+import static android.view.View.inflate;
 
 
 public class YGOStarter {
     private static Bitmap mLogo;
+    private ImageView cardImage;
+    private TextView name;
+    private TextView desc;
+    private TextView level;
+    private TextView type;
+    private TextView race;
+    private TextView cardAtk;
+    private TextView cardDef;
+    private TextView otView;
+    private TextView attrView;
+    private View linkArrow;
+    private View monsterlayout;
+    private View layout_detail_p_scale;
+    private View atkdefView;
+    private TextView detail_cardscale;
+
+    public void RandomCardDetail(Context context, ImageLoader imageLoader, Card cardInfo, StringManager stringManager, View view) {
+        ThreeDLayoutUtil cardDetail = (ThreeDLayoutUtil) inflate(context, R.layout.dialog_cardinfo_small, null);
+        cardImage = cardDetail.findViewById(R.id.card_image);
+        name = cardDetail.findViewById(R.id.text_name);
+        level = cardDetail.findViewById(R.id.card_level);
+        linkArrow = cardDetail.findViewById(R.id.detail_link_arrows);
+        race = cardDetail.findViewById(R.id.card_race);
+        attrView = cardDetail.findViewById(R.id.card_attribute);
+        type = cardDetail.findViewById(R.id.card_type);
+        cardAtk = cardDetail.findViewById(R.id.card_atk);
+        cardDef = cardDetail.findViewById(R.id.card_def);
+        atkdefView = cardDetail.findViewById(R.id.layout_atkdef2);
+        desc = cardDetail.findViewById(R.id.text_desc);
+
+        monsterlayout = cardDetail.findViewById(R.id.layout_monster);
+        layout_detail_p_scale = cardDetail.findViewById(R.id.detail_p_scale);
+        detail_cardscale = cardDetail.findViewById(R.id.detail_cardscale);
+
+        if (cardInfo == null) return;
+        imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
+        name.setText(cardInfo.Name);
+        type.setText(CardUtils.getAllTypeString(cardInfo, stringManager).replace("/", "|"));
+        attrView.setText(stringManager.getAttributeString(cardInfo.Attribute));
+        desc.setText(cardInfo.Desc);
+        if (cardInfo.isType(CardType.Monster)) {
+            atkdefView.setVisibility(View.VISIBLE);
+            monsterlayout.setVisibility(View.VISIBLE);
+            race.setVisibility(View.VISIBLE);
+            String star = "★" + cardInfo.getStar();
+            level.setText(star);
+            if (cardInfo.isType(CardType.Xyz)) {
+                level.setTextColor(context.getResources().getColor(R.color.star_rank));
+            } else {
+                level.setTextColor(context.getResources().getColor(R.color.star));
+            }
+            if (cardInfo.isType(CardType.Pendulum)) {
+                layout_detail_p_scale.setVisibility(View.VISIBLE);
+                detail_cardscale.setText(String.valueOf(cardInfo.LScale));
+            } else {
+                layout_detail_p_scale.setVisibility(View.GONE);
+            }
+            cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
+            //连接怪兽设置
+            if (cardInfo.isType(CardType.Link)) {
+                level.setVisibility(View.GONE);
+                linkArrow.setVisibility(View.VISIBLE);
+                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+                BaseActivity.showLinkArrows(cardInfo, view);
+            } else {
+                level.setVisibility(View.VISIBLE);
+                linkArrow.setVisibility(View.GONE);
+                cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
+            }
+            race.setText(stringManager.getRaceString(cardInfo.Race));
+        } else {
+            atkdefView.setVisibility(View.GONE);
+            race.setVisibility(View.GONE);
+            monsterlayout.setVisibility(View.GONE);
+            level.setVisibility(View.GONE);
+            linkArrow.setVisibility(View.GONE);
+        }
+    }
 
     private static void setFullScreen(Activity activity, ActivityShowInfo activityShowInfo) {
         activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -73,8 +166,6 @@ public class YGOStarter {
             return;
         }
         activityShowInfo.isRunning = true;
-//        Log.i("checker", "show:" + activity);
-//        activityShowInfo.oldRequestedOrientation = activity.getRequestedOrientation();
         activityShowInfo.rootOld = activityShowInfo.mRoot.getBackground();
         activityShowInfo.mContentView.setVisibility(View.INVISIBLE);
         //读取当前的背景图，如果卡的话，可以考虑缓存bitmap
@@ -157,18 +248,18 @@ public class YGOStarter {
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
-            Log.e("YGOStarter","设置背景前"+System.currentTimeMillis());
+            Log.e("YGOStarter", "设置背景前" + System.currentTimeMillis());
             //显示加载背景
             showLoadingBg(activity);
-            Log.e("YGOStarter","设置背景后"+System.currentTimeMillis());
+            Log.e("YGOStarter", "设置背景后" + System.currentTimeMillis());
             if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
                 //random tips
                 String[] tipsList = activity.getResources().getStringArray(R.array.tips);
                 int x = (int) (Math.random() * tipsList.length);
                 String tips = tipsList[x];
                 Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-//            } else {
-//               options = null;
+                //random carddetail
+
             }
             Intent intent = new Intent(activity, YGOMobileActivity.class);
             if (options != null) {
@@ -176,9 +267,9 @@ public class YGOStarter {
                 intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
             }
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Log.e("YGOStarter","跳转前"+System.currentTimeMillis());
+            Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
             activity.startActivity(intent);
-            Log.e("YGOStarter","跳转后"+System.currentTimeMillis());
+            Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
         }
     }
 
