@@ -67,29 +67,28 @@ public class YGOStarter {
     private static ImageLoader imageLoader;
     private static StringManager mStringManager;
     private static SparseArray<Card> cards;
-    private static Context mContext;
     private static View view;
 
     public static void RandomCardDetail(Context context, Card cardInfo) {
-        mContext = context;
-        View viewCardDetail = inflate(mContext, R.layout.dialog_cardinfo_small, null);
-        cardImage = viewCardDetail.findViewById(R.id.card_image);
-        name = viewCardDetail.findViewById(R.id.text_name);
-        level = viewCardDetail.findViewById(R.id.card_level);
-        linkArrow = viewCardDetail.findViewById(R.id.detail_link_arrows);
-        race = viewCardDetail.findViewById(R.id.card_race);
-        attrView = viewCardDetail.findViewById(R.id.card_attribute);
-        type = viewCardDetail.findViewById(R.id.card_type);
-        cardAtk = viewCardDetail.findViewById(R.id.card_atk);
-        cardDef = viewCardDetail.findViewById(R.id.card_def);
-        atkdefView = viewCardDetail.findViewById(R.id.layout_atkdef2);
-        desc = viewCardDetail.findViewById(R.id.text_desc);
+        ThreeDLayoutUtil viewCardDetail = (ThreeDLayoutUtil) inflate(context, R.layout.dialog_cardinfo_small, null);
+        cardImage = viewCardDetail.findViewById(R.id.card_image_toast);
+        name = viewCardDetail.findViewById(R.id.card_name_toast);
+        level = viewCardDetail.findViewById(R.id.card_level_toast);
+        linkArrow = viewCardDetail.findViewById(R.id.link_arrows_toast);
+        race = viewCardDetail.findViewById(R.id.card_race_toast);
+        attrView = viewCardDetail.findViewById(R.id.card_attr_toast);
+        type = viewCardDetail.findViewById(R.id.card_type_toast);
+        cardAtk = viewCardDetail.findViewById(R.id.card_atk_toast);
+        cardDef = viewCardDetail.findViewById(R.id.card_def_toast);
+        atkdefView = viewCardDetail.findViewById(R.id.layout_atkdef2_toast);
+        desc = viewCardDetail.findViewById(R.id.text_desc_toast);
 
-        monsterlayout = viewCardDetail.findViewById(R.id.layout_monster);
         layout_detail_p_scale = viewCardDetail.findViewById(R.id.detail_p_scale);
         detail_cardscale = viewCardDetail.findViewById(R.id.detail_cardscale);
 
         if (cardInfo == null) return;
+        mStringManager = DataManager.get().getStringManager();
+        imageLoader = ImageLoader.get(context);
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         name.setText(cardInfo.Name);
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
@@ -97,20 +96,13 @@ public class YGOStarter {
         desc.setText(cardInfo.Desc);
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);
-            monsterlayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
             String star = "★" + cardInfo.getStar();
             level.setText(star);
             if (cardInfo.isType(CardType.Xyz)) {
-                level.setTextColor(mContext.getResources().getColor(R.color.star_rank));
+                level.setTextColor(context.getResources().getColor(R.color.star_rank));
             } else {
-                level.setTextColor(mContext.getResources().getColor(R.color.star));
-            }
-            if (cardInfo.isType(CardType.Pendulum)) {
-                layout_detail_p_scale.setVisibility(View.VISIBLE);
-                detail_cardscale.setText(String.valueOf(cardInfo.LScale));
-            } else {
-                layout_detail_p_scale.setVisibility(View.GONE);
+                level.setTextColor(context.getResources().getColor(R.color.star));
             }
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             //连接怪兽设置
@@ -128,11 +120,10 @@ public class YGOStarter {
         } else {
             atkdefView.setVisibility(View.GONE);
             race.setVisibility(View.GONE);
-            monsterlayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
         }
-        Toast toast = new Toast(mContext);
+        Toast toast = new Toast(context);
         toast.setView(viewCardDetail);
         toast.setDuration(Toast.LENGTH_LONG);
         toast.show();
@@ -269,7 +260,6 @@ public class YGOStarter {
                 //random carddetail first
                 VUiKit.defer().when(() -> {
                     mCardManager = DataManager.get().getCardManager();
-                    mStringManager = DataManager.get().getStringManager();
                     cards = mCardManager.getAllCards();
                 }).fail((e) -> {
                     //if failed, random tips second
