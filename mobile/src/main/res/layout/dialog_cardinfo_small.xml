@@ -10,20 +10,89 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <RelativeLayout
-            android:layout_width="140dp"
-            android:layout_height="203dp">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/card_image_toast"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:layout_gravity="center_vertical"
-                android:scaleType="fitXY"
-                tools:src="@drawable/unknown" />
-        </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="140dp"
+                android:layout_height="203dp">
+
+                <ImageView
+                    android:id="@+id/card_image_toast"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center_vertical"
+                    android:scaleType="fitXY"
+                    tools:src="@drawable/unknown" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_atkdef2_toast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/layout_atk_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="ATK/"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@android:color/holo_green_light" />
+
+                    <TextView
+                        android:id="@+id/card_atk_toast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:maxLines="1"
+                        android:minWidth="@dimen/label_width_small_32dp"
+                        android:singleLine="true"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@color/holo_blue_bright"
+                        tools:text="2500" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_def_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/TextDef_toast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="DEF/"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@android:color/holo_green_light" />
+
+                    <TextView
+                        android:id="@+id/card_def_toast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:maxLines="1"
+                        android:minWidth="@dimen/label_width_small_32dp"
+                        android:singleLine="true"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@color/holo_blue_bright"
+                        tools:text="2500" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -141,74 +210,6 @@
                     android:textColor="@color/holo_blue_bright"
                     android:textSize="15sp"
                     tools:text="[A/XYZ]" />
-
-                <LinearLayout
-                    android:id="@+id/layout_atkdef2_toast"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:gravity="right"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:id="@+id/layout_atk_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:maxLines="1"
-                            android:singleLine="true"
-                            android:text="ATK/"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@android:color/holo_green_light" />
-
-                        <TextView
-                            android:id="@+id/card_atk_toast"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="right"
-                            android:maxLines="1"
-                            android:minWidth="@dimen/label_width_small_32dp"
-                            android:singleLine="true"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/holo_blue_bright"
-                            tools:text="2500" />
-
-                        <View
-                            android:layout_width="5dp"
-                            android:layout_height="1dp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/layout_def_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:id="@+id/TextDef_toast"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:maxLines="1"
-                            android:singleLine="true"
-                            android:text="DEF/"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@android:color/holo_green_light" />
-
-                        <TextView
-                            android:id="@+id/card_def_toast"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="right"
-                            android:maxLines="1"
-                            android:minWidth="@dimen/label_width_small_32dp"
-                            android:singleLine="true"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/holo_blue_bright"
-                            tools:text="2500" />
-                    </LinearLayout>
-                </LinearLayout>
             </LinearLayout>
 
             <TextView
@@ -220,7 +221,7 @@
                 android:paddingBottom="5dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/white"
-                android:textIsSelectable="true"
+                android:textSize="12sp"
                 tools:text="desc" />
         </LinearLayout>
     </LinearLayout>

@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -105,6 +106,9 @@ public class YGOStarter {
                 level.setTextColor(context.getResources().getColor(R.color.star));
             }
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
+            if (cardInfo.isType(CardType.Pendulum)) {
+                desc.setTextSize(10);
+            }
             //连接怪兽设置
             if (cardInfo.isType(CardType.Link)) {
                 level.setVisibility(View.GONE);
@@ -125,7 +129,8 @@ public class YGOStarter {
         }
         Toast toast = new Toast(context);
         toast.setView(viewCardDetail);
-        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.LEFT, 50, 0);
         toast.show();
     }
 
