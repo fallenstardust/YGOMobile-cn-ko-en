@@ -11,7 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
-import android.view.LayoutInflater;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -33,11 +33,13 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.ThreeDLayoutUtil;
 import ocgcore.CardManager;
+import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -47,45 +49,51 @@ import static android.view.View.inflate;
 
 public class YGOStarter {
     private static Bitmap mLogo;
-    private ImageView cardImage;
-    private TextView name;
-    private TextView desc;
-    private TextView level;
-    private TextView type;
-    private TextView race;
-    private TextView cardAtk;
-    private TextView cardDef;
-    private TextView otView;
-    private TextView attrView;
-    private View linkArrow;
-    private View monsterlayout;
-    private View layout_detail_p_scale;
-    private View atkdefView;
-    private TextView detail_cardscale;
+    private static ImageView cardImage;
+    private static TextView name;
+    private static TextView desc;
+    private static TextView level;
+    private static TextView type;
+    private static TextView race;
+    private static TextView cardAtk;
+    private static TextView cardDef;
+    private static TextView attrView;
+    private static View linkArrow;
+    private static View monsterlayout;
+    private static View layout_detail_p_scale;
+    private static View atkdefView;
+    private static TextView detail_cardscale;
+    private static CardManager mCardManager;
+    private static ImageLoader imageLoader;
+    private static StringManager mStringManager;
+    private static SparseArray<Card> cards;
+    private static Context mContext;
+    private static View view;
 
-    public void RandomCardDetail(Context context, ImageLoader imageLoader, Card cardInfo, StringManager stringManager, View view) {
-        ThreeDLayoutUtil cardDetail = (ThreeDLayoutUtil) inflate(context, R.layout.dialog_cardinfo_small, null);
-        cardImage = cardDetail.findViewById(R.id.card_image);
-        name = cardDetail.findViewById(R.id.text_name);
-        level = cardDetail.findViewById(R.id.card_level);
-        linkArrow = cardDetail.findViewById(R.id.detail_link_arrows);
-        race = cardDetail.findViewById(R.id.card_race);
-        attrView = cardDetail.findViewById(R.id.card_attribute);
-        type = cardDetail.findViewById(R.id.card_type);
-        cardAtk = cardDetail.findViewById(R.id.card_atk);
-        cardDef = cardDetail.findViewById(R.id.card_def);
-        atkdefView = cardDetail.findViewById(R.id.layout_atkdef2);
-        desc = cardDetail.findViewById(R.id.text_desc);
+    public static void RandomCardDetail(Context context, Card cardInfo) {
+        mContext = context;
+        View viewCardDetail = inflate(mContext, R.layout.dialog_cardinfo_small, null);
+        cardImage = viewCardDetail.findViewById(R.id.card_image);
+        name = viewCardDetail.findViewById(R.id.text_name);
+        level = viewCardDetail.findViewById(R.id.card_level);
+        linkArrow = viewCardDetail.findViewById(R.id.detail_link_arrows);
+        race = viewCardDetail.findViewById(R.id.card_race);
+        attrView = viewCardDetail.findViewById(R.id.card_attribute);
+        type = viewCardDetail.findViewById(R.id.card_type);
+        cardAtk = viewCardDetail.findViewById(R.id.card_atk);
+        cardDef = viewCardDetail.findViewById(R.id.card_def);
+        atkdefView = viewCardDetail.findViewById(R.id.layout_atkdef2);
+        desc = viewCardDetail.findViewById(R.id.text_desc);
 
-        monsterlayout = cardDetail.findViewById(R.id.layout_monster);
-        layout_detail_p_scale = cardDetail.findViewById(R.id.detail_p_scale);
-        detail_cardscale = cardDetail.findViewById(R.id.detail_cardscale);
+        monsterlayout = viewCardDetail.findViewById(R.id.layout_monster);
+        layout_detail_p_scale = viewCardDetail.findViewById(R.id.detail_p_scale);
+        detail_cardscale = viewCardDetail.findViewById(R.id.detail_cardscale);
 
         if (cardInfo == null) return;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         name.setText(cardInfo.Name);
-        type.setText(CardUtils.getAllTypeString(cardInfo, stringManager).replace("/", "|"));
-        attrView.setText(stringManager.getAttributeString(cardInfo.Attribute));
+        type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
+        attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
         desc.setText(cardInfo.Desc);
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);
@@ -94,9 +102,9 @@ public class YGOStarter {
             String star = "★" + cardInfo.getStar();
             level.setText(star);
             if (cardInfo.isType(CardType.Xyz)) {
-                level.setTextColor(context.getResources().getColor(R.color.star_rank));
+                level.setTextColor(mContext.getResources().getColor(R.color.star_rank));
             } else {
-                level.setTextColor(context.getResources().getColor(R.color.star));
+                level.setTextColor(mContext.getResources().getColor(R.color.star));
             }
             if (cardInfo.isType(CardType.Pendulum)) {
                 layout_detail_p_scale.setVisibility(View.VISIBLE);
@@ -116,7 +124,7 @@ public class YGOStarter {
                 linkArrow.setVisibility(View.GONE);
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
-            race.setText(stringManager.getRaceString(cardInfo.Race));
+            race.setText(mStringManager.getRaceString(cardInfo.Race));
         } else {
             atkdefView.setVisibility(View.GONE);
             race.setVisibility(View.GONE);
@@ -124,6 +132,10 @@ public class YGOStarter {
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
         }
+        Toast toast = new Toast(mContext);
+        toast.setView(viewCardDetail);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.show();
     }
 
     private static void setFullScreen(Activity activity, ActivityShowInfo activityShowInfo) {
@@ -160,6 +172,7 @@ public class YGOStarter {
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     private static void showLoadingBg(Activity activity) {
         ActivityShowInfo activityShowInfo = Infos.get(activity);
         if (activityShowInfo == null) {
@@ -253,24 +266,33 @@ public class YGOStarter {
             showLoadingBg(activity);
             Log.e("YGOStarter", "设置背景后" + System.currentTimeMillis());
             if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                //random tips
-                String[] tipsList = activity.getResources().getStringArray(R.array.tips);
-                int x = (int) (Math.random() * tipsList.length);
-                String tips = tipsList[x];
-                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-                //random carddetail
-
+                //random carddetail first
+                VUiKit.defer().when(() -> {
+                    mCardManager = DataManager.get().getCardManager();
+                    mStringManager = DataManager.get().getStringManager();
+                    cards = mCardManager.getAllCards();
+                }).fail((e) -> {
+                    //if failed, random tips second
+                    String[] tipsList = activity.getResources().getStringArray(R.array.tips);
+                    int x = (int) (Math.random() * tipsList.length);
+                    String tips = tipsList[x];
+                    Toast.makeText(activity, e + "", Toast.LENGTH_LONG).show();
+                }).done((list) -> {
+                    int y = (int) (Math.random() * cards.size());
+                    Card cardinfo = cards.valueAt(y);
+                    RandomCardDetail(activity, cardinfo);
+                });
             }
-            Intent intent = new Intent(activity, YGOMobileActivity.class);
-            if (options != null) {
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
-            activity.startActivity(intent);
-            Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
         }
+        Intent intent = new Intent(activity, YGOMobileActivity.class);
+        if (options != null) {
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
+        activity.startActivity(intent);
+        Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
     }
 
     private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
