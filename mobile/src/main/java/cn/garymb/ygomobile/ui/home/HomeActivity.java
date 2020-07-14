@@ -63,6 +63,7 @@ import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
@@ -78,6 +79,9 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.CardManager;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
@@ -92,6 +96,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
     private DuelAssistantManagement duelAssistantManagement;
+    private CardManager mCardManager;
+    private SparseArray<Card> cards;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,7 +128,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
                 if (arg0) {
-                      Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
                 }
@@ -647,5 +653,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         dialog.setLeftButtonListener((dlg, s) -> {
             dialog.dismiss();
         });
+    }
+
+    public void setRandomCardDetail() {
+        mCardManager = DataManager.get().getCardManager();
+        cards = mCardManager.getAllCards();
+        int y = (int) (Math.random() * cards.size());
+        Card cardinfo = cards.valueAt(y);
+        CardDetailRandom.RandomCardDetail(this, cardinfo);
     }
 }
