@@ -26,8 +26,7 @@
                     android:layout_centerHorizontal="true"
                     android:layout_centerVertical="true"
                     android:layout_gravity="center_vertical"
-                    android:scaleType="fitXY"
-                    tools:src="@drawable/unknown" />
+                    android:scaleType="fitXY"/>
             </RelativeLayout>
 
             <LinearLayout
@@ -116,16 +115,11 @@
                 tools:text="Card Name" />
 
             <LinearLayout
-                android:id="@+id/star_attr_race_scale_toast"
+                android:id="@+id/star_attr_race_toast"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_horizontal"
                 android:orientation="horizontal">
-
-                <include
-                    android:id="@+id/link_arrows_toast"
-                    layout="@layout/item_linkmaker_small"
-                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/card_level_toast"

@@ -80,7 +80,6 @@ import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
-import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
@@ -104,6 +103,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
+        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
         mServerList = $(R.id.list_server);
         mServerListAdapter = new ServerListAdapter(this);
         //server list
@@ -122,6 +122,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         AnimationShake();
         tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
+        setRandomCardDetail();
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
@@ -154,6 +155,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     protected void onResume() {
         super.onResume();
+        setRandomCardDetail();
         BacktoDuel();
     }
 
@@ -314,6 +316,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             }
             break;
             case R.id.action_game:
+                CardDetailRandom.showRandromCardDetailToast(this);
                 openGame();
                 break;
             case R.id.action_settings: {
@@ -656,10 +659,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public void setRandomCardDetail() {
-        mCardManager = DataManager.get().getCardManager();
+        //加载数据库中所有卡片卡片
+        mCardManager.loadCards();
+        //mCardManager = DataManager.get().getCardManager();
         cards = mCardManager.getAllCards();
         int y = (int) (Math.random() * cards.size());
-        Card cardinfo = cards.valueAt(y);
-        CardDetailRandom.RandomCardDetail(this, cardinfo);
+        Card cardInfo = cards.valueAt(y);
+        if (cardInfo == null) {
+            Toast.makeText(this, "code为空", Toast.LENGTH_LONG).show();
+        }
+        CardDetailRandom.RandomCardDetail(this, cardInfo);
     }
 }
