@@ -665,9 +665,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         cards = mCardManager.getAllCards();
         int y = (int) (Math.random() * cards.size());
         Card cardInfo = cards.valueAt(y);
-        if (cardInfo == null) {
-            Toast.makeText(this, "code为空", Toast.LENGTH_LONG).show();
-        }
+        if (cardInfo == null)
+            return;
         CardDetailRandom.RandomCardDetail(this, cardInfo);
     }
 }

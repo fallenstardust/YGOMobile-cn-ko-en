@@ -1,13 +1,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="170dp"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/window2"
         android:orientation="vertical">
 
         <ImageView
@@ -90,7 +94,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:background="@drawable/window2"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:orientation="vertical">
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
@@ -99,7 +105,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:shadowColor="@color/black"
-            android:shadowDx="1"
+            android:shadowDx="-2"
             android:shadowDy="2"
             android:shadowRadius="2"
             android:singleLine="true"
@@ -112,7 +118,6 @@
             android:id="@+id/star_attr_race_toast"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_horizontal"
             android:orientation="horizontal">
 
             <TextView
@@ -175,11 +180,6 @@
                     android:textColor="@color/gray"
                     tools:text="SpellCaster" />
             </LinearLayout>
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
         </LinearLayout>
 
         <LinearLayout

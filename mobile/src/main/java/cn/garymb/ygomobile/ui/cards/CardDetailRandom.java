@@ -34,6 +34,7 @@ public class CardDetailRandom {
     private static StringManager mStringManager;
 
     public static void RandomCardDetail(Context context, Card cardInfo) {
+        if (cardInfo == null) return;
         imageLoader = ImageLoader.get(context);
         viewCardDetail = inflate(context, R.layout.dialog_cardinfo_small, null);
         cardImage = viewCardDetail.findViewById(R.id.card_image_toast);
@@ -49,7 +50,6 @@ public class CardDetailRandom {
         textdefView = viewCardDetail.findViewById(R.id.TextDef_toast);
         desc = viewCardDetail.findViewById(R.id.text_desc_toast);
 
-        if (cardInfo == null) return;
         mStringManager = DataManager.get().getStringManager();
         imageLoader.bindImage(cardImage, cardInfo.Code);
         name.setText(cardInfo.Name);
@@ -89,7 +89,7 @@ public class CardDetailRandom {
         Toast toast = new Toast(context);
         toast.setView(viewCardDetail);
         toast.setDuration(Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.LEFT, 50, 0);
+        toast.setGravity(Gravity.LEFT, 30, 0);
         toast.show();
     }
 }
