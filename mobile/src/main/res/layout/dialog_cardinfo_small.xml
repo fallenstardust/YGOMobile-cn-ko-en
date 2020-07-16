@@ -1,131 +1,147 @@
-<cn.garymb.ygomobile.utils.ThreeDLayoutUtil xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/td_cardinfo"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
 
     <LinearLayout
-        android:id="@id/smContentView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/card_image_toast"
+            android:layout_width="140dp"
+            android:layout_height="203dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:scaleType="fitXY" />
+
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <RelativeLayout
-                android:layout_width="140dp"
-                android:layout_height="203dp">
-
-                <ImageView
-                    android:id="@+id/card_image_toast"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    android:layout_gravity="center_vertical"
-                    android:scaleType="fitXY"/>
-            </RelativeLayout>
-
-            <LinearLayout
-                android:id="@+id/layout_atkdef2_toast"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/layout_atk_toast"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="ATK/"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light" />
-
-                    <TextView
-                        android:id="@+id/card_atk_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="right"
-                        android:maxLines="1"
-                        android:minWidth="@dimen/label_width_small_32dp"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/holo_blue_bright"
-                        tools:text="2500" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/layout_def_toast"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:id="@+id/TextDef_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="DEF/"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light" />
-
-                    <TextView
-                        android:id="@+id/card_def_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="right"
-                        android:maxLines="1"
-                        android:minWidth="@dimen/label_width_small_32dp"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/holo_blue_bright"
-                        tools:text="2500" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
+            android:id="@+id/layout_atkdef2_toast"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:orientation="vertical">
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="3dp"
+            android:orientation="horizontal">
 
-            <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
-                android:id="@+id/card_name_toast"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/layout_atk_toast"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingRight="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="ATK/"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@android:color/holo_green_light" />
+
+                <TextView
+                    android:id="@+id/card_atk_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:maxLines="1"
+                    android:minWidth="@dimen/label_width_small_32dp"
+                    android:singleLine="true"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@color/holo_blue_bright"
+                    tools:text="2500" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_def_toast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="5dp">
+
+                <TextView
+                    android:id="@+id/TextDef_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="DEF/"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@android:color/holo_green_light" />
+
+                <TextView
+                    android:id="@+id/card_def_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:maxLines="1"
+                    android:minWidth="@dimen/label_width_small_32dp"
+                    android:singleLine="true"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@color/holo_blue_bright"
+                    tools:text="2500" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+        <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
+            android:id="@+id/card_name_toast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:shadowColor="@color/black"
+            android:shadowDx="1"
+            android:shadowDy="2"
+            android:shadowRadius="2"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textColor="@color/item_title"
+            android:textSize="18sp"
+            tools:text="Card Name" />
+
+        <LinearLayout
+            android:id="@+id/star_attr_race_toast"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/card_level_toast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:maxLines="1"
                 android:shadowColor="@color/black"
                 android:shadowDx="1"
-                android:shadowDy="2"
+                android:shadowDy="1"
                 android:shadowRadius="2"
                 android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                android:textColor="@color/item_title"
-                android:textSize="18sp"
-                tools:text="Card Name" />
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/star"
+                tools:text="★4" />
 
             <LinearLayout
-                android:id="@+id/star_attr_race_toast"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/card_level_toast"
+                    android:id="@+id/card_attr_toast"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:maxLines="1"
                     android:shadowColor="@color/black"
                     android:shadowDx="1"
@@ -133,90 +149,66 @@
                     android:shadowRadius="2"
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/star"
-                    tools:text="★4" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="10dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/card_attr_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:maxLines="1"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="1"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/gray"
-                        tools:text="Dark" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="/"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light" />
-
-                    <TextView
-                        android:id="@+id/card_race_toast"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:maxLines="1"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="1"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/gray"
-                        tools:text="SpellCaster" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:orientation="horizontal">
+                    android:textColor="@color/gray"
+                    tools:text="Dark" />
 
                 <TextView
-                    android:id="@+id/card_type_toast"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="/"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@android:color/holo_green_light" />
+
+                <TextView
+                    android:id="@+id/card_race_toast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:maxLines="1"
+                    android:shadowColor="@color/black"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/holo_blue_bright"
-                    android:textSize="15sp"
-                    tools:text="[A/XYZ]" />
+                    android:textColor="@color/gray"
+                    tools:text="SpellCaster" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_desc_toast"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="left|top"
-                android:minHeight="@dimen/card_desc_height"
-                android:paddingBottom="5dp"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                tools:text="desc" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/card_type_toast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/holo_blue_bright"
+                android:textSize="15sp"
+                tools:text="[A/XYZ]" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_desc_toast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left|top"
+            android:minHeight="155dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            tools:text="desc" />
     </LinearLayout>
-</cn.garymb.ygomobile.utils.ThreeDLayoutUtil>
+</LinearLayout>

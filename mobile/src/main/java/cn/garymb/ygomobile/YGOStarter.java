@@ -3,7 +3,6 @@ package cn.garymb.ygomobile;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
@@ -12,7 +11,6 @@ import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,7 +26,6 @@ import java.util.HashMap;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
-import cn.garymb.ygomobile.utils.ComponentUtils;
 
 
 public class YGOStarter {
