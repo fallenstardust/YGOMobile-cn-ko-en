@@ -5,19 +5,18 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="170dp"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="15dp"
         android:layout_marginTop="10dp"
-        android:layout_marginRight="5dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/window2"
         android:orientation="vertical">
 
         <ImageView
             android:id="@+id/card_image_toast"
-            android:layout_width="140dp"
-            android:layout_height="203dp"
+            android:layout_width="130dp"
+            android:layout_height="189dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:layout_gravity="center_vertical"
@@ -36,14 +35,15 @@
                 android:id="@+id/layout_atk_toast"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingRight="5dp">
+                android:paddingRight="10dp">
 
                 <TextView
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:maxLines="1"
                     android:singleLine="true"
                     android:text="ATK/"
+                    android:textSize="8sp"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@android:color/holo_green_light" />
 
@@ -64,7 +64,7 @@
                 android:id="@+id/layout_def_toast"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="5dp">
+                android:paddingLeft="10dp">
 
                 <TextView
                     android:id="@+id/TextDef_toast"
@@ -72,6 +72,7 @@
                     android:layout_height="match_parent"
                     android:maxLines="1"
                     android:singleLine="true"
+                    android:textSize="8sp"
                     android:text="DEF/"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@android:color/holo_green_light" />
@@ -93,15 +94,13 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="@drawable/window2"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
         android:orientation="vertical">
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
             android:id="@+id/card_name_toast"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:shadowColor="@color/black"
@@ -116,8 +115,8 @@
 
         <LinearLayout
             android:id="@+id/star_attr_race_toast"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <TextView
@@ -183,7 +182,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
             android:orientation="horizontal">
@@ -205,7 +204,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="left|top"
-            android:minHeight="155dp"
+            android:minHeight="145dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/white"
             android:textSize="10sp"

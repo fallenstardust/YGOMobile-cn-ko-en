@@ -89,7 +89,7 @@ public class CardDetailRandom {
         Toast toast = new Toast(context);
         toast.setView(viewCardDetail);
         toast.setDuration(Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.LEFT, 30, 0);
+        toast.setGravity(Gravity.LEFT, 0, 0);
         toast.show();
     }
 }
