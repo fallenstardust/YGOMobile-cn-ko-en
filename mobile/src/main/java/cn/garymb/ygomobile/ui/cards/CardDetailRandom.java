@@ -55,6 +55,9 @@ public class CardDetailRandom {
         name.setText(cardInfo.Name);
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
+        if (cardInfo.Desc.length() >= 100) desc.setTextSize(10);
+        if (cardInfo.Desc.length() >= 160) desc.setTextSize(9);
+        if (cardInfo.Desc.length() >= 220) desc.setTextSize(8);
         desc.setText(cardInfo.Desc);
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);
@@ -70,7 +73,7 @@ public class CardDetailRandom {
             //连接怪兽设置
             if (cardInfo.isType(CardType.Link)) {
                 level.setVisibility(View.GONE);
-                textdefView.setVisibility(View.GONE);
+                textdefView.setVisibility(View.INVISIBLE);
                 cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
             } else {
                 level.setVisibility(View.VISIBLE);

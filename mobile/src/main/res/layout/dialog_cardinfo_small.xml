@@ -5,9 +5,9 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="150dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="15dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/window2s"
@@ -15,8 +15,8 @@
 
         <ImageView
             android:id="@+id/card_image_toast"
-            android:layout_width="130dp"
-            android:layout_height="189dp"
+            android:layout_width="120dp"
+            android:layout_height="174dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:layout_gravity="center"
@@ -34,8 +34,7 @@
             <LinearLayout
                 android:id="@+id/layout_atk_toast"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingRight="10dp">
+                android:layout_height="wrap_content">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -43,9 +42,9 @@
                     android:maxLines="1"
                     android:singleLine="true"
                     android:text="ATK/"
-                    android:textSize="8sp"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@android:color/holo_green_light" />
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="8sp" />
 
                 <TextView
                     android:id="@+id/card_atk_toast"
@@ -63,8 +62,7 @@
             <LinearLayout
                 android:id="@+id/layout_def_toast"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp">
+                android:layout_height="wrap_content">
 
                 <TextView
                     android:id="@+id/TextDef_toast"
@@ -72,10 +70,10 @@
                     android:layout_height="match_parent"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:textSize="8sp"
                     android:text="DEF/"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@android:color/holo_green_light" />
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="8sp" />
 
                 <TextView
                     android:id="@+id/card_def_toast"
@@ -110,7 +108,7 @@
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
             android:textColor="@color/item_title"
-            android:textSize="18sp"
+            android:textSize="15sp"
             tools:text="Card Name" />
 
         <LinearLayout
@@ -132,6 +130,7 @@
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/star"
+                android:textSize="12sp"
                 tools:text="★4" />
 
             <LinearLayout
@@ -154,6 +153,7 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/gray"
+                    android:textSize="12sp"
                     tools:text="Dark" />
 
                 <TextView
@@ -162,7 +162,8 @@
                     android:gravity="center"
                     android:text="/"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@android:color/holo_green_light" />
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/card_race_toast"
@@ -177,6 +178,7 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/gray"
+                    android:textSize="12sp"
                     tools:text="SpellCaster" />
             </LinearLayout>
         </LinearLayout>
@@ -195,7 +197,7 @@
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="@color/holo_blue_bright"
-                android:textSize="15sp"
+                android:textSize="12sp"
                 tools:text="[A/XYZ]" />
         </LinearLayout>
 
@@ -207,7 +209,7 @@
             android:minHeight="145dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/white"
-            android:textSize="10sp"
+            android:textSize="11sp"
             tools:text="desc" />
     </LinearLayout>
 </LinearLayout>
