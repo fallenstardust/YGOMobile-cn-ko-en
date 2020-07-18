@@ -158,12 +158,6 @@ public class YGOStarter {
             //显示加载背景
             showLoadingBg(activity);
             Log.e("YGOStarter", "设置背景后" + System.currentTimeMillis());
- /*           if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                String[] tipsList = activity.getResources().getStringArray(R.array.tips);
-                int x = (int) (Math.random() * tipsList.length);
-                String tips = tipsList[x];
-                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-            }*/
         }
         Intent intent = new Intent(activity, YGOMobileActivity.class);
         if (options != null) {

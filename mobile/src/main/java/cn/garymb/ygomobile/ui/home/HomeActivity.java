@@ -475,6 +475,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     void joinGame(ServerInfo serverInfo, String name) {
+        showTipsToast();
         YGOGameOptions options = new YGOGameOptions();
         options.mServerAddr = serverInfo.getServerAddr();
         options.mUserName = serverInfo.getPlayerName();
@@ -668,5 +669,14 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         if (cardInfo == null)
             return;
         CardDetailRandom.RandomCardDetail(this, cardInfo);
+    }
+
+    public void showTipsToast() {
+        if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+            String[] tipsList = this.getResources().getStringArray(R.array.tips);
+            int x = (int) (Math.random() * tipsList.length);
+            String tips = tipsList[x];
+            Toast.makeText(this, tips, Toast.LENGTH_LONG).show();
+        }
     }
 }
