@@ -7,10 +7,10 @@
     <LinearLayout
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:background="@drawable/window2"
+        android:background="@drawable/window2s"
         android:orientation="vertical">
 
         <ImageView
@@ -19,15 +19,15 @@
             android:layout_height="189dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:layout_gravity="center_vertical"
+            android:layout_gravity="center"
             android:scaleType="fitXY" />
 
 
         <LinearLayout
             android:id="@+id/layout_atkdef2_toast"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="center"
             android:layout_marginTop="3dp"
             android:orientation="horizontal">
 
