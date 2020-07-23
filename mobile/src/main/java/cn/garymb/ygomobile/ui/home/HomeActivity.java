@@ -122,7 +122,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         AnimationShake();
         tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
-        setRandomCardDetail();
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
