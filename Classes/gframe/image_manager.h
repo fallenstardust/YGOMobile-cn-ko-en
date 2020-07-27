@@ -64,6 +64,7 @@ public:
 	irr::video::ITexture* tTalk;
 	irr::video::ITexture* tShut;
     irr::video::ITexture* tTitleBar;
+	irr::video::ITexture* tWindow;
     std::list<std::string> support_types;
 };
 

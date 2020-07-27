@@ -271,6 +271,7 @@ public:
 	//Settings
 	irr::gui::CGUIImageButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
+	irr::gui::IGUIImage* bgSettings;
 	irr::gui::IGUIButton* btnCloseSettings;
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg;
@@ -322,6 +323,7 @@ public:
         irr::gui::IGUIStaticText* textModeExit;
 	//lan
 	irr::gui::IGUIWindow* wLanWindow;
+	irr::gui::IGUIImage* bgLanWindow;
 	irr::gui::IGUIEditBox* ebNickName;
 	irr::gui::IGUIListBox* lstHostList;
 	irr::gui::IGUIButton* btnLanRefresh;
@@ -333,6 +335,7 @@ public:
 	irr::gui::IGUIButton* btnCreateHost;
 	//create host
 	irr::gui::IGUIWindow* wCreateHost;
+	irr::gui::IGUIImage* bgCreateHost;
 	irr::gui::IGUIComboBox* cbLFlist;
 	irr::gui::IGUIComboBox* cbMatchMode;
 	irr::gui::IGUIComboBox* cbRule;
@@ -349,6 +352,7 @@ public:
 	irr::gui::IGUIButton* btnHostCancel;
 	//host panel
 	irr::gui::IGUIWindow* wHostPrepare;
+	irr::gui::IGUIImage* bgHostPrepare;
 	irr::gui::IGUIButton* btnHostPrepDuelist;
 	irr::gui::IGUIButton* btnHostPrepOB;
 	irr::gui::IGUIStaticText* stHostPrepDuelist[4];
@@ -364,6 +368,7 @@ public:
 	irr::gui::IGUIButton* btnHostPrepCancel;
 	//replay
 	irr::gui::IGUIWindow* wReplay;
+	irr::gui::IGUIImage* bgReplay;
 	irr::gui::IGUIListBox* lstReplayList;
 	irr::gui::IGUIStaticText* stReplayInfo;
 	irr::gui::IGUIButton* btnLoadReplay;
@@ -374,6 +379,7 @@ public:
 	irr::gui::IGUIEditBox* ebRepStartTurn;
 	//single play
 	irr::gui::IGUIWindow* wSinglePlay;
+	irr::gui::IGUIImage* bgSinglePlay;
 	//TEST BOT MODE
 	irr::gui::IGUIListBox* lstBotList;
 	irr::gui::IGUIStaticText* stBotInfo;
