@@ -169,6 +169,7 @@ public:
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
+	void AddIGUIImageBUtton(irr::gui::IGUIButton* button);
 
 	int LocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
@@ -399,10 +400,12 @@ public:
 	irr::gui::CGUIImageButton* btnHand[3];
 	//
 	irr::gui::IGUIWindow* wFTSelect;
+	irr::gui::IGUIImage* bgFTSelect;
 	irr::gui::IGUIButton* btnFirst;
 	irr::gui::IGUIButton* btnSecond;
 	//message
 	irr::gui::IGUIWindow* wMessage;
+	irr::gui::IGUIImage* bgMessage;
 	irr::gui::IGUIStaticText* stMessage;
 	irr::gui::IGUIButton* btnMsgOK;
 	//auto close message
@@ -410,16 +413,19 @@ public:
 	irr::gui::IGUIStaticText* stACMessage;
 	//yes/no
 	irr::gui::IGUIWindow* wQuery;
+	irr::gui::IGUIImage* bgQuery;
 	irr::gui::IGUIStaticText* stQMessage;
 	irr::gui::IGUIButton* btnYes;
 	irr::gui::IGUIButton* btnNo;
 	//surrender yes/no
 	irr::gui::IGUIWindow* wSurrender;
+	irr::gui::IGUIImage* bgSurrender;
 	irr::gui::IGUIStaticText* stSurrenderMessage;
 	irr::gui::IGUIButton* btnSurrenderYes;
 	irr::gui::IGUIButton* btnSurrenderNo;
 	//options
 	irr::gui::IGUIWindow* wOptions;
+	irr::gui::IGUIImage* bgOptions;
 	irr::gui::IGUIStaticText* stOptions;
 	irr::gui::IGUIButton* btnOptionp;
 	irr::gui::IGUIButton* btnOptionn;
@@ -428,18 +434,21 @@ public:
 	irr::gui::IGUIScrollBar* scrOption;
 	//pos selection
 	irr::gui::IGUIWindow* wPosSelect;
+	irr::gui::IGUIImage* bgPosSelect;
 	irr::gui::CGUIImageButton* btnPSAU;
 	irr::gui::CGUIImageButton* btnPSAD;
 	irr::gui::CGUIImageButton* btnPSDU;
 	irr::gui::CGUIImageButton* btnPSDD;
 	//card selection
 	irr::gui::IGUIWindow* wCardSelect;
+	irr::gui::IGUIImage* bgCardSelect;
 	irr::gui::CGUIImageButton* btnCardSelect[5];
 	irr::gui::IGUIStaticText *stCardPos[5];
 	irr::gui::IGUIScrollBar *scrCardList;
 	irr::gui::IGUIButton* btnSelectOK;
 	//card display
 	irr::gui::IGUIWindow* wCardDisplay;
+	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::CGUIImageButton* btnCardDisplay[5];
 	irr::gui::IGUIStaticText *stDisplayPos[5];
 	irr::gui::IGUIScrollBar *scrDisplayList;
@@ -561,6 +570,7 @@ public:
 	irr::gui::IGUIComboBox* cbSortType;
 	//replay save
 	irr::gui::IGUIWindow* wReplaySave;
+	irr::gui::IGUIImage* bgReplaySave;
 	irr::gui::IGUIEditBox* ebRSName;
 	irr::gui::IGUIButton* btnRSYes;
 	irr::gui::IGUIButton* btnRSNo;

@@ -43,7 +43,9 @@ bool ImageManager::Initial(const path dir) {
 	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
     tTitleBar = driver->getTexture((dir + path("/textures/extra/stitlebar.png")).c_str());
     tWindow = driver->getTexture((dir + path("/textures/extra/sWindow.png")).c_str());
-	if(!tBackGround_menu)
+	tDialog_S = driver->getTexture((dir + path("/textures/extra/sDialog_S.png")).c_str());
+	tDialog_L = driver->getTexture((dir + path("/textures/extra/sDialog_L.png")).c_str());
+    if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
 	if(!tBackGround_deck)

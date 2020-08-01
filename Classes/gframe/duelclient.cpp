@@ -1795,28 +1795,28 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		}
 		if(count == 4) startpos = 10;
 		else if(count == 3) startpos = 82;
-		else startpos = 155;
+		else startpos = 50;
 		if(positions & 0x1) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSAU, code));
-			mainGame->btnPSAU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSAU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSAU->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSAU->setVisible(false);
 		if(positions & 0x2) {
-			mainGame->btnPSAD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSAD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSAD->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSAD->setVisible(false);
 		if(positions & 0x4) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSDU, code));
-			mainGame->btnPSDU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSDU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSDU->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSDU->setVisible(false);
 		if(positions & 0x8) {
-			mainGame->btnPSDD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSDD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSDD->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSDD->setVisible(false);
 		mainGame->gMutex.lock();
 		mainGame->PopupElement(mainGame->wPosSelect);

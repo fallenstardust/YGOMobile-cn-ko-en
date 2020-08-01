@@ -548,15 +548,23 @@ bool Game::Initialize(ANDROID_APP app) {
 	}
 #ifdef _IRR_ANDROID_PLATFORM_
 	//first or second to go
-	wFTSelect = env->addWindow(rect<s32>(530 * xScale, 220 * yScale, 800 * xScale, 380 * yScale), false, L"");
+	wFTSelect = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, L"");
+    wFTSelect->setDrawBackground(false);
 	wFTSelect->getCloseButton()->setVisible(false);
 	wFTSelect->setVisible(false);
-	btnFirst = env->addButton(rect<s32>(10 * xScale, 30 * yScale, 260 * xScale, 75 * yScale), wFTSelect, BUTTON_FIRST, dataManager.GetSysString(100));
-	btnSecond = env->addButton(rect<s32>(10 * xScale, 85 * yScale, 260 * xScale, 130 * yScale), wFTSelect, BUTTON_SECOND, dataManager.GetSysString(101));
+	bgFTSelect = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wFTSelect, -1, 0, true);
+    bgFTSelect->setImage(imageManager.tDialog_L);
+    bgFTSelect->setScaleImage(true);
+	btnFirst = env->addButton(rect<s32>(20 * xScale, 35 * yScale, 370 * xScale, 85 * yScale), wFTSelect, BUTTON_FIRST, dataManager.GetSysString(100));
+	btnSecond = env->addButton(rect<s32>(20 * xScale, 95 * yScale, 370 * xScale, 145 * yScale), wFTSelect, BUTTON_SECOND, dataManager.GetSysString(101));
 	//message (370)
 	wMessage = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1216));
+	wMessage->setDrawBackground(false);
 	wMessage->getCloseButton()->setVisible(false);
 	wMessage->setVisible(false);
+	bgMessage = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wMessage, -1, 0, true);
+	bgMessage->setImage(imageManager.tDialog_L);
+    bgMessage->setScaleImage(true);
 	stMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 390 * xScale, 100 * yScale), false, true, wMessage, -1, false);
 	stMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 115 * yScale, 260 * xScale, 165 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
@@ -570,31 +578,43 @@ bool Game::Initialize(ANDROID_APP app) {
 	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	//yes/no (370)
 	wQuery = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
+	wQuery->setDrawBackground(false);
 	wQuery->getCloseButton()->setVisible(false);
 	wQuery->setVisible(false);
+    bgQuery = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wQuery, -1, 0, true);
+    bgQuery->setImage(imageManager.tDialog_L);
+    bgQuery->setScaleImage(true);
 	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 390 * xScale, 100 * yScale), false, true, wQuery, -1, false);
 	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnYes = env->addButton(rect<s32>(80 * xScale, 115 * yScale, 170 * xScale, 165 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
 	btnNo = env->addButton(rect<s32>(200 * xScale, 115 * yScale, 290 * xScale, 165 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
 	//surrender yes/no (310)
 	wSurrender = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
+	wSurrender->setDrawBackground(false);
 	wSurrender->getCloseButton()->setVisible(false);
 	wSurrender->setVisible(false);
+    bgSurrender = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wSurrender, -1, 0, true);
+    bgSurrender->setImage(imageManager.tDialog_L);
+    bgSurrender->setScaleImage(true);
 	stSurrenderMessage = env->addStaticText(dataManager.GetSysString(1359), rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wSurrender, -1, false);
 	stSurrenderMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnSurrenderYes = env->addButton(rect<s32>(80 * xScale, 115 * yScale, 170 * xScale, 165 * yScale), wSurrender, BUTTON_SURRENDER_YES, dataManager.GetSysString(1213));
 	btnSurrenderNo = env->addButton(rect<s32>(200 * xScale, 115 * yScale, 290 * xScale, 165 * yScale), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
-	//options (370)
+	//options (350)
 	wOptions = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, L"");
+	wOptions->setDrawBackground(false);
 	wOptions->getCloseButton()->setVisible(false);
 	wOptions->setVisible(false);
-	stOptions =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 390 * xScale, 100 * yScale), false, true, wOptions, -1, false);
+    bgOptions = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wOptions, -1, 0, true);
+    bgOptions->setImage(imageManager.tDialog_L);
+    bgOptions->setScaleImage(true);
+	stOptions =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wOptions, -1, false);
 	stOptions->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnOptionOK = env->addButton(rect<s32>(130 * xScale, 115 * yScale, 260 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_OK, dataManager.GetSysString(1211));
 	btnOptionp = env->addButton(rect<s32>(20 * xScale, 115 * yScale, 100 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_PREV, L"<<<");
 	btnOptionn = env->addButton(rect<s32>(290 * xScale, 115 * yScale, 370 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_NEXT, L">>>");
     for(int i = 0; i < 5; ++i) {
-		btnOption[i] = env->addButton(rect<s32>(10 * xScale, (30 + 60 * i) * yScale, 380 * xScale, (80 + 60 * i) * yScale), wOptions, BUTTON_OPTION_0 + i, L"");
+		btnOption[i] = env->addButton(rect<s32>(20 * xScale, (20 + 60 * i) * yScale, 370 * xScale, (70 + 60 * i) * yScale), wOptions, BUTTON_OPTION_0 + i, L"");
 	}
 	scrOption = env->addScrollBar(false, rect<s32>(350 * xScale, 30 * yScale, 380 * xScale, 220 * yScale), wOptions, SCROLL_OPTION_SELECT);
 	scrOption->setLargeStep(1);
@@ -602,26 +622,34 @@ bool Game::Initialize(ANDROID_APP app) {
 	scrOption->setMin(0);
 #endif
 	//pos
-	wPosSelect = env->addWindow(rect<s32>(340 * xScale, 200 * yScale, 935 * xScale, 410 * yScale), false, dataManager.GetSysString(561));
+	wPosSelect = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
+    wPosSelect->setDrawBackground(false);
 	wPosSelect->setVisible(false);
-	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(10 * xScale, 45 * yScale, 150 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_AU);
-	btnPSAU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
-	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(155 * xScale, 45 * yScale, 295 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_AD);
-	btnPSAD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
+    bgPosSelect = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wPosSelect, -1, 0, true);
+    bgPosSelect->setImage(imageManager.tDialog_L);
+    bgPosSelect->setScaleImage(true);
+	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(50 * xScale, 25 * yScale, 190 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_AU);
+	btnPSAU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * yScale, CARD_IMG_HEIGHT * 0.5f * yScale));
+	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(200 * xScale, 25 * yScale, 340 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_AD);
+	btnPSAD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * yScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSAD->setImage(imageManager.tCover[0]);
-	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(300 * xScale, 45 * yScale, 440 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_DU);
-	btnPSDU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
+	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(50 * xScale, 25 * yScale, 190 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_DU);
+	btnPSDU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * yScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSDU->setImageRotation(270);
-	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(445 * xScale, 45 * yScale, 585 * xScale, 185 * yScale), wPosSelect, BUTTON_POS_DD);
-	btnPSDD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * xScale, CARD_IMG_HEIGHT * 0.5f * yScale));
+	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(200 * xScale, 25 * yScale, 340 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_DD);
+	btnPSDD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * yScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSDD->setImageRotation(270);
 	btnPSDD->setImage(imageManager.tCover[0]);
 #ifdef _IRR_ANDROID_PLATFORM_
     //card select
 	wCardSelect = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 1000 * xScale, 430 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
+    wCardSelect->setDrawBackground(false);
 	wCardSelect->setVisible(false);
+    bgCardSelect = env->addImage(rect<s32>(0, 0, 680 * xScale, 330 * yScale), wCardSelect, -1, 0, true);
+    bgCardSelect->setImage(imageManager.tDialog_L);
+    bgCardSelect->setScaleImage(true);
 	for(int i = 0; i < 5; ++i) {
 		stCardPos[i] = env->addStaticText(L"", rect<s32>((40 + 125 * i) * xScale, 30 * yScale, (139 + 125 * i) * xScale, 50 * yScale), true, false, wCardSelect, -1, true);
 		stCardPos[i]->setBackgroundColor(0xffffffff);
@@ -634,7 +662,11 @@ bool Game::Initialize(ANDROID_APP app) {
 	//card display
 	wCardDisplay = env->addWindow(rect<s32>(320 * xScale, 100 * yScale, 1000 * xScale, 400 * yScale), false, L"");
 	wCardDisplay->getCloseButton()->setVisible(false);
+    wCardSelect->setDrawBackground(false);
 	wCardDisplay->setVisible(false);
+    bgCardDisplay = env->addImage(rect<s32>(0, 0, 680 * xScale, 300 * yScale), wCardDisplay, -1, 0, true);
+    bgCardDisplay->setImage(imageManager.tDialog_L);
+    bgCardDisplay->setScaleImage(true);
 	for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", rect<s32>((30 + 125 * i) *xScale, 30 * yScale, (150 + 125 * i) * xScale, 50 * yScale), true, false, wCardDisplay, -1, true);
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
@@ -921,7 +953,7 @@ bool Game::Initialize(ANDROID_APP app) {
 		btnStartBot->setVisible(false);
 		btnBotCancel->setVisible(false);
 	}
-	//SINGLE MODE	
+	//SINGLE MODE
 	irr::gui::IGUITab* tabSingle = wSingle->addTab(dataManager.GetSysString(1381));
 	env->addStaticText(dataManager.GetSysString(1352), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabSingle);
 	stSinglePlayInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 80 * yScale), false, true, tabSingle);
@@ -929,16 +961,19 @@ bool Game::Initialize(ANDROID_APP app) {
 	lstSinglePlayList->setItemHeight(25 * yScale);
 	btnLoadSinglePlay = env->addButton(rect<s32>(420 * xScale, 240 * yScale, 530 * xScale, 280 * yScale), tabSingle, BUTTON_LOAD_SINGLEPLAY, dataManager.GetSysString(1211));
 	btnSinglePlayCancel = env->addButton(rect<s32>(420 * xScale, 290 * yScale, 530 * xScale, 330 * yScale),tabSingle, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
-	
 	//replay save
-	wReplaySave = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1340));
+	wReplaySave = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1340));
+    wReplaySave->setDrawBackground(false);
 	wReplaySave->getCloseButton()->setVisible(false);
 	wReplaySave->setVisible(false);
+    bgReplaySave = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wReplaySave, -1, 0, true);
+    bgReplaySave->setImage(imageManager.tDialog_L);
+    bgReplaySave->setScaleImage(true);
 	env->addStaticText(dataManager.GetSysString(1342), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wReplaySave);
-	ebRSName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), wReplaySave, -1);
+	ebRSName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 370 * xScale, 90 * yScale), wReplaySave, -1);
 	ebRSName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnRSYes = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
-	btnRSNo = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 270 * xScale, 150 * yScale), wReplaySave, BUTTON_REPLAY_CANCEL, dataManager.GetSysString(1212));
+	btnRSYes = env->addButton(rect<s32>(70 * xScale, 110 * yScale, 180 * xScale, 160 * yScale), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
+	btnRSNo = env->addButton(rect<s32>(210 * xScale, 110 * yScale, 320 * xScale, 160 * yScale), wReplaySave, BUTTON_REPLAY_CANCEL, dataManager.GetSysString(1212));
 	//replay control
 	wReplayControl = env->addStaticText(L"", rect<s32>(200 * yScale, 43 * yScale, 305 * yScale, 273 * yScale), true, false, 0, -1, true);
 	wReplayControl->setVisible(false);
@@ -1043,7 +1078,7 @@ IGUIStaticText *text = env->addStaticText(L"",
 	hideChatTimer = 0;
 	delete options;
 	return true;
-}//bool Game::Initialize 
+}//bool Game::Initialize
 void Game::MainLoop() {
 	wchar_t cap[256];
 	camera = smgr->addCameraSceneNode(0);
@@ -1830,6 +1865,9 @@ int Game::LocalPlayer(int player) {
 }
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
+}
+void Game::AddIGUIImageBUtton(irr::gui::IGUIButton* button) {
+
 }
 
 }
