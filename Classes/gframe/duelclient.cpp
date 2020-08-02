@@ -3645,7 +3645,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->cbANNumber->setSelected(0);
 		if(quickmode) {
 			mainGame->cbANNumber->setVisible(false);
-			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 195 * mainGame->yScale, 160 * mainGame->xScale, 245 * mainGame->yScale));
+			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 205 * mainGame->yScale, 160 * mainGame->xScale, 245 * mainGame->yScale));
 			mainGame->btnANNumberOK->setEnabled(false);
 			recti pos = mainGame->wANNumber->getRelativePosition();
 			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 250 * mainGame->yScale;
@@ -3655,7 +3655,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->btnANNumber[i]->setVisible(false);
 			}
 			mainGame->cbANNumber->setVisible(true);
-			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 95 * mainGame->yScale, 160 * mainGame->xScale, 145 * mainGame->yScale));
+			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 105 * mainGame->yScale, 160 * mainGame->xScale, 145 * mainGame->yScale));
 			recti pos = mainGame->wANNumber->getRelativePosition();
 			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 150 * mainGame->yScale;
 			mainGame->wANNumber->setRelativePosition(pos);

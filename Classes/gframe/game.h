@@ -263,6 +263,7 @@ public:
 	//Logs
 	irr::gui::CGUIImageButton* imgLog;
 	irr::gui::IGUIWindow* wLogs;
+	irr::gui::IGUIImage* bgLogs;
 	irr::gui::IGUIListBox* lstLog;
 	irr::gui::IGUIButton* btnClearLog;
 	irr::gui::IGUIButton* btnCloseLog;
@@ -456,19 +457,23 @@ public:
 	irr::gui::IGUIButton* btnDisplayOK;
 	//announce number
 	irr::gui::IGUIWindow* wANNumber;
+	irr::gui::IGUIImage* bgANNumber;
 	irr::gui::IGUIComboBox* cbANNumber;
 	irr::gui::IGUIButton* btnANNumber[12];
 	irr::gui::IGUIButton* btnANNumberOK;
 	//announce card
 	irr::gui::IGUIWindow* wANCard;
+	irr::gui::IGUIImage* bgANCard;
 	irr::gui::IGUIEditBox* ebANCard;
 	irr::gui::IGUIListBox* lstANCard;
 	irr::gui::IGUIButton* btnANCardOK;
 	//announce attribute
 	irr::gui::IGUIWindow* wANAttribute;
+	irr::gui::IGUIImage* bgANAttribute;
 	irr::gui::IGUICheckBox* chkAttribute[7];
 	//announce race
 	irr::gui::IGUIWindow* wANRace;
+	irr::gui::IGUIImage* bgANRace;
 	irr::gui::IGUICheckBox* chkRace[25];
 	//cmd menu
 	irr::gui::IGUIWindow* wCmdMenu;

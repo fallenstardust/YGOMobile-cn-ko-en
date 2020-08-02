@@ -415,13 +415,14 @@ bool Game::Initialize(ANDROID_APP app) {
 	imgLog->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
 	imgLog->setImage(imageManager.tLogs);
 	imgLog->setIsPushButton(true);
-	wLogs = env->addWindow(rect<s32>(720 * xScale, 5 * yScale, 1020 * xScale, 510 * yScale), false, dataManager.GetSysString(1271));
+	wLogs = env->addWindow(rect<s32>(720 * xScale, 1 * yScale, 1020 * xScale, 501 * yScale), false, dataManager.GetSysString(1271));
     wLogs->getCloseButton()->setVisible(false);
     wLogs->setVisible(false);
-    lstLog = env->addListBox(rect<s32>(1 * xScale, 25 * yScale, 299 * xScale, 455 * yScale), wLogs, LISTBOX_LOG, false);
+        ChangeToIGUIImageWindow(wLogs, bgLogs, imageManager.tDialog_S);
+    lstLog = env->addListBox(rect<s32>(10 * xScale, 20 * yScale, 290 * xScale, 440 * yScale), wLogs, LISTBOX_LOG, false);
     lstLog->setItemHeight(25 * yScale);
-    btnClearLog = env->addButton(rect<s32>(60 * xScale, 460 * yScale, 130 * xScale, 500 * yScale), wLogs, BUTTON_CLEAR_LOG, dataManager.GetSysString(1304));
-    btnCloseLog = env->addButton(rect<s32>(170 * xScale, 460 * yScale, 240 * xScale, 500 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
+    btnClearLog = env->addButton(rect<s32>(20 * xScale, 450 * yScale, 130 * xScale, 490 * yScale), wLogs, BUTTON_CLEAR_LOG, dataManager.GetSysString(1304));
+    btnCloseLog = env->addButton(rect<s32>(170 * xScale, 450 * yScale, 280 * xScale, 490 * yScale), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
     //vol play/mute
 	imgVol = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(0 * yScale, 110 * yScale, 45 * yScale, 155 * yScale), wPallet, BUTTON_BGM);
     imgVol->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
@@ -637,38 +638,42 @@ bool Game::Initialize(ANDROID_APP app) {
 	btnDisplayOK = env->addButton(rect<s32>(300 * xScale, 265 * yScale, 380 * xScale, 290 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
 #endif
 	//announce number
-	wANNumber = env->addWindow(rect<s32>(550 * xScale, 200 * yScale, 780 * xScale, 355 * yScale), false, L"");
+	wANNumber = env->addWindow(rect<s32>(500 * xScale, 50 * yScale, 800 * xScale, 550 * yScale), false, L"");
 	wANNumber->getCloseButton()->setVisible(false);
 	wANNumber->setVisible(false);
-	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(40 * xScale, 30 * yScale, 190 * xScale, 65 * yScale), wANNumber, -1);
+        ChangeToIGUIImageWindow(wANNumber, bgANNumber, imageManager.tDialog_S);
+	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(20 * xScale, 30 * yScale, 370 * xScale, 65 * yScale), wANNumber, -1);
 	cbANNumber->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	for(int i = 0; i < 12; ++i) {
 		myswprintf(strbuf, L"%d", i + 1);
-		btnANNumber[i] = env->addButton(rect<s32>((20 + 50 * (i % 4)) * xScale, (40 + 50 * (i / 4)) * yScale, (60 + 50 * (i % 4)) * xScale, (80 + 50 * (i / 4)) * yScale), wANNumber, BUTTON_ANNUMBER_1 + i, strbuf);
+		btnANNumber[i] = env->addButton(rect<s32>((30 + 50 * (i % 4)) * xScale, (40 + 50 * (i / 4)) * yScale, (70 + 50 * (i % 4)) * xScale, (80 + 50 * (i / 4)) * yScale), wANNumber, BUTTON_ANNUMBER_1 + i, strbuf);
 		btnANNumber[i]->setIsPushButton(true);
 	}
-	btnANNumberOK = env->addButton(rect<s32>(70 * xScale, 95 * yScale, 160 * xScale, 145 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
+	btnANNumberOK = env->addButton(rect<s32>(20 * xScale, 400 * yScale, 130 * xScale, 440 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
 	//announce card
-	wANCard = env->addWindow(rect<s32>(400 * xScale, 100 * yScale, 800 * xScale, 400 * yScale), false, L"");
+	wANCard = env->addWindow(rect<s32>(500 * xScale, 50 * yScale, 800 * xScale, 550 * yScale), false, L"");
 	wANCard->getCloseButton()->setVisible(false);
 	wANCard->setVisible(false);
-	ebANCard = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 25 * yScale, 380 * xScale, 55 * yScale), wANCard, EDITBOX_ANCARD);
+    ChangeToIGUIImageWindow(wANCard, bgANCard, imageManager.tDialog_S);
+	ebANCard = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 20 * yScale, 290 * xScale, 60 * yScale), wANCard, EDITBOX_ANCARD);
 	ebANCard->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	lstANCard = env->addListBox(rect<s32>(20 * xScale, 55 * yScale, 380 * xScale, 260 * yScale), wANCard, LISTBOX_ANCARD, true);
-	btnANCardOK = env->addButton(rect<s32>(140 * xScale, 260 * yScale, 270 * xScale, 295 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
+	lstANCard = env->addListBox(rect<s32>(10 * xScale, 70 * yScale, 290 * xScale, 440 * yScale), wANCard, LISTBOX_ANCARD, true);
+	btnANCardOK = env->addButton(rect<s32>(95 * xScale, 450 * yScale, 205 * xScale, 490 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
 	//announce attribute
-	wANAttribute = env->addWindow(rect<s32>(450 * xScale, 200 * yScale, 800 * xScale, 370 * yScale), false, dataManager.GetSysString(562));
+	wANAttribute = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(562));
 	wANAttribute->getCloseButton()->setVisible(false);
 	wANAttribute->setVisible(false);
+        ChangeToIGUIImageWindow(wANAttribute, bgANAttribute, imageManager.tDialog_L);
 	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
-		chkAttribute[i] = env->addCheckBox(false, rect<s32>((20 + (i % 4) * 80) * xScale, (50 + (i / 4) * 55) * yScale, (100 + (i % 4) * 80) * xScale, (80 + (i / 4) * 55) * yScale),
+		chkAttribute[i] = env->addCheckBox(false, rect<s32>((50 + (i % 4) * 80) * xScale, (50 + (i / 4) * 55) * yScale, (130 + (i % 4) * 80) * xScale, (80 + (i / 4) * 55) * yScale),
 		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter));
 	//announce race
-	wANRace = env->addWindow(rect<s32>(480 * xScale, 100 * yScale, 850 * xScale, 530 * yScale), false, dataManager.GetSysString(563));
+	wANRace = env->addWindow(rect<s32>(500 * xScale, 50 * yScale, 800 * xScale, 550 * yScale), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
 	wANRace->setVisible(false);
+	    ChangeToIGUIImageWindow(wANRace, bgANRace, imageManager.tDialog_S);
 	for(int filter = 0x1, i = 0; i < 25; filter <<= 1, ++i)
-		chkRace[i] = env->addCheckBox(false, rect<s32>((15 + (i % 4) * 90) * xScale, (50 + (i / 4) * 55) * yScale, (105 + (i % 4) * 90) * xScale, (75 + (i / 4) * 55) * yScale),
+		chkRace[i] = env->addCheckBox(false, rect<s32>((30 + (i % 3) * 90) * xScale, (30 + (i / 3) * 50) * yScale, (100 + (i % 3) * 90) * xScale, (70 + (i / 3) * 50) * yScale),
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
