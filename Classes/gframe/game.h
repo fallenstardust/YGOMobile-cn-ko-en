@@ -169,7 +169,8 @@ public:
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
-	void AddIGUIImageBUtton(irr::gui::IGUIButton* button);
+	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
+	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font);
 
 	int LocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
@@ -309,7 +310,7 @@ public:
 	irr::gui::IGUICheckBox* chkMusicMode;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
-	irr::gui::CGUIImageButton* btnLanMode;
+	irr::gui::IGUIButton* btnLanMode;
 	    irr::gui::IGUIStaticText* textLanMode;
 	irr::gui::CGUIImageButton* btnSingleMode;
 	    irr::gui::IGUIStaticText* textSingleMode;
