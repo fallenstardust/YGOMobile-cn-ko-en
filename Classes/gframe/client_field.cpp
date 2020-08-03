@@ -646,8 +646,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		mainGame->wOptions->setRelativePosition(pos);
         mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 405 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	} else {
-		mainGame->SetStaticText(mainGame->stOptions, 370  * mainGame->xScale, mainGame->guiFont,
-			(wchar_t*)dataManager.GetDesc(select_options[0]));
+		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont,(wchar_t*)dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
 		mainGame->btnOptionp->setVisible(false);
 		mainGame->btnOptionn->setVisible(count > 1);
@@ -658,7 +657,6 @@ void ClientField::ShowSelectOption(int select_hint) {
 		recti pos = mainGame->wOptions->getRelativePosition();
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 180 * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
-        mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, 390 * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	}
 	if(select_hint)
 		myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));

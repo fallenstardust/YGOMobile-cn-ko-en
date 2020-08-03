@@ -576,7 +576,10 @@ bool Game::Initialize(ANDROID_APP app) {
 	wOptions = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, L"");
 	wOptions->getCloseButton()->setVisible(false);
 	wOptions->setVisible(false);
-        ChangeToIGUIImageWindow(wOptions, bgOptions, imageManager.tDialog_L);
+    wOptions->setDrawBackground(false);
+    bgOptions = env->addImage(rect<s32>(0, 0, 390 * xScale, 180 * yScale), wOptions, -1, 0, true);
+    bgOptions->setImage(imageManager.tDialog_L);
+    bgOptions->setScaleImage(true);
 	stOptions =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wOptions, -1, false);
 	stOptions->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnOptionOK = env->addButton(rect<s32>(130 * xScale, 115 * yScale, 260 * xScale, 165 * yScale), wOptions, BUTTON_OPTION_OK, dataManager.GetSysString(1211));
