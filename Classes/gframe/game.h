@@ -311,19 +311,19 @@ public:
 	irr::gui::IGUICheckBox* chkMusicMode;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
-	irr::gui::IGUIButton* btnLanMode;
-	    irr::gui::IGUIStaticText* textLanMode;
+	irr::gui::CGUIImageButton* btnLanMode;
+	irr::gui::IGUIStaticText* textLanMode;
 	irr::gui::CGUIImageButton* btnSingleMode;
-	    irr::gui::IGUIStaticText* textSingleMode;
+	irr::gui::IGUIStaticText* textSingleMode;
 	irr::gui::CGUIImageButton* btnReplayMode;
-	    irr::gui::IGUIStaticText* textReplayMode;
+	irr::gui::IGUIStaticText* textReplayMode;
 	irr::gui::IGUIButton* btnTestMode;
 	irr::gui::CGUIImageButton* btnDeckEdit;
-        irr::gui::IGUIStaticText* textDeckEdit;
+	irr::gui::IGUIStaticText* textDeckEdit;
 	irr::gui::CGUIImageButton* btnSettings;
-        irr::gui::IGUIStaticText* textSettings;
+	irr::gui::IGUIStaticText* textSettings;
 	irr::gui::CGUIImageButton* btnModeExit;
-        irr::gui::IGUIStaticText* textModeExit;
+	irr::gui::IGUIStaticText* textModeExit;
 	//lan
 	irr::gui::IGUIWindow* wLanWindow;
 	irr::gui::IGUIImage* bgLanWindow;

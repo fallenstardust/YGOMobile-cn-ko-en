@@ -211,8 +211,13 @@ bool Game::Initialize(ANDROID_APP app) {
 	wMainMenu = env->addWindow(rect<s32>(450 * xScale, 40 * yScale, 900 * xScale, 600 * yScale), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDrawBackground(false);
-    btnLanMode = env->addButton(rect<s32>(15 * xScale, 30 * yScale, 350 * xScale, 106 * yScale), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
-        ChangeToIGUIImageButton(btnLanMode, imageManager.tTitleBar, imageManager.tTitleBar, titleFont);
+	btnLanMode = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(15 * xScale, 30 * yScale, 350 * xScale, 106 * yScale), wMainMenu, BUTTON_LAN_MODE);
+	btnLanMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+	btnLanMode->setDrawBorder(false);
+	btnLanMode->setImage(imageManager.tTitleBar);
+	env->addStaticText(strbuf, rect<s32>(55 * xScale, 2 * yScale, 280 * xScale, 35 * yScale), false, false, btnLanMode);
+	textLanMode = env->addStaticText(dataManager.GetSysString(1200), rect<s32>(115 * xScale, 25 * yScale, 300 * xScale, 65 * yScale), false, false, btnLanMode);
+	textLanMode->setOverrideFont(titleFont);
 	btnSingleMode = irr::gui::CGUIImageButton::addImageButton(env,  rect<s32>(15 * xScale, 110 * yScale, 350 * xScale, 186 * yScale), wMainMenu, BUTTON_SINGLE_MODE);
 	btnSingleMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
 	btnSingleMode->setDrawBorder(false);
