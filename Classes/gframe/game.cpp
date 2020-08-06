@@ -1841,7 +1841,7 @@ const wchar_t* Game::LocalName(int local_player) {
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image) {
     window->setDrawBackground(false);
     recti pos = window->getRelativePosition();
-	bgwindow = env->addImage(rect<s32>(0, 0, pos.LowerRightCorner.X - pos.UpperLeftCorner.X, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y), window, -1, 0, true);
+	bgwindow = env->addImage(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
 	bgwindow->setImage(image);
 	bgwindow->setScaleImage(true);
 

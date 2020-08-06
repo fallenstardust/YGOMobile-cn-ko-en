@@ -170,7 +170,7 @@ public:
 	void CloseGameWindow();
 	void CloseDuelWindow();
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
-	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font);
+	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
 	int LocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
