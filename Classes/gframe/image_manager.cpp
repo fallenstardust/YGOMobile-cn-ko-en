@@ -45,6 +45,11 @@ bool ImageManager::Initial(const path dir) {
     tWindow = driver->getTexture((dir + path("/textures/extra/sWindow.png")).c_str());
 	tDialog_S = driver->getTexture((dir + path("/textures/extra/sDialog_S.png")).c_str());
 	tDialog_L = driver->getTexture((dir + path("/textures/extra/sDialog_L.png")).c_str());
+	tButton_L = driver->getTexture((dir + path("/textures/extra/sButton_L.png")).c_str());
+	tButton_L_pressed = driver->getTexture((dir + path("/textures/extra/sButton_L_pressed.png")).c_str());
+	tButton_S = driver->getTexture((dir + path("/textures/extra/sButton_S.png")).c_str());
+	tButton_S_pressed = driver->getTexture((dir + path("/textures/extra/sButton_S_pressed.png")).c_str());
+
     if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());

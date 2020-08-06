@@ -68,7 +68,9 @@ public:
 	irr::video::ITexture* tDialog_L;
 	irr::video::ITexture* tDialog_S;
 	irr::video::ITexture* tButton_L;
+	irr::video::ITexture* tButton_L_pressed;
 	irr::video::ITexture* tButton_S;
+	irr::video::ITexture* tButton_S_pressed;
     std::list<std::string> support_types;
 };
 
