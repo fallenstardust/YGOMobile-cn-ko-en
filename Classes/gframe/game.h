@@ -374,11 +374,11 @@ public:
 	irr::gui::IGUIImage* bgReplay;
 	irr::gui::IGUIListBox* lstReplayList;
 	irr::gui::IGUIStaticText* stReplayInfo;
-	irr::gui::IGUIButton* btnLoadReplay;
-	irr::gui::IGUIButton* btnDeleteReplay;
-	irr::gui::IGUIButton* btnRenameReplay;
-	irr::gui::IGUIButton* btnReplayCancel;
-	irr::gui::IGUIButton* btnExportDeck;
+	irr::gui::IGUIButton* btnLoadReplay;//
+	irr::gui::IGUIButton* btnDeleteReplay;//
+	irr::gui::IGUIButton* btnRenameReplay;//
+	irr::gui::IGUIButton* btnReplayCancel;//
+	irr::gui::IGUIButton* btnExportDeck;//
 	irr::gui::IGUIEditBox* ebRepStartTurn;
 	//single play
 	irr::gui::IGUIWindow* wSinglePlay;
@@ -529,6 +529,7 @@ public:
 	irr::gui::IGUIStaticText* stScale;
 	//deck manage
 	irr::gui::IGUIWindow* wDeckManage;
+	irr::gui::IGUIImage* bgDeckManage;
 	irr::gui::IGUIListBox* lstCategories;
 	irr::gui::IGUIListBox* lstDecks;
 	irr::gui::IGUIButton* btnNewCategory;
