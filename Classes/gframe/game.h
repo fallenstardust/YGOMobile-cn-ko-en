@@ -403,8 +403,8 @@ public:
 	//
 	irr::gui::IGUIWindow* wFTSelect;
 	irr::gui::IGUIImage* bgFTSelect;
-	irr::gui::IGUIButton* btnFirst;
-	irr::gui::IGUIButton* btnSecond;
+	irr::gui::IGUIButton* btnFirst;//
+	irr::gui::IGUIButton* btnSecond;//
 	//message
 	irr::gui::IGUIWindow* wMessage;
 	irr::gui::IGUIImage* bgMessage;
@@ -429,10 +429,10 @@ public:
 	irr::gui::IGUIWindow* wOptions;
 	irr::gui::IGUIImage* bgOptions;
 	irr::gui::IGUIStaticText* stOptions;
-	irr::gui::IGUIButton* btnOptionp;
-	irr::gui::IGUIButton* btnOptionn;
-	irr::gui::IGUIButton* btnOptionOK;
-	irr::gui::IGUIButton* btnOption[5];
+	irr::gui::IGUIButton* btnOptionp;//
+	irr::gui::IGUIButton* btnOptionn;//
+	irr::gui::IGUIButton* btnOptionOK;//
+	irr::gui::IGUIButton* btnOption[5];//
 	irr::gui::IGUIScrollBar* scrOption;
 	//pos selection
 	irr::gui::IGUIWindow* wPosSelect;
@@ -459,7 +459,7 @@ public:
 	irr::gui::IGUIWindow* wANNumber;
 	irr::gui::IGUIImage* bgANNumber;
 	irr::gui::IGUIComboBox* cbANNumber;
-	irr::gui::IGUIButton* btnANNumber[12];
+	irr::gui::IGUIButton* btnANNumber[12];//
 	irr::gui::IGUIButton* btnANNumberOK;//
 	//announce card
 	irr::gui::IGUIWindow* wANCard;
@@ -562,9 +562,9 @@ public:
 	irr::gui::IGUIEditBox* ebAttack;
 	irr::gui::IGUIEditBox* ebDefense;
 	irr::gui::IGUIEditBox* ebCardName;
-	irr::gui::IGUIButton* btnEffectFilter;
-	irr::gui::IGUIButton* btnStartFilter;
-	irr::gui::IGUIButton* btnClearFilter;
+	irr::gui::IGUIButton* btnEffectFilter;//
+	irr::gui::IGUIButton* btnStartFilter;//
+	irr::gui::IGUIButton* btnClearFilter;//
 	irr::gui::IGUIWindow* wCategories;
 	irr::gui::IGUICheckBox* chkCategory[32];
 	irr::gui::IGUIButton* btnCategoryOK;
@@ -583,11 +583,11 @@ public:
 	irr::gui::IGUIButton* btnRSNo;//
 	//replay control
 	irr::gui::IGUIStaticText* wReplayControl;
-	irr::gui::IGUIButton* btnReplayStart;
-	irr::gui::IGUIButton* btnReplayPause;
-	irr::gui::IGUIButton* btnReplayStep;
-	irr::gui::IGUIButton* btnReplayUndo;
-	irr::gui::IGUIButton* btnReplayExit;
+	irr::gui::IGUIButton* btnReplayStart;//
+	irr::gui::IGUIButton* btnReplayPause;//
+	irr::gui::IGUIButton* btnReplayStep;//
+	irr::gui::IGUIButton* btnReplayUndo;//
+	irr::gui::IGUIButton* btnReplayExit;//
 	irr::gui::IGUIButton* btnReplaySwap;//
 	//surrender/leave
 	irr::gui::IGUIButton* btnLeaveGame;//
