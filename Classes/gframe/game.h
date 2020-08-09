@@ -582,7 +582,7 @@ public:
 	irr::gui::IGUIButton* btnRSYes;//
 	irr::gui::IGUIButton* btnRSNo;//
 	//replay control
-	irr::gui::IGUIStaticText* wReplayControl;
+	irr::gui::IGUIWindow* wReplayControl;
 	irr::gui::IGUIButton* btnReplayStart;//
 	irr::gui::IGUIButton* btnReplayPause;//
 	irr::gui::IGUIButton* btnReplayStep;//
