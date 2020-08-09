@@ -256,7 +256,7 @@ public:
 	irr::gui::CGUITTFont* titleFont;
 	std::map<irr::gui::CGUIImageButton*, int> imageLoading;
 	//card image
-	irr::gui::IGUIStaticText* wCardImg;
+	irr::gui::IGUIImage* wCardImg;
 	irr::gui::IGUIImage* imgCard;
 	//imageButtons pallet
 	irr::gui::IGUIWindow* wPallet;
@@ -281,7 +281,8 @@ public:
 	irr::gui::IGUIStaticText* stTip;
 	irr::gui::IGUIStaticText* stCardListTip;
 	//infos
-	irr::gui::IGUIStaticText* wInfos;
+	irr::gui::IGUIWindow* wInfos;
+	irr::gui::IGUIImage* bgInfos;
 	irr::gui::IGUIStaticText* stName;
 	irr::gui::IGUIStaticText* stInfo;
 	irr::gui::IGUIStaticText* stDataInfo;

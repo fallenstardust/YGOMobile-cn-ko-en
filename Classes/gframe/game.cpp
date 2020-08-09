@@ -380,8 +380,9 @@ bool Game::Initialize(ANDROID_APP app) {
 		ChangeToIGUIImageButton(btnHostPrepCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 #endif
 	//img always use *yScale to keep proportion
-	wCardImg = env->addStaticText(L"", rect<s32>(1 * yScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * yScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), true, false, 0, -1, true);
-	wCardImg->setBackgroundColor(0x6011113d);
+	wCardImg = env->addImage(rect<s32>(1 * yScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * yScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), 0, -1, 0, true);
+	wCardImg->setImage(imageManager.tDialog_S);
+	wCardImg->setScaleImage(true);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(rect<s32>(10 * yScale, 9 * yScale, (10 + CARD_IMG_WIDTH) * yScale, (9 + CARD_IMG_HEIGHT) * yScale), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
@@ -392,20 +393,26 @@ bool Game::Initialize(ANDROID_APP app) {
 	wPhase = env->addStaticText(L"", rect<s32>(480 * xScale, 305 * yScale, 895 * xScale, 335 * yScale));
 	wPhase->setVisible(false);
 	btnPhaseStatus = env->addButton(rect<s32>(0 * xScale, 0 * yScale, 50 * xScale, 30 * yScale), wPhase, BUTTON_PHASE, L"");
+	    ChangeToIGUIImageButton(btnPhaseStatus, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnPhaseStatus->setIsPushButton(true);
 	btnPhaseStatus->setPressed(true);
 	btnPhaseStatus->setVisible(false);
 	btnBP = env->addButton(rect<s32>(160 * xScale, 0 * yScale, 210 * xScale, 30 * yScale), wPhase, BUTTON_BP, L"\xff22\xff30");
+        ChangeToIGUIImageButton(btnBP, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnBP->setVisible(false);
 	btnM2 = env->addButton(rect<s32>(160 * xScale, 0 * yScale, 210 * xScale, 30 * yScale), wPhase, BUTTON_M2, L"\xff2d\xff12");
+        ChangeToIGUIImageButton(btnM2, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnM2->setVisible(false);
 	btnEP = env->addButton(rect<s32>(320 * xScale, 0 * yScale, 370 * xScale, 30 * yScale), wPhase, BUTTON_EP, L"\xff25\xff30");
+        ChangeToIGUIImageButton(btnEP, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnEP->setVisible(false);
 #endif
     //tab（changed）
-	wInfos = env->addStaticText(L"", rect<s32>(1 * xScale, 275 * yScale, 260 * xScale, 639 * yScale), true, false, 0, -1, true);
-	wInfos->setBackgroundColor(0xab11113d);
+	wInfos = env->addWindow(rect<s32>(1 * xScale, 275 * yScale, 260 * xScale, 639 * yScale), false, L"");
+	wInfos->getCloseButton()->setVisible(false);
+	wInfos->setDraggable(false);
 	wInfos->setVisible(false);
+	    ChangeToIGUIImageWindow(wInfos, bgInfos, imageManager.tWindow_V);
 	//info
 	stName = env->addStaticText(L"", rect<s32>(10 * xScale, 10 * yScale, 250 * xScale, 32 * yScale), true, false, wInfos, -1, false);
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
@@ -759,7 +766,7 @@ bool Game::Initialize(ANDROID_APP app) {
 	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 990 * xScale, 550 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
-	    ChangeToIGUIImageWindow(wDeckManage, bgDeckManage, imageManager.tDialog_S);
+	    ChangeToIGUIImageWindow(wDeckManage, bgDeckManage, imageManager.tWindow_V);
 	lstCategories = env->addListBox(rect<s32>(10 * xScale, 30 * yScale, 140 * xScale, 530 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
     lstCategories->setItemHeight(25 * yScale);
 	lstDecks = env->addListBox(rect<s32>(150 * xScale, 30 * yScale, 340 * xScale, 530 * yScale), wDeckManage, LISTBOX_DECKS, true);
