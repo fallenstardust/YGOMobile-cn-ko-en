@@ -497,15 +497,16 @@ public:
 	irr::gui::IGUICheckBox* chkIgnore2;
 	//phase button
 	irr::gui::IGUIStaticText* wPhase;
-	irr::gui::IGUIButton* btnPhaseStatus;
-	irr::gui::IGUIButton* btnBP;
-	irr::gui::IGUIButton* btnM2;
-	irr::gui::IGUIButton* btnEP;
+	irr::gui::IGUIButton* btnPhaseStatus;//
+	irr::gui::IGUIButton* btnBP;//
+	irr::gui::IGUIButton* btnM2;//
+	irr::gui::IGUIButton* btnEP;//
 	//deck edit
-	irr::gui::IGUIStaticText* wDeckEdit;
+	irr::gui::IGUIWindow* wDeckEdit;
+	irr::gui::IGUIImage* bgDeckEdit;
 	irr::gui::IGUIComboBox* cbDBCategory;
 	irr::gui::IGUIComboBox* cbDBDecks;
-	irr::gui::IGUIButton* btnManageDeck;
+	irr::gui::IGUIButton* btnManageDeck;//
 	irr::gui::IGUIButton* btnClearDeck;
 	irr::gui::IGUIButton* btnSortDeck;
 	irr::gui::IGUIButton* btnShuffleDeck;
@@ -543,6 +544,7 @@ public:
 	irr::gui::IGUIButton* btnCopyDeck;
 	irr::gui::IGUIButton* btnCloseDM;
 	irr::gui::IGUIWindow* wDMQuery;
+	irr::gui::IGUIImage* bgDMQuery;
 	irr::gui::IGUIStaticText* stDMMessage;
 	irr::gui::IGUIStaticText* stDMMessage2;
 	irr::gui::IGUIEditBox* ebDMName;
@@ -551,7 +553,8 @@ public:
 	irr::gui::IGUIButton* btnDMCancel;
 	irr::gui::IGUIComboBox* cbLFList;
 	//filter
-	irr::gui::IGUIStaticText* wFilter;
+	irr::gui::IGUIWindow* wFilter;
+	irr::gui::IGUIImage* bgFilter;
 	irr::gui::IGUIScrollBar* scrFilter;
 	irr::gui::IGUIComboBox* cbCardType;
 	irr::gui::IGUIComboBox* cbCardType2;
@@ -567,10 +570,12 @@ public:
 	irr::gui::IGUIButton* btnStartFilter;//
 	irr::gui::IGUIButton* btnClearFilter;//
 	irr::gui::IGUIWindow* wCategories;
+	irr::gui::IGUIImage* bgCategories;
 	irr::gui::IGUICheckBox* chkCategory[32];
 	irr::gui::IGUIButton* btnCategoryOK;
 	irr::gui::IGUIButton* btnMarksFilter;
 	irr::gui::IGUIWindow* wLinkMarks;
+	irr::gui::IGUIImage* bgLinkMarks;
 	irr::gui::IGUIButton* btnMark[8];
 	irr::gui::IGUIButton* btnMarksOK;
 	//sort type
