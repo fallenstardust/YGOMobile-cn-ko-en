@@ -507,12 +507,12 @@ public:
 	irr::gui::IGUIComboBox* cbDBCategory;
 	irr::gui::IGUIComboBox* cbDBDecks;
 	irr::gui::IGUIButton* btnManageDeck;//
-	irr::gui::IGUIButton* btnClearDeck;
+	irr::gui::IGUIButton* btnClearDeck;//
 	irr::gui::IGUIButton* btnSortDeck;
-	irr::gui::IGUIButton* btnShuffleDeck;
+	irr::gui::IGUIButton* btnShuffleDeck;//
 	irr::gui::IGUIButton* btnSaveDeck;
-	irr::gui::IGUIButton* btnDeleteDeck;
-	irr::gui::IGUIButton* btnSaveDeckAs;
+	irr::gui::IGUIButton* btnDeleteDeck;//
+	irr::gui::IGUIButton* btnSaveDeckAs;//
 	irr::gui::IGUIButton* btnSideOK;
 	irr::gui::IGUIButton* btnSideShuffle;
 	irr::gui::IGUIButton* btnSideSort;
@@ -534,23 +534,23 @@ public:
 	irr::gui::IGUIImage* bgDeckManage;
 	irr::gui::IGUIListBox* lstCategories;
 	irr::gui::IGUIListBox* lstDecks;
-	irr::gui::IGUIButton* btnNewCategory;
-	irr::gui::IGUIButton* btnRenameCategory;
-	irr::gui::IGUIButton* btnDeleteCategory;
-	irr::gui::IGUIButton* btnNewDeck;
-	irr::gui::IGUIButton* btnRenameDeck;
-	irr::gui::IGUIButton* btnDMDeleteDeck;
-	irr::gui::IGUIButton* btnMoveDeck;
-	irr::gui::IGUIButton* btnCopyDeck;
-	irr::gui::IGUIButton* btnCloseDM;
+	irr::gui::IGUIButton* btnNewCategory;//
+	irr::gui::IGUIButton* btnRenameCategory;//
+	irr::gui::IGUIButton* btnDeleteCategory;//
+	irr::gui::IGUIButton* btnNewDeck;//
+	irr::gui::IGUIButton* btnRenameDeck;//
+	irr::gui::IGUIButton* btnDMDeleteDeck;//
+	irr::gui::IGUIButton* btnMoveDeck;//
+	irr::gui::IGUIButton* btnCopyDeck;//
+	irr::gui::IGUIButton* btnCloseDM;//
 	irr::gui::IGUIWindow* wDMQuery;
 	irr::gui::IGUIImage* bgDMQuery;
 	irr::gui::IGUIStaticText* stDMMessage;
 	irr::gui::IGUIStaticText* stDMMessage2;
 	irr::gui::IGUIEditBox* ebDMName;
 	irr::gui::IGUIComboBox* cbDMCategory;
-	irr::gui::IGUIButton* btnDMOK;
-	irr::gui::IGUIButton* btnDMCancel;
+	irr::gui::IGUIButton* btnDMOK;//
+	irr::gui::IGUIButton* btnDMCancel;//
 	irr::gui::IGUIComboBox* cbLFList;
 	//filter
 	irr::gui::IGUIWindow* wFilter;
