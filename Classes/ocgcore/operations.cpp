@@ -3794,7 +3794,7 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 			uint8 dest = pcard->sendto_param.location;
 			if(!(reason & REASON_RULE) &&
 			        (pcard->get_status(STATUS_SUMMONING | STATUS_SPSUMMON_STEP)
-			         || (!(pcard->current.reason & REASON_COST) && !pcard->is_affect_by_effect(pcard->current.reason_effect))
+			         || (!(pcard->current.reason & (REASON_COST | REASON_SUMMON | REASON_MATERIAL)) && !pcard->is_affect_by_effect(pcard->current.reason_effect))
 			         || (dest == LOCATION_HAND && !pcard->is_capable_send_to_hand(core.reason_player))
 			         || (dest == LOCATION_DECK && !pcard->is_capable_send_to_deck(core.reason_player))
 			         || (dest == LOCATION_REMOVED && !pcard->is_removeable(core.reason_player, pcard->sendto_param.position, reason))
@@ -5213,7 +5213,7 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 	case 3: {
 		card* tuner = core.limit_tuner;
 		effect* ptuner = tuner->is_affected_by_effect(EFFECT_TUNER_MATERIAL_LIMIT);
-		if(ptuner) {
+		if(ptuner && ptuner->is_flag(EFFECT_FLAG_SPSUM_PARAM)) {
 			if(ptuner->s_range && ptuner->s_range > min)
 				min = ptuner->s_range;
 			if(ptuner->o_range && ptuner->o_range < max)
@@ -5242,7 +5242,7 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 			nsyn.push_back(smat);
 			tuner->sum_param = tuner->get_synchro_level(pcard);
 			smat->sum_param = smat->get_synchro_level(pcard);
-			if(check_with_sum_limit_m(nsyn, lv, 0, 0, 0, 2))
+			if(check_with_sum_limit_m(nsyn, lv, 0, 0, 0, 0xffff, 2))
 				core.units.begin()->step = 8;
 		}
 		return FALSE;
@@ -5416,8 +5416,8 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 						if(nsyn[i]->is_affected_by_effect(EFFECT_SCRAP_CHIMERA))
 							mremoved = false;
 					}
-					if(mfiltered && check_with_sum_limit_m(nsyn_filtered, lv, 0, min, max, mcount)) {
-						if(mremoved && check_with_sum_limit_m(nsyn_removed, lv, 0, min, max, mcount)) {
+					if(mfiltered && check_with_sum_limit_m(nsyn_filtered, lv, 0, min, max, 0xffff, mcount)) {
+						if(mremoved && check_with_sum_limit_m(nsyn_removed, lv, 0, min, max, 0xffff, mcount)) {
 							add_process(PROCESSOR_SELECT_YESNO, 0, 0, 0, playerid, peffect->description);
 							core.units.begin()->step = 9;
 							return FALSE;

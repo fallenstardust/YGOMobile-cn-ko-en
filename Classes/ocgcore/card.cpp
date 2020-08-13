@@ -2221,9 +2221,8 @@ int32 card::get_counter(uint16 countertype) {
 void card::set_material(card_set* materials) {
 	if(!materials) {
 		material_cards.clear();
-		return;
-	}
-	material_cards = *materials;
+	} else
+		material_cards = *materials;
 	for(auto& pcard : material_cards)
 		pcard->current.reason_card = this;
 	effect_set eset;
@@ -2849,7 +2848,7 @@ void card::get_unique_target(card_set* cset, int32 controler, card* icard) {
 		const auto& player = pduel->game_field->player[controler ^ p];
 		if(unique_location & LOCATION_MZONE) {
 			for(auto& pcard : player.list_mzone) {
-				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && !pcard->get_status(STATUS_BATTLE_DESTROYED | STATUS_SPSUMMON_STEP)
+				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && !pcard->get_status(STATUS_SPSUMMON_STEP)
 					&& check_unique_code(pcard))
 					cset->insert(pcard);
 			}
@@ -3123,17 +3122,6 @@ int32 card::is_special_summonable(uint8 playerid, uint32 summon_type) {
 	}
 	effect_set eset;
 	filter_spsummon_procedure(playerid, &eset, summon_type);
-	pduel->game_field->core.limit_tuner = 0;
-	pduel->game_field->core.limit_syn = 0;
-	pduel->game_field->core.limit_syn_minc = 0;
-	pduel->game_field->core.limit_syn_maxc = 0;
-	pduel->game_field->core.limit_xyz = 0;
-	pduel->game_field->core.limit_xyz_minc = 0;
-	pduel->game_field->core.limit_xyz_maxc = 0;
-	pduel->game_field->core.limit_link = 0;
-	pduel->game_field->core.limit_link_card = 0;
-	pduel->game_field->core.limit_link_minc = 0;
-	pduel->game_field->core.limit_link_maxc = 0;
 	pduel->game_field->restore_lp_cost();
 	return eset.size();
 }

@@ -1026,7 +1026,7 @@ int32 scriptlib::card_is_attack(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE))
+	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER))
 		lua_pushboolean(L, 0);
 	else {
 		uint32 atk = pcard->get_attack();
@@ -1049,7 +1049,8 @@ int32 scriptlib::card_is_defense(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	if((pcard->data.type & TYPE_LINK) || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	if((pcard->data.type & TYPE_LINK)
+		|| (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER)))
 		lua_pushboolean(L, 0);
 	else {
 		uint32 def = pcard->get_defense();
@@ -1569,10 +1570,12 @@ int32 scriptlib::card_get_tuner_limit(lua_State *L) {
 			lua_pushnil(L);
 		uint16 min = 0;
 		uint16 max = 99;
-		if(peffect->s_range && peffect->s_range > min)
-			min = peffect->s_range;
-		if(peffect->o_range && peffect->o_range < max)
-			max = peffect->o_range;
+		if(peffect->is_flag(EFFECT_FLAG_SPSUM_PARAM)) {
+			if(peffect->s_range && peffect->s_range > min)
+				min = peffect->s_range;
+			if(peffect->o_range && peffect->o_range < max)
+				max = peffect->o_range;
+		}
 		lua_pushinteger(L, min);
 		lua_pushinteger(L, max);
 		return 5;
@@ -1594,10 +1597,12 @@ int32 scriptlib::card_get_hand_synchro(lua_State *L) {
 			lua_pushnil(L);
 		uint16 min = 0;
 		uint16 max = 99;
-		if(peffect->s_range && peffect->s_range > min)
-			min = peffect->s_range;
-		if(peffect->o_range && peffect->o_range < max)
-			max = peffect->o_range;
+		if(peffect->is_flag(EFFECT_FLAG_SPSUM_PARAM)) {
+			if(peffect->s_range && peffect->s_range > min)
+				min = peffect->s_range;
+			if(peffect->o_range && peffect->o_range < max)
+				max = peffect->o_range;
+		}
 		lua_pushinteger(L, min);
 		lua_pushinteger(L, max);
 		return 4;
@@ -1611,10 +1616,12 @@ int32 scriptlib::card_get_hand_synchro(lua_State *L) {
 			lua_pushnil(L);
 		uint16 min = 0;
 		uint16 max = 99;
-		if(peffect->s_range && peffect->s_range > min)
-			min = peffect->s_range;
-		if(peffect->o_range && peffect->o_range < max)
-			max = peffect->o_range;
+		if(peffect->is_flag(EFFECT_FLAG_SPSUM_PARAM)) {
+			if(peffect->s_range && peffect->s_range > min)
+				min = peffect->s_range;
+			if(peffect->o_range && peffect->o_range < max)
+				max = peffect->o_range;
+		}
 		lua_pushinteger(L, min);
 		lua_pushinteger(L, max);
 		return 4;
@@ -2031,7 +2038,12 @@ int32 scriptlib::card_is_synchro_summonable(lua_State *L) {
 	pcard->pduel->game_field->core.limit_syn = mg;
 	pcard->pduel->game_field->core.limit_syn_minc = minc;
 	pcard->pduel->game_field->core.limit_syn_maxc = maxc;
-	lua_pushboolean(L, pcard->is_special_summonable(p, SUMMON_TYPE_SYNCHRO));
+	int32 res = pcard->is_special_summonable(p, SUMMON_TYPE_SYNCHRO);
+	pcard->pduel->game_field->core.limit_tuner = 0;
+	pcard->pduel->game_field->core.limit_syn = 0;
+	pcard->pduel->game_field->core.limit_syn_minc = 0;
+	pcard->pduel->game_field->core.limit_syn_maxc = 0;
+	lua_pushboolean(L, res);
 	return 1;
 }
 int32 scriptlib::card_is_xyz_summonable(lua_State *L) {
@@ -2057,7 +2069,11 @@ int32 scriptlib::card_is_xyz_summonable(lua_State *L) {
 	pcard->pduel->game_field->core.limit_xyz = materials;
 	pcard->pduel->game_field->core.limit_xyz_minc = minc;
 	pcard->pduel->game_field->core.limit_xyz_maxc = maxc;
-	lua_pushboolean(L, pcard->is_special_summonable(p, SUMMON_TYPE_XYZ));
+	int32 res = pcard->is_special_summonable(p, SUMMON_TYPE_XYZ);
+	pcard->pduel->game_field->core.limit_xyz = 0;
+	pcard->pduel->game_field->core.limit_xyz_minc = 0;
+	pcard->pduel->game_field->core.limit_xyz_maxc = 0;
+	lua_pushboolean(L, res);
 	return 1;
 }
 int32 scriptlib::card_is_link_summonable(lua_State *L) {
@@ -2091,7 +2107,12 @@ int32 scriptlib::card_is_link_summonable(lua_State *L) {
 	pcard->pduel->game_field->core.limit_link_card = lcard;
 	pcard->pduel->game_field->core.limit_link_minc = minc;
 	pcard->pduel->game_field->core.limit_link_maxc = maxc;
-	lua_pushboolean(L, pcard->is_special_summonable(p, SUMMON_TYPE_LINK));
+	int32 res = pcard->is_special_summonable(p, SUMMON_TYPE_LINK);
+	pcard->pduel->game_field->core.limit_link = 0;
+	pcard->pduel->game_field->core.limit_link_card = 0;
+	pcard->pduel->game_field->core.limit_link_minc = 0;
+	pcard->pduel->game_field->core.limit_link_maxc = 0;
+	lua_pushboolean(L, res);
 	return 1;
 }
 int32 scriptlib::card_is_can_be_summoned(lua_State *L) {
@@ -2445,11 +2466,11 @@ int32 scriptlib::card_is_level_below(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 lvl = (uint32)lua_tointeger(L, 2);
-	if((pcard->data.type & (TYPE_XYZ | TYPE_LINK)) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 plvl = pcard->get_level();
+	if(plvl == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_level() <= lvl);
+		lua_pushboolean(L, plvl <= lvl);
 	return 1;
 }
 int32 scriptlib::card_is_level_above(lua_State *L) {
@@ -2457,11 +2478,11 @@ int32 scriptlib::card_is_level_above(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 lvl = (uint32)lua_tointeger(L, 2);
-	if((pcard->data.type & (TYPE_XYZ | TYPE_LINK)) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 plvl = pcard->get_level();
+	if(plvl == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_level() >= lvl);
+		lua_pushboolean(L, plvl >= lvl);
 	return 1;
 }
 int32 scriptlib::card_is_rank_below(lua_State *L) {
@@ -2469,11 +2490,11 @@ int32 scriptlib::card_is_rank_below(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 rnk = (uint32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_XYZ) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 prnk = pcard->get_rank();
+	if(prnk == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_rank() <= rnk);
+		lua_pushboolean(L, prnk <= rnk);
 	return 1;
 }
 int32 scriptlib::card_is_rank_above(lua_State *L) {
@@ -2481,11 +2502,11 @@ int32 scriptlib::card_is_rank_above(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 rnk = (uint32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_XYZ) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 prnk = pcard->get_rank();
+	if(prnk == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_rank() >= rnk);
+		lua_pushboolean(L, prnk >= rnk);
 	return 1;
 }
 int32 scriptlib::card_is_link_below(lua_State *L) {
@@ -2493,11 +2514,11 @@ int32 scriptlib::card_is_link_below(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 lnk = (uint32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_LINK) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 plnk = pcard->get_link();
+	if(plnk == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_link() <= lnk);
+		lua_pushboolean(L, plnk <= lnk);
 	return 1;
 }
 int32 scriptlib::card_is_link_above(lua_State *L) {
@@ -2505,11 +2526,11 @@ int32 scriptlib::card_is_link_above(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 lnk = (uint32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_LINK) || (pcard->status & STATUS_NO_LEVEL)
-	        || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	uint32 plnk = pcard->get_link();
+	if(plnk == 0)
 		lua_pushboolean(L, 0);
 	else
-		lua_pushboolean(L, pcard->get_link() >= lnk);
+		lua_pushboolean(L, plnk >= lnk);
 	return 1;
 }
 int32 scriptlib::card_is_attack_below(lua_State *L) {
@@ -2517,7 +2538,7 @@ int32 scriptlib::card_is_attack_below(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 atk = (int32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE))
+	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER))
 		lua_pushboolean(L, 0);
 	else {
 		int32 _atk = pcard->get_attack();
@@ -2530,7 +2551,7 @@ int32 scriptlib::card_is_attack_above(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 atk = (int32)lua_tointeger(L, 2);
-	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE))
+	if(!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER))
 		lua_pushboolean(L, 0);
 	else {
 		int32 _atk = pcard->get_attack();
@@ -2543,7 +2564,8 @@ int32 scriptlib::card_is_defense_below(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 def = (int32)lua_tointeger(L, 2);
-	if((pcard->data.type & TYPE_LINK) || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	if((pcard->data.type & TYPE_LINK)
+		|| (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER)))
 		lua_pushboolean(L, 0);
 	else {
 		int32 _def = pcard->get_defense();
@@ -2556,7 +2578,8 @@ int32 scriptlib::card_is_defense_above(lua_State *L) {
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 def = (int32)lua_tointeger(L, 2);
-	if((pcard->data.type & TYPE_LINK) || (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !(pcard->current.location & LOCATION_MZONE)))
+	if((pcard->data.type & TYPE_LINK)
+		|| (!(pcard->data.type & TYPE_MONSTER) && !(pcard->get_type() & TYPE_MONSTER) && !pcard->is_affected_by_effect(EFFECT_PRE_MONSTER)))
 		lua_pushboolean(L, 0);
 	else {
 		int32 _def = pcard->get_defense();
