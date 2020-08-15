@@ -942,7 +942,7 @@ bool Game::Initialize(ANDROID_APP app) {
 	wLinkMarks->setVisible(false);
 	    ChangeToIGUIImageWindow(wLinkMarks, bgLinkMarks, imageManager.tWindow_V);
 	btnMarksOK = env->addButton(recti(80 * xScale, 80 * yScale, 140 * xScale, 140 * yScale), wLinkMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211));
-        ChangeToIGUIImageButton(btnMarksOK, imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
+        ChangeToIGUIImageButton(btnMarksOK, imageManager.tButton_C, imageManager.tButton_C_pressed);
 	btnMark[0] = env->addButton(recti(10 * xScale, 10 * yScale, 70 * xScale, 70 * yScale), wLinkMarks, -1, L"\u2196");
         ChangeToIGUIImageButton(btnMark[0], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[1] = env->addButton(recti(80 * xScale, 10 * yScale, 140 * xScale, 70 * yScale), wLinkMarks, -1, L"\u2191");
