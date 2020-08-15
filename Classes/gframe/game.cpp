@@ -942,23 +942,23 @@ bool Game::Initialize(ANDROID_APP app) {
 	wLinkMarks->setVisible(false);
 	    ChangeToIGUIImageWindow(wLinkMarks, bgLinkMarks, imageManager.tWindow_V);
 	btnMarksOK = env->addButton(recti(80 * xScale, 80 * yScale, 140 * xScale, 140 * yScale), wLinkMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211));
-        ChangeToIGUIImageButton(btnMarksOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMarksOK, imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[0] = env->addButton(recti(10 * xScale, 10 * yScale, 70 * xScale, 70 * yScale), wLinkMarks, -1, L"\u2196");
-        ChangeToIGUIImageButton(btnMark[0], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[0], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[1] = env->addButton(recti(80 * xScale, 10 * yScale, 140 * xScale, 70 * yScale), wLinkMarks, -1, L"\u2191");
-        ChangeToIGUIImageButton(btnMark[1], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[1], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[2] = env->addButton(recti(150 * xScale, 10 * yScale, 210 * xScale, 70 * yScale), wLinkMarks, -1, L"\u2197");
-        ChangeToIGUIImageButton(btnMark[2], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[2], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[3] = env->addButton(recti(10 * xScale, 80 * yScale, 70 * xScale, 140 * yScale), wLinkMarks, -1, L"\u2190");
-        ChangeToIGUIImageButton(btnMark[3], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[3], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[4] = env->addButton(recti(150 * xScale, 80 * yScale, 210 * xScale, 140 * yScale), wLinkMarks, -1, L"\u2192");
-        ChangeToIGUIImageButton(btnMark[4], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[4], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[5] = env->addButton(recti(10 * xScale, 150 * yScale, 70 * xScale, 210 * yScale), wLinkMarks, -1, L"\u2199");
-        ChangeToIGUIImageButton(btnMark[5], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[5], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[6] = env->addButton(recti(80 * xScale, 150 * yScale, 140 * xScale, 210 * yScale), wLinkMarks, -1, L"\u2193");
-        ChangeToIGUIImageButton(btnMark[6], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[6], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	btnMark[7] = env->addButton(recti(150 * xScale, 150 * yScale, 210 * xScale, 210 * yScale), wLinkMarks, -1, L"\u2198");
-        ChangeToIGUIImageButton(btnMark[7], imageManager.tButton_S, imageManager.tButton_S_pressed);
+        ChangeToIGUIImageButton(btnMark[7], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 	for(int i=0;i<8;i++)
 		btnMark[i]->setIsPushButton(true);
 	//replay window
