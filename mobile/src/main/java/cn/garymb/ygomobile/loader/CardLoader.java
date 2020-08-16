@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
@@ -28,6 +29,7 @@ import ocgcore.enums.LimitType;
 public class CardLoader implements ICardLoader {
     private LimitManager mLimitManager;
     private CardManager mCardManager;
+    private StringManager mStringManager;
     private Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
@@ -48,6 +50,7 @@ public class CardLoader implements ICardLoader {
         this.context = context;
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
+        mStringManager = DataManager.get().getStringManager();
         mLimitList = mLimitManager.getTopLimit();
     }
 
@@ -133,8 +136,7 @@ public class CardLoader implements ICardLoader {
             for (int i = 0; i < count; i++) {
                 Card card = cards.valueAt(i);
                 if (searchInfo == null || searchInfo.check(card)) {
-                    if (searchInfo != null && card.Name.equals(searchInfo.word)) {
-                        cards.remove(i);
+                    if (searchInfo != null && card.Name.equalsIgnoreCase(searchInfo.keyWord1)) {
                         tmp.add(card);
                     } else if (card.isType(CardType.Monster)) {
                         monster.add(card);
@@ -206,13 +208,13 @@ public class CardLoader implements ICardLoader {
                        String atk, String def, long pscale,
                        long setcode, long category, long ot, int linkKey, long... types) {
         CardSearchInfo searchInfo = new CardSearchInfo();
-        if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
-            searchInfo.prefixWord = prefixWord;
-            searchInfo.suffixWord = suffixWord;
-        } else if (!TextUtils.isEmpty(prefixWord)) {
-            searchInfo.word = prefixWord;
-        } else if (!TextUtils.isEmpty(suffixWord)) {
-            searchInfo.word = suffixWord;
+        if (!TextUtils.isEmpty(prefixWord)) {
+            searchInfo.keyWord1 = prefixWord;
+            searchInfo.keyWordSetcode1 = mStringManager.getSetCode(prefixWord);
+        }
+        if (!TextUtils.isEmpty(suffixWord)) {
+            searchInfo.keyWord2 = suffixWord;
+            searchInfo.keyWordSetcode2 = mStringManager.getSetCode(suffixWord);
         }
         searchInfo.attribute = (int) attribute;
         searchInfo.level = (int) level;

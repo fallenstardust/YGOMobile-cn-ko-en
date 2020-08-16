@@ -72,6 +72,7 @@ public:
 	int32 check_count_limit(uint8 playerid);
 	int32 is_activateable(uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE, int32 neglect_loc = FALSE, int32 neglect_faceup = FALSE);
 	int32 is_action_check(uint8 playerid);
+	int32 is_activate_ready(effect* reason_effect, uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE);
 	int32 is_activate_ready(uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE);
 	int32 is_condition_check(uint8 playerid, const tevent& e);
 	int32 is_activate_check(uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE);
@@ -275,6 +276,7 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EFFECT_DUAL_STATUS				75	//
 #define EFFECT_EQUIP_LIMIT				76	//
 #define EFFECT_DUAL_SUMMONABLE			77	//
+#define EFFECT_UNION_LIMIT				78	//
 #define EFFECT_REVERSE_DAMAGE			80	//
 #define EFFECT_REVERSE_RECOVER			81	//
 #define EFFECT_CHANGE_DAMAGE			82	//

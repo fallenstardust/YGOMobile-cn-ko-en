@@ -374,6 +374,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->is_siding = true;
 		mainGame->CloseGameWindow();
 		mainGame->wChat->setVisible(false);
+		mainGame->imgChat->setVisible(false);
 		mainGame->wDeckEdit->setVisible(false);
 		mainGame->wFilter->setVisible(false);
 		mainGame->wSort->setVisible(false);
@@ -592,6 +593,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->is_building = false;
 		mainGame->wCardImg->setVisible(true);
 		mainGame->wInfos->setVisible(true);
+		mainGame->wPallet->setVisible(true);
 		mainGame->wPhase->setVisible(true);
 		mainGame->btnSideOK->setVisible(false);
 		mainGame->btnSideShuffle->setVisible(false);
@@ -1793,28 +1795,28 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		}
 		if(count == 4) startpos = 10;
 		else if(count == 3) startpos = 82;
-		else startpos = 155;
+		else startpos = 50;
 		if(positions & 0x1) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSAU, code));
-			mainGame->btnPSAU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSAU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSAU->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSAU->setVisible(false);
 		if(positions & 0x2) {
-			mainGame->btnPSAD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSAD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSAD->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSAD->setVisible(false);
 		if(positions & 0x4) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSDU, code));
-			mainGame->btnPSDU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSDU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSDU->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSDU->setVisible(false);
 		if(positions & 0x8) {
-			mainGame->btnPSDD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 45 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 185 * mainGame->yScale));
+			mainGame->btnPSDD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
 			mainGame->btnPSDD->setVisible(true);
-			startpos += 145;
+			startpos += 150;
 		} else mainGame->btnPSDD->setVisible(false);
 		mainGame->gMutex.lock();
 		mainGame->PopupElement(mainGame->wPosSelect);
@@ -3643,20 +3645,12 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		mainGame->cbANNumber->setSelected(0);
 		if(quickmode) {
 			mainGame->cbANNumber->setVisible(false);
-			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 195 * mainGame->yScale, 160 * mainGame->xScale, 245 * mainGame->yScale));
 			mainGame->btnANNumberOK->setEnabled(false);
-			recti pos = mainGame->wANNumber->getRelativePosition();
-			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 250 * mainGame->yScale;
-			mainGame->wANNumber->setRelativePosition(pos);
 		} else {
 			for(int i = 0; i < 12; ++i) {
 				mainGame->btnANNumber[i]->setVisible(false);
 			}
 			mainGame->cbANNumber->setVisible(true);
-			mainGame->btnANNumberOK->setRelativePosition(rect<s32>(70 * mainGame->xScale, 95 * mainGame->yScale, 160 * mainGame->xScale, 145 * mainGame->yScale));
-			recti pos = mainGame->wANNumber->getRelativePosition();
-			pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 150 * mainGame->yScale;
-			mainGame->wANNumber->setRelativePosition(pos);
 		}
 		if(select_hint)
 			myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));

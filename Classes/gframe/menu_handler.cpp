@@ -240,6 +240,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->imgCard->setScaleImage(true);
 				mainGame->wCardImg->setVisible(true);
 				mainGame->wInfos->setVisible(true);
+				mainGame->wPallet->setVisible(true);
+				mainGame->imgChat->setVisible(false);
 				mainGame->wReplay->setVisible(true);
 				mainGame->wReplayControl->setVisible(true);
 				mainGame->btnReplayStart->setVisible(false);
@@ -396,6 +398,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_LOAD_SINGLEPLAY: {
+                mainGame->imgChat->setVisible(false);
 				if(mainGame->lstSinglePlayList->getSelected() == -1)
 					break;
 				mainGame->singleSignal.SetNoWait(false);
@@ -458,6 +461,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_operation = 0;
 				prev_sel = -1;
 				break;
+			}
+			case BUTTON_SETTINGS: {
+                mainGame->HideElement(mainGame->wMainMenu);
+                mainGame->ShowElement(mainGame->wSettings);
+			    break;
+			}
+			case BUTTON_CLOSE_SETTINGS: {
+                mainGame->HideElement(mainGame->wSettings);
+                mainGame->ShowElement(mainGame->wMainMenu);
+			    break;
 			}
 			}
 			break;

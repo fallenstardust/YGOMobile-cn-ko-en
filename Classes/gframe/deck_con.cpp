@@ -122,7 +122,53 @@ inline void showDeckManage() {
 	mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
 	mainGame->PopupElement(mainGame->wDeckManage);
 }
-
+inline void ShowBigCard(int code, float zoom) {
+	mainGame->deckBuilder.bigcard_code = code;
+	mainGame->deckBuilder.bigcard_zoom = zoom;
+	ITexture* img = imageManager.GetBigPicture(code, zoom);
+	mainGame->imgBigCard->setImage(img);
+	auto size = img->getSize();
+	dimension2du window_size = mainGame->driver->getScreenSize();
+	s32 left = window_size.Width / 2 - size.Width / 2;
+	s32 top = window_size.Height / 2 - size.Height / 2;
+	mainGame->imgBigCard->setRelativePosition(recti(0, 0, size.Width, size.Height));
+	mainGame->wBigCard->setRelativePosition(recti(left, top, left + size.Width, top + size.Height));
+	mainGame->gMutex.lock();
+	mainGame->btnBigCardOriginalSize->setVisible(true);
+	mainGame->btnBigCardZoomIn->setVisible(true);
+	mainGame->btnBigCardZoomOut->setVisible(true);
+	mainGame->btnBigCardClose->setVisible(true);
+	mainGame->ShowElement(mainGame->wBigCard);
+	mainGame->env->getRootGUIElement()->bringToFront(mainGame->wBigCard);
+	mainGame->gMutex.unlock();
+}
+inline void ZoomBigCard(s32 centerx = -1, s32 centery = -1) {
+	if(mainGame->deckBuilder.bigcard_zoom >= 4)
+		mainGame->deckBuilder.bigcard_zoom = 4;
+	if(mainGame->deckBuilder.bigcard_zoom <= 0.2)
+		mainGame->deckBuilder.bigcard_zoom = 0.2;
+	ITexture* img = imageManager.GetBigPicture(mainGame->deckBuilder.bigcard_code, mainGame->deckBuilder.bigcard_zoom);
+	mainGame->imgBigCard->setImage(img);
+	auto size = img->getSize();
+	auto pos = mainGame->wBigCard->getRelativePosition();
+	if(centerx == -1) {
+		centerx = pos.UpperLeftCorner.X + pos.getWidth() / 2;
+		centery = pos.UpperLeftCorner.Y + pos.getHeight() * 0.444f;
+	}
+	float posx = (float)(centerx - pos.UpperLeftCorner.X) / pos.getWidth();
+	float posy = (float)(centery - pos.UpperLeftCorner.Y) / pos.getHeight();
+	s32 left = centerx - size.Width * posx;
+	s32 top = centery - size.Height * posy;
+		mainGame->imgBigCard->setRelativePosition(recti(0, 0, size.Width, size.Height));
+		mainGame->wBigCard->setRelativePosition(recti(left, top, left + size.Width, top + size.Height));
+}
+inline void CloseBigCard() {
+	mainGame->HideElement(mainGame->wBigCard);
+	mainGame->btnBigCardOriginalSize->setVisible(false);
+	mainGame->btnBigCardZoomIn->setVisible(false);
+	mainGame->btnBigCardZoomOut->setVisible(false);
+	mainGame->btnBigCardClose->setVisible(false);
+}
 void DeckBuilder::Initialize() {
 	mainGame->is_building = true;
 	mainGame->is_siding = false;
@@ -134,6 +180,8 @@ void DeckBuilder::Initialize() {
 	mainGame->wSort->setVisible(true);
 	mainGame->btnLeaveGame->setVisible(true);
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
+	mainGame->wPallet->setVisible(true);
+	mainGame->imgChat->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
@@ -168,6 +216,15 @@ void DeckBuilder::Terminate() {
 	mainGame->wCardImg->setVisible(false);
 	mainGame->wInfos->setVisible(false);
 	mainGame->btnLeaveGame->setVisible(false);
+    mainGame->wPallet->setVisible(false);
+    mainGame->imgChat->setVisible(true);
+    mainGame->wSettings->setVisible(false);
+    mainGame->wLogs->setVisible(false);
+	mainGame->wBigCard->setVisible(false);
+	mainGame->btnBigCardOriginalSize->setVisible(false);
+	mainGame->btnBigCardZoomIn->setVisible(false);
+	mainGame->btnBigCardZoomOut->setVisible(false);
+	mainGame->btnBigCardClose->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);
@@ -308,6 +365,53 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				Terminate();
 				break;
+			}
+			case BUTTON_SETTINGS: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (mainGame->imgSettings->isPressed()) {
+			        mainGame->ShowElement(mainGame->wSettings);
+                    mainGame->imgSettings->setPressed(true);
+                } else {
+                    mainGame->HideElement(mainGame->wSettings);
+                    mainGame->imgSettings->setPressed(false);
+                }
+			    break;
+			}
+			case BUTTON_CLOSE_SETTINGS: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->HideElement(mainGame->wSettings);
+                mainGame->imgSettings->setPressed(false);
+			    break;
+			}
+			case BUTTON_SHOW_LOG: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (mainGame->imgLog->isPressed()) {
+			        mainGame->ShowElement(mainGame->wLogs);
+			        mainGame->imgLog->setPressed(true);
+                } else {
+                    mainGame->HideElement(mainGame->wLogs);
+                    mainGame->imgLog->setPressed(false);
+                }
+			    break;
+			}
+			case BUTTON_CLOSE_LOG: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    mainGame->HideElement(mainGame->wLogs);
+                mainGame->imgLog->setPressed(false);
+			    break;
+			}
+			case BUTTON_BGM: {
+			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+			    if (mainGame->gameConf.enable_music) {
+			        mainGame->gameConf.enable_music = false;
+			        mainGame->imgVol->setImage(imageManager.tMute);
+			    } else {
+			        mainGame->gameConf.enable_music = true;
+			        mainGame->imgVol->setImage(imageManager.tPlay);
+			    }
+			    mainGame->chkEnableMusic->setChecked(mainGame->gameConf.enable_music);
+			    mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
+			    break;
 			}
 			case BUTTON_EFFECT_FILTER: {
 				mainGame->PopupElement(mainGame->wCategories);
@@ -714,6 +818,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				mainGame->ClearCardInfo();
+                mainGame->imgChat->setVisible(true);
 				char deckbuf[1024];
 				char* pdeck = deckbuf;
 				BufferIO::WriteInt32(pdeck, deckManager.current_deck.main.size() + deckManager.current_deck.extra.size());
@@ -729,6 +834,24 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_SIDE_RELOAD: {
 				deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+				break;
+			}
+			case BUTTON_BIG_CARD_ORIG_SIZE: {
+				ShowBigCard(bigcard_code, 1);
+				break;
+			}
+			case BUTTON_BIG_CARD_ZOOM_IN: {
+				bigcard_zoom += 0.2;
+				ZoomBigCard();
+				break;
+			}
+			case BUTTON_BIG_CARD_ZOOM_OUT: {
+				bigcard_zoom -= 0.2;
+				ZoomBigCard();
+				break;
+			}
+			case BUTTON_BIG_CARD_CLOSE: {
+				CloseBigCard();
 				break;
 			}
 			case BUTTON_MSG_OK: {
@@ -1086,6 +1209,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::EMIE_LMOUSE_LEFT_UP: {
 			is_starting_dragging = false;
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(!is_draging)
 				break;
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
@@ -1109,6 +1233,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			is_draging = false;
 			break;
 		}
+		case irr::EMIE_LMOUSE_DOUBLE_CLICK: {
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == root && hovered_code) {
+				ShowBigCard(hovered_code, 1);
+				break;
+			}
+			break;
+		}
 		case irr::EMIE_RMOUSE_LEFT_UP: {
 			if(mainGame->is_siding) {
 				if(is_draging)
@@ -1129,6 +1261,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					if(push_extra(pointer) || push_main(pointer))
 						pop_side(hovered_seq);
 				}
+				break;
+			}
+			if(mainGame->wBigCard->isVisible()) {
+				CloseBigCard();
 				break;
 			}
 			if(havePopupWindow())
@@ -1209,22 +1345,20 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				is_starting_dragging = false;
 			}
 			mouse_pos.set(event.MouseInput.X, event.MouseInput.Y);
-         /*   if(hovered_pos == 4 && mainGame->scrFilter->isVisible()) {
-			    if(dragy - mouse_pos.Y > 0 && mainGame->scrFilter->getPos() < mainGame->scrFilter->getMax()) {
-			        mainGame->scrFilter->setPos(mainGame->scrFilter->getPos() + 1);
-			    } else if(dragy - mouse_pos.Y < 0 && mainGame->scrFilter->getPos() > 0){
-			        mainGame->scrFilter->setPos(mainGame->scrFilter->getPos() - 1);
-			    }
-            }*/
 			GetHoveredCard();
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(root->getElementFromPoint(mouse_pos) == mainGame->imgBigCard) {
+				bigcard_zoom += 0.1f * event.MouseInput.Wheel;
+				ZoomBigCard(mouse_pos.X, mouse_pos.Y);
+				break;
+			}
 			if(!mainGame->scrFilter->isVisible())
 				break;
 			if(mainGame->env->hasFocus(mainGame->scrFilter))
 				break;
-			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(root->getElementFromPoint(mouse_pos) != root)
 				break;
 			if(event.MouseInput.Wheel < 0) {
@@ -1317,13 +1451,9 @@ void DeckBuilder::GetHoveredCard() {
 		if(pos >= (int)results.size()) {
 			hovered_seq = -1;
 			hovered_code = 0;
-			//} else if(x >= 805 * mainGame->xScale && x <= 850 * mainGame->xScale) {
 		} else {
 			hovered_code = results[pos]->first;
-		//} else if(x > 850 * mainGame->xScale && x <= 995 * mainGame->xScale) {
-		 //   mainGame->ShowCardInfo(results[pos]->first);
 		}
-
 	}
 	if(is_draging) {
 		dragx = x;

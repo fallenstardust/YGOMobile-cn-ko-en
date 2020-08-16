@@ -42,7 +42,6 @@ import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
-import static cn.garymb.ygomobile.Constants.ORI_TEXTURES;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
