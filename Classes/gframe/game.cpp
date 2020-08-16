@@ -566,9 +566,9 @@ bool Game::Initialize(ANDROID_APP app) {
 	wFTSelect->setVisible(false);
 	    ChangeToIGUIImageWindow(wFTSelect, bgFTSelect, imageManager.tDialog_L);
 	btnFirst = env->addButton(rect<s32>(20 * xScale, 35 * yScale, 370 * xScale, 85 * yScale), wFTSelect, BUTTON_FIRST, dataManager.GetSysString(100));
-        ChangeToIGUIImageButton(btnFirst, imageManager.tButton_L, imageManager.tButton_L_pressed);
+        ChangeToIGUIImageButton(btnFirst, imageManager.tButton_L, imageManager.tButton_L_pressed, titleFont);
 	btnSecond = env->addButton(rect<s32>(20 * xScale, 95 * yScale, 370 * xScale, 145 * yScale), wFTSelect, BUTTON_SECOND, dataManager.GetSysString(101));
-        ChangeToIGUIImageButton(btnSecond, imageManager.tButton_L, imageManager.tButton_L_pressed);
+        ChangeToIGUIImageButton(btnSecond, imageManager.tButton_L, imageManager.tButton_L_pressed, titleFont);
 	//message (370)
 	wMessage = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1216));
 	wMessage->getCloseButton()->setVisible(false);
