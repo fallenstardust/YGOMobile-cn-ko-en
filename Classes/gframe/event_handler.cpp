@@ -498,10 +498,10 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 					}
 					if(!conti_selecting) {
-						mainGame->wCardSelect->setText(dataManager.GetSysString(566));
+						mainGame->stCardSelect->setText(dataManager.GetSysString(566));
 						list_command = COMMAND_ACTIVATE;
 					} else {
-						mainGame->wCardSelect->setText(dataManager.GetSysString(568));
+						mainGame->stCardSelect->setText(dataManager.GetSysString(568));
 						list_command = COMMAND_OPERATION;
 					}
 					std::sort(selectable_cards.begin(), selectable_cards.end(), ClientCard::client_card_sort);
@@ -559,7 +559,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 					}
 					list_command = COMMAND_SPSUMMON;
-					mainGame->wCardSelect->setText(dataManager.GetSysString(509));
+					mainGame->stCardSelect->setText(dataManager.GetSysString(509));
 					ShowSelectCard();
 					select_ready = false;
 					ShowCancelOrFinishButton(1);
@@ -627,7 +627,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)deck[command_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(deck[command_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[command_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_MZONE: {
@@ -635,28 +635,28 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = 0; i < (int32)pcard->overlayed.size(); ++i)
 						selectable_cards.push_back(pcard->overlayed[i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), pcard->overlayed.size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_GRAVE: {
 					for(int32 i = (int32)grave[command_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(grave[command_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[command_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_REMOVED: {
 					for(int32 i = (int32)remove[command_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(remove[command_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[command_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_EXTRA: {
 					for(int32 i = (int32)extra[command_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(extra[command_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[command_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				}
@@ -1152,7 +1152,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)deck[hovered_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(deck[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_MZONE: {
@@ -1161,7 +1161,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = 0; i < (int32)clicked_card->overlayed.size(); ++i)
 						selectable_cards.push_back(clicked_card->overlayed[i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_GRAVE: {
@@ -1170,7 +1170,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)grave[hovered_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(grave[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_REMOVED: {
@@ -1179,7 +1179,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)remove[hovered_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(remove[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_EXTRA: {
@@ -1188,7 +1188,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)extra[hovered_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(extra[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				}
@@ -1207,7 +1207,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = 0; i < (int32)clicked_card->overlayed.size(); ++i)
 						selectable_cards.push_back(clicked_card->overlayed[i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_GRAVE: {
@@ -1216,7 +1216,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for(int32 i = (int32)grave[hovered_controler].size() - 1; i >= 0 ; --i)
 						selectable_cards.push_back(grave[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_REMOVED: {
@@ -1225,7 +1225,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for (int32 i = (int32)remove[hovered_controler].size() - 1; i >= 0; --i)
 						selectable_cards.push_back(remove[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_EXTRA: {
@@ -1234,7 +1234,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					for (int32 i = (int32)extra[hovered_controler].size() - 1; i >= 0; --i)
 						selectable_cards.push_back(extra[hovered_controler][i]);
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
-					mainGame->wCardSelect->setText(formatBuffer);
+					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				}
@@ -1838,7 +1838,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				if(display_cards.size()) {
 					wchar_t formatBuffer[2048];
 					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
-					mainGame->wCardDisplay->setText(formatBuffer);
+					mainGame->stCardDisplay->setText(formatBuffer);
 					ShowLocationCard();
 				}
 			}

@@ -664,6 +664,7 @@ bool Game::Initialize(ANDROID_APP app) {
 		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrCardList = env->addScrollBar(true, rect<s32>(30 * xScale, 235 * yScale, 650 * xScale, 275 * yScale), wCardSelect, SCROLL_CARD_SELECT);
+	stCardSelect = env->addStaticText(L"", rect<s32>(20 * xScale, 285 * yScale, 270 * xScale, 325 * yScale), false, false, wCardSelect, -1, false);
 	btnSelectOK = env->addButton(rect<s32>(285 * xScale, 285 * yScale, 395 * xScale, 325 * yScale), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnSelectOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//card display

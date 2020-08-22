@@ -445,6 +445,7 @@ public:
 	//card selection
 	irr::gui::IGUIWindow* wCardSelect;
 	irr::gui::IGUIImage* bgCardSelect;
+	irr::gui::IGUIStaticText* stCardSelect;
 	irr::gui::CGUIImageButton* btnCardSelect[5];
 	irr::gui::IGUIStaticText *stCardPos[5];
 	irr::gui::IGUIScrollBar *scrCardList;
