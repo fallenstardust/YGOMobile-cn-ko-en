@@ -447,12 +447,13 @@ public:
 	irr::gui::IGUIImage* bgCardSelect;
 	irr::gui::IGUIStaticText* stCardSelect;
 	irr::gui::CGUIImageButton* btnCardSelect[5];
-	irr::gui::IGUIStaticText *stCardPos[5];
-	irr::gui::IGUIScrollBar *scrCardList;
+	irr::gui::IGUIStaticText* stCardPos[5];
+	irr::gui::IGUIScrollBar* scrCardList;
 	irr::gui::IGUIButton* btnSelectOK;//
 	//card display
 	irr::gui::IGUIWindow* wCardDisplay;
 	irr::gui::IGUIImage* bgCardDisplay;
+	irr::gui::IGUIStaticText* stCardDisplay;
 	irr::gui::CGUIImageButton* btnCardDisplay[5];
 	irr::gui::IGUIStaticText *stDisplayPos[5];
 	irr::gui::IGUIScrollBar *scrDisplayList;
