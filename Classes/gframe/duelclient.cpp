@@ -3507,7 +3507,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		else myswprintf(textBuffer, dataManager.GetSysString(563));
 		select_hint = 0;
 		mainGame->gMutex.lock();
-		mainGame->wANRace->setText(textBuffer);
+		mainGame->stANRace->setText(textBuffer);
 		mainGame->PopupElement(mainGame->wANRace);
 /*#ifdef _IRR_ANDROID_PLATFORM_
 		char* content;
@@ -3560,7 +3560,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		else myswprintf(textBuffer, dataManager.GetSysString(562));
 		select_hint = 0;
 		mainGame->gMutex.lock();
-		mainGame->wANAttribute->setText(textBuffer);
+		mainGame->stANAttribute->setText(textBuffer);
 		mainGame->PopupElement(mainGame->wANAttribute);
 /*#ifdef _IRR_ANDROID_PLATFORM_
 		char* content;
@@ -3611,7 +3611,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		select_hint = 0;
 		mainGame->gMutex.lock();
 		mainGame->ebANCard->setText(L"");
-		mainGame->wANCard->setText(textBuffer);
+		mainGame->stANCard->setText(textBuffer);
 		mainGame->dField.UpdateDeclarableList();
 		mainGame->PopupElement(mainGame->wANCard);
 		mainGame->gMutex.unlock();
@@ -3656,7 +3656,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
 		else myswprintf(textBuffer, dataManager.GetSysString(565));
 		select_hint = 0;
-		mainGame->wANNumber->setText(textBuffer);
+		mainGame->stANNumber->setText(textBuffer);
 		mainGame->PopupElement(mainGame->wANNumber);
 		mainGame->gMutex.unlock();
 		return false;
