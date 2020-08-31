@@ -576,7 +576,7 @@ bool Game::Initialize(ANDROID_APP app) {
 	    ChangeToIGUIImageWindow(wMessage, bgMessage, imageManager.tDialog_L);
 	stMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 390 * xScale, 100 * yScale), false, true, wMessage, -1, false);
 	stMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 115 * yScale, 260 * xScale, 165 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
+	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 120 * yScale, 260 * xScale, 170 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//auto fade message (370)
 	wACMessage = env->addWindow(rect<s32>(490 * xScale, 240 * yScale, 840 * xScale, 300 * yScale), false, L"");
@@ -593,9 +593,9 @@ bool Game::Initialize(ANDROID_APP app) {
         ChangeToIGUIImageWindow(wQuery, bgQuery, imageManager.tDialog_L);
 	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 390 * xScale, 100 * yScale), false, true, wQuery, -1, false);
 	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnYes = env->addButton(rect<s32>(60 * xScale, 130 * yScale, 170 * xScale, 170 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
+	btnYes = env->addButton(rect<s32>(60 * xScale, 120 * yScale, 170 * xScale, 170 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
         ChangeToIGUIImageButton(btnYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnNo = env->addButton(rect<s32>(200 * xScale, 130 * yScale, 310 * xScale, 170 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
+	btnNo = env->addButton(rect<s32>(200 * xScale, 120 * yScale, 310 * xScale, 170 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//surrender yes/no (310)
 	wSurrender = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
@@ -604,9 +604,9 @@ bool Game::Initialize(ANDROID_APP app) {
         ChangeToIGUIImageWindow(wSurrender, bgSurrender, imageManager.tDialog_L);
 	stSurrenderMessage = env->addStaticText(dataManager.GetSysString(1359), rect<s32>(20 * xScale, 20 * yScale, 350 * xScale, 100 * yScale), false, true, wSurrender, -1, false);
 	stSurrenderMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnSurrenderYes = env->addButton(rect<s32>(60 * xScale, 130 * yScale, 170 * xScale, 170 * yScale), wSurrender, BUTTON_SURRENDER_YES, dataManager.GetSysString(1213));
+	btnSurrenderYes = env->addButton(rect<s32>(60 * xScale, 120 * yScale, 170 * xScale, 170 * yScale), wSurrender, BUTTON_SURRENDER_YES, dataManager.GetSysString(1213));
         ChangeToIGUIImageButton(btnSurrenderYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnSurrenderNo = env->addButton(rect<s32>(200 * xScale, 130 * yScale, 310 * xScale, 170 * yScale), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
+	btnSurrenderNo = env->addButton(rect<s32>(200 * xScale, 120 * yScale, 310 * xScale, 170 * yScale), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnSurrenderNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//options (350)
 	wOptions = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, L"");
@@ -701,7 +701,7 @@ bool Game::Initialize(ANDROID_APP app) {
             ChangeToIGUIImageButton(btnANNumber[i], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
 		btnANNumber[i]->setIsPushButton(true);
 	}
-	btnANNumberOK = env->addButton(rect<s32>(95 * xScale, 370 * yScale, 205 * xScale, 410 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
+	btnANNumberOK = env->addButton(rect<s32>(95 * xScale, 360 * yScale, 205 * xScale, 410 * yScale), wANNumber, BUTTON_ANNUMBER_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnANNumberOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//announce card
 	wANCard = env->addWindow(rect<s32>(500 * xScale, 50 * yScale, 800 * xScale, 550 * yScale), false, L"");
@@ -712,8 +712,8 @@ bool Game::Initialize(ANDROID_APP app) {
 	stANCard->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
     ebANCard = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 50 * yScale, 290 * xScale, 90 * yScale), wANCard, EDITBOX_ANCARD);
 	ebANCard->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	lstANCard = env->addListBox(rect<s32>(10 * xScale, 100 * yScale, 290 * xScale, 440 * yScale), wANCard, LISTBOX_ANCARD, true);
-	btnANCardOK = env->addButton(rect<s32>(95 * xScale, 450 * yScale, 205 * xScale, 490 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
+	lstANCard = env->addListBox(rect<s32>(10 * xScale, 100 * yScale, 290 * xScale, 430 * yScale), wANCard, LISTBOX_ANCARD, true);
+	btnANCardOK = env->addButton(rect<s32>(95 * xScale, 440 * yScale, 205 * xScale, 490 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnANCardOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//announce attribute
 	wANAttribute = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(562));
@@ -1051,9 +1051,9 @@ bool Game::Initialize(ANDROID_APP app) {
 	env->addStaticText(dataManager.GetSysString(1342), rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wReplaySave);
 	ebRSName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(20 * xScale, 50 * yScale, 370 * xScale, 90 * yScale), wReplaySave, -1);
 	ebRSName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnRSYes = env->addButton(rect<s32>(70 * xScale, 130 * yScale, 180 * xScale, 170 * yScale), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
+	btnRSYes = env->addButton(rect<s32>(70 * xScale, 120 * yScale, 180 * xScale, 170 * yScale), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
         ChangeToIGUIImageButton(btnRSYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnRSNo = env->addButton(rect<s32>(210 * xScale, 130 * yScale, 320 * xScale, 170 * yScale), wReplaySave, BUTTON_REPLAY_CANCEL, dataManager.GetSysString(1212));
+	btnRSNo = env->addButton(rect<s32>(210 * xScale, 120 * yScale, 320 * xScale, 170 * yScale), wReplaySave, BUTTON_REPLAY_CANCEL, dataManager.GetSysString(1212));
         ChangeToIGUIImageButton(btnRSNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//replay control
 	wReplayControl = env->addWindow(rect<s32>(200 * yScale, 5 * yScale, 310 * yScale, 270 * yScale), false, L"");
