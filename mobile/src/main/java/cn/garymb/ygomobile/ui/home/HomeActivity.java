@@ -130,7 +130,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 if (arg0) {
                     Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "X5未加载，转为系统内核", Toast.LENGTH_LONG).show();
                 }
             }
 

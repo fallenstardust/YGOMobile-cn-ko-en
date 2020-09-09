@@ -662,7 +662,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
 	else
 		myswprintf(textBuffer, dataManager.GetSysString(555));
-	mainGame->wOptions->setText(textBuffer);
+	mainGame->stOptions->setText(textBuffer);
 	mainGame->PopupElement(mainGame->wOptions);
 	mainGame->gMutex.unlock();
 }
