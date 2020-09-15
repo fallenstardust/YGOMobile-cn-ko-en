@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,7 +13,7 @@ import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 
-public class LogoActivity extends BaseActivity {
+public class LogoActivity extends Activity {
     Handler handler;
     Runnable runnable;
 
@@ -25,20 +26,6 @@ public class LogoActivity extends BaseActivity {
             YGOStarter.startGame(this, null);
             finish();
             return;
-        }
-        if (!isTaskRoot()) {
-            finish();
-            return;
-        }
-
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
-        if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
-            finish();
         } else {
             handler = new Handler();
             runnable = new Runnable() {
@@ -51,6 +38,11 @@ public class LogoActivity extends BaseActivity {
             handler.postDelayed(runnable, 1000);
             Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
         }
+        if (!isTaskRoot()) {
+            finish();
+            return;
+        }
+
     }
 
     protected void hideBottomUIMenu() {
