@@ -291,6 +291,5 @@
     <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
     <string name="explain_permission">
         necessary permissions will be applied\:
-        \nPhone Access\: Only get device inform\,no other private inform.
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
 </resources>
