@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 
@@ -14,6 +15,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.bumptech.glide.GenericTranscodeRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +69,7 @@ public class PermissionsActivity extends AppCompatActivity {
             dialog.setLeftButtonListener((dlg, i) -> {
                 isRequireCheck = true;
                 doPermission();
+                jumpToRequestInstallPackage();
                 dialog.dismiss();
             });
             dialog.show();
@@ -183,6 +187,12 @@ public class PermissionsActivity extends AppCompatActivity {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(Uri.parse(PACKAGE_URL_SCHEME + getPackageName()));
         startActivity(intent);
+    }
+
+    public void jumpToRequestInstallPackage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !this.getPackageManager().canRequestPackageInstalls()) {
+            getApplicationContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package" + this.getPackageName())));
+        }
     }
 }
 

@@ -97,16 +97,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (Build.VERSION.SDK_INT<Build.VERSION_CODES.M|| !startPermissionsActivity()){
-            onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
-        }
     }
 
     public Resources getResources() {
         Resources res = super.getResources();
-        Configuration config=new Configuration();
+        Configuration config = new Configuration();
         config.setToDefaults();
-        res.updateConfiguration(config,res.getDisplayMetrics());
+        res.updateConfiguration(config, res.getDisplayMetrics());
         return res;
     }
 
@@ -311,7 +308,7 @@ public class BaseActivity extends AppCompatActivity {
         toast.show();
     }
 
-    public static void showLinkArrows(Card cardInfo, View view){
+    public static void showLinkArrows(Card cardInfo, View view) {
         String lk = Integer.toBinaryString(cardInfo.Defense);
         String Linekey = String.format("%09d", Integer.parseInt(lk));
         for (int i = 0; i < ids.length; i++) {
