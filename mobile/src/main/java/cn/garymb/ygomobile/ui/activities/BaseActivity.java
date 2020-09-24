@@ -303,7 +303,7 @@ public class BaseActivity extends AppCompatActivity {
     protected void onPermission(boolean isOk) {
         if (isOk) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
-                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package" + getContext().getPackageName())));
+                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
         } else {
             showToast("喵不给我权限让我怎么运行？！");

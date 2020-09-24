@@ -191,7 +191,7 @@ public class PermissionsActivity extends AppCompatActivity {
 
     public void jumpToRequestInstallPackage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !this.getPackageManager().canRequestPackageInstalls()) {
-            getApplicationContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package" + this.getPackageName())));
+            getApplicationContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + this.getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         }
     }
 }
