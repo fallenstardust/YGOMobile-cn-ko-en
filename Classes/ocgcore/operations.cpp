@@ -2178,7 +2178,7 @@ int32 field::mset(uint16 step, uint8 setplayer, card* target, effect* proc, uint
 					int32 rcount = target->get_set_tribute_count();
 					int32 min = rcount & 0xffff;
 					int32 max = (rcount >> 16) & 0xffff;
-					if(!is_player_can_summon(SUMMON_TYPE_ADVANCE, setplayer, target, setplayer))
+					if(!is_player_can_mset(SUMMON_TYPE_ADVANCE, setplayer, target, setplayer))
 						max = 0;
 					if(min < (int32)min_tribute)
 						min = min_tribute;
@@ -4160,6 +4160,7 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 				else
 					pcard->reset(RESET_REMOVE, RESET_EVENT);
 			}
+			pcard->refresh_disable_status();
 		}
 		for(auto& pcard : param->leave)
 			raise_single_event(pcard, 0, EVENT_LEAVE_FIELD, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
