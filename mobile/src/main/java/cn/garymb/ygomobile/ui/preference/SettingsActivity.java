@@ -26,14 +26,4 @@ public class SettingsActivity extends BaseActivity {
         enableBackHome();
         getFragmentManager().beginTransaction().replace(R.id.fragment, new SettingFragment()).commit();
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_PERMISSIONS && resultCode == PERMISSIONS_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
-                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package" + getContext().getPackageName())));
-            }
-        }
-    }
 }
