@@ -159,16 +159,7 @@ public class MainActivity extends HomeActivity {
                                 });
                                 dlgpls.setRightButtonText(R.string.deck_restore);
                                 dlgpls.setRightButtonListener((dlg, i) -> {
-                                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !startPermissionsActivity()) {
-                                        onActivityResult(REQUEST_PERMISSIONS, PermissionsActivity.PERMISSIONS_GRANTED, null);
-                                    }
-                                    try {
-                                        FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
-                                    } catch (Throwable e) {
-                                        Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
-                                    }
-                                    Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
-
+                                    startPermissionsActivity();
                                     dlgpls.dismiss();
                                 });
                                 dlgpls.show();
@@ -185,6 +176,19 @@ public class MainActivity extends HomeActivity {
             }
 
         });
+    }
+
+    @Override
+    protected void onPermission(boolean isOk) {
+        super.onPermission(isOk);
+        if (isOk){
+            try {
+                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+            } catch (Throwable e) {
+                Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
+            }
+            Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

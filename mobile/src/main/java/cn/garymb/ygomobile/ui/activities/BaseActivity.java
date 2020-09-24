@@ -250,11 +250,25 @@ public class BaseActivity extends AppCompatActivity {
         setActionBarTitle(getString(rid));
     }
 
+    /**
+     *权限申请
+     * @return 是否满足权限申请条件
+     */
     protected boolean startPermissionsActivity() {
-        String[] PERMISSIONS = getPermissions();
-        if (PERMISSIONS == null || PERMISSIONS.length == 0)
+        return startPermissionsActivity(getPermissions());
+    }
+
+    /**
+     * 权限申请
+     * @param permissions 要申请的权限列表
+     * @return 是否满足权限申请条件
+     */
+    protected boolean startPermissionsActivity(String[] permissions) {
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return false;
-        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
+        if (permissions == null || permissions.length == 0)
+            return false;
+        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, permissions);
     }
 
     @Override
@@ -282,6 +296,10 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 权限申请回调
+     * @param isOk 权限申请是否成功
+     */
     protected void onPermission(boolean isOk) {
         if (isOk) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
