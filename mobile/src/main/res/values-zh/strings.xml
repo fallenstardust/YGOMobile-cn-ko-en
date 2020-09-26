@@ -287,6 +287,7 @@
         \n还原：将已在上述备份路径的所有卡组还原到此</string>
     <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
     <string name="explain_permission">
-        将申请以下必要权限：
-        \n存储权限：备份/还原卡组，自定义背景/头像/卡背必需</string>
+        使用本软件此类功能将申请以下必要权限：
+        \n安装未知应用权限：安装更新包，备份、还原卡组必需
+        \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
 </resources>

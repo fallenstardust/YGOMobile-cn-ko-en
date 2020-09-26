@@ -15,6 +15,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -348,14 +349,20 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private int copyCoreConfig(String toPath, boolean needsUpdate) {
         try {
-            String path = getDatapath("conf");
+          /*  String path = getDatapath("conf");
             int count = IOUtils.copyFilesFromAssets(mContext, path, toPath, needsUpdate);
             if (count < 3) {
                 return ERROR_CORE_CONFIG_LOST;
-            }
-            //替换换行符
+            }*/
+            File systemfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SYSTEM_PATH);
             File stringfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
             File botfile = new File(AppsSettings.get().getResourcePath(), Constants.BOT_CONF);
+            if (!systemfile.exists()) {
+                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + Constants.CORE_SYSTEM_PATH, toPath, false);
+            }
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + Constants.CORE_STRING_PATH, toPath, needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_BOT_CONF_PATH, toPath, needsUpdate);
+            //替换换行符
             fixString(stringfile.getAbsolutePath());
             fixString(botfile.getAbsolutePath());
             return ERROR_NONE;

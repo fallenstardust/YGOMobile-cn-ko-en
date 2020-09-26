@@ -251,7 +251,8 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     /**
-     *权限申请
+     * 权限申请
+     *
      * @return 是否满足权限申请条件
      */
     protected boolean startPermissionsActivity() {
@@ -260,11 +261,12 @@ public class BaseActivity extends AppCompatActivity {
 
     /**
      * 权限申请
+     *
      * @param permissions 要申请的权限列表
      * @return 是否满足权限申请条件
      */
     protected boolean startPermissionsActivity(String[] permissions) {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return false;
         if (permissions == null || permissions.length == 0)
             return false;
@@ -298,6 +300,7 @@ public class BaseActivity extends AppCompatActivity {
 
     /**
      * 权限申请回调
+     *
      * @param isOk 权限申请是否成功
      */
     protected void onPermission(boolean isOk) {

@@ -290,6 +290,7 @@
         \nRestore\: restore backed up decks</string>
     <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
     <string name="explain_permission">
-        necessary permissions will be applied\:
+        Very necessary permissions will be applied\:
+        \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
 </resources>
