@@ -1409,11 +1409,10 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				}
 				break;
 			}
-			case MSG_SELECT_CARD:
-			case MSG_SELECT_TRIBUTE: {
-				if (!(hovered_location & 0xe) || !clicked_card || !clicked_card->is_selectable)
+			case MSG_SELECT_CARD: {
+				if(!(hovered_location & 0xe) || !clicked_card || !clicked_card->is_selectable)
 					break;
-				if (clicked_card->is_selected) {
+				if(clicked_card->is_selected) {
 					clicked_card->is_selected = false;
 					int i = 0;
 					while(selected_cards[i] != clicked_card) i++;
@@ -1422,18 +1421,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					clicked_card->is_selected = true;
 					selected_cards.push_back(clicked_card);
 				}
-				int min = selected_cards.size(), max = 0;
-				if (mainGame->dInfo.curMsg == MSG_SELECT_CARD) {
-					max = selected_cards.size();
-				} else {
-					for(size_t i = 0; i < selected_cards.size(); ++i)
-						max += selected_cards[i]->opParam;
-				}
-				if (min >= select_max) {
+				if(selected_cards.size() >= select_max) {
 					SetResponseSelectedCards();
 					ShowCancelOrFinishButton(0);
 					DuelClient::SendResponse();
-				} else if (max >= select_min) {
+				} else if(selected_cards.size() >= select_min) {
 					if(selected_cards.size() == selectable_cards.size()) {
 						SetResponseSelectedCards();
 						ShowCancelOrFinishButton(0);
@@ -1441,18 +1433,37 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					} else {
 						select_ready = true;
 						ShowCancelOrFinishButton(2);
-						if(mainGame->dInfo.curMsg == MSG_SELECT_TRIBUTE) {
-							wchar_t wbuf[256], *pwbuf = wbuf;
-							BufferIO::CopyWStrRef(dataManager.GetSysString(209), pwbuf, 256);
-							*pwbuf++ = L'\n';
-							BufferIO::CopyWStrRef(dataManager.GetSysString(210), pwbuf, 256);
-							mainGame->stQMessage->setText(wbuf);
-							mainGame->PopupElement(mainGame->wQuery);
-						}
 					}
 				} else {
 					select_ready = false;
-					if (select_cancelable && min == 0)
+					if(select_cancelable && selected_cards.size() == 0)
+						ShowCancelOrFinishButton(1);
+					else
+						ShowCancelOrFinishButton(0);
+				}
+				break;
+			}
+			case MSG_SELECT_TRIBUTE: {
+				if (!(hovered_location & 0xe) || !clicked_card || !clicked_card->is_selectable)
+					break;
+				if(clicked_card->is_selected) {
+					auto it = std::find(selected_cards.begin(), selected_cards.end(), clicked_card);
+					selected_cards.erase(it);
+				} else {
+					selected_cards.push_back(clicked_card);
+				}
+				if(CheckSelectTribute()) {
+					if(selectsum_cards.size() == 0) {
+						SetResponseSelectedCards();
+						ShowCancelOrFinishButton(0);
+						DuelClient::SendResponse();
+					} else {
+						select_ready = true;
+						ShowCancelOrFinishButton(2);
+					}
+				} else {
+					select_ready = false;
+					if (select_cancelable && selected_cards.size() == 0)
 						ShowCancelOrFinishButton(1);
 					else
 						ShowCancelOrFinishButton(0);
@@ -2732,6 +2743,11 @@ void ClientField::CancelOrFinish() {
 			mainGame->HideElement(mainGame->wQuery, true);
 			break;
 		}
+		if(select_ready) {
+			SetResponseSelectedCards();
+			ShowCancelOrFinishButton(0);
+			DuelClient::SendResponse();
+		}
 		break;
 	}
 	case MSG_SELECT_SUM: {
@@ -2769,6 +2785,19 @@ void ClientField::CancelOrFinish() {
 		if(mainGame->wCardSelect->isVisible()) {
 			DuelClient::SetResponseI(-1);
 			mainGame->HideElement(mainGame->wCardSelect, true);
+		}
+		break;
+	}
+	case MSG_SELECT_PLACE: {
+		if(select_cancelable) {
+			unsigned char respbuf[3];
+			respbuf[0] = mainGame->LocalPlayer(0);
+			respbuf[1] = 0;
+			respbuf[2] = 0;
+			mainGame->dField.selectable_field = 0;
+			DuelClient::SetResponseB(respbuf, 3);
+			DuelClient::SendResponse();
+			ShowCancelOrFinishButton(0);
 		}
 		break;
 	}
