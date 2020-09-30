@@ -30,7 +30,11 @@ import ocgcore.CardManager;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
@@ -354,13 +358,14 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (count < 3) {
                 return ERROR_CORE_CONFIG_LOST;
             }*/
-            File systemfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SYSTEM_PATH);
-            File stringfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
-            File botfile = new File(AppsSettings.get().getResourcePath(), Constants.BOT_CONF);
+            File systemfile = new File(AppsSettings.get().getResourcePath(), CORE_SYSTEM_PATH);
+            File stringfile = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH);
+            File botfile = new File(AppsSettings.get().getResourcePath(), BOT_CONF);
             if (!systemfile.exists()) {
-                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + Constants.CORE_SYSTEM_PATH, toPath, false);
+                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
             }
-            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + Constants.CORE_STRING_PATH, toPath, needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_LIMIT_PATH, toPath, needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_STRING_PATH, toPath, needsUpdate);
             IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_BOT_CONF_PATH, toPath, needsUpdate);
             //替换换行符
             fixString(stringfile.getAbsolutePath());
