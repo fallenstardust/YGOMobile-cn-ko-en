@@ -737,7 +737,7 @@ bool Game::Initialize(ANDROID_APP app) {
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
-	stHintMsg->setBackgroundColor(0x6011113d);
+	stHintMsg->setBackgroundColor(0xee11113d);
 	stHintMsg->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stHintMsg->setVisible(false);
 	stTip = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
