@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
@@ -88,19 +89,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private CardListProvider mProvider;
     private OnCardClickListener mListener;
     private DialogUtils dialog;
-    private ImageView photoView;
+    private PhotoView photoView;
     private LinearLayout ll_bar;
     private ProgressBar pb_loading;
     private TextView tv_loading;
     private boolean isDownloadCardImage = true;
-    private CallBack mCallBack;
-
-    public interface CallBack {
-        void onSearchStart();
-
-        void onSearchResult(List<Card> Cards, boolean isHide);
-    }
-
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -129,7 +122,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
-
+    private CallBack mCallBack;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
@@ -383,6 +376,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         pb_loading = view.findViewById(R.id.pb_loading);
         tv_loading = view.findViewById(R.id.tv_name);
         pb_loading.setMax(100);
+
+        // 启用图片缩放功能
+        photoView.enable();
+
         photoView.setOnClickListener(View -> {
             dialog.dis();
         });
@@ -521,6 +518,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private <T extends View> T bind(int id) {
         return (T) findViewById(id);
+    }
+
+    public interface CallBack {
+        void onSearchStart();
+
+        void onSearchResult(List<Card> Cards, boolean isHide);
     }
 
     public interface OnCardClickListener {
