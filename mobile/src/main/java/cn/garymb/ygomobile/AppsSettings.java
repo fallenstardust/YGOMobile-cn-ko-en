@@ -135,7 +135,7 @@ public class AppsSettings {
     }
 
     public float getXScale(int w, int h) {
-        if(isKeepScale()){
+        if (isKeepScale()) {
             float sx = getScreenHeight() / w;
             float sy = getScreenWidth() / h;
             return Math.min(sx, sy);
@@ -144,7 +144,7 @@ public class AppsSettings {
     }
 
     public float getYScale(int w, int h) {
-        if(isKeepScale()){
+        if (isKeepScale()) {
             //固定比例，取最小值
             float sx = getScreenHeight() / w;
             float sy = getScreenWidth() / h;
@@ -153,7 +153,7 @@ public class AppsSettings {
         return getScreenWidth() / h;
     }
 
-    public boolean isKeepScale(){
+    public boolean isKeepScale() {
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
     }
 
@@ -179,7 +179,7 @@ public class AppsSettings {
             h = mScreenSize.y;
         }
         int ret = Math.max(w, h);
-        if(isImmerSiveMode()){
+        if (isImmerSiveMode()) {
             //刘海高度
             ret -= getNotchHeight();
         }
@@ -240,9 +240,6 @@ public class AppsSettings {
     }
 
     private void makeZipList(List<String> pathList) {
-        pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
-        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
-        //
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
@@ -257,8 +254,21 @@ public class AppsSettings {
                         pathList.add(file.getAbsolutePath());
                     }
                 }
+                File[] ypks = expansionsDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".ypk");
+                    }
+                });
+                if (ypks != null) {
+                    for (File file : ypks) {
+                        pathList.add(file.getAbsolutePath());
+                    }
+                }
             }
         }
+        pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
+        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
     }
 
     /***
@@ -339,11 +349,12 @@ public class AppsSettings {
 
     /**
      * 根据卡密获取卡图的路径
+     *
      * @param code 卡密
      * @return
      */
-    public String getCardImagePath(int code){
-        return new File(getCardImagePath(),code+".jpg").getAbsolutePath();
+    public String getCardImagePath(int code) {
+        return new File(getCardImagePath(), code + ".jpg").getAbsolutePath();
     }
 
     /***
@@ -451,11 +462,7 @@ public class AppsSettings {
      */
     public String getResourcePath() {
         String defPath;
-        try {
-            defPath = new File(Environment.getExternalStorageDirectory(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
-        } catch (Exception e) {
-            defPath = new File(context.getFilesDir(), Constants.PREF_DEF_GAME_DIR).getAbsolutePath();
-        }
+        defPath = new File(String.valueOf(context.getExternalFilesDir(Constants.PREF_DEF_GAME_DIR))).getAbsolutePath();
         return mSharedPreferences.getString(Constants.PREF_GAME_PATH, defPath);
     }
 

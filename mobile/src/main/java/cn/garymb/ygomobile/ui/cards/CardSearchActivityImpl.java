@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards;
 
-
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -8,19 +7,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-
-import com.bumptech.glide.Glide;
-
-import java.io.IOException;
-import java.util.List;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.widget.RecyclerViewItemListener;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.RecyclerViewItemListener;
+
+import com.bumptech.glide.Glide;
+import com.ourygo.assistant.util.DuelAssistantManagement;
+
+import java.io.IOException;
+import java.util.List;
+
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -30,7 +33,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.DuelAssistantService;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -38,32 +40,36 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
-class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack {
+class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
 
     protected DrawerLayout mDrawerlayout;
-    private RecyclerView mListView;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapater;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
     protected StringManager mStringManager = DataManager.get().getStringManager();
     protected LimitManager mLimitManager = DataManager.get().getLimitManager();
+    private RecyclerView mListView;
     private ImageLoader mImageLoader;
 
     private String intentSearchMessage;
-    private boolean isFirstCardSearch=true;
-    private String currentCardSearchMessage="";
+    private boolean isInitCdbOk = false;
+    private String currentCardSearchMessage = "";
+    private DuelAssistantManagement duelAssistantManagement;
+    private CardDetail mCardDetail;
+    private DialogPlus mDialog;
+    private Button btn_search;
+    private TextView mResult_count;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-
-        if(TextUtils.isEmpty(getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE))){
-            DuelAssistantService.cardSearchMessage="";
-        }
-        Toolbar toolbar = $(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mResult_count = findViewById(R.id.search_result_count);
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
+        intentSearchMessage = getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
+//        Toolbar toolbar = $(R.id.toolbar);
+//        setSupportActionBar(toolbar);
         enableBackHome();
         mDrawerlayout = $(R.id.drawer_layout);
         mImageLoader = ImageLoader.get(this);
@@ -72,7 +78,11 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         mCardListAdapater.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
         mListView.setAdapter(mCardListAdapater);
-//
+        btn_search = $(R.id.btn_search);
+        btn_search.setOnClickListener((v) -> {
+            showSearch(true);
+        });
+/*
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerlayout, toolbar, R.string.search_open, R.string.search_close);
         toggle.setDrawerIndicatorEnabled(false);
@@ -81,10 +91,11 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             onBack();
         });
         toggle.syncState();
-        //
+        */
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
@@ -97,23 +108,32 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             isLoad = true;
             mCardLoader.loadData();
             mCardSelector.initItems();
-            intentSearch();
-            isFirstCardSearch=false;
+            //数据库初始化完毕后搜索被传入的关键字
+            intentSearch(intentSearchMessage);
+            isInitCdbOk = true;
         });
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!isFirstCardSearch&&!currentCardSearchMessage.equals(DuelAssistantService.cardSearchMessage)){
-            currentCardSearchMessage=DuelAssistantService.cardSearchMessage;
-            intentSearch();
+        //数据库初始化完毕并且决斗助手的卡查关键字未被搜索过就卡查
+        if (isInitCdbOk && !currentCardSearchMessage.equals(duelAssistantManagement.getCardSearchMessage())) {
+            intentSearch(null);
         }
     }
 
-    private void intentSearch(){
-//        intentSearchMessage=getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
-        mCardSelector.search(DuelAssistantService.cardSearchMessage);
+    private void intentSearch(String searchMessage) {
+        //如果要求搜索的关键字为空，就搜索决斗助手保存的卡查关键字
+        if (TextUtils.isEmpty(searchMessage)) {
+            currentCardSearchMessage = duelAssistantManagement.getCardSearchMessage();
+        } else {
+            currentCardSearchMessage = searchMessage;
+        }
+        //卡查关键字为空不卡查
+        if (TextUtils.isEmpty(currentCardSearchMessage))
+            return;
+        mCardSelector.search(currentCardSearchMessage);
     }
 
     protected void setListeners() {
@@ -181,9 +201,10 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     }
 
     @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
         mCardListAdapater.set(cardInfos);
+        mResult_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapater.notifyDataSetChanged();
         if (cardInfos != null && cardInfos.size() > 0) {
             mListView.smoothScrollToPosition(0);
@@ -255,9 +276,6 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
 
     }
 
-    private CardDetail mCardDetail;
-    private DialogPlus mDialog;
-
     private boolean isShowCard() {
         return mDialog != null && mDialog.isShowing();
     }
@@ -269,13 +287,29 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                 mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
-                        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        String uri;
+                        int t = cardInfo.Alias - cardInfo.Code;
+                        if (t > 10 || t < -10) {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
+                        } else {
+                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
+                        }
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }
 
                     @Override
                     public void onClose() {
                         mDialog.dismiss();
+                    }
+                });
+                mCardDetail.setCallBack(new CardDetail.CallBack() {
+                    @Override
+                    public void onSearchStart() {
+                    }
+
+                    @Override
+                    public void onSearchResult(List<Card> Cards, boolean isHide) {
+                        CardSearchActivityImpl.this.onSearchResult(Cards, isHide);
                     }
                 });
             }

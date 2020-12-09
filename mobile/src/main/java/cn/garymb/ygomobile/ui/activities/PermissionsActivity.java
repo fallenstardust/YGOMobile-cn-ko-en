@@ -1,28 +1,28 @@
 package cn.garymb.ygomobile.ui.activities;
 
-
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.bumptech.glide.GenericTranscodeRequest;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
 /**
  * 权限获取页面
@@ -52,44 +52,44 @@ public class PermissionsActivity extends AppCompatActivity {
             ActivityCompat.startActivityForResult(activity, intent, requestCode, null);
             return true;
         }
-            return false;
+        return false;
     }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getIntent() == null || !getIntent().hasExtra(EXTRA_PERMISSIONS)) {
-            try {
-                FileLogUtil.writeAndTime("所有权限已获取");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             allPermissionsGranted();
-        }else {
+        } else {
             mChecker = PermissionsChecker.getPermissionsChecker(this);
-            isRequireCheck = true;
+            DialogPlus dialog = new DialogPlus(this);
+            dialog.setTitle(R.string.tip);
+            dialog.setMessage(R.string.explain_permission);
+            dialog.setLeftButtonText(R.string.OK);
+            dialog.setLeftButtonListener((dlg, i) -> {
+                isRequireCheck = true;
+                doPermission();
+                jumpToRequestInstallPackage();
+                dialog.dismiss();
+            });
+            dialog.show();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        doPermission();
+    }
+
+    private void doPermission() {
+        String[] permissions = getPermissions();
         if (isRequireCheck) {
-            String[] permissions = getPermissions();
             if (mChecker.lacksPermissions(permissions)) {
                 requestPermissions(permissions); // 请求权限
-                try {
-                    FileLogUtil.writeAndTime("onResume请求权限");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             } else {
                 allPermissionsGranted(); // 全部权限都已获取
-                try {
-                    FileLogUtil.writeAndTime("onResume所有权限已获取");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+
             }
         } else {
             isRequireCheck = true;
@@ -124,31 +124,21 @@ public class PermissionsActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE && hasAllPermissionsGranted(grantResults)) {
-            try {
-                FileLogUtil.writeAndTime("权限请求回调：所有权限已获取");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             isRequireCheck = true;
             allPermissionsGranted();
         } else {
-            try {
-                FileLogUtil.writeAndTime("权限请求回调：权限未得到");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             isRequireCheck = false;
-            showMissingPermissionDialog(getNoPermission(permissions,grantResults));
+            showMissingPermissionDialog(getNoPermission(permissions, grantResults));
         }
     }
 
     //获取未同意的权限
-    private List<String> getNoPermission(String[] permissions, int[] grantResults){
-        List<String> permissionList=new ArrayList<>();
-        for (int i=0;i<grantResults.length;i++) {
+    private List<String> getNoPermission(String[] permissions, int[] grantResults) {
+        List<String> permissionList = new ArrayList<>();
+        for (int i = 0; i < grantResults.length; i++) {
             int grantResult = grantResults[i];
             if (grantResult == PackageManager.PERMISSION_DENIED) {
-               permissionList.add(permissions[i]);
+                permissionList.add(permissions[i]);
             }
         }
         return permissionList;
@@ -165,34 +155,31 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     // 显示缺失权限提示
-    private void showMissingPermissionDialog(List<String > permissionList) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(PermissionsActivity.this);
-        builder.setTitle(R.string.help);
-        String noPermission="";
-        for (String s:permissionList)
-            noPermission+="\n"+s;
-        builder.setMessage(getString(R.string.string_help_text)+noPermission);
+    private void showMissingPermissionDialog(List<String> permissionList) {
+        DialogPlus builder = new DialogPlus(PermissionsActivity.this);
+        builder.setTitle(R.string.tip);
+        String noPermission = "";
+        for (String s : permissionList)
+            noPermission += "\n" + s;
+        builder.setMessage(getString(R.string.string_help_text) + noPermission);
 
         // 拒绝, 退出应用
-        builder.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
+        builder.setLeftButtonText(R.string.quit);
+        builder.setLeftButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 setResult(PERMISSIONS_DENIED);
                 finish();
             }
         });
-
-        builder.setPositiveButton(R.string.settings, new DialogInterface.OnClickListener() {
+        builder.setRightButtonText(R.string.settings);
+        builder.setRightButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 startAppSettings();
             }
         });
-        Dialog dialog = builder.show();
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.setOnCancelListener((v) -> {
-            finish();
-        });
+        builder.show();
     }
 
     // 启动应用的设置
@@ -200,6 +187,12 @@ public class PermissionsActivity extends AppCompatActivity {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(Uri.parse(PACKAGE_URL_SCHEME + getPackageName()));
         startActivity(intent);
+    }
+
+    public void jumpToRequestInstallPackage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !this.getPackageManager().canRequestPackageInstalls()) {
+            getApplicationContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + this.getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        }
     }
 }
 
@@ -210,13 +203,13 @@ public class PermissionsActivity extends AppCompatActivity {
  */
 class PermissionsChecker {
     private final Context mContext;
-    private static  PermissionsChecker sPermissionsChecker;
+    private static PermissionsChecker sPermissionsChecker;
 
     public static PermissionsChecker getPermissionsChecker(Context context) {
-        if(sPermissionsChecker==null){
-            synchronized (PermissionsChecker.class){
-                if(sPermissionsChecker==null){
-                    sPermissionsChecker=new PermissionsChecker(context);
+        if (sPermissionsChecker == null) {
+            synchronized (PermissionsChecker.class) {
+                if (sPermissionsChecker == null) {
+                    sPermissionsChecker = new PermissionsChecker(context);
                 }
             }
         }

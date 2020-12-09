@@ -29,7 +29,7 @@ import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 
-public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack {
+public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
     protected DrawerLayout mDrawerlayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -59,6 +59,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector.setCallBack(this);
     }
 
     protected int getDimen(int id) {
@@ -118,8 +119,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
         finish();
     }
 
-    @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
         mCardListAdapater.set(cardInfos);
         mCardListAdapater.notifyDataSetChanged();
@@ -144,7 +144,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
 
     }
 
-    public void AnimationShake2(){
+    public void AnimationShake2() {
         Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
         findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }

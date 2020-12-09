@@ -17,6 +17,7 @@ import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -28,11 +29,14 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
@@ -68,6 +72,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mListener = listener;
         handler = new Handler(context.getMainLooper());
         mSettings = AppsSettings.get();
+        checkWindbot();
     }
 
     public static String getDatapath(String path) {
@@ -204,17 +209,15 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 }
             }
 
-            //设置字体
-            ConfigManager systemConf = DataManager.openConfig(mSettings.getSystemConfig());
-            systemConf.setFontSize(mSettings.getFontSize());
-            systemConf.close();
-
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
-                        mSettings.getDeckDir(), needsUpdate);
+                File deckFiles = new File(mSettings.getDeckDir());
+                if (deckFiles.list().length == 0) {
+                    setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.tip_new_deck)));
+                    IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_DECK_PATH),
+                            mSettings.getDeckDir(), needsUpdate);
+                }
                 //复制卡包
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
                         mSettings.get().getPackDeckDir(), needsUpdate);
@@ -262,11 +265,13 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    resPath, needsUpdate);//mContext.getFilesDir().getPath()
+                    resPath, needsUpdate);
+
             han.sendEmptyMessage(0);
 
             loadData();
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             if (Constants.DEBUG)
                 Log.e(TAG, "check", e);
             return ERROR_COPY;
@@ -351,14 +356,21 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private int copyCoreConfig(String toPath, boolean needsUpdate) {
         try {
-            String path = getDatapath("conf");
+          /*  String path = getDatapath("conf");
             int count = IOUtils.copyFilesFromAssets(mContext, path, toPath, needsUpdate);
             if (count < 3) {
                 return ERROR_CORE_CONFIG_LOST;
+            }*/
+            File systemfile = new File(AppsSettings.get().getResourcePath(), CORE_SYSTEM_PATH);
+            File stringfile = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH);
+            File botfile = new File(AppsSettings.get().getResourcePath(), BOT_CONF);
+            if (!systemfile.exists()) {
+                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
             }
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_LIMIT_PATH, toPath, needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_STRING_PATH, toPath, needsUpdate);
+            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_BOT_CONF_PATH, toPath, needsUpdate);
             //替换换行符
-            File stringfile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
-            File botfile = new File(AppsSettings.get().getResourcePath(), Constants.BOT_CONF);
             fixString(stringfile.getAbsolutePath());
             fixString(botfile.getAbsolutePath());
             return ERROR_NONE;

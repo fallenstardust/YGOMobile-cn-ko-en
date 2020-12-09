@@ -125,24 +125,16 @@ public class ServiceManagement {
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .setHost("chat.mycard.moe")
                 .build();
-        FileLogUtil.writeAndTime("初始化配置");
         con = new XMPPTCPConnection(config);
-        FileLogUtil.writeAndTime("建立新配置");
         return con;
     }
 
     public boolean login(String name, String password) throws IOException, SmackException, XMPPException, InterruptedException {
-
-        FileLogUtil.writeAndTime("获取配置之前");
         XMPPTCPConnection con = getConnextion(name, password);
-        FileLogUtil.writeAndTime("获取配置完毕");
         con.connect();
-        FileLogUtil.writeAndTime("连接完毕");
         if (con.isConnected()) {
             con.login();
-            FileLogUtil.writeAndTime("登陆完毕");
             con.addConnectionListener(new TaxiConnectionListener());
-            FileLogUtil.writeAndTime("设置监听完毕");
             setIsConnected(true);
             return true;
         }

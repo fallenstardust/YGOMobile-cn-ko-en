@@ -388,7 +388,7 @@ class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBa
     }
 
     @Override
-    public void onSearchResult(List<Card> cardInfos) {
+    public void onSearchResult(List<Card> cardInfos, boolean isHide) {
         mCardListAdapater.set(cardInfos);
         mCardListAdapater.notifyDataSetChanged();
         if (cardInfos != null && cardInfos.size() > 0) {

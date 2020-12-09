@@ -9,7 +9,7 @@ import ocgcore.enums.CardType;
 
 class CardSearchInfo {
     //名字或者描述
-    String word, prefixWord, suffixWord;
+    String keyWord1, keyWord2;
     int attribute;
     int level, ot, pscale = -1;
     long race, category;
@@ -17,9 +17,31 @@ class CardSearchInfo {
     int linkKey;
     List<Integer> inCards;
     long[] types;
-    long setcode;
+    long setcode, keyWordSetcode1, keyWordSetcode2;
 
     CardSearchInfo() {
+    }
+
+    public static boolean containsIgnoreCase(String src, String what) {
+        // https://stackoverflow.com/a/25379180
+        final int length = what.length();
+        if (length == 0)
+            return true; // Empty string is contained
+
+        final char firstLo = Character.toLowerCase(what.charAt(0));
+        final char firstUp = Character.toUpperCase(what.charAt(0));
+
+        for (int i = src.length() - length; i >= 0; i--) {
+            // Quick check before calling the more expensive regionMatches() method:
+            final char ch = src.charAt(i);
+            if (ch != firstLo && ch != firstUp)
+                continue;
+
+            if (src.regionMatches(true, i, what, 0, length))
+                return true;
+        }
+
+        return false;
     }
 
     List<Integer> getInCards() {
@@ -30,34 +52,21 @@ class CardSearchInfo {
         if (inCards != null && !inCards.contains(Integer.valueOf(card.Code))) {
             return false;
         }
-        if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
+        if (!TextUtils.isEmpty(keyWord1)) {
+            if (TextUtils.isDigitsOnly(keyWord1) && keyWord1.length() >= 5) {
                 //code
-                long code = Long.parseLong(word);
+                long code = Long.parseLong(keyWord1);
                 return card.Code == code || card.Alias == code;
-            } else if (!((card.Name != null && card.Name.contains(word))
-                    || (card.Desc != null && card.Desc.contains(word)))) {
+            } else if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord1))
+                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord1))
+                    || (keyWordSetcode1 > 0 && card.isSetCode(keyWordSetcode1)))) {
                 return false;
             }
-        } else if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
-            boolean has = false;
-            if (card.Name != null) {
-                int i1 = card.Name.indexOf(prefixWord);
-                int i2 = card.Name.indexOf(suffixWord);
-                if (i1 >= 0 && i2 >= 0 && i1 < i2) {
-                    has = true;
-                }
-            }
-            if (!has) {
-                if (card.Desc != null) {
-                    int i1 = card.Desc.indexOf(prefixWord);
-                    int i2 = card.Desc.indexOf(suffixWord);
-                    if (i1 >= 0 && i2 >= 0 && i1 < i2) {
-                        has = true;
-                    }
-                }
-            }
-            if (!has) {
+        }
+        if (!TextUtils.isEmpty(keyWord2)) {
+            if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord2))
+                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord2))
+                    || (keyWordSetcode2 > 0 && card.isSetCode(keyWordSetcode2)))) {
                 return false;
             }
         }
@@ -152,11 +161,14 @@ class CardSearchInfo {
                             }
                             continue;
                         }
+                    } else {
+                        //排除通常怪兽里的token卡
+                        if (type == CardType.Normal.value()) {
+                            if ((card.Type & CardType.Token.value()) == CardType.Token.value())
+                                return false;
+                        }
                     }
-                    if ((card.Type & type) != type) {
-                        return false;
-                    }
-                    //如果是效果怪兽
+                    //效果怪兽
                     if (type == CardType.Effect.value()) {
                         if ((card.Type & CardType.Effect.value()) == CardType.Effect.value()) {
                             //如果是融合/仪式/同调/超量/连接
@@ -165,9 +177,17 @@ class CardSearchInfo {
                                     || (card.Type & CardType.Synchro.value()) == CardType.Synchro.value()
                                     || (card.Type & CardType.Xyz.value()) == CardType.Xyz.value()
                                     || (card.Type & CardType.Link.value()) == CardType.Link.value()
-                                    )
+                            )
                                 return false;
+                        } else {
+                            return false;
                         }
+                    } else if (type == CardType.Non_Effect.value()) {
+                        //非效果怪兽
+                        if ((card.Type & CardType.Effect.value()) == CardType.Effect.value())
+                            return false;
+                    } else if ((card.Type & type) != type) {
+                        return false;
                     }
 
                 }

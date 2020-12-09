@@ -31,7 +31,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/title_height_small"
-            android:background="@android:color/transparent"
             android:orientation="horizontal">
 
             <TextView
@@ -112,17 +111,44 @@
             android:textIsSelectable="true"
             tools:text="name" />
 
-        <TextView
-            android:id="@+id/card_level"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:maxLines="1"
-            android:paddingLeft="4dp"
-            android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@color/star"
-            tools:text="★★★★" />
+            android:layout_height="match_parent"
+            android:gravity="center|left"
+            android:orientation="horizontal">
+
+            <include
+                android:id="@+id/detail_link_arrows"
+                layout="@layout/item_linkmaker_small"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/card_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingLeft="4dp"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@color/star"
+                tools:text="★4" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/image_fav"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:background="@drawable/ic_control_point"
+                android:paddingRight="5dp"
+                android:scaleType="center" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -141,15 +167,6 @@
                     android:layout_gravity="center_vertical"
                     android:scaleType="fitXY"
                     android:src="@drawable/unknown" />
-
-                <ImageView
-                    android:id="@+id/image_control"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|right"
-                    android:scaleType="center"
-                    android:visibility="invisible"
-                    app:srcCompat="@drawable/ic_control_point" />
             </FrameLayout>
 
             <LinearLayout
@@ -179,8 +196,6 @@
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/white"
                         tools:text="Test" />
-
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -235,6 +250,52 @@
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                             android:textColor="@android:color/white"
                             tools:text="Test" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/detail_p_scale"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="visible">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginRight="5dp"
+                            android:text="@string/label_pendulum"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                            android:textColor="@color/item_title" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center|left"
+                            android:background="@drawable/p_left" />
+
+                        <TextView
+                            android:id="@+id/detail_cardscale"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="2dp"
+                            android:layout_marginRight="2dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"
+                            android:singleLine="true"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            tools:text="13" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center|right"
+                            android:background="@drawable/p_right" />
                     </LinearLayout>
                 </LinearLayout>
 

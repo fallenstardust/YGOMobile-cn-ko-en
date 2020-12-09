@@ -106,7 +106,7 @@
     <string name="label_level">星/标数</string>
     <string name="label_attr">属性</string>
     <string name="label_category">效果分类</string>
-    <string name="linkmarker">连接标记</string>>
+    <string name="linkmarker">◀连接标记▶</string>>
     <string name="searching">读取中</string>
     <string name="card_faq">在线调整</string>
     <string name="no_webbrowser">没有安装浏览器</string>
@@ -298,4 +298,20 @@
     <string name="already_top">已经是第一张啦</string>
     <string name="already_end">已经是最后一张啦</string>
     <string name="tip_redownload">重新下载？</string>
+    <string name="tip_expansions_image">非自带卡片没有大图</string>
+    <string name="tip_return_to_duel">已回到当前游戏</string>
+    <string name="my_favorites">我的收藏★</string>
+    <string name="ypk_installed">拓展卡包文件已安装</string>
+    <string name="ypk_go_setting">这是拓展卡包文件,要使用须启用扩展卡包</string>
+    <string name="ypk_failed_bcos">拓展卡包安装失败，原因：</string>
+    <string name="deck_back_up">备份</string>
+    <string name="deck_restore">还原</string>
+    <string name="deck_backup_n_restore">备份/还原</string>
+    <string name="deck_explain">备份：将当前所有卡组备份到内存根目录的ygocore文件夹
+        \n还原：将已在上述备份路径的所有卡组还原到此</string>
+    <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
+    <string name="explain_permission">
+        使用本软件此类功能将申请以下必要权限：
+        \n安装未知应用权限：安装更新包，备份、还原卡组必需
+        \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
 </resources>

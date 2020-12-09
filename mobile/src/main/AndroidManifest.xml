@@ -44,7 +44,8 @@
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:theme="@style/AppTheme"
-        tools:replace="android:allowBackup,android:supportsRtl,android:hardwareAccelerated">
+        tools:replace="android:allowBackup,android:supportsRtl"
+        tools:targetApi="m">
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
             android:excludeFromRecents="false"
@@ -84,19 +85,28 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
 
-                <data android:scheme="file"/>
-                <data android:host="*"/>
-                <!--data android:mimeType="*/*" /-->
-                <data android:pathPattern=".*\\.ydk"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-
-                <data android:scheme="content"/>
-                <data android:host="*"/>
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
                 <data android:mimeType="*/*" />
-                <data android:pathPattern=".*\\.ydk"/>
+                <data android:pathPattern=".*\.ydk" />
+                <data android:pathPattern=".*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.ydk" />
+                <data android:pathPattern=".*\.ypk" />
+                <data android:pathPattern=".*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.ypk" />
             </intent-filter>
 
             <intent-filter>
@@ -172,17 +182,51 @@
             android:label="@string/app_name"/>
         <activity android:name="com.ourygo.ygomobile.ui.activity.NewServerActivity"/>
         <activity
-            android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"/>
-        <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity"/>
-        <activity android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"/>
-
+            android:name="cn.garymb.ygomobile.ui.mycard.mcchat.McchatActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity" />
+        <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
+        <activity
+            android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
+            android:theme="@style/TranslucentTheme"/>
+        <activity
+            android:name="com.base.bj.paysdk.TrPayAcitivity"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="behind"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name="com.base.bj.paysdk.TrPayUnionAcitivity"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name="com.base.bj.paysdk.TrSelectListActivity"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name="com.tencent.bugly.beta.ui.BetaActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|locale"
+            android:theme="@android:style/Theme.Translucent" />
 
         <service
-            android:name="cn.garymb.ygomobile.ui.plus.DuelAssistantService"
-            android:priority="1000"/>
+            android:name="com.ourygo.assistant.service.DuelAssistantService"
+            android:priority="1000" />
 
-    <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
-    <!--android:priority="1000"-->
+        <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
+        <provider
+            android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
         <activity android:name="com.ourygo.ygomobile.ui.activity.OYMainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -194,6 +238,7 @@
                 android:resource="@xml/shortcuts"/>
 
         </activity>
+
     </application>
 
 

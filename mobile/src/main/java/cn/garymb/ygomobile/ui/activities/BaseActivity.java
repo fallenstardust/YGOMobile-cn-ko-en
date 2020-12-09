@@ -9,9 +9,11 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,29 +29,76 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.FileLogUtil;
+import ocgcore.data.Card;
 
 public class BaseActivity extends AppCompatActivity {
     protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
-    private boolean mExitAnim = true;
-    private boolean mEnterAnim = true;
-
-    private Toast mToast;
-
-    protected OYToolbar toolbar;
-
-    protected String[] getPermissions() {
-        return PERMISSIONS;
-    }
-
+    public static int[] enImgs = new int[]{
+            R.drawable.right_top_1,
+            R.drawable.top_1,
+            R.drawable.left_top_1,
+            R.drawable.right_1,
+            0,
+            R.drawable.left_1,
+            R.drawable.right_bottom_1,
+            R.drawable.bottom_1,
+            R.drawable.left_bottom_1
+    };
+    public static int[] disImgs = new int[]{
+            R.drawable.right_top_0,
+            R.drawable.top_0,
+            R.drawable.left_top_0,
+            R.drawable.right_0,
+            0,
+            R.drawable.left_0,
+            R.drawable.right_bottom_0,
+            R.drawable.bottom_0,
+            R.drawable.left_bottom_0,
+    };
+    public static int[] ids = new int[]{
+            R.id.iv_9,
+            R.id.iv_8,
+            R.id.iv_7,
+            R.id.iv_6,
+            0,
+            R.id.iv_4,
+            R.id.iv_3,
+            R.id.iv_2,
+            R.id.iv_1
+    };
     protected final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_PHONE_STATE,
+            //Manifest.permission.READ_PHONE_STATE,
 //            Manifest.permission.SYSTEM_ALERT_WINDOW,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
     };
+    private boolean mExitAnim = true;
+    private boolean mEnterAnim = true;
+    private Toast mToast;
+
+    protected OYToolbar toolbar;
+
+    public static void showLinkArrows(Card cardInfo, View view) {
+        String lk = Integer.toBinaryString(cardInfo.Defense);
+        String Linekey = String.format("%09d", Integer.parseInt(lk));
+        for (int i = 0; i < ids.length; i++) {
+            String arrow = Linekey.substring(i, i + 1);
+            if (i != 4) {
+                if ("1".equals(arrow)) {
+                    view.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
+                } else {
+                    view.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
+                }
+            }
+        }
+    }
+
+    protected String[] getPermissions() {
+        return PERMISSIONS;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,26 +115,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        try {
-            FileLogUtil.writeAndTime("开始显示");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (Build.VERSION.SDK_INT<Build.VERSION_CODES.M|| !startPermissionsActivity()){
-            try {
-                FileLogUtil.writeAndTime("不申请权限");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            onActivityResult(REQUEST_PERMISSIONS,PermissionsActivity.PERMISSIONS_GRANTED,null);
-        }
     }
 
     public Resources getResources() {
         Resources res = super.getResources();
-        Configuration config=new Configuration();
+        Configuration config = new Configuration();
         config.setToDefaults();
-        res.updateConfiguration(config,res.getDisplayMetrics());
+        res.updateConfiguration(config, res.getDisplayMetrics());
         return res;
     }
 
@@ -163,14 +199,6 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-//    @Override
-//    public void onWindowFocusChanged(boolean hasFocus) {
-//        if (hasFocus) {
-//            hideSystemNavBar();
-//        }
-//        super.onWindowFocusChanged(hasFocus);
-//    }
-
     public void setActionBarTitle(String title) {
         if (TextUtils.isEmpty(title)) {
             return;
@@ -233,16 +261,27 @@ public class BaseActivity extends AppCompatActivity {
         setActionBarTitle(getString(rid));
     }
 
+    /**
+     * 权限申请
+     *
+     * @return 是否满足权限申请条件
+     */
     protected boolean startPermissionsActivity() {
-        String[] PERMISSIONS = getPermissions();
-        if (PERMISSIONS == null || PERMISSIONS.length == 0)
+        return startPermissionsActivity(getPermissions());
+    }
+
+    /**
+     * 权限申请
+     *
+     * @param permissions 要申请的权限列表
+     * @return 是否满足权限申请条件
+     */
+    protected boolean startPermissionsActivity(String[] permissions) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return false;
-        try {
-            FileLogUtil.writeAndTime("申请权限");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, PERMISSIONS);
+        if (permissions == null || permissions.length == 0)
+            return false;
+        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, permissions);
     }
 
     @Override
@@ -257,13 +296,30 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        try {
-            FileLogUtil.writeAndTime("resultcode值"+resultCode);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
-        if (requestCode == REQUEST_PERMISSIONS && resultCode == PermissionsActivity.PERMISSIONS_DENIED) {
+        if (requestCode == REQUEST_PERMISSIONS) {
+            switch (resultCode) {
+                case PermissionsActivity.PERMISSIONS_DENIED:
+                    onPermission(false);
+                    break;
+                case PermissionsActivity.PERMISSIONS_GRANTED:
+                    onPermission(true);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * 权限申请回调
+     *
+     * @param isOk 权限申请是否成功
+     */
+    protected void onPermission(boolean isOk) {
+        if (isOk) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
+                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+        } else {
             showToast("喵不给我权限让我怎么运行？！");
             finish();
         }

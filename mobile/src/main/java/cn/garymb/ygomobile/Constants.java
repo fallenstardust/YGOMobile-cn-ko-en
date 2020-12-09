@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile;
 
+import android.os.Environment;
 import android.view.Gravity;
 
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -143,13 +144,19 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String ALIPAY_URL = "HTTPS://QR.ALIPAY.COM/FKX06491UAXJMGIDTYVC0C";
-    String PAYPAL_URL = "https://www.paypal.me/YGOmobile3";
+    String PAYPAL_URL = "https://www.paypal.me/ygomobile1";
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";
+
+    //原目录文件路径
+    String ORI_DECK = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_DECK_PATH;
+    String ORI_REPLAY = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_REPLAY_PATH;
+    String ORI_TEXTURES = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
+    String ORI_PICS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
 
     long LOG_TIME = 2 * 1000;
     /***

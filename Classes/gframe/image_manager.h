@@ -17,6 +17,7 @@ public:
 	void RemoveTexture(int code);
 //	irr::video::ITexture* GetTextureFromFile(char* file, s32 width, s32 height);
 	irr::video::ITexture* GetTexture(int code);
+	irr::video::ITexture* GetBigPicture(int code, float zoom);
 	irr::video::ITexture* GetTextureThumb(int code);
 	irr::video::ITexture* GetTextureField(int code);
 	
@@ -28,6 +29,7 @@ public:
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
 	irr::video::ITexture* tCover[2];
+	irr::video::ITexture* tBigPicture;
 	irr::video::ITexture* tUnknown;
 	irr::video::ITexture* tAct;
 	irr::video::ITexture* tAttack;
@@ -55,7 +57,24 @@ public:
 	irr::video::ITexture* tCardType;
 	irr::video::ITexture* tAvatar[2];
 	irr::video::ITexture* tLPBarFrame;
-	std::list<std::string> support_types;
+	irr::video::ITexture* tSettings;
+    irr::video::ITexture* tLogs;
+    irr::video::ITexture* tMute;
+    irr::video::ITexture* tPlay;
+	irr::video::ITexture* tTalk;
+	irr::video::ITexture* tShut;
+    irr::video::ITexture* tTitleBar;
+	irr::video::ITexture* tWindow;
+	irr::video::ITexture* tWindow_V;
+	irr::video::ITexture* tDialog_L;
+	irr::video::ITexture* tDialog_S;
+	irr::video::ITexture* tButton_L;
+	irr::video::ITexture* tButton_L_pressed;
+	irr::video::ITexture* tButton_S;
+	irr::video::ITexture* tButton_S_pressed;
+	irr::video::ITexture* tButton_C;
+	irr::video::ITexture* tButton_C_pressed;
+    std::list<std::string> support_types;
 };
 
 extern ImageManager imageManager;

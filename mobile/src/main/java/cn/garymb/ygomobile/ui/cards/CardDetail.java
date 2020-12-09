@@ -5,10 +5,14 @@ import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,12 +22,15 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -32,9 +39,14 @@ import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.CardManager;
+import ocgcore.ConfigManager;
+import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
+
+import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
 
 /***
  * 卡片详情
@@ -46,6 +58,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
 
     private static final String TAG = "CardDetail";
+    private static CardManager cardManager;
     private ImageView cardImage;
     private TextView name;
     private TextView desc;
@@ -63,10 +76,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private View faq;
     private View addMain;
     private View addSide;
+    private View linkArrow;
+    private View layout_detail_p_scale;
+    private TextView detail_cardscale;
     private TextView cardcode;
     private View lb_setcode;
     private ImageLoader imageLoader;
-    private View mImageOpen, atkdefView;
+    private View mImageFav, atkdefView;
 
     private BaseActivity mContext;
     private StringManager mStringManager;
@@ -75,12 +91,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private CardListProvider mProvider;
     private OnCardClickListener mListener;
     private DialogUtils dialog;
-    private ImageView photoView;
+    private PhotoView photoView;
     private LinearLayout ll_bar;
     private ProgressBar pb_loading;
     private TextView tv_loading;
     private boolean isDownloadCardImage = true;
-
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -109,7 +124,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
-
+    private CallBack mCallBack;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
@@ -122,14 +137,17 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         close = bind(R.id.btn_close);
         cardcode = bind(R.id.card_code);
         level = bind(R.id.card_level);
+        linkArrow = bind(R.id.detail_link_arrows);
         type = bind(R.id.card_type);
         faq = bind(R.id.btn_faq);
         cardAtk = bind(R.id.card_atk);
         cardDef = bind(R.id.card_def);
         atkdefView = bind(R.id.layout_atkdef2);
-        mImageOpen = bind(R.id.image_control);
+        mImageFav = bind(R.id.image_fav);
 
         monsterlayout = bind(R.id.layout_monster);
+        layout_detail_p_scale = bind(R.id.detail_p_scale);
+        detail_cardscale = bind(R.id.detail_cardscale);
         race = bind(R.id.card_race);
         setname = bind(R.id.card_setname);
         addMain = bind(R.id.btn_add_main);
@@ -138,7 +156,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         attrView = bind(R.id.card_attribute);
         lb_setcode = bind(R.id.label_setcode);
 
-
+        if (cardManager == null) {
+            Log.e("CardDetail", "加载卡片信息");
+            cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
+            //加载数据库中所有卡片卡片
+            cardManager.loadCards();
+        }
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -177,6 +200,35 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         bind(R.id.nextone).setOnClickListener((v) -> {
             onNextCard();
         });
+        bind(R.id.image_fav).setOnClickListener((v) -> {
+            doMyFavorites(getCardInfo());
+        });
+    }
+
+    public void doMyFavorites(Card cardInfo) {
+        CardLoader mCardLoader = new CardLoader(context);
+        ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
+        Integer code = cardInfo.Code;
+        if (favConf.mLines.contains(code)) {
+            favConf.mLines.remove(code);
+            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
+        } else {
+            favConf.mLines.add(0, code);
+            mImageFav.setBackgroundResource(R.drawable.ic_fav);
+        }
+        favConf.save("#Favorite");
+        favConf.read();
+        Favorite.clear();
+        if (!DeckManagerActivityImpl.isSearchResult) {
+            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
+            if (id != null) {
+                for (int i = 0; i < id.size(); i++)
+                    Favorite.add(id.valueAt(i));
+            }
+            if (mCallBack != null)
+                mCallBack.onSearchResult(Favorite, true);
+        }
+
     }
 
     public ImageView getCardImage() {
@@ -204,11 +256,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mListener = listener;
     }
 
+    public void setCallBack(CallBack callBack) {
+        mCallBack = callBack;
+    }
+
     public void bind(Card cardInfo, final int position, final CardListProvider provider) {
         curPosition = position;
         mProvider = provider;
         if (cardInfo != null) {
-            setCardInfo(cardInfo);
+            setCardInfo(cardInfo, view);
         }
     }
 
@@ -224,8 +280,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
-    private void setCardInfo(Card cardInfo) {
+    private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
+
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         dialog = DialogUtils.getInstance(context);
@@ -234,11 +291,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
-        if (cardInfo.Alias != 0) {
-            cardcode.setText(String.format("%08d", cardInfo.Alias));
-        } else {
+        int t = cardInfo.Alias - cardInfo.Code;
+        if (t > 10 || t < -10) {
             cardcode.setText(String.format("%08d", cardInfo.Code));
+        } else {
+            cardcode.setText(String.format("%08d", cardInfo.Alias));
         }
+
+        //按是否存在于收藏夹切换显示图标
+        if (ConfigManager.mLines.contains(cardInfo.Code)) {
+            mImageFav.setBackgroundResource(R.drawable.ic_fav);
+        } else {
+            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
+        }
+
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
         otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));
@@ -262,12 +328,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             setname.setVisibility(View.VISIBLE);
             lb_setcode.setVisibility(View.VISIBLE);
         }
+
         if (cardInfo.isType(CardType.Monster)) {
-            if (cardInfo.isType(CardType.Link)) {
-                level.setVisibility(View.INVISIBLE);
-            } else {
-                level.setVisibility(View.VISIBLE);
-            }
             atkdefView.setVisibility(View.VISIBLE);
             monsterlayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
@@ -281,10 +343,22 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             } else {
                 level.setTextColor(context.getResources().getColor(R.color.star));
             }
-            cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
-            if (cardInfo.isType(CardType.Link)) {
-                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+            if (cardInfo.isType(CardType.Pendulum)) {
+                layout_detail_p_scale.setVisibility(View.VISIBLE);
+                detail_cardscale.setText(String.valueOf(cardInfo.LScale));
             } else {
+                layout_detail_p_scale.setVisibility(View.GONE);
+            }
+            cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
+            //连接怪兽设置
+            if (cardInfo.isType(CardType.Link)) {
+                level.setVisibility(View.GONE);
+                linkArrow.setVisibility(View.VISIBLE);
+                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+                BaseActivity.showLinkArrows(cardInfo, view);
+            } else {
+                level.setVisibility(View.VISIBLE);
+                linkArrow.setVisibility(View.GONE);
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
             race.setText(mStringManager.getRaceString(cardInfo.Race));
@@ -293,6 +367,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             race.setVisibility(View.GONE);
             monsterlayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
+            linkArrow.setVisibility(View.GONE);
         }
     }
 
@@ -300,21 +375,31 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         AppsSettings appsSettings = AppsSettings.get();
         File file = new File(appsSettings.getCardImagePath(code));
         View view = dialog.initDialog(context, R.layout.dialog_photo);
+
         dialog.setDialogWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        Window dialogWindow = dialog.getDialog().getWindow();
+        WindowManager.LayoutParams lp = dialogWindow.getAttributes();
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
+        dialogWindow.setAttributes(lp);
+
         photoView = view.findViewById(R.id.photoView);
         ll_bar = view.findViewById(R.id.ll_bar);
         pb_loading = view.findViewById(R.id.pb_loading);
         tv_loading = view.findViewById(R.id.tv_name);
         pb_loading.setMax(100);
+
+        // 启用图片缩放功能
+        photoView.enable();
+
         photoView.setOnClickListener(View -> {
             dialog.dis();
         });
 
         photoView.setOnLongClickListener(new View.OnLongClickListener() {
-
             @Override
             public boolean onLongClick(View v) {
-                if (!isDownloadCardImage)
+                if (!isDownloadCardImage || cardManager.getCard(code) == null)
                     return false;
                 DialogPlus dialogPlus = new DialogPlus(context);
                 dialogPlus.setMessage(R.string.tip_redownload);
@@ -331,31 +416,32 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        ll_bar.setVisibility(View.VISIBLE);
-                        ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
                         downloadCardImage(code, file);
                     }
                 });
                 dialogPlus.show();
+                imageLoader.bindImage(cardImage, code, null, true);
                 return true;
             }
-
-
         });
 
         //先显示普通卡片大图，判断如果没有高清图就下载
         imageLoader.bindImage(photoView, code, null, true);
 
         if (!file.exists()) {
-            ll_bar.setVisibility(View.VISIBLE);
-            ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
             downloadCardImage(code, file);
         }
 
     }
 
     private void downloadCardImage(int code, File file) {
+        if (cardManager.getCard(code) == null) {
+            YGOUtil.show(context.getString(R.string.tip_expansions_image));
+            return;
+        }
         isDownloadCardImage = false;
+        ll_bar.setVisibility(View.VISIBLE);
+        ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
         DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
@@ -385,7 +471,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             public void onDownloadFailed(Exception e) {
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(file);
-                downloadCardImage(code, file);
+//                downloadCardImage(code, file);
 
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
@@ -393,6 +479,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 handler.sendMessage(message);
             }
         });
+
     }
 
     public void onPreCard() {
@@ -443,6 +530,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private <T extends View> T bind(int id) {
         return (T) findViewById(id);
+    }
+
+    public interface CallBack {
+        void onSearchStart();
+
+        void onSearchResult(List<Card> Cards, boolean isHide);
     }
 
     public interface OnCardClickListener {

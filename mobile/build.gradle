@@ -66,6 +66,7 @@ android {
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
+        exclude 'META-INF/rxjava.properties'
     }
     aaptOptions {
         noCompress 'dll',"config"
@@ -105,11 +106,15 @@ dependencies {
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     //图片选择
-    implementation 'com.yuyh.imgsel:library:2.0.6'
+    implementation 'com.yuyh.imgsel:library:2.1.0'
     //跨进程SharedPreferencesPlus工具
     implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
     //Tencent bugly
     implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
     implementation 'com.tencent.bugly:nativecrashreport:latest.release'
+    api 'com.tencent.tbs.tbssdk:sdk:43903'
+    //http请求库
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
+    implementation 'com.bm.photoview:library:1.4.1'
 
 }

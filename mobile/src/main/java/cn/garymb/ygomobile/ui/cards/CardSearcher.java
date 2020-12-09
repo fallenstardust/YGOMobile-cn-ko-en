@@ -4,6 +4,7 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,13 +22,17 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ICardLoader;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
+import ocgcore.data.Card;
 import ocgcore.data.CardSet;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardAttribute;
@@ -37,8 +42,15 @@ import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
+import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
+
 public class CardSearcher implements View.OnClickListener {
 
+    final String[] BtnVals = new String[9];
+    protected StringManager mStringManager;
+    protected LimitManager mLimitManager;
+    protected AppsSettings mSettings;
+    int lineKey;
     private EditText prefixWord;
     private EditText suffixWord;
     private Spinner otSpinner;
@@ -48,7 +60,6 @@ public class CardSearcher implements View.OnClickListener {
     private Spinner typeMonsterSpinner;
     private Spinner typeMonsterSpinner2;
     private Spinner typeSTSpinner;
-
     private Spinner setcodeSpinner;
     private Spinner categorySpinner;
     private Spinner raceSpinner;
@@ -57,6 +68,7 @@ public class CardSearcher implements View.OnClickListener {
     private EditText atkText;
     private EditText defText;
     private Spinner pScale;
+    private Button MyFavButton;
     private Button LinkMarkerButton;
     private Button searchButton;
     private Button resetButton;
@@ -64,12 +76,18 @@ public class CardSearcher implements View.OnClickListener {
     private View layout_monster;
     private ICardLoader dataLoader;
     private Context mContext;
-    protected StringManager mStringManager;
-    protected LimitManager mLimitManager;
-    protected AppsSettings mSettings;
+    private CallBack mCallBack;
+    CardLoader mCardLoader;
 
-    final String[] BtnVals = new String[9];
-    int lineKey;
+    public interface CallBack {
+        void onSearchStart();
+
+        void onSearchResult(List<Card> Cards, boolean isHide);
+    }
+
+    public void setCallBack(CallBack callBack) {
+        mCallBack = callBack;
+    }
 
     public CardSearcher(View view, ICardLoader dataLoader) {
         this.view = view;
@@ -95,13 +113,16 @@ public class CardSearcher implements View.OnClickListener {
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
         LinkMarkerButton = findViewById(R.id.btn_linkmarker);
+        MyFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
         layout_monster = findViewById(R.id.layout_monster);
         pScale = findViewById(R.id.sp_scale);
+        MyFavButton.setOnClickListener(this);
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
+        mCardLoader = new CardLoader(mContext);
 
         OnEditorActionListener searchListener = new OnEditorActionListener() {
             @Override
@@ -118,6 +139,24 @@ public class CardSearcher implements View.OnClickListener {
 
         prefixWord.setOnEditorActionListener(searchListener);
         suffixWord.setOnEditorActionListener(searchListener);
+
+        MyFavButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
+                Favorite.clear();
+                if (id != null) {
+                    for (int i = 0; i < id.size(); i++)
+                        Favorite.add(id.valueAt(i));
+                }
+                if (mCallBack != null) {
+                    mCallBack.onSearchStart();
+                    mCallBack.onSearchResult(Favorite, false);
+                }
+
+                DeckManagerActivityImpl.isSearchResult = false;
+            }
+        });
 
         LinkMarkerButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -254,7 +293,7 @@ public class CardSearcher implements View.OnClickListener {
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
                 CardType.Dual, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token
         });
-        initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner
+        initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner, CardType.Non_Effect
         });
         initTypeSpinners(typeSTSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.QuickPlay, CardType.Ritual,
                 CardType.Continuous, CardType.Equip, CardType.Field, CardType.Counter
@@ -510,6 +549,7 @@ public class CardSearcher implements View.OnClickListener {
                     , getSelect(typeMonsterSpinner2));
             lineKey = 0;
         }
+        DeckManagerActivityImpl.isSearchResult = true;
     }
 
     private void resetAll() {

@@ -121,7 +121,7 @@
     <string name="label_set">Card Set</string>
     <string name="label_level">Lv/Rk/Lmk</string>
     <string name="label_attr">Attribute</string>
-    <string name="linkmarker">LINKMARKER</string>>
+    <string name="linkmarker">◀LinkArrows▶</string>>
     <string name="label_category">Category</string>
     <string name="searching">Search Cards</string>
     <string name="card_faq">FAQ</string>
@@ -138,7 +138,7 @@
     <string name="card_add_main">+Main Deck</string>
     <string name="card_add_side">+Side Deck</string>
     <string name="deck_main" formatted="false">Main:%d  Monster:%d Spell:%d Trap:%d</string>
-    <string name="deck_extra" formatted="false">Extra:%d  Fusion:%d Synchro:%d Xyx:%d Link:%d</string>
+    <string name="deck_extra" formatted="false">Extra:%d  Fusion:%d Synchro:%d Xyz:%d Link:%d</string>
     <string name="deck_side" formatted="false">Side:%d  Monster:%d Spell:%d Trap:%d</string>
     <string name="card_result">Cards List</string>
     <string name="unsort">Unsort</string>
@@ -306,4 +306,20 @@
     <string name="already_top">Already the first card</string>
     <string name="already_end">Already the last card</string>
     <string name="tip_redownload">Redownload\?</string>
+    <string name="tip_expansions_image">no Large image for pre-released data</string>
+    <string name="tip_return_to_duel">Current game has been Returned</string>
+    <string name="my_favorites">myFav★</string>
+    <string name="ypk_installed">expansion file installed</string>
+    <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
+    <string name="ypk_failed_bcos">expansion file install failed, because\:</string>
+    <string name="deck_back_up">BackUp</string>
+    <string name="deck_restore">Restore</string>
+    <string name="deck_backup_n_restore">BackUp/Restore</string>
+    <string name="deck_explain">BackUp\: back up all decks to Sdcard/ygocore
+        \nRestore\: restore backed up decks</string>
+    <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
+    <string name="explain_permission">
+        Very necessary permissions will be applied\:
+        \nInstall unknow apps\: Install upgrade and Change Settings
+        \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
 </resources>

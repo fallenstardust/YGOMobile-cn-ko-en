@@ -1,6 +1,7 @@
 package ocgcore;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.BufferedReader;
@@ -52,7 +53,8 @@ public class StringManager implements Closeable {
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && file.getName().endsWith(".zip")) {
+                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
+                        Log.e("StringManager", "读取压缩包");
                         try {
                             ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
                             ZipEntry entry = zipFile.getEntry(Constants.CORE_STRING_PATH);
@@ -81,7 +83,7 @@ public class StringManager implements Closeable {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
                 }
-                String[] words = line.split("[\t| ]+");
+                String[] words = line.split("[\t ]+");
 //
                 if (words.length >= 3) {
                     if (PRE_SETNAME.equals(words[0])) {
@@ -130,7 +132,7 @@ public class StringManager implements Closeable {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
                 }
-                String[] words = line.split("[\t| ]+");
+                String[] words = line.split("[\t ]+");
 //
                 if (words.length >= 3) {
                     if (PRE_SETNAME.equals(words[0])) {
@@ -175,6 +177,17 @@ public class StringManager implements Closeable {
             return mCardSets.get(i).getName();
         }
         return String.format("0x%x", key);
+    }
+
+    public long getSetCode(String key) {
+        for (int i = 0; i < mCardSets.size(); i++) {
+            CardSet cardSet = mCardSets.get(i);
+            String[] setNames = cardSet.getName().split("\\|");
+            if(setNames[0].equalsIgnoreCase(key)){
+                return cardSet.getCode();
+            }
+        }
+        return 0;
     }
 
     public String getSystemString(int key) {

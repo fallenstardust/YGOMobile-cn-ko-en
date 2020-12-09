@@ -2,13 +2,19 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
-    <ImageView
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
+<!--    <ImageView-->
+<!--        android:layout_marginLeft="1dp"-->
+<!--        android:layout_marginRight="1dp"-->
+<!--        android:id="@+id/photoView"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_centerInParent="true"-->
+<!--        android:scaleType="fitCenter" />-->
+
+    <com.bm.library.PhotoView
         android:id="@+id/photoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
         android:scaleType="fitCenter" />
 
     <LinearLayout

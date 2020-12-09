@@ -9,8 +9,6 @@ import android.util.Log;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +46,7 @@ public class IOUtils {
         if (file == null || !file.exists()) return;
         if (file.isFile()) {
             file.delete();
-        } else if(file.isDirectory()){
+        } else if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {
                 for (File f : files) {
@@ -123,12 +121,11 @@ public class IOUtils {
                 InputStream inputStream = null;
                 try {
                     inputStream = am.open(assets);
-                }catch (Exception e){
-
+                } catch (Exception e) {
                 }
-                if(inputStream != null) {
+                if (inputStream != null) {
                     copyToFile(inputStream, tofile.getAbsolutePath());
-                }else{
+                } else {
                     return 0;
                 }
             }
@@ -161,15 +158,17 @@ public class IOUtils {
             return count;
         }
     }
+
     public static void createFolderByFile(File file) {
         File dir = file.getParentFile();
         if (dir != null && !dir.exists()) {
             dir.mkdirs();
         }
     }
+
     public static boolean createFolder(File file) {
         if (!file.exists()) {
-           return file.mkdirs();
+            return file.mkdirs();
         }
         return false;
     }
@@ -238,13 +237,12 @@ public class IOUtils {
                 os.write(buffer, 0, len);
             }
         } finally {
-            if (os!=null)
-            os.close();
+            if (os != null)
+                os.close();
             is.close();
         }
         return new File(outPath);
     }
-
 
 
 }

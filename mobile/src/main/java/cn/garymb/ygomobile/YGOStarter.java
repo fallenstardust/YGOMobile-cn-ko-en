@@ -1,18 +1,19 @@
 package cn.garymb.ygomobile;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -22,12 +23,9 @@ import com.bumptech.glide.signature.StringSignature;
 import java.io.File;
 import java.util.HashMap;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
-import cn.garymb.ygomobile.utils.ComponentUtils;
 
 
 public class YGOStarter {
@@ -67,14 +65,13 @@ public class YGOStarter {
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     private static void showLoadingBg(Activity activity) {
         ActivityShowInfo activityShowInfo = Infos.get(activity);
         if (activityShowInfo == null) {
             return;
         }
         activityShowInfo.isRunning = true;
-//        Log.i("checker", "show:" + activity);
-//        activityShowInfo.oldRequestedOrientation = activity.getRequestedOrientation();
         activityShowInfo.rootOld = activityShowInfo.mRoot.getBackground();
         activityShowInfo.mContentView.setVisibility(View.INVISIBLE);
         //读取当前的背景图，如果卡的话，可以考虑缓存bitmap
@@ -157,29 +154,20 @@ public class YGOStarter {
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
-            Log.e("YGOStarter","设置背景前"+System.currentTimeMillis());
+            Log.e("YGOStarter", "设置背景前" + System.currentTimeMillis());
             //显示加载背景
-//            showLoadingBg(activity);
-            Log.e("YGOStarter","设置背景后"+System.currentTimeMillis());
-            if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                //random tips
-                String[] tipsList = activity.getResources().getStringArray(R.array.tips);
-                int x = (int) (Math.random() * tipsList.length);
-                String tips = tipsList[x];
-                Toast.makeText(activity, tips, Toast.LENGTH_LONG).show();
-//            } else {
-//               options = null;
-            }
-            Intent intent = new Intent(activity, YGOMobileActivity.class);
-            if (options != null) {
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
-                intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Log.e("YGOStarter","跳转前"+System.currentTimeMillis());
-            activity.startActivity(intent);
-            Log.e("YGOStarter","跳转后"+System.currentTimeMillis());
+            showLoadingBg(activity);
+            Log.e("YGOStarter", "设置背景后" + System.currentTimeMillis());
         }
+        Intent intent = new Intent(activity, YGOMobileActivity.class);
+        if (options != null) {
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
+            intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
+        activity.startActivity(intent);
+        Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
     }
 
     private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();

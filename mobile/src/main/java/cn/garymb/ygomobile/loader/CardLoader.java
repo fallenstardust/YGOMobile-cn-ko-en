@@ -20,13 +20,16 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class CardLoader implements ICardLoader {
     private LimitManager mLimitManager;
     private CardManager mCardManager;
+    private StringManager mStringManager;
     private Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
@@ -38,7 +41,7 @@ public class CardLoader implements ICardLoader {
 
         void onLimitListChanged(LimitList limitList);
 
-        void onSearchResult(List<Card> Cards);
+        void onSearchResult(List<Card> Cards, boolean isHide);
 
         void onResetSearch();
     }
@@ -47,6 +50,7 @@ public class CardLoader implements ICardLoader {
         this.context = context;
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
+        mStringManager = DataManager.get().getStringManager();
         mLimitList = mLimitManager.getTopLimit();
     }
 
@@ -58,19 +62,24 @@ public class CardLoader implements ICardLoader {
         }
     }
 
-    public SparseArray<Card> readCards(List<Integer> ids) {
-        return readCards(ids, mLimitList);
+    public SparseArray<Card> readCards(List<Integer> ids, boolean isSorted) {
+        return readCards(ids, mLimitList, isSorted);
     }
 
-    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList) {
+    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList, boolean isSorted) {
         if (!isOpen()) {
             return null;
         }
         SparseArray<Card> map = new SparseArray<>();
-        for (Integer id : ids) {
-            if (id != 0) {
-                map.put(id, mCardManager.getCard(id));
+        if (isSorted) {
+            for (Integer id : ids) {
+                if (id != 0) {
+                    map.put(id, mCardManager.getCard(id));
+                }
             }
+        } else {
+            for (int i = 0; i < ids.size(); i++)
+                map.put(i, mCardManager.getCard(ids.get(i)));
         }
         return map;
     }
@@ -119,41 +128,56 @@ public class CardLoader implements ICardLoader {
         Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
         VUiKit.defer().when(() -> {
             List<Card> tmp = new ArrayList<Card>();
+            List<Card> monster = new ArrayList<Card>();
+            List<Card> spell = new ArrayList<Card>();
+            List<Card> trap = new ArrayList<Card>();
             SparseArray<Card> cards = mCardManager.getAllCards();
             int count = cards.size();
             for (int i = 0; i < count; i++) {
                 Card card = cards.valueAt(i);
                 if (searchInfo == null || searchInfo.check(card)) {
-                    tmp.add(card);
+                    if (searchInfo != null && card.Name.equalsIgnoreCase(searchInfo.keyWord1)) {
+                        tmp.add(card);
+                    } else if (card.isType(CardType.Monster)) {
+                        monster.add(card);
+                    } else if (card.isType(CardType.Spell)) {
+                        spell.add(card);
+                    } else if (card.isType(CardType.Trap)) {
+                        trap.add(card);
+                    }
                 }
             }
-            if (searchInfo != null && searchInfo.getInCards() != null) {
-                final List<Integer> ids = searchInfo.getInCards();
-                Collections.sort(tmp, new Comparator<Card>() {
-                    @Override
-                    public int compare(Card o1, Card o2) {
-                        int index1 = ids.indexOf(Integer.valueOf(o1.Code));
-                        int index2 = ids.indexOf(Integer.valueOf(o2.Code));
-                        return index1 - index2;
-                    }
-                });
-            } else {
-                Collections.sort(tmp, ASC);
-            }
+            Collections.sort(tmp, ASCode);
+            Collections.sort(monster, ASC);
+            Collections.sort(spell, ASCode);
+            Collections.sort(trap, ASCode);
+            tmp.addAll(monster);
+            tmp.addAll(spell);
+            tmp.addAll(trap);
             return tmp;
         }).fail((e) -> {
             if (mCallBack != null) {
-                mCallBack.onSearchResult(null);
+                ArrayList<Card> noting = new ArrayList<Card>();
+                mCallBack.onSearchResult(noting, false);
             }
             Log.e("kk", "search", e);
             wait.dismiss();
         }).done((tmp) -> {
             if (mCallBack != null) {
-                mCallBack.onSearchResult(tmp);
+                mCallBack.onSearchResult(tmp, false);
             }
             wait.dismiss();
         });
     }
+
+    private Comparator<Card> ASCode = new Comparator<Card>() {
+        @Override
+        public int compare(Card o1, Card o2) {
+            int index1 = (Integer.valueOf(o1.Code).intValue());
+            int index2 = (Integer.valueOf(o2.Code).intValue());
+            return index1 - index2;
+        }
+    };
 
     private Comparator<Card> ASC = new Comparator<Card>() {
         @Override
@@ -184,13 +208,13 @@ public class CardLoader implements ICardLoader {
                        String atk, String def, long pscale,
                        long setcode, long category, long ot, int linkKey, long... types) {
         CardSearchInfo searchInfo = new CardSearchInfo();
-        if (!TextUtils.isEmpty(prefixWord) && !TextUtils.isEmpty(suffixWord)) {
-            searchInfo.prefixWord = prefixWord;
-            searchInfo.suffixWord = suffixWord;
-        } else if (!TextUtils.isEmpty(prefixWord)) {
-            searchInfo.word = prefixWord;
-        } else if (!TextUtils.isEmpty(suffixWord)) {
-            searchInfo.word = suffixWord;
+        if (!TextUtils.isEmpty(prefixWord)) {
+            searchInfo.keyWord1 = prefixWord;
+            searchInfo.keyWordSetcode1 = mStringManager.getSetCode(prefixWord);
+        }
+        if (!TextUtils.isEmpty(suffixWord)) {
+            searchInfo.keyWord2 = suffixWord;
+            searchInfo.keyWordSetcode2 = mStringManager.getSetCode(suffixWord);
         }
         searchInfo.attribute = (int) attribute;
         searchInfo.level = (int) level;

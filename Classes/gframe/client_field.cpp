@@ -12,6 +12,18 @@ namespace ygo {
 
 ClientField::ClientField() {
 	panel = 0;
+	//drag cardtext and lists
+	is_dragging_cardtext = false;
+	is_dragging_lstLog = false;
+	is_dragging_lstReplayList = false;
+	is_dragging_lstSinglePlayList = false;
+	is_dragging_lstBotList = false;
+	is_dragging_lstDecks = false;
+	is_dragging_lstANCard = false;
+	is_selectable = true;
+	dragging_tab_start_pos = 0;
+	dragging_tab_start_y = 0;
+
 	hovered_card = 0;
 	clicked_card = 0;
 	highlighting_card = 0;
@@ -408,10 +420,10 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->chain_code));
 		else
 			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler]);
-		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
+		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
-		if(mainGame->dInfo.curMsg != MSG_SORT_CHAIN && mainGame->dInfo.curMsg != MSG_SORT_CARD) {
+		if(mainGame->dInfo.curMsg != MSG_SORT_CARD) {
 			// text
 			wchar_t formatBuffer[2048];
 			if(conti_selecting)
@@ -459,7 +471,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
-		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 30 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 50 * mainGame->yScale));
+		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
 	}
 	if(selectable_cards.size() <= 5) {
 		for(int i = selectable_cards.size(); i < 5; ++i) {
@@ -492,7 +504,7 @@ void ClientField::ShowChainCard() {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->code));
 		else
 			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler]);
-		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
+		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
 		wchar_t formatBuffer[2048];
@@ -511,7 +523,7 @@ void ClientField::ShowChainCard() {
 			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
-		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 30 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 50 * mainGame->yScale));
+		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
 	} 
 	if(selectable_cards.size() <= 5) {
 		for(int i = selectable_cards.size(); i < 5; ++i) {
@@ -547,7 +559,7 @@ void ClientField::ShowLocationCard() {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardDisplay[i], display_cards[i]->code));
 		else
 			mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i]->controler]);
-		mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 55 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 225 * mainGame->yScale));
+		mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
 		mainGame->btnCardDisplay[i]->setPressed(false);
 		mainGame->btnCardDisplay[i]->setVisible(true);
 		wchar_t formatBuffer[2048];
@@ -580,7 +592,7 @@ void ClientField::ShowLocationCard() {
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stDisplayPos[i]->setVisible(true);
-		mainGame->stDisplayPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 30 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 50 * mainGame->yScale));
+		mainGame->stDisplayPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
 	}
 	if(display_cards.size() <= 5) {
 		for(int i = display_cards.size(); i < 5; ++i) {
@@ -626,19 +638,20 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(i < count);
 		recti pos = mainGame->wOptions->getRelativePosition();
-		int newheight = 30 + 70 * (scrollbar ? 5 : count) * mainGame->yScale;
+		int newheight = 50 + 60 * (scrollbar ? 5 : count) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
 		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 405 : 390) * mainGame->xScale;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
 		mainGame->wOptions->setRelativePosition(pos);
+        mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 405 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	} else {
-		mainGame->SetStaticText(mainGame->stOptions, 370  * mainGame->xScale, mainGame->guiFont,
-			(wchar_t*)dataManager.GetDesc(select_options[0]));
+		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont,(wchar_t*)dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
 		mainGame->btnOptionp->setVisible(false);
 		mainGame->btnOptionn->setVisible(count > 1);
 		mainGame->btnOptionOK->setVisible(true);
+		mainGame->scrOption->setVisible(false);
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		recti pos = mainGame->wOptions->getRelativePosition();
@@ -649,7 +662,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
 	else
 		myswprintf(textBuffer, dataManager.GetSysString(555));
-	mainGame->wOptions->setText(textBuffer);
+	mainGame->stOptions->setText(textBuffer);
 	mainGame->PopupElement(mainGame->wOptions);
 	mainGame->gMutex.unlock();
 }
@@ -1216,6 +1229,27 @@ bool ClientField::CheckSelectSum() {
 		return ret;
 	}
 }
+bool ClientField::CheckSelectTribute() {
+	std::set<ClientCard*> selable;
+	for(auto sit = selectsum_all.begin(); sit != selectsum_all.end(); ++sit) {
+		(*sit)->is_selectable = false;
+		(*sit)->is_selected = false;
+		selable.insert(*sit);
+	}
+	for(size_t i = 0; i < selected_cards.size(); ++i) {
+		selected_cards[i]->is_selectable = true;
+		selected_cards[i]->is_selected = true;
+		selable.erase(selected_cards[i]);
+	}
+	selectsum_cards.clear();
+	bool ret = check_sel_sum_trib_s(selable, 0, 0);
+	selectable_cards.clear();
+	for(auto sit = selectsum_cards.begin(); sit != selectsum_cards.end(); ++sit) {
+		(*sit)->is_selectable = true;
+		selectable_cards.push_back(*sit);
+	}
+	return ret;
+}
 bool ClientField::check_min(const std::set<ClientCard*>& left, std::set<ClientCard*>::const_iterator index, int min, int max) {
 	if (index == left.end())
 		return false;
@@ -1278,6 +1312,52 @@ bool ClientField::check_sum(std::set<ClientCard*>::const_iterator index, std::se
 	return (acc > l1 && check_sum(index, end, acc - l1, count + 1))
 	       || (l2 > 0 && acc > l2 && check_sum(index, end, acc - l2, count + 1))
 	       || check_sum(index, end, acc, count);
+}
+bool ClientField::check_sel_sum_trib_s(const std::set<ClientCard*>& left, int index, int acc) {
+	if(acc > select_max)
+		return false;
+	if(index == (int)selected_cards.size()) {
+		check_sel_sum_trib_t(left, acc);
+		return acc >= select_min && acc <= select_max;
+	}
+	int l = selected_cards[index]->opParam;
+	int l1 = l & 0xffff;
+	int l2 = l >> 16;
+	bool res1 = false, res2 = false;
+	res1 = check_sel_sum_trib_s(left, index + 1, acc + l1);
+	if(l2 > 0)
+		res2 = check_sel_sum_trib_s(left, index + 1, acc + l2);
+	return res1 || res2;
+}
+void ClientField::check_sel_sum_trib_t(const std::set<ClientCard*>& left, int acc) {
+	for(auto sit = left.begin(); sit != left.end(); ++sit) {
+		if(selectsum_cards.find(*sit) != selectsum_cards.end())
+			continue;
+		std::set<ClientCard*> testlist(left);
+		testlist.erase(*sit);
+		int l = (*sit)->opParam;
+		int l1 = l & 0xffff;
+		int l2 = l >> 16;
+		if(check_sum_trib(testlist.begin(), testlist.end(), acc + l1)
+			|| (l2 > 0 && check_sum_trib(testlist.begin(), testlist.end(), acc + l2))) {
+			selectsum_cards.insert(*sit);
+		}
+	}
+}
+bool ClientField::check_sum_trib(std::set<ClientCard*>::const_iterator index, std::set<ClientCard*>::const_iterator end, int acc) {
+	if(acc >= select_min && acc <= select_max)
+		return true;
+	if(acc > select_max || index == end)
+		return false;
+	int l = (*index)->opParam;
+	int l1 = l & 0xffff;
+	int l2 = l >> 16;
+	if((acc + l1 >= select_min && acc + l1 <= select_max) || (acc + l2 >= select_min && acc + l2 <= select_max))
+		return true;
+	++index;
+	return check_sum_trib(index, end, acc + l1)
+		|| check_sum_trib(index, end, acc + l2)
+		|| check_sum_trib(index, end, acc);
 }
 template <class T>
 static bool is_declarable(T const& cd, const std::vector<int>& opcode) {

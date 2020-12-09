@@ -13,6 +13,12 @@
         android:title="@string/share_deck"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_deck_backup_n_restore"
+        android:icon="@drawable/downloadimages"
+        android:title="@string/deck_backup_n_restore"
+        app:showAsAction="always" />
+
     <!--<item-->
     <!--android:id="@+id/action_card_list"-->
     <!--android:icon="@drawable/listicon"-->

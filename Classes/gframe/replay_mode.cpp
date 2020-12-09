@@ -230,8 +230,7 @@ void ReplayMode::EndDuel() {
 		mainGame->actionSignal.Reset();
 		mainGame->gMutex.lock();
 		mainGame->stMessage->setText(dataManager.GetSysString(1501));
-		if(mainGame->wCardSelect->isVisible())
-			mainGame->HideElement(mainGame->wCardSelect);
+		mainGame->HideElement(mainGame->wCardSelect);
 		mainGame->PopupElement(mainGame->wMessage);
 		mainGame->gMutex.unlock();
 		mainGame->actionSignal.Wait();
@@ -239,6 +238,7 @@ void ReplayMode::EndDuel() {
 		mainGame->dInfo.isStarted = false;
 		mainGame->dInfo.isFinished = true;
 		mainGame->dInfo.isReplay = false;
+		mainGame->dInfo.isSingleMode = false;
 		mainGame->gMutex.unlock();
 		mainGame->closeDoneSignal.Reset();
 		mainGame->closeSignal.Set();
@@ -422,8 +422,7 @@ bool ReplayMode::ReplayAnalyze(char* msg, unsigned int len) {
 			pbuf += count * 11;
 			return ReadReplayResponse();
 		}
-		case MSG_SORT_CARD:
-		case MSG_SORT_CHAIN: {
+		case MSG_SORT_CARD: {
 			player = BufferIO::ReadInt8(pbuf);
 			count = BufferIO::ReadInt8(pbuf);
 			pbuf += count * 7;

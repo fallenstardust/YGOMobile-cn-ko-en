@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
+import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
 import com.yuyh.library.imgsel.ISNav;
@@ -34,6 +36,8 @@ public class App extends GameApplication {
         //初始化bugly
         initBugly();
     }
+
+
 
     @Override
     public NativeInitOptions getNativeInitOptions() {

@@ -8,18 +8,13 @@ Android编译环境
 ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 ---------------------
     稳定ndk
-    Darwin: https://dl.google.com/android/ndk/android-ndk-r9d-darwin-x86_64.tar.bz2
-    Linux: https://dl.google.com/android/ndk/android-ndk-r9d-linux-x86_64.tar.bz2
-    Windows: https://dl.google.com/android/ndk/android-ndk-r9d-windows-x86_64.zip
-    
-    目前最新ndk
     https://dl.google.com/android/repository/android-ndk-r15b-windows-x86_64.zip
     https://dl.google.com/android/repository/android-ndk-r15b-darwin-x86_64.zip
     https://dl.google.com/android/repository/android-ndk-r15b-linux-x86_64.zip
     
 重要
 ---------------------------------------------
-    开始的NDK是R9版本，目前NDKR15编译已经通过。
+    NDKR15编译已经通过，更加新的NDK可能通不过
     根据自己的系统下载上面的压缩包，解压并且配置环境变量，cmd窗口，输ndk-build --version，看到一堆数字和英文的版权就是ok了
     不懂环境变量？没关系，自己自动把下文的ndk-build前面，加上NDK解压的文件夹比如D:\NDK\ndk-build -j4
 
@@ -27,6 +22,7 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 --------------------------
     从官网发布的apk提取，或者自己提供，scripts.zip里面是script文件夹
     mobile\assets\data\cards.cdb
+    mobile\assets\data\pics.zip
     mobile\assets\data\scripts.zip
     mobile\assets\data\fonts\ygo.ttf
     mobile\libs\libWindbot.aar
@@ -39,21 +35,29 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
     cd libcore
     ndk-build -j4
     成功：libcore\libs\armeabi-v7a\libYGOMobile.so
-    大于4.6M
+    大于8M
 
 3.包名和签名
 ---------------------
     一个手机相同包名的app只能同时存在一个，低版本无法覆盖高版本
     包名相同，签名不相同的app是无法覆盖安装。
-    （如果你不是组内的开发员，那么你需要改包名和准备一个签名，不然你的app无法覆盖旧版本，或者无法同时存在）
+    （因为你没有原版的签名，如果不想卸载原版，你需要改包名和准备自己的签名，不然你的app无法覆盖原版，或者无法同时存在）
 
-4.如何改包名，制作签名
+4.如何改包名
 ----------------------------
     如果你需要改包名
     编辑：mobile\build.gradle
     applicationId "cn.garymb.ygomobile"
     cn.garymb.ygomobile改为你的包名，如果不懂，请在后面加.xxxx，例如我是菜菜，改为cn.garymb.ygomobile.caicai
-    5.制作签名（仅第一次或者你没有签名文件）
+
+5.修改PreferencesProvider
+---------------------------
+    Provider和包名类似也会冲突，如需与原版共存，也要修改
+    将cn\garymb\ygomobile\ui\preference\YGOPreferencesProvider类改名
+    然后把AndroidManifest.xml里provider一节也做对应修改
+    
+6.制作签名（仅第一次或者你没有签名文件）
+--------------------------
     左边的project标签，选中mobile，点击顶部的菜单Build->Generate Signed Apk->Create New
     key store path: 点第一行的...选择保存位置或者手动输入，例如D:\ygo.jks
     Password:       签名密码，如果不懂，建议直接123456
@@ -61,7 +65,7 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
     Password:       key密码，如果不懂，建议直接123456
     First and Last name:随便一个名字
 
-6.生成apk文件
+7.生成apk文件
 -------------------------
     如果是自己电脑，最好勾上Remember passwords
     key store password  签名密码

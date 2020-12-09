@@ -8,10 +8,6 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#ifdef _MSC_VER
-#pragma warning(disable: 4244)
-#endif
-
 typedef unsigned long uptr;
 typedef unsigned long long uint64;
 typedef unsigned int uint32;
@@ -54,6 +50,9 @@ struct card_sort {
 #define LOCATION_ONFIELD	0x0c		//
 #define LOCATION_FZONE		0x100		//
 #define LOCATION_PZONE		0x200		//
+//For redirect
+#define LOCATION_DECKBOT	0x10001		//Return to deck bottom
+#define LOCATION_DECKSHF	0x20001		//Return to deck and shuffle
 
 //Positions
 #define POS_FACEUP_ATTACK		0x1
@@ -66,7 +65,6 @@ struct card_sort {
 #define POS_DEFENSE				0xc
 //Flip effect flags
 #define NO_FLIP_EFFECT			0x10000
-#define FLIP_SET_AVAILABLE		0x20000
 
 //Types
 #define TYPE_MONSTER		0x1			//
@@ -157,8 +155,9 @@ struct card_sort {
 #define REASON_REPLACE		0x1000000	//
 #define REASON_DRAW			0x2000000	//
 #define REASON_REDIRECT		0x4000000	//
-//#define REASON_REVEAL			0x8000000	//
+#define REASON_REVEAL		0x8000000	//
 #define REASON_LINK			0x10000000	//
+#define REASON_LOST_OVERLAY	0x20000000	//
 
 //Status
 #define STATUS_DISABLED				0x0001	//
@@ -247,7 +246,7 @@ struct card_sort {
 #define MSG_SELECT_PLACE		18
 #define MSG_SELECT_POSITION		19
 #define MSG_SELECT_TRIBUTE		20
-#define MSG_SORT_CHAIN			21
+//#define MSG_SORT_CHAIN			21
 #define MSG_SELECT_COUNTER		22
 #define MSG_SELECT_SUM			23
 #define MSG_SELECT_DISFIELD		24

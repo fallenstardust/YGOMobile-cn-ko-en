@@ -49,7 +49,11 @@ public class DeckUtil {
                 }
             }
         }
-        Collections.sort(deckList, nameCom);
+        if (path.equals(AppsSettings.get().getPackDeckDir())) {
+            Collections.sort(deckList, dateCom);
+        } else {
+            Collections.sort(deckList, nameCom);
+        }
         return deckList;
     }
 
@@ -92,7 +96,7 @@ public class DeckUtil {
         }
         files = appsSettings.getExpansionsPath().listFiles();
         for (File file : files) {
-            if (file.isFile() && file.getName().endsWith(".zip")) {
+            if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
                 ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
                 Enumeration entries = zipFile.entries();
                 while (entries.hasMoreElements()) {
@@ -119,6 +123,13 @@ public class DeckUtil {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
             return ydk1.getName().compareTo(ydk2.getName());
+        }
+    };
+
+    static Comparator dateCom = new Comparator<DeckFile>() {
+        @Override
+        public int compare(DeckFile ydk1, DeckFile ydk2) {
+            return ydk2.getDate().compareTo(ydk1.getDate());
         }
     };
 

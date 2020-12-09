@@ -8,6 +8,7 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
+	tBigPicture = NULL;
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
@@ -34,7 +35,25 @@ bool ImageManager::Initial(const path dir) {
 	tAvatar[0] = driver->getTexture((dir + path("/textures/me.jpg")).c_str());
 	tAvatar[1] = driver->getTexture((dir + path("/textures/opponent.jpg")).c_str());
 	tLPBarFrame = driver->getTexture((dir + path("/textures/lpbarf.png")).c_str());
-	if(!tBackGround_menu)
+	tSettings = driver->getTexture((dir + path("/textures/extra/tsettings.png")).c_str());
+	tLogs = driver->getTexture((dir + path("/textures/extra/tlogs.png")).c_str());
+	tMute = driver->getTexture((dir + path("/textures/extra/tmute.png")).c_str());
+	tPlay = driver->getTexture((dir + path("/textures/extra/tplay.png")).c_str());
+	tTalk = driver->getTexture((dir + path("/textures/extra/ttalk.png")).c_str());
+	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
+    tTitleBar = driver->getTexture((dir + path("/textures/extra/stitlebar.png")).c_str());
+    tWindow = driver->getTexture((dir + path("/textures/extra/sWindow.png")).c_str());
+    tWindow_V = driver->getTexture((dir + path("/textures/extra/sWindow_V.png")).c_str());
+	tDialog_S = driver->getTexture((dir + path("/textures/extra/sDialog_S.png")).c_str());
+	tDialog_L = driver->getTexture((dir + path("/textures/extra/sDialog_L.png")).c_str());
+	tButton_L = driver->getTexture((dir + path("/textures/extra/sButton_L.png")).c_str());
+	tButton_L_pressed = driver->getTexture((dir + path("/textures/extra/sButton_L_pressed.png")).c_str());
+	tButton_S = driver->getTexture((dir + path("/textures/extra/sButton_S.png")).c_str());
+	tButton_S_pressed = driver->getTexture((dir + path("/textures/extra/sButton_S_pressed.png")).c_str());
+	tButton_C = driver->getTexture((dir + path("/textures/extra/sButton_C.png")).c_str());
+	tButton_C_pressed = driver->getTexture((dir + path("/textures/extra/sButton_C_pressed.png")).c_str());
+
+    if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
 	if(!tBackGround_deck)
@@ -75,6 +94,10 @@ void ImageManager::ClearTexture() {
 	}
 	tMap.clear();
 	tThumb.clear();
+	if(tBigPicture != NULL) {
+		driver->removeTexture(tBigPicture);
+		tBigPicture = NULL;
+	}
 }
 void ImageManager::RemoveTexture(int code) {
 	auto tit = tMap.find(code);
@@ -140,6 +163,37 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		return tit->second;
 	else
 		return GetTextureThumb(code);
+}
+irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
+	if(code == 0)
+		return tUnknown;
+	if(tBigPicture != NULL) {
+		driver->removeTexture(tBigPicture);
+		tBigPicture = NULL;
+	}
+	irr::video::ITexture* texture;
+	char file[256];
+	sprintf(file, "expansions/pics/%d.jpg", code);
+	irr::video::IImage* srcimg = driver->createImageFromFile(file);
+	if(srcimg == NULL) {
+		sprintf(file, "pics/%d.jpg", code);
+		srcimg = driver->createImageFromFile(file);
+	}
+	if(srcimg == NULL) {
+		return tUnknown;
+	}
+	if(zoom == 1) {
+		texture = driver->addTexture(file, srcimg);
+	} else {
+		auto origsize = srcimg->getDimension();
+		video::IImage* destimg = driver->createImage(srcimg->getColorFormat(), irr::core::dimension2d<u32>(origsize.Width * zoom, origsize.Height * zoom));
+		//imageScaleNNAA(srcimg, destimg);
+		texture = driver->addTexture(file, destimg);
+		destimg->drop();
+	}
+	srcimg->drop();
+	tBigPicture = texture;
+	return texture;
 }
 irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 	return tUnknown;

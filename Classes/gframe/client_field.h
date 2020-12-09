@@ -22,6 +22,7 @@ struct ChainInfo {
 	int location;
 	int sequence;
 	bool solved;
+	bool need_distinguish;
 	std::set<ClientCard*> target;
 };
 
@@ -109,16 +110,30 @@ public:
 	void FadeCard(ClientCard* pcard, int alpha, int frame);
 	bool ShowSelectSum(bool panelmode);
 	bool CheckSelectSum();
+	bool CheckSelectTribute();
 	bool check_min(const std::set<ClientCard*>& left, std::set<ClientCard*>::const_iterator index, int min, int max);
 	bool check_sel_sum_s(const std::set<ClientCard*>& left, int index, int acc);
 	void check_sel_sum_t(const std::set<ClientCard*>& left, int acc);
 	bool check_sum(std::set<ClientCard*>::const_iterator index, std::set<ClientCard*>::const_iterator end, int acc, int count);
+	bool check_sel_sum_trib_s(const std::set<ClientCard*>& left, int index, int acc);
+	void check_sel_sum_trib_t(const std::set<ClientCard*>& left, int acc);
+	bool check_sum_trib(std::set<ClientCard*>::const_iterator index, std::set<ClientCard*>::const_iterator end, int acc);
 
 	void UpdateDeclarableList();
 	void RefreshCardCountDisplay();
 
 	irr::gui::IGUIElement* panel;
-	std::vector<int> ancard;
+	bool is_dragging_cardtext;
+	bool is_dragging_lstLog;
+	bool is_dragging_lstReplayList;
+	bool is_dragging_lstSinglePlayList;
+	bool is_dragging_lstBotList;
+	bool is_dragging_lstDecks;
+	bool is_dragging_lstANCard;
+    bool is_selectable;
+    int dragging_tab_start_pos;
+	int dragging_tab_start_y;
+    std::vector<int> ancard;
 	int hovered_controler;
 	int hovered_location;
 	size_t hovered_sequence;

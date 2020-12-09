@@ -10,6 +10,7 @@ public enum CardType {
     Pendulum(0x1000000L),
     Xyz(0x800000L),
     Link(0x4000000L),
+    Non_Effect(0x8000000L),
 
     Spirit(0x200),
     Union(0x400),

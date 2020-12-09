@@ -72,6 +72,7 @@ int SingleMode::SinglePlayThread() {
 	mainGame->ClearCardInfo();
 	mainGame->wCardImg->setVisible(true);
 	mainGame->wInfos->setVisible(true);
+	mainGame->wPallet->setVisible(true);
 	mainGame->btnLeaveGame->setVisible(true);
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1210));
 	mainGame->wPhase->setVisible(true);
@@ -328,8 +329,7 @@ bool SingleMode::SinglePlayAnalyze(char* msg, unsigned int len) {
 			}
 			break;
 		}
-		case MSG_SORT_CARD:
-		case MSG_SORT_CHAIN: {
+		case MSG_SORT_CARD: {
 			player = BufferIO::ReadInt8(pbuf);
 			count = BufferIO::ReadInt8(pbuf);
 			pbuf += count * 7;
@@ -746,7 +746,7 @@ bool SingleMode::SinglePlayAnalyze(char* msg, unsigned int len) {
 			memcpy(msgbuf, begin, len + 1);
 			BufferIO::DecodeUTF8(msgbuf, msg);
 			mainGame->gMutex.lock();
-			mainGame->SetStaticText(mainGame->stMessage, 310 * mainGame->xScale, mainGame->textFont, msg);
+			mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, msg);
 			mainGame->PopupElement(mainGame->wMessage);
 			mainGame->gMutex.unlock();
 			mainGame->actionSignal.Reset();

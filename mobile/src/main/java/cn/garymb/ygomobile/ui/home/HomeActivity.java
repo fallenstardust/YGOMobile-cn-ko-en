@@ -1,13 +1,12 @@
 package cn.garymb.ygomobile.ui.home;
 
 import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Gravity;
@@ -28,10 +27,15 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.base.bj.paysdk.utils.TrPay;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
+import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.assistant.util.Util;
+import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -39,6 +43,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -47,7 +53,9 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
@@ -55,47 +63,47 @@ import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.CardManager;
+import ocgcore.data.Card;
 
-public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+
+public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
+
+    private static final int ID_MAINACTIVITY = 0;
+
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
     ShimmerTextView tv;
     Shimmer shimmer;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
-
-    /*
-     *isToastCheckUpdateing  是否提示正在检查更新
-     *isToastNoUpdata  没有更新是否提示
-     * isErrorIntent  检查更新失败是否跳转下载地址
-     */
-    public static void checkPgyerUpdateSilent(Context context, boolean isToastCheckUpdateing, boolean isToastNoUpdata, boolean isErrorIntent) {
-        final DialogPlus builder = new DialogPlus(context);
-        if (isToastCheckUpdateing) {
-            builder.showProgressBar();
-            builder.hideTitleBar();
-            builder.setMessage(R.string.Checking_Update);
-            builder.show();
-        }
-
-    }
+    private DuelAssistantManagement duelAssistantManagement;
+    private CardManager mCardManager;
+    private SparseArray<Card> cards;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
+        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
         mServerList = $(R.id.list_server);
         mServerListAdapter = new ServerListAdapter(this);
         //server list
@@ -112,7 +120,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
-        //tv = findViewById(R.id.shimmer_tv);
+        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
@@ -120,9 +128,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
                 if (arg0) {
-                    //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_LONG).show();
                 } else {
-                    //Toast.makeText(getActivity(), "部分资源因机型原因加载错误，不影响使用", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -132,11 +140,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        //autoupadte checking
-        checkPgyerUpdateSilent(getContext(), false, false, false);
-        //ServiceDuelAssistant
-        YGOUtil.startDuelService(this);
-
+        //trpay
+        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
+        //check update
+        Beta.checkUpgrade(false, false);
+        //初始化决斗助手
+        initDuelAssistant();
         //萌卡
         StartMycard();
         checkNotch();
@@ -148,16 +157,70 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         BacktoDuel();
     }
 
+    private void duelAssistantCheck() {
+        if (AppsSettings.get().isServiceDuelAssistant()) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        FileLogUtil.writeAndTime("主页决斗助手检查");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    duelAssistantManagement.checkClip(ID_MAINACTIVITY);
+                }
+            }, 500);
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        duelAssistantCheck();
+    }
+
+    @Override
+    public void onJoinRoom(String password, int id) {
+        if (id == ID_MAINACTIVITY) {
+            QuickjoinRoom(password);
+        }
+    }
+
+    @Override
+    public void onCardSearch(String key, int id) {
+        if (id == ID_MAINACTIVITY) {
+            Intent intent = new Intent(this, CardSearchAcitivity.class);
+            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onSaveDeck(String message, boolean isUrl, int id) {
+        if (id == ID_MAINACTIVITY) {
+            saveDeck(message, isUrl);
+        }
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(this);
+    }
+
+
+    private void initDuelAssistant() {
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
+        duelAssistantManagement.init(getApplicationContext());
+        duelAssistantManagement.addDuelAssistantListener(this);
+        YGOUtil.startDuelService(this);
+    }
+
     //检查是否有刘海
     private void checkNotch() {
         ScreenUtil.findNotchInformation(HomeActivity.this, new ScreenUtil.FindNotchInformation() {
             @Override
             public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
-                try {
-                    FileLogUtil.writeAndTime("检查刘海" + isNotch + "   " + notchHeight);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 AppsSettings.get().setNotchHeight(notchHeight);
             }
         });
@@ -166,6 +229,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        duelAssistantManagement.removeDuelAssistantListener(this);
         EventBus.getDefault().unregister(this);
     }
 
@@ -225,11 +289,33 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     private boolean doMenu(int id) {
         switch (id) {
-            case R.id.nav_donation:
+            case R.id.nav_donation: {
 
-
+                final DialogPlus dialog = new DialogPlus(getContext());
+                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
+                dialog.setTitle(R.string.logo_text);
+                dialog.show();
+                View viewDialog = dialog.getContentView();
+                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
+                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
+                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
+                btnAlipay.setOnClickListener((v) -> {
+                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+                    dialog.dismiss();
+                });
+                btnTrpay.setOnClickListener((v) -> {
+                    PayUtils.inputMoney(HomeActivity.this);
+                    dialog.dismiss();
+                });
+                btnpaypal.setOnClickListener((v) -> {
+                    WebActivity.open(this, getString(R.string.donation), Constants.PAYPAL_URL);
+                    dialog.dismiss();
+                });
+            }
             break;
             case R.id.action_game:
+                setRandomCardDetail();
+                CardDetailRandom.showRandromCardDetailToast(this);
                 openGame();
                 break;
             case R.id.action_settings: {
@@ -356,21 +442,28 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         builder.setLeftButtonText(R.string.join_game);
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
-            //保存名字
-            String name = editText.getText().toString();
-            if (!TextUtils.isEmpty(name)) {
-                List<String> items = simpleListAdapter.getItems();
-                int index = items.indexOf(name);
-                if (index >= 0) {
-                    items.remove(index);
-                    items.add(0, name);
-                } else {
-                    items.add(0, name);
+            if (Build.VERSION.SDK_INT >= 23 && ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+                Toast toast = Toast.makeText(getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                openGame();
+            } else {
+                //保存名字
+                String name = editText.getText().toString();
+                if (!TextUtils.isEmpty(name)) {
+                    List<String> items = simpleListAdapter.getItems();
+                    int index = items.indexOf(name);
+                    if (index >= 0) {
+                        items.remove(index);
+                        items.add(0, name);
+                    } else {
+                        items.add(0, name);
+                    }
+                    AppsSettings.get().setLastRoomList(items);
+                    simpleListAdapter.notifyDataSetChanged();
                 }
-                AppsSettings.get().setLastRoomList(items);
-                simpleListAdapter.notifyDataSetChanged();
+                joinGame(serverInfo, name);
             }
-            joinGame(serverInfo, name);
         });
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
@@ -381,6 +474,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     void joinGame(ServerInfo serverInfo, String name) {
+        showTipsToast();
         YGOGameOptions options = new YGOGameOptions();
         options.mServerAddr = serverInfo.getServerAddr();
         options.mUserName = serverInfo.getPlayerName();
@@ -455,7 +549,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         ImageView iv_mc = $(R.id.btn_mycard);
         iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
-               // startActivity(new Intent(this, MyCardActivity.class));
+                startActivity(new Intent(this, MyCardActivity.class));
             }
         });
         iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
@@ -488,6 +582,100 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         } catch (Exception e) {
             // 未安装手Q或安装的版本不支持
             return false;
+        }
+    }
+
+    private void saveDeck(String deckMessage, boolean isUrl) {
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(R.string.find_deck_text);
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.save_n_open);
+        dialog.show();
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
+            //如果是卡组url
+            if (isUrl) {
+                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                startActivity(startdeck);
+            } else {
+                //如果是卡组文本
+                try {
+                    //以当前时间戳作为卡组名保存卡组
+                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                    Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                    startActivity(startdeck);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void QuickjoinRoom(String password) {
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(getString(R.string.quick_join) + password + "\"");
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.join);
+        dialog.show();
+        dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
+            ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
+            ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);
+            mServerListManager.syncLoadData();
+            File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
+            VUiKit.defer().when(() -> {
+                ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));
+                ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+                if (fileList == null) {
+                    return assetList;
+                }
+                if (fileList.getVercode() < assetList.getVercode()) {
+                    xmlFile.delete();
+                    return assetList;
+                }
+                return fileList;
+            }).done((list) -> {
+                if (list != null) {
+                    ServerInfo serverInfo = list.getServerInfoList().get(0);
+                    joinGame(serverInfo, password);
+                }
+            });
+        });
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+    }
+
+    public void setRandomCardDetail() {
+        //加载数据库中所有卡片卡片
+        mCardManager.loadCards();
+        //mCardManager = DataManager.get().getCardManager();
+        cards = mCardManager.getAllCards();
+        int y = (int) (Math.random() * cards.size());
+        Card cardInfo = cards.valueAt(y);
+        if (cardInfo == null)
+            return;
+        CardDetailRandom.RandomCardDetail(this, cardInfo);
+    }
+
+    public void showTipsToast() {
+        if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+            String[] tipsList = this.getResources().getStringArray(R.array.tips);
+            int x = (int) (Math.random() * tipsList.length);
+            String tips = tipsList[x];
+            Toast.makeText(this, tips, Toast.LENGTH_LONG).show();
         }
     }
 }

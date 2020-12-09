@@ -9,16 +9,16 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import java.io.File;
 import java.io.IOException;
 
-import androidx.annotation.NonNull;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
@@ -26,15 +26,23 @@ import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
-import cn.garymb.ygomobile.utils.PermissionUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.ConfigManager;
+import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.ORI_PICS;
+import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
@@ -51,6 +59,8 @@ public class MainActivity extends HomeActivity {
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
 
+    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +70,8 @@ public class MainActivity extends HomeActivity {
 //        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
         //资源复制
         checkRes();
+        //加载收藏夹
+        favConf.read();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
@@ -84,7 +96,40 @@ public class MainActivity extends HomeActivity {
             }
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
-                    DialogPlus dialog = new DialogPlus(this)
+                    final DialogPlus dialog = new DialogPlus(this);
+                    dialog.showTitleBar();
+                    dialog.setTitle(getString(R.string.settings_about_change_log));
+                    dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
+                    dialog.setLeftButtonText(R.string.help);
+                    dialog.setLeftButtonListener((dlg, i) -> {
+                        dialog.setContentView(R.layout.dialog_help);
+                        dialog.setTitle(R.string.question);
+                        dialog.hideButton();
+                        dialog.show();
+                        View viewDialog = dialog.getContentView();
+                        Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
+                        Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
+
+                        btnMasterRule.setOnClickListener((v) -> {
+                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                            dialog.dismiss();
+                        });
+                        btnTutorial.setOnClickListener((v) -> {
+                            WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
+                            dialog.dismiss();
+                        });
+                    });
+                    dialog.setRightButtonText(R.string.OK);
+                    dialog.setRightButtonListener((dlg, i) -> {
+                        dlg.dismiss();
+                        //mImageUpdater
+                        if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+                            if (!mImageUpdater.isRunning()) {
+                                mImageUpdater.start();
+                            }
+                        }
+                    });
+                    /*DialogPlus dialog = new DialogPlus(this)
                             .setTitleText(getString(R.string.settings_about_change_log))
                             .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                             .hideButton()
@@ -96,23 +141,54 @@ public class MainActivity extends HomeActivity {
                                         mImageUpdater.start();
                                     }
                                 }
-                            });
+                            });*/
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-//                            if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-//                                PermissionUtil.isServicePermission(MainActivity.this, true);
+                            if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                                YGOUtil.isServicePermission(MainActivity.this, true);
+                            File oriDeckFiles = new File(ORI_DECK);
+                            File deckFiles = new File(AppsSettings.get().getDeckDir());
+                            if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
+                                DialogPlus dlgpls = new DialogPlus(MainActivity.this);
+                                dlgpls.setTitle(R.string.tip);
+                                dlgpls.setMessage(R.string.restore_deck);
+                                dlgpls.setLeftButtonText(R.string.Cancel);
+                                dlgpls.setLeftButtonListener((dlg, i) -> {
+                                    dlgpls.dismiss();
+                                });
+                                dlgpls.setRightButtonText(R.string.deck_restore);
+                                dlgpls.setRightButtonListener((dlg, i) -> {
+                                    startPermissionsActivity();
+                                    dlgpls.dismiss();
+                                });
+                                dlgpls.show();
+                            }
+
                         }
                     });
                     dialog.show();
                 }
             } else {
-//                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-//                    PermissionUtil.isServicePermission(MainActivity.this, true);
+                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                    YGOUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
 
         });
+    }
+
+    @Override
+    protected void onPermission(boolean isOk) {
+        super.onPermission(isOk);
+        if (isOk){
+            try {
+                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+            } catch (Throwable e) {
+                Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
+            }
+            Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -129,7 +205,7 @@ public class MainActivity extends HomeActivity {
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if (mResCheckTask != null)
+        if (mResCheckTask.mReceiver != null)
             mResCheckTask.unregisterMReceiver();
     }
 
@@ -185,6 +261,9 @@ public class MainActivity extends HomeActivity {
             Log.e("MainActivity", "开始复制");
             try {
                 IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
+
+                FileUtils.delFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
+
                 if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
                     IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
                             AppsSettings.get().getResourcePath(), true);
@@ -199,11 +278,22 @@ public class MainActivity extends HomeActivity {
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
                         AppsSettings.get().getResourcePath(), true);
 
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.WINDBOT_PATH),
+                        AppsSettings.get().getResourcePath(), true);
+
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
-
+                /*
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
-                        AppsSettings.get().getSoundPath(), false);
+                        AppsSettings.get().getSoundPath(), false);*/
+
+                //复制原目录文件
+                if (new File(ORI_DECK).list() != null)
+                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+                if (new File(ORI_REPLAY).list() != null)
+                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
+                if (new File(ORI_PICS).list() != null)
+                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);
@@ -213,7 +303,9 @@ public class MainActivity extends HomeActivity {
             dialog.dismiss();
         });
     }
-/*        checkResourceDownload((result, isNewVersion) -> {
-            Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
-        });*/
+
+    /*        checkResourceDownload((result, isNewVersion) -> {
+                Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
+            });*/
+
 }

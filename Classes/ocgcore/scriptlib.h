@@ -138,6 +138,7 @@ public:
 	static int32 card_get_equip_target(lua_State *L);
 	static int32 card_get_pre_equip_target(lua_State *L);
 	static int32 card_check_equip_target(lua_State *L);
+	static int32 card_check_union_target(lua_State *L);
 	static int32 card_get_union_count(lua_State *L);
 	static int32 card_get_overlay_group(lua_State *L);
 	static int32 card_get_overlay_count(lua_State *L);
@@ -188,7 +189,7 @@ public:
 	static int32 card_is_disabled(lua_State *L);
 	static int32 card_is_destructable(lua_State *L);
 	static int32 card_is_summonable(lua_State *L);
-	static int32 card_is_fusion_summonable_card(lua_State* L);
+	static int32 card_is_fusion_summonable_card(lua_State *L);
 	static int32 card_is_msetable(lua_State *L);
 	static int32 card_is_ssetable(lua_State *L);
 	static int32 card_is_special_summonable(lua_State *L);
@@ -432,6 +433,7 @@ public:
 	static int32 duel_discard_deck(lua_State *L);
 	static int32 duel_discard_hand(lua_State *L);
 	static int32 duel_disable_shuffle_check(lua_State *L);
+	static int32 duel_disable_self_destroy_check(lua_State *L);
 	static int32 duel_shuffle_deck(lua_State *L);
 	static int32 duel_shuffle_extra(lua_State *L);
 	static int32 duel_shuffle_hand(lua_State *L);
@@ -469,7 +471,8 @@ public:
 	static int32 duel_skip_phase(lua_State *L);
 	static int32 duel_is_damage_calculated(lua_State *L);
 	static int32 duel_get_attacker(lua_State *L);
-	static int32 duel_get_attack_target(lua_State *L);
+	static int32 duel_get_attack_target(lua_State* L);
+	static int32 duel_get_battle_monster(lua_State* L);
 	static int32 duel_disable_attack(lua_State *L);
 	static int32 duel_chain_attack(lua_State *L);
 	static int32 duel_readjust(lua_State *L);
@@ -507,6 +510,7 @@ public:
 	static int32 duel_get_ritual_material(lua_State *L);
 	static int32 duel_release_ritual_material(lua_State *L);
 	static int32 duel_get_fusion_material(lua_State *L);
+	static int32 duel_is_summon_cancelable(lua_State *L);
 	static int32 duel_set_must_select_cards(lua_State *L);
 	static int32 duel_grab_must_select_cards(lua_State *L);
 	static int32 duel_set_target_card(lua_State *L);
@@ -533,6 +537,7 @@ public:
 	static int32 duel_select_sequence(lua_State *L);
 	static int32 duel_select_position(lua_State *L);
 	static int32 duel_select_disable_field(lua_State *L);
+	static int32 duel_select_field(lua_State *L);
 	static int32 duel_announce_race(lua_State *L);
 	static int32 duel_announce_attribute(lua_State *L);
 	static int32 duel_announce_level(lua_State *L);

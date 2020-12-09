@@ -76,6 +76,8 @@ public class CardSort implements Comparator<Card> {
                 }
                 if (c2.isType(CardType.Fusion)) {
                     return -2;
+                }if (c2.isType(CardType.Link)) {
+                    return 1;
                 }
             } else if (c1.isType(CardType.Synchro)) {
                 if (c2.isType(CardType.Xyz)) {
@@ -84,12 +86,18 @@ public class CardSort implements Comparator<Card> {
                 if (c2.isType(CardType.Fusion)) {
                     return -1;
                 }
+                if (c2.isType(CardType.Link)) {
+                    return 2;
+                }
             } else if (c1.isType(CardType.Fusion)) {
                 if (c2.isType(CardType.Xyz)) {
                     return 2;
                 }
                 if (c2.isType(CardType.Synchro)) {
                     return 1;
+                }
+                if (c2.isType(CardType.Link)) {
+                    return 3;
                 }
             }
             int rs = comp(c1.getStar(), c2.getStar());

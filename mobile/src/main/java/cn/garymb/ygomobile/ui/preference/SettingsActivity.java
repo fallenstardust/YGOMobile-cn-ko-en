@@ -17,6 +17,6 @@ public class SettingsActivity extends BaseActivity {
         Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
         enableBackHome();
-        getFragmentManager().beginTransaction().replace(R.id.fragment,  new SettingFragment()).commit();
+        getFragmentManager().beginTransaction().replace(R.id.fragment, new SettingFragment()).commit();
     }
 }

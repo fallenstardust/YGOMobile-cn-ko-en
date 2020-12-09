@@ -44,7 +44,7 @@ struct optarget {
 	int32 op_param;
 };
 struct chain {
-	typedef std::unordered_map<uint32, optarget> opmap;
+	using opmap = std::unordered_map<uint32, optarget>;
 	uint16 chain_id;
 	uint8 chain_count;
 	uint8 triggering_player;
@@ -68,7 +68,7 @@ struct chain {
 };
 
 struct player_info {
-	typedef std::vector<card*> card_vector;
+	using card_vector = std::vector<card*>;
 	int32 lp;
 	int32 start_count;
 	int32 draw_count;
@@ -88,12 +88,12 @@ struct player_info {
 	card_vector tag_list_extra;
 };
 struct field_effect {
-	typedef std::multimap<uint32, effect*> effect_container;
-	typedef std::unordered_map<effect*, effect_container::iterator> effect_indexer;
-	typedef std::unordered_map<effect*, effect*> oath_effects;
-	typedef std::unordered_set<effect*> effect_collection;
-	typedef std::unordered_map<card*, effect*> gain_effects;
-	typedef std::unordered_map<effect*, gain_effects> grant_effect_container;
+	using effect_container = std::multimap<uint32, effect*>;
+	using effect_indexer = std::unordered_map<effect*, effect_container::iterator>;
+	using oath_effects = std::unordered_map<effect*, effect*>;
+	using effect_collection = std::unordered_set<effect*>;
+	using gain_effects = std::unordered_map<card*, effect*>;
+	using grant_effect_container = std::unordered_map<effect*, gain_effects>;
 
 	effect_container aura_effect;
 	effect_container ignition_effect;
@@ -150,23 +150,23 @@ union return_value {
 	int64 lvalue[8];
 };
 struct processor {
-	typedef std::vector<effect*> effect_vector;
-	typedef std::vector<card*> card_vector;
-	typedef std::vector<uint32> option_vector;
-	typedef std::list<card*> card_list;
-	typedef std::list<tevent> event_list;
-	typedef std::list<chain> chain_list;
-	typedef std::map<effect*, chain> instant_f_list;
-	typedef std::vector<chain> chain_array;
-	typedef std::list<processor_unit> processor_list;
-	typedef std::set<card*, card_sort> card_set;
-	typedef std::set<std::pair<effect*, tevent>> delayed_effect_collection;
+	using effect_vector = std::vector<effect*>;
+	using card_vector = std::vector<card*>;
+	using option_vector = std::vector<uint32>;
+	using card_list = std::list<card*>;
+	using event_list = std::list<tevent>;
+	using chain_list = std::list<chain>;
+	using instant_f_list = std::map<effect*, chain>;
+	using chain_array = std::vector<chain>;
+	using processor_list = std::list<processor_unit>;
+	using card_set = std::set<card*, card_sort>;
+	using delayed_effect_collection = std::set<std::pair<effect*, tevent>>;
 	struct chain_limit_t {
 		chain_limit_t(int32 f, int32 p): function(f), player(p) {}
 		int32 function;
 		int32 player;
 	};
-	typedef std::vector<chain_limit_t> chain_limit_list;
+	using chain_limit_list = std::vector<chain_limit_t>;
 
 	processor_list units;
 	processor_list subunits;
@@ -209,7 +209,6 @@ struct processor {
 	chain_list new_ochain_h;
 	chain_list new_chains;
 	delayed_effect_collection delayed_quick_tmp;
-	delayed_effect_collection delayed_quick_break;
 	delayed_effect_collection delayed_quick;
 	instant_f_list quick_f_chain;
 	card_set leave_confirmed;
@@ -220,6 +219,7 @@ struct processor {
 	card_set unique_destroy_set;
 	card_set self_destroy_set;
 	card_set self_tograve_set;
+	card_set trap_monster_adjust_set[2];
 	card_set release_cards;
 	card_set release_cards_ex;
 	card_set release_cards_ex_oneof;
@@ -241,7 +241,6 @@ struct processor {
 	std::unordered_map<uint32, uint32> effect_count_code;
 	std::unordered_map<uint32, uint32> effect_count_code_duel;
 	std::unordered_map<uint32, uint32> spsummon_once_map[2];
-	std::unordered_map<uint32, uint32> spsummon_once_map_rst[2];
 	std::multimap<int32, card*, std::greater<int32>> xmaterial_lst;
 	ptr temp_var[4];
 	uint32 global_flag;
@@ -314,9 +313,6 @@ struct processor {
 	uint8 normalsummon_state_count[2];
 	uint8 flipsummon_state_count[2];
 	uint8 spsummon_state_count[2];
-	uint8 spsummon_state_count_rst[2];
-	uint8 spsummon_state_count_tmp[2];
-	bool spsummon_rst;
 	uint8 attack_state_count[2];
 	uint8 battle_phase_count[2];
 	uint8 battled_count[2];
@@ -335,16 +331,16 @@ struct processor {
 };
 class field {
 public:
-	typedef std::multimap<uint32, effect*> effect_container;
-	typedef std::set<card*, card_sort> card_set;
-	typedef std::vector<effect*> effect_vector;
-	typedef std::vector<card*> card_vector;
-	typedef std::list<card*> card_list;
-	typedef std::list<tevent> event_list;
-	typedef std::list<chain> chain_list;
-	typedef std::map<effect*, chain> instant_f_list;
-	typedef std::vector<chain> chain_array;
-	typedef std::list<processor_unit> processor_list;
+	using effect_container = std::multimap<uint32, effect*>;
+	using card_set = std::set<card*, card_sort>;
+	using effect_vector = std::vector<effect*>;
+	using card_vector = std::vector<card*>;
+	using card_list = std::list<card*>;
+	using event_list = std::list<tevent>;
+	using chain_list = std::list<chain>;
+	using instant_f_list = std::map<effect*, chain>;
+	using chain_array = std::vector<chain>;
+	using processor_list = std::list<processor_unit>;
 
 	duel* pduel;
 	player_info player[2];
@@ -395,6 +391,7 @@ public:
 	void add_effect(effect* peffect, uint8 owner_player = 2);
 	void remove_effect(effect* peffect);
 	void remove_oath_effect(effect* reason_effect);
+	void release_oath_relation(effect* reason_effect);
 	void reset_phase(uint32 phase);
 	void reset_chain();
 	void add_effect_code(uint32 code, uint32 playerid);
@@ -433,7 +430,7 @@ public:
 	void check_card_counter(card* pcard, int32 counter_type, int32 playerid);
 	void check_card_counter(group* pgroup, int32 counter_type, int32 playerid);
 	void check_chain_counter(effect* peffect, int32 playerid, int32 chainid, bool cancel = false);
-	void set_spsummon_counter(uint8 playerid, bool add = true, bool chain = false);
+	void set_spsummon_counter(uint8 playerid);
 	int32 check_spsummon_counter(uint8 playerid, uint8 ct = 1);
 
 	int32 check_lp_cost(uint8 playerid, uint32 cost);
@@ -450,8 +447,8 @@ public:
 	int32 check_tuner_material(card* pcard, card* tuner, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_other_synchro_material(const card_vector& nsyn, int32 lv, int32 min, int32 max, int32 mcount);
 	int32 check_tribute(card* pcard, int32 min, int32 max, group* mg, uint8 toplayer, uint32 zone = 0x1f, uint32 releasable = 0xff00ff, uint32 pos = 0x1);
-	static int32 check_with_sum_limit(const card_vector& mats, int32 acc, int32 index, int32 count, int32 min, int32 max);
-	static int32 check_with_sum_limit_m(const card_vector& mats, int32 acc, int32 index, int32 min, int32 max, int32 must_count);
+	static int32 check_with_sum_limit(const card_vector& mats, int32 acc, int32 index, int32 count, int32 min, int32 max, int32 opmin);
+	static int32 check_with_sum_limit_m(const card_vector& mats, int32 acc, int32 index, int32 min, int32 max, int32 opmin, int32 must_count);
 	static int32 check_with_sum_greater_limit(const card_vector& mats, int32 acc, int32 index, int32 opmin);
 	static int32 check_with_sum_greater_limit_m(const card_vector& mats, int32 acc, int32 index, int32 opmin, int32 must_count);
 	int32 check_xyz_material(card* pcard, int32 findex, int32 lv, int32 min, int32 max, group* mg);
@@ -459,13 +456,13 @@ public:
 	int32 is_player_can_draw(uint8 playerid);
 	int32 is_player_can_discard_deck(uint8 playerid, int32 count);
 	int32 is_player_can_discard_deck_as_cost(uint8 playerid, int32 count);
-	int32 is_player_can_discard_hand(uint8 playerid, card* pcard, effect* peffect, uint32 reason);
+	int32 is_player_can_discard_hand(uint8 playerid, card* pcard, effect* reason_effect, uint32 reason);
 	int32 is_player_can_action(uint8 playerid, uint32 actionlimit);
 	int32 is_player_can_summon(uint32 sumtype, uint8 playerid, card* pcard, uint8 toplayer);
 	int32 is_player_can_mset(uint32 sumtype, uint8 playerid, card* pcard, uint8 toplayer);
 	int32 is_player_can_sset(uint8 playerid, card* pcard);
 	int32 is_player_can_spsummon(uint8 playerid);
-	int32 is_player_can_spsummon(effect* peffect, uint32 sumtype, uint8 sumpos, uint8 playerid, uint8 toplayer, card* pcard);
+	int32 is_player_can_spsummon(effect* reason_effect, uint32 sumtype, uint8 sumpos, uint8 playerid, uint8 toplayer, card* pcard);
 	int32 is_player_can_flipsummon(uint8 playerid, card* pcard);
 	int32 is_player_can_spsummon_monster(uint8 playerid, uint8 toplayer, uint8 sumpos, uint32 sumtype, card_data* pdata);
 	int32 is_player_can_spsummon_count(uint8 playerid, uint32 count);
@@ -485,8 +482,7 @@ public:
 	int32 get_cteffect(effect* peffect, int32 playerid, int32 store);
 	int32 get_cteffect_evt(effect* feffect, int32 playerid, const tevent& e, int32 store);
 	int32 check_cteffect_hint(effect* peffect, uint8 playerid);
-	int32 check_deck_effect(chain& ch) const;
-	int32 check_hand_trigger(chain& ch);
+	int32 check_nonpublic_trigger(chain& ch);
 	int32 check_trigger_effect(const chain& ch) const;
 	int32 check_spself_from_hand_trigger(const chain& ch) const;
 	int32 is_able_to_enter_bp();
@@ -554,7 +550,7 @@ public:
 	void release(card* target, effect* reason_effect, uint32 reason, uint32 reason_player);
 	void send_to(card_set* targets, effect* reason_effect, uint32 reason, uint32 reason_player, uint32 playerid, uint32 destination, uint32 sequence, uint32 position);
 	void send_to(card* target, effect* reason_effect, uint32 reason, uint32 reason_player, uint32 playerid, uint32 destination, uint32 sequence, uint32 position);
-	void move_to_field(card* target, uint32 move_player, uint32 playerid, uint32 destination, uint32 positions, uint32 enable = FALSE, uint32 ret = 0, uint32 is_equip = FALSE, uint32 zone = 0xff);
+	void move_to_field(card* target, uint32 move_player, uint32 playerid, uint32 destination, uint32 positions, uint32 enable = FALSE, uint32 ret = 0, uint32 pzone = FALSE, uint32 zone = 0xff);
 	void change_position(card_set* targets, effect* reason_effect, uint32 reason_player, uint32 au, uint32 ad, uint32 du, uint32 dd, uint32 flag, uint32 enable = FALSE);
 	void change_position(card* target, effect* reason_effect, uint32 reason_player, uint32 npos, uint32 flag, uint32 enable = FALSE);
 	void operation_replace(int32 type, int32 step, group* targets);
@@ -566,6 +562,7 @@ public:
 	int32 swap_control(uint16 step, effect* reason_effect, uint8 reason_player, group* targets1, group* targets2, uint16 reset_phase, uint8 reset_count);
 	int32 control_adjust(uint16 step);
 	int32 self_destroy(uint16 step, card* ucard, int32 p);
+	int32 trap_monster_adjust(uint16 step);
 	int32 equip(uint16 step, uint8 equip_player, card* equip_card, card* target, uint32 up, uint32 is_step);
 	int32 draw(uint16 step, effect* reason_effect, uint32 reason, uint8 reason_player, uint8 playerid, uint32 count);
 	int32 damage(uint16 step, effect* reason_effect, uint32 reason, uint8 reason_player, card* reason_card, uint8 playerid, uint32 amount, uint32 is_step);
@@ -585,7 +582,7 @@ public:
 	int32 send_replace(uint16 step, group* targets, card* target);
 	int32 send_to(uint16 step, group* targets, effect* reason_effect, uint32 reason, uint8 reason_player);
 	int32 discard_deck(uint16 step, uint8 playerid, uint8 count, uint32 reason);
-	int32 move_to_field(uint16 step, card* target, uint32 enable, uint32 ret, uint32 is_equip, uint32 zone);
+	int32 move_to_field(uint16 step, card* target, uint32 enable, uint32 ret, uint32 pzone, uint32 zone);
 	int32 change_position(uint16 step, group* targets, effect* reason_effect, uint8 reason_player, uint32 enable);
 	int32 operation_replace(uint16 step, effect* replace_effect, group* targets, card* target, int32 is_destroy);
 	int32 activate_effect(uint16 step, effect* peffect);
@@ -610,7 +607,7 @@ public:
 	int32 select_tribute(uint16 step, uint8 playerid, uint8 cancelable, uint8 min, uint8 max);
 	int32 select_counter(uint16 step, uint8 playerid, uint16 countertype, uint16 count, uint8 s, uint8 o);
 	int32 select_with_sum_limit(int16 step, uint8 playerid, int32 acc, int32 min, int32 max);
-	int32 sort_card(int16 step, uint8 playerid, uint8 is_chain);
+	int32 sort_card(int16 step, uint8 playerid);
 	int32 announce_race(int16 step, uint8 playerid, int32 count, int32 available);
 	int32 announce_attribute(int16 step, uint8 playerid, int32 count, int32 available);
 	int32 announce_card(int16 step, uint8 playerid);
@@ -627,7 +624,7 @@ public:
 #define CHAIN_CONTINUOUS_CARD	0x08
 #define CHAIN_ACTIVATING		0x10
 #define CHAIN_HAND_TRIGGER		0x20
-#define CHAIN_DECK_EFFECT		0x40
+//#define CHAIN_DECK_EFFECT		0x40
 #define CHAININFO_CHAIN_COUNT			0x01
 #define CHAININFO_TRIGGERING_EFFECT		0x02
 #define CHAININFO_TRIGGERING_PLAYER		0x04
@@ -757,6 +754,7 @@ public:
 #define PROCESSOR_SWAP_CONTROL		75
 #define PROCESSOR_CONTROL_ADJUST	76
 #define PROCESSOR_SELF_DESTROY		77
+#define PROCESSOR_TRAP_MONSTER_ADJUST	78
 #define PROCESSOR_PAY_LPCOST		80
 #define PROCESSOR_REMOVE_COUNTER	81
 #define PROCESSOR_ATTACK_DISABLE	82

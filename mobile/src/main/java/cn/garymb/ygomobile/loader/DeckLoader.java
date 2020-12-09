@@ -26,7 +26,7 @@ public class DeckLoader {
         try {
             inputStream = new FileInputStream(file);
             deckInfo = readDeck(cardLoader, inputStream, limitList);
-            if(deckInfo != null){
+            if (deckInfo != null) {
                 deckInfo.source = file;
             }
         } catch (Exception e) {
@@ -101,15 +101,15 @@ public class DeckLoader {
             IOUtils.close(in);
         }
         DeckInfo deckInfo = new DeckInfo();
-        SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), limitList);
+        SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), limitList, true);
         for (Integer id : deck.getMainlist()) {
             deckInfo.addMainCards(tmp.get(id));
         }
-        tmp = cardLoader.readCards(deck.getExtraList(), limitList);
+        tmp = cardLoader.readCards(deck.getExtraList(), limitList, true);
         for (Integer id : deck.getExtraList()) {
             deckInfo.addExtraCards(tmp.get(id));
         }
-        tmp = cardLoader.readCards(deck.getSideList(), limitList);
+        tmp = cardLoader.readCards(deck.getSideList(), limitList, true);
 //        Log.i("kk", "desk:" + tmp.size()+"/"+side.size());
         for (Integer id : deck.getSideList()) {
             deckInfo.addSideCards(tmp.get(id));
