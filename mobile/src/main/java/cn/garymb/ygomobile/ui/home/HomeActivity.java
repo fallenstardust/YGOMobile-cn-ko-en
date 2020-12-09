@@ -27,7 +27,6 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.base.bj.paysdk.utils.TrPay;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -65,9 +64,8 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -120,7 +118,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
-        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
+//        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
@@ -141,7 +139,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
         //trpay
-        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
+//        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //check update
         Beta.checkUpgrade(false, false);
         //初始化决斗助手
@@ -292,25 +290,25 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             case R.id.nav_donation: {
 
                 final DialogPlus dialog = new DialogPlus(getContext());
-                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
+//                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
                 dialog.setTitle(R.string.logo_text);
                 dialog.show();
                 View viewDialog = dialog.getContentView();
-                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
-                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
-                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
-                btnAlipay.setOnClickListener((v) -> {
-                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
-                    dialog.dismiss();
-                });
-                btnTrpay.setOnClickListener((v) -> {
-                    PayUtils.inputMoney(HomeActivity.this);
-                    dialog.dismiss();
-                });
-                btnpaypal.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.donation), Constants.PAYPAL_URL);
-                    dialog.dismiss();
-                });
+//                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
+//                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
+//                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
+//                btnAlipay.setOnClickListener((v) -> {
+//                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
+//                    dialog.dismiss();
+//                });
+//                btnTrpay.setOnClickListener((v) -> {
+//                    PayUtils.inputMoney(HomeActivity.this);
+//                    dialog.dismiss();
+//                });
+//                btnpaypal.setOnClickListener((v) -> {
+//                    WebActivity.open(this, getString(R.string.donation), Constants.PAYPAL_URL);
+//                    dialog.dismiss();
+//                });
             }
             break;
             case R.id.action_game:
@@ -343,7 +341,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 startActivity(new Intent(this, CardSearchAcitivity.class));
                 break;
             case R.id.action_deck_manager:
-                startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
+//                startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
                 break;
             case R.id.action_join_qq_group:
                 String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
@@ -549,7 +547,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         ImageView iv_mc = $(R.id.btn_mycard);
         iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
-                startActivity(new Intent(this, MyCardActivity.class));
+//                startActivity(new Intent(this, MyCardActivity.class));
             }
         });
         iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
@@ -602,17 +600,17 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                 File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
-                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                startActivity(startdeck);
+//                Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+//                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                startActivity(startdeck);
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    startActivity(startdeck);
+//                    Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                    startActivity(startdeck);
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

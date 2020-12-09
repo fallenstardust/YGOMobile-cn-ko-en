@@ -19,7 +19,7 @@ import java.util.List;
 public class Util {
 
     public static boolean startDuelService(Context context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (PermissionUtil.isNotificationListenerEnabled(context))
                     context.startForegroundService(new Intent(context, DuelAssistantService.class));
@@ -28,7 +28,7 @@ public class Util {
             } else {
                 context.startService(new Intent(context, DuelAssistantService.class));
             }
-        }
+//        }
         return true;
     }
 

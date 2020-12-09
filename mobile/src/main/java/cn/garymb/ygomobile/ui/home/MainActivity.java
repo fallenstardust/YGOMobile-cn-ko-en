@@ -145,7 +145,7 @@ public class MainActivity extends HomeActivity {
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                            if (AppsSettings.get().isServiceDuelAssistant()/** && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q**/)
                                 YGOUtil.isServicePermission(MainActivity.this, true);
                             File oriDeckFiles = new File(ORI_DECK);
                             File deckFiles = new File(AppsSettings.get().getDeckDir());
@@ -170,7 +170,7 @@ public class MainActivity extends HomeActivity {
                     dialog.show();
                 }
             } else {
-                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                if (AppsSettings.get().isServiceDuelAssistant()/** && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q**/)
                     YGOUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }

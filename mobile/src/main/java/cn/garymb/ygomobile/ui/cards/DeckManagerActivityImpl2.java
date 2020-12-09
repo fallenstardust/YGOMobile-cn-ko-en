@@ -69,7 +69,7 @@ import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBack {
     private DeckGroupView mDeckView;
-    protected CardSearcher mCardSelector;
+//    protected CardSearcher mCardSelector;
     protected StringManager mStringManager = DataManager.get().getStringManager();
     protected LimitManager mLimitManager = DataManager.get().getLimitManager();
     protected CardLoader mCardLoader;
@@ -101,7 +101,7 @@ class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBa
         mImageLoader = ImageLoader.get(this);
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+//        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
         mListView = $(R.id.list_cards);
         mCardListAdapater = new CardListAdapter(this, mImageLoader);
         mCardListAdapater.setEnableSwipe(true);
@@ -214,7 +214,7 @@ class DeckManagerActivityImpl2 extends BaseActivity implements CardLoader.CallBa
         }).done((rs) -> {
             isLoad = true;
             dlg.dismiss();
-            mCardSelector.initItems();
+//            mCardSelector.initItems();
             mLimitList = mCardLoader.getLimitList();
             isLoad = true;
             setCurYdkFile(mYdkFile, false);

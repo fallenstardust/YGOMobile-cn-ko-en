@@ -8,9 +8,6 @@ import android.text.InputType;
 import android.view.Gravity;
 import android.widget.EditText;
 
-import com.base.bj.paysdk.domain.TrPayResult;
-import com.base.bj.paysdk.listener.PayResultListener;
-import com.base.bj.paysdk.utils.TrPay;
 
 import java.net.URLEncoder;
 import java.util.UUID;
@@ -76,13 +73,13 @@ public class PayUtils {
     public static void callPay(Activity activity, Long money) {
         String id = UUID.randomUUID() + "";
         String notifyurl = "192.168.1.1";
-        TrPay.getInstance(activity).callPay("感谢您对YGOMobile的支持", id, money, "", notifyurl, "user", new PayResultListener() {
-            public void onPayFinish(Context context, String outtradeno, int resultCode, String resultString, int payType, Long amount, String tradename) {
-                if (resultCode == TrPayResult.RESULT_CODE_SUCC.getId()) {
-                } else if (resultCode == TrPayResult.RESULT_CODE_FAIL.getId()) {
-                }
-            }
-        });
+//        TrPay.getInstance(activity).callPay("感谢您对YGOMobile的支持", id, money, "", notifyurl, "user", new PayResultListener() {
+//            public void onPayFinish(Context context, String outtradeno, int resultCode, String resultString, int payType, Long amount, String tradename) {
+//                if (resultCode == TrPayResult.RESULT_CODE_SUCC.getId()) {
+//                } else if (resultCode == TrPayResult.RESULT_CODE_FAIL.getId()) {
+//                }
+//            }
+//        });
     }
 
     /*

@@ -43,7 +43,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
@@ -236,19 +236,19 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
                 if (isUrl) {
                     Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(startdeck);
+//                    Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                    startActivity(startdeck);
                 } else {
                     //如果是卡组文本
                     try {
                         //以当前时间戳作为卡组名保存卡组
                         File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                        Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
-                        startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                        startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(startdeck);
+//                        Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
+//                        startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                        startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(startdeck);
                     } catch (IOException e) {
                         e.printStackTrace();
                         Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

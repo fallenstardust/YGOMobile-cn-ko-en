@@ -15,7 +15,7 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import ocgcore.DataManager;
@@ -118,17 +118,17 @@ public class GameUriManager {
         if ("file".equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             if (file.getName().toLowerCase(Locale.US).endsWith(".ydk")) {
-                Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-                if (isDeckDir(file)) {
-                    //deck目录
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                } else {
-                    //非deck目录
-                    File ydk = getDeckFile(new File(AppsSettings.get().getDeckDir()), getDeckName(uri));
-                    FileUtils.copyFile(file, ydk);
-                    startdeck.putExtra(Intent.EXTRA_TEXT, ydk.getAbsolutePath());
-                }
-                activity.startActivity(startdeck);
+//                Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
+//                if (isDeckDir(file)) {
+//                    //deck目录
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                } else {
+//                    //非deck目录
+//                    File ydk = getDeckFile(new File(AppsSettings.get().getDeckDir()), getDeckName(uri));
+//                    FileUtils.copyFile(file, ydk);
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, ydk.getAbsolutePath());
+//                }
+//                activity.startActivity(startdeck);
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
                 File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + file.getName().toLowerCase(Locale.US));
                 try {
@@ -162,9 +162,9 @@ public class GameUriManager {
                             pfd.close();
                         }
                     }
-                    Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, ydk.getAbsolutePath());
-                    activity.startActivity(startdeck);
+//                    Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, ydk.getAbsolutePath());
+//                    activity.startActivity(startdeck);
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
@@ -207,9 +207,9 @@ public class GameUriManager {
                 } else {
                     Deck deckInfo = new Deck(uri);
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    activity.startActivity(startdeck);
+//                    Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
+//                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+//                    activity.startActivity(startdeck);
                 }
             }
 //            else if (PATH_ROOM.equals(path)) {
@@ -237,9 +237,9 @@ public class GameUriManager {
             }
         }
         if (deck != null && deck.exists()) {
-            Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-            startdeck.putExtra(Intent.EXTRA_TEXT, deck.getAbsolutePath());
-            activity.startActivity(startdeck);
+//            Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
+//            startdeck.putExtra(Intent.EXTRA_TEXT, deck.getAbsolutePath());
+//            activity.startActivity(startdeck);
         } else {
             Log.w("kk", "no find " + name);
             activity.finish();

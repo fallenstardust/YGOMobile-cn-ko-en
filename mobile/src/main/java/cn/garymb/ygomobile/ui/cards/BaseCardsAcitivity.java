@@ -29,10 +29,10 @@ import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 
-public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
+public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoader.CallBack{
     protected DrawerLayout mDrawerlayout;
     protected RecyclerView mListView;
-    protected CardSearcher mCardSelector;
+//    protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapater;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
@@ -58,8 +58,8 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
 
         mCardLoader = new CardLoader(this);
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
-        mCardSelector.setCallBack(this);
+//        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+//        mCardSelector.setCallBack(this);
     }
 
     protected int getDimen(int id) {
