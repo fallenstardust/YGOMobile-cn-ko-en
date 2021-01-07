@@ -27,7 +27,6 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.base.bj.paysdk.utils.TrPay;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -57,6 +56,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.FileLogActivity;
@@ -76,13 +76,15 @@ import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_CN;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_EN;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_KO;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
 
@@ -140,8 +142,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        //trpay
-        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
         //check update
         Beta.checkUpgrade(false, false);
         //初始化决斗助手
@@ -289,28 +289,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     private boolean doMenu(int id) {
         switch (id) {
-            case R.id.nav_donation: {
-
-                final DialogPlus dialog = new DialogPlus(getContext());
-                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
-                dialog.setTitle(R.string.logo_text);
-                dialog.show();
-                View viewDialog = dialog.getContentView();
-                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
-                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
-                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
-                btnAlipay.setOnClickListener((v) -> {
-                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
-                    dialog.dismiss();
-                });
-                btnTrpay.setOnClickListener((v) -> {
-                    PayUtils.inputMoney(HomeActivity.this);
-                    dialog.dismiss();
-                });
-                btnpaypal.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.donation), Constants.PAYPAL_URL);
-                    dialog.dismiss();
-                });
+            case R.id.nav_webpage: {
+                String url;
+                if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.EN") {
+                    url = URL_PGYER_EN;
+                } else if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.KO") {
+                    url = URL_PGYER_KO;
+                } else {
+                    url = URL_PGYER_CN;
+                }
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                startActivity(intent);
             }
             break;
             case R.id.action_game:
@@ -501,7 +491,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
         addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.downloadimages);
         addMenuButton(mMenuIds, menu, R.id.action_settings, R.string.settings, R.drawable.setting);
-        addMenuButton(mMenuIds, menu, R.id.nav_donation, R.string.donation, R.drawable.about);
+        addMenuButton(mMenuIds, menu, R.id.nav_webpage, R.string.donation, R.drawable.about);
 
         //设置展开或隐藏的延时。 默认值为 800ms。
         menu.setDuration(100);

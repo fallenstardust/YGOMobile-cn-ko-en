@@ -42,7 +42,7 @@
                 android:textColor="@color/white" />
 
             <Button
-                android:id="@+id/nav_donation"
+                android:id="@+id/nav_webpage"
                 android:layout_width="124dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
