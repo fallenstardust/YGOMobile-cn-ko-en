@@ -625,6 +625,7 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
         DialogPlus builder = new DialogPlus(this);
         switch (menuId) {
             case R.id.action_deck_backup_n_restore:
+                startPermissionsActivity();
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.deck_explain);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
