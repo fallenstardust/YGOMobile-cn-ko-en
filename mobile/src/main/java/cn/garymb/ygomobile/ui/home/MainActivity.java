@@ -283,6 +283,8 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.FONT_DIRECTORY),
+                        AppsSettings.get().getFontDirPath(), true);
                 /*
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
                         AppsSettings.get().getSoundPath(), false);*/
