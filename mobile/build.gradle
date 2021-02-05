@@ -8,12 +8,12 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 371300201
+        versionCode 371300205
         versionName "3.7.13"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
-            abiFilters "armeabi-v7a","x86"
+            abiFilters "armeabi-v7a", "x86"
         }
     }
     compileOptions {
@@ -72,6 +72,7 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+    maven { url 'https://jitpack.io' }
 }
 dependencies {
     implementation 'junit:junit:4.12'
@@ -114,4 +115,6 @@ dependencies {
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'com.bm.photoview:library:1.4.1'
+    //引导页库
+    implementation 'com.github.huburt-Hu:NewbieGuide:v2.4.4'
 }
