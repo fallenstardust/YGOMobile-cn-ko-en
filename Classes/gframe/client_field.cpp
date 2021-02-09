@@ -516,11 +516,13 @@ void ClientField::ShowChainCard() {
 				mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 			if(selectable_cards[i]->overlayTarget->controler)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+			else
+				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		} else {
 			if(selectable_cards[i]->controler)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+			else
+				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
 		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));

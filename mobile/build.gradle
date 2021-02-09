@@ -78,6 +78,13 @@ android {
             dirs 'libs'
         }
     }
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    maven { url 'https://jitpack.io' }
+}
 dependencies {
     implementation 'junit:junit:4.12'
     implementation project(':libcore')
@@ -105,6 +112,12 @@ dependencies {
     implementation 'com.github.xiaohaibin:XBanner:1.6.4'
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
+    //dialog库
+    implementation(name: 'dialogutils2-release', ext: 'aar')
+    //recyclerview的adapter库
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.0.0'
     //图片选择
     implementation 'com.yuyh.imgsel:library:2.1.0'
     //跨进程SharedPreferencesPlus工具
@@ -116,5 +129,6 @@ dependencies {
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'com.bm.photoview:library:1.4.1'
-
+    //引导页库
+    implementation 'com.github.huburt-Hu:NewbieGuide:v2.4.4'
 }

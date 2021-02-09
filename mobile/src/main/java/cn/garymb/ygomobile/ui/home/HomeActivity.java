@@ -27,6 +27,8 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.model.GuidePage;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -56,6 +58,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.FileLogActivity;
@@ -74,13 +77,15 @@ import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.PayUtils;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_CN;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_EN;
+import static cn.garymb.ygomobile.Constants.URL_PGYER_KO;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
 
@@ -147,6 +152,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //萌卡
         StartMycard();
         checkNotch();
+        showNewbieGuide();
     }
 
     @Override
@@ -287,6 +293,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     private boolean doMenu(int id) {
         switch (id) {
+            case R.id.nav_webpage: {
+                String url;
+                if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.EN") {
+                    url = URL_PGYER_EN;
+                } else if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.KO") {
+                    url = URL_PGYER_KO;
+                } else {
+                    url = URL_PGYER_CN;
+                }
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                startActivity(intent);
             case R.id.nav_donation: {
 
                 final DialogPlus dialog = new DialogPlus(getContext());
@@ -499,7 +517,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
         addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.downloadimages);
         addMenuButton(mMenuIds, menu, R.id.action_settings, R.string.settings, R.drawable.setting);
-        addMenuButton(mMenuIds, menu, R.id.nav_donation, R.string.donation, R.drawable.about);
+        addMenuButton(mMenuIds, menu, R.id.nav_webpage, R.string.donation, R.drawable.about);
 
         //设置展开或隐藏的延时。 默认值为 800ms。
         menu.setDuration(100);
@@ -675,5 +693,16 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             String tips = tipsList[x];
             Toast.makeText(this, tips, Toast.LENGTH_LONG).show();
         }
+    }
+    //https://www.jianshu.com/p/99649af3b191
+    public void showNewbieGuide() {
+        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                .setLabel("homeguide")
+                .addGuidePage(GuidePage.newInstance()
+                        .setBackgroundColor(0x60000000)
+                        .addHighLight(findViewById(R.id.menu))
+                        .setLayoutRes(R.layout.activity_logo))
+                .alwaysShow(true)//总是显示，调试时可以打开
+                .show();
     }
 }
