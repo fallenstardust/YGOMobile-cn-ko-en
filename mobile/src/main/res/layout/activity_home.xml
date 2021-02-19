@@ -46,6 +46,7 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/mycard"
                 android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:orientation="vertical">

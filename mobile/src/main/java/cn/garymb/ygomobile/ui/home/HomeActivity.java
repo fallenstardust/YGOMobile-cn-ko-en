@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -675,10 +676,11 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     public void showNewbieGuide() {
         NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
                 .setLabel("homeguide")
-                .addGuidePage(GuidePage.newInstance()
-                        .setBackgroundColor(0x60000000)
-                        .addHighLight(findViewById(R.id.menu))
-                        .setLayoutRes(R.layout.activity_logo))
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                        .setBackgroundColor(0xcc000000)
+                        .addHighLight(findViewById(R.id.menu), HighLight.Shape.CIRCLE)
+                        .setLayoutRes(R.layout.view_guide_home))
                 .alwaysShow(true)//总是显示，调试时可以打开
                 .show();
     }
