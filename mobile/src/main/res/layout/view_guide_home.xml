@@ -4,10 +4,23 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/text_about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_margin="20dp"
-        android:text="软件主要功能在这里\n如教程，单人游戏，卡组编辑，设置等"
+        android:text="about"
+        android:textColor="@color/white"
+        android:shadowColor="#000000"
+        android:shadowDy="2"
+        android:shadowRadius="2"
         android:textSize="20sp" />
+
+    <ImageView
+        android:id="@+id/abt_rename"
+        android:layout_width="@dimen/dp_40"
+        android:layout_height="@dimen/dp_40"
+        android:layout_margin="20dp"
+        android:src="@drawable/rename"
+        android:visibility="gone" />
 </FrameLayout>

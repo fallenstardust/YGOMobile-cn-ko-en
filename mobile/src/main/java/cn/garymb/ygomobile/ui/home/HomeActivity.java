@@ -2,7 +2,11 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,8 +33,12 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.core.Controller;
+import com.app.hubert.guide.listener.OnHighlightDrewListener;
+import com.app.hubert.guide.listener.OnLayoutInflatedListener;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
 import com.google.android.material.navigation.NavigationView;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -109,18 +118,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
         mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
-        mServerList = $(R.id.list_server);
-        mServerListAdapter = new ServerListAdapter(this);
         //server list
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        mServerList.setLayoutManager(linearLayoutManager);
-        DividerItemDecoration dividerItemDecoration =
-                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        mServerList.addItemDecoration(dividerItemDecoration);
-        mServerList.setAdapter(mServerListAdapter);
-        mServerListManager = new ServerListManager(this, mServerListAdapter);
-        mServerListManager.bind(mServerList);
-        mServerListManager.syncLoadData();
+        initServerlist();
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
@@ -672,15 +671,98 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             Toast.makeText(this, tips, Toast.LENGTH_LONG).show();
         }
     }
+
+    public void initServerlist() {
+        mServerList = $(R.id.list_server);
+        mServerListAdapter = new ServerListAdapter(this);
+        //server list
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        mServerList.setLayoutManager(linearLayoutManager);
+        DividerItemDecoration dividerItemDecoration =
+                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        mServerList.addItemDecoration(dividerItemDecoration);
+        mServerList.setAdapter(mServerListAdapter);
+        mServerListManager = new ServerListManager(this, mServerListAdapter);
+        mServerListManager.bind(mServerList);
+        mServerListManager.syncLoadData();
+    }
+
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide() {
+        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
+                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
+                    @Override
+                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(20);
+                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                        canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
+                    }
+                }).build();
         NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
                 .setLabel("homeguide")
                 .addGuidePage(
                         GuidePage.newInstance().setEverywhereCancelable(true)
-                        .setBackgroundColor(0xcc000000)
-                        .addHighLight(findViewById(R.id.menu), HighLight.Shape.CIRCLE)
-                        .setLayoutRes(R.layout.view_guide_home))
+                                .setBackgroundColor(0xbc000000)
+                                .addHighLightWithOptions(findViewById(R.id.menu), HighLight.Shape.CIRCLE, options)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setText("软件主要功能在这里\n如教程，单人游戏，卡组编辑，设置等");
+                                    }
+                                })
+
+                )
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                                .setBackgroundColor(0xbc000000)
+                                .addHighLightWithOptions(findViewById(R.id.mycard), HighLight.Shape.CIRCLE, options)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setText("萌卡平台，有排位天梯，战绩，断线重连，卡组云端备份等功能\n以及观战、新闻活动、决斗数据与交友聊天室等");
+                                    }
+                                })
+                )
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                                .setBackgroundColor(0xbc000000)
+                                .addHighLight(findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setText("点击一个服务器模块\n即可加入相应的在线游戏");
+                                    }
+                                })
+                )
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                                .setBackgroundColor(0xbc000000)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        ImageView iv = view.findViewById(R.id.abt_rename);
+                                        iv.setVisibility(View.VISIBLE);
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setText("点击编辑按钮即可编辑相应的服务器信息\n比如改昵称等");
+                                    }
+                                })
+                )
                 .alwaysShow(true)//总是显示，调试时可以打开
                 .show();
     }
