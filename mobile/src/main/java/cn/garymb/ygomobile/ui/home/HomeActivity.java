@@ -714,7 +714,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     public void onLayoutInflated(View view, Controller controller) {
                                         //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("软件主要功能在这里\n如教程，单人游戏，卡组编辑，设置等");
+                                        tv.setText("功能菜单：\n软件主要功能如教程，单人游戏，卡组编辑，设置等");
                                     }
                                 })
 
@@ -730,7 +730,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     public void onLayoutInflated(View view, Controller controller) {
                                         //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("萌卡平台，有排位天梯，战绩，断线重连，卡组云端备份等功能\n以及观战、新闻活动、决斗数据与交友聊天室等");
+                                        tv.setText("萌卡平台:\n提供众多对战服务\n包含排位，观战，聊天与论坛等");
                                     }
                                 })
                 )
@@ -744,7 +744,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("点击一个服务器模块\n即可加入相应的在线游戏");
+                                        tv.setText("直连服务器列表：\n点击一个服务器模块即可加入相应的在线游戏");
                                     }
                                 })
                 )
@@ -759,7 +759,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                         ImageView iv = view.findViewById(R.id.abt_rename);
                                         iv.setVisibility(View.VISIBLE);
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("点击编辑按钮即可编辑相应的服务器信息\n比如改昵称等");
+                                        tv.setText("编辑按钮:\n点击编辑相应的服务器信息\n如改游戏昵称等");
                                     }
                                 })
                 )
