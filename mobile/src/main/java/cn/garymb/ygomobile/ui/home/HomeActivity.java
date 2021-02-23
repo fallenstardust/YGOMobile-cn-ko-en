@@ -151,7 +151,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //萌卡
         StartMycard();
         checkNotch();
-        showNewbieGuide();
+        showNewbieGuide("homepage");
     }
 
     @Override
@@ -688,7 +688,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     //https://www.jianshu.com/p/99649af3b191
-    public void showNewbieGuide() {
+    public void showNewbieGuide(String scene) {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
                 .setOnHighlightDrewListener(new OnHighlightDrewListener() {
                     @Override
@@ -701,69 +701,84 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
                     }
                 }).build();
-        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
-                .setLabel("homeguide")
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.menu), HighLight.Shape.CIRCLE, options)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+        HighlightOptions options2 = new HighlightOptions.Builder()//绘制一个高亮虚线矩形
+                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
+                    @Override
+                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(20);
+                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                        canvas.drawRect(rectF, paint);
+                    }
+                }).build();
+        if (scene == "homepage") {
+            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                    .setLabel("homepageGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.menu), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("功能菜单：\n软件主要功能如教程，单人游戏，卡组编辑，设置等");
-                                    }
-                                })
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setText("功能菜单：\n软件主要功能如教程，单人游戏，卡组编辑，设置等");
+                                        }
+                                    })
 
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.mycard), HighLight.Shape.CIRCLE, options)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.mycard), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("萌卡平台:\n提供众多对战服务\n包含排位，观战，聊天与论坛等");
-                                    }
-                                })
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLight(findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setText("萌卡平台:\n提供众多对战服务\n包含排位，观战，聊天与论坛等");
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLight(findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("直连服务器列表：\n点击一个服务器模块即可加入相应的在线游戏");
-                                    }
-                                })
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setText("直连服务器列表：\n点击一个服务器模块即可加入相应的在线游戏");
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        ImageView iv = view.findViewById(R.id.abt_rename);
-                                        iv.setVisibility(View.VISIBLE);
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("编辑按钮:\n点击编辑相应的服务器信息\n如改游戏昵称等");
-                                    }
-                                })
-                )
-                .alwaysShow(true)//总是显示，调试时可以打开
-                .show();
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            ImageView iv = view.findViewById(R.id.abt_rename);
+                                            iv.setVisibility(View.VISIBLE);
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setText("编辑按钮:\n点击编辑相应的服务器信息\n如改游戏昵称等");
+                                        }
+                                    })
+                    )
+                    .alwaysShow(true)//总是显示，调试时可以打开
+                    .show();
+        } else if (scene == "dlgJoinGame") {
+
+        }
     }
 }
