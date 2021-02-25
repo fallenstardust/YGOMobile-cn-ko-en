@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -37,12 +37,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
                 android:shadowColor="#000000"
                 android:shadowDy="2"
                 android:shadowRadius="2"
                 android:text="@string/action_game"
                 android:textColor="@color/white"
                 android:textSize="15sp" />
+
             <ImageView
                 android:layout_width="30dp"
                 android:layout_height="30dp"
@@ -53,12 +55,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
                 android:shadowColor="#000000"
                 android:shadowDy="2"
                 android:shadowRadius="2"
                 android:text="@string/deck_manager"
                 android:textColor="@color/white"
                 android:textSize="15sp" />
+
             <ImageView
                 android:layout_width="30dp"
                 android:layout_height="30dp"
@@ -69,6 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
                 android:shadowColor="#000000"
                 android:shadowDy="2"
                 android:shadowRadius="2"
@@ -78,10 +83,17 @@
 
         </LinearLayout>
 
+        <View
+            android:id="@+id/view_bar"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginVertical="50dp"
+            android:background="@color/holo_blue_bright" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100dp"
             android:orientation="horizontal">
 
             <ImageView
@@ -168,11 +180,29 @@
         android:textSize="20sp"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/abt_rename"
-        android:layout_width="@dimen/dp_40"
-        android:layout_height="@dimen/dp_40"
-        android:layout_margin="20dp"
-        android:src="@drawable/rename"
-        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/view_abt_server_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="@dimen/dp_40"
+            android:layout_height="@dimen/dp_40"
+            android:layout_margin="20dp"
+            android:src="@drawable/rename" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="20dp"
+            android:shadowColor="#000000"
+            android:shadowDy="2"
+            android:shadowRadius="2"
+            android:text="@string/guide_server_edit"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+    </LinearLayout>
 </FrameLayout>

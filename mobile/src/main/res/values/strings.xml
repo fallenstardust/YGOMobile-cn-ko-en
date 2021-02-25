@@ -293,10 +293,10 @@
         Very necessary permissions will be applied\:
         \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
-    <string name="guide_menu">Menu\: including most of functions like</string>
-    <string name="guide_single_game">Single Game\: start YGOPro.play bot duel\, deck builder\, etc. </string>
-    <string name="guide_deckmanager">Deck Manager\: create, edit, share and backup Decks. search Cards and addto Deck</string>
-    <string name="guide_cardSearch">Card Search\: search cards, add cards to myfavorites</string>
+    <string name="guide_menu">Menu\: including most of functions, for Example</string>
+    <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
+    <string name="guide_serverlist">Server list\: click a server to join online Game</string>
+    <string name="guide_server_edit">Server edit\: edit server information. for example\: change nickname</string>
     <string name="guide_help">Help\: specifically guide How to use YGOMobile and learn Master Rules</string>
     <string name="guide_settings">Settings\: turn on Expansions and DuelAssistant.set game avatars, background, cardback. </string>
     <string name="guide_reset">Reset Resources\: click to reset when pictures or any files are mistaken deleted</string>

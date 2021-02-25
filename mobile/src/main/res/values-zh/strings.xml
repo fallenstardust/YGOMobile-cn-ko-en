@@ -290,10 +290,10 @@
         使用本软件此类功能将申请以下必要权限：
         \n安装未知应用权限：安装更新包，备份、还原卡组必需
         \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
-    <string name="guide_menu">功能菜单：软件主要功能如"</string>
-    <string name="guide_single_game">单人游戏：启动YGOPro，可玩离线人机，横屏卡组编辑等</string>
-    <string name="guide_deckmanager">卡组编辑：创建、修改、分享、备份卡组，搜索卡片加入卡组等</string>
-    <string name="guide_cardSearch">卡片搜索：搜索卡片，收藏单卡等</string>
+    <string name="guide_menu">功能菜单：\n软件主要功能如"</string>
+    <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
+    <string name="guide_serverlist">直连服务器列表\n点击一个服务器块即可加入相应的在线游戏</string>
+    <string name="guide_server_edit">编辑按钮:\n点击编辑相应的服务器信息。\n如改游戏昵称等</string>
     <string name="guide_help">教程：包含软件具体使用方法和大师规则学习（划重点）</string>
     <string name="guide_settings">设置：启动决斗助手，使用先行卡（如果有），更改游戏头像，背景，卡背等</string>
     <string name="guide_reset">重置资源：发现缺图等文件误删情况时点击重置</string>

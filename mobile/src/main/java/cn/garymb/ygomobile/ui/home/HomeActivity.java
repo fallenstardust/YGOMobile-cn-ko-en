@@ -738,7 +738,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("萌卡平台:\n提供众多对战服务\n包含排位，观战，聊天与论坛等");
+                                        tv.setText(R.string.guide_mycard);
                                     }
                                 })
                 )
@@ -752,7 +752,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
                                         TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("直连服务器列表：\n点击一个服务器模块即可加入相应的在线游戏");
+                                        tv.setText(R.string.guide_serverlist);
                                     }
                                 })
                 )
@@ -764,9 +764,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
-                                        view.findViewById(R.id.abt_rename).setVisibility(View.VISIBLE);
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("编辑按钮:\n点击编辑相应的服务器信息\n如改游戏昵称等");
+                                        view.findViewById(R.id.view_abt_server_edit).setVisibility(View.VISIBLE);
                                     }
                                 })
                 )
