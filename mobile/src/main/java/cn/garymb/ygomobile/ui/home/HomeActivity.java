@@ -722,9 +722,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
-                                        //可对同一个layout布局使用不同的文字图案和布局更改，不必重复创建许多类似的布局
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setText("功能菜单：\n软件主要功能如教程，单人游戏，卡组编辑，设置等");
+                                        //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
+                                        view.findViewById(R.id.view_abt_menu).setVisibility(View.VISIBLE);
                                     }
                                 })
 
