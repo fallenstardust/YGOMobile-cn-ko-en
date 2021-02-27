@@ -297,4 +297,5 @@
     <string name="guide_help">Help\: specifically guide How to use YGOMobile and learn Master Rules</string>
     <string name="guide_settings">Settings\: turn on Expansions and DuelAssistant.set game avatars, background, cardback. </string>
     <string name="guide_reset">Reset Resources\: click to reset when pictures or any files are mistaken deleted</string>
+    <string name="abt_room_list">Inputted password will be recorded. Lone-Press to delete record(s)</string>
 </resources>

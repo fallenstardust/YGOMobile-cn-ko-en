@@ -16,7 +16,13 @@
         android:singleLine="true"
         android:textColor="@color/holo_blue_bright"
         android:textColorHint="@color/gray" />
-
+    <TextView
+        android:id="@+id/abt_room_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/abt_room_list"
+        android:textSize="10sp" />
     <ListView
         android:id="@+id/room_list"
         android:layout_width="match_parent"
