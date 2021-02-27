@@ -738,6 +738,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
                                         TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
                                         tv.setText(R.string.guide_mycard);
                                     }
                                 })
@@ -752,6 +753,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                                     @Override
                                     public void onLayoutInflated(View view, Controller controller) {
                                         TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
                                         tv.setText(R.string.guide_serverlist);
                                     }
                                 })

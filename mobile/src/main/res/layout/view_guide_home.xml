@@ -10,7 +10,7 @@
         android:layout_gravity="center"
         android:layout_margin="10dp"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="invisible">
 
         <TextView
             android:layout_width="match_parent"
@@ -177,15 +177,15 @@
         android:shadowRadius="2"
         android:text="about"
         android:textColor="@color/white"
-        android:textSize="20sp"
-        android:visibility="gone" />
+        android:textSize="15sp"
+        android:visibility="invisible" />
 
     <LinearLayout
         android:id="@+id/view_abt_server_edit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="invisible">
 
         <ImageView
             android:layout_width="@dimen/dp_40"
@@ -203,6 +203,6 @@
             android:shadowRadius="2"
             android:text="@string/guide_server_edit"
             android:textColor="@color/white"
-            android:textSize="20sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 </FrameLayout>

@@ -293,7 +293,7 @@
         Very necessary permissions will be applied\:
         \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
-    <string name="guide_menu">Menu\: including most of functions, for Example</string>
+    <string name="guide_menu">Menu\:\nincluding most of functions, for Example</string>
     <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
     <string name="guide_serverlist">Server list\: click a server to join online Game</string>
     <string name="guide_server_edit">Server edit\: edit server information. for example\: change nickname</string>
