@@ -21,8 +21,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="@string/abt_room_list"
-        android:textSize="10sp" />
+        android:text="@string/guide_abt_room_list"
+        android:textSize="10sp"
+        android:visibility="gone"/>
     <ListView
         android:id="@+id/room_list"
         android:layout_width="match_parent"

@@ -1,5 +1,10 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -11,13 +16,18 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.widget.RecyclerViewItemListener;
-import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.core.Controller;
+import com.app.hubert.guide.listener.OnHighlightDrewListener;
+import com.app.hubert.guide.listener.OnLayoutInflatedListener;
+import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
 import com.bumptech.glide.Glide;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
@@ -112,6 +122,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
             intentSearch(intentSearchMessage);
             isInitCdbOk = true;
         });
+        showNewbieGuide();
     }
 
     @Override
@@ -345,5 +356,57 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         } else if (isLoad) {
             mDrawerlayout.openDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
+    }
+
+    //https://www.jianshu.com/p/99649af3b191
+    public void showNewbieGuide() {
+        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
+                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
+                    @Override
+                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(20);
+                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                        canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
+                    }
+                }).build();
+        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                .setLabel("searchCardGuide")
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                                .setBackgroundColor(0xbc000000)
+                                .addHighLightWithOptions(findViewById(R.id.btn_search), HighLight.Shape.CIRCLE, options)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_button_search);
+                                    }
+                                })
+
+                )
+                .addGuidePage(
+                        GuidePage.newInstance().setEverywhereCancelable(true)
+                                .setBackgroundColor(0xbc000000)
+                                .addHighLightWithOptions(findViewById(R.id.search_result_count), HighLight.Shape.CIRCLE, options)
+                                .setLayoutRes(R.layout.view_guide_home)
+                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                    @Override
+                                    public void onLayoutInflated(View view, Controller controller) {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_search_result_count);
+                                    }
+                                })
+
+                )
+                .alwaysShow(true)//总是显示，调试时可以打开
+                .show();
     }
 }

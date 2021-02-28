@@ -297,5 +297,10 @@
     <string name="guide_help">Help\: specifically guide How to use YGOMobile and learn Master Rules</string>
     <string name="guide_settings">Settings\: turn on Expansions and DuelAssistant.set game avatars, background, cardback. </string>
     <string name="guide_reset">Reset Resources\: click to reset when pictures or any files are mistaken deleted</string>
-    <string name="abt_room_list">Inputted password will be recorded. Lone-Press to delete record(s)</string>
+    <string name="guide_abt_room_list">Inputted password will be recorded. Lone-Press to delete record(s)</string>
+    <string name="guide_join_room">you can join game without password to start random duel with default mode
+                                \n use specified password and share other players to join same game
+                                \n more duel model password you can see the tortuial.</string>
+    <string name="guide_button_search">click search buttton to edit search criteria</string>
+    <string name="guide_search_result_count">here shows search result count</string>
 </resources>

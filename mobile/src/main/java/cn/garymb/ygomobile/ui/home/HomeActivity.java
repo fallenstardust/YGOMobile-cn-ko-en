@@ -151,7 +151,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //萌卡
         StartMycard();
         checkNotch();
-        showNewbieGuide();
+        showNewbieGuide("homePage");
     }
 
     @Override
@@ -253,6 +253,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             dialogPlus.show();
         } else if (event.join) {
             joinRoom(event.position);
+            showNewbieGuide("joinRoom");
         } else {
             mServerListManager.showEditDialog(event.position);
         }
@@ -392,8 +393,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         builder.setContentView(R.layout.dialog_room_name);
         EditText editText = builder.bind(R.id.room_name);
         ListView listView = builder.bind(R.id.room_list);
+        TextView text_abt_roomlist = builder.bind(R.id.abt_room_list);
         SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
         simpleListAdapter.set(AppsSettings.get().getLastRoomList());
+        if (AppsSettings.get().getLastRoomList().size() > 0)
+            text_abt_roomlist.setVisibility(View.VISIBLE);
+        else text_abt_roomlist.setVisibility(View.GONE);
         listView.setAdapter(simpleListAdapter);
         listView.setOnItemClickListener((a, v, pos, index) -> {
             String name = simpleListAdapter.getItemById(index);
@@ -686,7 +691,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     //https://www.jianshu.com/p/99649af3b191
-    public void showNewbieGuide() {
+    public void showNewbieGuide(String scene) {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
                 .setOnHighlightDrewListener(new OnHighlightDrewListener() {
                     @Override
@@ -711,66 +716,85 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                         canvas.drawRect(rectF, paint);
                     }
                 }).build();
-        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
-                .setLabel("homepageGuide")
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.menu), HighLight.Shape.CIRCLE, options)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+        if (scene == "homePage") {
+            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                    .setLabel("homepageGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.menu), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
-                                        view.findViewById(R.id.view_abt_menu).setVisibility(View.VISIBLE);
-                                    }
-                                })
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
+                                            view.findViewById(R.id.view_abt_menu).setVisibility(View.VISIBLE);
+                                        }
+                                    })
 
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.mycard), HighLight.Shape.CIRCLE, options)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.mycard), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_mycard);
-                                    }
-                                })
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE, options2)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_mycard);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_serverlist);
-                                    }
-                                })
-                )
-                .addGuidePage(
-                        GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
-                                .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_serverlist);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        view.findViewById(R.id.view_abt_server_edit).setVisibility(View.VISIBLE);
-                                    }
-                                })
-                )
-                .alwaysShow(true)//总是显示，调试时可以打开
-                .show();
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            view.findViewById(R.id.view_abt_server_edit).setVisibility(View.VISIBLE);
+                                        }
+                                    })
+                    )
+                    //.alwaysShow(true)//总是显示，调试时可以打开
+                    .show();
+        } else if (scene == "joinRoom") {
+            NewbieGuide.with(this)
+                    .setLabel("joinRoomGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            view.findViewById(R.id.view_abt_join_room).setVisibility(View.VISIBLE);
+                                        }
+                                    })
+
+                    )
+                    .show();
+        }
     }
 }

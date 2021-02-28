@@ -18,8 +18,6 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!--include layout="@layout/content_toolbar" /-->
-
             <com.tubb.smrv.SwipeMenuRecyclerView
                 android:id="@+id/list_cards"
                 android:layout_width="match_parent"

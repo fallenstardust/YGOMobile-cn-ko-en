@@ -205,4 +205,19 @@
             android:textColor="@color/white"
             android:textSize="15sp" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/view_abt_join_room"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:gravity="center|left"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="100dp"
+        android:shadowColor="#000000"
+        android:shadowDy="2"
+        android:shadowRadius="2"
+        android:text="@string/guide_join_room"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:visibility="invisible"/>
 </FrameLayout>
