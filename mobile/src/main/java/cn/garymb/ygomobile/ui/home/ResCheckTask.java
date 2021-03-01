@@ -15,7 +15,6 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -205,7 +204,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     AppsSettings.get().setUseExtraCards(false);
                 }
             }
-
             //如果是新版本
             if (needsUpdate) {
                 //复制卡组
@@ -220,6 +218,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         mSettings.get().getPackDeckDir(), needsUpdate);
                 //复制残局
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
+                File single = new File(mSettings.getSingleDir());
+                if (single.exists()) {
+                    FileUtils.delFile(single.getAbsolutePath());
+                }
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
