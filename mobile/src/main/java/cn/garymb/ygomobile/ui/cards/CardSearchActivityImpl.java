@@ -406,7 +406,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                                 })
 
                 )
-                .alwaysShow(true)//总是显示，调试时可以打开
+                //.alwaysShow(true)//总是显示，调试时可以打开
                 .show();
     }
 }
