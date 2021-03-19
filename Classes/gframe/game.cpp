@@ -1019,14 +1019,18 @@ bool Game::Initialize(ANDROID_APP app) {
             ChangeToIGUIImageButton(btnBotCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 		env->addStaticText(dataManager.GetSysString(1382), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabBot);
 		stBotInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 80 * yScale), false, true, tabBot);
-		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 90 * yScale, 530 * xScale, 120 * yScale), tabBot, COMBOBOX_BOT_RULE);
+		cbBotDeckCategory =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 90 * yScale, 530 * xScale, 120 * yScale), tabBot, COMBOBOX_BOT_DECKCATEGORY);
+		cbBotDeckCategory->setVisible(false);
+		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
+		cbBotDeck->setVisible(false);
+		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 170 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
 		cbBotRule->addItem(dataManager.GetSysString(1264));
 		cbBotRule->setSelected(gameConf.default_rule - 3);
-		chkBotHand = env->addCheckBox(false, rect<s32>(310 * xScale, 130 * yScale, 500 * xScale, 160 * yScale), tabBot, -1, dataManager.GetSysString(1384));
-		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(310 * xScale, 170 * yScale, 500 * xScale, 200 * yScale), tabBot, -1, dataManager.GetSysString(1229));
-		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(310 * xScale, 210 * yScale, 500 * xScale, 240 * yScale), tabBot, -1, dataManager.GetSysString(1230));
+		chkBotHand = env->addCheckBox(false, rect<s32>(310 * xScale, 210 * yScale, 410 * xScale, 240 * yScale), tabBot, -1, dataManager.GetSysString(1384));
+		chkBotNoCheckDeck = env->addCheckBox(false, rect<s32>(310 * xScale, 250 * yScale, 410 * xScale, 280 * yScale), tabBot, -1, dataManager.GetSysString(1229));
+		chkBotNoShuffleDeck = env->addCheckBox(false, rect<s32>(310 * xScale, 290 * yScale, 410 * xScale, 320 * yScale), tabBot, -1, dataManager.GetSysString(1230));
 	} else { // avoid null object reference
 		btnStartBot = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
 		btnBotCancel = env->addButton(rect<s32>(0, 0, 0, 0), wSinglePlay);
@@ -1601,6 +1605,7 @@ void Game::RefreshBot() {
 				newinfo.support_master_rule_3 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_3");
 				newinfo.support_new_master_rule = !!strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
 				newinfo.support_master_rule_2020 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_2020");
+				newinfo.select_deckfile = !!strstr(linebuf, "SELECT_DECKFILE");
 				int rule = cbBotRule->getSelected() + 3;
 				if((rule == 3 && newinfo.support_master_rule_3)
 					|| (rule == 4 && newinfo.support_new_master_rule)
@@ -1613,11 +1618,16 @@ void Game::RefreshBot() {
 	}
 	lstBotList->clear();
 	stBotInfo->setText(L"");
+	cbBotDeckCategory->setVisible(false);
+	cbBotDeck->setVisible(false);
 	for(unsigned int i = 0; i < botInfo.size(); ++i) {
 		lstBotList->addItem(botInfo[i].name);
 	}
-	if(botInfo.size() == 0)
+	if(botInfo.size() == 0) {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
+	} else {
+		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
+	}
 }
 void Game::LoadConfig() {
 	wchar_t wstr[256];
