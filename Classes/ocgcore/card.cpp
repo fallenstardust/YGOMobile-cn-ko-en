@@ -1923,6 +1923,9 @@ void card::reset(uint32 id, uint32 reset_type) {
 			for(; pr.first != pr.second; ++pr.first)
 				pr.first->second->value = pr.first->second->value & 0xffff;
 		}
+		if(id & RESET_TOFIELD) {
+			pre_equip_target = 0;
+		}
 		if(id & RESET_DISABLE) {
 			for(auto cmit = counters.begin(); cmit != counters.end();) {
 				auto rm = cmit++;
@@ -2126,7 +2129,7 @@ int32 card::destination_redirect(uint8 destination, uint32 reason) {
 int32 card::add_counter(uint8 playerid, uint16 countertype, uint16 count, uint8 singly) {
 	if(!is_can_add_counter(playerid, countertype, count, singly, 0))
 		return FALSE;
-	uint16 cttype = countertype & ~COUNTER_NEED_ENABLE;
+	uint16 cttype = countertype;
 	auto pr = counters.emplace(cttype, counter_map::mapped_type());
 	auto cmit = pr.first;
 	if(pr.second) {
@@ -2146,7 +2149,7 @@ int32 card::add_counter(uint8 playerid, uint16 countertype, uint16 count, uint8 
 				pcount = mcount;
 		}
 	}
-	if((countertype & COUNTER_WITHOUT_PERMIT) && !(countertype & COUNTER_NEED_ENABLE))
+	if(countertype & COUNTER_WITHOUT_PERMIT)
 		cmit->second[0] += pcount;
 	else
 		cmit->second[1] += pcount;
@@ -2189,8 +2192,6 @@ int32 card::is_can_add_counter(uint8 playerid, uint16 countertype, uint16 count,
 			return FALSE;
 		if(!loc && (!(current.location & LOCATION_ONFIELD) || !is_position(POS_FACEUP)))
 			return FALSE;
-		if((countertype & COUNTER_NEED_ENABLE) && is_status(STATUS_DISABLED))
-			return FALSE;
 	}
 	uint32 check = countertype & COUNTER_WITHOUT_PERMIT;
 	if(!check) {
@@ -2216,7 +2217,7 @@ int32 card::is_can_add_counter(uint8 playerid, uint16 countertype, uint16 count,
 	}
 	if(!check)
 		return FALSE;
-	uint16 cttype = countertype & ~COUNTER_NEED_ENABLE;
+	uint16 cttype = countertype;
 	int32 limit = -1;
 	int32 cur = 0;
 	auto cmit = counters.find(cttype);
@@ -3048,7 +3049,6 @@ int32 card::is_can_be_summoned(uint8 playerid, uint8 ignore_count, effect* peffe
 }
 int32 card::get_summon_tribute_count() {
 	int32 min = 0, max = 0;
-	int32 minul = 0, maxul = 0;
 	int32 level = get_level();
 	if(level < 5)
 		return 0;
@@ -3056,22 +3056,26 @@ int32 card::get_summon_tribute_count() {
 		min = max = 1;
 	else
 		min = max = 2;
+	std::vector<int32> duplicate;
 	effect_set eset;
 	filter_effect(EFFECT_DECREASE_TRIBUTE, &eset);
 	for(int32 i = 0; i < eset.size(); ++i) {
-		int32 dec = eset[i]->get_value(this);
-		if(!eset[i]->is_flag(EFFECT_FLAG_COUNT_LIMIT)) {
-			if(minul < (dec & 0xffff))
-				minul = dec & 0xffff;
-			if(maxul < (dec >> 16))
-				maxul = dec >> 16;
-		} else if(eset[i]->count_limit > 0) {
-			min -= dec & 0xffff;
-			max -= dec >> 16;
+		if(eset[i]->is_flag(EFFECT_FLAG_COUNT_LIMIT) && eset[i]->count_limit == 0)
+			continue;
+		std::vector<int32> retval;
+		eset[i]->get_value(this, 0, &retval);
+		int32 dec = retval.size() > 0 ? retval[0] : 0;
+		int32 effect_code = retval.size() > 1 ? retval[1] : 0;
+		if(effect_code > 0) {
+			auto it = std::find(duplicate.begin(), duplicate.end(), effect_code);
+			if(it == duplicate.end())
+				duplicate.push_back(effect_code);
+			else
+				continue;
 		}
+		min -= dec & 0xffff;
+		max -= dec >> 16;
 	}
-	min -= minul;
-	max -= maxul;
 	if(min < 0) min = 0;
 	if(max < min) max = min;
 	return min + (max << 16);
@@ -3085,10 +3089,23 @@ int32 card::get_set_tribute_count() {
 		min = max = 1;
 	else
 		min = max = 2;
+	std::vector<int32> duplicate;
 	effect_set eset;
 	filter_effect(EFFECT_DECREASE_TRIBUTE_SET, &eset);
-	if(eset.size()) {
-		int32 dec = eset.get_last()->get_value(this);
+	for(int32 i = 0; i < eset.size(); ++i) {
+		if(eset[i]->is_flag(EFFECT_FLAG_COUNT_LIMIT) && eset[i]->count_limit == 0)
+			continue;
+		std::vector<int32> retval;
+		eset[i]->get_value(this, 0, &retval);
+		int32 dec = retval.size() > 0 ? retval[0] : 0;
+		int32 effect_code = retval.size() > 1 ? retval[1] : 0;
+		if(effect_code > 0) {
+			auto it = std::find(duplicate.begin(), duplicate.end(), effect_code);
+			if(it == duplicate.end())
+				duplicate.push_back(effect_code);
+			else
+				continue;
+		}
 		min -= dec & 0xffff;
 		max -= dec >> 16;
 	}
