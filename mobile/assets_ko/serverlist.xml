@@ -10,10 +10,17 @@
         <keep>true</keep>
     </server>
     <server>
-        <player-name>fresh_meat</player-name>
-        <name>YGOPRO WindBot O/T Prerelease Online</name>
-        <ip>s1.ygo233.com</ip>
-        <port>9999</port>
+        <player-name>신선한 고기</player-name>
+        <name>듀얼 크로니클즈</name>
+        <ip>2333.duelstart.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>신선한 고기</player-name>
+        <name>2 Pick 교체</name>
+        <ip>2pick.mycard.moe</ip>
+        <port>765</port>
         <keep>true</keep>
     </server>
 </servers>

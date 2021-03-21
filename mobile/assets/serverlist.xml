@@ -9,16 +9,16 @@
         <port>233</port>
         <keep>true</keep>
     </server>
-    <!--server>
-        <player-name>Knight of Hanoi</player-name>
-        <name>233在线OT混先行卡AI练习</name>
-        <ip>s1.ygo233.com</ip>
-        <port>9999</port>
-        <keep>true</keep>
-    </server-->
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>2Pick轮抽服务器</name>
+        <name>决斗编年史</name>
+        <ip>2333.duelstart.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>2Pick轮抽</name>
         <ip>2pick.mycard.moe</ip>
         <port>765</port>
         <keep>true</keep>
