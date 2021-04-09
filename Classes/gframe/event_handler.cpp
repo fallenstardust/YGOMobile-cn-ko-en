@@ -1733,8 +1733,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			if(mainGame->wCardSelect->isVisible())
 			    break;
-			selectable_cards.clear();
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible() || mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible() || mainGame->wOptions->isVisible()){
+                selectable_cards.clear();
                 wchar_t formatBuffer[2048];
                 switch(hovered_location) {
                     /* test unable check deck and overlay unit
