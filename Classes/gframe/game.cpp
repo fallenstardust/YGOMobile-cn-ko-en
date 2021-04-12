@@ -682,7 +682,7 @@ bool Game::Initialize(ANDROID_APP app) {
 		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>((30 + 125 * i) * xScale, 65 * yScale, (150 + 125 * i) * xScale, 235 * yScale), wCardDisplay, BUTTON_DISPLAY_0 + i);
 		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
-	scrDisplayList = env->addScrollBar(true, rect<s32>(30 * xScale, 245 * yScale, 650 * xScale, 265 * yScale), wCardDisplay, SCROLL_CARD_DISPLAY);
+	scrDisplayList = env->addScrollBar(true, rect<s32>(30 * xScale, 245 * yScale, 650 * xScale, 285 * yScale), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(rect<s32>(285 * xScale, 295 * yScale, 395 * xScale, 335 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnDisplayOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 #endif

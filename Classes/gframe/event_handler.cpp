@@ -1734,67 +1734,54 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			if(mainGame->wCardSelect->isVisible())
 			    break;
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible() || mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible() || mainGame->wOptions->isVisible()){
-                selectable_cards.clear();
-                wchar_t formatBuffer[2048];
+                display_cards.clear();
+                int loc_id = 0;
                 switch(hovered_location) {
-                    /* test unable check deck and overlay unit
-                    case LOCATION_DECK: {
-                        if(deck[hovered_controler].size() == 0)
-                            break;
-                        for(int32 i = (int32)deck[hovered_controler].size() - 1; i >= 0 ; --i)
-                            selectable_cards.push_back(deck[hovered_controler][i]);
-                        myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[hovered_controler].size());
-                        mainGame->stCardSelect->setText(formatBuffer);
-                        break;
-                    }
+                    /*
                     case LOCATION_MZONE: {
                         if(!clicked_card || clicked_card->overlayed.size() == 0)
                             break;
-                        for(int32 i = 0; i < (int32)clicked_card->overlayed.size(); ++i)
-                            selectable_cards.push_back(clicked_card->overlayed[i]);
-                        myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
-                        mainGame->stCardSelect->setText(formatBuffer);
+                        loc_id = 1007;
+                        for(auto it = mzone[hovered_controler].begin(); it != mzone[hovered_controler].end(); ++it) {
+                            if(*it) {
+                                for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
+                                    display_cards.push_back(*oit);
+                            }
+                        }
                         break;
-                    }
-                    */
+                    }*/
                     case LOCATION_GRAVE: {
                         if(grave[hovered_controler].size() == 0)
                             break;
-                        for(int32 i = (int32)grave[hovered_controler].size() - 1; i >= 0 ; --i)
-                            selectable_cards.push_back(grave[hovered_controler][i]);
-                        myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
-                        mainGame->stCardSelect->setText(formatBuffer);
+                        loc_id = 1004;
+                        for(auto it = grave[hovered_controler].rbegin(); it != grave[hovered_controler].rend(); ++it)
+                            display_cards.push_back(*it);
                         break;
                     }
                     case LOCATION_REMOVED: {
                         if(remove[hovered_controler].size() == 0)
                             break;
-                        for(int32 i = (int32)remove[hovered_controler].size() - 1; i >= 0 ; --i)
-                            selectable_cards.push_back(remove[hovered_controler][i]);
-                        myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
-                        mainGame->stCardSelect->setText(formatBuffer);
+                        loc_id = 1005;
+                        for(auto it = remove[hovered_controler].rbegin(); it != remove[hovered_controler].rend(); ++it)
+                            display_cards.push_back(*it);
                         break;
                     }
                     case LOCATION_EXTRA: {
                         if(extra[hovered_controler].size() == 0)
                             break;
-                        for(int32 i = (int32)extra[hovered_controler].size() - 1; i >= 0 ; --i)
-                            selectable_cards.push_back(extra[hovered_controler][i]);
-                        myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
-                        mainGame->stCardSelect->setText(formatBuffer);
+                        loc_id = 1006;
+                        for(auto it = extra[hovered_controler].rbegin(); it != extra[hovered_controler].rend(); ++it)
+                            display_cards.push_back(*it);
                         break;
                     }
                 }
-                if(selectable_cards.size())
-                    ShowSelectCard(true);
-                break;
+                if(display_cards.size()) {
+                    wchar_t formatBuffer[2048];
+                    myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
+                    mainGame->stCardDisplay->setText(formatBuffer);
+                    ShowLocationCard();
+                }
 			}
-            if(mainGame->gameConf.control_mode == 1 && event.MouseInput.X > 300 * mainGame->xScale) {
-                mainGame->always_chain = event.MouseInput.isLeftPressed();
-                mainGame->ignore_chain = false;
-                mainGame->chain_when_avail = false;
-                UpdateChainButtons();
-            }
 		    break;
 		}
 		case irr::EMIE_RMOUSE_PRESSED_DOWN: {
