@@ -140,6 +140,7 @@ public:
 	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
+	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
 	void DrawLinkedZones(ClientCard* pcard);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();

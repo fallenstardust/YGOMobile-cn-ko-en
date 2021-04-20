@@ -240,6 +240,15 @@ void Game::DrawBackGround() {
 	if (dField.hovered_location != 0 && dField.hovered_location != 2 && dField.hovered_location != POSITION_HINT
 		&& !(dInfo.duel_rule < 4 && dField.hovered_location == LOCATION_MZONE && dField.hovered_sequence > 4)
 		&& !(dInfo.duel_rule >= 4 && dField.hovered_location == LOCATION_SZONE && dField.hovered_sequence > 5)) {
+#ifdef _IRR_ANDROID_PLATFORM_
+		if (dField.hovered_location == LOCATION_MZONE) {
+			ClientCard* pcard = mainGame->dField.mzone[dField.hovered_controler][dField.hovered_sequence];
+			if(pcard && pcard->type & TYPE_LINK) {
+				DrawLinkedZones(pcard);
+			}
+		}
+		DrawSelField(dField.hovered_controler, dField.hovered_location, dField.hovered_sequence, imageManager.tSelField, false, true);
+#else
 		S3DVertex *vertex = 0;
 		if (dField.hovered_location == LOCATION_DECK)
 			vertex = matManager.vFieldDeck[dField.hovered_controler];
@@ -272,70 +281,77 @@ void Game::DrawBackGround() {
 		matManager.mSelField.DiffuseColor = selFieldAlpha << 24;
 		driver->setMaterial(matManager.mSelField);
 		driver->drawVertexPrimitiveList(v2, 4, matManager.iRectangle, 2);
+#endif
 	}
+}
+void Game::DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse, bool spin) {
+	static irr::core::vector3df act_rot(0, 0, 0);
+	irr::core::vector3df t;
+	irr::core::matrix4 im;
+	dField.GetChainLocation(player, loc, seq, &t);
+	t.Z = spin ? 0.002f : 0.001f;
+	im.setTranslation(t);
+	if (spin) {
+		act_rot.Z += 0.02f;
+		im.setRotationRadians(act_rot);
+	}
+	if (reverse) {
+		im.setRotationRadians(vector3df(0, 0, 3.1415926f));
+	}
+	driver->setTransform(irr::video::ETS_WORLD, im);
+	matManager.mTexture.setTexture(0, texture);
+	driver->setMaterial(matManager.mTexture);
+	driver->drawVertexPrimitiveList(matManager.vSelField, 4, matManager.iRectangle, 2);
 }
 
 void Game::DrawLinkedZones(ClientCard* pcard) {
 	int mark = pcard->link_marker;
-	S3DVertex *vertex = 0;
-    S3DVertex vSelField[4];
-	matManager.mSelField.AmbientColor = 0xff0261a2;
-	driver->setMaterial(matManager.mSelField);
-	if (dField.hovered_sequence<5) {
-		if (mark & LINK_MARKER_LEFT && dField.hovered_sequence>0) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence - 1];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
+	//ClientCard* pcard2;
+	int player = dField.hovered_controler;
+	//int loc = dField.hovered_location;
+	size_t seq = dField.hovered_sequence;
+	bool reverse = player == 1;
+	if (seq < 5) {
+		if (mark & LINK_MARKER_LEFT && seq > 0) {
+			DrawSelField(player, LOCATION_MZONE, seq - 1, imageManager.tSelFieldLinkArrows[4], reverse);
+			//pcard2 = dField.mzone[player][seq - 1];
+			//if (pcard2 && pcard2->link_marker & LINK_MARKER_RIGHT)
+			//	DrawSelField(player, LOCATION_MZONE, seq, imageManager.tSelFieldLinkArrows[6], reverse);
         }
-		if (mark & LINK_MARKER_RIGHT && dField.hovered_sequence<4) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence + 1];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
+		if (mark & LINK_MARKER_RIGHT && seq < 4) {
+			DrawSelField(player, LOCATION_MZONE, seq + 1, imageManager.tSelFieldLinkArrows[6], reverse);
+			//pcard2 = dField.mzone[player][seq + 1];
+			//if (pcard2 && pcard2->link_marker & LINK_MARKER_LEFT)
+			//	DrawSelField(player, LOCATION_MZONE, seq, imageManager.tSelFieldLinkArrows[4], reverse);
+        }
 		if (dInfo.duel_rule >= 4) {
-		if ((mark & LINK_MARKER_TOP_LEFT && dField.hovered_sequence == 2) || (mark & LINK_MARKER_TOP && dField.hovered_sequence == 1) || (mark & LINK_MARKER_TOP_RIGHT && dField.hovered_sequence == 0)) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][5];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
+			if (mark & LINK_MARKER_TOP_RIGHT && seq == 0)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[9], reverse);
+			if (mark & LINK_MARKER_TOP && seq == 1)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[8], reverse);
+			if (mark & LINK_MARKER_TOP_LEFT && seq == 2)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[7], reverse);
+			if (mark & LINK_MARKER_TOP_RIGHT && seq == 2)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[9], reverse);
+			if (mark & LINK_MARKER_TOP && seq == 3)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[8], reverse);
+			if (mark & LINK_MARKER_TOP_LEFT && seq == 4)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[7], reverse);
 		}
-		if ((mark & LINK_MARKER_TOP_LEFT && dField.hovered_sequence == 4) || (mark & LINK_MARKER_TOP && dField.hovered_sequence == 3) || (mark & LINK_MARKER_TOP_RIGHT && dField.hovered_sequence == 2)) {
-		    vertex = matManager.vFieldMzone[dField.hovered_controler][6];
-			SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-			driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-	}
 	} else {
 		int swap = (dField.hovered_sequence == 5) ? 0 : 2;
-		if (mark & LINK_MARKER_BOTTOM_LEFT) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][0 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_BOTTOM) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][1 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_BOTTOM_RIGHT) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][2 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP_LEFT) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][4 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][3 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP_RIGHT) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][2 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
+		if (mark & LINK_MARKER_BOTTOM_LEFT)
+			DrawSelField(player, LOCATION_MZONE, 0 + swap, imageManager.tSelFieldLinkArrows[1], reverse);
+		if (mark & LINK_MARKER_BOTTOM)
+			DrawSelField(player, LOCATION_MZONE, 1 + swap, imageManager.tSelFieldLinkArrows[2], reverse);
+		if (mark & LINK_MARKER_BOTTOM_RIGHT)
+			DrawSelField(player, LOCATION_MZONE, 2 + swap, imageManager.tSelFieldLinkArrows[3], reverse);
+		if (mark & LINK_MARKER_TOP_LEFT)
+			DrawSelField(1 - player, LOCATION_MZONE, 4 - swap, imageManager.tSelFieldLinkArrows[7], reverse);
+		if (mark & LINK_MARKER_TOP)
+			DrawSelField(1 - player, LOCATION_MZONE, 3 - swap, imageManager.tSelFieldLinkArrows[8], reverse);
+		if (mark & LINK_MARKER_TOP_RIGHT)
+			DrawSelField(1 - player, LOCATION_MZONE, 2 - swap, imageManager.tSelFieldLinkArrows[9], reverse);
 	}
 }
 

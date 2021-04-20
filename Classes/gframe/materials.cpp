@@ -29,6 +29,7 @@ Materials::Materials() {
 	SetS3DVertex(vTotalAtkop, 6.4f, -0.1f, 7.4f, 0.65f, 1, 1, 0, 0, 1, 1);
 	SetS3DVertex(vTotalAtkmeT, 2.5f, 0.95f, 3.5f, 1.65f, 1, 1, 0, 0, 1, 1);
 	SetS3DVertex(vTotalAtkopT, 4.45f, 0.4f, 5.45f, 1.1f, 1, 1, 0, 0, 1, 1);
+	SetS3DVertex(vSelField, -0.5f, -0.5f, 0.5f, 0.5f, 0, 1, 0, 0, 1, 1);
 
 	/*
 	//background grids

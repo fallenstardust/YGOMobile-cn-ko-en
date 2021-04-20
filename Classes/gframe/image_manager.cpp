@@ -17,6 +17,15 @@ bool ImageManager::Initial(const path dir) {
 	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
 	tChain = driver->getTexture((dir + path("/textures/chain.png")).c_str());
 	tNegated = driver->getTexture((dir + path("/textures/negated.png")).c_str());
+	tSelField = driver->getTexture((dir + path("/textures/selfield.png")).c_str());
+	tSelFieldLinkArrows[1] = driver->getTexture((dir + path("/textures/link_marker_on_1.png")).c_str());
+	tSelFieldLinkArrows[2] = driver->getTexture((dir + path("/textures/link_marker_on_2.png")).c_str());
+	tSelFieldLinkArrows[3] = driver->getTexture((dir + path("/textures/link_marker_on_3.png")).c_str());
+	tSelFieldLinkArrows[4] = driver->getTexture((dir + path("/textures/link_marker_on_4.png")).c_str());
+	tSelFieldLinkArrows[6] = driver->getTexture((dir + path("/textures/link_marker_on_6.png")).c_str());
+	tSelFieldLinkArrows[7] = driver->getTexture((dir + path("/textures/link_marker_on_7.png")).c_str());
+	tSelFieldLinkArrows[8] = driver->getTexture((dir + path("/textures/link_marker_on_8.png")).c_str());
+	tSelFieldLinkArrows[9] = driver->getTexture((dir + path("/textures/link_marker_on_9.png")).c_str());
 	tNumber = driver->getTexture((dir + path("/textures/number.png")).c_str());
 	tLPBar = driver->getTexture((dir + path("/textures/lp2.png")).c_str());
 	tLPFrame = driver->getTexture((dir + path("/textures/lpf.png")).c_str());
