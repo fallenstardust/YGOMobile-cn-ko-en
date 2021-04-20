@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <PreferenceCategory android:title="@string/settings_game">
-        <!--Preference
-            android:key="pref_key_game_res_path"
-            android:persistent="true"
-            android:title="@string/settings_game_res_path" /-->
+    <PreferenceCategory android:title="@string/settings_about">
         <Preference
             android:key="pref_key_about_check_update"
             android:persistent="true"
@@ -13,11 +8,24 @@
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_game">
+        <!--Preference
+            android:key="pref_key_game_res_path"
+            android:persistent="true"
+            android:title="@string/settings_game_res_path" /-->
 
         <CheckBoxPreference
             android:key="pref_settings_read_ex"
             android:persistent="true"
             android:title="@string/title_use_ex" />
+
+        <Preference
+            android:key="pref_key_settings_delete_ex"
+            android:persistent="true"
+            android:summary="@string/about_delete_ex"
+            android:title="@string/title_delete_ex" />
 
         <CheckBoxPreference
             android:key="pref_key_start_serviceduelassistant"
@@ -28,7 +36,7 @@
         <CheckBoxPreference
             android:key="pref_settings_keep_scale"
             android:persistent="false"
-            android:title="@string/about_pref_settings_keep_scale"/>
+            android:title="@string/about_pref_settings_keep_scale" />
 
         <ListPreference
             android:entries="@array/opengl_version"

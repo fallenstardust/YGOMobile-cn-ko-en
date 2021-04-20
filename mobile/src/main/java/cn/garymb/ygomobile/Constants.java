@@ -39,6 +39,7 @@ public interface Constants {
     boolean PREF_DEF_SENSOR_REFRESH = true;
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
+    String PREF_DEL_EX = "pref_key_settings_delete_ex";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";
     String PERF_TEST_REPLACE_KERNEL = "pref_key_test_replace_kernel";
     int LAST_ROOM_MAX = 10;

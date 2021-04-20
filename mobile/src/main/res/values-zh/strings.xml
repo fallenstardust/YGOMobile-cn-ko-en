@@ -303,4 +303,6 @@
                                 \n更多决斗模式密码请参考软件使用教程</string>
     <string name="guide_button_search">点击编辑搜索条件</string>
     <string name="guide_search_result_count">这里显示搜索结果卡片数量</string>
+    <string name="title_delete_ex">清空扩展卡包</string>
+    <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
 </resources>

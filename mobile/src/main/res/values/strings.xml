@@ -5,7 +5,7 @@
     <string name="action_game">Single Game</string>
     <string name="action_about">About</string>
     <string name="action_add_server">Add Server</string>
-    <string name="dont_start_game">don\'t start game</string>
+    <string name="dont_start_game">unable to start game</string>
     <!-- check -->
     <string name="check_res">Check Resources</string>
     <string name="check_things">Check %s ...</string>
@@ -306,4 +306,6 @@
                                 \n more duel model password you can see the tortuial.</string>
     <string name="guide_button_search">click search buttton to edit search criteria</string>
     <string name="guide_search_result_count">here shows search result count</string>
+    <string name="title_delete_ex">delete expansions</string>
+    <string name="about_delete_ex">if you need to delte all expansion cards</string>
 </resources>
