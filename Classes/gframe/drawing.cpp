@@ -304,26 +304,25 @@ void Game::DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* t
 	driver->drawVertexPrimitiveList(matManager.vSelField, 4, matManager.iRectangle, 2);
 }
 
-void Game::DrawLinkedZones(ClientCard* pcard) {
+void Game::DrawLinkedZones(ClientCard* pcard, ClientCard* fcard) {
 	int mark = pcard->link_marker;
-	//ClientCard* pcard2;
-	int player = dField.hovered_controler;
-	//int loc = dField.hovered_location;
-	size_t seq = dField.hovered_sequence;
+	int player = pcard->controler;
+	int seq = pcard->sequence;
 	bool reverse = player == 1;
+	ClientCard* pcard2;
 	if (seq < 5) {
 		if (mark & LINK_MARKER_LEFT && seq > 0) {
 			DrawSelField(player, LOCATION_MZONE, seq - 1, imageManager.tSelFieldLinkArrows[4], reverse);
 			//pcard2 = dField.mzone[player][seq - 1];
-			//if (pcard2 && pcard2->link_marker & LINK_MARKER_RIGHT)
-			//	DrawSelField(player, LOCATION_MZONE, seq, imageManager.tSelFieldLinkArrows[6], reverse);
-        }
+			//if (pcard2 && pcard2 != fcard && pcard2->link_marker & LINK_MARKER_RIGHT)
+			//	DrawLinkedZones(pcard2, pcard);
+		}
 		if (mark & LINK_MARKER_RIGHT && seq < 4) {
 			DrawSelField(player, LOCATION_MZONE, seq + 1, imageManager.tSelFieldLinkArrows[6], reverse);
 			//pcard2 = dField.mzone[player][seq + 1];
-			//if (pcard2 && pcard2->link_marker & LINK_MARKER_LEFT)
-			//	DrawSelField(player, LOCATION_MZONE, seq, imageManager.tSelFieldLinkArrows[4], reverse);
-        }
+			//if (pcard2 && pcard2 != fcard && pcard2->link_marker & LINK_MARKER_LEFT)
+			//	DrawLinkedZones(pcard2, pcard);
+		}
 		if (dInfo.duel_rule >= 4) {
 			if (mark & LINK_MARKER_TOP_RIGHT && seq == 0)
 				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[9], reverse);

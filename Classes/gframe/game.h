@@ -141,7 +141,7 @@ public:
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
 	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
-	void DrawLinkedZones(ClientCard* pcard);
+	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
