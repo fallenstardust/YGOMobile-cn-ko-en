@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -17,11 +18,13 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
+import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 
 
@@ -134,7 +137,7 @@ public class GameUriManager {
                 try {
                     FileUtils.copyFile(file, ypk);
                 } catch (Throwable e) {
-                    Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
                 }
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSeting);
@@ -142,6 +145,20 @@ public class GameUriManager {
                 } else {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                }
+            } else if (file.getName().toLowerCase(Locale.US).endsWith(".yrp")) {
+                File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + file.getName().toLowerCase(Locale.US));
+                if (yrp.getAbsolutePath().equals(file)) {
+                    YGOStarter.startGame(getActivity(), null);
+                } else {
+                    try {
+                        FileUtils.copyFile(file, yrp);
+                    } catch (Throwable e) {
+                        Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                    }
+                    if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
+                        YGOStarter.startGame(getActivity(), null);
+                    }
                 }
             }
         } else if ("content".equals(uri.getScheme())) {
@@ -178,7 +195,7 @@ public class GameUriManager {
                         try {
                             FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), ypk);
                         } catch (Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
                         } finally {
                             pfd.close();
                         }
@@ -193,6 +210,28 @@ public class GameUriManager {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                 }
+            } else if (urifile.getName().toLowerCase(Locale.US).endsWith(".yrp")) {
+                try {
+                    File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + urifile.getName().toLowerCase(Locale.US));
+                    ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
+                    if (pfd == null) {
+                        return;
+                    } else {
+                        try {
+                            FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), yrp);
+                        } catch (Throwable e) {
+                            Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                        } finally {
+                            pfd.close();
+                        }
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
+            if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
+                YGOStarter.startGame(activity, null);
+                Toast.makeText(activity, activity.getString(R.string.install_failed_bcos), Toast.LENGTH_SHORT).show();
             }
         } else {
             String host = uri.getHost();
