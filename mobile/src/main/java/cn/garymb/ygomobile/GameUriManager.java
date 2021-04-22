@@ -215,24 +215,28 @@ public class GameUriManager {
                 try {
                     File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + urifile.getName().toLowerCase(Locale.US));
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
-                    if (pfd == null) {
-                        return;
+                    if (yrp.exists()) {
+                        YGOStarter.startGame(getActivity(), null);
                     } else {
-                        try {
-                            FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), yrp);
-                        } catch (Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
-                        } finally {
-                            pfd.close();
+                        if (pfd == null) {
+                            return;
+                        } else {
+                            try {
+                                FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), yrp);
+                            } catch (Throwable e) {
+                                Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                            } finally {
+                                pfd.close();
+                            }
                         }
                     }
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-            }
-            if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                YGOStarter.startGame(activity, null);
-                Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
+                if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
+                    YGOStarter.startGame(activity, null);
+                    Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
+                }
             }
         } else {
             String host = uri.getHost();
