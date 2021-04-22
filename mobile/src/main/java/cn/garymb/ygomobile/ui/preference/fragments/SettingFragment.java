@@ -220,8 +220,18 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
-            FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
-            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+            final DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setTitle(R.string.question);
+            dialog.setMessage(R.string.ask_delete_ex);
+            dialog.setLeftButtonListener((dlg, s) -> {
+                dialog.dismiss();
+            });
+            dialog.setRightButtonListener((dlg, s) -> {
+                FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
+                Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                dialog.dismiss();
+            });
+            dialog.show();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
