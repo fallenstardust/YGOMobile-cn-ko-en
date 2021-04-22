@@ -158,6 +158,7 @@ public class GameUriManager {
                     }
                     if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
                         YGOStarter.startGame(getActivity(), null);
+                        Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
                     }
                 }
             }
@@ -231,7 +232,7 @@ public class GameUriManager {
             }
             if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
                 YGOStarter.startGame(activity, null);
-                Toast.makeText(activity, activity.getString(R.string.install_failed_bcos), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
             }
         } else {
             String host = uri.getHost();
