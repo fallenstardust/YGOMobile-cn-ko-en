@@ -224,11 +224,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
             dialog.setTitle(R.string.question);
             dialog.setMessage(R.string.ask_delete_ex);
             dialog.setLeftButtonListener((dlg, s) -> {
+                FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
+                Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
             dialog.setRightButtonListener((dlg, s) -> {
-                FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
-                Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
             dialog.show();
