@@ -139,7 +139,12 @@ public class StringManager implements Closeable {
 //                        System.out.println(Arrays.toString(words));
                         //setcode
                         long id = toNumber(words[1]);
-                        CardSet cardSet = new CardSet(id, words[2]);
+                        CardSet cardSet;
+                        if (words.length >= 5) {
+                            cardSet = new CardSet(id, words[2] + " " + words[3]);
+                        } else {
+                            cardSet = new CardSet(id, words[2]);
+                        }
                         int i = mCardSets.indexOf(cardSet);
                         if (i >= 0) {
                             CardSet cardSet1 = mCardSets.get(i);
@@ -183,7 +188,7 @@ public class StringManager implements Closeable {
         for (int i = 0; i < mCardSets.size(); i++) {
             CardSet cardSet = mCardSets.get(i);
             String[] setNames = cardSet.getName().split("\\|");
-            if(setNames[0].equalsIgnoreCase(key)){
+            if (setNames[0].equalsIgnoreCase(key)) {
                 return cardSet.getCode();
             }
         }
