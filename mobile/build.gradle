@@ -8,8 +8,8 @@ android {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 380100324
-        versionName "3.8.1"
+        versionCode 380200502
+        versionName "3.8.2"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
