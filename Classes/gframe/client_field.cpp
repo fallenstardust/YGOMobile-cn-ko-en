@@ -27,6 +27,7 @@ ClientField::ClientField() {
 	hovered_card = 0;
 	clicked_card = 0;
 	highlighting_card = 0;
+	menu_card = 0;
 	hovered_controler = 0;
 	hovered_location = 0;
 	hovered_sequence = 0;
@@ -41,6 +42,7 @@ ClientField::ClientField() {
 	conti_act = false;
 	deck_reversed = false;
 	conti_selecting = false;
+	cant_check_grave = false;
 	for(int p = 0; p < 2; ++p) {
 		mzone[p].resize(7, 0);
 		szone[p].resize(8, 0);
@@ -94,6 +96,7 @@ void ClientField::Clear() {
 	hovered_card = 0;
 	clicked_card = 0;
 	highlighting_card = 0;
+	menu_card = 0;
 	hovered_controler = 0;
 	hovered_location = 0;
 	hovered_sequence = 0;
@@ -105,7 +108,7 @@ void ClientField::Clear() {
 	pzone_act[1] = false;
 	conti_act = false;
 	deck_reversed = false;
-	RefreshCardCountDisplay();
+	cant_check_grave = false;
 }
 void ClientField::Initial(int player, int deckc, int extrac) {
 	ClientCard* pcard;
@@ -402,6 +405,18 @@ void ClientField::ClearChainSelect() {
 }
 // needs to be synchronized with EGET_SCROLL_BAR_CHANGED
 void ClientField::ShowSelectCard(bool buttonok, bool chain) {
+	if(cant_check_grave) {
+		bool has_card_in_grave = false;
+		for(size_t i = 0; i < selectable_cards.size(); ++i) {
+			if(selectable_cards[i]->location == LOCATION_GRAVE) {
+				has_card_in_grave = true;
+				break;
+			}
+		}
+		if(has_card_in_grave) {
+			std::random_shuffle(selectable_cards.begin(), selectable_cards.end());
+		}
+	}
 	int startpos;
 	size_t ct;
 	if(selectable_cards.size() <= 5) {
@@ -428,6 +443,8 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			wchar_t formatBuffer[2048];
 			if(conti_selecting)
 				myswprintf(formatBuffer, L"%ls", DataManager::unknown_string);
+			else if(cant_check_grave && selectable_cards[i]->location == LOCATION_GRAVE)
+				myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i]->location, 0));
 			else if(selectable_cards[i]->location == LOCATION_OVERLAY)
 				myswprintf(formatBuffer, L"%ls[%d](%d)", 
 					dataManager.FormatLocation(selectable_cards[i]->overlayTarget->location, selectable_cards[i]->overlayTarget->sequence),
@@ -440,26 +457,27 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			if (selectable_cards[i]->is_selected)
 				mainGame->stCardPos[i]->setBackgroundColor(0xffa2d8f4);
 			else {
-			if(conti_selecting)
-				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-			else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
-				if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
-					mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
-				if(selectable_cards[i]->overlayTarget->controler)
-					mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-				else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-			} else if(selectable_cards[i]->location == LOCATION_DECK || selectable_cards[i]->location == LOCATION_EXTRA || selectable_cards[i]->location == LOCATION_REMOVED) {
-				if(selectable_cards[i]->position & POS_FACEDOWN)
-					mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
-				if(selectable_cards[i]->controler)
-					mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-				else
+				if(conti_selecting)
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-			} else {
-				if(selectable_cards[i]->controler)
-					mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-				else
+				else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
+					if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
+						mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+					if(selectable_cards[i]->overlayTarget->controler)
+						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
+					else
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+				} else if(selectable_cards[i]->location == LOCATION_DECK || selectable_cards[i]->location == LOCATION_EXTRA || selectable_cards[i]->location == LOCATION_REMOVED) {
+					if(selectable_cards[i]->position & POS_FACEDOWN)
+						mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+					if(selectable_cards[i]->controler)
+						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
+					else
+						mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+				} else {
+					if(selectable_cards[i]->controler)
+						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
+					else
+						mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				}
 			}
 		} else {
@@ -467,7 +485,8 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 				wchar_t formatBuffer[2048];
 				myswprintf(formatBuffer, L"%d", sort_list[i]);
 				mainGame->stCardPos[i]->setText(formatBuffer);
-			} else mainGame->stCardPos[i]->setText(L"");
+			} else
+				mainGame->stCardPos[i]->setText(L"");
 			mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
@@ -648,12 +667,12 @@ void ClientField::ShowSelectOption(int select_hint) {
 		mainGame->wOptions->setRelativePosition(pos);
         mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 405 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	} else {
-		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont,(wchar_t*)dataManager.GetDesc(select_options[0]));
+		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont,
+			(wchar_t*)dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
 		mainGame->btnOptionp->setVisible(false);
 		mainGame->btnOptionn->setVisible(count > 1);
 		mainGame->btnOptionOK->setVisible(true);
-		mainGame->scrOption->setVisible(false);
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		recti pos = mainGame->wOptions->getRelativePosition();

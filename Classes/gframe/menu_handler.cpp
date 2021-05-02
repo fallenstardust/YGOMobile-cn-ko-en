@@ -157,6 +157,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_DUELIST: {
+				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
 				DuelClient::SendPacketToServer(CTOS_HS_TODUELIST);
 				break;
@@ -494,7 +495,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_CLOSE_SETTINGS: {
                 mainGame->HideElement(mainGame->wSettings);
                 mainGame->ShowElement(mainGame->wMainMenu);
-			    break;
+				break;
 			}
 			}
 			break;
@@ -604,6 +605,32 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			break;
 		}
+		case irr::gui::EGET_CHECKBOX_CHANGED: {
+			switch(id) {
+			case CHECKBOX_HP_READY: {
+				if(!caller->isEnabled())
+					break;
+				mainGame->env->setFocus(mainGame->wHostPrepare);
+				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
+					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
+						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
+						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
+						break;
+					}
+					UpdateDeck();
+					DuelClient::SendPacketToServer(CTOS_HS_READY);
+					mainGame->cbCategorySelect->setEnabled(false);
+					mainGame->cbDeckSelect->setEnabled(false);
+				} else {
+					DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
+					mainGame->cbCategorySelect->setEnabled(true);
+					mainGame->cbDeckSelect->setEnabled(true);
+				}
+				break;
+			}
+			}
+			break;
+		}
 		case irr::gui::EGET_COMBO_BOX_CHANGED: {
 			switch(id) {
 			case COMBOBOX_BOT_RULE: {
@@ -631,32 +658,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(catesel >= 0) {
 					mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 					mainGame->cbBotDeck->setSelected(0);
-				}
-				break;
-			}
-			}
-			break;
-		}
-		case irr::gui::EGET_CHECKBOX_CHANGED: {
-			switch(id) {
-			case CHECKBOX_HP_READY: {
-				if(!caller->isEnabled())
-					break;
-				mainGame->env->setFocus(mainGame->wHostPrepare);
-				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
-					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
-						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
-						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
-						break;
-					}
-					UpdateDeck();
-					DuelClient::SendPacketToServer(CTOS_HS_READY);
-					mainGame->cbCategorySelect->setEnabled(false);
-					mainGame->cbDeckSelect->setEnabled(false);
-				} else {
-					DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
-					mainGame->cbCategorySelect->setEnabled(true);
-					mainGame->cbDeckSelect->setEnabled(true);
 				}
 				break;
 			}
