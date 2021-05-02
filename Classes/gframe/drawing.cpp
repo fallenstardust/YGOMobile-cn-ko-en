@@ -247,7 +247,7 @@ void Game::DrawBackGround() {
 				DrawLinkedZones(pcard);
 			}
 		}
-		DrawSelField(dField.hovered_controler, dField.hovered_location, dField.hovered_sequence, imageManager.tSelField, false, true);
+		DrawSelField(dField.hovered_controler, dField.hovered_location, dField.hovered_sequence, imageManager.tSelField, false);
 #else
 		S3DVertex *vertex = 0;
 		if (dField.hovered_location == LOCATION_DECK)
