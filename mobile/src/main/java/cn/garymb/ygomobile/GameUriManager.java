@@ -134,7 +134,7 @@ public class GameUriManager {
                 activity.startActivity(startdeck);
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
                 File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + file.getName().toLowerCase(Locale.US));
-                if (ypk.exists()) {
+                if (ypk.exists() && file.lastModified() == ypk.lastModified()) {
                     Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_LONG).show();
                 } else {
                     try {
@@ -195,7 +195,7 @@ public class GameUriManager {
                 try {
                     File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + urifile.getName().toLowerCase(Locale.US));
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
-                    if (ypk.exists()) {
+                    if (ypk.exists() && urifile.lastModified() == ypk.lastModified()) {
                         Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_SHORT).show();
                     } else {
                         if (pfd == null) {
