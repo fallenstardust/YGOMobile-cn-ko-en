@@ -29,7 +29,7 @@ public class ChatMessage {
 
             int cc = xs.indexOf("stamp='");
             if (cc != -1) {
-                String ss = xs.substring(cc + 7, xs.indexOf("'", cc + 7));
+                String ss = xs.substring(cc + 7, xs.indexOf("_", cc + 7));
             } else {
 
             }
