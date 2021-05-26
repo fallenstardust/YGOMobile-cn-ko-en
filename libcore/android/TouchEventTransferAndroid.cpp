@@ -188,7 +188,7 @@ void TouchEventTransferAndroid::set_long_click_handler(int mode) {
 }
 
 void TouchEventTransferAndroid::long_press_handler(sigval_t info) {
-	int mode = (int)info.sival_ptr;
+	int mode = (int)(long)info.sival_ptr;
 	char log[256];
 	sprintf(log, "receve long click %d", mode);
 	os::Printer::log(log);

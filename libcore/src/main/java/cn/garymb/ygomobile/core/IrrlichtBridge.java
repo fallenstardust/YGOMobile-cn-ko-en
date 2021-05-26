@@ -39,27 +39,27 @@ public final class IrrlichtBridge {
 
     }
 
-    public static int sNativeHandle;
+    public static long sNativeHandle;
     //显示卡图
     public static native byte[] nativeBpgImage(byte[] data);
     //插入文本（大概是发送消息）
-    private static native void nativeInsertText(int handle, String text);
+    private static native void nativeInsertText(long handle, String text);
     //刷新文字
-    private static native void nativeRefreshTexture(int handle);
+    private static native void nativeRefreshTexture(long handle);
     //忽略时点
-    private static native void nativeIgnoreChain(int handle, boolean begin);
+    private static native void nativeIgnoreChain(long handle, boolean begin);
     //强制时点
-    private static native void nativeReactChain(int handle, boolean begin);
+    private static native void nativeReactChain(long handle, boolean begin);
     //取消连锁
-    private static native void nativeCancelChain(int handle);
+    private static native void nativeCancelChain(long handle);
 
-    private static native void nativeSetCheckBoxesSelection(int handle, int idx);
+    private static native void nativeSetCheckBoxesSelection(long handle, int idx);
 
-    private static native void nativeSetComboBoxSelection(int handle, int idx);
+    private static native void nativeSetComboBoxSelection(long handle, int idx);
 
-    private static native void nativeJoinGame(int handle, ByteBuffer buffer, int length);
+    private static native void nativeJoinGame(long handle, ByteBuffer buffer, int length);
 
-    private static native void nativeSetInputFix(int handle, int x, int y);
+    private static native void nativeSetInputFix(long handle, int x, int y);
 
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
@@ -205,7 +205,7 @@ public final class IrrlichtBridge {
 
         int getLocalAddress();
 
-        void setNativeHandle(int nativeHandle);
+        void setNativeHandle(long nativeHandle);
 
         int getPositionX();
 

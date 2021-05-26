@@ -749,8 +749,8 @@ core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
 	jmethodID MethodSetHandle = jni->GetMethodID(ClassNativeActivity,
-												 "setNativeHandle", "(I)V");
-	jint code = (int) handle;
+												 "setNativeHandle", "(J)V");
+	jlong code = (jlong) handle;
 	jni->CallVoidMethod(lNativeActivity, MethodSetHandle, code);
 
 
