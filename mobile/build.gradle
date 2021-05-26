@@ -18,27 +18,49 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    flavorDimensions 'abi', 'lang'
     productFlavors {
         cn {
+            dimension 'lang'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
+            dimension 'lang'
             applicationIdSuffix ".EN"
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
+            dimension 'lang'
             applicationIdSuffix ".KO"
             manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
-    }
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'x86', 'armeabi-v7a', 'arm64-v8a'
-            universalApk true
+        x86 {
+            dimension 'abi'
+            ndk {
+                abiFilters "x86"
+            }
+        }
+        arm {
+            dimension 'abi'
+            ndk {
+                abiFilters "armeabi-v7a"
+            }
+        }
+        arm64 {
+            dimension 'abi'
+            ndk {
+                abiFilters "arm64-v8a"
+            }
         }
     }
+//    splits {
+//        abi {
+//            enable true
+//            reset()
+//            include 'x86', 'armeabi-v7a', 'arm64-v8a'
+//            universalApk true
+//        }
+//    }
     buildTypes {
         release {
             shrinkResources false
