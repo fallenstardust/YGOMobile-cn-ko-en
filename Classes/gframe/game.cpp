@@ -595,7 +595,7 @@ bool Game::Initialize(ANDROID_APP app) {
 	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnYes = env->addButton(rect<s32>(60 * xScale, 120 * yScale, 170 * xScale, 170 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
         ChangeToIGUIImageButton(btnYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnNo = env->addButton(rect<s32>(200 * xScale, 120 * yScale, 310 * xScale, 170 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
+	btnNo = env->addButton(rect<s32>(210 * xScale, 120 * yScale, 310 * xScale, 170 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//surrender yes/no (310)
 	wSurrender = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
