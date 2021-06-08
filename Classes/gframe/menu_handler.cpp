@@ -42,7 +42,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 	}
 #endif
 	switch(event.EventType) {
-        wchar_t textBuffer[256];
 	case irr::EET_GUI_EVENT: {
 		irr::gui::IGUIElement* caller = event.GUIEvent.Caller;
 		s32 id = caller->getID();
@@ -61,11 +60,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			else
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			switch(id) {
-                case BUTTON_MSG_OK: {
-                    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-                    mainGame->HideElement(mainGame->wMessage);
-                    break;
-                }
 			case BUTTON_MODE_EXIT: {
 				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
@@ -104,9 +98,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(status != 0) {
 						mainGame->gMutex.lock();
 						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						myswprintf(textBuffer, L"%ls\n%ls", dataManager.GetSysString(1412));
-						mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
-						mainGame->PopupElement(mainGame->wMessage);
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1412));
 						mainGame->gMutex.unlock();
 						break;
 					} else {
@@ -482,7 +474,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(Replay::RenameReplay(mainGame->lstReplayList->getListItem(prev_sel), newname)) {
 						mainGame->lstReplayList->setItem(prev_sel, newname, -1);
 					} else {
-						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1365));
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1365));
 					}
 				}
 				prev_operation = 0;

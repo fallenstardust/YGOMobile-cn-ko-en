@@ -84,7 +84,7 @@ void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
 		else if(!bot_mode && !mainGame->wLanWindow->isVisible())
 			mainGame->ShowElement(mainGame->wLanWindow);
 		mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-		mainGame->env->addMessageBox(L"", dataManager.GetSysString(1400));
+		mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
 		mainGame->gMutex.unlock();
 	}
 	event_base_loopbreak(client_base);
@@ -115,7 +115,6 @@ void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
 	}
 }
 void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
-    wchar_t textBuffer[256];
 	if (events & BEV_EVENT_CONNECTED) {
 		bool create_game = (size_t)ctx != 0;
 		CTOS_PlayerInfo cspi;
@@ -176,7 +175,7 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 				else if(!bot_mode && !mainGame->wLanWindow->isVisible())
 					mainGame->ShowElement(mainGame->wLanWindow);
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-				mainGame->env->addMessageBox(L"", dataManager.GetSysString(1400));
+				mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
 				mainGame->gMutex.unlock();
 			} else if(connect_state == 0x7) {
 				if(!mainGame->dInfo.isStarted && !mainGame->is_building) {
@@ -194,17 +193,13 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 					mainGame->wChat->setVisible(false);
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					if(events & BEV_EVENT_EOF)
-						myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1401));
-					else myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1402));
-					mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
-					mainGame->PopupElement(mainGame->wMessage);
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1401));
+					else mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
 					mainGame->gMutex.unlock();
 				} else {
 					mainGame->gMutex.lock();
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-                    myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1502));
-                    mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
-                    mainGame->PopupElement(mainGame->wMessage);
+					mainGame->addMessageBox(L"", dataManager.GetSysString(1502));
 					mainGame->btnCreateHost->setEnabled(true);
 					mainGame->btnJoinHost->setEnabled(true);
 					mainGame->btnJoinCancel->setEnabled(true);
@@ -260,11 +255,11 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			mainGame->gMutex.lock();
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 			if(pkt->code == 0)
-				mainGame->env->addMessageBox(L"", dataManager.GetSysString(1403));
+				mainGame->addMessageBox(L"", dataManager.GetSysString(1403));
 			else if(pkt->code == 1)
-				mainGame->env->addMessageBox(L"", dataManager.GetSysString(1404));
+				mainGame->addMessageBox(L"", dataManager.GetSysString(1404));
 			else if(pkt->code == 2)
-				mainGame->env->addMessageBox(L"", dataManager.GetSysString(1405));
+				mainGame->addMessageBox(L"", dataManager.GetSysString(1405));
 			mainGame->gMutex.unlock();
 			event_base_loopbreak(client_base);
 			break;
@@ -317,8 +312,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			}
 			}
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-            mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, msgbuf);
-            mainGame->PopupElement(mainGame->wMessage);
+			mainGame->addMessageBox(L"", msgbuf);
 			mainGame->cbCategorySelect->setEnabled(true);
 			mainGame->cbDeckSelect->setEnabled(true);
 			mainGame->gMutex.unlock();
@@ -327,7 +321,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		case ERRMSG_SIDEERROR: {
 			mainGame->gMutex.lock();
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-			mainGame->env->addMessageBox(L"", dataManager.GetSysString(1408));
+			mainGame->addMessageBox(L"", dataManager.GetSysString(1408));
 			mainGame->gMutex.unlock();
 			break;
 		}
@@ -341,7 +335,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			wchar_t msgbuf[256];
 			myswprintf(msgbuf, dataManager.GetSysString(1411), pkt->code >> 12, (pkt->code >> 4) & 0xff, pkt->code & 0xf);
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-			mainGame->env->addMessageBox(L"", msgbuf);
+			mainGame->addMessageBox(L"", msgbuf);
 			mainGame->gMutex.unlock();
 			event_base_loopbreak(client_base);
 			break;

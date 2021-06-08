@@ -578,6 +578,15 @@ bool Game::Initialize(ANDROID_APP app) {
 	stMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 120 * yScale, 260 * xScale, 170 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
+	//system message (370)
+	wSysMessage = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1216));
+	wSysMessage->getCloseButton()->setVisible(false);
+	wSysMessage->setVisible(false);
+	ChangeToIGUIImageWindow(wSysMessage, bgSysMessage, imageManager.tDialog_L);
+	stSysMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wSysMessage, -1, false);
+	stSysMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
+	btnSysMsgOK = env->addButton(rect<s32>(130 * xScale, 120 * yScale, 260 * xScale, 170 * yScale), wSysMessage, BUTTON_SYS_MSG_OK, dataManager.GetSysString(1211));
+    ChangeToIGUIImageButton(btnSysMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//auto fade message (370)
 	wACMessage = env->addWindow(rect<s32>(490 * xScale, 240 * yScale, 840 * xScale, 300 * yScale), false, L"");
 	wACMessage->getCloseButton()->setVisible(false);
@@ -1908,6 +1917,12 @@ void Game::ErrorLog(const char* msg) {
 	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
 	fprintf(fp, "[%s]%s\n", timebuf, msg);
 	fclose(fp);
+}
+void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
+	SetStaticText(stSysMessage, 370 * xScale, textFont, text);
+	wSysMessage->setVisible(true);
+	wSysMessage->getParent()->bringToFront(wSysMessage);
+	//env->setFocus(wSysMessage);
 }
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
