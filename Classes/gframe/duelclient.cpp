@@ -115,7 +115,6 @@ void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
 	}
 }
 void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
-    wchar_t textBuffer[256];
 	if (events & BEV_EVENT_CONNECTED) {
 		bool create_game = (size_t)ctx != 0;
 		CTOS_PlayerInfo cspi;
@@ -194,17 +193,13 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 					mainGame->wChat->setVisible(false);
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					if(events & BEV_EVENT_EOF)
-						myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1401));
-					else myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1402));
-					mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
-					mainGame->PopupElement(mainGame->wMessage);
+						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1401));
+					else mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
 					mainGame->gMutex.unlock();
 				} else {
 					mainGame->gMutex.lock();
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-                    myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(1502));
-                    mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
-                    mainGame->PopupElement(mainGame->wMessage);
+					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1502));
 					mainGame->btnCreateHost->setEnabled(true);
 					mainGame->btnJoinHost->setEnabled(true);
 					mainGame->btnJoinCancel->setEnabled(true);
@@ -317,8 +312,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			}
 			}
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-            mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, msgbuf);
-            mainGame->PopupElement(mainGame->wMessage);
+			mainGame->env->addMessageBox(L"", msgbuf);
 			mainGame->cbCategorySelect->setEnabled(true);
 			mainGame->cbDeckSelect->setEnabled(true);
 			mainGame->gMutex.unlock();
