@@ -711,7 +711,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					|| deckManager.current_deck.extra.size() != pre_extrac
 					|| deckManager.current_deck.side.size() != pre_sidec) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1410));
+					mainGame->addMessageBox(L"", dataManager.GetSysString(1410));
 					break;
 				}
 				mainGame->ClearCardInfo();

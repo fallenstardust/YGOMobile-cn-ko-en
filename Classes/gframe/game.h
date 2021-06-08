@@ -166,6 +166,7 @@ public:
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
+	void addMessageBox(const wchar_t* caption, const wchar_t* text);
 	void initUtils();
 	void ClearTextures();
 	void CloseGameButtons();
@@ -415,6 +416,11 @@ public:
 	irr::gui::IGUIImage* bgMessage;
 	irr::gui::IGUIStaticText* stMessage;
 	irr::gui::IGUIButton* btnMsgOK;//
+	//system message
+	irr::gui::IGUIWindow* wSysMessage;
+	irr::gui::IGUIImage* bgSysMessage;
+	irr::gui::IGUIStaticText* stSysMessage;
+	irr::gui::IGUIButton* btnSysMsgOK;
 	//auto close message
 	irr::gui::IGUIWindow* wACMessage;
 	irr::gui::IGUIStaticText* stACMessage;
@@ -745,6 +751,7 @@ private:
 #define BUTTON_MSG_OK				200
 #define BUTTON_YES					201
 #define BUTTON_NO					202
+#define BUTTON_SYS_MSG_OK			203
 #define BUTTON_HAND1				205
 #define BUTTON_HAND2				206
 #define BUTTON_HAND3				207

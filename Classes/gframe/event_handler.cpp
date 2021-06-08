@@ -1933,6 +1933,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		s32 id = event.GUIEvent.Caller->getID();
+		if(mainGame->wSysMessage->isVisible() && id != BUTTON_SYS_MSG_OK) {
+			mainGame->wSysMessage->getParent()->bringToFront(mainGame->wSysMessage);
+			//mainGame->env->setFocus(mainGame->wSysMessage);
+			return true;
+			break;
+		}
 		switch(event.GUIEvent.EventType) {
 //dont merge these cases
 		case irr::gui::EGET_BUTTON_CLICKED: {
@@ -1941,6 +1947,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->lstLog->clear();
 				mainGame->logParam.clear();
+				return true;
+				break;
+			}
+			case BUTTON_SYS_MSG_OK: {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				mainGame->HideElement(mainGame->wSysMessage);
 				return true;
 				break;
 			}
