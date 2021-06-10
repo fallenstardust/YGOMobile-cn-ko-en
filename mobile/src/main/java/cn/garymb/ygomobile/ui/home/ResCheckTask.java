@@ -219,9 +219,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 //复制残局
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
                 File single = new File(mSettings.getSingleDir());
-                if (single.exists()) {
-                    FileUtils.delFile(single.getAbsolutePath());
-                }
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
                         mSettings.getSingleDir(), needsUpdate);
             }
