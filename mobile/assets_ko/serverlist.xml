@@ -4,6 +4,13 @@
 
     <server>
         <player-name>신선한 고기</player-name>
+        <name>korean server</name>
+        <ip>pro.ygoreplay.com</ip>
+        <port>2021</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>신선한 고기</player-name>
         <name>YGOPRO 중국서버</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
