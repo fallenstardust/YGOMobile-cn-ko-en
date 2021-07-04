@@ -83,9 +83,9 @@ import ocgcore.CardManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_PGYER_CN;
-import static cn.garymb.ygomobile.Constants.URL_PGYER_EN;
-import static cn.garymb.ygomobile.Constants.URL_PGYER_KO;
+//import static cn.garymb.ygomobile.Constants.URL_PGYER_CN;
+//import static cn.garymb.ygomobile.Constants.URL_PGYER_EN;
+//import static cn.garymb.ygomobile.Constants.URL_PGYER_KO;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
 
@@ -294,17 +294,18 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private boolean doMenu(int id) {
         switch (id) {
             case R.id.nav_webpage: {
-                String url;
-                if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.EN") {
-                    url = URL_PGYER_EN;
-                } else if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.KO") {
-                    url = URL_PGYER_KO;
-                } else {
-                    url = URL_PGYER_CN;
-                }
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(url));
-                startActivity(intent);}
+//                String url;
+//                if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.EN") {
+//                    url = URL_PGYER_EN;
+//                } else if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.KO") {
+//                    url = URL_PGYER_KO;
+//                } else {
+//                    url = URL_PGYER_CN;
+//                }
+//                Intent intent = new Intent(Intent.ACTION_VIEW);
+//                intent.setData(Uri.parse(url));
+//                startActivity(intent);
+               }
             break;
             case R.id.action_game:
                 setRandomCardDetail();
