@@ -1,6 +1,6 @@
 --created by assaultcore
 Debug.SetAIName("本残局作者:突击核")
-Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI,4) -- 4 = new master rule
+Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI,5) -- 4 = new master rule
 Debug.SetPlayerInfo(0,8000,0,0)
 Debug.SetPlayerInfo(1,21150,0,0)
 Debug.AddCard(89943723,0,0,LOCATION_DECK,0,POS_FACEUP_ATTACK)

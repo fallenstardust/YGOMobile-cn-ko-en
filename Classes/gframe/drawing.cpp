@@ -240,6 +240,15 @@ void Game::DrawBackGround() {
 	if (dField.hovered_location != 0 && dField.hovered_location != 2 && dField.hovered_location != POSITION_HINT
 		&& !(dInfo.duel_rule < 4 && dField.hovered_location == LOCATION_MZONE && dField.hovered_sequence > 4)
 		&& !(dInfo.duel_rule >= 4 && dField.hovered_location == LOCATION_SZONE && dField.hovered_sequence > 5)) {
+#ifdef _IRR_ANDROID_PLATFORM_
+		if (dField.hovered_location == LOCATION_MZONE) {
+			ClientCard* pcard = mainGame->dField.mzone[dField.hovered_controler][dField.hovered_sequence];
+			if(pcard && pcard->type & TYPE_LINK) {
+				DrawLinkedZones(pcard);
+			}
+		}
+		DrawSelField(dField.hovered_controler, dField.hovered_location, dField.hovered_sequence, imageManager.tSelField, false);
+#else
 		S3DVertex *vertex = 0;
 		if (dField.hovered_location == LOCATION_DECK)
 			vertex = matManager.vFieldDeck[dField.hovered_controler];
@@ -272,70 +281,76 @@ void Game::DrawBackGround() {
 		matManager.mSelField.DiffuseColor = selFieldAlpha << 24;
 		driver->setMaterial(matManager.mSelField);
 		driver->drawVertexPrimitiveList(v2, 4, matManager.iRectangle, 2);
+#endif
 	}
 }
+void Game::DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse, bool spin) {
+	static irr::core::vector3df act_rot(0, 0, 0);
+	irr::core::vector3df t;
+	irr::core::matrix4 im;
+	dField.GetChainLocation(player, loc, seq, &t);
+	t.Z = spin ? 0.002f : 0.001f;
+	im.setTranslation(t);
+	if (spin) {
+		act_rot.Z += 0.02f;
+		im.setRotationRadians(act_rot);
+	}
+	if (reverse) {
+		im.setRotationRadians(vector3df(0, 0, 3.1415926f));
+	}
+	driver->setTransform(irr::video::ETS_WORLD, im);
+	matManager.mTexture.setTexture(0, texture);
+	driver->setMaterial(matManager.mTexture);
+	driver->drawVertexPrimitiveList(matManager.vSelField, 4, matManager.iRectangle, 2);
+}
 
-void Game::DrawLinkedZones(ClientCard* pcard) {
+void Game::DrawLinkedZones(ClientCard* pcard, ClientCard* fcard) {
 	int mark = pcard->link_marker;
-	S3DVertex *vertex = 0;
-    S3DVertex vSelField[4];
-	matManager.mSelField.AmbientColor = 0xff0261a2;
-	driver->setMaterial(matManager.mSelField);
-	if (dField.hovered_sequence<5) {
-		if (mark & LINK_MARKER_LEFT && dField.hovered_sequence>0) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence - 1];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-        }
-		if (mark & LINK_MARKER_RIGHT && dField.hovered_sequence<4) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence + 1];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
+	int player = pcard->controler;
+	int seq = pcard->sequence;
+	bool reverse = player == 1;
+	ClientCard* pcard2;
+	if (seq < 5) {
+		if (mark & LINK_MARKER_LEFT && seq > 0) {
+			DrawSelField(player, LOCATION_MZONE, seq - 1, imageManager.tSelFieldLinkArrows[4], reverse);
+			//pcard2 = dField.mzone[player][seq - 1];
+			//if (pcard2 && pcard2 != fcard && pcard2->link_marker & LINK_MARKER_RIGHT)
+			//	DrawLinkedZones(pcard2, pcard);
+		}
+		if (mark & LINK_MARKER_RIGHT && seq < 4) {
+			DrawSelField(player, LOCATION_MZONE, seq + 1, imageManager.tSelFieldLinkArrows[6], reverse);
+			//pcard2 = dField.mzone[player][seq + 1];
+			//if (pcard2 && pcard2 != fcard && pcard2->link_marker & LINK_MARKER_LEFT)
+			//	DrawLinkedZones(pcard2, pcard);
 		}
 		if (dInfo.duel_rule >= 4) {
-		if ((mark & LINK_MARKER_TOP_LEFT && dField.hovered_sequence == 2) || (mark & LINK_MARKER_TOP && dField.hovered_sequence == 1) || (mark & LINK_MARKER_TOP_RIGHT && dField.hovered_sequence == 0)) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][5];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
+			if (mark & LINK_MARKER_TOP_RIGHT && seq == 0)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[9], reverse);
+			if (mark & LINK_MARKER_TOP && seq == 1)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[8], reverse);
+			if (mark & LINK_MARKER_TOP_LEFT && seq == 2)
+				DrawSelField(player, LOCATION_MZONE, 5, imageManager.tSelFieldLinkArrows[7], reverse);
+			if (mark & LINK_MARKER_TOP_RIGHT && seq == 2)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[9], reverse);
+			if (mark & LINK_MARKER_TOP && seq == 3)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[8], reverse);
+			if (mark & LINK_MARKER_TOP_LEFT && seq == 4)
+				DrawSelField(player, LOCATION_MZONE, 6, imageManager.tSelFieldLinkArrows[7], reverse);
 		}
-		if ((mark & LINK_MARKER_TOP_LEFT && dField.hovered_sequence == 4) || (mark & LINK_MARKER_TOP && dField.hovered_sequence == 3) || (mark & LINK_MARKER_TOP_RIGHT && dField.hovered_sequence == 2)) {
-		    vertex = matManager.vFieldMzone[dField.hovered_controler][6];
-			SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-			driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-	}
 	} else {
 		int swap = (dField.hovered_sequence == 5) ? 0 : 2;
-		if (mark & LINK_MARKER_BOTTOM_LEFT) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][0 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_BOTTOM) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][1 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_BOTTOM_RIGHT) {
-		vertex = matManager.vFieldMzone[dField.hovered_controler][2 + swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP_LEFT) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][4 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][3 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP_RIGHT) {
-		vertex = matManager.vFieldMzone[1 - dField.hovered_controler][2 - swap];
-		SetS3DVertex(vSelField, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.01f, 1, 0, 0, 0, 0);
-		driver->drawVertexPrimitiveList(vSelField, 4, matManager.iRectangle, 2);
-		}
+		if (mark & LINK_MARKER_BOTTOM_LEFT)
+			DrawSelField(player, LOCATION_MZONE, 0 + swap, imageManager.tSelFieldLinkArrows[1], reverse);
+		if (mark & LINK_MARKER_BOTTOM)
+			DrawSelField(player, LOCATION_MZONE, 1 + swap, imageManager.tSelFieldLinkArrows[2], reverse);
+		if (mark & LINK_MARKER_BOTTOM_RIGHT)
+			DrawSelField(player, LOCATION_MZONE, 2 + swap, imageManager.tSelFieldLinkArrows[3], reverse);
+		if (mark & LINK_MARKER_TOP_LEFT)
+			DrawSelField(1 - player, LOCATION_MZONE, 4 - swap, imageManager.tSelFieldLinkArrows[7], reverse);
+		if (mark & LINK_MARKER_TOP)
+			DrawSelField(1 - player, LOCATION_MZONE, 3 - swap, imageManager.tSelFieldLinkArrows[8], reverse);
+		if (mark & LINK_MARKER_TOP_RIGHT)
+			DrawSelField(1 - player, LOCATION_MZONE, 2 - swap, imageManager.tSelFieldLinkArrows[9], reverse);
 	}
 }
 
@@ -468,7 +483,7 @@ void Game::DrawShadowText(CGUITTFont * font, const core::stringw & text, const c
 void Game::DrawMisc() {
 	static irr::core::vector3df act_rot(0, 0, 0);
 	int rule = (dInfo.duel_rule >= 4) ? 1 : 0;
-	irr::core::matrix4 im, ic, it;
+	irr::core::matrix4 im, ic, it, ig;
 	act_rot.Z += 0.02f;
 	im.setRotationRadians(act_rot);
 	matManager.mTexture.setTexture(0, imageManager.tAct);
@@ -513,7 +528,7 @@ void Game::DrawMisc() {
 	}
 	if(dField.conti_act) {
 		irr::core::vector3df pos = vector3df((matManager.vFieldContiAct[0].X + matManager.vFieldContiAct[1].X) / 2,
-											 (matManager.vFieldContiAct[0].Y + matManager.vFieldContiAct[2].Y) / 2, 0);
+			(matManager.vFieldContiAct[0].Y + matManager.vFieldContiAct[2].Y) / 2, 0);
 		im.setRotationRadians(irr::core::vector3df(0, 0, 0));
 		for(auto cit = dField.conti_cards.begin(); cit != dField.conti_cards.end(); ++cit) {
 			im.setTranslation(pos);
@@ -529,34 +544,43 @@ void Game::DrawMisc() {
 		driver->setMaterial(matManager.mTexture);
 		driver->drawVertexPrimitiveList(matManager.vActivate, 4, matManager.iRectangle, 2);
 	}
-    if(dField.chains.size() > 1 || dField.chains.size() == 1 && dField.chains[0].need_distinguish || mainGame->gameConf.draw_single_chain) {
-        for (size_t i = 0; i < dField.chains.size(); ++i) {
-            if (dField.chains[i].solved)
-                break;
-            matManager.mTRTexture.setTexture(0, imageManager.tChain);
-            matManager.mTRTexture.AmbientColor = 0xffffff00;
-            ic.setRotationRadians(act_rot);
-            ic.setTranslation(dField.chains[i].chain_pos);
-            driver->setMaterial(matManager.mTRTexture);
-            driver->setTransform(irr::video::ETS_WORLD, ic);
-            driver->drawVertexPrimitiveList(matManager.vSymbol, 4, matManager.iRectangle, 2);
-            it.setScale(0.6f);
-            it.setTranslation(dField.chains[i].chain_pos);
-            matManager.mTRTexture.setTexture(0, imageManager.tNumber);
-            matManager.vChainNum[0].TCoords = vector2df(0.19375f * (i % 5), 0.2421875f * (i / 5));
-            matManager.vChainNum[1].TCoords = vector2df(0.19375f * (i % 5 + 1),
-                                                        0.2421875f * (i / 5));
-            matManager.vChainNum[2].TCoords = vector2df(0.19375f * (i % 5),
-                                                        0.2421875f * (i / 5 + 1));
-            matManager.vChainNum[3].TCoords = vector2df(0.19375f * (i % 5 + 1),
-                                                        0.2421875f * (i / 5 + 1));
-            driver->setMaterial(matManager.mTRTexture);
-            driver->setTransform(irr::video::ETS_WORLD, it);
-            driver->drawVertexPrimitiveList(matManager.vChainNum, 4, matManager.iRectangle, 2);
-        }
-    }
+	if(dField.chains.size() > 1 || mainGame->gameConf.draw_single_chain) {
+		for(size_t i = 0; i < dField.chains.size(); ++i) {
+			if(dField.chains[i].solved)
+				break;
+			matManager.mTRTexture.setTexture(0, imageManager.tChain);
+			matManager.mTRTexture.AmbientColor = 0xffffff00;
+			ic.setRotationRadians(act_rot);
+			ic.setTranslation(dField.chains[i].chain_pos);
+			driver->setMaterial(matManager.mTRTexture);
+			driver->setTransform(irr::video::ETS_WORLD, ic);
+			driver->drawVertexPrimitiveList(matManager.vSymbol, 4, matManager.iRectangle, 2);
+			it.setScale(0.6f);
+			it.setTranslation(dField.chains[i].chain_pos);
+			matManager.mTRTexture.setTexture(0, imageManager.tNumber);
+			matManager.vChainNum[0].TCoords = vector2df(0.19375f * (i % 5), 0.2421875f * (i / 5));
+			matManager.vChainNum[1].TCoords = vector2df(0.19375f * (i % 5 + 1), 0.2421875f * (i / 5));
+			matManager.vChainNum[2].TCoords = vector2df(0.19375f * (i % 5), 0.2421875f * (i / 5 + 1));
+			matManager.vChainNum[3].TCoords = vector2df(0.19375f * (i % 5 + 1), 0.2421875f * (i / 5 + 1));
+			driver->setMaterial(matManager.mTRTexture);
+			driver->setTransform(irr::video::ETS_WORLD, it);
+			driver->drawVertexPrimitiveList(matManager.vChainNum, 4, matManager.iRectangle, 2);
+		}
+	}
+	if(dField.cant_check_grave) {
+		matManager.mTexture.setTexture(0, imageManager.tNegated);
+		driver->setMaterial(matManager.mTexture);
+		ig.setTranslation(vector3df((matManager.vFieldGrave[0][rule][0].Pos.X + matManager.vFieldGrave[0][rule][1].Pos.X) / 2,
+			(matManager.vFieldGrave[0][rule][0].Pos.Y + matManager.vFieldGrave[0][rule][2].Pos.Y) / 2, dField.grave[0].size() * 0.01f + 0.02f));
+		driver->setTransform(irr::video::ETS_WORLD, ig);
+		driver->drawVertexPrimitiveList(matManager.vNegate, 4, matManager.iRectangle, 2);
+		ig.setTranslation(vector3df((matManager.vFieldGrave[1][rule][0].Pos.X + matManager.vFieldGrave[1][rule][1].Pos.X) / 2,
+			(matManager.vFieldGrave[1][rule][0].Pos.Y + matManager.vFieldGrave[1][rule][2].Pos.Y) / 2, dField.grave[1].size() * 0.01f + 0.02f));
+		driver->setTransform(irr::video::ETS_WORLD, ig);
+		driver->drawVertexPrimitiveList(matManager.vNegate, 4, matManager.iRectangle, 2);
+	}
 	//finish button
-	if(btnCancelOrFinish->isVisible())
+	if(btnCancelOrFinish->isVisible() && dField.select_ready)
 		DrawSelectionLine(btnCancelOrFinish, 4, 0xff00ff00);
 	//lp bar
 	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
@@ -1031,7 +1055,7 @@ void Game::DrawSpec() {
 			} else if(showcardp < showcarddif) {
 				DrawShadowText(lpcFont, lstr, recti(550 * mainGame->xScale - pos.Width / 2, 270 * mainGame->yScale, 850 * mainGame->xScale, 350 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 				if(dInfo.vic_string && (showcardcode == 1 || showcardcode == 2)) {
-					driver->draw2DRectangle(0xa0000000, recti(540 * mainGame->xScale, 320 * mainGame->yScale, 800 * mainGame->xScale, 340 * mainGame->yScale));
+					driver->draw2DRectangle(0xa0000000, recti(500 * mainGame->xScale, 320 * mainGame->yScale, 840 * mainGame->xScale, 340 * mainGame->yScale));
 					DrawShadowText(guiFont, dInfo.vic_string, recti(500 * mainGame->xScale, 320 * mainGame->yScale, 840 * mainGame->xScale, 340 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, true);
 				}
 			} else if(showcardp < showcarddif + 10) {

@@ -102,6 +102,7 @@ struct BotInfo {
 	bool support_master_rule_3;
 	bool support_new_master_rule;
 	bool support_master_rule_2020;
+	bool select_deckfile;
 };
 
 struct FadingUnit {
@@ -128,7 +129,7 @@ public:
 	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
-	void SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
+	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
 	void LoadExpansions();
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
@@ -139,7 +140,8 @@ public:
 	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
-	void DrawLinkedZones(ClientCard* pcard);
+	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
+	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
@@ -164,6 +166,7 @@ public:
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
+	void addMessageBox(const wchar_t* caption, const wchar_t* text);
 	void initUtils();
 	void ClearTextures();
 	void CloseGameButtons();
@@ -389,6 +392,8 @@ public:
 	irr::gui::IGUIStaticText* stBotInfo;
 	irr::gui::IGUIButton* btnStartBot;//
 	irr::gui::IGUIButton* btnBotCancel;//
+	irr::gui::IGUIComboBox* cbBotDeckCategory;
+	irr::gui::IGUIComboBox* cbBotDeck;
 	irr::gui::IGUIComboBox* cbBotRule;
 	irr::gui::IGUICheckBox* chkBotHand;
 	irr::gui::IGUICheckBox* chkBotNoCheckDeck;
@@ -411,6 +416,11 @@ public:
 	irr::gui::IGUIImage* bgMessage;
 	irr::gui::IGUIStaticText* stMessage;
 	irr::gui::IGUIButton* btnMsgOK;//
+	//system message
+	irr::gui::IGUIWindow* wSysMessage;
+	irr::gui::IGUIImage* bgSysMessage;
+	irr::gui::IGUIStaticText* stSysMessage;
+	irr::gui::IGUIButton* btnSysMsgOK;
 	//auto close message
 	irr::gui::IGUIWindow* wACMessage;
 	irr::gui::IGUIStaticText* stACMessage;
@@ -735,11 +745,13 @@ private:
 #define LISTBOX_BOT_LIST			153
 #define BUTTON_BOT_START			154
 #define COMBOBOX_BOT_RULE			155
+#define COMBOBOX_BOT_DECKCATEGORY	156
 #define EDITBOX_CHAT				199
 
 #define BUTTON_MSG_OK				200
 #define BUTTON_YES					201
 #define BUTTON_NO					202
+#define BUTTON_SYS_MSG_OK			203
 #define BUTTON_HAND1				205
 #define BUTTON_HAND2				206
 #define BUTTON_HAND3				207
@@ -812,6 +824,7 @@ private:
 #define BUTTON_CARD_DISP_OK			296
 #define BUTTON_SURRENDER_YES		297
 #define BUTTON_SURRENDER_NO			298
+
 #define BUTTON_MANAGE_DECK			300
 #define COMBOBOX_DBCATEGORY			301
 #define COMBOBOX_DBDECKS			302
@@ -838,7 +851,6 @@ private:
 #define BUTTON_MARKERS_OK			323
 #define COMBOBOX_SORTTYPE			324
 #define EDITBOX_INPUTS				325
-
 #define WINDOW_DECK_MANAGE			330
 #define BUTTON_NEW_CATEGORY			331
 #define BUTTON_RENAME_CATEGORY		332
@@ -854,6 +866,7 @@ private:
 #define BUTTON_DM_CANCEL			342
 #define BUTTON_CLOSE_DECKMANAGER	343
 #define COMBOBOX_LFLIST				349
+
 #define BUTTON_CLEAR_LOG			350
 #define LISTBOX_LOG					351
 #define SCROLL_CARDTEXT				352

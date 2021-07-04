@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -17,11 +18,13 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 //import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
+import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 
 
@@ -131,10 +134,14 @@ public class GameUriManager {
 //                activity.startActivity(startdeck);
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".ypk")) {
                 File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + file.getName().toLowerCase(Locale.US));
-                try {
-                    FileUtils.copyFile(file, ypk);
-                } catch (Throwable e) {
-                    Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                if (ypk.exists() && file.lastModified() == ypk.lastModified()) {
+                    Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_LONG).show();
+                } else {
+                    try {
+                        FileUtils.copyFile(file, ypk);
+                    } catch (Throwable e) {
+                        Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                    }
                 }
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSeting);
@@ -142,6 +149,22 @@ public class GameUriManager {
                 } else {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                }
+            } else if (file.getName().toLowerCase(Locale.US).endsWith(".yrp")) {
+                File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + file.getName().toLowerCase(Locale.US));
+                if (yrp.exists()) {
+                    YGOStarter.startGame(getActivity(), null);
+                    Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_LONG).show();
+                } else {
+                    try {
+                        FileUtils.copyFile(file, yrp);
+                    } catch (Throwable e) {
+                        Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                    }
+                    if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
+                        YGOStarter.startGame(getActivity(), null);
+                        Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         } else if ("content".equals(uri.getScheme())) {
@@ -172,15 +195,19 @@ public class GameUriManager {
                 try {
                     File ypk = new File(AppsSettings.get().getExpansionsPath() + "/" + urifile.getName().toLowerCase(Locale.US));
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
-                    if (pfd == null) {
-                        return;
+                    if (ypk.exists() && urifile.lastModified() == ypk.lastModified()) {
+                        Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_SHORT).show();
                     } else {
-                        try {
-                            FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), ypk);
-                        } catch (Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.ypk_failed_bcos) + e, Toast.LENGTH_LONG).show();
-                        } finally {
-                            pfd.close();
+                        if (pfd == null) {
+                            return;
+                        } else {
+                            try {
+                                FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), ypk);
+                            } catch (Throwable e) {
+                                Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                            } finally {
+                                pfd.close();
+                            }
                         }
                     }
                 } catch (Throwable e) {
@@ -192,6 +219,33 @@ public class GameUriManager {
                 } else {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                }
+            } else if (urifile.getName().toLowerCase(Locale.US).endsWith(".yrp")) {
+                try {
+                    File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + urifile.getName().toLowerCase(Locale.US));
+                    ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
+                    if (yrp.exists()) {
+                        YGOStarter.startGame(getActivity(), null);
+                        Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_SHORT).show();
+                    } else {
+                        if (pfd == null) {
+                            return;
+                        } else {
+                            try {
+                                FileUtils.copyFile(new FileInputStream(pfd.getFileDescriptor()), yrp);
+                            } catch (Throwable e) {
+                                Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
+                            } finally {
+                                pfd.close();
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+                if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
+                    YGOStarter.startGame(activity, null);
+                    Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
                 }
             }
         } else {

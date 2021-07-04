@@ -69,9 +69,9 @@ android {
         exclude 'META-INF/rxjava.properties'
     }
     aaptOptions {
-        noCompress 'dll',"config"
+        noCompress 'dll', "config"
     }
-//    buildToolsVersion '28.0.2'
+//    buildToolsVersion '28.0.3'
 }
     repositories {
         flatDir {

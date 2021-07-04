@@ -10,7 +10,7 @@
     <string name="action_game">Single Game</string>
     <string name="action_about">About</string>
     <string name="action_add_server">Add Server</string>
-    <string name="dont_start_game">don\'t start game</string>
+    <string name="dont_start_game">unable to start game</string>
     <!-- check -->
     <string name="check_res">Check Resources</string>
     <string name="check_things">Check %s ...</string>
@@ -311,7 +311,7 @@
     <string name="my_favorites">myFav★</string>
     <string name="ypk_installed">expansion file installed</string>
     <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
-    <string name="ypk_failed_bcos">expansion file install failed, because\:</string>
+    <string name="install_failed_bcos">file install failed, because\:</string>
     <string name="deck_back_up">BackUp</string>
     <string name="deck_restore">Restore</string>
     <string name="deck_backup_n_restore">BackUp/Restore</string>
@@ -322,4 +322,21 @@
         Very necessary permissions will be applied\:
         \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
+    <string name="guide_menu">Menu\:\nincluding most of functions, for Example</string>
+    <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
+    <string name="guide_serverlist">Server list\: click a server to join online Game</string>
+    <string name="guide_server_edit">Server edit\: edit server information. for example\: change nickname</string>
+    <string name="guide_help">Help\: specifically guide How to use YGOMobile and learn Master Rules</string>
+    <string name="guide_settings">Settings\: turn on Expansions and DuelAssistant.set game avatars, background, cardback. </string>
+    <string name="guide_reset">Reset Resources\: click to reset when pictures or any files are mistaken deleted</string>
+    <string name="guide_abt_room_list">Inputted password will be recorded. Lone-Press to delete record(s)</string>
+    <string name="guide_join_room">you can join game without password to start random duel with default mode
+                                \n use specified password and share other players to join same game
+                                \n more duel model password you can see the tortuial.</string>
+    <string name="guide_button_search">click search buttton to edit search criteria</string>
+    <string name="guide_search_result_count">here shows search result count</string>
+    <string name="title_delete_ex">delete expansions</string>
+    <string name="about_delete_ex">if you need to delte all expansion cards</string>
+    <string name="yrp_installed">replay loaded, select it in \"\\Watch Replay\"\\</string>
+    <string name="ask_delete_ex">Click OK to confirm the deletion</string>
 </resources>

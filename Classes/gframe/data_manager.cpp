@@ -5,13 +5,13 @@
 namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
-wchar_t DataManager::strBuffer[4096];
 byte DataManager::scriptBuffer[0x20000];
 IFileSystem* DataManager::FileSystem;
 DataManager dataManager;
 
 bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
+	wchar_t strBuffer[4096];
 	BufferIO::EncodeUTF8(wfile, file);
 #ifdef _WIN32
 	IReadFile* reader = FileSystem->createAndOpenFile(wfile);
@@ -123,6 +123,7 @@ void DataManager::ReadStringConfLine(const char* linebuf) {
 		return;
 	char strbuf[256];
 	int value;
+	wchar_t strBuffer[4096];
 	sscanf(linebuf, "!%s", strbuf);
 	if(!strcmp(strbuf, "system")) {
 		sscanf(&linebuf[7], "%d %240[^\n]", &value, strbuf);
@@ -143,6 +144,7 @@ void DataManager::ReadStringConfLine(const char* linebuf) {
 	}
 }
 bool DataManager::Error(spmemvfs_db_t* pDB, sqlite3_stmt* pStmt, int errNo) {
+	wchar_t strBuffer[4096];
 	const char* msg = sqlite3_errmsg(pDB->handle);
 	BufferIO::DecodeUTF8(msg, strBuffer);
 	if(pStmt)

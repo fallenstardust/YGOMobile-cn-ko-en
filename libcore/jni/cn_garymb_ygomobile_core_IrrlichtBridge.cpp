@@ -24,7 +24,7 @@ const static char secret_key[] = "O2zMfI3gqJYYJSAuCeUkH9J_vm5S_A4Yn8fhrjU3";
  * Method:    nativeInsertText
  * Signature: (ILjava/lang/String;)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeInsertText(
-		JNIEnv* env, jclass clazz, jint handle, jstring textString) {
+		JNIEnv* env, jclass clazz, jlong handle, jstring textString) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		IGUIEnvironment* irrenv = device->getGUIEnvironment();
@@ -112,7 +112,7 @@ JNIEXPORT jbyteArray JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_native
  * Method:    nativeSetComboBoxSelection
  * Signature: (II)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetComboBoxSelection(
-		JNIEnv* env, jclass clazz, jint handle, jint idx) {
+		JNIEnv* env, jclass clazz, jlong handle, jint idx) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		IGUIEnvironment* irrenv = device->getGUIEnvironment();
@@ -147,7 +147,7 @@ JNIEXPORT jbyteArray JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_native
  * Method:    nativeSetCheckBoxesSelection
  * Signature: (II)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetCheckBoxesSelection(
-		JNIEnv* env, jclass clazz, jint handle, jint idx) {
+		JNIEnv* env, jclass clazz, jlong handle, jint idx) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		IGUIEnvironment* irrenv = device->getGUIEnvironment();
@@ -232,7 +232,7 @@ static void* join_game_thread(void* param) {
  * Method:    nativeRefreshTexture
  * Signature: (I)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeRefreshTexture(
-		JNIEnv* env, jclass clazz, jint handle) {
+		JNIEnv* env, jclass clazz, jlong handle) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 
@@ -255,7 +255,7 @@ static void* join_game_thread(void* param) {
  * Method:    nativeIgnoreChain
  * Signature: (IZ)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeIgnoreChain(
-		JNIEnv* env, jclass clazz, jint handle, jboolean begin) {
+		JNIEnv* env, jclass clazz, jlong handle, jboolean begin) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		if (device->isWindowFocused()) {
@@ -277,7 +277,7 @@ static void* join_game_thread(void* param) {
  * Method:    nativeReactChain
  * Signature: (IZ)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeReactChain(
-		JNIEnv* env, jclass clazz, jint handle, jboolean begin) {
+		JNIEnv* env, jclass clazz, jlong handle, jboolean begin) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		if (device->isWindowFocused()) {
@@ -295,7 +295,7 @@ static void* join_game_thread(void* param) {
 }
 
 JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetInputFix(
-		JNIEnv* env, jclass clazz, jint handle, jint x, jint y) {
+		JNIEnv* env, jclass clazz, jlong handle, jint x, jint y) {
 	if(ygo::mainGame) {
 		__android_log_print(ANDROID_LOG_INFO, "ygo", "setInputFix posX=%d, posY=%d", x, y);
 		ygo::mainGame->setPositionFix(core::position2di(x, y));
@@ -324,7 +324,7 @@ static void* cancel_chain_thread(void* param) {
  * Method:    nativeCancelChain
  * Signature: (I)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeCancelChain(
-		JNIEnv* env, jclass clazz, jint handle) {
+		JNIEnv* env, jclass clazz, jlong handle) {
 	if (handle) {
 		IrrlichtDevice* device = (IrrlichtDevice*) handle;
 		if (device->isWindowFocused()) {
@@ -344,7 +344,7 @@ static void* cancel_chain_thread(void* param) {
  * Method:    nativeJoinGame
  * Signature: (ILjava/nio/ByteBuffer;I)V
  */JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeJoinGame(
-		JNIEnv* env, jclass clazz, jint handle, jobject buffer, jint length) {
+		JNIEnv* env, jclass clazz, jlong handle, jobject buffer, jint length) {
 	void* data = env->GetDirectBufferAddress(buffer);
 	s_init_param_buffer = malloc(length);
 	memcpy(s_init_param_buffer, data, length);

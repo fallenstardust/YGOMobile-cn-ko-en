@@ -470,7 +470,7 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public void setNativeHandle(int nativeHandle) {
+    public void setNativeHandle(long nativeHandle) {
         IrrlichtBridge.sNativeHandle = nativeHandle;
     }
 

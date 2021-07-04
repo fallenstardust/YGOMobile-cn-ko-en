@@ -36,6 +36,8 @@ public:
 	irr::video::ITexture* tTotalAtk;
 	irr::video::ITexture* tNegated;
 	irr::video::ITexture* tChain;
+	irr::video::ITexture* tSelField;
+	irr::video::ITexture* tSelFieldLinkArrows[10];
 	irr::video::ITexture* tNumber;
 	irr::video::ITexture* tLPFrame;
 	irr::video::ITexture* tLPBar;

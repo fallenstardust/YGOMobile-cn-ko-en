@@ -4,16 +4,6 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>YGOPROES TCG</name>
-        <ip>ygoproes.ddns.net</ip>
-        <port>8005</port>
-        <keep>true</keep>
-        <lflist_name> </lflist_name>
-        <lflist_code>1</lflist_code>
-        <mode>0</mode>
-    </server>
-    <server>
-        <player-name>Knight of Hanoi</player-name>
         <name>Mercury233 OCG</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
@@ -24,9 +14,19 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>Szefo server (Links +TCG)</name>
-        <ip>szefoserver.ddns.net</ip>
-        <port>7210</port>
+        <name>Duel Chronicles</name>
+        <ip>2333.duelstart.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+        <lflist_name> </lflist_name>
+        <lflist_code>1</lflist_code>
+        <mode>0</mode>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>2Pick</name>
+        <ip>2pick.mycard.moe</ip>
+        <port>765</port>
         <keep>true</keep>
         <lflist_name> </lflist_name>
         <lflist_code>1</lflist_code>

@@ -107,6 +107,15 @@
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.ypk" />
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.ypk" />
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.ypk" />
+                <data android:pathPattern=".*\.yrp" />
+                <data android:pathPattern=".*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.yrp" />
             </intent-filter>
 
             <intent-filter>
@@ -190,23 +199,6 @@
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
             android:theme="@style/TranslucentTheme"/>
-        <activity
-            android:name="com.base.bj.paysdk.TrPayAcitivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:screenOrientation="behind"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
-        <activity
-            android:name="com.base.bj.paysdk.TrPayUnionAcitivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
-        <activity
-            android:name="com.base.bj.paysdk.TrSelectListActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|locale"

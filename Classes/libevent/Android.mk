@@ -17,7 +17,6 @@ LOCAL_SRC_FILES := \
     bufferevent_ratelim.c \
     bufferevent_sock.c \
     epoll.c \
-    epoll_sub.c \
     evdns.c \
     event.c \
     event_tagging.c \
@@ -34,6 +33,9 @@ LOCAL_SRC_FILES := \
     select.c \
     signal.c \
     strlcpy.c
+
+# android has <sys/epoll.h>
+# LOCAL_SRC_FILES += epoll_sub.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH) \
     				$(LOCAL_PATH)/android \

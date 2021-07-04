@@ -39,6 +39,7 @@ public interface Constants {
     boolean PREF_DEF_SENSOR_REFRESH = true;
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
+    String PREF_DEL_EX = "pref_key_settings_delete_ex";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";
     String PERF_TEST_REPLACE_KERNEL = "pref_key_test_replace_kernel";
     int LAST_ROOM_MAX = 10;
@@ -143,9 +144,8 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
-    String URL_PGYER_CN= "https://www.pgyer.com/ygomobilecn";
-    String URL_PGYER_EN= "https://www.pgyer.com/ygomobileen";
-    String URL_PGYER_KO= "https://www.pgyer.com/ygomobileko";
+    String URL_DONATE_CN= "https://afdian.net/@ygomobile";
+    String URL_DONATE= "https://www.paypal.me/ygomobile1";
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";

@@ -98,7 +98,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(status != 0) {
 						mainGame->gMutex.lock();
 						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1412));
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1412));
 						mainGame->gMutex.unlock();
 						break;
 					} else {
@@ -157,6 +157,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_DUELIST: {
+				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
 				DuelClient::SendPacketToServer(CTOS_HS_TODUELIST);
 				break;
@@ -345,9 +346,17 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				si.cb = sizeof(si);
 				ZeroMemory(&pi, sizeof(pi));
 				wchar_t cmd[MAX_PATH];
+				wchar_t arg1[512];
+				if(mainGame->botInfo[sel].select_deckfile) {
+					wchar_t botdeck[256];
+					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					myswprintf(arg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
+				}
+				else
+					myswprintf(arg1, L"%ls", mainGame->botInfo[sel].command);
 				int flag = 0;
 				flag += (mainGame->chkBotHand->isChecked() ? 0x1 : 0);
-				myswprintf(cmd, L"Bot.exe \"%ls\" %d %d", mainGame->botInfo[sel].command, flag, mainGame->gameConf.serverport);
+				myswprintf(cmd, L"Bot.exe \"%ls\" %d %d", arg1, flag, mainGame->gameConf.serverport);
 				if(!CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 				{
 					NetServer::StopServer();
@@ -355,8 +364,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				}
 #elif defined(_IRR_ANDROID_PLATFORM_)
 				char args[512];
+				wchar_t warg1[512];
+				if(mainGame->botInfo[sel].select_deckfile) {
+					wchar_t botdeck[256];
+					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
+				}
+				else
+					myswprintf(warg1, L"%ls", mainGame->botInfo[sel].command);
 				char arg1[512];
-				BufferIO::EncodeUTF8(mainGame->botInfo[sel].command, arg1);
+				BufferIO::EncodeUTF8(warg1, arg1);
 				char arg2[32];
 				arg2[0]=0;
 				if(mainGame->chkBotHand->isChecked())
@@ -374,8 +391,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 #else
 				if(fork() == 0) {
 					usleep(100000);
+					wchar_t warg1[512];
+					if(mainGame->botInfo[sel].select_deckfile) {
+						wchar_t botdeck[256];
+						deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+						myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
+					}
+					else
+						myswprintf(warg1, L"%ls", mainGame->botInfo[sel].command);
 					char arg1[512];
-					BufferIO::EncodeUTF8(mainGame->botInfo[sel].command, arg1);
+					BufferIO::EncodeUTF8(warg1, arg1);
 					int flag = 0;
 					flag += (mainGame->chkBotHand->isChecked() ? 0x1 : 0);
 					char arg2[8];
@@ -449,7 +474,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(Replay::RenameReplay(mainGame->lstReplayList->getListItem(prev_sel), newname)) {
 						mainGame->lstReplayList->setItem(prev_sel, newname, -1);
 					} else {
-						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1365));
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1365));
 					}
 				}
 				prev_operation = 0;
@@ -470,7 +495,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_CLOSE_SETTINGS: {
                 mainGame->HideElement(mainGame->wSettings);
                 mainGame->ShowElement(mainGame->wMainMenu);
-			    break;
+				break;
 			}
 			}
 			break;
@@ -573,27 +598,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(sel == -1)
 					break;
 				mainGame->SetStaticText(mainGame->stBotInfo, 200 * mainGame->xScale, mainGame->guiFont, mainGame->botInfo[sel].desc);
-				break;
-			}
-			}
-			break;
-		}
-		case irr::gui::EGET_COMBO_BOX_CHANGED: {
-			switch(id) {
-			case COMBOBOX_BOT_RULE: {
-				mainGame->RefreshBot();
-				break;
-			}
-			case COMBOBOX_HP_CATEGORY: {
-				int catesel = mainGame->cbCategorySelect->getSelected();
-				if(catesel == 3) {
-					catesel = 2;
-					mainGame->cbCategorySelect->setSelected(2);
-				}
-				if(catesel >= 0) {
-					mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
-					mainGame->cbDeckSelect->setSelected(0);
-				}
+				mainGame->cbBotDeckCategory->setVisible(mainGame->botInfo[sel].select_deckfile);
+				mainGame->cbBotDeck->setVisible(mainGame->botInfo[sel].select_deckfile);
 				break;
 			}
 			}
@@ -619,6 +625,39 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
 					mainGame->cbCategorySelect->setEnabled(true);
 					mainGame->cbDeckSelect->setEnabled(true);
+				}
+				break;
+			}
+			}
+			break;
+		}
+		case irr::gui::EGET_COMBO_BOX_CHANGED: {
+			switch(id) {
+			case COMBOBOX_BOT_RULE: {
+				mainGame->RefreshBot();
+				break;
+			}
+			case COMBOBOX_HP_CATEGORY: {
+				int catesel = mainGame->cbCategorySelect->getSelected();
+				if(catesel == 3) {
+					catesel = 2;
+					mainGame->cbCategorySelect->setSelected(2);
+				}
+				if(catesel >= 0) {
+					mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+					mainGame->cbDeckSelect->setSelected(0);
+				}
+				break;
+			}
+			case COMBOBOX_BOT_DECKCATEGORY: {
+				int catesel = mainGame->cbBotDeckCategory->getSelected();
+				if(catesel == 3) {
+					catesel = 2;
+					mainGame->cbBotDeckCategory->setSelected(2);
+				}
+				if(catesel >= 0) {
+					mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					mainGame->cbBotDeck->setSelected(0);
 				}
 				break;
 			}
