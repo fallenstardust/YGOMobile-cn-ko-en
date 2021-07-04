@@ -3,14 +3,21 @@ package com.ourygo.ygomobile.ui.activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
 import com.google.android.material.tabs.TabLayout;
 import com.ourygo.ygomobile.bean.FragmentData;
 import com.ourygo.ygomobile.ui.fragment.MainFragment;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
@@ -20,16 +27,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
@@ -37,7 +37,7 @@ import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public class OYMainActivity extends BaseActivity {
 
-    private static final String TAG="TIME-MainActivity";
+    private static final String TAG = "TIME-MainActivity";
 
     private Toolbar toolbar;
     private OYTabLayout tl_tab;
@@ -56,16 +56,24 @@ public class OYMainActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mian_oy);
-        Log.e(TAG,"0");
-        SdkInitUtil.getInstance().initX5WebView();
-        Log.e(TAG,"1");
+        setContentView(R.layout.activity_mian_oy);
+        LogUtil.time(TAG,"0");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SdkInitUtil.getInstance().initX5WebView();
+            }
+        }).start();
+        LogUtil.time(TAG,"1");
         initView();
-        Log.e(TAG,"2");
-checkNotch();
-checkRes();
-
+        LogUtil.time(TAG,"2");
+        checkNotch();
+        LogUtil.time(TAG, "3");
+        checkRes();
+        LogUtil.time(TAG,"4");
+        LogUtil.printSumTime(TAG);
     }
+
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
 
         mResCheckTask = new ResCheckTask(this, listener);
@@ -133,23 +141,23 @@ checkRes();
 
     private void initView() {
 
-        tl_tab=findViewById(R.id.tl_tab);
-        vp_pager=findViewById(R.id.vp_pager);
-        iv_avatar=findViewById(R.id.iv_avatar);
-        tv_name=findViewById(R.id.tv_name);
+        tl_tab = findViewById(R.id.tl_tab);
+        vp_pager = findViewById(R.id.vp_pager);
+        iv_avatar = findViewById(R.id.iv_avatar);
+        tv_name = findViewById(R.id.tv_name);
 
-        String mcName= SharedPreferenceUtil.getMyCardUserName();
+        String mcName = SharedPreferenceUtil.getMyCardUserName();
         refreshMyCardUser(mcName);
 
-        mainFragment=new MainFragment();
-        myCardFragment=new MyCardFragment();
-        otherFunctionFragment=new OtherFunctionFragment();
+        mainFragment = new MainFragment();
+        myCardFragment = new MyCardFragment();
+        otherFunctionFragment = new OtherFunctionFragment();
 
-        fragmentList=new ArrayList<>();
+        fragmentList = new ArrayList<>();
 
-        fragmentList.add(FragmentData.toFragmentData(s(R.string.homepage),mainFragment));
-        fragmentList.add(FragmentData.toFragmentData(s(R.string.mycard),myCardFragment));
-        fragmentList.add(FragmentData.toFragmentData(s(R.string.other_funstion),otherFunctionFragment));
+        fragmentList.add(FragmentData.toFragmentData(s(R.string.homepage), mainFragment));
+        fragmentList.add(FragmentData.toFragmentData(s(R.string.mycard), myCardFragment));
+        fragmentList.add(FragmentData.toFragmentData(s(R.string.other_funstion), otherFunctionFragment));
 
         vp_pager.setAdapter(new FmPagerAdapter(getSupportFragmentManager()));
         tl_tab.setTabMode(TabLayout.MODE_FIXED);
@@ -168,7 +176,7 @@ checkRes();
     }
 
     public void refreshMyCardUser(String name) {
-        if (TextUtils.isEmpty(name)){
+        if (TextUtils.isEmpty(name)) {
             tv_name.setText(getString(R.string.no_login));
             iv_avatar.setImageResource(R.drawable.avatar);
             iv_avatar.setOnClickListener(new View.OnClickListener() {
@@ -183,13 +191,13 @@ checkRes();
                     vp_pager.setCurrentItem(1);
                 }
             });
-        }else {
+        } else {
             tv_name.setText(name);
-            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name),iv_avatar);
+            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name), iv_avatar);
         }
     }
 
-    class FmPagerAdapter extends FragmentPagerAdapter{
+    class FmPagerAdapter extends FragmentPagerAdapter {
 
         public FmPagerAdapter(FragmentManager fm) {
             super(fm);

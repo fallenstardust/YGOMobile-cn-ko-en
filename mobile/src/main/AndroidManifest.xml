@@ -34,7 +34,7 @@
 <!--        tools:overrideLibrary="com.toptoche.searchablespinnerlibrary"-->
 <!--        tools:ignore="MultipleUsesSdk" />-->
     <application
-        android:name="cn.garymb.ygomobile.App"
+        android:name="com.ourygo.ygomobile.OYApplication"
         android:allowBackup="false"
         android:icon="@drawable/ic_icon"
         android:label="@string/app_name"

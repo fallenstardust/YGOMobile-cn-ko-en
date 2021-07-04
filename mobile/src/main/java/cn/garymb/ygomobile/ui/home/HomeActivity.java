@@ -304,30 +304,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 }
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(url));
-                startActivity(intent);
-            case R.id.nav_donation: {
-
-                final DialogPlus dialog = new DialogPlus(getContext());
-//                dialog.setContentView(R.layout.dialog_alipay_or_wechat);
-                dialog.setTitle(R.string.logo_text);
-                dialog.show();
-                View viewDialog = dialog.getContentView();
-//                Button btnAlipay = viewDialog.findViewById(R.id.button_alipay);
-//                Button btnTrpay = viewDialog.findViewById(R.id.button_trpay);
-//                Button btnpaypal = viewDialog.findViewById(R.id.button_paypal);
-//                btnAlipay.setOnClickListener((v) -> {
-//                    PayUtils.openAlipayPayPage(getContext(), Constants.ALIPAY_URL);
-//                    dialog.dismiss();
-//                });
-//                btnTrpay.setOnClickListener((v) -> {
-//                    PayUtils.inputMoney(HomeActivity.this);
-//                    dialog.dismiss();
-//                });
-//                btnpaypal.setOnClickListener((v) -> {
-//                    WebActivity.open(this, getString(R.string.donation), Constants.PAYPAL_URL);
-//                    dialog.dismiss();
-//                });
-            }
+                startActivity(intent);}
             break;
             case R.id.action_game:
                 setRandomCardDetail();
@@ -696,13 +673,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide() {
-        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
-                .setLabel("homeguide")
-                .addGuidePage(GuidePage.newInstance()
-                        .setBackgroundColor(0x60000000)
-                        .addHighLight(findViewById(R.id.menu))
-                        .setLayoutRes(R.layout.activity_logo))
-                .alwaysShow(true)//总是显示，调试时可以打开
-                .show();
+//        NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+//                .setLabel("homeguide")
+//                .addGuidePage(GuidePage.newInstance()
+//                        .setBackgroundColor(0x60000000)
+//                        .addHighLight(findViewById(R.id.menu))
+//                        .setLayoutRes(R.layout.activity_logo))
+//                .alwaysShow(true)//总是显示，调试时可以打开
+//                .show();
     }
 }

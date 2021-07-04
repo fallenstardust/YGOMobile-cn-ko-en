@@ -26,13 +26,15 @@ import java.text.MessageFormat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebView;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 
-public class MyCardFragment extends Fragment implements MyCard.MyCardListener {
+public class MyCardFragment extends BaseFragemnt implements MyCard.MyCardListener {
 
     private static final int TYPE_LOGIN=0;
     private static final int FILECHOOSER_RESULTCODE = 10;
@@ -55,12 +57,15 @@ public class MyCardFragment extends Fragment implements MyCard.MyCardListener {
         return v;
     }
 
-    private void initView(View v) {
+    private void initView(View v){
+        mWebViewPlus = v.findViewById(R.id.wv_web);
+        mProgressBar = v.findViewById(R.id.progressBar);
+    }
+
+    private void initData() {
 
 
         mMyCard = new MyCard(getActivity());
-        mWebViewPlus = v.findViewById(R.id.wv_web);
-        mProgressBar = v.findViewById(R.id.progressBar);
         mProgressBar.setMax(100);
 
         WebSettings settings = mWebViewPlus.getSettings();
@@ -178,6 +183,26 @@ public class MyCardFragment extends Fragment implements MyCard.MyCardListener {
     public void onResume() {
 //        YGOStarter.onResumed(getActivity());
         super.onResume();
+    }
+
+    @Override
+    public void onFirstUserVisible() {
+        initData();
+    }
+
+    @Override
+    public void onUserVisible() {
+
+    }
+
+    @Override
+    public void onFirstUserInvisible() {
+
+    }
+
+    @Override
+    public void onUserInvisible() {
+
     }
 
     @Override

@@ -35,10 +35,12 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
+
+import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 
-public class MainFragment extends Fragment {
+public class MainFragment extends BaseFragemnt {
 
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
@@ -172,6 +174,26 @@ public class MainFragment extends Fragment {
     public void onResume() {
         super.onResume();
         xb_banner.startAutoPlay();
+    }
+
+    @Override
+    public void onFirstUserVisible() {
+
+    }
+
+    @Override
+    public void onUserVisible() {
+
+    }
+
+    @Override
+    public void onFirstUserInvisible() {
+
+    }
+
+    @Override
+    public void onUserInvisible() {
+
     }
 
     @Override
