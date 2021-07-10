@@ -2,6 +2,7 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
+#include <memory>
 
 int enable_log = 0;
 bool exit_on_return = false;
@@ -14,24 +15,12 @@ void android_main(ANDROID_APP app) {
 #else
 int main(int argc, char* argv[]) {
 #endif
-
-#ifdef _WIN32
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	wVersionRequested = MAKEWORD(2, 2);
-	WSAStartup(wVersionRequested, &wsaData);
-	evthread_use_windows_threads();
-#else
 	evthread_use_pthreads();
-#endif //_WIN32
 	ygo::Game _game;
 	ygo::mainGame = &_game;
 #ifdef _IRR_ANDROID_PLATFORM_
 	if(!ygo::mainGame->Initialize(app))
 		return;
-#else
-	if(!ygo::mainGame->Initialize())
-		return 0;
 #endif
 #ifndef _IRR_ANDROID_PLATFORM_
 	for(int i = 1; i < argc; ++i) {
@@ -83,19 +72,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 #endif
-#ifdef _IRR_ANDROID_PLATFORM_
 	ygo::mainGame->externalSignal.Set();
 	ygo::mainGame->externalSignal.SetNoWait(true);
-#endif
 	ygo::mainGame->MainLoop();
-#ifdef _WIN32
-	WSACleanup();
-#else
-
-#endif //_WIN32
-#ifdef _IRR_ANDROID_PLATFORM_
 	return;
-#else
-	return EXIT_SUCCESS;
-#endif
 }
