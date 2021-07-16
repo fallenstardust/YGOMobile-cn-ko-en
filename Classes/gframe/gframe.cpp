@@ -9,6 +9,16 @@ bool exit_on_return = false;
 bool bot_mode = false;
 
 #ifdef _IRR_ANDROID_PLATFORM_
+int GetListBoxIndex(IGUIListBox* listbox, const wchar_t* target){
+	int count = listbox->getItemCount();
+	for(int i = 0; i < count; i++){
+		auto item = listbox->getListItem(i);
+		if(wcscmp(item, target)){
+			return i;
+		}
+	}
+	return 0;
+}
 void android_main(ANDROID_APP app) {
 	app->inputPollSource.process = android::process_input;
 	app_dummy();
@@ -59,22 +69,21 @@ int main(int argc, char* argv[]) {
 			ygo::mainGame->device->postEventFromUser(event);
 			break;
 		} else if(!strcmp(arg, "-r")) { // Replay
-			char* name = NULL;
+		    int index = 0;
 			if((i+1) < argc){//下一个参数是录像名
 #ifdef _IRR_ANDROID_PLATFORM_
-		        name = argv[i+1].c_str();
+		        char* name = argv[i+1].c_str();
 #else
-                name = argv[i+1];
+                char* name = argv[i+1];
 #endif
+			    wchar_t fname[1024];
+			    BufferIO::DecodeUTF8(name, fname);
+
+                index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
 			}
 			event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;
 			ygo::mainGame->device->postEventFromUser(event);
-			if(name != NULL){
-				//TODO may be error?
-				ygo::mainGame->lstReplayList->setSelected(name);
-			} else {
-				ygo::mainGame->lstReplayList->setSelected(0);
-			}
+			ygo::mainGame->lstReplayList->setSelected(index);
 			event.GUIEvent.Caller = ygo::mainGame->btnLoadReplay;
 			ygo::mainGame->device->postEventFromUser(event);
 			break;//只播放一个
