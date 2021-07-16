@@ -8,6 +8,14 @@ int enable_log = 0;
 bool exit_on_return = false;
 bool bot_mode = false;
 
+void ClickButton(irr::gui::IGUIElement* btn) {
+	irr::SEvent event;
+	event.EventType = irr::EET_GUI_EVENT;
+	event.GUIEvent.EventType = irr::gui::EGET_BUTTON_CLICKED;
+	event.GUIEvent.Caller = btn;
+	ygo::mainGame->device->postEventFromUser(event);
+}
+
 #ifdef _IRR_ANDROID_PLATFORM_
 int GetListBoxIndex(IGUIListBox* listbox, const wchar_t* target){
 	int count = listbox->getItemCount();
@@ -42,6 +50,8 @@ int main(int argc, char* argv[]) {
  * -d: deck edit
  * -r: replay
  */
+    bool keep_on_return = false;
+	bool open_file = false;
 #ifdef _IRR_ANDROID_PLATFORM_
     //android
     for(int i = 0; i < argc; ++i) {
@@ -53,22 +63,21 @@ int main(int argc, char* argv[]) {
 #endif
 		if(arg[0] == '-' && arg[1] == 'e') {
 			ygo::dataManager.LoadDB(&arg[2]);
-		} else if(!strcmp(arg, "-j") || !strcmp(arg, "-d") || !strcmp(arg, "-r") || !strcmp(arg, "-s")) {
-			exit_on_return = true;
-			irr::SEvent event;
-			event.EventType = irr::EET_GUI_EVENT;
-			event.GUIEvent.EventType = irr::gui::EGET_BUTTON_CLICKED;
+		} else if(!strcmp(arv, "-k")) { // Keep on return
+			exit_on_return = false;
+			keep_on_return = true;
 		} else if(!strcmp(arg, "-c")) { // Create host
+		    exit_on_return = !keep_on_return;
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-			event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
-			ygo::mainGame->device->postEventFromUser(event);
+			ClickButton(ygo::mainGame->btnJoinHost);
 			break;
 		} else if(!strcmp(arg, "-j")) { // Join host
-			event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
+		    exit_on_return = !keep_on_return;
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-			ygo::mainGame->device->postEventFromUser(event);
+			ClickButton(ygo::mainGame->btnJoinHost);
 			break;
 		} else if(!strcmp(arg, "-r")) { // Replay
+		    exit_on_return = !keep_on_return;
 		    int index = 0;
 			if((i+1) < argc){//下一个参数是录像名
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -78,17 +87,19 @@ int main(int argc, char* argv[]) {
 #endif
 			    wchar_t fname[1024];
 			    BufferIO::DecodeUTF8(name, fname);
+				open_file = true;
 
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
-				exit_on_return = true;//看完就退出
 			}
-			event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;
-			ygo::mainGame->device->postEventFromUser(event);
-			ygo::mainGame->lstReplayList->setSelected(index);
-			event.GUIEvent.Caller = ygo::mainGame->btnLoadReplay;
-			ygo::mainGame->device->postEventFromUser(event);
+			ClickButton(ygo::mainGame->btnReplayMode);
+			if(open_file){
+				ygo::mainGame->lstReplayList->setSelected(index);
+			    ClickButton(ygo::mainGame->btnLoadReplay);
+			}
 			break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
+		    exit_on_return = !keep_on_return;
+
 			int index = 0;
 			if((i+1) < argc){//下一个参数是文件名
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -98,15 +109,15 @@ int main(int argc, char* argv[]) {
 #endif
 			    wchar_t fname[1024];
 			    BufferIO::DecodeUTF8(name, fname);
+				open_file = true;
 
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
-				//exit_on_return = true;//一次性
 			}
-			event.GUIEvent.Caller = ygo::mainGame->btnSingleMode;
-			ygo::mainGame->device->postEventFromUser(event);
-			ygo::mainGame->lstSinglePlayList->setSelected(index);
-			event.GUIEvent.Caller = ygo::mainGame->btnLoadSinglePlay;
-			ygo::mainGame->device->postEventFromUser(event);
+			ClickButton(ygo::mainGame->btnSingleMode);
+			if(open_file){
+				ygo::mainGame->lstSinglePlayList->setSelected(index);
+			    ClickButton(ygo::mainGame->btnLoadSinglePlay);
+			}
 			break;
 		}
 	}
