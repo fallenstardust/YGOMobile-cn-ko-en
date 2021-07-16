@@ -47,6 +47,14 @@ InitOptions::InitOptions(void*data) :
 			ReadString(tmp_path, rawdata);
 			m_archive_files[i] = tmp_path;
 		}
+        //argv
+		m_argc = BufferIO::ReadInt32(rawdata);
+		m_argv = new io::path[m_argc];
+		for(int i = 0 ;i < m_argc; i++){
+			io::path tmp_path;
+			ReadString(tmp_path, rawdata);
+			m_argv[i] = tmp_path;
+		}
 	}
 }
 

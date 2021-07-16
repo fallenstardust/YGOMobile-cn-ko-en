@@ -19,58 +19,76 @@ int main(int argc, char* argv[]) {
 	ygo::Game _game;
 	ygo::mainGame = &_game;
 #ifdef _IRR_ANDROID_PLATFORM_
-	if(!ygo::mainGame->Initialize(app))
+    android::InitOptions *options = android::getInitOptions(app);
+	if(!ygo::mainGame->Initialize(app, options)){
+		delete options;
 		return;
+	}
+	int argc = options->getArgc();
+	irr::io::path* argv = options->getArgv();
 #endif
-#ifndef _IRR_ANDROID_PLATFORM_
-	for(int i = 1; i < argc; ++i) {
-		/*command line args:
-		 * -j: join host (host info from system.conf)
-		 * -d: deck edit
-		 * -r: replay */
-		if(argv[i][0] == '-' && argv[i][1] == 'e') {
+/*command line args:
+ * -j: join host (host info from system.conf)
+ * -d: deck edit
+ * -r: replay
+ */
 #ifdef _IRR_ANDROID_PLATFORM_
-			wchar_t fname[260];
-			MultiByteToWideChar(CP_ACP, 0, &argv[i][2], -1, fname, 260);
-			char fname2[260];
-			BufferIO::EncodeUTF8(fname, fname2);
-			if(ygo::dataManager.LoadDB(fname2)){
-				os::Printer::log("add cdb ok ", fname2);
-			}else{
-				os::Printer::log("add cdb fail ", fname2);
-			}
+    //android
+    for(int i = 0; i < argc; ++i) {
+		char* arg = argv[i].c_str();
 #else
-			ygo::dataManager.LoadDB(&argv[i][2]);
+    //pc的第一个是exe的路径
+    for(int i = 1; i < argc; ++i) {
+        char* arg = argv[i];
 #endif
-		} else if(!strcmp(argv[i], "-j") || !strcmp(argv[i], "-d") || !strcmp(argv[i], "-r") || !strcmp(argv[i], "-s")) {
+		if(arg[0] == '-' && arg[1] == 'e') {
+			ygo::dataManager.LoadDB(&arg[2]);
+		} else if(!strcmp(arg, "-j") || !strcmp(arg, "-d") || !strcmp(arg, "-r") || !strcmp(arg, "-s")) {
 			exit_on_return = true;
 			irr::SEvent event;
 			event.EventType = irr::EET_GUI_EVENT;
 			event.GUIEvent.EventType = irr::gui::EGET_BUTTON_CLICKED;
-		} else if(!strcmp(argv[i], "-c")) { // Create host
-				ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-				event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
-				ygo::mainGame->device->postEventFromUser(event);
-		} else if(!strcmp(argv[i], "-j")) { // Join host
-		        event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
-				ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-				ygo::mainGame->device->postEventFromUser(event);
-		} else if(!strcmp(argv[i], "-r")) { // Replay
-				event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;
-				ygo::mainGame->device->postEventFromUser(event);
-				ygo::mainGame->lstReplayList->setSelected(0);
-				event.GUIEvent.Caller = ygo::mainGame->btnLoadReplay;
-				ygo::mainGame->device->postEventFromUser(event);
-		} else if(!strcmp(argv[i], "-s")) { // Single
-				event.GUIEvent.Caller = ygo::mainGame->btnSingleMode;
-				ygo::mainGame->device->postEventFromUser(event);
-				ygo::mainGame->lstSinglePlayList->setSelected(0);
-				event.GUIEvent.Caller = ygo::mainGame->btnLoadSinglePlay;
-				ygo::mainGame->device->postEventFromUser(event);
+		} else if(!strcmp(arg, "-c")) { // Create host
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
+			ygo::mainGame->device->postEventFromUser(event);
+			break;
+		} else if(!strcmp(arg, "-j")) { // Join host
+			event.GUIEvent.Caller = ygo::mainGame->btnJoinHost;
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			ygo::mainGame->device->postEventFromUser(event);
+			break;
+		} else if(!strcmp(arg, "-r")) { // Replay
+			char* name = NULL;
+			if((i+1) < argc){//下一个参数是录像名
+#ifdef _IRR_ANDROID_PLATFORM_
+		        name = argv[i+1].c_str();
+#else
+                name = argv[i+1];
+#endif
 			}
-
+			event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;
+			ygo::mainGame->device->postEventFromUser(event);
+			if(name != NULL){
+				//TODO may be error?
+				ygo::mainGame->lstReplayList->setSelected(name);
+			} else {
+				ygo::mainGame->lstReplayList->setSelected(0);
+			}
+			event.GUIEvent.Caller = ygo::mainGame->btnLoadReplay;
+			ygo::mainGame->device->postEventFromUser(event);
+			break;//只播放一个
+		} else if(!strcmp(arg, "-s")) { // Single
+			event.GUIEvent.Caller = ygo::mainGame->btnSingleMode;
+			ygo::mainGame->device->postEventFromUser(event);
+			ygo::mainGame->lstSinglePlayList->setSelected(0);
+			event.GUIEvent.Caller = ygo::mainGame->btnLoadSinglePlay;
+			ygo::mainGame->device->postEventFromUser(event);
+			break;
 		}
 	}
+#ifdef _IRR_ANDROID_PLATFORM_
+	delete options;
 #endif
 	ygo::mainGame->externalSignal.Set();
 	ygo::mainGame->externalSignal.SetNoWait(true);

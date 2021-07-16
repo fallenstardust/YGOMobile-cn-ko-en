@@ -85,6 +85,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
     private static boolean USE_SURFACE = true;
+    private String[] mArgV;
 
 //    public static int notchHeight;
 
@@ -196,6 +197,9 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void handleExternalCommand(Intent intent) {
+        //argv
+        mArgV = intent.getStringArrayExtra(IrrlichtBridge.EXTRA_ARGV);
+        //
         YGOGameOptions options = intent
                 .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
         long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
@@ -512,5 +516,18 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         }
         super.surfaceRedrawNeeded(holder);
+    }
+  
+    @Override
+    public int getArgc(){
+        return mArgV == null ? 0 : mArgV.length;
+    }
+
+    @Override
+    public String getArgv(int index){
+        if(index >= 0 && mArgV != null && index < mArgV.length){
+            return mArgV[index];
+        }
+        return null;
     }
 }

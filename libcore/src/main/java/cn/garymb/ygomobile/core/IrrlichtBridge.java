@@ -26,6 +26,7 @@ public final class IrrlichtBridge {
     public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
     public static final String EXTRA_PID = "extras.mypid";
+    public static final String EXTRA_ARGV = "extras.argv";
     public static int gPid;
     static {
         try {
@@ -210,5 +211,9 @@ public final class IrrlichtBridge {
         int getPositionX();
 
         int getPositionY();
+
+        int getArgc();
+
+        String getArgv(int index);
     }
 }
