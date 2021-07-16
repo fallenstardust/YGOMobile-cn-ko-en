@@ -121,7 +121,7 @@ class Game :IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
-	bool Initialize(ANDROID_APP app);
+	bool Initialize(ANDROID_APP app, android::InitOptions *options);
 #else
 	bool Initialize();
 #endif

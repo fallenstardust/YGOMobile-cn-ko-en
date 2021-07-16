@@ -39,14 +39,14 @@ void Game::process(irr::SEvent &event) {
 }
 
 #ifdef _IRR_ANDROID_PLATFORM_
-bool Game::Initialize(ANDROID_APP app) {
+bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 #endif
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
 
 #ifdef _IRR_ANDROID_PLATFORM_
-	android::InitOptions *options = android::getInitOptions(app);
+	
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -1186,7 +1186,7 @@ IGUIStaticText *text = env->addStaticText(L"",
 #endif
 	hideChat = false;
 	hideChatTimer = 0;
-	delete options;
+	
 	return true;
 }//bool Game::Initialize
 void Game::MainLoop() {

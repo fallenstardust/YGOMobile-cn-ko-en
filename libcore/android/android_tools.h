@@ -27,6 +27,12 @@ public:
 	inline irr::io::path* getArchiveFiles() {
 		return m_archive_files;
 	}
+	inline int getArgc() {
+		return m_argc;
+	}
+	inline irr::io::path* getArgv() {
+		return m_argv;
+	}
 	inline int getDbCount() {
 		return cdb_count;
 	}
@@ -55,11 +61,17 @@ public:
 			delete[] m_archive_files;
 		}
 		m_archive_files = NULL;
+		if(m_argv != NULL){
+			delete[] m_argv;
+		}
+		m_argv = NULL;
     }
 private:
 	irr::io::path m_work_dir;
     irr::io::path* m_db_files;
     irr::io::path* m_archive_files;
+	irr::io::path* m_argv;
+	int m_argc;
     int m_opengles_version;
     int m_card_quality;
 	int cdb_count;
