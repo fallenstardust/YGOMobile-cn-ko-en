@@ -80,6 +80,7 @@ int main(int argc, char* argv[]) {
 			    BufferIO::DecodeUTF8(name, fname);
 
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
+				exit_on_return = true;//看完就退出
 			}
 			event.GUIEvent.Caller = ygo::mainGame->btnReplayMode;
 			ygo::mainGame->device->postEventFromUser(event);
@@ -88,9 +89,22 @@ int main(int argc, char* argv[]) {
 			ygo::mainGame->device->postEventFromUser(event);
 			break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
+			int index = 0;
+			if((i+1) < argc){//下一个参数是文件名
+#ifdef _IRR_ANDROID_PLATFORM_
+		        char* name = argv[i+1].c_str();
+#else
+                char* name = argv[i+1];
+#endif
+			    wchar_t fname[1024];
+			    BufferIO::DecodeUTF8(name, fname);
+
+                index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
+				//exit_on_return = true;//一次性
+			}
 			event.GUIEvent.Caller = ygo::mainGame->btnSingleMode;
 			ygo::mainGame->device->postEventFromUser(event);
-			ygo::mainGame->lstSinglePlayList->setSelected(0);
+			ygo::mainGame->lstSinglePlayList->setSelected(index);
 			event.GUIEvent.Caller = ygo::mainGame->btnLoadSinglePlay;
 			ygo::mainGame->device->postEventFromUser(event);
 			break;
