@@ -16,19 +16,18 @@ void ClickButton(irr::gui::IGUIElement* btn) {
 	ygo::mainGame->device->postEventFromUser(event);
 }
 char* sub_string(const char* str, int start, int count=-1){
-    char* tmp = new char[1024];
-    int len = strlen(str);
-    int index = 0;
-    if(count < 0){
-        count = len - start;
-    }
-    for (int j = start; j < len && count > 0; count--, j++) {
-        tmp[index++] = str[j];
-    }
-    tmp[index] = '\0';
-    return tmp;
+	char* tmp = new char[1024];
+	int len = strlen(str);
+	int index = 0;
+	if(count < 0){
+		count = len - start;
+		}
+	for (int j = start; j < len && count > 0; count--, j++) {
+		tmp[index++] = str[j];
+		}
+	tmp[index] = '\0';
+	return tmp;
 }
-
 #ifdef _IRR_ANDROID_PLATFORM_
 int GetListBoxIndex(IGUIListBox* listbox, const wchar_t* target){
 	int count = listbox->getItemCount();
@@ -74,13 +73,13 @@ int main(int argc, char* argv[]) {
     for(int i = 1; i < argc; ++i) {
         char* arg = argv[i];
 #endif
-        if (arg[0] == '-' && arg[1] == 'e') {
-            wchar_t fname[1024];
-            char* tmp = sub_string(arg, 2);
-            BufferIO::DecodeUTF8(tmp, fname);
-            __android_log_print(ANDROID_LOG_DEBUG, "ygo", "load cdb=%s", tmp);
-            ygo::dataManager.LoadDB(fname);
-            delete tmp;
+		if (arg[0] == '-' && arg[1] == 'e') {
+			wchar_t fname[1024];
+			char* tmp = sub_string(arg, 2);
+			BufferIO::DecodeUTF8(tmp, fname);
+			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "load cdb=%s", tmp);
+			ygo::dataManager.LoadDB(fname);
+			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return
 			exit_on_return = false;
 			keep_on_return = true;
@@ -109,7 +108,7 @@ int main(int argc, char* argv[]) {
 
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
 			}
-            ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnReplayMode);
 			if(open_file){
 				ygo::mainGame->lstReplayList->setSelected(index);
@@ -132,7 +131,7 @@ int main(int argc, char* argv[]) {
 
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
 			}
-            ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnSingleMode);
 			if(open_file){
 				ygo::mainGame->lstSinglePlayList->setSelected(index);
