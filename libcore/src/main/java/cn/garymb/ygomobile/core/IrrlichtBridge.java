@@ -211,9 +211,5 @@ public final class IrrlichtBridge {
         int getPositionX();
 
         int getPositionY();
-
-        int getArgc();
-
-        String getArgv(int index);
     }
 }

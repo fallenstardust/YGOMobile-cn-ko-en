@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
 			BufferIO::DecodeUTF8(tmp, fname);
-			__android_log_print(ANDROID_LOG_INFO, "ygo", "load cdb=%s", tmp);
+			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "load cdb=%s", tmp);
 			ygo::dataManager.LoadDB(fname);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return

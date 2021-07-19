@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 
@@ -150,7 +151,14 @@ public class YGOStarter {
 
     private static long lasttime = 0;
 
-    public static void startGame(Activity activity, YGOGameOptions options) {
+    /**
+     *
+     * @param activity
+     * @param options
+     * @param args 例如(播放完退出游戏)：-r 1111.yrp
+     *             或者(播放完不退出游戏)：-k -r 1111.yrp
+     */
+    public static void startGame(Activity activity, YGOGameOptions options, String args) {
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
@@ -163,6 +171,9 @@ public class YGOStarter {
         if (options != null) {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
+        }
+        if(args != null) {
+            intent.putExtra(IrrlichtBridge.EXTRA_ARGV, args.split(" "));
         }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());

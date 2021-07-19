@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.controller.NetworkController;
@@ -411,6 +412,10 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public ByteBuffer getNativeInitOptions() {
         NativeInitOptions options = app().getNativeInitOptions();
+        options.mArgvList.clear();
+        if (mArgV != null) {
+            options.mArgvList.addAll(Arrays.asList(mArgV));
+        }
         return options.toNativeBuffer();
     }
 
@@ -516,18 +521,5 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         }
         super.surfaceRedrawNeeded(holder);
-    }
-  
-    @Override
-    public int getArgc(){
-        return mArgV == null ? 0 : mArgV.length;
-    }
-
-    @Override
-    public String getArgv(int index){
-        if(index >= 0 && mArgV != null && index < mArgV.length){
-            return mArgV[index];
-        }
-        return null;
     }
 }
