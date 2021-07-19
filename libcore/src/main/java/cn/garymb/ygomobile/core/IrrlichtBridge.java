@@ -195,6 +195,8 @@ public final class IrrlichtBridge {
 
         void toggleIME(String hint, boolean isShow);
 
+        void shareFile(String title, String path);
+
         void showComboBoxCompat(String[] items, boolean isShow, int mode);
 
         void performHapticFeedback();

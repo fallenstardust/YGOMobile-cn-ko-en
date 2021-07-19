@@ -6,8 +6,10 @@
  */
 package cn.garymb.ygomobile;
 
+import android.app.AlertDialog;
 import android.app.NativeActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
@@ -58,6 +60,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
+    private static int sChainControlXPostion = -1;
+    private static int sChainControlYPostion = -1;
+    private static boolean USE_SURFACE = true;
     protected final int windowsFlags =
             Build.VERSION.SDK_INT >= 19 ? (
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -66,7 +71,6 @@ public class YGOMobileActivity extends NativeActivity implements
                             | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
                     View.SYSTEM_UI_FLAG_LOW_PROFILE;
-
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
     protected EditWindowCompat mGlobalEditText;
@@ -76,8 +80,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-    private static int sChainControlXPostion = -1;
-    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
@@ -85,10 +87,12 @@ public class YGOMobileActivity extends NativeActivity implements
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
-    private static boolean USE_SURFACE = true;
     private String[] mArgV;
 
 //    public static int notchHeight;
+    //电池管理
+    private PowerManager mPM;
+    private PowerManager.WakeLock mLock;
 
     private GameApplication app() {
         if (mApp == null) {
@@ -108,14 +112,14 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
         }
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
         super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
+        Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
             initPostion();
         }
@@ -131,14 +135,10 @@ public class YGOMobileActivity extends NativeActivity implements
                 .setPackage(getPackageName()));
     }
 
-    //电池管理
-    private PowerManager mPM;
-    private PowerManager.WakeLock mLock;
-
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
+        Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);
@@ -232,7 +232,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private int[] getGameSize(){
+    private int[] getGameSize() {
         //调整padding
         float xScale = app().getXScale();
         float yScale = app().getYScale();
@@ -282,7 +282,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void changeGameSize(){
+    private void changeGameSize() {
         //游戏大小
         int[] size = getGameSize();
         int w = (int) app().getScreenHeight();
@@ -485,7 +485,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -495,7 +495,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -505,7 +505,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -515,11 +515,31 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
         }
         super.surfaceRedrawNeeded(holder);
+    }
+
+    @Override
+    public void shareFile(final String title, final String path) {
+        //TODO 分享文件
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(YGOMobileActivity.this);
+                builder.setTitle(title);
+                builder.setMessage(path);
+                builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 }

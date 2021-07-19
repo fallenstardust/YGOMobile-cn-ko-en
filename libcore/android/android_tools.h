@@ -98,6 +98,8 @@ extern float getScreenWidth(ANDROID_APP app);
 
 extern float getScreenHeight(ANDROID_APP app);
 
+extern void OnShareFile(ANDROID_APP app, char* title, char* path);
+
 // Get SDCard path.
 extern irr::io::path getExternalStorageDir(ANDROID_APP app);
 
