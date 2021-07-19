@@ -6,8 +6,10 @@
  */
 package cn.garymb.ygomobile;
 
+import android.app.AlertDialog;
 import android.app.NativeActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
@@ -521,5 +523,25 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         }
         super.surfaceRedrawNeeded(holder);
+    }
+
+    @Override
+    public void shareFile(final String title, final String path) {
+        //TODO 分享文件
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(YGOMobileActivity.this);
+                builder.setTitle(title);
+                builder.setMessage(path);
+                builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 }

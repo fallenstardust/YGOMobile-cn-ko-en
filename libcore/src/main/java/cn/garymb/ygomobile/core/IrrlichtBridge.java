@@ -197,6 +197,8 @@ public final class IrrlichtBridge {
 
         void showComboBoxCompat(String[] items, boolean isShow, int mode);
 
+        void shareFile(String title, String path);
+
         void performHapticFeedback();
 
         /**
