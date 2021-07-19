@@ -473,7 +473,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         options.mUserName = serverInfo.getPlayerName();
         options.mPort = serverInfo.getPort();
         options.mRoomName = name;
-        YGOStarter.startGame(this, options);
+        YGOStarter.startGame(this, options, null);
     }
 
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
