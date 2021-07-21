@@ -96,6 +96,15 @@
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.yrp" />
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.yrp" />
                 <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.yrp" />
+                <data android:pathPattern=".*\.lua" />
+                <data android:pathPattern=".*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\.lua" />
+                <data android:pathPattern=".*\..*\..*\..*\..*\..*\..*\..*\..*\.lua" />
             </intent-filter>
 
             <intent-filter>

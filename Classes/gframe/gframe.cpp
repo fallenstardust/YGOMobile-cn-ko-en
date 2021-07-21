@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 			    BufferIO::DecodeUTF8(name, fname);
 				open_file = true;
 
-                index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
+                index = GetListBoxIndex(ygo::mainGame->lstSinglePlayList, fname);
 			}
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnSingleMode);

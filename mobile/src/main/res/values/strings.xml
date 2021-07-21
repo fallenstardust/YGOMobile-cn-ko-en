@@ -308,6 +308,6 @@
     <string name="guide_search_result_count">here shows search result count</string>
     <string name="title_delete_ex">delete expansions</string>
     <string name="about_delete_ex">if you need to delte all expansion cards</string>
-    <string name="yrp_installed">replay loaded, select it in \"\\Watch Replay\"\\</string>
+    <string name="file_installed">file loaded</string>
     <string name="ask_delete_ex">Click OK to confirm the deletion</string>
 </resources>
