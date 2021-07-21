@@ -39,6 +39,15 @@ void Game::process(irr::SEvent &event) {
 }
 
 #ifdef _IRR_ANDROID_PLATFORM_
+void onActivityLifeChanged(struct android_app* app, int32_t status){
+	//status ==
+//ANDROID_ACTIVITY_RESUME 1
+//ANDROID_ACTIVITY_STOP 2
+// ANDROID_ACTIVITY_PAUSE 5
+//ANDROID_ACTIVITY_DESTROY 3
+//ANDROID_ACTIVITY_FOCUS 4
+}
+
 bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 #endif
@@ -72,6 +81,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	device->setProcessReceiver(this);
 
 	app->onInputEvent = android::handleInput;
+	((CIrrDeviceAndroid*)device)->onActivityLifeChanged = onActivityLifeChanged;
+
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();

@@ -279,21 +279,36 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 		case APP_CMD_LOST_FOCUS:
 			os::Printer::log("Android command APP_CMD_LOST_FOCUS", ELL_DEBUG);
 			device->Focused = false;
+			if(device->onActivityLifeChanged != nullptr){
+				device->onActivityLifeChanged(app, ANDROID_ACTIVITY_FOCUS);
+			}
 		break;
 		case APP_CMD_DESTROY:
 			os::Printer::log("Android command APP_CMD_DESTROY", ELL_DEBUG);
 			device->Initialized = false;
+			if(device->onActivityLifeChanged != nullptr){
+				device->onActivityLifeChanged(app, ANDROID_ACTIVITY_DESTROY);
+			}
 			break;
 		case APP_CMD_PAUSE:
 			os::Printer::log("Android command APP_CMD_PAUSE", ELL_DEBUG);
 			device->Paused = true;
+			if(device->onActivityLifeChanged != nullptr){
+				device->onActivityLifeChanged(app, ANDROID_ACTIVITY_PAUSE);
+			}
 			break;
 		case APP_CMD_STOP:
 			os::Printer::log("Android command APP_CMD_STOP", ELL_DEBUG);
+			if(device->onActivityLifeChanged != nullptr){
+				device->onActivityLifeChanged(app, ANDROID_ACTIVITY_STOP);
+			}
 			break;
 		case APP_CMD_RESUME:
 			os::Printer::log("Android command APP_CMD_RESUME", ELL_DEBUG);
 			device->Paused = false;
+			if(device->onActivityLifeChanged != nullptr){
+				device->onActivityLifeChanged(app, ANDROID_ACTIVITY_RESUME);
+			}
 			break;
 		case APP_CMD_WINDOW_RESIZED:
 			os::Printer::log("Android command APP_CMD_WINDOW_RESIZED", ELL_DEBUG);

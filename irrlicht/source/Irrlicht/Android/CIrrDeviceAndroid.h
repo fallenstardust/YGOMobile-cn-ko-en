@@ -17,6 +17,12 @@
 #include <android/sensor.h>
 #include <android_native_app_glue.h>
 
+#define ANDROID_ACTIVITY_RESUME 1
+#define ANDROID_ACTIVITY_STOP 2
+#define ANDROID_ACTIVITY_PAUSE 5
+#define ANDROID_ACTIVITY_DESTROY 3
+#define ANDROID_ACTIVITY_FOCUS 4
+
 namespace irr
 {
 	class CIrrDeviceAndroid : public CIrrDeviceStub, video::IImagePresenter
@@ -51,6 +57,8 @@ namespace irr
 		virtual void maximizeWindow();
 
 		virtual void restoreWindow();
+
+		void (*onActivityLifeChanged)(struct android_app* app, int32_t status);
 
 		virtual core::position2di getWindowPosition();
 		
