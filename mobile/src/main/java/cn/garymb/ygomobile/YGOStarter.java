@@ -158,7 +158,6 @@ public class YGOStarter {
      *                 或者(播放完不退出游戏)：-k -r 1111.yrp
      */
     public static void startGame(Activity activity, YGOGameOptions options, String[] args) {
-        Log.i("kk arg", args[0] + " " + args[1]);
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
@@ -173,7 +172,8 @@ public class YGOStarter {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
         }
         if (args != null) {
-            intent.putExtra(IrrlichtBridge.EXTRA_ARGV, args[0] + " " + args[1]);
+            Log.i("kk arg", args[0]+""+args[1]);
+            intent.putExtra(IrrlichtBridge.EXTRA_ARGV, args);
         }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());

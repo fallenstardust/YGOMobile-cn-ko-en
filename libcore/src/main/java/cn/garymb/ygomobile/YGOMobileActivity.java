@@ -118,6 +118,9 @@ public class YGOMobileActivity extends NativeActivity implements
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
+        //argv
+        mArgV = getIntent().getStringArrayExtra(IrrlichtBridge.EXTRA_ARGV);
+        //
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
@@ -198,8 +201,6 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void handleExternalCommand(Intent intent) {
-        //argv
-        mArgV = intent.getStringArrayExtra(IrrlichtBridge.EXTRA_ARGV);
         //
         YGOGameOptions options = intent
                 .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
