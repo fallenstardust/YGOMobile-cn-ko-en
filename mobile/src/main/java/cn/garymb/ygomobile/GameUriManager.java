@@ -37,6 +37,7 @@ public class GameUriManager {
     }
 
     public boolean doIntent(Intent intent) {
+        Log.i("ygo", "doIntent");
         if (ACTION_OPEN_DECK.equals(intent.getAction())) {
             if (intent.getData() != null) {
                 doUri(intent.getData());
@@ -119,6 +120,7 @@ public class GameUriManager {
 
     private void doUri(Uri uri) {
         Intent startSeting = new Intent(activity, SettingsActivity.class);
+        Log.i("ygo", "doUri:"+uri);
         if ("file".equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             if (file.getName().toLowerCase(Locale.US).endsWith(".ydk")) {
@@ -162,9 +164,11 @@ public class GameUriManager {
                         Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
                     }
                 }
-                if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
+                if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-r", yrp.getName());
                     Toast.makeText(activity, ""+yrp.getName(), Toast.LENGTH_LONG).show();
+                } else {
+                    Log.w("ygo", "game is running");
                 }
             }
         } else if ("content".equals(uri.getScheme())) {
@@ -242,9 +246,11 @@ public class GameUriManager {
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-                if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                    YGOStarter.startGame(getActivity(), null, "-r ", yrp.getName());
+                if (!YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(getActivity(), null, "-r", yrp.getName());
                     Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
+                } else {
+                    Log.w("ygo", "game is running");
                 }
             }
         } else {

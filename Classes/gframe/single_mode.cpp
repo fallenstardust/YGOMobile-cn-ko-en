@@ -154,7 +154,7 @@ int SingleMode::SinglePlayThread() {
 		mainGame->gMutex.unlock();
 		mainGame->SaveConfig();
 		if(exit_on_return)
-			mainGame->device->closeDevice();
+			mainGame->OnGameClose();
 	}
 	return 0;
 }

@@ -3,6 +3,8 @@ package cn.garymb.ygomobile;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
@@ -19,6 +21,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.signature.StringSignature;
+import com.tencent.bugly.proguard.C;
 
 import java.io.File;
 import java.util.HashMap;
@@ -27,6 +30,7 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
+import cn.garymb.ygomobile.utils.ComponentUtils;
 
 
 public class YGOStarter {
@@ -206,5 +210,10 @@ public class YGOStarter {
 //7.unspecified：未指定，此为默认值，由Android系统自己选择适当的方向，选择策略视具体设备的配置情况而定，因此不同的设备会有不同的方向选择；
         int oldRequestedOrientation;
         boolean isRunning = false;
+    }
+
+    public static boolean isGameRunning(Context context) {
+        return ComponentUtils.isProcessRunning(context, context.getPackageName() + ":game")
+                && ComponentUtils.isActivityRunning(context, new ComponentName(context, YGOMobileActivity.class));
     }
 }

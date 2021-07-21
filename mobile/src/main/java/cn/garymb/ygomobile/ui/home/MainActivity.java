@@ -196,7 +196,7 @@ public class MainActivity extends HomeActivity {
         super.onResume();
         YGOStarter.onResumed(this);
         //如果游戏Activity已经不存在了，则
-        if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+        if (!YGOStarter.isGameRunning(getActivity())) {
             sendBroadcast(new Intent(IrrlichtBridge.ACTION_STOP).setPackage(getPackageName()));
         }
     }

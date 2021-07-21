@@ -167,11 +167,12 @@ public:
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
 	void addMessageBox(const wchar_t* caption, const wchar_t* text);
-	void initUtils();
+	void initUtils(){}
 	void ClearTextures();
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
+	void OnGameClose();
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 

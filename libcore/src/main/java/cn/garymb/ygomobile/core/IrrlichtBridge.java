@@ -213,5 +213,7 @@ public final class IrrlichtBridge {
         int getPositionX();
 
         int getPositionY();
+
+        void onGameExit();
     }
 }

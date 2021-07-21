@@ -65,6 +65,7 @@ int main(int argc, char* argv[]) {
     bool keep_on_return = false;
 	bool open_file = false;
 #ifdef _IRR_ANDROID_PLATFORM_
+    __android_log_print(ANDROID_LOG_WARN, "ygo", "handle args %d", argc);
     //android
     for(int i = 0; i < argc; ++i) {
 		const char* arg = argv[i].c_str();
@@ -77,7 +78,6 @@ int main(int argc, char* argv[]) {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
 			BufferIO::DecodeUTF8(tmp, fname);
-			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "load cdb=%s", tmp);
 			ygo::dataManager.LoadDB(fname);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return

@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.os.Process;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -543,5 +544,11 @@ public class YGOMobileActivity extends NativeActivity implements
                 builder.show();
             }
         });
+    }
+
+    @Override
+    public void onGameExit() {
+        Log.e("ygomobile", "game exit");
+        Process.killProcess(Process.myPid());
     }
 }

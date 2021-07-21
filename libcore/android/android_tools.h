@@ -193,6 +193,8 @@ extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
 extern bool android_deck_delete(const char* deck_name);
 
+extern void onGameExit(ANDROID_APP app);
+
 extern void runWindbot(ANDROID_APP app, const char* args);
 
 }

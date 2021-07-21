@@ -132,7 +132,7 @@ void DeckBuilder::Terminate() {
 		//os::Printer::log("setLastDeck", linebuf);
 	mainGame->SaveConfig();
 	if(exit_on_return)
-		mainGame->device->closeDevice();
+		mainGame->OnGameClose();
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #ifdef _IRR_ANDROID_PLATFORM_

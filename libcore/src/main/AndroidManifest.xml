@@ -26,7 +26,7 @@
                 android:value="YGOMobile"/>
         </activity>
         <receiver android:name="cn.garymb.ygomobile.GameReceiver"
-                  android:process=":game" >
+                  android:process=":gamehelper" >
             <intent-filter>
                 <action android:name="cn.garymb.ygomobile.game.start"/>
                 <action android:name="cn.garymb.ygomobile.game.stop"/>
