@@ -818,7 +818,7 @@ void OnShareFile(ANDROID_APP app, char* title, char* path){
 											   "shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
 	jstring s_title = jni->NewStringUTF(title);
 	jstring s_path = jni->NewStringUTF(path);
-	jni->CallVoidMethod(lNativeActivity, MethodGetAddr, s_title, s_path;
+	jni->CallVoidMethod(lNativeActivity, MethodGetAddr, s_title, s_path);
 	jni->ReleaseStringUTFChars(s_title, title);
 	jni->ReleaseStringUTFChars(s_path, path);
 	jni->DeleteLocalRef(ClassNativeActivity);

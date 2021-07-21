@@ -246,7 +246,7 @@ public class MainActivity extends HomeActivity {
     @Override
     protected void openGame() {
         if (enableStart) {
-            YGOStarter.startGame(this, null, null);
+            YGOStarter.startGame(this, null);
         } else {
             VUiKit.show(this, R.string.dont_start_game);
         }

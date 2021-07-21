@@ -57,7 +57,7 @@ public class GameUriManager {
                 options.mUserName = intent.getStringExtra(Constants.QUERY_USER);
                 options.mPort = intent.getIntExtra(Constants.QUERY_PORT, 0);
                 options.mRoomName = intent.getStringExtra(Constants.QUERY_ROOM);
-                YGOStarter.startGame(getActivity(), options, null);
+                YGOStarter.startGame(getActivity(), options);
             } catch (Exception e) {
                 Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
                 activity.finish();
@@ -163,7 +163,7 @@ public class GameUriManager {
                     }
                 }
                 if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
-                    YGOStarter.startGame(getActivity(), null, "-r" + yrp.getName());
+                    YGOStarter.startGame(getActivity(), null, "-r", yrp.getName());
                     Toast.makeText(activity, ""+yrp.getName(), Toast.LENGTH_LONG).show();
                 }
             }
@@ -243,7 +243,7 @@ public class GameUriManager {
                     e.printStackTrace();
                 }
                 if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                    YGOStarter.startGame(getActivity(), null, "-r " + yrp.getName());
+                    YGOStarter.startGame(getActivity(), null, "-r ", yrp.getName());
                     Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
                 }
             }
