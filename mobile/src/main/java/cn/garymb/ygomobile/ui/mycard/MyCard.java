@@ -257,7 +257,7 @@ public class MyCard {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        YGOStarter.startGame(activity, options, null);
+                        YGOStarter.startGame(activity, options);
                     }
                 });
             } catch (Exception e) {

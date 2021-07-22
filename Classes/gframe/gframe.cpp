@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
 	bool open_file = false;
 #ifdef _IRR_ANDROID_PLATFORM_
     __android_log_print(ANDROID_LOG_WARN, "ygo", "handle args %d", argc);
+    __android_log_print(ANDROID_LOG_WARN, "ygo", "handle args %s", argv);
     //android
     for(int i = 0; i < argc; ++i) {
 		const char* arg = argv[i].c_str();

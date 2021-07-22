@@ -23,7 +23,7 @@ public class LogoActivity extends Activity {
         hideBottomUIMenu();
         setContentView(R.layout.activity_logo);
         if (AppsSettings.get().isOnlyGame()) {
-            YGOStarter.startGame(this, null, null);
+            YGOStarter.startGame(this, null);
             finish();
             return;
         } else {
