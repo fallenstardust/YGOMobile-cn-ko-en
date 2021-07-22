@@ -31,13 +31,13 @@ import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 
 public class GameUriManager {
     private Activity activity;
-    private String[] fname;
 
     public GameUriManager(Activity activity) {
         this.activity = activity;
     }
 
     public boolean doIntent(Intent intent) {
+        Log.i("ygo", "doIntent");
         if (ACTION_OPEN_DECK.equals(intent.getAction())) {
             if (intent.getData() != null) {
                 doUri(intent.getData());
@@ -58,7 +58,7 @@ public class GameUriManager {
                 options.mUserName = intent.getStringExtra(Constants.QUERY_USER);
                 options.mPort = intent.getIntExtra(Constants.QUERY_PORT, 0);
                 options.mRoomName = intent.getStringExtra(Constants.QUERY_ROOM);
-                YGOStarter.startGame(getActivity(), options, null);
+                YGOStarter.startGame(getActivity(), options);
             } catch (Exception e) {
                 Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
                 activity.finish();
@@ -120,6 +120,7 @@ public class GameUriManager {
 
     private void doUri(Uri uri) {
         Intent startSeting = new Intent(activity, SettingsActivity.class);
+        Log.i("ygo", "doUri:"+uri);
         if ("file".equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             if (file.getName().toLowerCase(Locale.US).endsWith(".ydk")) {
@@ -155,8 +156,7 @@ public class GameUriManager {
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".yrp")) {
                 File yrp = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH + "/" + file.getName());
                 if (yrp.exists()) {
-                    fname = new String[]{"-r", yrp.getName()};
-                    YGOStarter.startGame(getActivity(), null, fname);
+                    YGOStarter.startGame(getActivity(), null, "-r ", yrp.getName());
                     Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_LONG).show();
                 } else {
                     try {
@@ -164,17 +164,15 @@ public class GameUriManager {
                     } catch (Throwable e) {
                         Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
                     }
-                    if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
-                        fname = new String[]{"-r", yrp.getName()};
-                        YGOStarter.startGame(getActivity(), null, fname);
+                    if (!YGOStarter.isGameRunning(getActivity())) {
+                        YGOStarter.startGame(getActivity(), null, "-r ", yrp.getName());
                         Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                     }
                 }
             } else if (file.getName().toLowerCase(Locale.US).endsWith(".lua")) {
                 File single = new File(AppsSettings.get().getResourcePath() + "/" + CORE_SINGLE_PATH + "/" + file.getName());
                 if (single.exists()) {
-                    fname = new String[]{"-s", single.getName()};
-                    YGOStarter.startGame(activity, null, fname);
+                    YGOStarter.startGame(activity, null, "-s", single.getName());
                     Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_LONG).show();
                 } else {
                     try {
@@ -182,9 +180,8 @@ public class GameUriManager {
                     } catch (Throwable e) {
                         Toast.makeText(activity, activity.getString(R.string.install_failed_bcos) + e, Toast.LENGTH_LONG).show();
                     }
-                    if (!ComponentUtils.isActivityRunning(getActivity(), new ComponentName(getActivity(), YGOMobileActivity.class))) {
-                        fname = new String[]{"-s", single.getName()};
-                        YGOStarter.startGame(activity, null, fname);
+                    if (!YGOStarter.isGameRunning(getActivity())) {
+                        YGOStarter.startGame(activity, null, "-s", single.getName());
                         Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                     }
                 }
@@ -247,8 +244,7 @@ public class GameUriManager {
                 try {
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
                     if (yrp.exists()) {
-                        fname = new String[]{"-r", yrp.getName()};
-                        YGOStarter.startGame(getActivity(), null, fname);
+                        YGOStarter.startGame(getActivity(), null, "-r ", yrp.getName());
                         Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_SHORT).show();
                     } else {
                         if (pfd == null) {
@@ -266,9 +262,8 @@ public class GameUriManager {
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-                if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                    fname = new String[]{"-r", yrp.getName()};
-                    YGOStarter.startGame(activity, null, fname);
+                if (!YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(activity, null, "-r ", yrp.getName());
                     Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                 }
             } else if (urifile.getName().toLowerCase(Locale.US).endsWith(".lua")) {
@@ -276,8 +271,7 @@ public class GameUriManager {
                 try {
                     ParcelFileDescriptor pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
                     if (single.exists()) {
-                        fname = new String[]{"-s", single.getName()};
-                        YGOStarter.startGame(getActivity(), null, fname);
+                        YGOStarter.startGame(getActivity(), null, "-s", single.getName());
                         Toast.makeText(activity, activity.getString(R.string.file_exist), Toast.LENGTH_SHORT).show();
                     } else {
                         if (pfd == null) {
@@ -295,9 +289,8 @@ public class GameUriManager {
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-                if (!ComponentUtils.isActivityRunning(activity, new ComponentName(activity, YGOMobileActivity.class))) {
-                    fname = new String[]{"-s", single.getName()};
-                    YGOStarter.startGame(activity, null, fname);
+                if (!YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(activity, null, "-s", single.getName());
                     Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                 }
             }

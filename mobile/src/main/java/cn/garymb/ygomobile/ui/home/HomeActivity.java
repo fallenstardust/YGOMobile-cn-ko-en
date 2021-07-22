@@ -435,7 +435,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         builder.setLeftButtonText(R.string.join_game);
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
-            if (Build.VERSION.SDK_INT >= 23 && ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+            if (Build.VERSION.SDK_INT >= 23 && YGOStarter.isGameRunning(getActivity())) {
                 Toast toast = Toast.makeText(getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
@@ -473,7 +473,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         options.mUserName = serverInfo.getPlayerName();
         options.mPort = serverInfo.getPort();
         options.mRoomName = name;
-        YGOStarter.startGame(this, options, null);
+        YGOStarter.startGame(this, options);
     }
 
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
@@ -558,7 +558,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         tv.setOnClickListener((v) -> {
             openGame();
         });
-        if (ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+        if (YGOStarter.isGameRunning(getActivity())) {
             tv.setVisibility(View.VISIBLE);
         } else {
             tv.setVisibility(View.GONE);
@@ -664,7 +664,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     public void showTipsToast() {
-        if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
+        if (!YGOStarter.isGameRunning(getActivity())) {
             String[] tipsList = this.getResources().getStringArray(R.array.tips);
             int x = (int) (Math.random() * tipsList.length);
             String tips = tipsList[x];

@@ -65,10 +65,10 @@ int main(int argc, char* argv[]) {
     bool keep_on_return = false;
 	bool open_file = false;
 #ifdef _IRR_ANDROID_PLATFORM_
+    __android_log_print(ANDROID_LOG_WARN, "ygo", "handle args %d", argc);
     //android
     for(int i = 0; i < argc; ++i) {
 		const char* arg = argv[i].c_str();
-        os::Printer::log("kkargv ", arg);
 #else
     //pc的第一个是exe的路径
     for(int i = 1; i < argc; ++i) {
@@ -78,7 +78,6 @@ int main(int argc, char* argv[]) {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
 			BufferIO::DecodeUTF8(tmp, fname);
-			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "load cdb=%s", tmp);
 			ygo::dataManager.LoadDB(fname);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return
@@ -94,7 +93,7 @@ int main(int argc, char* argv[]) {
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnJoinHost);
 			break;
-		} else if (arg[0] == '-' && arg[1] == 'r') { // Replay
+		} else if(!strcmp(arg, "-r")) { // Replay
 		    exit_on_return = !keep_on_return;
 		    int index = 0;
 			if((i+1) < argc){//下一个参数是录像名

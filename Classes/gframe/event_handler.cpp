@@ -145,7 +145,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
 					if(exit_on_return)
-						mainGame->device->closeDevice();
+						mainGame->OnGameClose();
 				} else {
 					mainGame->PopupElement(mainGame->wSurrender);
 				}

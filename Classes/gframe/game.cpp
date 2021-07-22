@@ -2017,4 +2017,8 @@ void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITe
     button->setOverrideFont(font);
 }
 
+void Game::OnGameClose() {
+	android::onGameExit(appMain);
+    this->device->closeDevice();
+}
 }

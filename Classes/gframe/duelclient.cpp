@@ -679,7 +679,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->SaveConfig();
 		event_base_loopbreak(client_base);
 		if(exit_on_return)
-			mainGame->device->closeDevice();
+			mainGame->OnGameClose();
 		break;
 	}
 	case STOC_REPLAY: {
@@ -980,7 +980,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			mainGame->gMutex.unlock();
 			event_base_loopbreak(client_base);
 			if(exit_on_return)
-				mainGame->device->closeDevice();
+				mainGame->OnGameClose();
 		}
 		return false;
 	}

@@ -249,7 +249,7 @@ void ReplayMode::EndDuel() {
 		mainGame->device->setEventReceiver(&mainGame->menuHandler);
 		mainGame->gMutex.unlock();
 		if(exit_on_return)
-			mainGame->device->closeDevice();
+			mainGame->OnGameClose();
 	}
 }
 void ReplayMode::Restart(bool refresh) {

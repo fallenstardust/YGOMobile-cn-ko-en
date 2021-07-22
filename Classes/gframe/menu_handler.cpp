@@ -63,7 +63,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MODE_EXIT: {
 				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
-				mainGame->device->closeDevice();
+				mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_MODE: {
@@ -121,7 +121,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_REFRESH: {
@@ -214,7 +214,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->wChat->setVisible(false);
 				mainGame->SaveConfig();
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_REPLAY_MODE: {

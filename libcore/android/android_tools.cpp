@@ -887,6 +887,20 @@ void process_input(ANDROID_APP app,
 	}
 }
 
+void onGameExit(ANDROID_APP app){
+    if (!app || !app->activity || !app->activity->vm)
+        return;
+    JNIEnv* jni = nullptr;
+    app->activity->vm->AttachCurrentThread(&jni, NULL);
+    jobject lNativeActivity = app->activity->clazz;
+    jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+    jmethodID methodId = jni->GetMethodID(ClassNativeActivity,
+                                               "onGameExit", "()V");
+    jni->CallVoidMethod(lNativeActivity, methodId);
+    jni->DeleteLocalRef(ClassNativeActivity);
+    app->activity->vm->DetachCurrentThread();
+}
+
 s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent) {
 	IrrlichtDevice* device = (IrrlichtDevice*) app->userData;
 	s32 Status = 0;

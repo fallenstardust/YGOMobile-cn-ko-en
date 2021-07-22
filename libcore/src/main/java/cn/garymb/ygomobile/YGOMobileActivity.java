@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.os.Process;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -60,9 +61,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
-    private static int sChainControlXPostion = -1;
-    private static int sChainControlYPostion = -1;
-    private static boolean USE_SURFACE = true;
     protected final int windowsFlags =
             Build.VERSION.SDK_INT >= 19 ? (
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -71,6 +69,7 @@ public class YGOMobileActivity extends NativeActivity implements
                             | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
                     View.SYSTEM_UI_FLAG_LOW_PROFILE;
+
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
     protected EditWindowCompat mGlobalEditText;
@@ -80,6 +79,8 @@ public class YGOMobileActivity extends NativeActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
+    private static int sChainControlXPostion = -1;
+    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
@@ -87,12 +88,10 @@ public class YGOMobileActivity extends NativeActivity implements
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
+    private static boolean USE_SURFACE = true;
     private String[] mArgV;
 
 //    public static int notchHeight;
-    //电池管理
-    private PowerManager mPM;
-    private PowerManager.WakeLock mLock;
 
     private GameApplication app() {
         if (mApp == null) {
@@ -137,6 +136,10 @@ public class YGOMobileActivity extends NativeActivity implements
                 .putExtra(IrrlichtBridge.EXTRA_PID, android.os.Process.myPid())
                 .setPackage(getPackageName()));
     }
+
+    //电池管理
+    private PowerManager mPM;
+    private PowerManager.WakeLock mLock;
 
     @Override
     protected void onResume() {
@@ -201,7 +204,6 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void handleExternalCommand(Intent intent) {
-        //
         YGOGameOptions options = intent
                 .getParcelableExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY);
         long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
@@ -542,5 +544,11 @@ public class YGOMobileActivity extends NativeActivity implements
                 builder.show();
             }
         });
+    }
+
+    @Override
+    public void onGameExit() {
+        Log.e("ygomobile", "game exit");
+        Process.killProcess(Process.myPid());
     }
 }
