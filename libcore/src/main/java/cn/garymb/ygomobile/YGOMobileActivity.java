@@ -118,7 +118,7 @@ public class YGOMobileActivity extends NativeActivity implements
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
         //argv
-        mArgV = getIntent().getStringArrayExtra(IrrlichtBridge.EXTRA_ARGV);
+        mArgV = IrrlichtBridge.getArgs(getIntent());
         //
         super.onCreate(savedInstanceState);
         Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
@@ -418,6 +418,7 @@ public class YGOMobileActivity extends NativeActivity implements
         options.mArgvList.clear();
         if (mArgV != null) {
             options.mArgvList.addAll(Arrays.asList(mArgV));
+            mArgV = null;
         }
         return options.toNativeBuffer();
     }

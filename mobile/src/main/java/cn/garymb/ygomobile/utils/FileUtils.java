@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -79,24 +81,21 @@ public class FileUtils {
         return true;
     }
 
-    public static void copyFile(InputStream in, File out) {
+    public static void copyFile(InputStream in, File out) throws IOException {
         FileOutputStream outputStream = null;
+        File dir = out.getParentFile();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         try {
-            File dir = out.getParentFile();
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
             outputStream = new FileOutputStream(out);
             copy(in, outputStream);
-        } catch (Throwable e) {
-            e.printStackTrace();
         } finally {
             IOUtils.close(outputStream);
-            IOUtils.close(in);
         }
     }
 
-    public static void copyFile(File in, File out) {
+    public static boolean copyFile(File in, File out) {
         FileOutputStream outputStream = null;
         FileInputStream inputStream = null;
         try {
@@ -108,11 +107,13 @@ public class FileUtils {
             outputStream = new FileOutputStream(out);
             copy(inputStream, outputStream);
         } catch (Throwable e) {
-            e.printStackTrace();
+            Log.e("ygo", "copy file", e);
+            return false;
         } finally {
             IOUtils.close(outputStream);
             IOUtils.close(inputStream);
         }
+        return true;
     }
 
     public static void copyFile(String oldPath, String newPath, boolean isName) throws FileNotFoundException, IOException {

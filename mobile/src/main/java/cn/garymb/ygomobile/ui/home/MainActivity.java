@@ -306,6 +306,15 @@ public class MainActivity extends HomeActivity {
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == Constants.REQUEST_SETTINGS_CODE){
+            //TODO
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
     /*        checkResourceDownload((result, isNewVersion) -> {
                 Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
             });*/

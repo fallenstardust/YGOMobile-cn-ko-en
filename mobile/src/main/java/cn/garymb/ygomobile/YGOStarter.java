@@ -176,9 +176,7 @@ public class YGOStarter {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
         }
-        if(args != null) {
-            intent.putExtra(IrrlichtBridge.EXTRA_ARGV,args);
-        }
+        IrrlichtBridge.setArgs(intent, args);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
         activity.startActivity(intent);

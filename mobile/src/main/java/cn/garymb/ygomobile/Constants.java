@@ -124,6 +124,7 @@ public interface Constants {
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
     int REQUEST_CHOOSE_IMG = 0x1000 + 0x21;
     int REQUEST_CHOOSE_FOLDER = 0x1000 + 0x22;
+    int REQUEST_SETTINGS_CODE = 0x1000 + 0x23;
     int STRING_TYPE_START = 1050;
 
     int STRING_ATTRIBUTE_START = 1010;

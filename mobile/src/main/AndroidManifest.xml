@@ -13,8 +13,8 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
+        android:extractNativeLibs="true"
         android:requestLegacyExternalStorage="true"
-
         tools:replace="android:allowBackup,android:supportsRtl"
         tools:targetApi="m">
         <activity

@@ -6,6 +6,7 @@
  */
 package cn.garymb.ygomobile.core;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
@@ -27,6 +28,7 @@ public final class IrrlichtBridge {
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
     public static final String EXTRA_PID = "extras.mypid";
     public static final String EXTRA_ARGV = "extras.argv";
+    public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";
     public static int gPid;
     static {
         try {
@@ -64,6 +66,19 @@ public final class IrrlichtBridge {
 
     private static final boolean DEBUG = false;
     private static final String TAG = IrrlichtBridge.class.getSimpleName();
+
+    public static void setArgs(Intent intent, String[] args) {
+        intent.putExtra(EXTRA_ARGV, args);
+        intent.putExtra(EXTRA_ARGV_TIME_OUT, (System.currentTimeMillis() + 15 * 1000));
+    }
+
+    public static String[] getArgs(Intent intent){
+        long time = intent.getLongExtra(EXTRA_ARGV_TIME_OUT, 0);
+        if(time > System.currentTimeMillis()){
+            return intent.getStringArrayExtra(EXTRA_ARGV);
+        }
+        return null;
+    }
 
     public static Bitmap getBpgImage(InputStream inputStream, Bitmap.Config config) {
         ByteArrayOutputStream outputStream = null;
