@@ -530,20 +530,20 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public void shareFile(final String title, final String path) {
+    public void shareFile(final String title, final String ext) {
+        Log.i("看看", title +"." + ext);
         //TODO 分享文件
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(YGOMobileActivity.this);
                 builder.setTitle(title);
-                builder.setMessage(path);
+                builder.setMessage(ext);
                 builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_STREAM,
-                                Uri.fromFile(new File(path)));
+                        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(ext)));
                         shareIntent.setType("*/*");//此处可发送多种文件
                         startActivity(Intent.createChooser(shareIntent, "分享到"));
                         dialog.dismiss();

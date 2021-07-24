@@ -807,7 +807,7 @@ int getLocalAddr(ANDROID_APP app) {
 	return addr;
 }
 
-void OnShareFile(ANDROID_APP app, char* title, char* path){
+void OnShareFile(ANDROID_APP app, char* title, char* ext){
 	if (!app || !app->activity || !app->activity->vm)
 		return;
 	JNIEnv* jni = nullptr;
@@ -817,10 +817,10 @@ void OnShareFile(ANDROID_APP app, char* title, char* path){
 	jmethodID MethodGetAddr = jni->GetMethodID(ClassNativeActivity,
 			"shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
 	jstring s_title = jni->NewStringUTF(title);
-	jstring s_path = jni->NewStringUTF(path);
-	jni->CallVoidMethod(lNativeActivity, MethodGetAddr, s_title, s_path);
+	jstring s_ext = jni->NewStringUTF(ext);
+	jni->CallVoidMethod(lNativeActivity, MethodGetAddr, s_title, s_ext);
 	jni->ReleaseStringUTFChars(s_title, title);
-	jni->ReleaseStringUTFChars(s_path, path);
+	jni->ReleaseStringUTFChars(s_ext, ext);
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 }

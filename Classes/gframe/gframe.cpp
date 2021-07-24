@@ -15,7 +15,7 @@ void ClickButton(irr::gui::IGUIElement* btn) {
 	event.GUIEvent.Caller = btn;
 	ygo::mainGame->device->postEventFromUser(event);
 }
-char* sub_string(const char* str, int start, int count=-1){
+char* sub_string(const char* str, int start, int count = -1){
 	char* tmp = new char[1024];
 	int len = strlen(str);
 	int index = 0;
