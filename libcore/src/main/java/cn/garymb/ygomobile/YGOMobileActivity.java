@@ -6,10 +6,8 @@
  */
 package cn.garymb.ygomobile;
 
-import android.app.AlertDialog;
 import android.app.NativeActivity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
@@ -44,6 +42,7 @@ import cn.garymb.ygomobile.widget.EditWindowCompat;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
 import cn.garymb.ygomobile.widget.overlay.OverlayView;
 
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_START;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_STOP;
 
@@ -528,21 +527,21 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public void shareFile(final String title, final String path) {
-        //TODO 分享文件
+    public void shareFile(final String type, final String path) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(YGOMobileActivity.this);
-                builder.setTitle(title);
-                builder.setMessage(path);
-                builder.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-                builder.show();
+                Intent intent = new Intent(ACTION_SHARE_FILE);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, type);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, path);
+                intent.setPackage(getPackageName());
+                try {
+                    startActivity(intent);
+                } catch (Throwable e) {
+                    //ignore
+                    Toast.makeText(YGOMobileActivity.this, "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

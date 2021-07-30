@@ -104,6 +104,17 @@
             </intent-filter>
         </activity>
         <activity
+            android:name="cn.garymb.ygomobile.ui.activities.ShareFileActivity"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
+            <intent-filter>
+                <action android:name="cn.garymb.ygomobile.game.shared.file" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />

@@ -37,12 +37,9 @@ public class App extends GameApplication {
         initBugly();
     }
 
-
-
     @Override
     public NativeInitOptions getNativeInitOptions() {
-        NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
-        return options;
+        return AppsSettings.get().getNativeInitOptions();
     }
 
     @Override
