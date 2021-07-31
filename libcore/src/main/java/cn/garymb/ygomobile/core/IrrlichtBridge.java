@@ -26,6 +26,14 @@ import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
 public final class IrrlichtBridge {
     public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
+    /**
+     * @see #EXTRA_SHARE_FILE
+     * @see #EXTRA_SHARE_TYPE
+     */
+    public static final String ACTION_SHARE_FILE = "cn.garymb.ygomobile.game.shared.file";
+    public static final String EXTRA_SHARE_FILE = Intent.EXTRA_STREAM;
+    public static final String EXTRA_SHARE_TYPE = Intent.EXTRA_TITLE;
+    //
     public static final String EXTRA_PID = "extras.mypid";
     public static final String EXTRA_ARGV = "extras.argv";
     public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";

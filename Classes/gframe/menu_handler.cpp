@@ -283,9 +283,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     char* fname= name;
 					myswprintf(textBuffer, L"%ls", mainGame->lstReplayList->getListItem(sel));
                     BufferIO::EncodeUTF8(textBuffer,fname);
-                    __android_log_print(ANDROID_LOG_DEBUG, "ygo", "1share replay file=%s", fname);
+                    __android_log_print(ANDROID_LOG_DEBUG, "ygo", "share replay file=%s", fname);
 					android::OnShareFile(mainGame->appMain, fname, "yrp");
-                    __android_log_print(ANDROID_LOG_DEBUG, "ygo", "2after share replay file:index=%s", fname);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
 					prev_sel = sel;
