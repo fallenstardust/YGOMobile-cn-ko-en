@@ -107,6 +107,7 @@
             android:name="cn.garymb.ygomobile.ui.activities.ShareFileActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:launchMode="singleTop"
+            android:excludeFromRecents="true"
             android:theme="@style/TranslucentTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <intent-filter>
@@ -208,14 +209,10 @@
             android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
             android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
             android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths" />
-        </provider>
+            android:grantUriPermissions="true" />
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities="${applicationId}.gamefiles"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

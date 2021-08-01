@@ -2,14 +2,27 @@ package cn.garymb.ygomobile.ui.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
+import java.io.File;
+import java.util.List;
+
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.utils.FileUtils;
+
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 
 public class ShareFileActivity extends Activity {
     @Override
@@ -28,8 +41,43 @@ public class ShareFileActivity extends Activity {
     private void doIntent(Intent intent) {
         String type = intent.getStringExtra(IrrlichtBridge.EXTRA_SHARE_TYPE);
         String path = intent.getStringExtra(IrrlichtBridge.EXTRA_SHARE_FILE);
-        //TODO
-        Toast.makeText(this, "type=" + type + ",path=" + path, Toast.LENGTH_SHORT).show();
+
+        File file;
+        String title;
+        if("yrp".equals(type)){
+            file = new File(AppsSettings.get().getReplayDir(), path);
+            title= "分享录像";
+        } else if("ydk".equals(type)){
+            file = new File(AppsSettings.get().getDeckDir(), path);
+            title= "分享卡组";
+        } else {
+            finish();
+            return;
+        }
+        Uri uri = FileUtils.toUri(this, file);
+//        Log.d("kk-test", "file="+file+", canRead="+(file.exists() && file.canRead()));
+//        Log.d("kk-test", "uri="+uri);
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.setType("text/plain");
+        try{
+//            Log.d("kk-test", "uri="+uri);
+//            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+//            if(pfd != null){
+//                pfd.close();
+//                Log.d("kk-test", "open ok");
+//            }
+//            List<ResolveInfo> resInfoList = this.getPackageManager()
+//                    .queryIntentActivities(shareIntent, 0);
+//            for (ResolveInfo resolveInfo : resInfoList) {
+//                String packageName = resolveInfo.activityInfo.packageName;
+//                this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//            }
+            startActivity(Intent.createChooser(shareIntent, title));
+        }catch (Throwable e){
+            Log.w("kk-test", "open uri error:"+uri, e);
+            Toast.makeText(this, "没有可以分享的应用", Toast.LENGTH_SHORT).show();
+        }
         finish();
     }
 

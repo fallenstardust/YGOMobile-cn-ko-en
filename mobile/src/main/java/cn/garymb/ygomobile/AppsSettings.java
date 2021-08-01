@@ -25,6 +25,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
@@ -469,6 +470,13 @@ public class AppsSettings {
     public void setResourcePath(String path) {
         if (TextUtils.equals(path, getResourcePath())) return;
         mSharedPreferences.putString(Constants.PREF_GAME_PATH, path);
+    }
+
+    /**
+     * @return 录像文件夹
+     */
+    public String getReplayDir() {
+        return new File(getResourcePath(), CORE_REPLAY_PATH).getAbsolutePath();
     }
 
     //获取卡组文件夹
