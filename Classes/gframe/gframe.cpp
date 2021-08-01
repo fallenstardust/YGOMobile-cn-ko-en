@@ -119,6 +119,7 @@ int main(int argc, char* argv[]) {
                 ygo::mainGame->lstReplayList->setSelected(index);
                 ClickButton(ygo::mainGame->btnLoadReplay);
             }
+
             break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
 		    exit_on_return = !keep_on_return;

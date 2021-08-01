@@ -27,6 +27,9 @@ public class LogoActivity extends Activity {
             finish();
             return;
         } else {
+           // File file = new File(AppsSettings.get().getDeckDir(), "1.ydk");
+           // Uri uri = FileUtils.toUri(this, file);
+           // Log.w("kk-test", file.getAbsolutePath() + "->" + uri);
             handler = new Handler();
             runnable = new Runnable() {
                 @Override

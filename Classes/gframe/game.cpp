@@ -1002,12 +1002,18 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnReplayCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	env->addStaticText(dataManager.GetSysString(1349), rect<s32>(320 * xScale, 30 * yScale, 550 * xScale, 50 * yScale), false, true, wReplay);
 	stReplayInfo = env->addStaticText(L"", rect<s32>(320 * xScale, 60 * yScale, 570 * xScale, 315 * yScale), false, true, wReplay);
-	env->addStaticText(dataManager.GetSysString(1353), rect<s32>(320 * xScale, 240 * yScale, 550 * xScale, 260 * yScale), false, true, wReplay);
-	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(320 * xScale, 260 * yScale, 430 * xScale, 300 * yScale), wReplay, -1);
+
+	env->addStaticText(dataManager.GetSysString(1353), rect<s32>(320 * xScale, 180 * yScale, 550 * xScale, 200 * yScale), false, true, wReplay);
+	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(320 * xScale, 210 * yScale, 430 * xScale, 250 * yScale), wReplay, -1);
+
 	ebRepStartTurn->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnExportDeck = env->addButton(rect<s32>(440 * xScale, 260 * yScale, 550 * xScale, 300 * yScale), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1282));
         ChangeToIGUIImageButton(btnExportDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	//single play window
+
+	btnShareReplay = env->addButton(rect<s32>(320 * xScale, 260 * yScale, 430 * xScale, 300 * yScale), wReplay, BUTTON_SHARE_REPLAY, dataManager.GetSysString(1368));
+	ChangeToIGUIImageButton(btnShareReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
+
+        //single play window
 	wSinglePlay = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1201));
 	wSinglePlay->getCloseButton()->setVisible(false);
 	wSinglePlay->setDrawBackground(false);
