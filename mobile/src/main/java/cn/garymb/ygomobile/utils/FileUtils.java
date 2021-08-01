@@ -22,7 +22,7 @@ import java.util.List;
 public class FileUtils {
 
     public static Uri toUri(Context context, File file) {
-        return FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
+        return FileProvider.getUriForFile(context, context.getPackageName() + ".gamefiles", file);
     }
 
     public static boolean deleteFile(File file) {
