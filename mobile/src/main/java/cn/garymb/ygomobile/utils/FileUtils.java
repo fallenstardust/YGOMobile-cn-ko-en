@@ -1,6 +1,10 @@
 package cn.garymb.ygomobile.utils;
 
+import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
+
+import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,6 +20,10 @@ import java.util.List;
 
 
 public class FileUtils {
+
+    public static Uri toUri(Context context, File file) {
+        return FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
+    }
 
     public static boolean deleteFile(File file) {
         if (file.isFile()) {

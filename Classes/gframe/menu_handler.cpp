@@ -278,16 +278,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(sel == -1)
 						break;
 					mainGame->gMutex.lock();
-                    wchar_t textBuffer[256];
                     char name[1024];
-                    char* fname= name;
-					myswprintf(textBuffer, L"%ls", mainGame->lstReplayList->getListItem(sel));
-                    BufferIO::EncodeUTF8(textBuffer,fname);
-                    __android_log_print(ANDROID_LOG_DEBUG, "ygo", "share replay file=%s", fname);
-					android::OnShareFile(mainGame->appMain, fname, "yrp");
+					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
 					prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+					__android_log_print(ANDROID_LOG_DEBUG, "ygo", "1share replay file=%s", name);
+					android::OnShareFile(mainGame->appMain, "yrp", name);
+					__android_log_print(ANDROID_LOG_DEBUG, "ygo", "2after share replay file:index=%d", sel);
+#endif
 					break;
 				}
 			case BUTTON_RENAME_REPLAY: {
