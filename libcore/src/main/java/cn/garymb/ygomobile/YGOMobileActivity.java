@@ -549,6 +549,14 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public void onGameExit() {
         Log.e("ygomobile", "game exit");
+        Intent  intent = new Intent("ygomobile.intent.action.GAME");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        intent.setPackage(getPackageName());
+        try {
+            startActivity(intent);
+        } catch (Throwable ignore) {}
         Process.killProcess(Process.myPid());
     }
 }
