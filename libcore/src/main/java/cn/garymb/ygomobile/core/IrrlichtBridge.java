@@ -26,8 +26,7 @@ import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
  * @author mabin
  */
 public final class IrrlichtBridge {
-    public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
-    public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
+    public static final String ACTION_OPEN_GAME_HOME = "ygomobile.intent.action.GAME";
     /**
      * @see #EXTRA_SHARE_FILE
      * @see #EXTRA_SHARE_TYPE
@@ -38,6 +37,11 @@ public final class IrrlichtBridge {
     public static final String EXTRA_PID = "extras.mypid";
     public static final String EXTRA_ARGV = "extras.argv";
     public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";
+    public static final String EXTRA_GAME_EXIT_TIME = "game_exit_time";
+    public static final String EXTRA_TASK_ID = "extras.taskid";
+
+    public static final String TAG = "ygo-java";
+
     public static int gPid;
     static {
         try {
@@ -74,7 +78,6 @@ public final class IrrlichtBridge {
     private static native void nativeSetInputFix(long handle, int x, int y);
 
     private static final boolean DEBUG = false;
-    private static final String TAG = IrrlichtBridge.class.getSimpleName();
 
     public static void setArgs(Intent intent, String[] args) {
         intent.putExtra(EXTRA_ARGV, args);

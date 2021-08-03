@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.home;
 
-import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -63,7 +62,6 @@ import java.util.List;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
@@ -87,7 +85,6 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
-import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -126,7 +123,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         AnimationShake();
         tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
-
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
             public void onViewInitFinished(boolean arg0) {
@@ -144,14 +140,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        if(AppsSettings.get().isAutoCheckUpdate()) {
-            if (!"ygomobile.intent.action.GAME".equals(getIntent().getAction())) {
-                Log.d("kk-test", "start check update");
-                //check update
-                Beta.checkUpgrade(false, false);
-            } else {
-                Log.d("kk-test", "skip check update");
-            }
+        if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
+            Log.d(Constants.TAG, "start check update");
+            //check update
+            Beta.checkUpgrade(false, false);
+        } else {
+            Log.d(Constants.TAG, "skip check update");
         }
         //初始化决斗助手
         initDuelAssistant();

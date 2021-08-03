@@ -124,10 +124,6 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
 
-        <receiver
-            android:name="cn.garymb.ygomobile.GameReceiver"
-            android:enabled="false" />
-
         <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"

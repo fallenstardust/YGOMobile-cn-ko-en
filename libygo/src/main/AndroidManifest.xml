@@ -25,13 +25,6 @@
                 android:name="android.notch_support"
                 android:value="true"/>
         </activity>
-        <receiver android:name="cn.garymb.ygomobile.GameReceiver"
-            android:process=":game" >
-            <intent-filter>
-                <action android:name="cn.garymb.ygomobile.game.start"/>
-                <action android:name="cn.garymb.ygomobile.game.stop"/>
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>

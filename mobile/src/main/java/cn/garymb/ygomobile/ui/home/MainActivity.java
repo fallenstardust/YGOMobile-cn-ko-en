@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -22,15 +21,11 @@ import java.io.IOException;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
-import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
@@ -195,10 +190,6 @@ public class MainActivity extends HomeActivity {
     protected void onResume() {
         super.onResume();
         YGOStarter.onResumed(this);
-        //如果游戏Activity已经不存在了，则
-        if (!YGOStarter.isGameRunning(getActivity())) {
-            sendBroadcast(new Intent(IrrlichtBridge.ACTION_STOP).setPackage(getPackageName()));
-        }
     }
 
     @Override
@@ -318,5 +309,4 @@ public class MainActivity extends HomeActivity {
     /*        checkResourceDownload((result, isNewVersion) -> {
                 Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
             });*/
-
 }

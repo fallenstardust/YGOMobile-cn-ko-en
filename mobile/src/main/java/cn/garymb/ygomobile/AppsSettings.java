@@ -678,8 +678,4 @@ public class AppsSettings {
 //        Log.i("kk", "saveTemp:" + array);
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
     }
-
-    public boolean isAutoCheckUpdate(){
-        return true;//mSharedPreferences.getBoolean(Constants.PREF_CHECK_UPDATE, false);
-    }
 }

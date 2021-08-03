@@ -46,7 +46,7 @@ void Game::stopBGM() {
 }
 
 void Game::playBGM() {
-    ALOGV("play bgm");
+ //   ALOGV("play bgm dInfo.isStarted=%d, is_building=%d", dInfo.isStarted, is_building);
 	gMutex.lock();
 	if(dInfo.isStarted) {
 		if(dInfo.isFinished && showcardcode == 1)
@@ -1348,7 +1348,6 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
-		ALOGV("game draw frame");
 		linePatternD3D = (linePatternD3D + 1) % 30;
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;

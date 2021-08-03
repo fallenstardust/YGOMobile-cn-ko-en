@@ -43,8 +43,6 @@ import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
 import cn.garymb.ygomobile.widget.overlay.OverlayView;
 
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_START;
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_STOP;
 
 /**
  * @author mabin
@@ -132,9 +130,6 @@ public class YGOMobileActivity extends NativeActivity implements
         mPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mNetController = new NetworkController(getApplicationContext());
         handleExternalCommand(getIntent());
-        sendBroadcast(new Intent(ACTION_START)
-                .putExtra(IrrlichtBridge.EXTRA_PID, android.os.Process.myPid())
-                .setPackage(getPackageName()));
     }
 
     //电池管理
@@ -193,14 +188,6 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
-    }
-
-    @Override
-    public void finish() {
-        super.finish();
-        sendBroadcast(new Intent(ACTION_STOP)
-                .putExtra(IrrlichtBridge.EXTRA_PID, android.os.Process.myPid())
-                .setPackage(getPackageName()));
     }
 
     private void handleExternalCommand(Intent intent) {
@@ -551,20 +538,31 @@ public class YGOMobileActivity extends NativeActivity implements
             return;
         }
         onGameExiting = true;
-        Log.e("ygomobile", "game exit");
-        final Intent  intent = new Intent("ygomobile.intent.action.GAME");
+        Log.e(IrrlichtBridge.TAG, "game exit");
+        final Intent  intent = new Intent(IrrlichtBridge.ACTION_OPEN_GAME_HOME);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        intent.putExtra("game_exit_time", System.currentTimeMillis());
+//        intent.putExtra(IrrlichtBridge.EXTRA_PID, Process.myPid());
+//        intent.putExtra(IrrlichtBridge.EXTRA_TASK_ID, getTaskId());
+//        intent.putExtra(IrrlichtBridge.EXTRA_GAME_EXIT_TIME, System.currentTimeMillis());
         intent.setPackage(getPackageName());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
                     startActivity(intent);
-                } catch (Throwable ignore) {}
-                finishAndRemoveTask();
+                    Log.d(IrrlichtBridge.TAG, "open home ok");
+                } catch (Throwable e) {
+                    Log.w(IrrlichtBridge.TAG, "open home", e);
+                }
+                boolean isRoot = isTaskRoot();
+                Log.d(IrrlichtBridge.TAG, "isRoot=" + isRoot + ",kill:" + Process.myPid());
+                if(isRoot) {
+                    finishAndRemoveTask();
+                } else {
+                    finish();
+                }
                 Process.killProcess(Process.myPid());
             }
         });
