@@ -150,9 +150,7 @@ bool DataManager::Error(spmemvfs_db_t* pDB, sqlite3_stmt* pStmt, int errNo) {
 	if(pStmt)
 		sqlite3_finalize(pStmt);
 	int len = strlen(msg);
-	char buff[len+32];
-	sprintf(buff, "cdb Error code=%d,msg=%s", errNo, msg);
-	os::Printer::log(buff);
+	ALOGE("cdb Error code=%d,msg=%s", errNo, msg);
 	spmemvfs_close_db(pDB);
 	spmemvfs_env_fini();
 	return false;

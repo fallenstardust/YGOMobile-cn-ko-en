@@ -12,6 +12,14 @@
 
 namespace ygo {
 
+#ifdef _IRR_ANDROID_PLATFORM_
+#define LOG_TAG "ygo-jni"
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
+#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG ,__VA_ARGS__)
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
+#endif
 struct Config {
 	bool _init;
 	bool use_d3d;
@@ -121,6 +129,8 @@ class Game :IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
+	void stopBGM();
+	void playBGM();
 	bool Initialize(ANDROID_APP app, android::InitOptions *options);
 #else
 	bool Initialize();
@@ -643,6 +653,7 @@ public:
 	s32 ogles2BlendTexture;
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
+	static void onHandleAndroidCommand(ANDROID_APP app, int32_t cmd);
 #endif
 	void setPositionFix(core::position2di fix){
 		InputFix = fix;
@@ -733,7 +744,7 @@ private:
 #define BUTTON_DELETE_REPLAY		133
 #define BUTTON_RENAME_REPLAY		134
 #define BUTTON_EXPORT_DECK			135
-#define BUTTON_SHARE_REPLAY			136
+#define BUTTON_SHARE_REPLAY         136
 #define BUTTON_REPLAY_START			140
 #define BUTTON_REPLAY_PAUSE			141
 #define BUTTON_REPLAY_STEP			142

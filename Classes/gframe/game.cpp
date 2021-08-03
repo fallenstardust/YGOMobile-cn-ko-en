@@ -33,12 +33,68 @@ void Game::process(irr::SEvent &event) {
 		s32 y = event.MouseInput.Y;
 		event.MouseInput.X = optX(x);
 		event.MouseInput.Y = optY(y);
-//			__android_log_print(ANDROID_LOG_DEBUG, "ygo", "Android comman process %d,%d -> %d,%d", x, y,
-//								event.MouseInput.X, event.MouseInput.Y);
 	}
 }
 
 #ifdef _IRR_ANDROID_PLATFORM_
+
+void Game::stopBGM() {
+    ALOGD("stop bgm");
+	gMutex.lock();
+	soundManager->StopBGM();
+	gMutex.unlock();
+}
+
+void Game::playBGM() {
+    ALOGV("play bgm");
+	gMutex.lock();
+	if(dInfo.isStarted) {
+		if(dInfo.isFinished && showcardcode == 1)
+			soundManager->PlayBGM(SoundManager::BGM::WIN);
+		else if(dInfo.isFinished && (showcardcode == 2 || showcardcode == 3))
+			soundManager->PlayBGM(SoundManager::BGM::LOSE);
+		else if(dInfo.lp[0] > 0 && dInfo.lp[0] <= dInfo.lp[1] / 2)
+			soundManager->PlayBGM(SoundManager::BGM::DISADVANTAGE);
+		else if(dInfo.lp[0] > 0 && dInfo.lp[0] >= dInfo.lp[1] * 2)
+			soundManager->PlayBGM(SoundManager::BGM::ADVANTAGE);
+		else
+			soundManager->PlayBGM(SoundManager::BGM::DUEL);
+	} else if(is_building) {
+		soundManager->PlayBGM(SoundManager::BGM::DECK);
+	} else {
+		soundManager->PlayBGM(SoundManager::BGM::MENU);
+	}
+	gMutex.unlock();
+}
+
+void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
+    switch (cmd)
+    {
+        case APP_CMD_PAUSE:
+            ALOGD("APP_CMD_PAUSE");
+            if(ygo::mainGame != nullptr){
+                ygo::mainGame->stopBGM();
+            }
+            break;
+        case APP_CMD_RESUME:
+			//第一次不一定调用
+			ALOGD("APP_CMD_RESUME");
+			if(ygo::mainGame != nullptr){
+                ygo::mainGame->playBGM();
+			}
+            break;
+		case APP_CMD_STOP:
+        case APP_CMD_INIT_WINDOW:
+        case APP_CMD_SAVE_STATE:
+        case APP_CMD_TERM_WINDOW:
+        case APP_CMD_GAINED_FOCUS:
+        case APP_CMD_LOST_FOCUS:
+        case APP_CMD_DESTROY:
+        case APP_CMD_WINDOW_RESIZED:
+        default:
+            break;
+    }
+}
 bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 #endif
@@ -76,6 +132,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
 	dataManager.FileSystem = device->getFileSystem();
+    ((CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
 	xScale = android::getXScale(app);
 	yScale = android::getYScale(app);
@@ -112,9 +169,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    os::Printer::log("add arrchive ok ", zip_path.c_str());
+		    ALOGD("add arrchive ok:%s", zip_path.c_str());
 	    }else{
-			os::Printer::log("add arrchive fail ", zip_path.c_str());
+			ALOGW("add arrchive fail:%s", zip_path.c_str());
 		}
 	}
 #endif
@@ -174,15 +231,15 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		wchar_t wpath[1024];
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
 		if(dataManager.LoadDB(wpath)) {
-		    os::Printer::log("add cdb ok ", cdb_path.c_str());
+		    ALOGD("add cdb ok:%s", cdb_path.c_str());
 	    }else{
-			os::Printer::log("add cdb fail ", cdb_path.c_str());
+			ALOGW("add cdb fail:%s", cdb_path.c_str());
 		}
 	}
 	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
 	//	return false;
 	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
-		os::Printer::log("loadStrings expansions/strings.conf");
+		ALOGD("loadStrings expansions/strings.conf");
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str()))
 		return false;
@@ -195,7 +252,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)32 * yScale, isAntialias, true);
 	textFont = guiFont;
 	if(!numFont || !textFont) {
-	  os::Printer::log("add font fail ");
+	  ALOGW("add font fail ");
 	}
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
@@ -1287,6 +1344,7 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
+		ALOGV("game draw frame");
 		linePatternD3D = (linePatternD3D + 1) % 30;
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
@@ -1313,16 +1371,6 @@ void Game::MainLoop() {
 #endif
 		gMutex.lock();
 		if(dInfo.isStarted) {
-			if(dInfo.isFinished && showcardcode == 1)
-				soundManager->PlayBGM(SoundManager::BGM::WIN);
-			else if(dInfo.isFinished && (showcardcode == 2 || showcardcode == 3))
-				soundManager->PlayBGM(SoundManager::BGM::LOSE);
-			else if(dInfo.lp[0] > 0 && dInfo.lp[0] <= dInfo.lp[1] / 2)
-				soundManager->PlayBGM(SoundManager::BGM::DISADVANTAGE);
-			else if(dInfo.lp[0] > 0 && dInfo.lp[0] >= dInfo.lp[1] * 2)
-				soundManager->PlayBGM(SoundManager::BGM::ADVANTAGE);
-			else
-				soundManager->PlayBGM(SoundManager::BGM::DUEL);
 			DrawBackImage(imageManager.tBackGround);
 			DrawBackGround();
 			DrawCards();
@@ -1331,14 +1379,12 @@ void Game::MainLoop() {
 			driver->setMaterial(irr::video::IdentityMaterial);
 			driver->clearZBuffer();
 		} else if(is_building) {
-			soundManager->PlayBGM(SoundManager::BGM::DECK);
 			DrawBackImage(imageManager.tBackGround_deck);
 #ifdef _IRR_ANDROID_PLATFORM_
 			driver->enableMaterial2D(true);
 			DrawDeckBd();
 			driver->enableMaterial2D(false);
 		} else {
-			soundManager->PlayBGM(SoundManager::BGM::MENU);
 			DrawBackImage(imageManager.tBackGround_menu);
 		}
 		driver->enableMaterial2D(true);
@@ -1347,13 +1393,15 @@ void Game::MainLoop() {
 		driver->enableMaterial2D(false);
 #else
 		} else {
-			soundManager->PlayBGM(SoundManager::BGM::MENU);
 			DrawBackImage(imageManager.tBackGround_menu);
 		}
 		DrawGUI();
 		DrawSpec();
 #endif
 		gMutex.unlock();
+#ifdef _IRR_ANDROID_PLATFORM_
+		playBGM();
+#endif
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
