@@ -58,6 +58,19 @@ namespace irr
 
 		core::array<EKEY_CODE> KeyMap;
 
+		bool isPaused(){
+			return Paused;
+		}
+
+		bool isFocused(){
+			return Focused;
+		}
+
+		bool isDestroy(){
+			return !Initialized;
+		}
+		void (*onAppCmd)(struct android_app* app, int32_t cmd) = nullptr;
+
 	private:
 		
 		static void handleAndroidCommand(ANDROID_APP app, int32_t cmd);

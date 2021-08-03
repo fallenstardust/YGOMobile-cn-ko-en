@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -143,8 +144,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        //check update
-        Beta.checkUpgrade(false, false);
+        if(AppsSettings.get().isAutoCheckUpdate()) {
+            if (!"ygomobile.intent.action.GAME".equals(getIntent().getAction())) {
+                Log.d("kk-test", "start check update");
+                //check update
+                Beta.checkUpgrade(false, false);
+            } else {
+                Log.d("kk-test", "skip check update");
+            }
+        }
         //初始化决斗助手
         initDuelAssistant();
         //萌卡

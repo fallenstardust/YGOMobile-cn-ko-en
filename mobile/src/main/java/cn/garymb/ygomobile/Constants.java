@@ -222,4 +222,6 @@ public interface Constants {
 
     //打开ydk，是否复制到文件夹
     boolean COPY_YDK_FILE = false;
+
+    String TAG = "ygo-java";
 }

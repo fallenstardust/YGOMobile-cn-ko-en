@@ -37,10 +37,12 @@ android {
     buildTypes {
         debug {
             debuggable false
+            buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
             shrinkResources false
             minifyEnabled false
+            buildConfigField 'boolean', 'DEBUG_MODE', 'false'
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

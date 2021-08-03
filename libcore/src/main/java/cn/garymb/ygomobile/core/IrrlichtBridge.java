@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import cn.garymb.ygodata.YGOGameOptions;
+
 import static cn.garymb.ygomobile.utils.ByteUtils.byte2int;
 import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
 

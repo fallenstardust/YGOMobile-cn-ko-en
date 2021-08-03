@@ -16,19 +16,15 @@ public class GameReceiver extends BroadcastReceiver {
         if (ACTION_START.equals(action)) {
             //
             IrrlichtBridge.gPid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
-//            Log.w("ygo", "pid=" + IrrlichtBridge.gPid);
         } else if (ACTION_STOP.equals(action)) {
             int pid = intent.getIntExtra(IrrlichtBridge.EXTRA_PID, 0);
             if (pid == 0 && IrrlichtBridge.gPid != 0) {
                 pid = IrrlichtBridge.gPid;
-//                Log.w("ygo", "will kill last pid=" + pid);
             }
             if (pid == 0) {
                 pid = android.os.Process.myPid();
-//                Log.w("ygo", "will kill now pid=" + pid);
             }
             try {
-//                Log.w("ygo", "kill pid=" + pid);
                 android.os.Process.killProcess(pid);
             } catch (Exception e) {
 //ignore

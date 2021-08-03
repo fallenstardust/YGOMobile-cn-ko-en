@@ -8,6 +8,7 @@
 #include <android_native_app_glue.h>
 #include <signal.h>
 #include <android/log.h>
+#include <Android/CIrrDeviceAndroid.h>
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "ygomobile-native", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "ygomobile-native", __VA_ARGS__))

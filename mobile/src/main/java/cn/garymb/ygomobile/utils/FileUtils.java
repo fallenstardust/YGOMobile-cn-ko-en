@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,6 +19,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.garymb.ygomobile.Constants;
 
 
 public class FileUtils {
@@ -116,7 +119,7 @@ public class FileUtils {
             outputStream = new FileOutputStream(out);
             copy(inputStream, outputStream);
         } catch (Throwable e) {
-            Log.e("ygo", "copy file", e);
+            Log.e(Constants.TAG, "copy file", e);
             return false;
         } finally {
             IOUtils.close(outputStream);

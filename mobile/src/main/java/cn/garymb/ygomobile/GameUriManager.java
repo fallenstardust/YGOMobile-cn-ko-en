@@ -47,7 +47,7 @@ public class GameUriManager {
     }
 
     public boolean doIntent(Intent intent) {
-        Log.i("ygo", "doIntent");
+        Log.i(Constants.TAG, "doIntent");
         if (ACTION_OPEN_DECK.equals(intent.getAction())) {
             if (intent.getData() != null) {
                 doUri(intent.getData());
@@ -85,7 +85,7 @@ public class GameUriManager {
 
 
     private String getPathName(String path, boolean withOutEx) {
-        Log.d("ygo", "path=" + path);
+        Log.d(Constants.TAG, "path=" + path);
         if (path != null) {
             int index = path.lastIndexOf("/");
             if (index > 0) {
@@ -146,11 +146,11 @@ public class GameUriManager {
             }
             try {
                 if (!remoteFile.canRead()) {
-                    Log.w("ygo", "don't read file " + remoteFile.getAbsolutePath());
+                    Log.w(Constants.TAG, "don't read file " + remoteFile.getAbsolutePath());
                     return null;
                 }
             } catch (Throwable e) {
-                Log.e("ygo", "don't read file " + remoteFile.getAbsolutePath(), e);
+                Log.e(Constants.TAG, "don't read file " + remoteFile.getAbsolutePath(), e);
                 return null;
             }
         }
@@ -169,11 +169,11 @@ public class GameUriManager {
             local = new File(AppsSettings.get().getResourcePath() + "/temp", name);
         }
         if (local.exists()) {
-            Log.w("ygo", "Overwrite file "+local.getAbsolutePath());
+            Log.w(Constants.TAG, "Overwrite file "+local.getAbsolutePath());
         }
         if(remoteFile != null && TextUtils.equals(remoteFile.getAbsolutePath(), local.getAbsolutePath())){
             //is same path
-            Log.i("ygo", "is same file " + remoteFile.getAbsolutePath() + "==" + local.getAbsolutePath());
+            Log.i(Constants.TAG, "is same file " + remoteFile.getAbsolutePath() + "==" + local.getAbsolutePath());
             return local;
         }
         //copy
@@ -192,7 +192,7 @@ public class GameUriManager {
                 FileUtils.copyFile(input, local);
             }
         } catch (Throwable e) {
-            Log.w("ygo", "copy file " + path + "->" + local.getAbsolutePath(), e);
+            Log.w(Constants.TAG, "copy file " + path + "->" + local.getAbsolutePath(), e);
             return null;
         } finally {
             IOUtils.close(input);
@@ -213,7 +213,7 @@ public class GameUriManager {
             boolean isYpk = file.getName().toLowerCase(Locale.US).endsWith(".ypk");
             boolean isYrp = file.getName().toLowerCase(Locale.US).endsWith(".yrp");
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
-            Log.i("ygo", "open file:" + uri + "->" + file.getAbsolutePath());
+            Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if(isYdk){
                 Intent intent = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
                 intent.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
@@ -231,14 +231,14 @@ public class GameUriManager {
                     YGOStarter.startGame(getActivity(), null, "-r", file.getName());
                     Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
                 } else {
-                    Log.w("ygo", "game is running");
+                    Log.w(Constants.TAG, "game is running");
                 }
             } else if(isLua){
                 if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-s", file.getName());
                     Toast.makeText(activity, "load single lua file", Toast.LENGTH_LONG).show();
                 } else {
-                    Log.w("ygo", "game is running");
+                    Log.w(Constants.TAG, "game is running");
                 }
             }
         } else {

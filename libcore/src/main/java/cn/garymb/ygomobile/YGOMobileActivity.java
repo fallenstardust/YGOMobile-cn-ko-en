@@ -89,6 +89,7 @@ public class YGOMobileActivity extends NativeActivity implements
     private boolean replaced = false;
     private static boolean USE_SURFACE = true;
     private String[] mArgV;
+    private boolean onGameExiting;
 
 //    public static int notchHeight;
 
@@ -291,7 +292,6 @@ public class YGOMobileActivity extends NativeActivity implements
         int h = (int) app().getScreenWidth();
         int spX = (int) ((w - size[0]) / 2.0f);
         int spY = (int) ((h - size[1]) / 2.0f);
-//        Log.i("ygo", "Android command 1:posX=" + spX + ",posY=" + spY);
         boolean update = false;
         synchronized (this) {
             if (spX != mPositionX || spY != mPositionY) {
@@ -301,7 +301,6 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         }
         if (update) {
-//            Log.i("ygo", "Android command setInputFix2:posX=" + spX + ",posY=" + spY);
             IrrlichtBridge.setInputFix(mPositionX, mPositionY);
         }
     }
@@ -548,15 +547,26 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onGameExit() {
+        if(onGameExiting){
+            return;
+        }
+        onGameExiting = true;
         Log.e("ygomobile", "game exit");
-        Intent  intent = new Intent("ygomobile.intent.action.GAME");
+        final Intent  intent = new Intent("ygomobile.intent.action.GAME");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        intent.putExtra("game_exit_time", System.currentTimeMillis());
         intent.setPackage(getPackageName());
-        try {
-            startActivity(intent);
-        } catch (Throwable ignore) {}
-        Process.killProcess(Process.myPid());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    startActivity(intent);
+                } catch (Throwable ignore) {}
+                finishAndRemoveTask();
+                Process.killProcess(Process.myPid());
+            }
+        });
     }
 }
