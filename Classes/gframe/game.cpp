@@ -169,9 +169,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    ALOGD("add arrchive ok ", zip_path.c_str());
+		    ALOGD("add arrchive ok:%s", zip_path.c_str());
 	    }else{
-			ALOGW("add arrchive fail ", zip_path.c_str());
+			ALOGW("add arrchive fail:%s", zip_path.c_str());
 		}
 	}
 #endif
@@ -231,9 +231,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		wchar_t wpath[1024];
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
 		if(dataManager.LoadDB(wpath)) {
-		    ALOGD("add cdb ok ", cdb_path.c_str());
+		    ALOGD("add cdb ok:%s", cdb_path.c_str());
 	    }else{
-			ALOGW("add cdb fail ", cdb_path.c_str());
+			ALOGW("add cdb fail:%s", cdb_path.c_str());
 		}
 	}
 	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
