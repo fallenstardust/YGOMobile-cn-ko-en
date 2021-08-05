@@ -24,7 +24,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ICardLoader;
-import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -59,7 +58,8 @@ public class CardSearcher implements View.OnClickListener {
     private Spinner typeSpinner;
     private Spinner typeMonsterSpinner;
     private Spinner typeMonsterSpinner2;
-    private Spinner typeSTSpinner;
+    private Spinner typeSpellSpinner;
+    private Spinner typeTrapSpinner;
     private Spinner setcodeSpinner;
     private Spinner categorySpinner;
     private Spinner raceSpinner;
@@ -104,7 +104,8 @@ public class CardSearcher implements View.OnClickListener {
         typeSpinner = findViewById(R.id.sp_type_card);
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
-        typeSTSpinner = findViewById(R.id.sp_type_st);
+        typeSpellSpinner = findViewById(R.id.sp_type_spell);
+        typeTrapSpinner = findViewById(R.id.sp_type_trap);
         setcodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
         raceSpinner = findViewById(R.id.sp_race);
@@ -251,28 +252,40 @@ public class CardSearcher implements View.OnClickListener {
                 if (value == 0) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
-                    typeSTSpinner.setVisibility(View.INVISIBLE);
+                    typeSpellSpinner.setVisibility(View.GONE);
+                    typeTrapSpinner.setVisibility(View.GONE);
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
-                } else if (value == CardType.Spell.value() || value == CardType.Trap.value()) {
+                } else if (value == CardType.Spell.value()) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
-                    typeSTSpinner.setVisibility(View.VISIBLE);
+                    typeSpellSpinner.setVisibility(View.VISIBLE);
+                    typeTrapSpinner.setVisibility(View.GONE);
+                    pScale.setVisibility(View.INVISIBLE);
+                    LinkMarkerButton.setVisibility(View.INVISIBLE);
+                    resetMonster();
+                } else if (value == CardType.Trap.value()) {
+                    layout_monster.setVisibility(View.INVISIBLE);
+                    raceSpinner.setVisibility(View.GONE);
+                    typeSpellSpinner.setVisibility(View.GONE);
+                    typeTrapSpinner.setVisibility(View.VISIBLE);
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
                 } else {
                     layout_monster.setVisibility(View.VISIBLE);
                     raceSpinner.setVisibility(View.VISIBLE);
-                    typeSTSpinner.setVisibility(View.GONE);
+                    typeSpellSpinner.setVisibility(View.GONE);
+                    typeTrapSpinner.setVisibility(View.GONE);
                     pScale.setVisibility(View.VISIBLE);
                     LinkMarkerButton.setVisibility(View.VISIBLE);
                 }
 
                 reset(pScale);
                 reset(raceSpinner);
-                reset(typeSTSpinner);
+                reset(typeSpellSpinner);
+                reset(typeTrapSpinner);
                 reset(typeMonsterSpinner);
                 reset(typeMonsterSpinner2);
             }
@@ -295,8 +308,10 @@ public class CardSearcher implements View.OnClickListener {
         });
         initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner, CardType.Non_Effect
         });
-        initTypeSpinners(typeSTSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.QuickPlay, CardType.Ritual,
-                CardType.Continuous, CardType.Equip, CardType.Field, CardType.Counter
+        initTypeSpinners(typeSpellSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.QuickPlay, CardType.Ritual,
+                CardType.Continuous, CardType.Equip, CardType.Field
+        });
+        initTypeSpinners(typeTrapSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Continuous, CardType.Counter
         });
         initLevelSpinners(levelSpinner);
         initPscaleSpinners(pScale);
@@ -545,7 +560,7 @@ public class CardSearcher implements View.OnClickListener {
                     text(atkText), text(defText),
                     getSelect(pScale),
                     getSelect(setcodeSpinner)
-                    , getSelect(categorySpinner), getSelect(otSpinner), lineKey, getSelect(typeSpinner), getSelect(typeMonsterSpinner), getSelect(typeSTSpinner)
+                    , getSelect(categorySpinner), getSelect(otSpinner), lineKey, getSelect(typeSpinner), getSelect(typeMonsterSpinner), getSelect(typeSpellSpinner), getSelect(typeTrapSpinner)
                     , getSelect(typeMonsterSpinner2));
             lineKey = 0;
         }
@@ -566,7 +581,8 @@ public class CardSearcher implements View.OnClickListener {
         }
         reset(limitSpinner);
         reset(typeSpinner);
-        reset(typeSTSpinner);
+        reset(typeSpellSpinner);
+        reset(typeTrapSpinner);
         reset(setcodeSpinner);
         reset(categorySpinner);
         resetMonster();
