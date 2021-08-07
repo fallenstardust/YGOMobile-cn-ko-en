@@ -60,9 +60,6 @@ public class YGOMobileActivity extends NativeActivity implements
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
-    private static int sChainControlXPostion = -1;
-    private static int sChainControlYPostion = -1;
-    private static boolean USE_SURFACE = true;
     protected final int windowsFlags =
             Build.VERSION.SDK_INT >= 19 ? (
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -80,6 +77,8 @@ public class YGOMobileActivity extends NativeActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
+    private static int sChainControlXPostion = -1;
+    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
@@ -87,12 +86,11 @@ public class YGOMobileActivity extends NativeActivity implements
     private FrameLayout mLayout;
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
+    private static boolean USE_SURFACE = true;
     private String[] mArgV;
+    private boolean onGameExiting;
 
 //    public static int notchHeight;
-    //电池管理
-    private PowerManager mPM;
-    private PowerManager.WakeLock mLock;
 
     private GameApplication app() {
         if (mApp == null) {
@@ -137,6 +135,10 @@ public class YGOMobileActivity extends NativeActivity implements
                 .putExtra(IrrlichtBridge.EXTRA_PID, android.os.Process.myPid())
                 .setPackage(getPackageName()));
     }
+
+    //电池管理
+    private PowerManager mPM;
+    private PowerManager.WakeLock mLock;
 
     @Override
     protected void onResume() {
@@ -547,17 +549,26 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void onGameExit() {
+        if(onGameExiting){
+            return;
+        }
+        onGameExiting = true;
         Log.e("ygomobile", "game exit");
-        Intent intent = new Intent("ygomobile.intent.action.GAME");
+        final Intent  intent = new Intent("ygomobile.intent.action.GAME");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        intent.putExtra("game_exit_time", System.currentTimeMillis());
         intent.setPackage(getPackageName());
-        try {
-            startActivity(intent);
-        } catch (Throwable ignore) {
-
-        }
-        Process.killProcess(Process.myPid());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    startActivity(intent);
+                } catch (Throwable ignore) {}
+                finishAndRemoveTask();
+                Process.killProcess(Process.myPid());
+            }
+        });
     }
 }

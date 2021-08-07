@@ -15,12 +15,12 @@
         android:usesCleartextTraffic="true"
         android:extractNativeLibs="true"
         android:requestLegacyExternalStorage="true"
+        android:taskAffinity="cn.garymb.ygomobile.task"
         tools:replace="android:allowBackup,android:supportsRtl"
         tools:targetApi="m">
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
             android:excludeFromRecents="false"
-            android:taskAffinity="cn.garymb.logo"
             android:theme="@style/TranslucentTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,13 +34,17 @@
         </activity>
 
         <activity
+            android:name="com.tencent.bugly.beta.ui.BetaActivity"
+            android:launchMode="singleTop"
+            android:configChanges="keyboardHidden|orientation|screenSize|locale"
+            android:excludeFromRecents="true"/>
+
+        <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:excludeFromRecents="false"
             android:exported="true"
             android:screenOrientation="portrait"
             android:launchMode="singleTop"
-            android:stateNotNeeded="true"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <intent-filter>
@@ -119,6 +123,11 @@
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
+
+        <receiver
+            android:name="cn.garymb.ygomobile.GameReceiver"
+            android:enabled="false" />
+
         <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -187,11 +196,6 @@
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
             android:theme="@style/TranslucentTheme"/>
-        <activity
-            android:name="com.tencent.bugly.beta.ui.BetaActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize|locale"
-            android:theme="@android:style/Theme.Translucent" />
-
         <meta-data
             android:name="BUGLY_APPID"
             android:value="${APP_ID}" />
