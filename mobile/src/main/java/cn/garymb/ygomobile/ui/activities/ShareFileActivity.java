@@ -44,12 +44,19 @@ public class ShareFileActivity extends Activity {
 
         File file;
         String title;
+        String mineType;
         if("yrp".equals(type)){
             file = new File(AppsSettings.get().getReplayDir(), path);
             title= "分享录像";
+            mineType = "text/plain";
         } else if("ydk".equals(type)){
             file = new File(AppsSettings.get().getDeckDir(), path);
             title= "分享卡组";
+            mineType = "text/plain";
+        } else if("jpg".equals(type)){
+            file = new File(AppsSettings.get().getDeckDir(), path);
+            title= "分享图片";
+            mineType = "image/*";
         } else {
             finish();
             return;
@@ -59,7 +66,7 @@ public class ShareFileActivity extends Activity {
 //        Log.d("kk-test", "uri="+uri);
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        shareIntent.setType("text/plain");
+        shareIntent.setType(mineType);
         try{
 //            Log.d("kk-test", "uri="+uri);
 //            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
