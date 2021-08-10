@@ -35,17 +35,21 @@ public class ShareFileActivity extends Activity {
         String ext = intent.getStringExtra(IrrlichtBridge.EXTRA_SHARE_TYPE);
         //TODO
         String sharePath = "";
-        if (ext.equals("yrp")) {
-            sharePath = AppsSettings.get().getReplayDir() + "/" + title;
-        } else if (ext.equals("lua")) {
-            sharePath = AppsSettings.get().getSingleDir() + "/" + title;
-        }
-        File shareFile = new File(sharePath);
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, FileUtils.toUri(this, shareFile));
         shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        shareIntent.setType("*/*");//此处可发送多种文件
+        if (ext.equals("yrp")) {
+            sharePath = AppsSettings.get().getReplayDir() + "/" + title;
+            shareIntent.setType("*/*");
+        } else if (ext.equals("lua")) {
+            sharePath = AppsSettings.get().getSingleDir() + "/" + title;
+            shareIntent.setType("*/*");
+        } else if (ext.equals(("jpg"))) {
+            sharePath = AppsSettings.get().getCardImagePath() + "/" + title;
+            shareIntent.setType("image/jpeg");
+        }
+        File shareFile = new File(sharePath);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, FileUtils.toUri(this, shareFile));
         try {
             startActivity(Intent.createChooser(shareIntent, getString(R.string.send)));
         } catch (Exception e) {
