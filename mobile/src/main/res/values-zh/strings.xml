@@ -306,5 +306,5 @@
     <string name="title_delete_ex">清空扩展卡包</string>
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
-    <string name="yrp_installed">录像已导入，请在观看录像中选择查看</string>
+    <string name="file_installed">文件已导入</string>
 </resources>

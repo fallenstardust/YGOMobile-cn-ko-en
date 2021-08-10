@@ -25,8 +25,8 @@ import cn.garymb.ygomobile.Constants;
 
 public class FileUtils {
 
-    public static Uri toUri(Context context, File file){
-        return FileProvider.getUriForFile(context, context.getPackageName()+".gamefiles", file);
+    public static Uri toUri(Context context, File file) {
+        return FileProvider.getUriForFile(context, context.getPackageName() + ".gamefiles", file);
     }
 
     public static boolean deleteFile(File file) {

@@ -273,24 +273,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 				break;
 			}
-			case BUTTON_SHARE_REPLAY: {
-
-                int sel = mainGame->lstReplayList->getSelected();
-                if(sel == -1)
-                    break;
-                mainGame->gMutex.lock();
-                char name[1024];
-                BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
-                mainGame->gMutex.unlock();
-                prev_operation = id;
-                prev_sel = sel;
-#if defined(_IRR_ANDROID_PLATFORM_)
-                ALOGD("1share replay file=%s", name);
-                android::OnShareFile(mainGame->appMain, "yrp", name);
-				ALOGD("2after share replay file:index=%d", sel);
+				case BUTTON_SHARE_REPLAY: {
+					int sel = mainGame->lstReplayList->getSelected();
+					if(sel == -1)
+						break;
+					mainGame->gMutex.lock();
+                    char name[1024];
+					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
+					mainGame->gMutex.unlock();
+					prev_operation = id;
+					prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+					ALOGD("1share replay file=%s", name);
+					android::OnShareFile(mainGame->appMain, "yrp", name);
+					ALOGD("2after share replay file:index=%d", sel);
 #endif
-                break;
-            }
+					break;
+				}
 			case BUTTON_RENAME_REPLAY: {
 				int sel = mainGame->lstReplayList->getSelected();
 				if(sel == -1)

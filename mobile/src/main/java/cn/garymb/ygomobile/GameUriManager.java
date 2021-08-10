@@ -90,7 +90,7 @@ public class GameUriManager {
             int index = path.lastIndexOf("/");
             if (index > 0) {
                 String name = path.substring(index + 1);
-                if(withOutEx) {
+                if (withOutEx) {
                     index = name.lastIndexOf(".");
                     if (index > 0) {
                         //1.ydk
@@ -129,7 +129,7 @@ public class GameUriManager {
         return TextUtils.equals(deck, file.getParentFile().getAbsolutePath());
     }
 
-    private File toLocalFile(Uri uri){
+    private File toLocalFile(Uri uri) {
         String path = uri.getPath();
         File remoteFile = null;
         if ("file".equals(uri.getScheme())) {
@@ -156,7 +156,7 @@ public class GameUriManager {
         }
         String name = getPathName(path, false);
         File local;
-        if(name.toLowerCase(Locale.US).endsWith(".ydk")){
+        if (name.toLowerCase(Locale.US).endsWith(".ydk")) {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
             local = getDeckFile(dir, name);
         } else if (name.toLowerCase(Locale.US).endsWith(".ypk")) {
@@ -171,7 +171,7 @@ public class GameUriManager {
         if (local.exists()) {
             Log.w(Constants.TAG, "Overwrite file "+local.getAbsolutePath());
         }
-        if(remoteFile != null && TextUtils.equals(remoteFile.getAbsolutePath(), local.getAbsolutePath())){
+        if (remoteFile != null && TextUtils.equals(remoteFile.getAbsolutePath(), local.getAbsolutePath())) {
             //is same path
             Log.i(Constants.TAG, "is same file " + remoteFile.getAbsolutePath() + "==" + local.getAbsolutePath());
             return local;
@@ -181,10 +181,10 @@ public class GameUriManager {
         FileInputStream input = null;
         try {
             File dir = local.getParentFile();
-            if(!dir.exists()){
+            if (!dir.exists()) {
                 dir.mkdirs();
             }
-            if(remoteFile != null){
+            if (remoteFile != null) {
                 FileUtils.copyFile(remoteFile, local);
             } else {
                 pfd = getActivity().getContentResolver().openFileDescriptor(uri, "r");
@@ -205,7 +205,7 @@ public class GameUriManager {
         Intent startSeting = new Intent(activity, SettingsActivity.class);
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
-            if(file == null || !file.exists()){
+            if (file == null || !file.exists()) {
                 Toast.makeText(activity, "open file error", Toast.LENGTH_LONG).show();
                 return;
             }
@@ -214,11 +214,11 @@ public class GameUriManager {
             boolean isYrp = file.getName().toLowerCase(Locale.US).endsWith(".yrp");
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
-            if(isYdk){
+            if (isYdk) {
                 Intent intent = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
                 intent.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                 activity.startActivity(intent);
-            } else if(isYpk){
+            } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSeting);
                     Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
@@ -226,14 +226,14 @@ public class GameUriManager {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                 }
-            } else if(isYrp){
+            } else if (isYrp) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-r", file.getName());
-                    Toast.makeText(activity, activity.getString(R.string.yrp_installed), Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                 } else {
                     Log.w(Constants.TAG, "game is running");
                 }
-            } else if(isLua){
+            } else if (isLua) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-s", file.getName());
                     Toast.makeText(activity, "load single lua file", Toast.LENGTH_LONG).show();

@@ -34,6 +34,7 @@ public final class IrrlichtBridge {
     public static final String ACTION_SHARE_FILE = "cn.garymb.ygomobile.game.shared.file";
     public static final String EXTRA_SHARE_FILE = Intent.EXTRA_STREAM;
     public static final String EXTRA_SHARE_TYPE = Intent.EXTRA_TITLE;
+    //
     public static final String EXTRA_PID = "extras.mypid";
     public static final String EXTRA_ARGV = "extras.argv";
     public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";
@@ -43,10 +44,12 @@ public final class IrrlichtBridge {
     public static final String TAG = "ygo-java";
 
     public static int gPid;
+    public static long sNativeHandle;
+
     static {
         try {
             System.loadLibrary("YGOMobile");
-        }catch (Throwable e){
+        } catch (Throwable e) {
             //ignore
         }
     }
@@ -55,17 +58,21 @@ public final class IrrlichtBridge {
 
     }
 
-    public static long sNativeHandle;
     //显示卡图
     public static native byte[] nativeBpgImage(byte[] data);
+
     //插入文本（大概是发送消息）
     private static native void nativeInsertText(long handle, String text);
+
     //刷新文字
     private static native void nativeRefreshTexture(long handle);
+
     //忽略时点
     private static native void nativeIgnoreChain(long handle, boolean begin);
+
     //强制时点
     private static native void nativeReactChain(long handle, boolean begin);
+
     //取消连锁
     private static native void nativeCancelChain(long handle);
 
@@ -148,7 +155,7 @@ public final class IrrlichtBridge {
         }
     }
 
-    public static void setInputFix(int x, int y){
+    public static void setInputFix(int x, int y) {
         nativeSetInputFix(sNativeHandle, x, y);
     }
 
@@ -193,20 +200,20 @@ public final class IrrlichtBridge {
 
         String getSetting(String key);
 
-        int getIntSetting(String key,int def);
+        int getIntSetting(String key, int def);
 
-        void saveIntSetting(String key,int value);
+        void saveIntSetting(String key, int value);
 
         float getScreenWidth();
 
         float getScreenHeight();
-		
+
 		void runWindbot(String args);
 
         float getXScale();
 
         float getYScale();
-		
+
 //        float getSmallerSize();
 //        float getXScale();
 //        float getYScale();
@@ -224,7 +231,7 @@ public final class IrrlichtBridge {
 
         void showComboBoxCompat(String[] items, boolean isShow, int mode);
 
-        void shareFile(String title, String path);
+        void shareFile(String type, String name);
 
         void performHapticFeedback();
 

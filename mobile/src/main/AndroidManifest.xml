@@ -189,7 +189,7 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity" />
         <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
-        <activity 
+        <activity
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
             android:theme="@style/TranslucentTheme"/>
         <meta-data

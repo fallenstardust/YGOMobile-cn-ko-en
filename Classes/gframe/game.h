@@ -394,8 +394,8 @@ public:
 	irr::gui::IGUIButton* btnRenameReplay;//
 	irr::gui::IGUIButton* btnReplayCancel;//
 	irr::gui::IGUIButton* btnExportDeck;//
+	irr::gui::IGUIButton* btnShareReplay;//
 	irr::gui::IGUIEditBox* ebRepStartTurn;
-	irr::gui::IGUIButton* btnShareReplay;
 	//single play
 	irr::gui::IGUIWindow* wSinglePlay;
 	irr::gui::IGUIImage* bgSinglePlay;

@@ -22,6 +22,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -49,12 +50,11 @@ public class MainActivity extends HomeActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
     };
+    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
     ResCheckTask mResCheckTask;
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
-
-    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +176,7 @@ public class MainActivity extends HomeActivity {
     @Override
     protected void onPermission(boolean isOk) {
         super.onPermission(isOk);
-        if (isOk){
+        if (isOk) {
             try {
                 FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
             } catch (Throwable e) {
@@ -299,7 +299,7 @@ public class MainActivity extends HomeActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == Constants.REQUEST_SETTINGS_CODE){
+        if (requestCode == Constants.REQUEST_SETTINGS_CODE) {
             //TODO
         } else {
             super.onActivityResult(requestCode, resultCode, data);

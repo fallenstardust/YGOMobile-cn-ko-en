@@ -23,17 +23,17 @@ InitOptions::InitOptions(void*data) :
 		char* rawdata = (char*)data;
 		int tmplength = 0;
 		m_opengles_version = BufferIO::ReadInt32(rawdata);
-		
+
 		m_card_quality = BufferIO::ReadInt32(rawdata);
 		m_font_aa_enabled = BufferIO::ReadInt32(rawdata) > 0;
 		m_ps_enabled = BufferIO::ReadInt32(rawdata) > 0;
-		
+
 		//cache dir
 		ReadString(m_work_dir, rawdata);
 		//cdbs
 		cdb_count = BufferIO::ReadInt32(rawdata);
 		m_db_files = new io::path[cdb_count];
-		
+
 		for(int i = 0;i < cdb_count; i++){
 			io::path tmp_path;
 			ReadString(tmp_path, rawdata);
@@ -64,7 +64,7 @@ irr::io::path getExternalStorageDir(ANDROID_APP app) {
 		return ret;
 
 	JNIEnv* jni = nullptr;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	app->activity->vm->AttachCurrentThread(&jni, nullptr);
 	if (!jni)
 		return ret;
 	jclass classEnvironment = jni->FindClass("android/os/Environment");
@@ -807,6 +807,30 @@ int getLocalAddr(ANDROID_APP app) {
 	return addr;
 }
 
+void OnShareFile(ANDROID_APP app, const char* _type, const char* name){
+    if (!app || !app->activity || !app->activity->vm)
+        return;
+    JNIEnv* jni = nullptr;
+   	app->activity->vm->AttachCurrentThread(&jni, nullptr);
+  	if (!jni)
+  	    return;
+   	jobject lNativeActivity = app->activity->clazz;
+   	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+   	jmethodID methodId = jni->GetMethodID(ClassNativeActivity, "shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
+   	jstring s_title = jni->NewStringUTF(_type);
+   	jstring s_ext = jni->NewStringUTF(name);
+   	jni->CallVoidMethod(lNativeActivity, methodId, s_title, s_ext);
+   	if (s_title) {
+   	    //不需要用ReleaseStringUTFChars，因为是c变量，函数外面自己释放
+   	    jni->DeleteLocalRef(s_title);
+   	}
+   	if (s_ext) {
+   	    jni->DeleteLocalRef(s_ext);
+   	}
+   	jni->DeleteLocalRef(ClassNativeActivity);
+   	app->activity->vm->DetachCurrentThread();
+}
+
 void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow, char** pContents,
 		int count, int mode) {
 	if (!app || !app->activity || !app->activity->vm)
@@ -965,31 +989,6 @@ bool android_deck_delete(const char* deck_name) {
 	status = remove(ext_deck_name.c_str());
 
 	return status == 0;
-}
-
-
-void OnShareFile(ANDROID_APP app,const char* title,const char* path){
-	if (!app || !app->activity || !app->activity->vm)
-		return;
-	JNIEnv* jni = nullptr;
-	app->activity->vm->AttachCurrentThread(&jni, nullptr);
-	if (!jni)
-		return;
-	jobject lNativeActivity = app->activity->clazz;
-	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
-	jmethodID methodId = jni->GetMethodID(ClassNativeActivity, "shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
-	jstring s_title = jni->NewStringUTF(title);
-	jstring s_path = jni->NewStringUTF(path);
-	jni->CallVoidMethod(lNativeActivity, methodId, s_title, s_path);
-    if (s_title) {
-        //不需要用ReleaseStringUTFChars，因为是c变量，函数外面自己释放
-        jni->DeleteLocalRef(s_title);
-    }
-    if (s_path) {
-        jni->DeleteLocalRef(s_path);
-    }
-    jni->DeleteLocalRef(ClassNativeActivity);
-    app->activity->vm->DetachCurrentThread();
 }
 
 void runWindbot(ANDROID_APP app, const char* args) {

@@ -15,7 +15,7 @@ void ClickButton(irr::gui::IGUIElement* btn) {
 	event.GUIEvent.Caller = btn;
 	ygo::mainGame->device->postEventFromUser(event);
 }
-char* sub_string(const char* str, int start, int count=-1){
+char* sub_string(const char* str, int start, int count = -1){
 	char* tmp = new char[1024];
 	int len = strlen(str);
 	int index = 0;
@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
  * -j: join host (host info from system.conf)
  * -d: deck edit
  * -r: replay
+ * -s：single
  */
     bool keep_on_return = false;
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -94,12 +95,12 @@ int main(int argc, char* argv[]) {
 			break;
 		} else if(!strcmp(arg, "-r")) { // Replay
 		    exit_on_return = !keep_on_return;
-            //显示录像窗口
-            ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-            ygo::mainGame->ShowElement(ygo::mainGame->wReplay);
-            ygo::mainGame->ebRepStartTurn->setText(L"1");
-            ygo::mainGame->stReplayInfo->setText(L"");
-            ygo::mainGame->RefreshReplay();
+			//显示录像窗口
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			ygo::mainGame->ShowElement(ygo::mainGame->wReplay);
+			ygo::mainGame->ebRepStartTurn->setText(L"1");
+			ygo::mainGame->stReplayInfo->setText(L"");
+			ygo::mainGame->RefreshReplay();
 		    int index = -1;
 			if((i+1) < argc){//下一个参数是录像名
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) {
 			}
             ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
             ClickButton(ygo::mainGame->btnReplayMode);
-            if (index >= 0) {
+			if (index >= 0) {
                 ygo::mainGame->lstReplayList->setSelected(index);
                 ClickButton(ygo::mainGame->btnLoadReplay);
             }
@@ -123,12 +124,12 @@ int main(int argc, char* argv[]) {
             break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
 		    exit_on_return = !keep_on_return;
-		    //显示单人模式窗口
-            ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-            ygo::mainGame->ShowElement(ygo::mainGame->wSinglePlay);
-            ygo::mainGame->RefreshSingleplay();
-            ygo::mainGame->RefreshBot();
-            int index = -1;
+			//显示残局窗口
+			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+			ygo::mainGame->ShowElement(ygo::mainGame->wSinglePlay);
+			ygo::mainGame->RefreshSingleplay();
+			ygo::mainGame->RefreshBot();
+			int index = -1;
 			if((i+1) < argc){//下一个参数是文件名
 #ifdef _IRR_ANDROID_PLATFORM_
 		        const char* name = argv[i+1].c_str();

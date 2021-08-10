@@ -66,7 +66,6 @@ public class YGOMobileActivity extends NativeActivity implements
                             | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
                     View.SYSTEM_UI_FLAG_LOW_PROFILE;
-
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
     protected EditWindowCompat mGlobalEditText;
@@ -109,7 +108,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
         }
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
@@ -119,7 +118,7 @@ public class YGOMobileActivity extends NativeActivity implements
         mArgV = IrrlichtBridge.getArgs(getIntent());
         //
         super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
+        Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
             initPostion();
         }
@@ -139,7 +138,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
+        Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);
@@ -222,7 +221,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private int[] getGameSize(){
+    private int[] getGameSize() {
         //调整padding
         float xScale = app().getXScale();
         float yScale = app().getYScale();
@@ -272,7 +271,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void changeGameSize(){
+    private void changeGameSize() {
         //游戏大小
         int[] size = getGameSize();
         int w = (int) app().getScreenHeight();
@@ -474,7 +473,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -484,7 +483,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -494,7 +493,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -504,7 +503,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -513,14 +512,15 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public void shareFile(final String type, final String path) {
+    public void shareFile(final String type, final String name) {
+        //TODO 分享文件
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(ACTION_SHARE_FILE);
                 intent.addCategory(Intent.CATEGORY_DEFAULT);
                 intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, type);
-                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, path);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, name);
                 intent.setPackage(getPackageName());
                 try {
                     startActivity(intent);

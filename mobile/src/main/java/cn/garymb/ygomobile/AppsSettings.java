@@ -3,7 +3,6 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -49,11 +48,11 @@ import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
+    private final Point mScreenSize = new Point();
+    private final Point mRealScreenSize = new Point();
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
-    private final Point mScreenSize = new Point();
-    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;

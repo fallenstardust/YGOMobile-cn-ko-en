@@ -12,7 +12,7 @@
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>决斗编年史</name>
-        <ip>2333.duelstart.com</ip>
+        <ip>duels.link</ip>
         <port>2333</port>
         <keep>true</keep>
     </server>
