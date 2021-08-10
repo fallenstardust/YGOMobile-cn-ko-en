@@ -270,13 +270,13 @@
     <string name="done">done\！</string>
     <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work properly</string>
     <string name="code_share">Code Share</string>
-    <string name="screenshoot">Screenshoot</string>
+    <string name="screenshoot">Share Art</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
     <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
     <string name="already_top">Already the first card</string>
     <string name="already_end">Already the last card</string>
-    <string name="tip_redownload">Redownload\?</string>
+    <string name="tip_redownload">Redownload</string>
     <string name="tip_expansions_image">no Large image for pre-released data</string>
     <string name="tip_return_to_duel">Current game has been Returned</string>
     <string name="my_favorites">myFav★</string>

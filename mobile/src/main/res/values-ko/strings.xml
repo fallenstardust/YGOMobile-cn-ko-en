@@ -273,7 +273,7 @@
     <string name="about_pref_settings_keep_scale">원래 해상도 표시</string>
     <string name="already_top">첫 번째</string>
     <string name="already_end">마지막</string>
-	<string name="tip_redownload">카드를 다시 다운로드하겠습니까?</string>
+	<string name="tip_redownload">다시 다운로드</string>
     <string name="tip_expansions_image">카드의 고화질 이미지가 없습니다.</string>
     <string name="tip_return_to_duel">현재 게임으로 돌아왔습니다</string>
     <string name="my_favorites">즐겨 찾기★</string>
