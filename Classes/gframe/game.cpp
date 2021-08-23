@@ -1533,7 +1533,7 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth,
 			if(_height == pos)
 				pbuffer = 0;
 			continue;
-		} else if(_width > 0 && _width + w > cWidth) {
+		} else if(_width > 0 && _width + w > cWidth * xScale) {
 			strBuffer[pbuffer++] = L'\n';
 			_width = 0;
 			_height++;
