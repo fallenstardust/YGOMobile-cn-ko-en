@@ -37,6 +37,7 @@
                 android:weightSum="1">
 
                 <LinearLayout
+                    android:id="@+id/tv_deckmanger"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/item_and_text_height"
                     android:layout_weight="1"
@@ -72,6 +73,7 @@
                     android:visibility="gone" />
 
                 <LinearLayout
+                    android:id="@+id/nav_list"
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:orientation="vertical">
@@ -92,6 +94,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/nav_search"
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:orientation="vertical">
@@ -112,6 +115,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/deck_menu"
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="2dp"
@@ -176,9 +180,9 @@
                     android:id="@+id/sp_limit_list"
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/item_height"
-                    android:gravity="fill_horizontal"
                     android:layout_weight="1"
-                    android:ellipsize="end" />
+                    android:ellipsize="end"
+                    android:gravity="fill_horizontal" />
 
                 <TextView
                     android:id="@+id/result_count"
