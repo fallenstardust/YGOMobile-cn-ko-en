@@ -225,10 +225,10 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
-            File[] yrps = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
+            File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
             List<String> list = new ArrayList<>();
-            for (int i = 0; i < yrps.length; i++) {
-                list.add(yrps[i].getName());
+            for (int i = 0; i < ypks.length; i++) {
+                list.add(ypks[i].getName());
             }
             SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
             simpleListAdapter.set(list);

@@ -180,7 +180,7 @@ public abstract class BaseCardsAcitivity extends BaseActivity implements CardLoa
                                         }
                                     })
                     )
-                    .alwaysShow(true)//总是显示，调试时可以打开
+                    //.alwaysShow(true)//总是显示，调试时可以打开
                     .show();
 
         }
