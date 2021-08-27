@@ -44,6 +44,9 @@ public class ShareFileActivity extends Activity {
         } else if (ext.equals("lua")) {
             sharePath = AppsSettings.get().getSingleDir() + "/" + title;
             shareIntent.setType("*/*");
+        } else if (ext.equals("ydk")) {
+            sharePath = AppsSettings.get().getDeckDir() + "/" + title;
+            shareIntent.setType("*/*");
         } else if (ext.equals(("jpg"))) {
             sharePath = AppsSettings.get().getCardImagePath() + "/" + title;
             shareIntent.setType("image/jpeg");

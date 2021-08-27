@@ -150,6 +150,7 @@
     <string name="share_deck">分享卡组</string>
     <string name="code_share">卡组码分享</string>
     <string name="screenshoot">图片分享</string>
+    <string name="ydk_share">文件分享</string>
     <string name="no_share_app">没有找到分享应用</string>
     <string name="intput_room_name">输入密码（可不填）</string>
     <string name="join">加入</string>

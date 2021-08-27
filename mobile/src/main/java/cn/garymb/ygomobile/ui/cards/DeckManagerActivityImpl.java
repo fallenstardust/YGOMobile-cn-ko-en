@@ -58,6 +58,7 @@ import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
@@ -73,6 +74,7 @@ import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
@@ -86,6 +88,7 @@ import ocgcore.enums.LimitType;
 
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener {
 
@@ -859,8 +862,24 @@ class DeckManagerActivityImpl extends BaseCardsAcitivity implements RecyclerView
             @Override
             public void onClick(View v) {
                 du.dis();
-                ShareUtil.shareImage(DeckManagerActivityImpl.this, getContext().getString(R.string.screenshoot), savePath, null);
-
+                //ShareUtil.shareImage(DeckManagerActivityImpl.this, getContext().getString(R.string.screenshoot), savePath, null);
+                String category = mDeckAdapater.getYdkFile().getParent();
+                String fname = deck.getName();
+                Intent intent = new Intent(ACTION_SHARE_FILE);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, "ydk");
+                if (category.equals(mSettings.getDeckDir())) {
+                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, fname);
+                } else {
+                    String cname = DeckUtil.getDeckTypeName(mDeckAdapater.getYdkFile().getAbsolutePath());
+                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, cname + "/" + fname);
+                }
+                intent.setPackage(getPackageName());
+                try {
+                    startActivity(intent);
+                } catch (Throwable e) {
+                    Toast.makeText(getContext(), "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

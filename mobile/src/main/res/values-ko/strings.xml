@@ -150,6 +150,7 @@
     <string name="share_deck">덱 공유</string>
 	<string name="code_share">덱 코드 공유</string>
 	<string name="screenshoot">스크린샷</string>
+    <string name="ydk_share">파일 공유</string>
     <string name="no_share_app">공유할 앱이 없습니다.</string>
     <string name="intput_room_name">비밀번호를 입력하세요. (선택 사항)</string>
     <string name="join">입장</string>
