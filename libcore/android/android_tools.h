@@ -8,6 +8,7 @@
 #include <android_native_app_glue.h>
 #include <signal.h>
 #include <android/log.h>
+#include <Android/CIrrDeviceAndroid.h>
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "ygomobile-native", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "ygomobile-native", __VA_ARGS__))
@@ -26,6 +27,12 @@ public:
 	}
 	inline irr::io::path* getArchiveFiles() {
 		return m_archive_files;
+	}
+	inline int getArgc() {
+		return m_argc;
+	}
+	inline irr::io::path* getArgv() {
+		return m_argv;
 	}
 	inline int getDbCount() {
 		return cdb_count;
@@ -55,11 +62,17 @@ public:
 			delete[] m_archive_files;
 		}
 		m_archive_files = NULL;
+		if(m_argv != NULL){
+			delete[] m_argv;
+		}
+		m_argv = NULL;
     }
 private:
 	irr::io::path m_work_dir;
     irr::io::path* m_db_files;
     irr::io::path* m_archive_files;
+	irr::io::path* m_argv;
+	int m_argc;
     int m_opengles_version;
     int m_card_quality;
 	int cdb_count;
@@ -85,6 +98,8 @@ struct SDisplayMetrics {
 extern float getScreenWidth(ANDROID_APP app);
 
 extern float getScreenHeight(ANDROID_APP app);
+
+extern void OnShareFile(ANDROID_APP app, const char* title, const char* ext);
 
 // Get SDCard path.
 extern irr::io::path getExternalStorageDir(ANDROID_APP app);
@@ -178,6 +193,8 @@ extern void process_input(ANDROID_APP app,
 extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
 extern bool android_deck_delete(const char* deck_name);
+
+extern void onGameExit(ANDROID_APP app);
 
 extern void runWindbot(ANDROID_APP app, const char* args);
 

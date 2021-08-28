@@ -150,6 +150,7 @@
     <string name="share_deck">分享卡组</string>
     <string name="code_share">卡组码分享</string>
     <string name="screenshoot">图片分享</string>
+    <string name="ydk_share">文件分享</string>
     <string name="no_share_app">没有找到分享应用</string>
     <string name="intput_room_name">输入密码（可不填）</string>
     <string name="join">加入</string>
@@ -273,12 +274,13 @@
     <string name="about_pref_settings_keep_scale">开启原始比例的游戏画面</string>
     <string name="already_top">已经是第一张啦</string>
     <string name="already_end">已经是最后一张啦</string>
-    <string name="tip_redownload">重新下载？</string>
+    <string name="tip_redownload">重新下载</string>
     <string name="tip_expansions_image">非自带卡片没有大图</string>
     <string name="tip_return_to_duel">已回到当前游戏</string>
     <string name="my_favorites">我的收藏★</string>
     <string name="ypk_installed">拓展卡包文件已安装</string>
     <string name="ypk_go_setting">这是拓展卡包文件,要使用须启用扩展卡包</string>
+    <string name="ypk_delete">长按相应名称以删除</string>
     <string name="install_failed_bcos">安装失败，原因：</string>
     <string name="deck_back_up">备份</string>
     <string name="deck_restore">还原</string>
@@ -290,7 +292,7 @@
         使用本软件此类功能将申请以下必要权限：
         \n安装未知应用权限：安装更新包，备份、还原卡组必需
         \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
-    <string name="guide_menu">功能菜单：\n软件主要功能如"</string>
+    <string name="guide_menu">功能菜单：\n主要功能如"</string>
     <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
     <string name="guide_serverlist">直连服务器列表\n点击一个服务器块即可加入相应的在线游戏</string>
     <string name="guide_server_edit">编辑按钮:\n点击编辑相应的服务器信息。\n如改游戏昵称等</string>
@@ -303,8 +305,11 @@
                                 \n更多决斗模式密码请参考软件使用教程</string>
     <string name="guide_button_search">点击编辑搜索条件</string>
     <string name="guide_search_result_count">这里显示搜索结果卡片数量</string>
-    <string name="title_delete_ex">清空扩展卡包</string>
+    <string name="guide_button_search_result">点击显示搜索结果\n默认显示收藏的卡片</string>
+    <string name="guide_view_deck_manager">点击切换卡组\n也可以在此管理多个卡组分类</string>
+    <string name="guide_view_move_card">按住一张卡片可以拖动到其他位置\n长按这张卡片即可删除它</string>
+    <string name="title_delete_ex">删除扩展卡包</string>
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
-    <string name="yrp_installed">录像已导入，请在观看录像中选择查看</string>
+    <string name="file_installed">文件已导入</string>
 </resources>

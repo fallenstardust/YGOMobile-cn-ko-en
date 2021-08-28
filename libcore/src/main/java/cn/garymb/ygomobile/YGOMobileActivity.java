@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.os.Process;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.controller.NetworkController;
@@ -40,6 +42,7 @@ import cn.garymb.ygomobile.widget.EditWindowCompat;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
 import cn.garymb.ygomobile.widget.overlay.OverlayView;
 
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_START;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_STOP;
 
@@ -65,7 +68,6 @@ public class YGOMobileActivity extends NativeActivity implements
                             | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
                     View.SYSTEM_UI_FLAG_LOW_PROFILE;
-
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
     protected EditWindowCompat mGlobalEditText;
@@ -85,6 +87,8 @@ public class YGOMobileActivity extends NativeActivity implements
     private SurfaceView mSurfaceView;
     private boolean replaced = false;
     private static boolean USE_SURFACE = true;
+    private String[] mArgV;
+    private boolean onGameExiting;
 
 //    public static int notchHeight;
 
@@ -106,14 +110,17 @@ public class YGOMobileActivity extends NativeActivity implements
     @SuppressWarnings("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
         }
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
+        //argv
+        mArgV = IrrlichtBridge.getArgs(getIntent());
+        //
         super.onCreate(savedInstanceState);
-        Log.e("YGOStarter","跳转完成"+System.currentTimeMillis());
+        Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
         if (sChainControlXPostion < 0) {
             initPostion();
         }
@@ -136,7 +143,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("YGOStarter","ygo显示"+System.currentTimeMillis());
+        Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);
@@ -227,7 +234,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private int[] getGameSize(){
+    private int[] getGameSize() {
         //调整padding
         float xScale = app().getXScale();
         float yScale = app().getYScale();
@@ -277,7 +284,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
-    private void changeGameSize(){
+    private void changeGameSize() {
         //游戏大小
         int[] size = getGameSize();
         int w = (int) app().getScreenHeight();
@@ -407,6 +414,11 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public ByteBuffer getNativeInitOptions() {
         NativeInitOptions options = app().getNativeInitOptions();
+        options.mArgvList.clear();
+        if (mArgV != null) {
+            options.mArgvList.addAll(Arrays.asList(mArgV));
+            mArgV = null;
+        }
         return options.toNativeBuffer();
     }
 
@@ -476,7 +488,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -486,7 +498,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -496,7 +508,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
@@ -506,11 +518,57 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if(USE_SURFACE) {
+        if (USE_SURFACE) {
             if (!replaced) {
                 return;
             }
         }
         super.surfaceRedrawNeeded(holder);
+    }
+
+    @Override
+    public void shareFile(final String title, final String ext) {
+        //TODO 分享文件
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(ACTION_SHARE_FILE);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, title);
+                intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, ext);
+                intent.setPackage(getPackageName());
+                try {
+                    startActivity(intent);
+                } catch (Throwable e) {
+                    //ignore
+                    Toast.makeText(YGOMobileActivity.this, "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGameExit() {
+        if(onGameExiting){
+            return;
+        }
+        onGameExiting = true;
+        Log.e("ygomobile", "game exit");
+        final Intent  intent = new Intent("ygomobile.intent.action.GAME");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        intent.putExtra("game_exit_time", System.currentTimeMillis());
+        intent.setPackage(getPackageName());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    startActivity(intent);
+                } catch (Throwable ignore) {}
+                finishAndRemoveTask();
+                Process.killProcess(Process.myPid());
+            }
+        });
     }
 }

@@ -3,7 +3,6 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -25,6 +24,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
@@ -48,11 +48,11 @@ import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 public class AppsSettings {
     private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
+    private final Point mScreenSize = new Point();
+    private final Point mRealScreenSize = new Point();
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
-    private final Point mScreenSize = new Point();
-    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;
@@ -469,6 +469,11 @@ public class AppsSettings {
     public void setResourcePath(String path) {
         if (TextUtils.equals(path, getResourcePath())) return;
         mSharedPreferences.putString(Constants.PREF_GAME_PATH, path);
+    }
+
+    //获取录像文件夹
+    public String getReplayDir() {
+        return new File(getResourcePath(), CORE_REPLAY_PATH).getAbsolutePath();
     }
 
     //获取卡组文件夹

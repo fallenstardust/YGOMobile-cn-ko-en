@@ -6,6 +6,7 @@
  */
 package cn.garymb.ygomobile.core;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
@@ -25,12 +26,26 @@ import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
 public final class IrrlichtBridge {
     public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
     public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
+    /**
+     * @see #EXTRA_SHARE_FILE
+     * @see #EXTRA_SHARE_TYPE
+     */
+    public static final String ACTION_SHARE_FILE = "cn.garymb.ygomobile.game.shared.file";
+    public static final String EXTRA_SHARE_FILE = Intent.EXTRA_STREAM;
+    public static final String EXTRA_SHARE_TYPE = Intent.EXTRA_TITLE;
+    //
     public static final String EXTRA_PID = "extras.mypid";
+    public static final String EXTRA_ARGV = "extras.argv";
+    public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";
+    private static final boolean DEBUG = false;
+    private static final String TAG = IrrlichtBridge.class.getSimpleName();
     public static int gPid;
+    public static long sNativeHandle;
+
     static {
         try {
             System.loadLibrary("YGOMobile");
-        }catch (Throwable e){
+        } catch (Throwable e) {
             //ignore
         }
     }
@@ -39,17 +54,21 @@ public final class IrrlichtBridge {
 
     }
 
-    public static long sNativeHandle;
     //显示卡图
     public static native byte[] nativeBpgImage(byte[] data);
+
     //插入文本（大概是发送消息）
     private static native void nativeInsertText(long handle, String text);
+
     //刷新文字
     private static native void nativeRefreshTexture(long handle);
+
     //忽略时点
     private static native void nativeIgnoreChain(long handle, boolean begin);
+
     //强制时点
     private static native void nativeReactChain(long handle, boolean begin);
+
     //取消连锁
     private static native void nativeCancelChain(long handle);
 
@@ -61,8 +80,18 @@ public final class IrrlichtBridge {
 
     private static native void nativeSetInputFix(long handle, int x, int y);
 
-    private static final boolean DEBUG = false;
-    private static final String TAG = IrrlichtBridge.class.getSimpleName();
+    public static void setArgs(Intent intent, String[] args) {
+        intent.putExtra(EXTRA_ARGV, args);
+        intent.putExtra(EXTRA_ARGV_TIME_OUT, (System.currentTimeMillis() + 15 * 1000));
+    }
+
+    public static String[] getArgs(Intent intent) {
+        long time = intent.getLongExtra(EXTRA_ARGV_TIME_OUT, 0);
+        if (time > System.currentTimeMillis()) {
+            return intent.getStringArrayExtra(EXTRA_ARGV);
+        }
+        return null;
+    }
 
     public static Bitmap getBpgImage(InputStream inputStream, Bitmap.Config config) {
         ByteArrayOutputStream outputStream = null;
@@ -120,7 +149,7 @@ public final class IrrlichtBridge {
         }
     }
 
-    public static void setInputFix(int x, int y){
+    public static void setInputFix(int x, int y) {
         nativeSetInputFix(sNativeHandle, x, y);
     }
 
@@ -165,20 +194,20 @@ public final class IrrlichtBridge {
 
         String getSetting(String key);
 
-        int getIntSetting(String key,int def);
+        int getIntSetting(String key, int def);
 
-        void saveIntSetting(String key,int value);
+        void saveIntSetting(String key, int value);
 
         float getScreenWidth();
 
         float getScreenHeight();
-		
-		void runWindbot(String args);
+
+        void runWindbot(String args);
 
         float getXScale();
 
         float getYScale();
-		
+
 //        float getSmallerSize();
 //        float getXScale();
 //        float getYScale();
@@ -196,6 +225,8 @@ public final class IrrlichtBridge {
 
         void showComboBoxCompat(String[] items, boolean isShow, int mode);
 
+        void shareFile(String title, String ext);
+
         void performHapticFeedback();
 
         /**
@@ -210,5 +241,7 @@ public final class IrrlichtBridge {
         int getPositionX();
 
         int getPositionY();
+
+        void onGameExit();
     }
 }

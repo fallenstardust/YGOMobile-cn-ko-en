@@ -21,6 +21,9 @@ public final class NativeInitOptions {
     //pics.zip;scripts.zip;a.zip;b.zip
     public final List<String> mArchiveList;
 
+    //int main(int argc, char*[] argv)
+    public final List<String> mArgvList;
+
     public int mCardQuality;
 
     public boolean mIsFontAntiAliasEnabled;
@@ -30,6 +33,7 @@ public final class NativeInitOptions {
     public NativeInitOptions() {
         mDbList = new ArrayList<>();
         mArchiveList = new ArrayList<>();
+        mArgvList = new ArrayList<>();
     }
 
     public ByteBuffer toNativeBuffer() {
@@ -48,6 +52,10 @@ public final class NativeInitOptions {
         for (String str : mArchiveList) {
             putString(buffer, str);
         }
+        putInt(buffer, mArgvList.size());
+        for (String str : mArgvList) {
+            putString(buffer, str);
+        }
         return buffer;
     }
 
@@ -59,6 +67,7 @@ public final class NativeInitOptions {
                 ", mDbList='" + mDbList + '\'' +
                 ", mArchiveList='" + mArchiveList + '\'' +
                 ", mCardQuality=" + mCardQuality +
+                ", mArgvList='" + mArgvList + '\'' +
                 ", mIsFontAntiAliasEnabled=" + mIsFontAntiAliasEnabled +
                 ", mIsPendulumScaleEnabled=" + mIsPendulumScaleEnabled +
                 '}';

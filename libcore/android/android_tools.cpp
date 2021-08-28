@@ -23,17 +23,17 @@ InitOptions::InitOptions(void*data) :
 		char* rawdata = (char*)data;
 		int tmplength = 0;
 		m_opengles_version = BufferIO::ReadInt32(rawdata);
-		
+
 		m_card_quality = BufferIO::ReadInt32(rawdata);
 		m_font_aa_enabled = BufferIO::ReadInt32(rawdata) > 0;
 		m_ps_enabled = BufferIO::ReadInt32(rawdata) > 0;
-		
+
 		//cache dir
 		ReadString(m_work_dir, rawdata);
 		//cdbs
 		cdb_count = BufferIO::ReadInt32(rawdata);
 		m_db_files = new io::path[cdb_count];
-		
+
 		for(int i = 0;i < cdb_count; i++){
 			io::path tmp_path;
 			ReadString(tmp_path, rawdata);
@@ -47,6 +47,14 @@ InitOptions::InitOptions(void*data) :
 			ReadString(tmp_path, rawdata);
 			m_archive_files[i] = tmp_path;
 		}
+        //argv
+		m_argc = BufferIO::ReadInt32(rawdata);
+		m_argv = new io::path[m_argc];
+		for(int i = 0 ;i < m_argc; i++){
+			io::path tmp_path;
+			ReadString(tmp_path, rawdata);
+			m_argv[i] = tmp_path;
+		}
 	}
 }
 
@@ -55,8 +63,8 @@ irr::io::path getExternalStorageDir(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	JNIEnv* jni = nullptr;
+	app->activity->vm->AttachCurrentThread(&jni, nullptr);
 	if (!jni)
 		return ret;
 	jclass classEnvironment = jni->FindClass("android/os/Environment");
@@ -87,7 +95,7 @@ irr::io::path getExternalFilesDir(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -117,7 +125,7 @@ float getScreenHeight(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -142,7 +150,7 @@ float getScreenWidth(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -167,7 +175,7 @@ irr::io::path getDBDir(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -196,7 +204,7 @@ irr::io::path getCardImagePath(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -225,7 +233,7 @@ irr::io::path getCoreConfigVersion(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -253,7 +261,7 @@ int getOpenglVersion(ANDROID_APP app) {
 	int ret = 1;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -277,7 +285,7 @@ int getCardQuality(ANDROID_APP app) {
 	int ret = 1;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -302,7 +310,7 @@ irr::io::path getFontPath(ANDROID_APP app) {
 	irr::io::path ret;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -330,7 +338,7 @@ irr::io::path getResourcePath(ANDROID_APP app) {
 	irr::io::path ret;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -358,7 +366,7 @@ float getXScale(ANDROID_APP app){
 	float ret = 1;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -382,7 +390,7 @@ float getYScale(ANDROID_APP app){
 	float ret = 1;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -416,7 +424,7 @@ irr::io::path getSetting(ANDROID_APP app, const char* key) {
 	irr::io::path ret;
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -460,7 +468,7 @@ void setLastCategory(ANDROID_APP app, const char* catename) {
 int getIntSetting(ANDROID_APP app, const char* key,int defvalue){
 	if (!app || !app->activity || !app->activity->vm)
 		return defvalue;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return defvalue;
@@ -488,7 +496,7 @@ int getIntSetting(ANDROID_APP app, const char* key,int defvalue){
 void saveIntSetting(ANDROID_APP app, const char* key, int value) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return;
@@ -514,7 +522,7 @@ void saveIntSetting(ANDROID_APP app, const char* key, int value) {
 void saveSetting(ANDROID_APP app, const char* key, const char* value) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return;
@@ -545,7 +553,7 @@ bool perfromTrick(ANDROID_APP app) {
 	bool ret = true;
 	if (!app || !app->activity || !app->activity->vm)
 		return false;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return false;
@@ -574,7 +582,7 @@ bool getFontAntiAlias(ANDROID_APP app) {
 	bool ret = true;
 	if (!app || !app->activity || !app->activity->vm)
 		return true;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return true;
@@ -603,7 +611,7 @@ bool getFontAntiAlias(ANDROID_APP app) {
 void perfromHapticFeedback(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return;
@@ -621,7 +629,7 @@ irr::io::path getCacheDir(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return ret;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return ret;
@@ -654,7 +662,7 @@ irr::io::path getCacheDir(ANDROID_APP app) {
 void toggleIME(ANDROID_APP app, bool pShow, const char* hint) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	// Retrieves NativeActivity.
 	jobject lNativeActivity = app->activity->clazz;
@@ -678,7 +686,7 @@ void toggleGlobalIME(ANDROID_APP app, bool pShow) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
 
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jint lFlags = 2;
 
@@ -744,7 +752,7 @@ void toggleGlobalIME(ANDROID_APP app, bool pShow) {
 core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 	if (!app || !app->activity || !app->activity->vm)
 		return core::position2di(0, 0);
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
@@ -769,7 +777,7 @@ core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 InitOptions* getInitOptions(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return NULL;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
@@ -787,7 +795,7 @@ int getLocalAddr(ANDROID_APP app) {
 	int addr = -1;
 	if (!app || !app->activity || !app->activity->vm)
 		return addr;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
@@ -799,11 +807,35 @@ int getLocalAddr(ANDROID_APP app) {
 	return addr;
 }
 
+void OnShareFile(ANDROID_APP app, const char* title, const char* ext){
+    if (!app || !app->activity || !app->activity->vm)
+        return;
+    JNIEnv* jni = nullptr;
+   	app->activity->vm->AttachCurrentThread(&jni, nullptr);
+  	if (!jni)
+  	    return;
+   	jobject lNativeActivity = app->activity->clazz;
+   	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+   	jmethodID methodId = jni->GetMethodID(ClassNativeActivity, "shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
+   	jstring s_title = jni->NewStringUTF(title);
+   	jstring s_ext = jni->NewStringUTF(ext);
+   	jni->CallVoidMethod(lNativeActivity, methodId, s_title, s_ext);
+   	if (s_title) {
+   	    //不需要用ReleaseStringUTFChars，因为是c变量，函数外面自己释放
+   	    jni->DeleteLocalRef(s_title);
+   	}
+   	if (s_ext) {
+   	    jni->DeleteLocalRef(s_ext);
+   	}
+   	jni->DeleteLocalRef(ClassNativeActivity);
+   	app->activity->vm->DetachCurrentThread();
+}
+
 void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow, char** pContents,
 		int count, int mode) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
@@ -826,7 +858,7 @@ void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow, char** pContents,
 void toggleOverlayView(ANDROID_APP app, bool pShow) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
@@ -859,6 +891,20 @@ void process_input(ANDROID_APP app,
 	} else {
 //        LOGE("Failure reading next input event: %s\n", strerror(errno));
 	}
+}
+
+void onGameExit(ANDROID_APP app){
+    if (!app || !app->activity || !app->activity->vm)
+        return;
+    JNIEnv* jni = nullptr;
+    app->activity->vm->AttachCurrentThread(&jni, NULL);
+    jobject lNativeActivity = app->activity->clazz;
+    jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+    jmethodID methodId = jni->GetMethodID(ClassNativeActivity,
+                                               "onGameExit", "()V");
+    jni->CallVoidMethod(lNativeActivity, methodId);
+    jni->DeleteLocalRef(ClassNativeActivity);
+    app->activity->vm->DetachCurrentThread();
 }
 
 s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent) {
@@ -948,7 +994,7 @@ bool android_deck_delete(const char* deck_name) {
 void runWindbot(ANDROID_APP app, const char* args) {
 	if (!app || !app->activity || !app->activity->vm)
 		return;
-	JNIEnv* jni = 0;
+	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	if (!jni)
 		return;

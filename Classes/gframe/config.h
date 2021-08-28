@@ -15,6 +15,7 @@
 #ifdef _WIN32
 
 #include <WinSock2.h>
+#define NOMINMAX
 #include <windows.h>
 #include <ws2tcpip.h>
 
@@ -39,6 +40,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <locale.h>
 
 #define SD_BOTH 2
 #define SOCKET int

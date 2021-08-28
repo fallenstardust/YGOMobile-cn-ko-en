@@ -6,6 +6,7 @@
 #include "replay_mode.h"
 #include "single_mode.h"
 #include "image_manager.h"
+#include "sound_manager.h"
 #include "game.h"
 
 namespace ygo {
@@ -63,7 +64,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MODE_EXIT: {
 				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
-				mainGame->device->closeDevice();
+				mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_MODE: {
@@ -121,7 +122,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_REFRESH: {
@@ -214,7 +215,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->wChat->setVisible(false);
 				mainGame->SaveConfig();
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_REPLAY_MODE: {
@@ -273,6 +274,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 				break;
 			}
+				case BUTTON_SHARE_REPLAY: {
+					int sel = mainGame->lstReplayList->getSelected();
+					if(sel == -1)
+						break;
+					mainGame->gMutex.lock();
+                    char name[1024];
+					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
+					mainGame->gMutex.unlock();
+					prev_operation = id;
+					prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+                ALOGD("1share replay file=%s", name);
+					android::OnShareFile(mainGame->appMain, "yrp", name);
+				ALOGD("2after share replay file:index=%d", sel);
+#endif
+					break;
+				}
 			case BUTTON_RENAME_REPLAY: {
 				int sel = mainGame->lstReplayList->getSelected();
 				if(sel == -1)
@@ -523,7 +541,11 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t infobuf[256];
 				std::wstring repinfo;
-				time_t curtime = ReplayMode::cur_replay.pheader.seed;
+				time_t curtime;
+				if(ReplayMode::cur_replay.pheader.flag & REPLAY_UNIFORM)
+					curtime = ReplayMode::cur_replay.pheader.start_time;
+				else
+					curtime = ReplayMode::cur_replay.pheader.seed;
 				tm* st = localtime(&curtime);
 				wcsftime(infobuf, 256, L"%Y/%m/%d %H:%M:%S\n", st);
 				repinfo.append(infobuf);

@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include "client_card.h"
-
-#include "config.h"
+#include "../ocgcore/mtrandom.h"
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #include <android/android_tools.h>
@@ -79,6 +78,7 @@ public:
 	int prev_sel;
 	bool is_modified;
 	bool readonly;
+	mt19937 rnd;
 
 	std::unordered_map<int, int>* filterList;
 	std::vector<code_pointer> results;

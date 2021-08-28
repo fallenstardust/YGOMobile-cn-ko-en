@@ -16,8 +16,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -31,11 +33,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -220,17 +225,43 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
+            File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
+            List<String> list = new ArrayList<>();
+            for (int i = 0; i < ypks.length; i++) {
+                list.add(ypks[i].getName());
+            }
+            SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
+            simpleListAdapter.set(list);
             final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setTitle(R.string.question);
+            dialog.setTitle(R.string.ypk_delete);
+            dialog.setContentView(R.layout.dialog_room_name);
+            EditText editText = dialog.bind(R.id.room_name);
+            editText.setVisibility(View.GONE);//不显示输入框
+            ListView listView = dialog.bind(R.id.room_list);
+            listView.setAdapter(simpleListAdapter);
+            listView.setOnItemLongClickListener((a, v, i, index) -> {
+                String name = simpleListAdapter.getItemById(index);
+                int pos = simpleListAdapter.findItem(name);
+                if (pos >= 0) {
+                    simpleListAdapter.remove(pos);
+                    simpleListAdapter.notifyDataSetChanged();
+                    FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
+                    DataManager.get().load(true);
+                    Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                }
+                return true;
+            });
+            /*
             dialog.setMessage(R.string.ask_delete_ex);
             dialog.setLeftButtonListener((dlg, s) -> {
                 FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
+                DataManager.get().load(true);
                 Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
             dialog.setRightButtonListener((dlg, s) -> {
                 dialog.dismiss();
-            });
+            });*/
             dialog.show();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {
