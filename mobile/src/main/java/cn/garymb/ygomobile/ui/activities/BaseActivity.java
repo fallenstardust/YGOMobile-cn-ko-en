@@ -7,15 +7,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.Display;
 import android.view.MenuItem;
+import android.view.Surface;
+import android.view.SurfaceControl;
+import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -24,7 +33,10 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import java.io.IOException;
+
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import ocgcore.data.Card;
 
 
@@ -95,6 +107,127 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+
+         /*
+        M 是 6.0，6.0修改了新的api，并且就已经支持修改window的刷新率了。
+        但是6.0那会儿，也没什么手机支持高刷新率吧，所以也没什么人注意它。
+        我更倾向于直接判断 O，也就是 Android 8.0，我觉得这个时候支持高刷新率的手机已经开始了。
+        */
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            // 获取系统window支持的模式
+////            val  = window.windowManager.defaultDisplay.supportedModes;
+//            Display display = getWindowManager().getDefaultDisplay();
+//
+//            Surface surface = new Surface(new SurfaceTexture(10));
+//            TextView textVie
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//                SurfaceHolder surfaceHolder=new SurfaceHolder() {
+//                    @Override
+//                    public void addCallback(Callback callback) {
+//
+//                    }
+//
+//                    @Override
+//                    public void removeCallback(Callback callback) {
+//
+//                    }
+//
+//                    @Override
+//                    public boolean isCreating() {
+//                        return false;
+//                    }
+//
+//                    @Override
+//                    public void setType(int type) {
+//
+//                    }
+//
+//                    @Override
+//                    public void setFixedSize(int width, int height) {
+//
+//                    }
+//
+//                    @Override
+//                    public void setSizeFromLayout() {
+//
+//                    }
+//
+//                    @Override
+//                    public void setFormat(int format) {
+//
+//                    }
+//
+//                    @Override
+//                    public void setKeepScreenOn(boolean screenOn) {
+//
+//                    }
+//
+//                    @Override
+//                    public Canvas lockCanvas() {
+//                        return null;
+//                    }
+//
+//                    @Override
+//                    public Canvas lockCanvas(Rect dirty) {
+//                        return null;
+//                    }
+//
+//                    @Override
+//                    public void unlockCanvasAndPost(Canvas canvas) {
+//
+//                    }
+//
+//                    @Override
+//                    public Rect getSurfaceFrame() {
+//                        return null;
+//                    }
+//
+//                    @Override
+//                    public Surface getSurface() {
+//                        return null;
+//                    }
+//                }
+//                getWindow().getDecorView().getd.setFrameRate(90, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+//            } else {
+//
+//                Display.Mode[] modes = display.getSupportedModes();
+//                Log.e("BaseActivity", "个数" + modes.length);
+//                try {
+//                    FileLogUtil.writeAndTime("刷新率个数" + modes.length);
+//
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                Display.Mode maxMode = null;
+//                for (Display.Mode mode : modes) {
+//                    if (maxMode == null) {
+//                        maxMode = mode;
+//                    } else {
+//                        if (mode.getRefreshRate() > maxMode.getRefreshRate())
+//                            maxMode = mode;
+//                    }
+//                    try {
+//                        FileLogUtil.writeAndTime("" + "状态信息" + mode.getModeId() + "  " + mode.getRefreshRate() + "  " + mode.getPhysicalWidth() + "  " + mode.getPhysicalHeight());
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                    Log.e("BaseActivity", "状态信息" + mode.getModeId() + "  " + mode.getRefreshRate() + "  " + mode.getPhysicalWidth() + "  " + mode.getPhysicalHeight());
+//                }
+////            if (maxMode!=null) {
+////                Log.e("BaseACtivity","设置刷新率"+maxMode.getRefreshRate());
+//                try {
+//                    FileLogUtil.writeAndTime("设置刷新率" + modes[0].getRefreshRate());
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                WindowManager.LayoutParams att = getWindow().getAttributes();
+//                att.preferredDisplayModeId = modes[0].getModeId();
+//                getWindow().setAttributes(att);
+//
+//            }
+//        }
+
         super.onCreate(savedInstanceState);
     }
 
