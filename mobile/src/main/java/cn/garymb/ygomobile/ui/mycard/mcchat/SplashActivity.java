@@ -100,25 +100,21 @@ public class SplashActivity extends Activity {
 
     private void join() {
         if (!su.isListener()) {
-            new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (!su.isConnected()) {
-                        han.sendEmptyMessage(4);
-                        login();
-                    }
-                    if (su.isConnected()) {
-                        han.sendEmptyMessage(3);
-                        try {
-                            su.joinChat();
-                            han.sendEmptyMessage(1);
-                        } catch (Exception e) {
-                            han.sendEmptyMessage(2);
-                        }
-                    }
-                    // TODO: Implement this method
+            new Thread(() -> {
+                if (!su.isConnected()) {
+                    han.sendEmptyMessage(4);
+                    login();
                 }
+                if (su.isConnected()) {
+                    han.sendEmptyMessage(3);
+                    try {
+                        su.joinChat();
+                        han.sendEmptyMessage(1);
+                    } catch (Exception e) {
+                        han.sendEmptyMessage(2);
+                    }
+                }
+                // TODO: Implement this method
             }).start();
         } else {
             han.sendEmptyMessage(1);
