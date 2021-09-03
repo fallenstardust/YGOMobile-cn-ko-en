@@ -7,15 +7,50 @@ import ocgcore.enums.CardType;
 
 
 public class CardSort implements Comparator<Card> {
-    public static final CardSort ASC = new CardSort();
-
-    public CardSort() {
+    public static final CardSort ASC = new CardSort(false);
+    public static final CardSort FULL_ASC = new CardSort(true);
+    private final boolean full;
+    private CardSort(boolean full) {
+        this.full = full;
     }
 
     private int comp(long l1, long l2) {
-        if (l1 == l2) return 0;
-        if (l1 > l2) return 1;
-        return -1;
+        return Long.compare(l1, l2);
+    }
+
+    private static final int SORT_OTHER = 999;
+    private static final int SORT_MONSTER = 1;
+    private static final int SORT_LINK = 2;
+    private static final int SORT_SPELL = 3;
+    private static final int SORT_TRAP = 4;
+    private static final int SORT_FUSION = 10;
+    private static final int SORT_SYNCHRO = 11;
+    private static final int SORT_XYZ = 12;
+
+    private int getSortKey1(Card c1){
+        if (c1.isType(CardType.Link)) {
+            return SORT_LINK;
+        } else if (c1.isType(CardType.Monster)) {
+            return SORT_MONSTER;
+        } else if (c1.isType(CardType.Spell)) {
+            return SORT_SPELL;
+        } else if (c1.isType(CardType.Trap)) {
+            return SORT_TRAP;
+        } else{
+            return SORT_OTHER;
+        }
+    }
+
+    private int getSortKey2(Card c1){
+        if (c1.isType(CardType.Fusion)) {
+            return SORT_FUSION;
+        } else if (c1.isType(CardType.Synchro)) {
+            return SORT_SYNCHRO;
+        } else if (c1.isType(CardType.Xyz)) {
+            return SORT_XYZ;
+        } else{
+            return SORT_OTHER;
+        }
     }
 
     @Override
@@ -26,89 +61,57 @@ public class CardSort implements Comparator<Card> {
         if (c2 == null) {
             return 1;
         }
-//            boolean log = c1.Code == 74003290||c2.Code == 74003290;
-        if (c1.isType(CardType.Spell)) {
-            if (c2.isType(CardType.Monster)) {
-                //怪兽在前面
-                return -1;
+        //同名卡
+        if(c1.isAlias(c2)){
+            return comp(c1.Code, c2.Code);
+        }
+        int sortKey1 = getSortKey1(c1);
+        int sortKey2 = getSortKey1(c2);
+        if(sortKey1 != sortKey2){
+            return Integer.compare(sortKey1, sortKey2);
+        }
+        if(sortKey1 == SORT_SPELL || sortKey2 == SORT_TRAP){
+            long type1, type2;
+            if(sortKey1 == SORT_SPELL){
+                type1 = c1.Type ^ CardType.Spell.value();
+                type2 = c2.Type ^ CardType.Spell.value();
+            } else {
+                type1 = c1.Type ^ CardType.Trap.value();
+                type2 = c2.Type ^ CardType.Trap.value();
             }
-            if (c2.isType(CardType.Trap)) {
-                //陷阱在前面
-                return 1;
-            }
-            long type1 = c1.Type ^ CardType.Spell.value();
-            long type2 = c2.Type ^ CardType.Spell.value();
             int rs = comp(type1, type2);
             if (rs == 0) {
                 return comp(c1.Code, c2.Code);
             } else {
                 return rs;
             }
-        } else if (c1.isType(CardType.Trap)) {
-            //怪兽魔法在前面
-            if (c2.isType(CardType.Monster) || c2.isType(CardType.Spell)) {
-                return -1;
-            }
-            long type1 = c1.Type ^ CardType.Trap.value();
-            long type2 = c2.Type ^ CardType.Trap.value();
-            int rs = comp(type1, type2);
-            if (rs == 0) {
-                return comp(c1.Code, c2.Code);
-            } else {
-                return rs;
-            }
-        } else if (c1.isType(CardType.Monster)) {
-            //魔法陷阱在后面
-            if (c2.isType(CardType.Spell)) {
-                //怪兽在前面
-                return 1;
-            }
-            if (c2.isType(CardType.Trap)) {
-                //陷阱在前面
-                return 2;
-            }
-
-            //超量，同调，融合
-            //1,2,3
-            if (c1.isType(CardType.Xyz)) {
-                if (c2.isType(CardType.Synchro)) {
-                    return -1;
-                }
-                if (c2.isType(CardType.Fusion)) {
-                    return -2;
-                }if (c2.isType(CardType.Link)) {
-                    return 1;
-                }
-            } else if (c1.isType(CardType.Synchro)) {
-                if (c2.isType(CardType.Xyz)) {
-                    return 1;
-                }
-                if (c2.isType(CardType.Fusion)) {
-                    return -1;
-                }
-                if (c2.isType(CardType.Link)) {
-                    return 2;
-                }
-            } else if (c1.isType(CardType.Fusion)) {
-                if (c2.isType(CardType.Xyz)) {
-                    return 2;
-                }
-                if (c2.isType(CardType.Synchro)) {
-                    return 1;
-                }
-                if (c2.isType(CardType.Link)) {
-                    return 3;
+        } else if(sortKey1 == SORT_OTHER){
+            return comp(c1.Code, c2.Code);
+        } else if(sortKey1 == SORT_LINK){
+            //高星的在前面
+            return Integer.compare(c2.getStar(), c1.getStar());
+        } else {
+            //monster
+            if(full) {
+                sortKey1 = getSortKey2(c1);
+                sortKey2 = getSortKey2(c2);
+                if (sortKey1 != sortKey2) {
+                    //需要反转
+                    return Integer.compare(sortKey1, sortKey2);
                 }
             }
-            int rs = comp(c1.getStar(), c2.getStar());
+            //高星的在前面
+            int rs = comp(c2.getStar(), c1.getStar());
             if (rs != 0) {
                 return rs;
             }
-            rs = comp(c1.Attack, c2.Attack);
+            //高攻击的在前面
+            rs = comp(c2.Attack, c1.Attack);
             if (rs != 0) {
                 return rs;
             }
-            rs = comp(c1.Defense, c2.Defense);
+            //高防御的在前面
+            rs = comp(c2.Defense, c1.Defense);
             if (rs != 0) {
                 return rs;
             }
@@ -127,5 +130,13 @@ public class CardSort implements Comparator<Card> {
             }
         }
         return comp(c1.Code, c2.Code);
+    }
+
+    private boolean isSameType(Card c1, Card c2, CardType type){
+        return c1.isType(type) && c2.isType(type);
+    }
+
+    private boolean isSpecialType(Card c1) {
+        return c1.isType(CardType.Fusion) || c1.isType(CardType.Synchro) || c1.isType(CardType.Xyz) || c1.isType(CardType.Link);
     }
 }
