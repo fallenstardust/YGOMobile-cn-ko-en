@@ -23,14 +23,17 @@ android {
     }
     productFlavors {
         cn {
+            buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
             applicationIdSuffix ".EN"
+            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
             applicationIdSuffix ".KO"
+            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
             manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }

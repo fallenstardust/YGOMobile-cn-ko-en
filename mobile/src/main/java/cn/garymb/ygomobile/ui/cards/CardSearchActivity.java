@@ -50,7 +50,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     public static final String SEARCH_MESSAGE = "searchMessage";
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
-    protected CardListAdapter mCardListAdapater;
+    protected CardListAdapter mCardListAdapter;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
     protected StringManager mStringManager = DataManager.get().getStringManager();
@@ -79,10 +79,10 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         mDrawerlayout = $(R.id.drawer_layout);
         mImageLoader = ImageLoader.get(this);
         mListView = $(R.id.list_cards);
-        mCardListAdapater = new CardListAdapter(this, mImageLoader);
-        mCardListAdapater.setItemBg(true);
+        mCardListAdapter = new CardListAdapter(this, mImageLoader);
+        mCardListAdapter.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
-        mListView.setAdapter(mCardListAdapater);
+        mListView.setAdapter(mCardListAdapter);
         Button btn_search = $(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
 /*
@@ -144,7 +144,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         mListView.addOnItemTouchListener(new RecyclerViewItemListener(mListView, new RecyclerViewItemListener.OnItemListener() {
             @Override
             public void onItemClick(View view, int pos) {
-                onCardClick(pos, mCardListAdapater);
+                onCardClick(pos, mCardListAdapter);
             }
 
             @Override
@@ -206,9 +206,9 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
 //        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
-        mCardListAdapater.set(cardInfos);
+        mCardListAdapter.set(cardInfos);
         mResult_count.setText(String.valueOf(cardInfos.size()));
-        mCardListAdapater.notifyDataSetChanged();
+        mCardListAdapter.notifyDataSetChanged();
         if (cardInfos.size() > 0) {
             mListView.smoothScrollToPosition(0);
         }
@@ -236,7 +236,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
-        mCardListAdapater.setLimitList(limitList);
+        mCardListAdapter.setLimitList(limitList);
     }
 
     @Override

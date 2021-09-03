@@ -22,7 +22,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -106,7 +105,7 @@ public class MainActivity extends HomeActivity {
                         Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
 
                         btnMasterRule.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
                             dialog.dismiss();
                         });
                         btnTutorial.setOnClickListener((v) -> {

@@ -92,8 +92,6 @@ import ocgcore.CardManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_DONATE;
-import static cn.garymb.ygomobile.Constants.URL_DONATE_CN;
 
 public abstract class HomeActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnDuelAssistantListener {
 
@@ -296,13 +294,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         switch (id) {
             case R.id.nav_webpage: {
                 String url;
-                if (BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.EN" || BuildConfig.APPLICATION_ID == "cn.garymb.ygomobile.KO") {
-                    url = URL_DONATE;
-                } else {
-                    url = URL_DONATE_CN;
-                }
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(url));
+                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
                 startActivity(intent);
             }
             break;
@@ -352,7 +345,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
 
                 btnMasterRule.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
                     dialog.dismiss();
                 });
                 btnTutorial.setOnClickListener((v) -> {

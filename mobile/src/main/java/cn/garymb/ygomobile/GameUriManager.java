@@ -104,7 +104,7 @@ public class GameUriManager {
     }
 
     private File getDeckFile(File dir, String name) {
-        File file = new File(dir, name + ".ydk");
+        File file = new File(dir, name);
         if (file.exists()) {
             for (int i = 2; i < 10; i++) {
                 file = new File(dir, name + "(" + i + ").ydk");
@@ -158,7 +158,7 @@ public class GameUriManager {
         File local;
         if (name.toLowerCase(Locale.US).endsWith(".ydk")) {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
-            local = getDeckFile(dir, name);
+            local = getDeckFile(dir, getPathName(path, true));
         } else if (name.toLowerCase(Locale.US).endsWith(".ypk")) {
             local = new File(AppsSettings.get().getExpansionsPath(), name);
         } else if (name.toLowerCase(Locale.US).endsWith(".yrp")) {

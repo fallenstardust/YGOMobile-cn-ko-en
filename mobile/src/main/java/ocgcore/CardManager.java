@@ -110,7 +110,13 @@ public class CardManager {
     }
 
     public Card getCard(int code) {
-        return cardDataHashMap.get(Integer.valueOf(code));
+        Card card = cardDataHashMap.get(code);
+        if(card == null){
+            card = new Card(code);
+            cardDataHashMap.put(code, new Card(code));
+            return card;
+        }
+        return card;
     }
 
     public int getCount() {

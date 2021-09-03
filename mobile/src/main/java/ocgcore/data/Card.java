@@ -35,6 +35,7 @@ public class Card extends CardData implements Parcelable {
 
     public Card(int code) {
         super(code);
+        this.Name = "Unknown";
     }
 
     public Card(CardData cardData) {

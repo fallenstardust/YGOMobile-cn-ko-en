@@ -32,7 +32,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     private boolean mItemBg;
     private ImageLoader imageLoader;
     private boolean mEnableSwipe = false;
-    private BaseActivity mContext;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {
         super(context);
@@ -103,10 +102,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Log.e("Cardlist","num"+position);
         Card item = getItem(position);
-        if (item==null)
-            return;
         imageLoader.bindImage(holder.cardImage, item.Code);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {
