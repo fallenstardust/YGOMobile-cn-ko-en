@@ -114,9 +114,6 @@ public interface Constants {
     String PREF_READ_EX = "pref_settings_read_ex";
     boolean DEF_PREF_READ_EX = false;
 
-    String PREF_DECK_MANAGER_V2 = "pref_settings_deck_manager_v2";
-    boolean DEF_PREF_DECK_MANAGER_V2 = false;
-
     String PREF_KEEP_SCALE = "pref_settings_keep_scale";
     boolean DEF_PREF_KEEP_SCALE = false;
 

@@ -1,10 +1,8 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -15,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -22,9 +21,6 @@ import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.hubert.guide.NewbieGuide;
-import com.app.hubert.guide.core.Controller;
-import com.app.hubert.guide.listener.OnHighlightDrewListener;
-import com.app.hubert.guide.listener.OnLayoutInflatedListener;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
@@ -50,8 +46,8 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
-class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
-
+public class CardSearchActivity extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
+    public static final String SEARCH_MESSAGE = "searchMessage";
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapater;
@@ -68,7 +64,6 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     private DuelAssistantManagement duelAssistantManagement;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
-    private Button btn_search;
     private TextView mResult_count;
 
     @Override
@@ -77,7 +72,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         setContentView(R.layout.activity_search);
         mResult_count = findViewById(R.id.search_result_count);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
-        intentSearchMessage = getIntent().getStringExtra(CardSearchAcitivity.SEARCH_MESSAGE);
+        intentSearchMessage = getIntent().getStringExtra(CardSearchActivity.SEARCH_MESSAGE);
 //        Toolbar toolbar = $(R.id.toolbar);
 //        setSupportActionBar(toolbar);
         enableBackHome();
@@ -88,10 +83,8 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         mCardListAdapater.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
         mListView.setAdapter(mCardListAdapater);
-        btn_search = $(R.id.btn_search);
-        btn_search.setOnClickListener((v) -> {
-            showSearch(true);
-        });
+        Button btn_search = $(R.id.btn_search);
+        btn_search.setOnClickListener((v) -> showSearch(true));
 /*
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerlayout, toolbar, R.string.search_open, R.string.search_close);
@@ -166,7 +159,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         }));
         mListView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
@@ -187,17 +180,16 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         });
     }
 
-    private boolean onBack() {
+    private void onBack() {
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
-            return true;
+            return;
         }
         if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
             mDrawerlayout.closeDrawer(Gravity.LEFT);
-            return true;
+            return;
         }
         finish();
-        return true;
     }
 
     @Override
@@ -217,7 +209,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
         mCardListAdapater.set(cardInfos);
         mResult_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapater.notifyDataSetChanged();
-        if (cardInfos != null && cardInfos.size() > 0) {
+        if (cardInfos.size() > 0) {
             mListView.smoothScrollToPosition(0);
         }
     }
@@ -255,11 +247,8 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_search:
-                //弹条件对话框
-                showSearch(true);
-                break;
+        if (item.getItemId() == R.id.action_search) {//弹条件对话框
+            showSearch(true);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -320,7 +309,7 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
 
                     @Override
                     public void onSearchResult(List<Card> Cards, boolean isHide) {
-                        CardSearchActivityImpl.this.onSearchResult(Cards, isHide);
+                        CardSearchActivity.this.onSearchResult(Cards, isHide);
                     }
                 });
             }
@@ -361,16 +350,13 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide() {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
-                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
-                    @Override
-                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
-                        Paint paint = new Paint();
-                        paint.setColor(Color.WHITE);
-                        paint.setStyle(Paint.Style.STROKE);
-                        paint.setStrokeWidth(20);
-                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
-                        canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
-                    }
+                .setOnHighlightDrewListener((canvas, rectF) -> {
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(20);
+                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                    canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
                 }).build();
         NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
                 .setLabel("searchCardGuide")
@@ -379,14 +365,10 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                                 .setBackgroundColor(0xbc000000)
                                 .addHighLightWithOptions(findViewById(R.id.btn_search), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
-
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_button_search);
-                                    }
+                                .setOnLayoutInflatedListener((view, controller) -> {
+                                    TextView tv = view.findViewById(R.id.text_about);
+                                    tv.setVisibility(View.VISIBLE);
+                                    tv.setText(R.string.guide_button_search);
                                 })
 
                 )
@@ -395,14 +377,10 @@ class CardSearchActivityImpl extends BaseActivity implements CardLoader.CallBack
                                 .setBackgroundColor(0xbc000000)
                                 .addHighLightWithOptions(findViewById(R.id.search_result_count), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
-                                .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
-
-                                    @Override
-                                    public void onLayoutInflated(View view, Controller controller) {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_search_result_count);
-                                    }
+                                .setOnLayoutInflatedListener((view, controller) -> {
+                                    TextView tv = view.findViewById(R.id.text_about);
+                                    tv.setVisibility(View.VISIBLE);
+                                    tv.setText(R.string.guide_search_result_count);
                                 })
 
                 )

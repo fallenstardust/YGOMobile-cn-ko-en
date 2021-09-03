@@ -215,9 +215,7 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
-                Intent intent = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-                intent.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                activity.startActivity(intent);
+                DeckManagerActivity.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSeting);
@@ -253,9 +251,7 @@ public class GameUriManager {
                 } else {
                     Deck deckInfo = new Deck(uri);
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    activity.startActivity(startdeck);
+                    DeckManagerActivity.start(activity, file.getAbsolutePath());
                 }
             }
 //            else if (PATH_ROOM.equals(path)) {
@@ -283,9 +279,7 @@ public class GameUriManager {
             }
         }
         if (deck != null && deck.exists()) {
-            Intent startdeck = new Intent(getActivity(), DeckManagerActivity.getDeckManager());
-            startdeck.putExtra(Intent.EXTRA_TEXT, deck.getAbsolutePath());
-            activity.startActivity(startdeck);
+            DeckManagerActivity.start(activity, deck.getAbsolutePath());
         } else {
             Log.w("kk", "no find " + name);
             activity.finish();

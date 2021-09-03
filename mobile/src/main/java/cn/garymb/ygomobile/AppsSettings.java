@@ -130,10 +130,6 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_READ_EX, DEF_PREF_READ_EX);
     }
 
-    public boolean isUseDeckManagerV2() {
-        return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
-    }
-
     public float getXScale(int w, int h) {
         if (isKeepScale()) {
             float sx = getScreenHeight() / w;

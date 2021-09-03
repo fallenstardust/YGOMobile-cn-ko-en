@@ -75,7 +75,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
@@ -194,8 +194,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ID_MAINACTIVITY) {
-            Intent intent = new Intent(this, CardSearchAcitivity.class);
-            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
+            Intent intent = new Intent(this, CardSearchActivity.class);
+            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
             startActivity(intent);
         }
     }
@@ -333,10 +333,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 mServerListManager.addServer();
                 break;
             case R.id.action_card_search:
-                startActivity(new Intent(this, CardSearchAcitivity.class));
+                startActivity(new Intent(this, CardSearchActivity.class));
                 break;
             case R.id.action_deck_manager:
-                startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
+                DeckManagerActivity.start(this, null);
                 break;
             case R.id.action_join_qq_group:
                 String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
@@ -597,17 +597,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                 File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
-                startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                startActivity(startdeck);
+                DeckManagerActivity.start(this, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    Intent startdeck = new Intent(this, DeckManagerActivity.getDeckManager());
-                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    startActivity(startdeck);
+                    DeckManagerActivity.start(this, file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

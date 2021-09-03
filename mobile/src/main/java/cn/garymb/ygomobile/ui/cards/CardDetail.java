@@ -48,7 +48,7 @@ import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
-import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
+import static cn.garymb.ygomobile.ui.cards.DeckManagerActivity.Favorite;
 
 /***
  * 卡片详情
@@ -224,7 +224,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         favConf.save("#Favorite");
         favConf.read();
         Favorite.clear();
-        if (!DeckManagerActivityImpl.isSearchResult) {
+        if (!DeckManagerActivity.isSearchResult) {
             SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
             if (id != null) {
                 for (int i = 0; i < id.size(); i++)
