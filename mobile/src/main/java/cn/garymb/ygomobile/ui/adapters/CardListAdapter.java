@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -102,7 +103,10 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        Log.e("Cardlist","num"+position);
         Card item = getItem(position);
+        if (item==null)
+            return;
         imageLoader.bindImage(holder.cardImage, item.Code);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {

@@ -37,7 +37,7 @@
             android:name="com.tencent.bugly.beta.ui.BetaActivity"
             android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize|locale"
-            android:excludeFromRecents="true"/>
+            android:excludeFromRecents="true" />
 
         <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
@@ -187,11 +187,14 @@
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.McchatActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity" />
+        <activity
+            android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"
+            android:theme="@style/AppTheme.Mycard" />
         <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
-            android:theme="@style/TranslucentTheme"/>
+            android:theme="@style/TranslucentTheme" />
+
         <meta-data
             android:name="BUGLY_APPID"
             android:value="${APP_ID}" />

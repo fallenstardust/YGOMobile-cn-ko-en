@@ -5,5 +5,6 @@ public enum CardOt {
     OCG,
     TCG,
     OCG_TCG,
-    DIY
+    CUSTOM/*,
+    简中*/
 }

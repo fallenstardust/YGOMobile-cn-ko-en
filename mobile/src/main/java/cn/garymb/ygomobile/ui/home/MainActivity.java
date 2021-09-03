@@ -274,6 +274,9 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
+                String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
+                if (new File(fonts).list() != null)
+                    FileUtils.delFile(fonts);
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.FONT_DIRECTORY),
                         AppsSettings.get().getFontDirPath(), true);
                 /*

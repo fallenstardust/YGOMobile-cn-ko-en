@@ -343,7 +343,12 @@ public class CardSearcher implements View.OnClickListener {
                         mStringManager.getOtString(item.ordinal(), item.toString()))
                 );
             }
-        }
+        }/*
+        items.add(new SimpleSpinnerItem(1,"OCG"));
+        items.add(new SimpleSpinnerItem(2,"TCG"));
+        items.add(new SimpleSpinnerItem(3,"OCG&TCG"));
+        items.add(new SimpleSpinnerItem(4,"DIY"));
+        items.add(new SimpleSpinnerItem(8,"简中"));*/
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.setColor(Color.WHITE);

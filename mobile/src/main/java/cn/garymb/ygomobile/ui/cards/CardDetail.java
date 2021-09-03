@@ -1,19 +1,19 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -29,12 +29,13 @@ import java.io.File;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -46,6 +47,7 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
 
 /***
@@ -95,6 +97,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private LinearLayout ll_bar;
     private ProgressBar pb_loading;
     private TextView tv_loading;
+    private LinearLayout ll_btn;
+    private Button btn_redownload;
+    private Button btn_share;
     private boolean isDownloadCardImage = true;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -389,11 +394,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         tv_loading = view.findViewById(R.id.tv_name);
         pb_loading.setMax(100);
 
+        ll_btn = view.findViewById(R.id.ll_btn);
+        btn_redownload = view.findViewById(R.id.btn_redownload);
+        btn_share = view.findViewById(R.id.btn_share);
+
         // 启用图片缩放功能
         photoView.enable();
 
         photoView.setOnClickListener(View -> {
-            dialog.dis();
+            if (ll_btn.getVisibility() == View.VISIBLE) {
+                ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
+                ll_btn.setVisibility(View.GONE);
+            } else {
+                dialog.dis();
+            }
         });
 
         photoView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -401,25 +415,30 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             public boolean onLongClick(View v) {
                 if (!isDownloadCardImage || cardManager.getCard(code) == null)
                     return false;
-                DialogPlus dialogPlus = new DialogPlus(context);
-                dialogPlus.setMessage(R.string.tip_redownload);
-                dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                dialogPlus.setLeftButtonText(R.string.Download);
-                dialogPlus.setRightButtonText(R.string.Cancel);
-                dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_in));
+                ll_btn.setVisibility(View.VISIBLE);
+                btn_redownload.setOnClickListener((s) -> {
+                    ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
+                    ll_btn.setVisibility(View.GONE);
+                    downloadCardImage(code, file);
+                });
+
+                btn_share.setOnClickListener((s) -> {
+                    ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
+                    ll_btn.setVisibility(View.GONE);
+                    String fname = String.valueOf(code);
+                    Intent intent = new Intent(ACTION_SHARE_FILE);
+                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, "jpg");
+                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, fname + Constants.IMAGE_URL_EX);
+                    intent.setPackage(context.getPackageName());
+                    try {
+                        context.startActivity(intent);
+                    } catch (Throwable e) {
+                        Toast.makeText(context, "dev error:not found activity.", Toast.LENGTH_SHORT).show();
                     }
                 });
-                dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        downloadCardImage(code, file);
-                    }
-                });
-                dialogPlus.show();
+
                 imageLoader.bindImage(cardImage, code, null, true);
                 return true;
             }

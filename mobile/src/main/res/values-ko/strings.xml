@@ -150,6 +150,7 @@
     <string name="share_deck">덱 공유</string>
 	<string name="code_share">덱 코드 공유</string>
 	<string name="screenshoot">스크린샷</string>
+    <string name="ydk_share">파일 공유</string>
     <string name="no_share_app">공유할 앱이 없습니다.</string>
     <string name="intput_room_name">비밀번호를 입력하세요. (선택 사항)</string>
     <string name="join">입장</string>
@@ -273,12 +274,13 @@
     <string name="about_pref_settings_keep_scale">원래 해상도 표시</string>
     <string name="already_top">첫 번째</string>
     <string name="already_end">마지막</string>
-	<string name="tip_redownload">카드를 다시 다운로드하겠습니까?</string>
+	<string name="tip_redownload">다시 다운로드</string>
     <string name="tip_expansions_image">카드의 고화질 이미지가 없습니다.</string>
     <string name="tip_return_to_duel">현재 게임으로 돌아왔습니다</string>
     <string name="my_favorites">즐겨 찾기★</string>
     <string name="ypk_installed">확장 카드 팩 파일이 설치되었습니다</string>
     <string name="ypk_go_setting">확장 카드 팩을 사용하려면 확장 카드 팩이 활성화되어 있어야합니다.</string>
+    <string name="ypk_delete">Long-press name to delete</string>
     <string name="install_failed_bcos">설치에 실패했습니다. 이유:</string>
     <string name="deck_back_up">백업</string>
     <string name="deck_restore">복원</string>
@@ -303,6 +305,9 @@
                                 \n더 많은 듀얼 모드 비밀번호는 앱 튜토리얼을 참고하십시오</string>
     <string name="guide_button_search">겁색 기준을 편집하려면 터치하십시오</string>
     <string name="guide_search_result_count">여기에 검색 결과를 표시합니다</string>
+    <string name="guide_button_search_result">검색 결과를 보려면 여기를 클릭하세요. 즐겨찾는 카드도 표시됩니다.</string>
+    <string name="guide_view_deck_manager">덱 관리에서 덱 카테고리와 덱을 클릭하여 관리할 수 있습니다.</string>
+    <string name="guide_view_move_card">원하는 카드를 길게 누르거나 다른 위치로 이동할 수 있고, 제거할 수 있습니다.</string>
     <string name="about_delete_ex">만약 확장 카드를 사용하면서 문제가 발생했을 경우, 삭제하는 것도 좋은 선택이다</string>
     <string name="title_delete_ex">확장 삭제</string>
     <string name="file_installed">문건 나왔습니다.</string>
