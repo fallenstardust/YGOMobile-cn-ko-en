@@ -170,27 +170,45 @@ public class CardLoader implements ICardLoader {
         });
     }
 
-    private Comparator<Card> ASCode = new Comparator<Card>() {
-        @Override
-        public int compare(Card o1, Card o2) {
-            int index1 = (Integer.valueOf(o1.Code).intValue());
-            int index2 = (Integer.valueOf(o2.Code).intValue());
-            return index1 - index2;
-        }
-    };
-
-    private Comparator<Card> ASC = new Comparator<Card>() {
-        @Override
-        public int compare(Card o1, Card o2) {
-            if (o1.getStar() == o2.getStar()) {
-                if (o1.Attack == o2.Attack) {
-                    return (int) (o2.Code - o1.Code);
-                } else {
-                    return o2.Attack - o1.Attack;
-                }
+    public List<Card> sort(List<Card> cards){
+        List<Card> tmp = new ArrayList<Card>();
+        List<Card> monster = new ArrayList<Card>();
+        List<Card> spell = new ArrayList<Card>();
+        List<Card> trap = new ArrayList<Card>();
+        int count = cards.size();
+        for (int i = 0; i < count; i++) {
+            Card card = cards.get(i);
+            if (card.isType(CardType.Monster)) {
+                monster.add(card);
+            } else if (card.isType(CardType.Spell)) {
+                spell.add(card);
+            } else if (card.isType(CardType.Trap)) {
+                trap.add(card);
             } else {
-                return o2.getStar() - o1.getStar();
+                tmp.add(card);
             }
+        }
+        Collections.sort(tmp, ASCode);
+        Collections.sort(monster, ASC);
+        Collections.sort(spell, ASCode);
+        Collections.sort(trap, ASCode);
+        tmp.addAll(monster);
+        tmp.addAll(spell);
+        tmp.addAll(trap);
+        return tmp;
+    }
+
+    private static final Comparator<Card> ASCode = (o1, o2) -> o1.Code - o2.Code;
+
+    private static final Comparator<Card> ASC = (o1, o2) -> {
+        if (o1.getStar() == o2.getStar()) {
+            if (o1.Attack == o2.Attack) {
+                return (int) (o2.Code - o1.Code);
+            } else {
+                return o2.Attack - o1.Attack;
+            }
+        } else {
+            return o2.getStar() - o1.getStar();
         }
     };
 

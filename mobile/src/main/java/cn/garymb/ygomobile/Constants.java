@@ -219,4 +219,6 @@ public interface Constants {
     boolean COPY_YDK_FILE = false;
 
     String TAG = "ygo-java";
+
+    String DEF_ENCODING = "utf-8";
 }

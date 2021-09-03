@@ -44,6 +44,9 @@ public class FileUtils {
         InputStreamReader in = null;
         FileInputStream inputStream = null;
         List<String> lines = new ArrayList<>();
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         try {
             inputStream = new FileInputStream(file);
             in = new InputStreamReader(inputStream, encoding);
@@ -52,8 +55,8 @@ public class FileUtils {
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
-        } catch (Exception e) {
-
+        } catch (Throwable e) {
+            //ignore
         } finally {
             IOUtils.close(in);
             IOUtils.close(inputStream);
@@ -62,6 +65,9 @@ public class FileUtils {
     }
 
     public static boolean writeLines(String file, List<String> lines, String encoding, String newLine) {
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         FileOutputStream outputStream = null;
         File tmp = new File(file + ".tmp");
         boolean ok = false;

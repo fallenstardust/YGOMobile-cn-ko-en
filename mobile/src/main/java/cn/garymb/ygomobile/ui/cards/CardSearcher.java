@@ -4,7 +4,6 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -16,6 +15,7 @@ import android.widget.TextView.OnEditorActionListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -25,7 +25,6 @@ import cn.garymb.ygomobile.loader.ICardLoader;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -38,8 +37,6 @@ import ocgcore.enums.CardOt;
 import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
-
-import static cn.garymb.ygomobile.ui.cards.DeckManagerActivity.Favorite;
 
 public class CardSearcher implements View.OnClickListener {
 
@@ -73,8 +70,10 @@ public class CardSearcher implements View.OnClickListener {
     private final View layout_monster;
     private final ICardLoader dataLoader;
     private final Context mContext;
+    private final Button myFavButton;
     private CallBack mCallBack;
     CardLoader mCardLoader;
+    private boolean mShowFavorite;
 
     public interface CallBack {
         void onSearchStart();
@@ -111,7 +110,7 @@ public class CardSearcher implements View.OnClickListener {
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
         LinkMarkerButton = findViewById(R.id.btn_linkmarker);
-        Button myFavButton = findViewById(R.id.btn_my_fav);
+        myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
         layout_monster = findViewById(R.id.layout_monster);
@@ -136,18 +135,11 @@ public class CardSearcher implements View.OnClickListener {
         suffixWord.setOnEditorActionListener(searchListener);
 
         myFavButton.setOnClickListener(v -> {
-            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
-            Favorite.clear();
-            if (id != null) {
-                for (int i = 0; i < id.size(); i++)
-                    Favorite.add(id.valueAt(i));
+            if(isShowFavorite()){
+                hideFavorites();
+            } else {
+                showFavorites(true);
             }
-            if (mCallBack != null) {
-                mCallBack.onSearchStart();
-                mCallBack.onSearchResult(Favorite, false);
-            }
-
-            DeckManagerActivity.isSearchResult = false;
         });
 
         LinkMarkerButton.setOnClickListener(v -> {
@@ -282,6 +274,24 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
+    public void showFavorites(boolean showList) {
+        mShowFavorite = true;
+        myFavButton.setSelected(true);
+        if (mCallBack != null) {
+            mCallBack.onSearchStart();
+            mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+        }
+    }
+
+    public void hideFavorites(){
+        mShowFavorite = true;
+        myFavButton.setSelected(false);
+        if (mCallBack != null) {
+            mCallBack.onSearchStart();
+            mCallBack.onSearchResult(Collections.emptyList(), true);
+        }
+    }
+
     public void initItems() {
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);
@@ -339,6 +349,10 @@ public class CardSearcher implements View.OnClickListener {
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
+    }
+
+    public boolean isShowFavorite() {
+        return mShowFavorite;
     }
 
     protected String getString(int id) {
@@ -528,9 +542,10 @@ public class CardSearcher implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        if (v == searchButton) {
+        if (v.getId() == R.id.btn_search) {
+            hideFavorites();
             search();
-        } else if (v == resetButton) {
+        } else if (v.getId() == R.id.btn_reset) {
             resetAll();
         }
     }
@@ -554,7 +569,6 @@ public class CardSearcher implements View.OnClickListener {
                     , getSelect(typeMonsterSpinner2));
             lineKey = 0;
         }
-        DeckManagerActivity.isSearchResult = true;
     }
 
     private void resetAll() {

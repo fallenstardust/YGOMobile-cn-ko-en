@@ -24,13 +24,13 @@ import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.CardFavorites;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
@@ -49,7 +49,6 @@ public class MainActivity extends HomeActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
     };
-    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
     ResCheckTask mResCheckTask;
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
@@ -65,7 +64,7 @@ public class MainActivity extends HomeActivity {
         //资源复制
         checkRes();
         //加载收藏夹
-        favConf.read();
+        CardFavorites.get().load();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})

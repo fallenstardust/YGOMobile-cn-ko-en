@@ -163,17 +163,13 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                 super.onScrollStateChanged(recyclerView, newState);
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
+                    case RecyclerView.SCROLL_STATE_SETTLING:
                         if (!isFinishing()) {
                             Glide.with(getContext()).resumeRequests();
                         }
                         break;
                     case RecyclerView.SCROLL_STATE_DRAGGING:
                         Glide.with(getContext()).pauseRequests();
-                        break;
-                    case RecyclerView.SCROLL_STATE_SETTLING:
-                        if (!isFinishing()) {
-                            Glide.with(getContext()).resumeRequests();
-                        }
                         break;
                 }
             }
@@ -284,6 +280,11 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         if (cardInfo != null) {
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail(this, mImageLoader, mStringManager);
+                mCardDetail.setCallBack((card, favorite) -> {
+                    if(mCardSelector.isShowFavorite()) {
+                        mCardSelector.showFavorites(false);
+                    }
+                });
                 mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
@@ -300,16 +301,6 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                     @Override
                     public void onClose() {
                         mDialog.dismiss();
-                    }
-                });
-                mCardDetail.setCallBack(new CardDetail.CallBack() {
-                    @Override
-                    public void onSearchStart() {
-                    }
-
-                    @Override
-                    public void onSearchResult(List<Card> Cards, boolean isHide) {
-                        CardSearchActivity.this.onSearchResult(Cards, isHide);
                     }
                 });
             }
@@ -345,6 +336,12 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         } else if (isLoad) {
             mDrawerlayout.openDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        CardFavorites.get().save();
     }
 
     //https://www.jianshu.com/p/99649af3b191

@@ -7,7 +7,6 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -26,7 +25,6 @@ import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
-import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -41,14 +39,12 @@ import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
-import static cn.garymb.ygomobile.ui.cards.DeckManagerActivity.Favorite;
 
 /***
  * 卡片详情
@@ -61,33 +57,31 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private static final String TAG = "CardDetail";
     private static CardManager cardManager;
-    private ImageView cardImage;
-    private TextView name;
-    private TextView desc;
-    private TextView level;
-    private TextView type;
-    private TextView race;
-    private TextView cardAtk;
-    private TextView cardDef;
+    private final ImageView cardImage;
+    private final TextView name;
+    private final TextView desc;
+    private final TextView level;
+    private final TextView type;
+    private final TextView race;
+    private final TextView cardAtk;
+    private final TextView cardDef;
 
-    private TextView setname;
-    private TextView otView;
-    private TextView attrView;
-    private View monsterlayout;
-    private View close;
-    private View faq;
-    private View addMain;
-    private View addSide;
-    private View linkArrow;
-    private View layout_detail_p_scale;
-    private TextView detail_cardscale;
-    private TextView cardcode;
-    private View lb_setcode;
-    private ImageLoader imageLoader;
-    private View mImageFav, atkdefView;
+    private final TextView setName;
+    private final TextView otView;
+    private final TextView attrView;
+    private final View monsterLayout;
+    private final View close;
+    private final View addMain;
+    private final View addSide;
+    private final View linkArrow;
+    private final View layoutDetailPScale;
+    private final TextView detailCardScale;
+    private final TextView cardCode;
+    private final View lbSetCode;
+    private final ImageLoader imageLoader;
+    private final View mImageFav, atkdefView;
 
-    private BaseActivity mContext;
-    private StringManager mStringManager;
+    private final StringManager mStringManager;
     private int curPosition;
     private Card mCardInfo;
     private CardListProvider mProvider;
@@ -129,10 +123,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
-    private CallBack mCallBack;
+    private final BaseActivity mContext;
+    private OnFavoriteChangedListener mCallBack;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
-        super(LayoutInflater.from(context).inflate(R.layout.dialog_cardinfo, null));
+        super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
         mContext = context;
         cardImage = bind(R.id.card_image);
         this.imageLoader = imageLoader;
@@ -140,26 +135,26 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         name = bind(R.id.text_name);
         desc = bind(R.id.text_desc);
         close = bind(R.id.btn_close);
-        cardcode = bind(R.id.card_code);
+        cardCode = bind(R.id.card_code);
         level = bind(R.id.card_level);
         linkArrow = bind(R.id.detail_link_arrows);
         type = bind(R.id.card_type);
-        faq = bind(R.id.btn_faq);
+        View faq = bind(R.id.btn_faq);
         cardAtk = bind(R.id.card_atk);
         cardDef = bind(R.id.card_def);
         atkdefView = bind(R.id.layout_atkdef2);
         mImageFav = bind(R.id.image_fav);
 
-        monsterlayout = bind(R.id.layout_monster);
-        layout_detail_p_scale = bind(R.id.detail_p_scale);
-        detail_cardscale = bind(R.id.detail_cardscale);
+        monsterLayout = bind(R.id.layout_monster);
+        layoutDetailPScale = bind(R.id.detail_p_scale);
+        detailCardScale = bind(R.id.detail_cardscale);
         race = bind(R.id.card_race);
-        setname = bind(R.id.card_setname);
+        setName = bind(R.id.card_setname);
         addMain = bind(R.id.btn_add_main);
         addSide = bind(R.id.btn_add_side);
         otView = bind(R.id.card_ot);
         attrView = bind(R.id.card_attribute);
-        lb_setcode = bind(R.id.label_setcode);
+        lbSetCode = bind(R.id.label_setcode);
 
         if (cardManager == null) {
             Log.e("CardDetail", "加载卡片信息");
@@ -205,35 +200,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         bind(R.id.nextone).setOnClickListener((v) -> {
             onNextCard();
         });
-        bind(R.id.image_fav).setOnClickListener((v) -> {
+        mImageFav.setOnClickListener((v) -> {
             doMyFavorites(getCardInfo());
         });
     }
 
+    /**
+     * 收藏卡片
+     */
     public void doMyFavorites(Card cardInfo) {
-        CardLoader mCardLoader = new CardLoader(context);
-        ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
-        Integer code = cardInfo.Code;
-        if (favConf.mLines.contains(code)) {
-            favConf.mLines.remove(code);
-            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
-        } else {
-            favConf.mLines.add(0, code);
-            mImageFav.setBackgroundResource(R.drawable.ic_fav);
+        boolean ret = CardFavorites.get().toggle(cardInfo.Code);
+        mImageFav.setSelected(ret);
+        if(mCallBack != null){
+            mCallBack.onFavoriteChange(cardInfo, ret);
         }
-        favConf.save("#Favorite");
-        favConf.read();
-        Favorite.clear();
-        if (!DeckManagerActivity.isSearchResult) {
-            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
-            if (id != null) {
-                for (int i = 0; i < id.size(); i++)
-                    Favorite.add(id.valueAt(i));
-            }
-            if (mCallBack != null)
-                mCallBack.onSearchResult(Favorite, true);
-        }
-
     }
 
     public ImageView getCardImage() {
@@ -261,7 +241,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mListener = listener;
     }
 
-    public void setCallBack(CallBack callBack) {
+    public void setCallBack(OnFavoriteChangedListener callBack) {
         mCallBack = callBack;
     }
 
@@ -287,7 +267,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
-
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
         dialog = DialogUtils.getdx(context);
@@ -298,45 +277,41 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         desc.setText(cardInfo.Desc);
         int t = cardInfo.Alias - cardInfo.Code;
         if (t > 10 || t < -10) {
-            cardcode.setText(String.format("%08d", cardInfo.Code));
+            cardCode.setText(String.format("%08d", cardInfo.Code));
         } else {
-            cardcode.setText(String.format("%08d", cardInfo.Alias));
+            cardCode.setText(String.format("%08d", cardInfo.Alias));
         }
 
         //按是否存在于收藏夹切换显示图标
-        if (ConfigManager.mLines.contains(cardInfo.Code)) {
-            mImageFav.setBackgroundResource(R.drawable.ic_fav);
-        } else {
-            mImageFav.setBackgroundResource(R.drawable.ic_control_point);
-        }
+        mImageFav.setSelected(CardFavorites.get().hasCard(cardInfo.Code));
 
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
         otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));
         long[] sets = cardInfo.getSetCode();
-        setname.setText("");
+        setName.setText("");
         int index = 0;
         for (long set : sets) {
             if (set > 0) {
                 if (index != 0) {
-                    setname.append("\n");
+                    setName.append("\n");
                 }
-                setname.append("" + mStringManager.getSetName(set));
+                setName.append("" + mStringManager.getSetName(set));
                 index++;
             }
         }
 
-        if (TextUtils.isEmpty(setname.getText())) {
-            setname.setVisibility(View.INVISIBLE);
-            lb_setcode.setVisibility(View.INVISIBLE);
+        if (TextUtils.isEmpty(setName.getText())) {
+            setName.setVisibility(View.INVISIBLE);
+            lbSetCode.setVisibility(View.INVISIBLE);
         } else {
-            setname.setVisibility(View.VISIBLE);
-            lb_setcode.setVisibility(View.VISIBLE);
+            setName.setVisibility(View.VISIBLE);
+            lbSetCode.setVisibility(View.VISIBLE);
         }
 
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);
-            monsterlayout.setVisibility(View.VISIBLE);
+            monsterLayout.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
             String star = "★" + cardInfo.getStar();
            /* for (int i = 0; i < cardInfo.getStar(); i++) {
@@ -349,10 +324,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 level.setTextColor(context.getResources().getColor(R.color.star));
             }
             if (cardInfo.isType(CardType.Pendulum)) {
-                layout_detail_p_scale.setVisibility(View.VISIBLE);
-                detail_cardscale.setText(String.valueOf(cardInfo.LScale));
+                layoutDetailPScale.setVisibility(View.VISIBLE);
+                detailCardScale.setText(String.valueOf(cardInfo.LScale));
             } else {
-                layout_detail_p_scale.setVisibility(View.GONE);
+                layoutDetailPScale.setVisibility(View.GONE);
             }
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             //连接怪兽设置
@@ -370,7 +345,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         } else {
             atkdefView.setVisibility(View.GONE);
             race.setVisibility(View.GONE);
-            monsterlayout.setVisibility(View.GONE);
+            monsterLayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
         }
@@ -551,10 +526,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return (T) findViewById(id);
     }
 
-    public interface CallBack {
-        void onSearchStart();
-
-        void onSearchResult(List<Card> Cards, boolean isHide);
+    public interface OnFavoriteChangedListener {
+        void onFavoriteChange(Card card, boolean favorite);
     }
 
     public interface OnCardClickListener {

@@ -40,10 +40,6 @@ public class DataManager {
         return mLimitManager;
     }
 
-    public static ConfigManager openConfig(File conf) {
-        return new ConfigManager(conf);
-    }
-
     public CardManager getCardManager() {
         return mCardManager;
     }

@@ -80,7 +80,6 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -117,8 +116,6 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
     private boolean isExit = false;
-    public static boolean isSearchResult;
-    public static List<Card> Favorite = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -169,12 +166,17 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             //最后卡组
             _file = new File(mSettings.getLastDeckPath());
         }
-        Favorite.clear();
         init(_file);
         EventBus.getDefault().register(this);
         tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
     }
     //endregion
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        CardFavorites.get().save();
+    }
 
     @Override
     protected void onDestroy() {
@@ -284,13 +286,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             //设置当前卡组
             setCurDeck(rs);
             //设置收藏夹
-            SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
-            if (id != null) {
-                for (int i = 0; i < id.size(); i++)
-                    Favorite.add(id.valueAt(i));
-            }
-            onSearchResult(Favorite, true);
-            isSearchResult = false;
+            mCardSelector.showFavorites(false);
         });
     }
 
@@ -440,14 +436,9 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
                         addMainCard(cardInfo);
                     }
                 });
-                mCardDetail.setCallBack(new CardDetail.CallBack() {
-                    @Override
-                    public void onSearchStart() {
-                    }
-
-                    @Override
-                    public void onSearchResult(List<Card> Cards, boolean isHide) {
-                        DeckManagerActivity.this.onSearchResult(Cards, isHide);
+                mCardDetail.setCallBack((card, favorite) -> {
+                    if(mCardSelector.isShowFavorite()){
+                        mCardSelector.showFavorites(false);
                     }
                 });
             }
