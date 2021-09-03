@@ -17,13 +17,13 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.CardSort;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
-import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class CardLoader implements ICardSearcher {
@@ -125,34 +125,13 @@ public class CardLoader implements ICardSearcher {
         }
         Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
         VUiKit.defer().when(() -> {
-            List<Card> tmp = new ArrayList<Card>();
-            List<Card> monster = new ArrayList<Card>();
-            List<Card> spell = new ArrayList<Card>();
-            List<Card> trap = new ArrayList<Card>();
             SparseArray<Card> cards = mCardManager.getAllCards();
-            int count = cards.size();
-            for (int i = 0; i < count; i++) {
-                Card card = cards.valueAt(i);
-                if (searchInfo == null || searchInfo.check(card)) {
-                    if (searchInfo != null && card.Name.equalsIgnoreCase(searchInfo.keyWord1)) {
-                        tmp.add(card);
-                    } else if (card.isType(CardType.Monster)) {
-                        monster.add(card);
-                    } else if (card.isType(CardType.Spell)) {
-                        spell.add(card);
-                    } else if (card.isType(CardType.Trap)) {
-                        trap.add(card);
-                    }
-                }
+            List<Card> list = new ArrayList<>();
+            for (int i = 0; i < cards.size(); i++) {
+                list.add(cards.valueAt(i));
             }
-            Collections.sort(tmp, ASCode);
-            Collections.sort(monster, ASC);
-            Collections.sort(spell, ASCode);
-            Collections.sort(trap, ASCode);
-            tmp.addAll(monster);
-            tmp.addAll(spell);
-            tmp.addAll(trap);
-            return tmp;
+            Collections.sort(list, CardSort.ASC);
+            return list;
         }).fail((e) -> {
             if (mCallBack != null) {
                 ArrayList<Card> noting = new ArrayList<Card>();
@@ -170,31 +149,8 @@ public class CardLoader implements ICardSearcher {
 
     @Override
     public List<Card> sort(List<Card> cards){
-        List<Card> tmp = new ArrayList<Card>();
-        List<Card> monster = new ArrayList<Card>();
-        List<Card> spell = new ArrayList<Card>();
-        List<Card> trap = new ArrayList<Card>();
-        int count = cards.size();
-        for (int i = 0; i < count; i++) {
-            Card card = cards.get(i);
-            if (card.isType(CardType.Monster)) {
-                monster.add(card);
-            } else if (card.isType(CardType.Spell)) {
-                spell.add(card);
-            } else if (card.isType(CardType.Trap)) {
-                trap.add(card);
-            } else {
-                tmp.add(card);
-            }
-        }
-        Collections.sort(tmp, ASCode);
-        Collections.sort(monster, ASC);
-        Collections.sort(spell, ASCode);
-        Collections.sort(trap, ASCode);
-        tmp.addAll(monster);
-        tmp.addAll(spell);
-        tmp.addAll(trap);
-        return tmp;
+        Collections.sort(cards, CardSort.ASC);
+        return cards;
     }
 
     private static final Comparator<Card> ASCode = (o1, o2) -> o1.Code - o2.Code;
