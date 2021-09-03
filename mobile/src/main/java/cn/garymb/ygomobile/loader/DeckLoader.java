@@ -101,15 +101,15 @@ public class DeckLoader {
             IOUtils.close(in);
         }
         DeckInfo deckInfo = new DeckInfo();
-        SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), limitList, true);
+        SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), true);
         for (Integer id : deck.getMainlist()) {
             deckInfo.addMainCards(tmp.get(id));
         }
-        tmp = cardLoader.readCards(deck.getExtraList(), limitList, true);
+        tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {
             deckInfo.addExtraCards(tmp.get(id));
         }
-        tmp = cardLoader.readCards(deck.getSideList(), limitList, true);
+        tmp = cardLoader.readCards(deck.getSideList(), true);
 //        Log.i("kk", "desk:" + tmp.size()+"/"+side.size());
         for (Integer id : deck.getSideList()) {
             deckInfo.addSideCards(tmp.get(id));

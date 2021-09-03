@@ -163,8 +163,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             _file = mPreLoadFile;
         } else {
             mPreLoadFile = null;
-            //最后卡组
-            _file = new File(mSettings.getLastDeckPath());
+            String path = mSettings.getLastDeckPath();
+            if(TextUtils.isEmpty(path)){
+                _file = null;
+            } else {
+                //最后卡组
+                _file = new File(path);
+            }
         }
         init(_file);
         EventBus.getDefault().register(this);
@@ -251,16 +256,16 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     //endregion
 
     //region init
-    private void init(File ydk) {
+    private void init(@Nullable File ydk) {
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            DataManager.get().load(false);
+            DataManager.get().load(true);
             //默认第一个卡表
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
             File file = ydk;
-            if (!file.exists()) {
+            if (file == null || !file.exists()) {
                 //当默认卡组不存在的时候
                 List<File> files = getYdkFiles();
                 if (files != null && files.size() > 0) {

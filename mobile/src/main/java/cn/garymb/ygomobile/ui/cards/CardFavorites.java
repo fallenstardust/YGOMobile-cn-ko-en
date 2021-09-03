@@ -8,7 +8,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.utils.FileUtils;
 import ocgcore.data.Card;
 
@@ -53,7 +53,7 @@ public class CardFavorites {
         return mList;
     }
 
-    public List<Card> getCards(CardLoader cardLoader) {
+    public List<Card> getCards(ICardSearcher cardLoader) {
         SparseArray<Card> id = cardLoader.readCards(mList, false);
         List<Card> list = new ArrayList<>();
         if (id != null) {

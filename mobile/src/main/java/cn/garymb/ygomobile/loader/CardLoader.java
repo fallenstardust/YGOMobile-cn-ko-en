@@ -26,11 +26,11 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
-public class CardLoader implements ICardLoader {
-    private LimitManager mLimitManager;
-    private CardManager mCardManager;
-    private StringManager mStringManager;
-    private Context context;
+public class CardLoader implements ICardSearcher {
+    private final LimitManager mLimitManager;
+    private final CardManager mCardManager;
+    private final StringManager mStringManager;
+    private final Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
     private static final String TAG = CardLoader.class.getSimpleName();
@@ -62,11 +62,8 @@ public class CardLoader implements ICardLoader {
         }
     }
 
+    @Override
     public SparseArray<Card> readCards(List<Integer> ids, boolean isSorted) {
-        return readCards(ids, mLimitList, isSorted);
-    }
-
-    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList, boolean isSorted) {
         if (!isOpen()) {
             return null;
         }
@@ -84,6 +81,7 @@ public class CardLoader implements ICardLoader {
         return map;
     }
 
+    @Override
     public boolean isOpen() {
         return mCardManager.getCount() > 0;
     }
@@ -170,6 +168,7 @@ public class CardLoader implements ICardLoader {
         });
     }
 
+    @Override
     public List<Card> sort(List<Card> cards){
         List<Card> tmp = new ArrayList<Card>();
         List<Card> monster = new ArrayList<Card>();

@@ -35,7 +35,12 @@ public class CardManager {
     private final SparseArray<Card> cardDataHashMap = new SparseArray<>();
     private String dbDir, exDbPath;
 
-    public CardManager(String dbDir, String exPath) {
+    /**
+     * @see DataManager#getCardManager()
+     * @param dbDir
+     * @param exPath
+     */
+    CardManager(String dbDir, String exPath) {
         this.dbDir = dbDir;
         this.exDbPath = exPath;
     }

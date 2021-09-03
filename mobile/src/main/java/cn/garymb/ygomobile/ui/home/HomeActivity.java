@@ -89,6 +89,7 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
+import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
@@ -112,7 +113,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
-        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
+        mCardManager = DataManager.get().getCardManager();
         //server list
         initServerlist();
         //event

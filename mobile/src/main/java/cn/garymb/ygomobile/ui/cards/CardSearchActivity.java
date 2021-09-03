@@ -102,7 +102,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         setListeners();
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            DataManager.get().load(false);
+            DataManager.get().load(true);
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }

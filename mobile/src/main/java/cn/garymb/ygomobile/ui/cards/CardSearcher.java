@@ -20,8 +20,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardLoader;
-import cn.garymb.ygomobile.loader.ICardLoader;
+import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -68,12 +67,12 @@ public class CardSearcher implements View.OnClickListener {
     private final Button resetButton;
     private final View view;
     private final View layout_monster;
-    private final ICardLoader dataLoader;
+    private final ICardSearcher dataLoader;
     private final Context mContext;
     private final Button myFavButton;
     private CallBack mCallBack;
-    CardLoader mCardLoader;
     private boolean mShowFavorite;
+    private ICardSearcher mCardLoader;
 
     public interface CallBack {
         void onSearchStart();
@@ -85,7 +84,7 @@ public class CardSearcher implements View.OnClickListener {
         mCallBack = callBack;
     }
 
-    public CardSearcher(View view, ICardLoader dataLoader) {
+    public CardSearcher(View view, ICardSearcher dataLoader) {
         this.view = view;
         this.mContext = view.getContext();
         this.dataLoader = dataLoader;
@@ -119,7 +118,7 @@ public class CardSearcher implements View.OnClickListener {
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
-        mCardLoader = new CardLoader(mContext);
+        mCardLoader = dataLoader;
 
         OnEditorActionListener searchListener = (v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {

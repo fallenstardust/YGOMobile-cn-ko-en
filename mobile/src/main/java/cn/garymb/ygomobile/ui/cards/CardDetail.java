@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -30,7 +28,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -56,7 +53,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
 
     private static final String TAG = "CardDetail";
-    private static CardManager cardManager;
+    private final CardManager cardManager;
     private final ImageView cardImage;
     private final TextView name;
     private final TextView desc;
@@ -155,13 +152,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         otView = bind(R.id.card_ot);
         attrView = bind(R.id.card_attribute);
         lbSetCode = bind(R.id.label_setcode);
-
-        if (cardManager == null) {
-            Log.e("CardDetail", "加载卡片信息");
-            cardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
-            //加载数据库中所有卡片卡片
-            cardManager.loadCards();
-        }
+        cardManager = DataManager.get().getCardManager();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();

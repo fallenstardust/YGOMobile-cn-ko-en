@@ -22,7 +22,7 @@ public class DataManager {
 
     private final StringManager mStringManager;
     private final LimitManager mLimitManager;
-    private CardManager mCardManager;
+    private final CardManager mCardManager;
 
     private DataManager() {
         mStringManager = new StringManager();
