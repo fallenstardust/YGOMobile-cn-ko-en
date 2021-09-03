@@ -129,6 +129,10 @@ public class Card extends CardData implements Parcelable {
         return false;
     }
 
+    public boolean isAlias(Card c){
+        return c.Code == this.Code || c.Alias == this.Code || c.Code == this.Alias;
+    }
+
     @Override
     public String toString() {
         return "Card{" +
