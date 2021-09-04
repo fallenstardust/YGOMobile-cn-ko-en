@@ -128,7 +128,10 @@ public class CardLoader implements ICardSearcher {
             SparseArray<Card> cards = mCardManager.getAllCards();
             List<Card> list = new ArrayList<>();
             for (int i = 0; i < cards.size(); i++) {
-                list.add(cards.valueAt(i));
+                Card card = cards.valueAt(i);
+                if (searchInfo == null || searchInfo.check(card)) {
+                    list.add(card);
+                }
             }
             Collections.sort(list, CardSort.ASC);
             return list;
