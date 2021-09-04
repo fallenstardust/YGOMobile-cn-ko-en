@@ -87,9 +87,8 @@ public class CardSort implements Comparator<Card> {
             }
         } else if(sortKey1 == SORT_OTHER){
             return comp(c1.Code, c2.Code);
-        } else if(sortKey1 == SORT_LINK){
-            //高星的在前面
-            return Integer.compare(c2.getStar(), c1.getStar());
+//        } else if(sortKey1 == SORT_LINK){
+//            return Integer.compare(c2.getStar(), c1.getStar());
         } else {
             //monster
             if(full) {
