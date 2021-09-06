@@ -125,7 +125,7 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 			if(bot_mode) {
 				BufferIO::CopyWStr(L"Bot Game", cscg.name, 20);
 				BufferIO::CopyWStr(L"", cscg.pass, 20);
-				cscg.info.rule = 2;
+				cscg.info.rule = 5;
 				cscg.info.mode = 0;
 				cscg.info.start_hand = 5;
 				cscg.info.start_lp = 8000;
@@ -145,7 +145,7 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 				cscg.info.start_lp = _wtoi(mainGame->ebStartLP->getText());
 				cscg.info.draw_count = _wtoi(mainGame->ebDrawCount->getText());
 				cscg.info.time_limit = _wtoi(mainGame->ebTimeLimit->getText());
-				cscg.info.lflist = mainGame->cbLFlist->getItemData(mainGame->cbLFlist->getSelected());
+				cscg.info.lflist = mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
 				cscg.info.duel_rule = mainGame->cbDuelRule->getSelected() + 1;
 				cscg.info.no_check_deck = mainGame->chkNoCheckDeck->isChecked();
 				cscg.info.no_shuffle_deck = mainGame->chkNoShuffleDeck->isChecked();
@@ -306,6 +306,10 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 				myswprintf(msgbuf, dataManager.GetSysString(1419), code);
 				break;
 			}
+			case DECKERROR_NOTAVAIL: {
+				myswprintf(msgbuf, dataManager.GetSysString(1432), dataManager.GetName(code));
+				break;
+			}
 			default: {
 				myswprintf(msgbuf, dataManager.GetSysString(1406));
 				break;
@@ -424,7 +428,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		wchar_t msgbuf[256];
 		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1226), deckManager.GetLFListName(pkt->info.lflist));
 		str.append(msgbuf);
-		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1225), dataManager.GetSysString(1240 + pkt->info.rule));
+		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1225), dataManager.GetSysString(1481 + pkt->info.rule));
 		str.append(msgbuf);
 		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1227), dataManager.GetSysString(1244 + pkt->info.mode));
 		str.append(msgbuf);
@@ -473,12 +477,9 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		mainGame->dInfo.time_left[0] = 0;
 		mainGame->dInfo.time_left[1] = 0;
 		mainGame->RefreshTimeDisplay();
-		mainGame->deckBuilder.filterList = 0;
-		for(auto lit = deckManager._lfList.begin(); lit != deckManager._lfList.end(); ++lit)
-			if(lit->hash == pkt->info.lflist)
-				mainGame->deckBuilder.filterList = lit->content;
-		if(mainGame->deckBuilder.filterList == 0)
-			mainGame->deckBuilder.filterList = deckManager._lfList[0].content;
+		mainGame->deckBuilder.filterList = deckManager.GetLFListContent(pkt->info.lflist);
+		if(mainGame->deckBuilder.filterList == nullptr)
+			mainGame->deckBuilder.filterList = &deckManager._lfList[0].content;
 		mainGame->stHostPrepDuelist[0]->setText(L"");
 		mainGame->stHostPrepDuelist[1]->setText(L"");
 		mainGame->stHostPrepDuelist[2]->setText(L"");
@@ -4132,7 +4133,7 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 			hoststr.append(L"[");
 			hoststr.append(deckManager.GetLFListName(pHP->host.lflist));
 			hoststr.append(L"][");
-			hoststr.append(dataManager.GetSysString(pHP->host.rule + 1240));
+			hoststr.append(dataManager.GetSysString(pHP->host.rule + 1481));
 			hoststr.append(L"][");
 			hoststr.append(dataManager.GetSysString(pHP->host.mode + 1244));
 			hoststr.append(L"][");

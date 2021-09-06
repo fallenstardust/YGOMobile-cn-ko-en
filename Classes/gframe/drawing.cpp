@@ -1198,9 +1198,7 @@ void Game::WaitFrameSignal(int frame) {
 	signalFrame = (gameConf.quick_animation && frame >= 12) ? 12 : frame;
 	frameSignal.Wait();
 }
-void Game::DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, int>* lflist) {
-	const int width = 44; //standard pic size, maybe it should be defined in game.h
-	const int height = 64;
+void Game::DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<int, int>* lflist, bool drag) {
 	int code = cp->first;
 	int lcode = cp->second.alias;
 	if(lcode == 0)
@@ -1209,39 +1207,50 @@ void Game::DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, i
 	if(img == NULL)
 		return; //NULL->getSize() will cause a crash
 	dimension2d<u32> size = img->getOriginalSize();
-	driver->draw2DImage(img, rect<s32>(pos.X, pos.Y, pos.X + width * mainGame->xScale, pos.Y + height * mainGame->yScale), rect<s32>(0, 0, size.Width, size.Height));
-
+	recti dragloc = recti(pos.X, pos.Y, pos.X + CARD_THUMB_WIDTH * mainGame->xScale, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
+	recti limitloc = recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale);
+	recti otloc = recti(pos.X + 7 * mainGame->xScale, pos.Y + 50 * mainGame->yScale, pos.X + 37 * mainGame->xScale, pos.Y + 65 * mainGame->yScale);
+	if(drag) {}
+	driver->draw2DImage(img, dragloc, rect<s32>(0, 0, size.Width, size.Height));
 	if(lflist->count(lcode)) {
-		switch((*lflist)[lcode]) {
+		switch((*lflist).at(lcode)) {
 		case 0:
-			driver->draw2DImage(imageManager.tLim, recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale), recti(0, 0, 64, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, recti(0, 0, 64, 64), 0, 0, true);
 			break;
 		case 1:
-			driver->draw2DImage(imageManager.tLim, recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale), recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, recti(64, 0, 128, 64), 0, 0, true);
 			break;
 		case 2:
-			driver->draw2DImage(imageManager.tLim, recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale), recti(0, 64, 64, 128), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, recti(0, 64, 64, 128), 0, 0, true);
 			break;
 		}
 	}
-	if(cbLimit->getSelected() >= 4 && (cp->second.ot & gameConf.defaultOT)) {
-		switch(cp->second.ot) {
-		case 1:
-			driver->draw2DImage(imageManager.tOT, recti(pos.X + 0 * mainGame->xScale, pos.Y + 45 * mainGame->yScale, pos.X + 40 * mainGame->xScale, pos.Y + 65 * mainGame->yScale), recti(0, 128, 128, 192), 0, 0, true);
-			break;
-		case 2:
-			driver->draw2DImage(imageManager.tOT, recti(pos.X + 0 * mainGame->xScale, pos.Y + 45 * mainGame->yScale, pos.X + 40 * mainGame->xScale, pos.Y + 65 * mainGame->yScale), recti(0, 192, 128, 256), 0, 0, true);
-			break;
-		}
-	} else if(cbLimit->getSelected() >= 4 || !(cp->second.ot & gameConf.defaultOT)) {
-		switch(cp->second.ot) {
-		case 1:
-			driver->draw2DImage(imageManager.tOT, recti(pos.X + 0 * mainGame->xScale, pos.Y + 45 * mainGame->yScale, pos.X + 40 * mainGame->xScale, pos.Y + 65 * mainGame->yScale), recti(0, 0, 128, 64), 0, 0, true);
-			break;
-		case 2:
-			driver->draw2DImage(imageManager.tOT, recti(pos.X + 0 * mainGame->xScale, pos.Y + 45 * mainGame->yScale, pos.X + 40 * mainGame->xScale, pos.Y + 65 * mainGame->yScale), recti(0, 64, 128, 128), 0, 0, true);
-			break;
-		}
+	bool showAvail = false;
+	bool showNotAvail = false;
+	int filter_lm = cbLimit->getSelected();
+	bool avail = !((filter_lm == 4 && !(cp->second.ot & AVAIL_OCG)
+				|| (filter_lm == 5 && !(cp->second.ot & AVAIL_TCG))
+				|| (filter_lm == 6 && !(cp->second.ot & AVAIL_SC))
+				|| (filter_lm == 7 && !(cp->second.ot & AVAIL_CUSTOM))
+				|| (filter_lm == 8 && (cp->second.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
+	if(filter_lm >= 4) {
+		showAvail = avail;
+		showNotAvail = !avail;
+	} else if(!(cp->second.ot & gameConf.defaultOT)) {
+		showNotAvail = true;
+	}
+	if(showAvail) {
+		if((cp->second.ot & AVAIL_OCG) && !(cp->second.ot & AVAIL_TCG))
+			driver->draw2DImage(imageManager.tOT, otloc, recti(0, 128, 128, 192), 0, 0, true);
+		else if((cp->second.ot & AVAIL_TCG) && !(cp->second.ot & AVAIL_OCG))
+			driver->draw2DImage(imageManager.tOT, otloc, recti(0, 192, 128, 256), 0, 0, true);
+	} else if(showNotAvail) {
+		if(cp->second.ot & AVAIL_OCG)
+			driver->draw2DImage(imageManager.tOT, otloc, recti(0, 0, 128, 64), 0, 0, true);
+		else if(cp->second.ot & AVAIL_TCG)
+			driver->draw2DImage(imageManager.tOT, otloc, recti(0, 64, 128, 128), 0, 0, true);
+		else if(!avail)
+			driver->draw2DImage(imageManager.tLim, otloc, recti(0, 0, 64, 64), 0, 0, true);
 	}
 }
 void Game::DrawDeckBd() {
@@ -1370,32 +1379,30 @@ void Game::DrawDeckBd() {
 				if(ptr->second.attack < 0)
 					myswprintf(textBuffer, L"?/-");
 				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
-			}//*
+			}
 			if(ptr->second.type & TYPE_PENDULUM) {
 				wchar_t scaleBuffer[16];
 				myswprintf(scaleBuffer, L" %d/%d", ptr->second.lscale, ptr->second.rscale);
-				mywcscat(textBuffer, scaleBuffer);
+				wcscat(textBuffer, scaleBuffer);
 			}
-			if((ptr->second.ot & 0x3) == 1)
-				mywcscat(textBuffer, L" [OCG]");
-			else if((ptr->second.ot & 0x3) == 2)
-				mywcscat(textBuffer, L" [TCG]");
-			else if((ptr->second.ot & 0x7) == 4)
-				mywcscat(textBuffer, L" [Custom]");
-			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
+				wcscat(textBuffer, L" [OCG]");
+			else if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
+				wcscat(textBuffer, L" [TCG]");
+			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
+				wcscat(textBuffer, L" [Custom]");
 		} else {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
 			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			const wchar_t* ptype = dataManager.FormatType(ptr->second.type);
 			DrawShadowText(textFont, ptype, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			textBuffer[0] = 0;
-			if((ptr->second.ot & 0x3) == 1)
-				mywcscat(textBuffer, L"[OCG]");
-			else if((ptr->second.ot & 0x3) == 2)
-				mywcscat(textBuffer, L"[TCG]");
-			else if((ptr->second.ot & 0x7) == 4)
-				mywcscat(textBuffer, L"[Custom]");
-			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (208 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (229 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
+				wcscat(textBuffer, L"[OCG]");
+			else if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
+				wcscat(textBuffer, L"[TCG]");
+			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
+				wcscat(textBuffer, L"[Custom]");
 		}
 	}
 #endif

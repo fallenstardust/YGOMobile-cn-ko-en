@@ -192,8 +192,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	menuHandler.prev_sel = -1;
 	memset(&dInfo, 0, sizeof(DuelInfo));
 	memset(chatTiming, 0, sizeof(chatTiming));
-	deckManager.LoadLFList((workingDir + path("/expansions/lflist.conf")).c_str(), false);
-	deckManager.LoadLFList((workingDir + path("/lflist.conf")).c_str(), true);
+	deckManager.LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());
+	deckManager.LoadLFListSingle((workingDir + path("/lflist.conf")).c_str());
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
 	int quality = options->getCardQualityOp();
@@ -339,18 +339,36 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wCreateHost->setVisible(false);
         ChangeToIGUIImageWindow(wCreateHost, bgCreateHost, imageManager.tWindow);
     env->addStaticText(dataManager.GetSysString(1226), rect<s32>(20 * xScale, 30 * yScale, 90 * xScale, 65 * yScale), false, false, wCreateHost);
-	cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(110 * xScale, 25 * yScale, 260 * xScale, 65 * yScale), wCreateHost);
-	std::vector<LFList>::iterator iter;
-	for (iter = deckManager._lfList.begin(); iter != deckManager._lfList.end(); iter++) {
-		cbLFlist->addItem((*iter).listName, (*iter).hash);
-	}
+	cbHostLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(110 * xScale, 25 * yScale, 260 * xScale, 65 * yScale), wCreateHost);
+	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
+		cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
+	cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);
 	env->addStaticText(dataManager.GetSysString(1225), rect<s32>(20 * xScale, 75 * yScale, 100 * xScale, 110 * yScale), false, false, wCreateHost);
 	cbRule = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(110 * xScale, 75 * yScale, 260 * xScale, 115 * yScale), wCreateHost);
-	cbRule->addItem(dataManager.GetSysString(1240));
-	cbRule->addItem(dataManager.GetSysString(1241));
-	cbRule->addItem(dataManager.GetSysString(1242));
-	cbRule->addItem(dataManager.GetSysString(1243));
-	cbRule->setSelected(gameConf.defaultOT - 1);
+	cbRule->setMaxSelectionRows(10);
+	cbRule->addItem(dataManager.GetSysString(1481));
+	cbRule->addItem(dataManager.GetSysString(1482));
+	cbRule->addItem(dataManager.GetSysString(1483));
+	cbRule->addItem(dataManager.GetSysString(1484));
+	cbRule->addItem(dataManager.GetSysString(1485));
+	cbRule->addItem(dataManager.GetSysString(1486));
+	switch(gameConf.defaultOT) {
+	case 1:
+		cbRule->setSelected(0);
+		break;
+	case 2:
+		cbRule->setSelected(1);
+		break;
+	case 4:
+		cbRule->setSelected(3);
+		break;
+	case 8:
+		cbRule->setSelected(2);
+		break;
+	default:
+		cbRule->setSelected(5);
+		break;
+	}	
 	env->addStaticText(dataManager.GetSysString(1227), rect<s32>(20 * xScale, 130 * yScale, 100 * xScale, 165 * yScale), false, false, wCreateHost);
 	cbMatchMode = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(110 * xScale, 125 * yScale, 260 * xScale, 165 * yScale), wCreateHost);
 	cbMatchMode->addItem(dataManager.GetSysString(1244));
@@ -544,7 +562,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
     posY += 40 * yScale;
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
-    chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
+	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
     posY += 40 * yScale;
     chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
     chkMusicMode->setChecked(gameConf.music_mode != 0);
@@ -586,25 +604,20 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
 	posY += 40 * yScale;
-	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
+	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
-    elmTabSystemLast = chkPreferExpansionScript;
+    posY += 40 * yScale;
+	chkLFlist = env->addCheckBox(false, rect<s32>(posX + 40 * xScale, posY, posX + 140 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
+	chkLFlist->setChecked(gameConf.use_lflist);
+	cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(posX + 150 * xScale, posY, posX + 290 * xScale, posY + 30 * yScale), wSettings, COMBOBOX_LFLIST);
+	cbLFlist->setMaxSelectionRows(6);
+	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
+		cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
+	cbLFlist->setEnabled(gameConf.use_lflist);
+	cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
+    elmTabSystemLast = chkLFlist;
 	btnCloseSettings =env->addButton(rect<s32>(450 * xScale, 350 * yScale, 560 * xScale, 400 * yScale), wSettings, BUTTON_CLOSE_SETTINGS, dataManager.GetSysString(1211));
 		ChangeToIGUIImageButton(btnCloseSettings, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	//show scroll
-    scrTabSystem = env->addScrollBar(false, rect<s32>(435 * xScale, 60 * yScale, 465 * xScale, 419 * yScale), wSettings, SCROLL_SETTINGS);
-    scrTabSystem->setLargeStep(1);
-    scrTabSystem->setSmallStep(1);
-    scrTabSystem->setVisible(false);
-    s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
-    s32 tabSystemHeight = 420 * yScale;
-    if(tabSystemLastY > tabSystemHeight) {
-        scrTabSystem->setMax(tabSystemLastY - tabSystemHeight);
-        scrTabSystem->setPos(0);
-        scrTabSystem->setVisible(true);
-    } else {
-        scrTabSystem->setVisible(false);
-    }
     //
 	wHand = env->addWindow(rect<s32>(500 * xScale, 450 * yScale, 825 * xScale, 605 * yScale), false, L"");
 	wHand->getCloseButton()->setVisible(false);
@@ -845,13 +858,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
 	    ChangeToIGUIImageButton(btnManageDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck manage
-	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 550 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
+	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 450 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckManage, bgDeckManage, imageManager.tWindow_V);
-	lstCategories = env->addListBox(rect<s32>(20 * xScale, 20 * yScale, 110 * xScale, 520 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
+	lstCategories = env->addListBox(rect<s32>(20 * xScale, 20 * yScale, 110 * xScale, 430 * yScale), wDeckManage, LISTBOX_CATEGORIES, true);
     lstCategories->setItemHeight(30 * yScale);
-	lstDecks = env->addListBox(rect<s32>(115 * xScale, 20 * yScale, 280 * xScale, 520 * yScale), wDeckManage, LISTBOX_DECKS, true);
+	lstDecks = env->addListBox(rect<s32>(115 * xScale, 20 * yScale, 280 * xScale, 430 * yScale), wDeckManage, LISTBOX_DECKS, true);
 	lstCategories->setItemHeight(30 * yScale);
 	btnNewCategory = env->addButton(rect<s32>(290 * xScale, 20 * yScale, 370 * xScale, 60 * yScale), wDeckManage, BUTTON_NEW_CATEGORY, dataManager.GetSysString(1461));
         ChangeToIGUIImageButton(btnNewCategory, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -869,10 +882,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnMoveDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnCopyDeck = env->addButton(rect<s32>(290 * xScale, 335 * yScale, 370 * xScale, 375 * yScale), wDeckManage, BUTTON_COPY_DECK, dataManager.GetSysString(1468));
         ChangeToIGUIImageButton(btnCopyDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	cbLFList = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(290 * xScale, 435 * yScale, 370 * xScale, 475 * yScale), wDeckManage, COMBOBOX_LFLIST);
-	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
-		cbLFList->addItem(deckManager._lfList[i].listName);
-	btnCloseDM = env->addButton(rect<s32>(290 * xScale, 480 * yScale, 370 * xScale, 520 * yScale), wDeckManage, BUTTON_CLOSE_DECKMANAGER, dataManager.GetSysString(1211));
+	btnCloseDM = env->addButton(rect<s32>(290 * xScale, 390 * yScale, 370 * xScale, 430 * yScale), wDeckManage, BUTTON_CLOSE_DECKMANAGER, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnCloseDM, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck manage query
 	wDMQuery = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1460));
@@ -956,17 +966,20 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	cbLimit->addItem(dataManager.GetSysString(1316));
 	cbLimit->addItem(dataManager.GetSysString(1317));
 	cbLimit->addItem(dataManager.GetSysString(1318));
-	cbLimit->addItem(dataManager.GetSysString(1240));
-	cbLimit->addItem(dataManager.GetSysString(1241));
-	cbLimit->addItem(dataManager.GetSysString(1242));
-	cbLimit->addItem(dataManager.GetSysString(1243));
+	cbLimit->addItem(dataManager.GetSysString(1481));
+	cbLimit->addItem(dataManager.GetSysString(1482));
+	cbLimit->addItem(dataManager.GetSysString(1483));
+	cbLimit->addItem(dataManager.GetSysString(1484));
+	cbLimit->addItem(dataManager.GetSysString(1485));
 	env->addStaticText(dataManager.GetSysString(1319), rect<s32>(10 * xScale, 28 * yScale, 70 * xScale, 48 * yScale), false, false, wFilter);
 	cbAttribute = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(60 * xScale, 26 * yScale, 190 * xScale, 46 * yScale), wFilter, COMBOBOX_ATTRIBUTE);
+	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter != 0x80; filter <<= 1)
 		cbAttribute->addItem(dataManager.FormatAttribute(filter), filter);
 	env->addStaticText(dataManager.GetSysString(1321), rect<s32>(10 * xScale, 51 * yScale, 70 * xScale, 71 * yScale), false, false, wFilter);
 	cbRace = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(60 * xScale, (40 + 75 / 6) * yScale, 190 * xScale, (60 + 75 / 6) * yScale), wFilter, COMBOBOX_RACE);
+	cbRace->setMaxSelectionRows(10);
 	cbRace->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter != 0x2000000; filter <<= 1)
 		cbRace->addItem(dataManager.FormatRace(filter), filter);
@@ -1742,6 +1755,7 @@ void Game::LoadConfig() {
 	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 1);
 	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 50);
 	gameConf.music_mode = android::getIntSetting(appMain, "music_mode", 1);
+	gameConf.use_lflist = android::getIntSetting(appMain, "use_lflist", 1);
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
@@ -1797,7 +1811,8 @@ void Game::SaveConfig() {
 	    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
 	    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
-
+	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "use_lflist", gameConf.music_mode);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
