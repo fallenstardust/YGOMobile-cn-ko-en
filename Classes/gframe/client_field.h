@@ -2,6 +2,7 @@
 #define CLIENT_FIELD_H
 
 #include "config.h"
+#include "../ocgcore/mtrandom.h"
 #include <vector>
 #include <set>
 #include <map>
@@ -87,6 +88,7 @@ public:
 	bool deck_reversed;
 	bool conti_selecting;
 	bool cant_check_grave;
+	mt19937 rnd;
 
 	ClientField();
 	void Clear();
