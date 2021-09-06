@@ -338,7 +338,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
             		int extra = replay.ReadInt32();
             		for(int j = 0; j < extra; ++j)
             			tmp_deck.extra.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
-            			myswprintf(filename, L"./deck/%ls %ls.ydk", ex_filename, namebuf[i]);
+						myswprintf(filename, L"deck/%ls-%d %ls.ydk", ex_filename, i + 1, namebuf[i]);
             		    deckManager.SaveDeck(tmp_deck, filename);
             	}
             	mainGame->stACMessage->setText(dataManager.GetSysString(1335));
