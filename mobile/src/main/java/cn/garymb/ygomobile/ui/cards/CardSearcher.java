@@ -348,7 +348,7 @@ public class CardSearcher implements View.OnClickListener {
         items.add(new SimpleSpinnerItem(2, getString(R.string.label_ot_TCG)));
         items.add(new SimpleSpinnerItem(3, getString(R.string.label_ot_No_Exclusive)));
         items.add(new SimpleSpinnerItem(4, getString(R.string.label_ot_CUSTOM)));
-        items.add(new SimpleSpinnerItem(11, getString(R.string.label_ot_SC_OCG)));
+        items.add(new SimpleSpinnerItem(8, getString(R.string.label_ot_SC_OCG)));
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.setColor(Color.WHITE);

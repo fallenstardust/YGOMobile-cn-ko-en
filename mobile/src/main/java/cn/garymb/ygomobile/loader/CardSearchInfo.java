@@ -112,8 +112,13 @@ class CardSearchInfo {
             }
         }
         if (ot > 0) {
-            if (card.Ot != ot) {
-                return false;
+            if (ot == 8) {//8为简中的位数
+                if((ot&card.Ot) !=ot)
+                    return false;
+            } else {
+                if (ot != card.Ot) {
+                    return false;
+                }
             }
         }
 
