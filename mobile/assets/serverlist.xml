@@ -4,8 +4,15 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>233正式服务器</name>
+        <name>233正式服务器1区</name>
         <ip>s1.ygo233.com</ip>
+        <port>233</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>233正式服务器2区</name>
+        <ip>s2.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
     </server>
