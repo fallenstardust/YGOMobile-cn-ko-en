@@ -252,12 +252,27 @@ public class StringManager implements Closeable {
         return getSystemString(value.getLanguageIndex(), value.name());
     }
 
-    public String getOtString(int ot) {
-        CardOt value = CardOt.valueOf(ot);
-        if(value == null){
-            return String.valueOf(ot);
+    public String getOtString(int ot, boolean full) {
+        if(!full || ot == 0){
+            CardOt value = CardOt.valueOf(ot);
+            if(value == null){
+                return String.valueOf(ot);
+            }
+            return getSystemString(value.getLanguageIndex(), value.name());
         }
-        return getSystemString(value.getLanguageIndex(), value.name());
+        StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
+        for(CardOt _ot : CardOt.values()){
+            if((_ot.getId() & ot) != 0){
+                if(first){
+                    first = false;
+                } else {
+                    stringBuilder.append("|");
+                }
+                stringBuilder.append(getSystemString(_ot.getLanguageIndex(), _ot.name()));
+            }
+        }
+        return stringBuilder.toString();
     }
 
     public String getCategoryString(long id) {

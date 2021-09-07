@@ -3,12 +3,12 @@ package ocgcore.enums;
 import androidx.annotation.Nullable;
 
 public enum CardOt {
-    ALL(0),
-    OCG(1, 1240),
-    TCG(2, 1241),
-    NO_EXCLUSIVE(3, 1242),
-    CUSTOM(4, 1243),
-    SC_OCG(8);
+    ALL(0, 1486),
+    OCG(1, 1481),
+    TCG(2, 1482),
+    CUSTOM(4, 1484),
+    SC_OCG(8, 1483),
+    NO_EXCLUSIVE(3, 1485);
 
     private final int value;
     //1240

@@ -117,7 +117,7 @@ class CardSearchInfo {
                 if(card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId()){
                     return false;
                 }
-            } else if (card.Ot != ot) {
+            } else if ((card.Ot & ot) == 0) {
                 return false;
             }
         }
