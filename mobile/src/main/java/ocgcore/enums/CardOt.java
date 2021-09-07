@@ -1,10 +1,10 @@
 package ocgcore.enums;
 
 public enum CardOt {
+    All,
     OCG,
     TCG,
     SC_OCG,
     CUSTOM,
-    No_Exclusive,
-    All
+    OCG_TCG
 }

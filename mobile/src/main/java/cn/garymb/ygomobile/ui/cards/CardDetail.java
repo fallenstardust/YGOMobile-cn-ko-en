@@ -45,6 +45,7 @@ import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
+import ocgcore.enums.CardOt;
 import ocgcore.enums.CardType;
 
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
@@ -285,6 +286,22 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
+    public String getOTSString(int ot) {
+        String str = "";
+        if (ot == CardOt.OCG.ordinal()) {
+            str = mContext.getString(R.string.label_ot_OCG);
+        } else if (ot == CardOt.TCG.ordinal()) {
+            str = mContext.getString(R.string.label_ot_TCG);
+        } else if (ot == 8) {
+            str = mContext.getString(R.string.label_ot_SC_OCG);
+        } else if (ot == CardOt.CUSTOM.ordinal()) {
+            str = mContext.getString(R.string.label_ot_CUSTOM);
+        } else {
+            str = "OCG/TCG";
+        }
+        return str;
+    }
+
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
 
@@ -312,7 +329,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
-        otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));
+        otView.setText(getOTSString(cardInfo.Ot));
+        //otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));//暂时弃用
         long[] sets = cardInfo.getSetCode();
         setname.setText("");
         int index = 0;
