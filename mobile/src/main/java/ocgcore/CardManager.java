@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;
+import ocgcore.enums.CardOt;
 
 
 public class CardManager {
@@ -191,14 +192,14 @@ public class CardManager {
                 do {
                     Card cardData = new Card();
                     cardData.Code = reader.getInt(0);
-                    cardData.Ot = reader.getInt(1);
+                    cardData.Ot = CardOt.of(reader.getInt(1));
                     cardData.Alias = reader.getInt(2);
-                    cardData.Setcode = reader.getLong(3);
+                    cardData.SetCode = reader.getLong(3);
                     cardData.Type = reader.getLong(4);
                     int levelInfo = reader.getInt(5);
                     cardData.Level = levelInfo & 0xff;
-                    cardData.LScale = (levelInfo >> 24) & 0xff;
-                    cardData.RScale = (levelInfo >> 16) & 0xff;
+                    cardData.LeftScale = (levelInfo >> 24) & 0xff;
+                    cardData.RightScale = (levelInfo >> 16) & 0xff;
                     cardData.Race = reader.getLong(6);
                     cardData.Attribute = reader.getInt(7);
                     cardData.Attack = reader.getInt(8);

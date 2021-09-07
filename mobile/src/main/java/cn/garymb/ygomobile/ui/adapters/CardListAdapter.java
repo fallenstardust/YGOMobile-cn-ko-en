@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -122,7 +121,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             }
             if (item.isType(CardType.Pendulum)) {
                 holder.layout_p_scale.setVisibility(View.VISIBLE);
-                holder.cardScale.setText(String.valueOf(item.LScale));
+                holder.cardScale.setText(String.valueOf(item.LeftScale));
             } else {
                 holder.layout_p_scale.setVisibility(View.GONE);
             }

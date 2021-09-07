@@ -123,7 +123,7 @@ public class CardSort implements Comparator<Card> {
             if (rs != 0) {
                 return rs;
             }
-            rs = comp(c1.Ot, c2.Ot);
+            rs = comp(c1.Ot.getId(), c2.Ot.getId());
             if (rs != 0) {
                 return rs;
             }

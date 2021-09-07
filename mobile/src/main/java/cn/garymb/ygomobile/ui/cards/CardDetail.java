@@ -278,7 +278,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
-        otView.setText(mStringManager.getOtString(cardInfo.Ot, "" + cardInfo.Ot));
+        otView.setText(mStringManager.getOtString(cardInfo.Ot.getId(), cardInfo.Ot.name()));
         long[] sets = cardInfo.getSetCode();
         setName.setText("");
         int index = 0;
@@ -316,7 +316,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
             if (cardInfo.isType(CardType.Pendulum)) {
                 layoutDetailPScale.setVisibility(View.VISIBLE);
-                detailCardScale.setText(String.valueOf(cardInfo.LScale));
+                detailCardScale.setText(String.valueOf(cardInfo.LeftScale));
             } else {
                 layoutDetailPScale.setVisibility(View.GONE);
             }

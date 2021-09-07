@@ -112,13 +112,13 @@ class CardSearchInfo {
             }
         }
         if (ot > 0) {
-            if (card.Ot != ot) {
+            if (card.Ot.getId() != ot) {
                 return false;
             }
         }
 
         if (pscale != -1) {
-            if (!card.isType(CardType.Pendulum) || card.LScale != pscale && card.RScale != pscale) {
+            if (!card.isType(CardType.Pendulum) || card.LeftScale != pscale && card.RightScale != pscale) {
                 return false;
             }
         }
