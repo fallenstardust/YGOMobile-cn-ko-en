@@ -1,30 +1,42 @@
 package ocgcore.enums;
 
+import androidx.annotation.Nullable;
+
 public enum CardOt {
     ALL(0),
-    OCG(1),
-    TCG(2),
-    NO_EXCLUSIVE(3),
-    CUSTOM(4),
-    SC_OCG(8),
-    UNKNOWN(999);/*简中*/
+    OCG(1, 1240),
+    TCG(2, 1241),
+    NO_EXCLUSIVE(3, 1242),
+    CUSTOM(4, 1243),
+    SC_OCG(8);
 
     private final int value;
+    //1240
+    private final int lang_index;
 
-    private CardOt(int value) {
-        this.value = value;
+    CardOt(int value) {
+        this(value, 0);
     }
 
-    public int getId(){
+    CardOt(int value, int lang_index) {
+        this.value = value;
+        this.lang_index = lang_index;
+    }
+
+    public int getLanguageIndex() {
+        return lang_index;
+    }
+
+    public int getId() {
         return value;
     }
 
-    public static CardOt of(int value){
-        for(CardOt cardOt: values()){
-            if(cardOt.value == value){
+    public static @Nullable CardOt valueOf(int value) {
+        for (CardOt cardOt : values()) {
+            if (cardOt.value == value) {
                 return cardOt;
             }
         }
-        return UNKNOWN;
+        return null;
     }
 }

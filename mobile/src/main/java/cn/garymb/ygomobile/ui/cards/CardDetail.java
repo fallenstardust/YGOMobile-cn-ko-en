@@ -278,7 +278,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
-        otView.setText(mStringManager.getOtString(cardInfo.Ot.getId(), cardInfo.Ot.name()));
+        otView.setText(mStringManager.getOtString(cardInfo.Ot));
         long[] sets = cardInfo.getSetCode();
         setName.setText("");
         int index = 0;

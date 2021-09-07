@@ -1,29 +1,41 @@
 package ocgcore.enums;
 
+import androidx.annotation.Nullable;
+
 public enum LimitType {
     None(0),
-    All(999),
-    Forbidden(1),
-    Limit(2),
-    SemiLimit(3);
+    All(999, 1310),
+    Forbidden(1, 1316),
+    Limit(2, 1317),
+    SemiLimit(3, 1318);
 
     private long value = 0;
+    private final int lang_index;
 
-    private LimitType(long value) {
-        this.value = value;
+    public int getLanguageIndex() {
+        return lang_index;
     }
 
-    public static LimitType valueOf(long value) {
+    LimitType(long value){
+        this(value, 0);
+    }
+
+    LimitType(long value, int lang_index) {
+        this.value = value;
+        this.lang_index = lang_index;
+    }
+
+    public static @Nullable LimitType valueOf(long value) {
         LimitType[] attributes = LimitType.values();
         for (LimitType attribute : attributes) {
-            if (attribute.value() == value) {
+            if (attribute.getId() == value) {
                 return attribute;
             }
         }
         return null;
     }
 
-    public long value() {
+    public long getId() {
         return this.value;
     }
 }

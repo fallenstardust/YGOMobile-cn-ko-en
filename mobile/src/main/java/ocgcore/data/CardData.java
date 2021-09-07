@@ -3,6 +3,7 @@ package ocgcore.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import ocgcore.enums.CardAttribute;
 import ocgcore.enums.CardOt;
 
 public class CardData implements Parcelable{
@@ -14,7 +15,7 @@ public class CardData implements Parcelable{
         Code = code;
     }
     public int Code;
-    public CardOt Ot;
+    public int Ot;
     public int Alias;
     public long SetCode;
     public long Type;
@@ -54,7 +55,7 @@ public class CardData implements Parcelable{
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(this.Code);
-        dest.writeInt(this.Ot.getId());
+        dest.writeInt(this.Ot);
         dest.writeInt(this.Alias);
         dest.writeLong(this.SetCode);
         dest.writeLong(this.Type);
@@ -70,7 +71,7 @@ public class CardData implements Parcelable{
 
     protected CardData(Parcel in) {
         this.Code = in.readInt();
-        this.Ot = CardOt.of(in.readInt());
+        this.Ot = in.readInt();
         this.Alias = in.readInt();
         this.SetCode = in.readLong();
         this.Type = in.readLong();

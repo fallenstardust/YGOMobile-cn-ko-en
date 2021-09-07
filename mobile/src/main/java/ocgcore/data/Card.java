@@ -63,7 +63,7 @@ public class Card extends CardData implements Parcelable {
     }
 
     public static boolean isType(long Type, CardType type) {
-        return ((Type & type.value()) != 0);
+        return ((Type & type.getId()) != 0);
     }
 
     public static boolean isSpellTrap(long Type) {
@@ -88,11 +88,11 @@ public class Card extends CardData implements Parcelable {
     }
 
     public boolean isType(CardType type) {
-        return ((Type & type.value()) != 0);
+        return ((Type & type.getId()) != 0);
     }
 
     public boolean onlyType(CardType type) {
-        return (Type == type.value());
+        return (Type == type.getId());
     }
 
     public boolean isSpellTrap() {
