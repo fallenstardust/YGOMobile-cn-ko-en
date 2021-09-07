@@ -45,6 +45,8 @@ struct Config {
 	int chkWaitChain;
 	int chkIgnore1;
 	int chkIgnore2;
+	int use_lflist;
+	int default_lflist;
 	int default_rule;
 	int hide_setname;
 	int hide_hint_button;
@@ -165,7 +167,7 @@ public:
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
 	void WaitFrameSignal(int frame);
-	void DrawThumb(code_pointer cp, position2di pos, std::unordered_map<int, int>* lflist);
+	void DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<int,int>* lflist, bool drag = false);
 	void DrawDeckBd();
 	void LoadConfig();
 	void SaveConfig();
@@ -318,6 +320,8 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
+	irr::gui::IGUICheckBox* chkLFlist;
+	irr::gui::IGUIComboBox* cbLFlist;
 	//sound
 	irr::gui::IGUICheckBox* chkEnableSound;
 	irr::gui::IGUICheckBox* chkEnableMusic;
@@ -354,7 +358,7 @@ public:
 	//create host
 	irr::gui::IGUIWindow* wCreateHost;
 	irr::gui::IGUIImage* bgCreateHost;
-	irr::gui::IGUIComboBox* cbLFlist;
+	irr::gui::IGUIComboBox* cbHostLFlist;
 	irr::gui::IGUIComboBox* cbMatchMode;
 	irr::gui::IGUIComboBox* cbRule;
 	irr::gui::IGUIEditBox* ebTimeLimit;
@@ -698,7 +702,8 @@ private:
 
 #define CARD_IMG_WIDTH		177
 #define CARD_IMG_HEIGHT		254
-// no need thumb
+#define CARD_THUMB_WIDTH	44
+#define CARD_THUMB_HEIGHT	64
 
 #define UEVENT_EXIT			0x1
 #define UEVENT_TOWINDOW		0x2
@@ -901,10 +906,17 @@ private:
 #define CHECKBOX_MULTI_KEYWORDS		372
 #define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
+#define CHECKBOX_LFLIST				375
 #define BUTTON_BIG_CARD_CLOSE		380
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
+
+#define AVAIL_OCG					0x1
+#define AVAIL_TCG					0x2
+#define AVAIL_CUSTOM				0x4
+#define AVAIL_SC					0x8
+#define AVAIL_OCGTCG				(AVAIL_OCG|AVAIL_TCG)
 
 #define DEFAULT_DUEL_RULE			5
 
