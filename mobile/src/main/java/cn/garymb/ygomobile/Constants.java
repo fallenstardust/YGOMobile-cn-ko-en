@@ -129,7 +129,7 @@ public interface Constants {
 
     int STRING_ATTRIBUTE_START = 1010;
     int STRING_RACE_START = 1020;
-    int STRING_OT_START = 1239;
+    int STRING_OT_START = 1480;
 
     int UNSORT_TIMES = 0x80;
 

@@ -336,19 +336,19 @@ public class CardSearcher implements View.OnClickListener {
     private void initOtSpinners(Spinner spinner) {
         CardOt[] ots = CardOt.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_ot)));
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_ot)));/*
         for (CardOt item : ots) {
             if (item.ordinal() != 0) {
                 items.add(new SimpleSpinnerItem(item.ordinal(),
                         mStringManager.getOtString(item.ordinal(), item.toString()))
                 );
             }
-        }/*
-        items.add(new SimpleSpinnerItem(1,"OCG"));
-        items.add(new SimpleSpinnerItem(2,"TCG"));
-        items.add(new SimpleSpinnerItem(3,"OCG&TCG"));
-        items.add(new SimpleSpinnerItem(4,"DIY"));
-        items.add(new SimpleSpinnerItem(8,"简中"));*/
+        }*/
+        items.add(new SimpleSpinnerItem(1, getString(R.string.label_ot_OCG)));
+        items.add(new SimpleSpinnerItem(2, getString(R.string.label_ot_TCG)));
+        items.add(new SimpleSpinnerItem(3, getString(R.string.label_ot_No_Exclusive)));
+        items.add(new SimpleSpinnerItem(4, getString(R.string.label_ot_CUSTOM)));
+        items.add(new SimpleSpinnerItem(11, getString(R.string.label_ot_SC_OCG)));
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.setColor(Color.WHITE);

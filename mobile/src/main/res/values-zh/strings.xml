@@ -99,6 +99,12 @@
     <string name="hit_def">DEF</string>
     <string name="label_race">种族</string>
     <string name="label_ot">专属</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_SC_OCG">简体中文</string>
+    <string name="label_ot_CUSTOM">自定义卡片</string>
+    <string name="label_ot_No_Exclusive">无独有卡</string>
+    <string name="label_ot_All">全部卡片</string>
     <string name="label_limit">不限制</string>
     <string name="label_limitlist">禁卡表</string>
     <string name="label_type">卡片类型</string>
