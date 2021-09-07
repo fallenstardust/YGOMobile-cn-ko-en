@@ -858,7 +858,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
 	    ChangeToIGUIImageButton(btnManageDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck manage
-	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 450 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
+	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 460 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckManage, bgDeckManage, imageManager.tWindow_V);
