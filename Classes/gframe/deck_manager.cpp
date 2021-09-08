@@ -48,6 +48,15 @@ void DeckManager::LoadLFListSingle(const char* path) {
 		fclose(fp);
 	}
 }
+void DeckManager::LoadLFList(android::InitOptions *options) {
+	io::path workingDir = options->getWorkDir();
+	LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());
+	LoadLFListSingle((workingDir + path("/lflist.conf")).c_str());
+	LFList nolimit;
+	nolimit.listName = L"N/A";
+	nolimit.hash = 0;
+	_lfList.push_back(nolimit);
+}
 const wchar_t* DeckManager::GetLFListName(int lfhash) {
 	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
 		return list.hash == lfhash;

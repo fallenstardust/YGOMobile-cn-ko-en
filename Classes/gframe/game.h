@@ -134,8 +134,6 @@ public:
 	void stopBGM();
 	void playBGM();
 	bool Initialize(ANDROID_APP app, android::InitOptions *options);
-#else
-	bool Initialize();
 #endif
 	void MainLoop();
 	void RefreshTimeDisplay();

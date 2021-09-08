@@ -192,8 +192,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	menuHandler.prev_sel = -1;
 	memset(&dInfo, 0, sizeof(DuelInfo));
 	memset(chatTiming, 0, sizeof(chatTiming));
-	deckManager.LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());
-	deckManager.LoadLFListSingle((workingDir + path("/lflist.conf")).c_str());
+	deckManager.LoadLFList(options);
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
 	int quality = options->getCardQualityOp();
