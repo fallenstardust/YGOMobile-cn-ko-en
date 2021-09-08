@@ -289,7 +289,7 @@ public:
 	irr::gui::CGUIImageButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
 	irr::gui::IGUIImage* bgSettings;
-	irr::gui::IGUIButton* btnCloseSettings;//
+	irr::gui::CGUIImageButton* btnCloseSettings;//
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg;
 	irr::gui::IGUIStaticText* stTip;
@@ -377,7 +377,7 @@ public:
 	irr::gui::IGUIButton* btnHostPrepOB;//
 	irr::gui::IGUIStaticText* stHostPrepDuelist[4];
 	irr::gui::IGUICheckBox* chkHostPrepReady[4];
-	irr::gui::IGUIButton* btnHostPrepKick[4];//
+	irr::gui::CGUIImageButton* btnHostPrepKick[4];//
 	irr::gui::IGUIComboBox* cbCategorySelect;
 	irr::gui::IGUIComboBox* cbDeckSelect;
 	irr::gui::IGUIStaticText* stHostPrepRule;

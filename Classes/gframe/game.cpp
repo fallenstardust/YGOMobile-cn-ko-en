@@ -422,16 +422,20 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	for(int i = 0; i < 2; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (80 + i * 45) * yScale, 260 * xScale, (120 + i * 45) * yScale), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (80 + i * 45) * yScale, 50 * xScale, (120 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
-			ChangeToIGUIImageButton(btnHostPrepKick[i], imageManager.tButton_C, imageManager.tButton_C_pressed);
+		btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(10 * xScale, (80 + i * 45) * yScale, 50 * xScale, (120 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK);
+        btnHostPrepKick[i]->setImageSize(core::dimension2di(40 * yScale, 40 * yScale));
+        btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (80 + i * 45) * yScale, 310 * xScale, (120 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
 	}
 	for(int i = 2; i < 4; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", rect<s32>(60 * xScale, (135 + i * 45) * yScale, 260 * xScale, (175 + i * 45) * yScale), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-		btnHostPrepKick[i] = env->addButton(rect<s32>(10 * xScale, (135 + i * 45) * yScale, 50 * xScale, (175 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK, L"X");
-			ChangeToIGUIImageButton(btnHostPrepKick[i], imageManager.tButton_C, imageManager.tButton_C_pressed);
+        btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env,rect<s32>(10 * xScale, (135 + i * 45) * yScale, 50 * xScale, (175 + i * 45) * yScale), wHostPrepare, BUTTON_HP_KICK);
+        btnHostPrepKick[i]->setImageSize(core::dimension2di(40 * yScale, 40 * yScale));
+        btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, rect<s32>(270 * xScale, (135 + i * 45) * yScale, 310 * xScale, (175 + i * 45) * yScale), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
 	}
@@ -563,27 +567,21 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
     posY += 40 * yScale;
-    chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
-    chkMusicMode->setChecked(gameConf.music_mode != 0);
-	posY += 40 * yScale;
-	chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
-	chkEnableSound->setChecked(gameConf.enable_sound);
-	scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
-	scrSoundVolume->setMax(100);
-	scrSoundVolume->setMin(0);
-	scrSoundVolume->setPos(gameConf.sound_volume);
-	scrSoundVolume->setLargeStep(1);
-	scrSoundVolume->setSmallStep(1);
-	posY += 40 * yScale;
-	chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
-	chkEnableMusic->setChecked(gameConf.enable_music);
-	scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 250 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
-	scrMusicVolume->setMax(100);
-	scrMusicVolume->setMin(0);
-	scrMusicVolume->setPos(gameConf.music_volume);
-	scrMusicVolume->setLargeStep(1);
-	scrMusicVolume->setSmallStep(1);
-	posX = 240 * xScale;//another Column
+    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
+    chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
+    posY += 40 * yScale;
+    chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
+    chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
+    posY += 40 * yScale;
+    chkLFlist = env->addCheckBox(false, rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
+    chkLFlist->setChecked(gameConf.use_lflist);
+    cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(posX + 110 * xScale, posY, posX + 230 * xScale, posY + 30 * yScale), wSettings, COMBOBOX_LFLIST);
+    cbLFlist->setMaxSelectionRows(6);
+    for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
+        cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
+    cbLFlist->setEnabled(gameConf.use_lflist);
+    cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
+	posX = 250 * xScale;//another Column
 	posY = 40 * yScale;
 	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
@@ -597,26 +595,34 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1366));
 	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
 	posY += 40 * yScale;
-    chkDrawFieldSpell = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
-    chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
-	posY += 40 * yScale;
-	chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
-	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
-	posY += 40 * yScale;
-	chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
-	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
+    chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
+    chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
     posY += 40 * yScale;
-	chkLFlist = env->addCheckBox(false, rect<s32>(posX + 40 * xScale, posY, posX + 140 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
-	chkLFlist->setChecked(gameConf.use_lflist);
-	cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(posX + 150 * xScale, posY, posX + 290 * xScale, posY + 30 * yScale), wSettings, COMBOBOX_LFLIST);
-	cbLFlist->setMaxSelectionRows(6);
-	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
-		cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
-	cbLFlist->setEnabled(gameConf.use_lflist);
-	cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
-    elmTabSystemLast = chkLFlist;
-	btnCloseSettings =env->addButton(rect<s32>(450 * xScale, 350 * yScale, 560 * xScale, 400 * yScale), wSettings, BUTTON_CLOSE_SETTINGS, dataManager.GetSysString(1211));
-		ChangeToIGUIImageButton(btnCloseSettings, imageManager.tButton_S, imageManager.tButton_S_pressed);
+    chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
+    chkMusicMode->setChecked(gameConf.music_mode != 0);
+    posY += 40 * yScale;
+    chkEnableSound = env->addCheckBox(gameConf.enable_sound, rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_SOUND, dataManager.GetSysString(1279));
+    chkEnableSound->setChecked(gameConf.enable_sound);
+    scrSoundVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
+    scrSoundVolume->setMax(100);
+    scrSoundVolume->setMin(0);
+    scrSoundVolume->setPos(gameConf.sound_volume);
+    scrSoundVolume->setLargeStep(1);
+    scrSoundVolume->setSmallStep(1);
+    posY += 40 * yScale;
+    chkEnableMusic = env->addCheckBox(gameConf.enable_music, rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
+    chkEnableMusic->setChecked(gameConf.enable_music);
+    scrMusicVolume = env->addScrollBar(true, rect<s32>(posX + 110 * xScale, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, SCROLL_VOLUME);
+    scrMusicVolume->setMax(100);
+    scrMusicVolume->setMin(0);
+    scrMusicVolume->setPos(gameConf.music_volume);
+    scrMusicVolume->setLargeStep(1);
+    scrMusicVolume->setSmallStep(1);
+    elmTabSystemLast = chkEnableMusic;
+	btnCloseSettings =irr::gui::CGUIImageButton::addImageButton(env,rect<s32>(500 * xScale, 30 * yScale, 550 * xScale, 80 * yScale), wSettings, BUTTON_CLOSE_SETTINGS);
+	btnCloseSettings->setImageSize(core::dimension2di(50 * yScale, 50 * yScale));
+	btnCloseSettings->setDrawBorder(false);
+    btnCloseSettings->setImage(imageManager.tClose);
     //
 	wHand = env->addWindow(rect<s32>(500 * xScale, 450 * yScale, 825 * xScale, 605 * yScale), false, L"");
 	wHand->getCloseButton()->setVisible(false);
@@ -1811,7 +1817,7 @@ void Game::SaveConfig() {
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
 	    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
 	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "use_lflist", gameConf.music_mode);
+	    android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
