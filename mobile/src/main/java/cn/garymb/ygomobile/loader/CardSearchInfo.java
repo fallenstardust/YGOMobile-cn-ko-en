@@ -114,7 +114,11 @@ class CardSearchInfo {
         }
         if (ot > CardOt.ALL.getId()) {
             if(ot == CardOt.NO_EXCLUSIVE.getId()){
-                if(card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId()){
+                if (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId()) {
+                    return false;
+                }
+            } else if (ot == CardOt.OCG.getId() || ot == CardOt.TCG.getId()) {
+                if (card.Ot != ot) {
                     return false;
                 }
             } else if ((card.Ot & ot) == 0) {
