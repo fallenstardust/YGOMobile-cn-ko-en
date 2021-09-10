@@ -58,7 +58,6 @@ import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
-import static cn.garymb.ygomobile.Constants.PREF_DECK_MANAGER_V2;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
@@ -138,7 +137,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_GAME_FONT, mSettings.getFontPath());
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
-        bind(PREF_DECK_MANAGER_V2, mSettings.isUseDeckManagerV2());
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {

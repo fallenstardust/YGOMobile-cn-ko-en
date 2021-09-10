@@ -4,30 +4,26 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
-import android.util.SparseArray;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardLoader;
-import cn.garymb.ygomobile.loader.ICardLoader;
+import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -41,8 +37,6 @@ import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
-import static cn.garymb.ygomobile.ui.cards.DeckManagerActivityImpl.Favorite;
-
 public class CardSearcher implements View.OnClickListener {
 
     final String[] BtnVals = new String[9];
@@ -50,34 +44,35 @@ public class CardSearcher implements View.OnClickListener {
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
     int lineKey;
-    private EditText prefixWord;
-    private EditText suffixWord;
-    private Spinner otSpinner;
-    private Spinner limitSpinner;
-    private Spinner limitListSpinner;
-    private Spinner typeSpinner;
-    private Spinner typeMonsterSpinner;
-    private Spinner typeMonsterSpinner2;
-    private Spinner typeSpellSpinner;
-    private Spinner typeTrapSpinner;
-    private Spinner setcodeSpinner;
-    private Spinner categorySpinner;
-    private Spinner raceSpinner;
-    private Spinner levelSpinner;
-    private Spinner attributeSpinner;
-    private EditText atkText;
-    private EditText defText;
-    private Spinner pScale;
-    private Button MyFavButton;
-    private Button LinkMarkerButton;
-    private Button searchButton;
-    private Button resetButton;
-    private View view;
-    private View layout_monster;
-    private ICardLoader dataLoader;
-    private Context mContext;
+    private final EditText prefixWord;
+    private final EditText suffixWord;
+    private final Spinner otSpinner;
+    private final Spinner limitSpinner;
+    private final Spinner limitListSpinner;
+    private final Spinner typeSpinner;
+    private final Spinner typeMonsterSpinner;
+    private final Spinner typeMonsterSpinner2;
+    private final Spinner typeSpellSpinner;
+    private final Spinner typeTrapSpinner;
+    private final Spinner setCodeSpinner;
+    private final Spinner categorySpinner;
+    private final Spinner raceSpinner;
+    private final Spinner levelSpinner;
+    private final Spinner attributeSpinner;
+    private final EditText atkText;
+    private final EditText defText;
+    private final Spinner pScale;
+    private final Button LinkMarkerButton;
+    private final Button searchButton;
+    private final Button resetButton;
+    private final View view;
+    private final View layout_monster;
+    private final ICardSearcher dataLoader;
+    private final Context mContext;
+    private final Button myFavButton;
     private CallBack mCallBack;
-    CardLoader mCardLoader;
+    private boolean mShowFavorite;
+    private ICardSearcher mCardLoader;
 
     public interface CallBack {
         void onSearchStart();
@@ -89,7 +84,7 @@ public class CardSearcher implements View.OnClickListener {
         mCallBack = callBack;
     }
 
-    public CardSearcher(View view, ICardLoader dataLoader) {
+    public CardSearcher(View view, ICardSearcher dataLoader) {
         this.view = view;
         this.mContext = view.getContext();
         this.dataLoader = dataLoader;
@@ -106,7 +101,7 @@ public class CardSearcher implements View.OnClickListener {
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
         typeSpellSpinner = findViewById(R.id.sp_type_spell);
         typeTrapSpinner = findViewById(R.id.sp_type_trap);
-        setcodeSpinner = findViewById(R.id.sp_setcode);
+        setCodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
         raceSpinner = findViewById(R.id.sp_race);
         levelSpinner = findViewById(R.id.sp_level);
@@ -114,117 +109,98 @@ public class CardSearcher implements View.OnClickListener {
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
         LinkMarkerButton = findViewById(R.id.btn_linkmarker);
-        MyFavButton = findViewById(R.id.btn_my_fav);
+        myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
         layout_monster = findViewById(R.id.layout_monster);
         pScale = findViewById(R.id.sp_scale);
-        MyFavButton.setOnClickListener(this);
+        myFavButton.setOnClickListener(this);
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
-        mCardLoader = new CardLoader(mContext);
+        mCardLoader = dataLoader;
 
-        OnEditorActionListener searchListener = new OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-                    search();
-                    return true;
-                }
-                return false;
+        OnEditorActionListener searchListener = (v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                search();
+                return true;
             }
+            return false;
         };
 
         prefixWord.setOnEditorActionListener(searchListener);
         suffixWord.setOnEditorActionListener(searchListener);
 
-        MyFavButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SparseArray<Card> id = mCardLoader.readCards(ConfigManager.mLines, false);
-                Favorite.clear();
-                if (id != null) {
-                    for (int i = 0; i < id.size(); i++)
-                        Favorite.add(id.valueAt(i));
-                }
-                if (mCallBack != null) {
-                    mCallBack.onSearchStart();
-                    mCallBack.onSearchResult(Favorite, false);
-                }
-
-                DeckManagerActivityImpl.isSearchResult = false;
+        myFavButton.setOnClickListener(v -> {
+            if(isShowFavorite()){
+                hideFavorites();
+            } else {
+                showFavorites(true);
             }
         });
 
-        LinkMarkerButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (int i = 0; i < BtnVals.length; i++) {
-                    BtnVals[i] = "0";
-                }
-                DialogPlus viewDialog = new DialogPlus(mContext);
-                viewDialog.setContentView(R.layout.item_linkmarker);
-                viewDialog.setTitle(R.string.ClickLinkArrows);
-                viewDialog.show();
-                int[] ids = new int[]{
-                        R.id.button_1,
-                        R.id.button_2,
-                        R.id.button_3,
-                        R.id.button_4,
-                        R.id.button_5,
-                        R.id.button_6,
-                        R.id.button_7,
-                        R.id.button_8,
-                        R.id.button_9,
-                };
-                int[] enImgs = new int[]{
-                        R.drawable.left_bottom_1,
-                        R.drawable.bottom_1,
-                        R.drawable.right_bottom_1,
-                        R.drawable.left_1,
-                        0,
-                        R.drawable.right_1,
-                        R.drawable.left_top_1,
-                        R.drawable.top_1,
-                        R.drawable.right_top_1,
-                };
-                int[] disImgs = new int[]{
-                        R.drawable.left_bottom_0,
-                        R.drawable.bottom_0,
-                        R.drawable.right_bottom_0,
-                        R.drawable.left_0,
-                        0,
-                        R.drawable.right_0,
-                        R.drawable.left_top_0,
-                        R.drawable.top_0,
-                        R.drawable.right_top_0,
-                };
-                for (int i = 0; i < ids.length; i++) {
-                    final int index = i;
-                    viewDialog.findViewById(ids[index]).setOnClickListener((btn) -> {
-                        if (index == 4) {
-                            String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
-                                    + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
-                            lineKey = Integer.parseInt(mLinkStr, 2);
-                            if (viewDialog.isShowing()) {
-                                viewDialog.dismiss();
-                            }
-                        } else {
-                            if ("0".equals(BtnVals[index])) {
-                                btn.setBackgroundResource(enImgs[index]);
-                                BtnVals[index] = "1";
-                            } else {
-                                btn.setBackgroundResource(disImgs[index]);
-                                BtnVals[index] = "0";
-                            }
+        LinkMarkerButton.setOnClickListener(v -> {
+            Arrays.fill(BtnVals, "0");
+            DialogPlus viewDialog = new DialogPlus(mContext);
+            viewDialog.setContentView(R.layout.item_linkmarker);
+            viewDialog.setTitle(R.string.ClickLinkArrows);
+            viewDialog.show();
+            int[] ids = new int[]{
+                    R.id.button_1,
+                    R.id.button_2,
+                    R.id.button_3,
+                    R.id.button_4,
+                    R.id.button_5,
+                    R.id.button_6,
+                    R.id.button_7,
+                    R.id.button_8,
+                    R.id.button_9,
+            };
+            int[] enImgs = new int[]{
+                    R.drawable.left_bottom_1,
+                    R.drawable.bottom_1,
+                    R.drawable.right_bottom_1,
+                    R.drawable.left_1,
+                    0,
+                    R.drawable.right_1,
+                    R.drawable.left_top_1,
+                    R.drawable.top_1,
+                    R.drawable.right_top_1,
+            };
+            int[] disImgs = new int[]{
+                    R.drawable.left_bottom_0,
+                    R.drawable.bottom_0,
+                    R.drawable.right_bottom_0,
+                    R.drawable.left_0,
+                    0,
+                    R.drawable.right_0,
+                    R.drawable.left_top_0,
+                    R.drawable.top_0,
+                    R.drawable.right_top_0,
+            };
+            for (int i = 0; i < ids.length; i++) {
+                final int index = i;
+                viewDialog.findViewById(ids[index]).setOnClickListener((btn) -> {
+                    if (index == 4) {
+                        String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
+                                + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
+                        lineKey = Integer.parseInt(mLinkStr, 2);
+                        if (viewDialog.isShowing()) {
+                            viewDialog.dismiss();
                         }
-                    });
-                }
+                    } else {
+                        if ("0".equals(BtnVals[index])) {
+                            btn.setBackgroundResource(enImgs[index]);
+                            BtnVals[index] = "1";
+                        } else {
+                            btn.setBackgroundResource(disImgs[index]);
+                            BtnVals[index] = "0";
+                        }
+                    }
+                });
             }
-
         });
 
 
@@ -257,7 +233,7 @@ public class CardSearcher implements View.OnClickListener {
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
-                } else if (value == CardType.Spell.value()) {
+                } else if (value == CardType.Spell.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.VISIBLE);
@@ -265,7 +241,7 @@ public class CardSearcher implements View.OnClickListener {
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
-                } else if (value == CardType.Trap.value()) {
+                } else if (value == CardType.Trap.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.GONE);
@@ -297,6 +273,24 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
+    public void showFavorites(boolean showList) {
+        mShowFavorite = true;
+        myFavButton.setSelected(true);
+        if (mCallBack != null) {
+            mCallBack.onSearchStart();
+            mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+        }
+    }
+
+    public void hideFavorites(){
+        mShowFavorite = true;
+        myFavButton.setSelected(false);
+        if (mCallBack != null) {
+            mCallBack.onSearchStart();
+            mCallBack.onSearchResult(Collections.emptyList(), true);
+        }
+    }
+
     public void initItems() {
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);
@@ -317,7 +311,7 @@ public class CardSearcher implements View.OnClickListener {
         initPscaleSpinners(pScale);
         initAttributes(attributeSpinner);
         initRaceSpinners(raceSpinner);
-        initSetNameSpinners(setcodeSpinner);
+        initSetNameSpinners(setCodeSpinner);
         initCategorySpinners(categorySpinner);
     }
 
@@ -334,26 +328,20 @@ public class CardSearcher implements View.OnClickListener {
     }*/
 
     private void initOtSpinners(Spinner spinner) {
-        CardOt[] ots = CardOt.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_ot)));/*
-        for (CardOt item : ots) {
-            if (item.ordinal() != 0) {
-                items.add(new SimpleSpinnerItem(item.ordinal(),
-                        mStringManager.getOtString(item.ordinal(), item.toString()))
-                );
-            }
-        }*/
-        items.add(new SimpleSpinnerItem(1, getString(R.string.label_ot_OCG)));
-        items.add(new SimpleSpinnerItem(2, getString(R.string.label_ot_TCG)));
-        items.add(new SimpleSpinnerItem(3, getString(R.string.label_ot_No_Exclusive)));
-        items.add(new SimpleSpinnerItem(4, getString(R.string.label_ot_CUSTOM)));
-        items.add(new SimpleSpinnerItem(8, getString(R.string.label_ot_SC_OCG)));
+        for (CardOt item : CardOt.values()) {
+            items.add(new SimpleSpinnerItem(item.getId(),
+                    mStringManager.getOtString(item.getId(), false)));
+        }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
+    }
+
+    public boolean isShowFavorite() {
+        return mShowFavorite;
     }
 
     protected String getString(int id) {
@@ -364,13 +352,12 @@ public class CardSearcher implements View.OnClickListener {
         LimitType[] eitems = LimitType.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (LimitType item : eitems) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_limit)));
-            } else if (val == LimitType.All.value()) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.all)));
+            if (item == LimitType.None) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.label_limit)));
+            } else if (item == LimitType.All) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.all)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getLimitString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getLimitString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -455,11 +442,10 @@ public class CardSearcher implements View.OnClickListener {
         }
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (CardType item : eitems) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_type)));
+            if (item == CardType.None) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.label_type)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getTypeString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getTypeString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -472,11 +458,10 @@ public class CardSearcher implements View.OnClickListener {
         CardAttribute[] attributes = CardAttribute.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (CardAttribute item : attributes) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_attr)));
+            if (item == CardAttribute.None) {
+                items.add(new SimpleSpinnerItem(CardAttribute.None.getId(), getString(R.string.label_attr)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getAttributeString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getAttributeString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -543,9 +528,10 @@ public class CardSearcher implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        if (v == searchButton) {
+        if (v.getId() == R.id.btn_search) {
+            hideFavorites();
             search();
-        } else if (v == resetButton) {
+        } else if (v.getId() == R.id.btn_reset) {
             resetAll();
         }
     }
@@ -564,12 +550,11 @@ public class CardSearcher implements View.OnClickListener {
                     , getSelect(levelSpinner), getSelect(raceSpinner), getSelectText(limitListSpinner), getSelect(limitSpinner),
                     text(atkText), text(defText),
                     getSelect(pScale),
-                    getSelect(setcodeSpinner)
+                    getSelect(setCodeSpinner)
                     , getSelect(categorySpinner), getSelect(otSpinner), lineKey, getSelect(typeSpinner), getSelect(typeMonsterSpinner), getSelect(typeSpellSpinner), getSelect(typeTrapSpinner)
                     , getSelect(typeMonsterSpinner2));
             lineKey = 0;
         }
-        DeckManagerActivityImpl.isSearchResult = true;
     }
 
     private void resetAll() {
@@ -588,7 +573,7 @@ public class CardSearcher implements View.OnClickListener {
         reset(typeSpinner);
         reset(typeSpellSpinner);
         reset(typeTrapSpinner);
-        reset(setcodeSpinner);
+        reset(setCodeSpinner);
         reset(categorySpinner);
         resetMonster();
     }

@@ -46,6 +46,7 @@
                     android:layout_weight="1"
                     android:background="@color/transparent"
                     android:text="@string/my_favorites"
+                    android:textColor="@color/selector_text_color_white_gold"
                     android:visibility="visible" />
 
             </LinearLayout>
