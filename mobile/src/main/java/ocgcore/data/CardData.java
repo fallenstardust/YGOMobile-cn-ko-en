@@ -3,10 +3,9 @@ package ocgcore.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import ocgcore.enums.CardAttribute;
-import ocgcore.enums.CardOt;
+import androidx.annotation.NonNull;
 
-public class CardData implements Parcelable{
+public class CardData implements Parcelable {
 
     public CardData() {
     }
@@ -28,6 +27,7 @@ public class CardData implements Parcelable{
     public int RightScale;
     public long Category;
 
+    @NonNull
     @Override
     public String toString() {
         return "CardData{" +

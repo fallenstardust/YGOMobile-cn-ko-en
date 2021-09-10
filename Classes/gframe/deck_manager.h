@@ -36,6 +36,7 @@ public:
 	std::vector<LFList> _lfList;
 
 	void LoadLFListSingle(const char* path);
+	void LoadLFList(android::InitOptions *options);
 	const wchar_t* GetLFListName(int lfhash);
 	std::unordered_map<int, int>* GetLFListContent(int lfhash);
 	int CheckDeck(Deck& deck, int lfhash, int rule);

@@ -4,6 +4,8 @@ package ocgcore.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.NonNull;
+
 import ocgcore.enums.CardType;
 
 public class Card extends CardData implements Parcelable {
@@ -137,6 +139,7 @@ public class Card extends CardData implements Parcelable {
         return c.Code == this.Code || c.Alias == this.Code || c.Code == this.Alias;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Card{" +

@@ -50,6 +50,7 @@ bool ImageManager::Initial(const path dir) {
 	tPlay = driver->getTexture((dir + path("/textures/extra/tplay.png")).c_str());
 	tTalk = driver->getTexture((dir + path("/textures/extra/ttalk.png")).c_str());
 	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
+	tClose = driver->getTexture((dir + path("/textures/extra/tclose.png")).c_str());
     tTitleBar = driver->getTexture((dir + path("/textures/extra/stitlebar.png")).c_str());
     tWindow = driver->getTexture((dir + path("/textures/extra/sWindow.png")).c_str());
     tWindow_V = driver->getTexture((dir + path("/textures/extra/sWindow_V.png")).c_str());
