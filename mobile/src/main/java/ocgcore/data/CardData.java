@@ -3,6 +3,9 @@ package ocgcore.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import ocgcore.enums.CardAttribute;
+import ocgcore.enums.CardOt;
+
 public class CardData implements Parcelable{
 
     public CardData() {
@@ -11,19 +14,18 @@ public class CardData implements Parcelable{
     public CardData(int code) {
         Code = code;
     }
-
     public int Code;
     public int Ot;
     public int Alias;
-    public long Setcode;
+    public long SetCode;
     public long Type;
     public int Level;
     public int Attribute;
     public long Race;
     public int Attack;
     public int Defense;
-    public int LScale;
-    public int RScale;
+    public int LeftScale;
+    public int RightScale;
     public long Category;
 
     @Override
@@ -32,15 +34,15 @@ public class CardData implements Parcelable{
                 "Code=" + Code +
                 ", Ot=" + Ot +
                 ", Alias=" + Alias +
-                ", Setcode=" + Setcode +
+                ", Setcode=" + SetCode +
                 ", Type=" + Type +
                 ", Level=" + Level +
                 ", Attribute=" + Attribute +
                 ", Race=" + Race +
                 ", Attack=" + Attack +
                 ", Defense=" + Defense +
-                ", LScale=" + LScale +
-                ", RScale=" + RScale +
+                ", LScale=" + LeftScale +
+                ", RScale=" + RightScale +
                 ", Category=" + Category +
                 '}';
     }
@@ -55,15 +57,15 @@ public class CardData implements Parcelable{
         dest.writeInt(this.Code);
         dest.writeInt(this.Ot);
         dest.writeInt(this.Alias);
-        dest.writeLong(this.Setcode);
+        dest.writeLong(this.SetCode);
         dest.writeLong(this.Type);
         dest.writeInt(this.Level);
         dest.writeInt(this.Attribute);
         dest.writeLong(this.Race);
         dest.writeInt(this.Attack);
         dest.writeInt(this.Defense);
-        dest.writeInt(this.LScale);
-        dest.writeInt(this.RScale);
+        dest.writeInt(this.LeftScale);
+        dest.writeInt(this.RightScale);
         dest.writeLong(this.Category);
     }
 
@@ -71,15 +73,15 @@ public class CardData implements Parcelable{
         this.Code = in.readInt();
         this.Ot = in.readInt();
         this.Alias = in.readInt();
-        this.Setcode = in.readLong();
+        this.SetCode = in.readLong();
         this.Type = in.readLong();
         this.Level = in.readInt();
         this.Attribute = in.readInt();
         this.Race = in.readLong();
         this.Attack = in.readInt();
         this.Defense = in.readInt();
-        this.LScale = in.readInt();
-        this.RScale = in.readInt();
+        this.LeftScale = in.readInt();
+        this.RightScale = in.readInt();
         this.Category = in.readLong();
     }
 
@@ -94,4 +96,5 @@ public class CardData implements Parcelable{
             return new CardData[size];
         }
     };
+
 }
