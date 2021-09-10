@@ -7,6 +7,7 @@ android {
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
         minSdkVersion 21
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 380800907
         versionName "3.8.8"
@@ -22,21 +23,29 @@ android {
     }
     productFlavors {
         cn {
+            buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
             applicationIdSuffix ".EN"
+            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
             applicationIdSuffix ".KO"
+            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
             manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }
     buildTypes {
+        debug {
+            debuggable false
+            buildConfigField 'boolean', 'DEBUG_MODE', 'true'
+        }
         release {
             shrinkResources false
             minifyEnabled false
+            buildConfigField 'boolean', 'DEBUG_MODE', 'false'
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

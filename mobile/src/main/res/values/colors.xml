@@ -12,8 +12,10 @@
     <color name="mediumPurple">#673AB7</color>
     <color name="mediumPurpleDark">#572AA7</color>
     <color name="colorPrimaryDark">#2f41a5</color>
-    <color name="gold">#b8be35</color>
-    <color name="colorAccent">#EF3934</color>
+    <color name="gold">#C8BE35</color>
+    <color name="gold_light">#D8DE45</color>
+    <color name="red">#EF3934</color>
+    <color name="colorAccent">@color/red</color>
     <color name="colorAccentDark">#CF3934</color>
     <color name="item_title">@color/gold</color>
     <color name="item_bg">#65ffffff</color>

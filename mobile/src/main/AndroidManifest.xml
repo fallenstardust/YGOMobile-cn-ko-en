@@ -124,10 +124,6 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
 
-        <receiver
-            android:name="cn.garymb.ygomobile.GameReceiver"
-            android:enabled="false" />
-
         <activity
             android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -137,7 +133,7 @@
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
-            android:name="cn.garymb.ygomobile.ui.cards.CardSearchAcitivity"
+            android:name="cn.garymb.ygomobile.ui.cards.CardSearchActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:label="@string/card_search"
             android:launchMode="singleTop"
@@ -146,22 +142,6 @@
             android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
         <activity
             android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/deck_manager"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity2"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/deck_manager"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity3"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:label="@string/deck_manager"
             android:launchMode="singleTop"

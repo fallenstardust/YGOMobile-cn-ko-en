@@ -145,9 +145,9 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                android:background="@drawable/ic_control_point"
+                android:src="@drawable/selector_favorite"
                 android:paddingRight="5dp"
-                android:scaleType="center" />
+                android:scaleType="fitCenter" />
         </LinearLayout>
 
         <LinearLayout
