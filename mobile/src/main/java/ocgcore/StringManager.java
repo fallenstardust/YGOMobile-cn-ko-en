@@ -82,9 +82,9 @@ public class StringManager implements Closeable {
 
         InputStreamReader in = null;
         try {
-            in = new InputStreamReader(inputStream, "utf-8");
+            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
@@ -133,7 +133,7 @@ public class StringManager implements Closeable {
             inputStream = new FileInputStream(file);
             in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
