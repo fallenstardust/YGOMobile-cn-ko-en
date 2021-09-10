@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import cn.garymb.ygodata.YGOGameOptions;
+
 import static cn.garymb.ygomobile.utils.ByteUtils.byte2int;
 import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
 
@@ -24,8 +26,7 @@ import static cn.garymb.ygomobile.utils.ByteUtils.byte2uint;
  * @author mabin
  */
 public final class IrrlichtBridge {
-    public static final String ACTION_START = "cn.garymb.ygomobile.game.start";
-    public static final String ACTION_STOP = "cn.garymb.ygomobile.game.stop";
+    public static final String ACTION_OPEN_GAME_HOME = "ygomobile.intent.action.GAME";
     /**
      * @see #EXTRA_SHARE_FILE
      * @see #EXTRA_SHARE_TYPE
@@ -37,8 +38,11 @@ public final class IrrlichtBridge {
     public static final String EXTRA_PID = "extras.mypid";
     public static final String EXTRA_ARGV = "extras.argv";
     public static final String EXTRA_ARGV_TIME_OUT = "extras.argv_timeout";
-    private static final boolean DEBUG = false;
-    private static final String TAG = IrrlichtBridge.class.getSimpleName();
+    public static final String EXTRA_GAME_EXIT_TIME = "game_exit_time";
+    public static final String EXTRA_TASK_ID = "extras.taskid";
+
+    public static final String TAG = "ygo-java";
+
     public static int gPid;
     public static long sNativeHandle;
 
@@ -80,14 +84,16 @@ public final class IrrlichtBridge {
 
     private static native void nativeSetInputFix(long handle, int x, int y);
 
+    private static final boolean DEBUG = false;
+
     public static void setArgs(Intent intent, String[] args) {
         intent.putExtra(EXTRA_ARGV, args);
         intent.putExtra(EXTRA_ARGV_TIME_OUT, (System.currentTimeMillis() + 15 * 1000));
     }
 
-    public static String[] getArgs(Intent intent) {
+    public static String[] getArgs(Intent intent){
         long time = intent.getLongExtra(EXTRA_ARGV_TIME_OUT, 0);
-        if (time > System.currentTimeMillis()) {
+        if(time > System.currentTimeMillis()){
             return intent.getStringArrayExtra(EXTRA_ARGV);
         }
         return null;
@@ -202,7 +208,7 @@ public final class IrrlichtBridge {
 
         float getScreenHeight();
 
-        void runWindbot(String args);
+		void runWindbot(String args);
 
         float getXScale();
 
