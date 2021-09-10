@@ -796,7 +796,7 @@ int getLocalAddr(ANDROID_APP app) {
 	if (!app || !app->activity || !app->activity->vm)
 		return addr;
 	JNIEnv* jni = nullptr;
-	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	app->activity->vm->AttachCurrentThread(&jni, nullptr);
 	jobject lNativeActivity = app->activity->clazz;
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
 	jmethodID MethodGetAddr = jni->GetMethodID(ClassNativeActivity,
