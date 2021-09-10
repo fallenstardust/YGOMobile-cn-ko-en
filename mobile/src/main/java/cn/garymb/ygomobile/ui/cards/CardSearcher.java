@@ -283,7 +283,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public void hideFavorites(){
-        mShowFavorite = true;
+        mShowFavorite = false;
         myFavButton.setSelected(false);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
