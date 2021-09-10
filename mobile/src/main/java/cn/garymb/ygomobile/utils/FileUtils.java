@@ -4,9 +4,11 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -17,6 +19,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.garymb.ygomobile.Constants;
 
 
 public class FileUtils {
@@ -40,6 +44,9 @@ public class FileUtils {
         InputStreamReader in = null;
         FileInputStream inputStream = null;
         List<String> lines = new ArrayList<>();
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         try {
             inputStream = new FileInputStream(file);
             in = new InputStreamReader(inputStream, encoding);
@@ -48,8 +55,8 @@ public class FileUtils {
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
-        } catch (Exception e) {
-
+        } catch (Throwable e) {
+            //ignore
         } finally {
             IOUtils.close(in);
             IOUtils.close(inputStream);
@@ -58,6 +65,9 @@ public class FileUtils {
     }
 
     public static boolean writeLines(String file, List<String> lines, String encoding, String newLine) {
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         FileOutputStream outputStream = null;
         File tmp = new File(file + ".tmp");
         boolean ok = false;
@@ -115,7 +125,7 @@ public class FileUtils {
             outputStream = new FileOutputStream(out);
             copy(inputStream, outputStream);
         } catch (Throwable e) {
-            Log.e("ygo", "copy file", e);
+            Log.e(Constants.TAG, "copy file", e);
             return false;
         } finally {
             IOUtils.close(outputStream);
