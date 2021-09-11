@@ -94,19 +94,24 @@ void ImageManager::SetDevice(irr::IrrlichtDevice* dev) {
 	driver = dev->getVideoDriver();
 }
 void ImageManager::ClearTexture() {
-	for(auto tit = tMap.begin(); tit != tMap.end(); ++tit) {
-		if(tit->second)
-			driver->removeTexture(tit->second);
+	for(auto & tit : tMap) {
+		if(tit.second)
+			driver->removeTexture(tit.second);
 	}
-	for(auto tit = tThumb.begin(); tit != tThumb.end(); ++tit) {
-		if(tit->second)
-			driver->removeTexture(tit->second);
+	for(auto & tit : tThumb) {
+		if(tit.second)
+			driver->removeTexture(tit.second);
+	}
+	for(auto & field : tFields) {
+		if(field.second)
+			driver->removeTexture(field.second);
 	}
 	tMap.clear();
 	tThumb.clear();
-	if(tBigPicture != NULL) {
+	tFields.clear();
+	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
-		tBigPicture = NULL;
+		tBigPicture = nullptr;
 	}
 }
 void ImageManager::RemoveTexture(int code) {
