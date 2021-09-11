@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -135,7 +136,7 @@ public class CardSearcher implements View.OnClickListener {
 
         myFavButton.setOnClickListener(v -> {
             if(isShowFavorite()){
-                hideFavorites();
+                hideFavorites(true);
             } else {
                 showFavorites(true);
             }
@@ -278,16 +279,30 @@ public class CardSearcher implements View.OnClickListener {
         myFavButton.setSelected(true);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
-            mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+        }
+        if (mCallBack != null) {
+            VUiKit.post(() -> {
+                mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+            });
         }
     }
 
-    public void hideFavorites(){
+    public void hideFavorites(boolean reload){
         mShowFavorite = false;
         myFavButton.setSelected(false);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
-            mCallBack.onSearchResult(Collections.emptyList(), true);
+        }
+        if (reload) {
+            VUiKit.post(() -> {
+                search();
+            });
+        } else {
+            if (mCallBack != null) {
+                VUiKit.post(() -> {
+                    mCallBack.onSearchResult(Collections.emptyList(), true);
+                });
+            }
         }
     }
 
@@ -529,8 +544,7 @@ public class CardSearcher implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_search) {
-            hideFavorites();
-            search();
+            hideFavorites(true);
         } else if (v.getId() == R.id.btn_reset) {
             resetAll();
         }

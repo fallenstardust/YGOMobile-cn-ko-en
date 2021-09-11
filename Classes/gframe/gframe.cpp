@@ -108,18 +108,20 @@ int main(int argc, char* argv[]) {
 #else
                 char* name = argv[i+1];
 #endif
-			    wchar_t fname[1024];
-			    BufferIO::DecodeUTF8(name, fname);
+
+                wchar_t fname[1024];
+                BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
 				ALOGD("open replay file:index=%d, name=%s", index, name);
 			}
-			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
-			ClickButton(ygo::mainGame->btnReplayMode);
+            ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
+            ClickButton(ygo::mainGame->btnReplayMode);
 			if (index >= 0) {
-				ygo::mainGame->lstReplayList->setSelected(index);
-			    ClickButton(ygo::mainGame->btnLoadReplay);
-			}
-			break;//只播放一个
+                ygo::mainGame->lstReplayList->setSelected(index);
+                ClickButton(ygo::mainGame->btnLoadReplay);
+            }
+
+            break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
 		    exit_on_return = !keep_on_return;
 			//显示残局窗口
@@ -134,13 +136,13 @@ int main(int argc, char* argv[]) {
 #else
                 char* name = argv[i+1];
 #endif
-			    wchar_t fname[1024];
-			    BufferIO::DecodeUTF8(name, fname);
+                wchar_t fname[1024];
+                BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstSinglePlayList, fname);
 				ALOGD("open single file:index=%d, name=%s", index, name);
 			}
 			if(index >= 0){
-				ygo::mainGame->lstSinglePlayList->setSelected(index);
+                ygo::mainGame->lstSinglePlayList->setSelected(index);
 			    ClickButton(ygo::mainGame->btnLoadSinglePlay);
 			}
 			break;

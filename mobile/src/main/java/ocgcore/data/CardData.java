@@ -13,7 +13,6 @@ public class CardData implements Parcelable {
     public CardData(int code) {
         Code = code;
     }
-
     public int Code;
     public int Ot;
     public int Alias;
