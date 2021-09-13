@@ -263,6 +263,8 @@ public class StringManager implements Closeable {
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for(CardOt _ot : CardOt.values()){
+            if (_ot.getId() == CardOt.NO_EXCLUSIVE.getId())
+                continue;
             if((_ot.getId() & ot) != 0){
                 if(first){
                     first = false;
