@@ -305,11 +305,17 @@
                                 \n더 많은 듀얼 모드 비밀번호는 앱 튜토리얼을 참고하십시오</string>
     <string name="guide_button_search">겁색 기준을 편집하려면 터치하십시오</string>
     <string name="guide_search_result_count">여기에 검색 결과를 표시합니다</string>
-    <string name="guide_button_search_result">click to see search result\n also here will shows favorite cards</string>
-    <string name="guide_view_deck_manager">click to change Decks\n you can manage deck categories here</string>
-    <string name="guide_view_move_card">press a card to move it to other place\nlong-press this card to delete it</string>
+    <string name="guide_button_search_result">검색 결과를 보려면 여기를 클릭하세요. 즐겨찾는 카드도 표시됩니다.</string>
+    <string name="guide_view_deck_manager">덱 관리에서 덱 카테고리와 덱을 클릭하여 관리할 수 있습니다.</string>
+    <string name="guide_view_move_card">원하는 카드를 길게 누르거나 다른 위치로 이동할 수 있고, 제거할 수 있습니다.</string>
     <string name="about_delete_ex">만약 확장 카드를 사용하면서 문제가 발생했을 경우, 삭제하는 것도 좋은 선택이다</string>
     <string name="title_delete_ex">확장 삭제</string>
     <string name="file_installed">문건 나왔습니다.</string>
     <string name="ask_delete_ex">지우려면 확인을 클릭하십시오.</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_SC_OCG">SC_OCG</string>
+    <string name="label_ot_All">모든 카드</string>
+    <string name="label_ot_No_Exclusive">ID 없는 카드</string>
+    <string name="label_ot_CUSTOM">커스텀 카드</string>
 </resources>

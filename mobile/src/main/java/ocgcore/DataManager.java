@@ -22,7 +22,7 @@ public class DataManager {
 
     private final StringManager mStringManager;
     private final LimitManager mLimitManager;
-    private CardManager mCardManager;
+    private final CardManager mCardManager;
 
     private DataManager() {
         mStringManager = new StringManager();
@@ -38,10 +38,6 @@ public class DataManager {
 
     public LimitManager getLimitManager() {
         return mLimitManager;
-    }
-
-    public static ConfigManager openConfig(File conf) {
-        return new ConfigManager(conf);
     }
 
     public CardManager getCardManager() {

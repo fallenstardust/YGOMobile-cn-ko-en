@@ -255,10 +255,6 @@ public class DeckInfo {
         }
     }
 
-    private boolean comp(Card c1, Card c2) {
-        return CardSort.ASC.compare(c1, c2) < 0;
-    }
-
     public void sortAll() {
         sortMain();
         sortExtra();
@@ -281,9 +277,9 @@ public class DeckInfo {
         int len = cards.size();
         for (int i = 0; i < len - 1; i++) {
             for (int j = 0; j < len - 1 - i; j++) {
-                Card d1 = cards.get(j);
-                Card d2 = cards.get(j + 1);
-                if (comp(d1, d2)) {
+                Card c1 = cards.get(j);
+                Card c2 = cards.get(j + 1);
+                if (CardSort.FULL_ASC.compare(c1, c2) > 0) {
                     Collections.swap(cards, j, j + 1);
                 }
             }

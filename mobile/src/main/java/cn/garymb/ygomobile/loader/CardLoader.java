@@ -17,20 +17,20 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.CardSort;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
-import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
-public class CardLoader implements ICardLoader {
-    private LimitManager mLimitManager;
-    private CardManager mCardManager;
-    private StringManager mStringManager;
-    private Context context;
+public class CardLoader implements ICardSearcher {
+    private final LimitManager mLimitManager;
+    private final CardManager mCardManager;
+    private final StringManager mStringManager;
+    private final Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
     private static final String TAG = CardLoader.class.getSimpleName();
@@ -62,11 +62,8 @@ public class CardLoader implements ICardLoader {
         }
     }
 
+    @Override
     public SparseArray<Card> readCards(List<Integer> ids, boolean isSorted) {
-        return readCards(ids, mLimitList, isSorted);
-    }
-
-    public SparseArray<Card> readCards(List<Integer> ids, LimitList limitList, boolean isSorted) {
         if (!isOpen()) {
             return null;
         }
@@ -84,6 +81,7 @@ public class CardLoader implements ICardLoader {
         return map;
     }
 
+    @Override
     public boolean isOpen() {
         return mCardManager.getCount() > 0;
     }
@@ -127,34 +125,16 @@ public class CardLoader implements ICardLoader {
         }
         Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
         VUiKit.defer().when(() -> {
-            List<Card> tmp = new ArrayList<Card>();
-            List<Card> monster = new ArrayList<Card>();
-            List<Card> spell = new ArrayList<Card>();
-            List<Card> trap = new ArrayList<Card>();
             SparseArray<Card> cards = mCardManager.getAllCards();
-            int count = cards.size();
-            for (int i = 0; i < count; i++) {
+            List<Card> list = new ArrayList<>();
+            for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.valueAt(i);
                 if (searchInfo == null || searchInfo.check(card)) {
-                    if (searchInfo != null && card.Name.equalsIgnoreCase(searchInfo.keyWord1)) {
-                        tmp.add(card);
-                    } else if (card.isType(CardType.Monster)) {
-                        monster.add(card);
-                    } else if (card.isType(CardType.Spell)) {
-                        spell.add(card);
-                    } else if (card.isType(CardType.Trap)) {
-                        trap.add(card);
-                    }
+                    list.add(card);
                 }
             }
-            Collections.sort(tmp, ASCode);
-            Collections.sort(monster, ASC);
-            Collections.sort(spell, ASCode);
-            Collections.sort(trap, ASCode);
-            tmp.addAll(monster);
-            tmp.addAll(spell);
-            tmp.addAll(trap);
-            return tmp;
+            Collections.sort(list, CardSort.ASC);
+            return list;
         }).fail((e) -> {
             if (mCallBack != null) {
                 ArrayList<Card> noting = new ArrayList<Card>();
@@ -170,27 +150,23 @@ public class CardLoader implements ICardLoader {
         });
     }
 
-    private Comparator<Card> ASCode = new Comparator<Card>() {
-        @Override
-        public int compare(Card o1, Card o2) {
-            int index1 = (Integer.valueOf(o1.Code).intValue());
-            int index2 = (Integer.valueOf(o2.Code).intValue());
-            return index1 - index2;
-        }
-    };
+    @Override
+    public List<Card> sort(List<Card> cards){
+        Collections.sort(cards, CardSort.ASC);
+        return cards;
+    }
 
-    private Comparator<Card> ASC = new Comparator<Card>() {
-        @Override
-        public int compare(Card o1, Card o2) {
-            if (o1.getStar() == o2.getStar()) {
-                if (o1.Attack == o2.Attack) {
-                    return (int) (o2.Code - o1.Code);
-                } else {
-                    return o2.Attack - o1.Attack;
-                }
+    private static final Comparator<Card> ASCode = (o1, o2) -> o1.Code - o2.Code;
+
+    private static final Comparator<Card> ASC = (o1, o2) -> {
+        if (o1.getStar() == o2.getStar()) {
+            if (o1.Attack == o2.Attack) {
+                return (int) (o2.Code - o1.Code);
             } else {
-                return o2.getStar() - o1.getStar();
+                return o2.Attack - o1.Attack;
             }
+        } else {
+            return o2.getStar() - o1.getStar();
         }
     };
 

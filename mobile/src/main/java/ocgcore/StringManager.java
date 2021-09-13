@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,12 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.StringUtils;
 import ocgcore.data.CardSet;
+import ocgcore.enums.CardAttribute;
+import ocgcore.enums.CardCategory;
 import ocgcore.enums.CardOt;
+import ocgcore.enums.CardRace;
+import ocgcore.enums.CardType;
+import ocgcore.enums.LimitType;
 
 public class StringManager implements Closeable {
     private static final String PRE_SYSTEM = "!system";
@@ -76,9 +82,9 @@ public class StringManager implements Closeable {
 
         InputStreamReader in = null;
         try {
-            in = new InputStreamReader(inputStream, "utf-8");
+            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
@@ -125,9 +131,9 @@ public class StringManager implements Closeable {
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
-            in = new InputStreamReader(inputStream, "utf-8");
+            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
@@ -195,44 +201,18 @@ public class StringManager implements Closeable {
         return 0;
     }
 
-    public String getSystemString(int key) {
-        return mSystem.get(Integer.valueOf(key));
-    }
-
-    public String getSystemString(int start, long value) {
-        return getSystemString(start + value2Index(value));
-    }
-
-    public String getLimitString(long value) {
-//        String str =
-//        Log.d("kk", value + "=" + str);
-        return getSystemString((int) (Constants.STRING_LIMIT_START + value));
-    }
-
-    public String getTypeString(long value) {
-        return getSystemString(Constants.STRING_TYPE_START, value);
-    }
-
-    public String getAttributeString(long value) {
-        return getSystemString(Constants.STRING_ATTRIBUTE_START, value);
-    }
-
-    public String getRaceString(long value) {
-        String race = getSystemString(Constants.STRING_RACE_START, value);
-        if (TextUtils.isEmpty(race)) {
-            return String.format("0x%X", value);
-        }
-        return race;
-    }
-
-    public String getOtString(int ot, String def) {
-        if (ot == CardOt.All.ordinal()) {
-            return "-";
+    /**
+     * @param index 索引
+     * @param def 默认值
+     */
+    public String getSystemString(Integer index, String def){
+        if(index <= 0){
+            return def;
         }
         try {
-            String str = getSystemString(Constants.STRING_OT_START + ot);
+            String str = mSystem.get(index);
             if (TextUtils.isEmpty(str)) {
-                return def;//String.valueOf(CardOt.values()[ot]);
+                return def;
             }
             return StringUtils.toDBC(str);
         } catch (Exception e) {
@@ -240,26 +220,69 @@ public class StringManager implements Closeable {
         }
     }
 
-    public String getCategoryString(long value) {
-        return getSystemString(Constants.STRING_CATEGORY_START, value);
+    public String getLimitString(long id) {
+        LimitType value = LimitType.valueOf(id);
+        if(value == null){
+            return String.valueOf(id);
+        }
+        return getSystemString(value.getLanguageIndex(), value.name());
     }
 
-    public int value2Index(long type) {
-        //0 1 2 3 4
-        //1 2 4 8 16
-        int i = 0;
-        long start;
-        do {
-            start = (long) Math.pow(2, i);
-            if (start == type) {
-                return i;
-            } else if (start > type) {
-                return -1;
-            }
-            i++;
+    public String getTypeString(long id) {
+        CardType value = CardType.valueOf(id);
+        if(value == null){
+            return String.valueOf(id);
         }
-        while (start < type);
-        return i;
+        return getSystemString(value.getLanguageIndex(), value.name());
+    }
+
+    public String getAttributeString(long id) {
+        CardAttribute value = CardAttribute.valueOf(id);
+        if(value == null){
+            return String.valueOf(id);
+        }
+        return getSystemString(value.getLanguageIndex(), value.name());
+    }
+
+    public String getRaceString(long id) {
+        CardRace value = CardRace.valueOf(id);
+        if(value == null){
+            return String.format("0x%x", id);
+        }
+        return getSystemString(value.getLanguageIndex(), value.name());
+    }
+
+    public String getOtString(int ot, boolean full) {
+        if(!full || ot == 0){
+            CardOt value = CardOt.valueOf(ot);
+            if(value == null){
+                return String.valueOf(ot);
+            }
+            return getSystemString(value.getLanguageIndex(), value.name());
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
+        for(CardOt _ot : CardOt.values()){
+            if (_ot.getId() == CardOt.NO_EXCLUSIVE.getId())
+                continue;
+            if((_ot.getId() & ot) != 0){
+                if(first){
+                    first = false;
+                } else {
+                    stringBuilder.append("|");
+                }
+                stringBuilder.append(getSystemString(_ot.getLanguageIndex(), _ot.name()));
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public String getCategoryString(long id) {
+        CardCategory value = CardCategory.valueOf(id);
+        if(value == null){
+            return String.valueOf(id);
+        }
+        return getSystemString(value.getLanguageIndex(), value.name());
     }
 
     private long toNumber(String str) {

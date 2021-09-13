@@ -79,8 +79,7 @@ void DeckBuilder::Initialize() {
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
 	mainGame->btnSideReload->setVisible(false);
-	filterList = deckManager._lfList[0].content;
-	mainGame->cbLFList->setSelected(0);
+	filterList = &deckManager._lfList[mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : deckManager._lfList.size() - 1].content;
 	ClearSearch();
 	rnd.reset((unsigned int)time(nullptr));
 	mouse_pos.set(0, 0);
@@ -851,10 +850,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_COMBO_BOX_CHANGED: {
 			switch(id) {
-			case COMBOBOX_LFLIST: {
-				filterList = deckManager._lfList[mainGame->cbLFList->getSelected()].content;
-				break;
-			}
 			case COMBOBOX_DBCATEGORY: {
 				if(havePopupWindow()) {
 					mainGame->cbDBCategory->setSelected(prev_category);
@@ -1487,13 +1482,15 @@ void DeckBuilder::FilterCards() {
 		if(filter_lm) {
 			if(filter_lm <= 3 && (!filterList->count(ptr->first) || (*filterList).at(ptr->first) != filter_lm - 1))
 				continue;
-			if(filter_lm == 4 && data.ot != 1)
+			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
 				continue;
-			if(filter_lm == 5 && data.ot != 2)
+			if(filter_lm == 5 && !(data.ot & AVAIL_TCG))
 				continue;
-			if(filter_lm == 6 && data.ot != 3)
+			if(filter_lm == 6 && !(data.ot & AVAIL_SC))
 				continue;
-			if(filter_lm == 7 && data.ot != 4)
+			if(filter_lm == 7 && !(data.ot & AVAIL_CUSTOM))
+				continue;
+			if(filter_lm == 8 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
 				continue;
 		}
 		bool is_target = true;
