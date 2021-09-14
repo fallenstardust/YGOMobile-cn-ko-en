@@ -312,4 +312,10 @@
     <string name="title_delete_ex">확장 삭제</string>
     <string name="file_installed">문건 나왔습니다.</string>
     <string name="ask_delete_ex">지우려면 확인을 클릭하십시오.</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_SC_OCG">SC_OCG</string>
+    <string name="label_ot_All">모든 카드</string>
+    <string name="label_ot_No_Exclusive">ID 없는 카드</string>
+    <string name="label_ot_CUSTOM">커스텀 카드</string>
 </resources>

@@ -157,9 +157,9 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         $(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
         //
         final File _file;
-        //æ‰“å¼€æŒ‡å®šå¡ç»„
+        //´ò¿ªÖ¸¶¨¿¨×é
         if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
-            //å¤–é¢å¡ç»„
+            //ÍâÃæ¿¨×é
             _file = mPreLoadFile;
         } else {
             mPreLoadFile = null;
@@ -167,7 +167,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             if(TextUtils.isEmpty(path)){
                 _file = null;
             } else {
-                //æœ€åå¡ç»„
+                //×îºó¿¨×é
                 _file = new File(path);
             }
         }
@@ -260,13 +260,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
-            //é»˜è®¤ç¬¬ä¸€ä¸ªå¡è¡¨
+            //Ä¬ÈÏµÚÒ»¸ö¿¨±í
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
             File file = ydk;
             if (file == null || !file.exists()) {
-                //å½“é»˜è®¤å¡ç»„ä¸å­˜åœ¨çš„æ—¶å€™
+                //µ±Ä¬ÈÏ¿¨×é²»´æÔÚµÄÊ±ºò
                 List<File> files = getYdkFiles();
                 if (files != null && files.size() > 0) {
                     file = files.get(0);
@@ -288,15 +288,15 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             mCardSelector.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             initDecksListSpinners(mDeckSpinner, rs.source);
-            //è®¾ç½®å½“å‰å¡ç»„
+            //ÉèÖÃµ±Ç°¿¨×é
             setCurDeck(rs);
-            //è®¾ç½®æ”¶è—å¤¹
+            //ÉèÖÃÊÕ²Ø¼Ğ
             mCardSelector.showFavorites(false);
         });
     }
 
     /**
-     * è®¾ç½®å½“å‰å¡ç»„
+     * ÉèÖÃµ±Ç°¿¨×é
      */
     private void setCurDeck(DeckInfo deckInfo) {
         if (deckInfo == null) {
@@ -307,7 +307,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             String name = IOUtils.tirmName(file.getName(), Constants.YDK_FILE_EX);
             setActionBarSubTitle(name);
 //            if (inDeckDir(file)) {
-            //è®°ä½æœ€åæ‰“å¼€çš„å¡ç»„
+            //¼Ç×¡×îºó´ò¿ªµÄ¿¨×é
             mSettings.setLastDeckPath(file.getAbsolutePath());
 
             tv_deck.setText(name);
@@ -383,7 +383,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onItemDoubleClick(View view, int pos) {
-        //æ‹–æ‹½ä¸­ï¼Œå°±ä¸æ˜¾ç¤º
+        //ÍÏ×§ÖĞ£¬¾Í²»ÏÔÊ¾
         if (isShowDrawer()) {
             return;
         }
@@ -627,7 +627,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 //                mDeckAdapater.notifyDataSetChanged();
 //                break;
             case R.id.action_search:
-                //å¼¹æ¡ä»¶å¯¹è¯æ¡†
+                //µ¯Ìõ¼ş¶Ô»°¿ò
                 showSearch(true);
                 break;
             case R.id.action_card_list:
@@ -642,7 +642,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
                 break;
             case R.id.action_save:
                 if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
-                    //éœ€è¦ä¿å­˜åˆ°deckæ–‡ä»¶å¤¹
+                    //ĞèÒª±£´æµ½deckÎÄ¼ş¼Ğ
                     inputDeckName(mPreLoadFile, null, true);
                 } else {
                     if (mDeckAdapater.getYdkFile() == null) {
@@ -709,7 +709,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             }
             break;
             case R.id.action_unsort:
-                //æ‰“ä¹±
+                //´òÂÒ
                 mDeckAdapater.unSort();
                 break;
             case R.id.action_sort:
@@ -729,7 +729,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
         builder.setLeftButtonListener((dlg, rs) -> {
             dlg.dismiss();
-            //å¤åˆ¶å½“å‰å¡ç»„
+            //¸´ÖÆµ±Ç°¿¨×é
             inputDeckName(old, savePath, true);
         });
         builder.setRightButtonListener((dlg, rs) -> {
@@ -757,11 +757,11 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         builderShareLoading.setMessage(R.string.Pre_share);
         builderShareLoading.show();
 
-        //å…ˆæ’åº
+        //ÏÈÅÅĞò
 //        mDeckAdapater.sort();
-        //ä¿å­˜
+        //±£´æ
 //        if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
-//            //éœ€è¦ä¿å­˜åˆ°deckæ–‡ä»¶å¤¹
+//            //ĞèÒª±£´æµ½deckÎÄ¼ş¼Ğ
 //            inputDeckName(mPreLoadFile, null, true);
 //        } else {
 //            if (mDeckAdapater.getYdkFile() == null) {
@@ -770,27 +770,27 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 //                save(mDeckAdapater.getYdkFile());
 //            }
 //        }
-//        //ä¿å­˜æˆåŠŸåé‡æ–°åŠ è½½å¡ç»„
+//        //±£´æ³É¹¦ºóÖØĞÂ¼ÓÔØ¿¨×é
 //        File file = getSelectDeck(mDeckSpinner);
 //        if (file != null) {
 //            loadDeckFromFile(file);
 //        }
-        //å»¶æ—¶åŠç§’ï¼Œä½¿æ•´ä½“çœ‹èµ·æ¥æ›´æµç•…
+        //ÑÓÊ±°ëÃë£¬Ê¹ÕûÌå¿´ÆğÀ´¸üÁ÷³©
         new Handler().postDelayed(this::shareDeck1, 500);
     }
 
     private void shareDeck1() {
-        //å¼€å¯ç»˜å›¾ç¼“å­˜
+        //¿ªÆô»æÍ¼»º´æ
         mRecyclerView.setDrawingCacheEnabled(true);
-        //è¿™ä¸ªæ–¹æ³•å¯è°ƒå¯ä¸è°ƒï¼Œå› ä¸ºåœ¨getDrawingCache()é‡Œä¼šè‡ªåŠ¨åˆ¤æ–­æœ‰æ²¡æœ‰ç¼“å­˜æœ‰æ²¡æœ‰å‡†å¤‡å¥½ï¼Œ
-        //å¦‚æœæ²¡æœ‰ï¼Œä¼šè‡ªåŠ¨è°ƒç”¨buildDrawingCache()
+        //Õâ¸ö·½·¨¿Éµ÷¿É²»µ÷£¬ÒòÎªÔÚgetDrawingCache()Àï»á×Ô¶¯ÅĞ¶ÏÓĞÃ»ÓĞ»º´æÓĞÃ»ÓĞ×¼±¸ºÃ£¬
+        //Èç¹ûÃ»ÓĞ£¬»á×Ô¶¯µ÷ÓÃbuildDrawingCache()
         mRecyclerView.buildDrawingCache();
-        //è·å–ç»˜å›¾ç¼“å­˜ è¿™é‡Œç›´æ¥åˆ›å»ºäº†ä¸€ä¸ªæ–°çš„bitmap
-        //å› ä¸ºæˆ‘ä»¬åœ¨æœ€åéœ€è¦é‡Šæ”¾ç¼“å­˜èµ„æºï¼Œä¼šé‡Šæ”¾æ‰ç¼“å­˜ä¸­åˆ›å»ºçš„bitmapå¯¹è±¡
+        //»ñÈ¡»æÍ¼»º´æ ÕâÀïÖ±½Ó´´½¨ÁËÒ»¸öĞÂµÄbitmap
+        //ÒòÎªÎÒÃÇÔÚ×îºóĞèÒªÊÍ·Å»º´æ×ÊÔ´£¬»áÊÍ·Åµô»º´æÖĞ´´½¨µÄbitmap¶ÔÏó
         Bitmap bitmap = BitmapUtil.drawBg4Bitmap(Color.parseColor("#e6f3fd"), Bitmap.createBitmap(mRecyclerView.getDrawingCache(), 0, 0, mRecyclerView.getMeasuredWidth(),
                 mRecyclerView.getMeasuredHeight()));
 
-        //æ¸…ç†ç»˜å›¾ç¼“å­˜ï¼Œé‡Šæ”¾èµ„æº
+        //ÇåÀí»æÍ¼»º´æ£¬ÊÍ·Å×ÊÔ´
         mRecyclerView.destroyDrawingCache();
 //        shotRecyclerView(mRecyclerView)
 
@@ -817,7 +817,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             stopService(new Intent(this, DuelAssistantService.class));
             YGOUtil.copyMessage(this, et_code.getText().toString().trim());
             showToast(getString(R.string.deck_text_copyed));
-            //å¤åˆ¶å®Œæ¯•å¼€å¯å†³æ–—åŠ©æ‰‹
+            //¸´ÖÆÍê±Ï¿ªÆô¾ö¶·ÖúÊÖ
             YGOUtil.startDuelService(this);
 
         });
@@ -844,7 +844,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         });
 
 
-        //å¤åˆ¶å‰å…³é—­å†³æ–—åŠ©æ‰‹
+        //¸´ÖÆÇ°¹Ø±Õ¾ö¶·ÖúÊÖ
 
 
 //        String label = TextUtils.isEmpty(deck.getName()) ? getString(R.string.share_deck) : deck.getName();
@@ -1075,9 +1075,9 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         addMenuButton(mMenuIds, menu, R.id.action_sort, R.string.sort, R.drawable.sort);
         addMenuButton(mMenuIds, menu, R.id.action_deck_backup_n_restore, R.string.deck_backup_n_restore, R.drawable.downloadimages);
 
-        //è®¾ç½®å±•å¼€æˆ–éšè—çš„å»¶æ—¶ã€‚ é»˜è®¤å€¼ä¸º 800msã€‚
+        //ÉèÖÃÕ¹¿ª»òÒş²ØµÄÑÓÊ±¡£ Ä¬ÈÏÖµÎª 800ms¡£
         menu.setDuration(150);
-        //è®¾ç½®æ¯ä¸¤ä¸ªå­æŒ‰é’®ä¹‹é—´åŠ¨ç”»çš„å»¶æ—¶ï¼ˆmsä¸ºå•ä½ï¼‰ã€‚ æ¯”å¦‚ï¼Œå¦‚æœå»¶æ—¶è®¾ä¸º0ï¼Œé‚£ä¹ˆæ‰€æœ‰å­æŒ‰é’®éƒ½ä¼šåŒæ—¶å±•å¼€æˆ–éšè—ï¼Œé»˜è®¤å€¼ä¸º100msã€‚
+        //ÉèÖÃÃ¿Á½¸ö×Ó°´Å¥Ö®¼ä¶¯»­µÄÑÓÊ±£¨msÎªµ¥Î»£©¡£ ±ÈÈç£¬Èç¹ûÑÓÊ±ÉèÎª0£¬ÄÇÃ´ËùÓĞ×Ó°´Å¥¶¼»áÍ¬Ê±Õ¹¿ª»òÒş²Ø£¬Ä¬ÈÏÖµÎª100ms¡£
         menu.setDelay(10);
 
         menu.setOnBoomListener(new DefaultOnBoomListener() {

@@ -10,8 +10,8 @@ namespace ygo {
 
 struct LFList {
 	unsigned int hash;
-	wchar_t listName[20];
-	std::unordered_map<int, int>* content;
+	std::wstring listName;
+	std::unordered_map<int, int> content;
 };
 struct Deck {
 	std::vector<code_pointer> main;
@@ -35,9 +35,11 @@ public:
 	Deck current_deck;
 	std::vector<LFList> _lfList;
 
-	void LoadLFList(const char* path, bool load_none);
-	wchar_t* GetLFListName(int lfhash);
-	int CheckDeck(Deck& deck, int lfhash, bool allow_ocg, bool allow_tcg);
+	void LoadLFListSingle(const char* path);
+	void LoadLFList(android::InitOptions *options);
+	const wchar_t* GetLFListName(int lfhash);
+	std::unordered_map<int, int>* GetLFListContent(int lfhash);
+	int CheckDeck(Deck& deck, int lfhash, int rule);
 	int LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec);
 	bool LoadSide(Deck& deck, int* dbuf, int mainc, int sidec);
 	void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text);

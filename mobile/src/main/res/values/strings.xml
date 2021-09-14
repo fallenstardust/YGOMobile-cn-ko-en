@@ -315,4 +315,10 @@
     <string name="about_delete_ex">if you need to delte all expansion cards</string>
     <string name="file_installed">file loaded</string>
     <string name="ask_delete_ex">Click OK to confirm the deletion</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_All">All</string>
+    <string name="label_ot_CUSTOM">Custom</string>
+    <string name="label_ot_No_Exclusive">No exclusive</string>
+    <string name="label_ot_SC_OCG">SChinese OCG</string>
 </resources>

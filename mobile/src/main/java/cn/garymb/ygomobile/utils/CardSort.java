@@ -73,11 +73,11 @@ public class CardSort implements Comparator<Card> {
         if(sortKey1 == SORT_SPELL || sortKey2 == SORT_TRAP){
             long type1, type2;
             if(sortKey1 == SORT_SPELL){
-                type1 = c1.Type ^ CardType.Spell.value();
-                type2 = c2.Type ^ CardType.Spell.value();
+                type1 = c1.Type ^ CardType.Spell.getId();
+                type2 = c2.Type ^ CardType.Spell.getId();
             } else {
-                type1 = c1.Type ^ CardType.Trap.value();
-                type2 = c2.Type ^ CardType.Trap.value();
+                type1 = c1.Type ^ CardType.Trap.getId();
+                type2 = c2.Type ^ CardType.Trap.getId();
             }
             int rs = comp(type1, type2);
             if (rs == 0) {

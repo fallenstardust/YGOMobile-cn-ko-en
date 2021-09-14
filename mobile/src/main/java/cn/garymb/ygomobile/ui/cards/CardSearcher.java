@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -135,7 +136,7 @@ public class CardSearcher implements View.OnClickListener {
 
         myFavButton.setOnClickListener(v -> {
             if(isShowFavorite()){
-                hideFavorites();
+                hideFavorites(true);
             } else {
                 showFavorites(true);
             }
@@ -233,7 +234,7 @@ public class CardSearcher implements View.OnClickListener {
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
-                } else if (value == CardType.Spell.value()) {
+                } else if (value == CardType.Spell.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.VISIBLE);
@@ -241,7 +242,7 @@ public class CardSearcher implements View.OnClickListener {
                     pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
-                } else if (value == CardType.Trap.value()) {
+                } else if (value == CardType.Trap.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
                     raceSpinner.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.GONE);
@@ -278,16 +279,30 @@ public class CardSearcher implements View.OnClickListener {
         myFavButton.setSelected(true);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
-            mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+        }
+        if (mCallBack != null) {
+            VUiKit.post(() -> {
+                mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+            });
         }
     }
 
-    public void hideFavorites(){
-        mShowFavorite = true;
+    public void hideFavorites(boolean reload){
+        mShowFavorite = false;
         myFavButton.setSelected(false);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
-            mCallBack.onSearchResult(Collections.emptyList(), true);
+        }
+        if (reload) {
+            VUiKit.post(() -> {
+                search();
+            });
+        } else {
+            if (mCallBack != null) {
+                VUiKit.post(() -> {
+                    mCallBack.onSearchResult(Collections.emptyList(), true);
+                });
+            }
         }
     }
 
@@ -328,21 +343,11 @@ public class CardSearcher implements View.OnClickListener {
     }*/
 
     private void initOtSpinners(Spinner spinner) {
-        CardOt[] ots = CardOt.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_ot)));
-        for (CardOt item : ots) {
-            if (item.ordinal() != 0) {
-                items.add(new SimpleSpinnerItem(item.ordinal(),
-                        mStringManager.getOtString(item.ordinal(), item.toString()))
-                );
-            }
-        }/*
-        items.add(new SimpleSpinnerItem(1,"OCG"));
-        items.add(new SimpleSpinnerItem(2,"TCG"));
-        items.add(new SimpleSpinnerItem(3,"OCG&TCG"));
-        items.add(new SimpleSpinnerItem(4,"DIY"));
-        items.add(new SimpleSpinnerItem(8,"简中"));*/
+        for (CardOt item : CardOt.values()) {
+            items.add(new SimpleSpinnerItem(item.getId(),
+                    mStringManager.getOtString(item.getId(), false)));
+        }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.setColor(Color.WHITE);
@@ -362,13 +367,12 @@ public class CardSearcher implements View.OnClickListener {
         LimitType[] eitems = LimitType.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (LimitType item : eitems) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_limit)));
-            } else if (val == LimitType.All.value()) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.all)));
+            if (item == LimitType.None) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.label_limit)));
+            } else if (item == LimitType.All) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.all)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getLimitString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getLimitString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -453,11 +457,10 @@ public class CardSearcher implements View.OnClickListener {
         }
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (CardType item : eitems) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_type)));
+            if (item == CardType.None) {
+                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.label_type)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getTypeString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getTypeString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -470,11 +473,10 @@ public class CardSearcher implements View.OnClickListener {
         CardAttribute[] attributes = CardAttribute.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (CardAttribute item : attributes) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, getString(R.string.label_attr)));
+            if (item == CardAttribute.None) {
+                items.add(new SimpleSpinnerItem(CardAttribute.None.getId(), getString(R.string.label_attr)));
             } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getAttributeString(val)));
+                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getAttributeString(item.getId())));
             }
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
@@ -542,8 +544,7 @@ public class CardSearcher implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_search) {
-            hideFavorites();
-            search();
+            hideFavorites(true);
         } else if (v.getId() == R.id.btn_reset) {
             resetAll();
         }
