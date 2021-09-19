@@ -23,14 +23,14 @@ void UpdateDeck() {
 		
 	char deckbuf[1024];
 	char* pdeck = deckbuf;
-	BufferIO::WriteInt32(pdeck, deckManager.current_deck.main.size() + deckManager.current_deck.extra.size());
-	BufferIO::WriteInt32(pdeck, deckManager.current_deck.side.size());
-	for(size_t i = 0; i < deckManager.current_deck.main.size(); ++i)
-		BufferIO::WriteInt32(pdeck, deckManager.current_deck.main[i]->first);
-	for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i)
-		BufferIO::WriteInt32(pdeck, deckManager.current_deck.extra[i]->first);
-	for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i)
-		BufferIO::WriteInt32(pdeck, deckManager.current_deck.side[i]->first);
+	BufferIO::WriteInt32(pdeck, mainGame->deckManager->current_deck.main.size() + mainGame->deckManager->current_deck.extra.size());
+	BufferIO::WriteInt32(pdeck, mainGame->deckManager->current_deck.side.size());
+	for(size_t i = 0; i < mainGame->deckManager->current_deck.main.size(); ++i)
+		BufferIO::WriteInt32(pdeck, mainGame->deckManager->current_deck.main[i]->first);
+	for(size_t i = 0; i < mainGame->deckManager->current_deck.extra.size(); ++i)
+		BufferIO::WriteInt32(pdeck, mainGame->deckManager->current_deck.extra[i]->first);
+	for(size_t i = 0; i < mainGame->deckManager->current_deck.side.size(); ++i)
+		BufferIO::WriteInt32(pdeck, mainGame->deckManager->current_deck.side[i]->first);
 	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
 }
 bool MenuHandler::OnEvent(const irr::SEvent& event) {
@@ -99,7 +99,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(status != 0) {
 						mainGame->gMutex.lock();
 						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						mainGame->addMessageBox(L"", dataManager.GetSysString(1412));
+						mainGame->addMessageBox(L"", mainGame->dataManager->GetSysString(1412));
 						mainGame->gMutex.unlock();
 						break;
 					} else {
@@ -181,7 +181,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_HP_READY: {
 				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
-					!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
+					!mainGame->deckManager->LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 					break;
 				}
 				UpdateDeck();
@@ -266,7 +266,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					break;
 				mainGame->gMutex.lock();
 				wchar_t textBuffer[256];
-				myswprintf(textBuffer, L"%ls\n%ls", mainGame->lstReplayList->getListItem(sel), dataManager.GetSysString(1363));
+				myswprintf(textBuffer, L"%ls\n%ls", mainGame->lstReplayList->getListItem(sel), mainGame->dataManager->GetSysString(1363));
 				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
@@ -296,7 +296,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(sel == -1)
 					break;
 				mainGame->gMutex.lock();
-				mainGame->wReplaySave->setText(dataManager.GetSysString(1364));
+				mainGame->wReplaySave->setText(mainGame->dataManager->GetSysString(1364));
 				mainGame->ebRSName->setText(mainGame->lstReplayList->getListItem(sel));
 				mainGame->PopupElement(mainGame->wReplaySave);
 				mainGame->gMutex.unlock();
@@ -334,15 +334,15 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					int main = replay.ReadInt32();
 					Deck tmp_deck;
 					for(int j = 0; j < main; ++j)
-						tmp_deck.main.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
+						tmp_deck.main.push_back(mainGame->dataManager->GetCodePointer(replay.ReadInt32()));
 					int extra = replay.ReadInt32();
 					for(int j = 0; j < extra; ++j)
-						tmp_deck.extra.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
+						tmp_deck.extra.push_back(mainGame->dataManager->GetCodePointer(replay.ReadInt32()));
 					FileSystem::SafeFileName(namebuf[i]);
 					myswprintf(filename, L"deck/%ls-%d %ls.ydk", ex_filename, i + 1, namebuf[i]);
-					deckManager.SaveDeck(tmp_deck, filename);
+					mainGame->deckManager->SaveDeck(tmp_deck, filename);
 				}
-				mainGame->stACMessage->setText(dataManager.GetSysString(1335));
+				mainGame->stACMessage->setText(mainGame->dataManager->GetSysString(1335));
 				mainGame->PopupElement(mainGame->wACMessage, 20);
 				break;
 			}
@@ -367,7 +367,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t arg1[512];
 				if(mainGame->botInfo[sel].select_deckfile) {
 					wchar_t botdeck[256];
-					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					mainGame->deckManager->GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 					myswprintf(arg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
 				}
 				else
@@ -385,7 +385,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t warg1[512];
 				if(mainGame->botInfo[sel].select_deckfile) {
 					wchar_t botdeck[256];
-					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					mainGame->deckManager->GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 					myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
 				}
 				else
@@ -412,7 +412,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					wchar_t warg1[512];
 					if(mainGame->botInfo[sel].select_deckfile) {
 						wchar_t botdeck[256];
-						deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+						mainGame->deckManager->GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 						myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
 					}
 					else
@@ -456,7 +456,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_DECK_EDIT: {
 				mainGame->RefreshCategoryDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 				if(mainGame->cbDBCategory->getSelected() != -1 && mainGame->cbDBDecks->getSelected() != -1) {
-					deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
+					mainGame->deckManager->LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 					mainGame->ebDeckname->setText(L"");
 				}
 				mainGame->HideElement(mainGame->wMainMenu);
@@ -492,7 +492,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					if(Replay::RenameReplay(mainGame->lstReplayList->getListItem(prev_sel), newname)) {
 						mainGame->lstReplayList->setItem(prev_sel, newname, -1);
 					} else {
-						mainGame->addMessageBox(L"", dataManager.GetSysString(1365));
+						mainGame->addMessageBox(L"", mainGame->dataManager->GetSysString(1365));
 					}
 				}
 				prev_operation = 0;
@@ -635,7 +635,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->env->setFocus(mainGame->wHostPrepare);
 				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
 					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
-						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
+						!mainGame->deckManager->LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
 						break;
 					}

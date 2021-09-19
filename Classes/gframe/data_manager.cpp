@@ -7,7 +7,6 @@ namespace ygo {
 const wchar_t* DataManager::unknown_string = L"???";
 byte DataManager::scriptBuffer[0x20000];
 IFileSystem* DataManager::FileSystem;
-DataManager dataManager;
 
 bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
@@ -358,7 +357,7 @@ const wchar_t* DataManager::FormatLinkMarker(int link_marker) {
 	return lmBuffer;
 }
 int DataManager::CardReader(int code, void* pData) {
-	if(!dataManager.GetData(code, (CardData*)pData))
+	if(!mainGame->dataManager->GetData(code, (CardData*)pData))
 		memset(pData, 0, sizeof(CardData));
 	return 0;
 }
