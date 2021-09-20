@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
@@ -33,6 +34,7 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
@@ -43,6 +45,7 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
@@ -134,6 +137,7 @@ public class AppsSettings {
     }
 
     public float getXScale(int w, int h) {
+        //曲面屏
         if (isKeepScale()) {
             float sx = getScreenHeight() / w;
             float sy = getScreenWidth() / h;
@@ -165,7 +169,11 @@ public class AppsSettings {
             w = mScreenSize.x;
             h = mScreenSize.y;
         }
-        return Math.min(w, h);
+        int ret = Math.min(w, h);
+        //测试代码，曲面屏左右2变需要留空白，但是游戏画面比例不对，需要修改c那边代码
+        int fix_h = mSharedPreferences.getInt(PREF_WINDOW_TOP_BOTTOM, DEF_PREF_WINDOW_TOP_BOTTOM);
+        Log.i(IrrlichtBridge.TAG, "get width=" + ret + "->" + (ret - fix_h * 2));
+        return ret - fix_h * 2;
     }
 
     public float getScreenHeight() {

@@ -6,6 +6,7 @@
  */
 package cn.garymb.ygomobile;
 
+import android.annotation.SuppressLint;
 import android.app.NativeActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -19,7 +20,9 @@ import android.os.Process;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.InputQueue;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -32,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.controller.InputQueueCompat;
 import cn.garymb.ygomobile.controller.NetworkController;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lib.R;
@@ -59,13 +63,11 @@ public class YGOMobileActivity extends NativeActivity implements
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
     protected final int windowsFlags =
-            Build.VERSION.SDK_INT >= 19 ? (
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) :
-                    View.SYSTEM_UI_FLAG_LOW_PROFILE;
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
     protected View mContentView;
     protected ComboBoxCompat mGlobalComboBox;
     protected EditWindowCompat mGlobalEditText;
@@ -87,6 +89,9 @@ public class YGOMobileActivity extends NativeActivity implements
     private static boolean USE_SURFACE = true;
     private String[] mArgV;
     private boolean onGameExiting;
+    //尝试调准触摸事件
+    private static final boolean USE_MY_INPUT = true;
+    private InputQueueCompat inputQueueCompat;
 
 //    public static int notchHeight;
 
@@ -110,6 +115,12 @@ public class YGOMobileActivity extends NativeActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         if (USE_SURFACE) {
             mSurfaceView = new SurfaceView(this);
+        }
+        if (USE_MY_INPUT) {
+            inputQueueCompat = new InputQueueCompat();
+            if (!inputQueueCompat.isValid()) {
+                inputQueueCompat = null;
+            }
         }
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
@@ -245,6 +256,7 @@ public class YGOMobileActivity extends NativeActivity implements
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void setContentView(View view) {
         int[] size = getGameSize();
@@ -260,10 +272,22 @@ public class YGOMobileActivity extends NativeActivity implements
             app().attachGame(this);
             changeGameSize();
             getWindow().takeSurface(null);
+            if (USE_MY_INPUT && inputQueueCompat != null) {
+                getWindow().takeInputQueue(null);
+            }
             replaced = true;
             mSurfaceView.getHolder().addCallback(this);
             mSurfaceView.requestFocus();
             getWindow().setGravity(Gravity.CENTER);
+            if (USE_MY_INPUT && inputQueueCompat != null) {
+                Log.e(IrrlichtBridge.TAG, "use java input queue:" + inputQueueCompat.getNativePtr());
+                mSurfaceView.setOnTouchListener((v, event) -> {
+                    if (inputQueueCompat != null) {
+                        inputQueueCompat.sendInputEvent(event, v, true);
+                    }
+                    return true;
+                });
+            }
         } else {
             mLayout.addView(view, lp);
             getWindow().setGravity(Gravity.CENTER);
@@ -272,18 +296,25 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void changeGameSize() {
-        //游戏大小
-        int[] size = getGameSize();
-        int w = (int) app().getScreenHeight();
-        int h = (int) app().getScreenWidth();
-        int spX = (int) ((w - size[0]) / 2.0f);
-        int spY = (int) ((h - size[1]) / 2.0f);
         boolean update = false;
-        synchronized (this) {
-            if (spX != mPositionX || spY != mPositionY) {
-                mPositionX = spX;
-                mPositionY = spY;
-                update = true;
+        if(USE_MY_INPUT && inputQueueCompat != null) {
+            //Ignore
+            update = true;
+            mPositionX = 0;
+            mPositionY = 0;
+        } else {
+            //游戏大小
+            int[] size = getGameSize();
+            int w = (int) app().getScreenHeight();
+            int h = (int) app().getScreenWidth();
+            int spX = (int) ((w - size[0]) / 2.0f);
+            int spY = (int) ((h - size[1]) / 2.0f);
+            synchronized (this) {
+                if (spX != mPositionX || spY != mPositionY) {
+                    mPositionX = spX;
+                    mPositionY = spY;
+                    update = true;
+                }
             }
         }
         if (update) {
@@ -310,9 +341,15 @@ public class YGOMobileActivity extends NativeActivity implements
 //        Log.e("YGOMobileActivity","窗口变化"+hasFocus);
         if (hasFocus) {
             fullscreen();
+            if (inputQueueCompat != null) {
+                super.onInputQueueCreated(inputQueueCompat.getInputQueue());
+            }
             mContentView.setHapticFeedbackEnabled(true);
         } else {
             mContentView.setHapticFeedbackEnabled(false);
+            if (inputQueueCompat != null) {
+                super.onInputQueueDestroyed(inputQueueCompat.getInputQueue());
+            }
         }
         super.onWindowFocusChanged(hasFocus);
     }
@@ -531,15 +568,51 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         });
     }
+//
+//    @Override
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        if(inputQueueCompat != null) {
+//            if (keyCode == KeyEvent.KEYCODE_BACK) {
+//                inputQueueCompat.sendInputEvent(event, this, true);
+//                return true;
+//            }
+//        }
+//        return super.onKeyDown(keyCode, event);
+//    }
+//
+//    @Override
+//    public boolean onKeyUp(int keyCode, KeyEvent event) {
+//        if(inputQueueCompat != null) {
+//            if (keyCode == KeyEvent.KEYCODE_BACK) {
+//                inputQueueCompat.sendInputEvent(event, this, true);
+//                return true;
+//            }
+//        }
+//        return super.onKeyUp(keyCode, event);
+//    }
+
+
+    @Override
+    public void onBackPressed() {
+        if(mGlobalComboBox != null && mGlobalComboBox.isShowing()){
+            mGlobalComboBox.dismiss();
+            return;
+        }
+        if(mGlobalEditText != null && mGlobalEditText.isShowing()){
+            mGlobalEditText.dismiss();
+            return;
+        }
+        super.onBackPressed();
+    }
 
     @Override
     public void onGameExit() {
-        if(onGameExiting){
+        if (onGameExiting) {
             return;
         }
         onGameExiting = true;
         Log.e(IrrlichtBridge.TAG, "game exit");
-        final Intent  intent = new Intent(IrrlichtBridge.ACTION_OPEN_GAME_HOME);
+        final Intent intent = new Intent(IrrlichtBridge.ACTION_OPEN_GAME_HOME);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
@@ -558,7 +631,7 @@ public class YGOMobileActivity extends NativeActivity implements
                 }
                 boolean isRoot = isTaskRoot();
                 Log.d(IrrlichtBridge.TAG, "isRoot=" + isRoot + ",kill:" + Process.myPid());
-                if(isRoot) {
+                if (isRoot) {
                     finishAndRemoveTask();
                 } else {
                     finish();

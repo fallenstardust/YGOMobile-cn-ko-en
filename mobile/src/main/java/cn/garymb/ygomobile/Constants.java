@@ -117,6 +117,10 @@ public interface Constants {
     String PREF_KEEP_SCALE = "pref_settings_keep_scale";
     boolean DEF_PREF_KEEP_SCALE = false;
 
+    //dp单位，游戏高度减少，留空白
+    String PREF_WINDOW_TOP_BOTTOM = "pref_settings_window_top_bottom";
+    int DEF_PREF_WINDOW_TOP_BOTTOM = 50;
+
     int REQUEST_CUT_IMG = 0x1000 + 0x10;
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
     int REQUEST_CHOOSE_IMG = 0x1000 + 0x21;

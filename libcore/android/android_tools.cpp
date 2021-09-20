@@ -868,9 +868,13 @@ void toggleOverlayView(ANDROID_APP app, bool pShow) {
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 }
-
+static bool test = false;
 void process_input(ANDROID_APP app,
 		struct android_poll_source* source) {
+	if(test == false) {
+		test = true;
+		ALOGD("inputQueue:%lld", (jlong) app->inputQueue);
+	}
 	AInputEvent* event = NULL;
 	if (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
 		int type = AInputEvent_getType(event);
@@ -908,6 +912,10 @@ void onGameExit(ANDROID_APP app){
 }
 
 s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent) {
+    if(test == false) {
+        test = true;
+        ALOGD("inputQueue:%lld", (jlong) app->inputQueue);
+    }
 	IrrlichtDevice* device = (IrrlichtDevice*) app->userData;
 	s32 Status = 0;
 
