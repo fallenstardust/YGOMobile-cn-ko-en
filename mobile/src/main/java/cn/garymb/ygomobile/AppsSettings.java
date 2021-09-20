@@ -679,6 +679,6 @@ public class AppsSettings {
 
     //获取收藏文件
     public String getFavoriteTxt() {
-        return new File(getResourcePath(), "/favorite.txt").getAbsolutePath();
+        return new File(getResourcePath(), CORE_SYSTEM_PATH).getAbsolutePath();
     }
 }
