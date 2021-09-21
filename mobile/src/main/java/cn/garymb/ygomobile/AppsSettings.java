@@ -3,6 +3,7 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
+import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -22,6 +23,7 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
@@ -56,8 +58,8 @@ public class AppsSettings {
     private static AppsSettings sAppsSettings;
     private final Point mScreenSize = new Point();
     private final Point mRealScreenSize = new Point();
-    private Context context;
-    private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
+    private final Context context;
+    private final PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
 
     private AppsSettings(Context context) {
@@ -160,6 +162,15 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
     }
 
+    public int getScreenPadding() {
+        //ListPreference都是string
+        String str = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, null);
+        if (!TextUtils.isEmpty(str) && TextUtils.isDigitsOnly(str)) {
+            return Integer.parseInt(str);
+        }
+        return 0;
+    }
+
     public float getScreenWidth() {
         int w, h;
         if (isImmerSiveMode()) {
@@ -171,7 +182,8 @@ public class AppsSettings {
         }
         int ret = Math.min(w, h);
         //测试代码，曲面屏左右2变需要留空白，但是游戏画面比例不对，需要修改c那边代码
-        int fix_h = mSharedPreferences.getInt(PREF_WINDOW_TOP_BOTTOM, DEF_PREF_WINDOW_TOP_BOTTOM);
+        int fix_h = DensityUtils.dp2px(context, getScreenPadding());
+        Log.d(IrrlichtBridge.TAG, "screen padding=" + fix_h);
         return ret - fix_h * 2;
     }
 
@@ -525,7 +537,8 @@ public class AppsSettings {
     }
 
     //获得最后卡组绝对路径
-    public @Nullable String getLastDeckPath() {
+    public @Nullable
+    String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
             path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;

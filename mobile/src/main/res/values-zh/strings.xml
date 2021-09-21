@@ -318,4 +318,5 @@
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
     <string name="file_installed">文件已导入</string>
+    <string name="settings_screen_padding">曲面屏预留高度</string>
 </resources>

@@ -318,4 +318,5 @@
     <string name="label_ot_All">모든 카드</string>
     <string name="label_ot_No_Exclusive">ID 없는 카드</string>
     <string name="label_ot_CUSTOM">커스텀 카드</string>
+    <string name="settings_screen_padding">曲面屏预留高度</string>
 </resources>

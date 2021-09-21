@@ -83,6 +83,12 @@
         <item>Speed</item>
         <item>Quality</item>
     </string-array>
+    <string-array name="screen_top_bottom_desc"  translatable="false">
+        <item>Disable</item>
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
     <!-- settings -->
 
     <string name="server_name">Name:</string>
@@ -321,4 +327,5 @@
     <string name="label_ot_CUSTOM">Custom</string>
     <string name="label_ot_No_Exclusive">No exclusive</string>
     <string name="label_ot_SC_OCG">SChinese OCG</string>
+    <string name="settings_screen_padding">Reserved height of curved screen</string>
 </resources>
