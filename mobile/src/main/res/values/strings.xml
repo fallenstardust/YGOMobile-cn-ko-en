@@ -86,6 +86,7 @@
     <string-array name="screen_top_bottom_desc"  translatable="false">
         <item>Disable</item>
         <item>5</item>
+        <item>8</item>
         <item>10</item>
         <item>15</item>
     </string-array>

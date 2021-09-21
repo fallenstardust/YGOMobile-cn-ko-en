@@ -12,6 +12,7 @@
     <string-array name="screen_top_bottom_value"  translatable="false">
         <item>0</item>
         <item>5</item>
+        <item>8</item>
         <item>10</item>
         <item>15</item>
     </string-array>
