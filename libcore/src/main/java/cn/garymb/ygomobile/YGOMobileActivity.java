@@ -453,7 +453,7 @@ public class YGOMobileActivity extends GameActivity implements
             Toast.makeText(this, R.string.tip_exit_game, Toast.LENGTH_SHORT).show();
             return;
         }
-        super.onBackPressed();
+        onGameExit();
     }
 
     @Override
