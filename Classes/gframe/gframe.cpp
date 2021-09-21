@@ -40,12 +40,11 @@ int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	return -1;
 }
 void android_main(ANDROID_APP app) {
-	app->inputPollSource.process = android::process_input;
 #else
 int main(int argc, char* argv[]) {
 #endif
 	evthread_use_pthreads();
-	ygo::Game* game = new ygo::Game;
+	auto game = new ygo::Game;
 	if(ygo::mainGame != nullptr){
 	    delete ygo::mainGame;
     }

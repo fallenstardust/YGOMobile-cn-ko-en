@@ -859,29 +859,6 @@ void toggleOverlayView(ANDROID_APP app, bool pShow) {
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 }
-void process_input(ANDROID_APP app,
-		struct android_poll_source* source) {
-	AInputEvent* event = NULL;
-	if (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
-		int type = AInputEvent_getType(event);
-		bool skip_predispatch = AInputEvent_getType(event)
-				== AINPUT_EVENT_TYPE_KEY
-				&& AKeyEvent_getKeyCode(event) == AKEYCODE_BACK;
-
-		// skip predispatch (all it does is send to the IME)
-		if (!skip_predispatch
-				&& AInputQueue_preDispatchEvent(app->inputQueue, event)) {
-			return;
-		}
-
-		int32_t handled = 0;
-		if (app->onInputEvent != NULL)
-			handled = app->onInputEvent(app, event);
-		AInputQueue_finishEvent(app->inputQueue, event, handled);
-	} else {
-//        LOGE("Failure reading next input event: %s\n", strerror(errno));
-	}
-}
 
 void onGameExit(ANDROID_APP app){
     if (!app || !app->activity || !app->activity->vm)

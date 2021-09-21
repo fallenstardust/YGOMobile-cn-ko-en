@@ -186,10 +186,6 @@ extern bool getFontAntiAlias(ANDROID_APP app);
 extern void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow,
 		char** pContents, int count, int mode = 0);
 
-/* android  event handlers*/
-extern void process_input(ANDROID_APP app,
-		struct android_poll_source* source);
-
 extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
 extern bool android_deck_delete(const char* deck_name);
