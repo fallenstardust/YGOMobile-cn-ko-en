@@ -8,19 +8,158 @@ import ocgcore.data.Card;
 import ocgcore.enums.CardOt;
 import ocgcore.enums.CardType;
 
-class CardSearchInfo {
+public class CardSearchInfo implements ICardFilter{
     //名字或者描述
-    String keyWord1, keyWord2;
-    int attribute;
-    int level, ot, pscale = -1;
-    long race, category;
-    String atk, def;
-    int linkKey;
-    List<Integer> inCards;
-    long[] types;
-    long setcode, keyWordSetcode1, keyWordSetcode2;
+    private CardKeyWord keyWord;
+    private int attribute;
+    private int level;
+    private int ot;
+    private int pscale = -1;
+    private long race;
+    private long category;
+    private String atk;
+    private String def;
+    private int linkKey;
+    private long[] types;
+    private long setcode;
+    private int limitType;
+    private String limitName;
 
-    CardSearchInfo() {
+    private CardSearchInfo() {
+    }
+
+    public int getLimitType() {
+        return limitType;
+    }
+
+    public String getLimitName() {
+        return limitName;
+    }
+
+    public CardKeyWord getKeyWord() {
+        return keyWord;
+    }
+
+    public int getAttribute() {
+        return attribute;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int getOt() {
+        return ot;
+    }
+
+    public int getPscale() {
+        return pscale;
+    }
+
+    public long getRace() {
+        return race;
+    }
+
+    public long getCategory() {
+        return category;
+    }
+
+    public String getAtk() {
+        return atk;
+    }
+
+    public String getDef() {
+        return def;
+    }
+
+    public int getLinkKey() {
+        return linkKey;
+    }
+
+    public long[] getTypes() {
+        return types;
+    }
+
+    public long getSetcode() {
+        return setcode;
+    }
+
+    public static class Builder {
+        private final CardSearchInfo searchInfo = new CardSearchInfo();
+
+        public CardSearchInfo build() {
+            return searchInfo;
+        }
+
+        public Builder limitType(int limit){
+            searchInfo.limitType = limit;
+            return this;
+        }
+
+        public Builder limitName(String val) {
+            searchInfo.limitName = val;
+            return this;
+        }
+
+        public Builder keyword(String val) {
+            searchInfo.keyWord = new CardKeyWord(val);
+            return this;
+        }
+
+        public Builder attribute(int val) {
+            searchInfo.attribute = val;
+            return this;
+        }
+
+        public Builder level(int val) {
+            searchInfo.level = val;
+            return this;
+        }
+
+        public Builder ot(int val) {
+            searchInfo.ot = val;
+            return this;
+        }
+
+        public Builder pscale(int val) {
+            searchInfo.pscale = val;
+            return this;
+        }
+
+        public Builder race(long val) {
+            searchInfo.race = val;
+            return this;
+        }
+
+        public Builder category(long val) {
+            searchInfo.category = val;
+            return this;
+        }
+
+        public Builder atk(String val) {
+            searchInfo.atk = val;
+            return this;
+        }
+
+        public Builder def(String val) {
+            searchInfo.def = val;
+            return this;
+        }
+
+        public Builder linkKey(int linkKey) {
+            searchInfo.linkKey = linkKey;
+            return this;
+        }
+
+        public Builder types(long[] types) {
+            searchInfo.types = types;
+            return this;
+        }
+
+        public Builder setcode(long setcode) {
+            searchInfo.setcode = setcode;
+            return this;
+        }
     }
 
     public static boolean containsIgnoreCase(String src, String what) {
@@ -45,31 +184,10 @@ class CardSearchInfo {
         return false;
     }
 
-    List<Integer> getInCards() {
-        return inCards;
-    }
-
-    public boolean check(Card card) {
-        if (inCards != null && !inCards.contains(Integer.valueOf(card.Code))) {
+    @Override
+    public boolean isValid(Card card) {
+        if(keyWord != null && !keyWord.isValid(card)){
             return false;
-        }
-        if (!TextUtils.isEmpty(keyWord1)) {
-            if (TextUtils.isDigitsOnly(keyWord1) && keyWord1.length() >= 5) {
-                //code
-                long code = Long.parseLong(keyWord1);
-                return card.Code == code || card.Alias == code;
-            } else if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord1))
-                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord1))
-                    || (keyWordSetcode1 > 0 && card.isSetCode(keyWordSetcode1)))) {
-                return false;
-            }
-        }
-        if (!TextUtils.isEmpty(keyWord2)) {
-            if (!((card.Name != null && containsIgnoreCase(card.Name, keyWord2))
-                    || (card.Desc != null && containsIgnoreCase(card.Desc, keyWord2))
-                    || (keyWordSetcode2 > 0 && card.isSetCode(keyWordSetcode2)))) {
-                return false;
-            }
         }
         if (attribute != 0) {
             if (card.Attribute != attribute) {
@@ -113,7 +231,7 @@ class CardSearchInfo {
             }
         }
         if (ot > CardOt.ALL.getId()) {
-            if(ot == CardOt.NO_EXCLUSIVE.getId()){
+            if (ot == CardOt.NO_EXCLUSIVE.getId()) {
                 if (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId()) {
                     return false;
                 }

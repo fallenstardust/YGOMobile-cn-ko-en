@@ -110,8 +110,7 @@
     <string name="search">Search</string>
     <string name="search_open">Select</string>
     <string name="search_close">Close</string>
-    <string name="hit_keyword1">prefix word</string>
-    <string name="hit_keyword2">suffix word</string>
+    <string name="hit_keyword1">keywords(separated by SPACE)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">Reset</string>
