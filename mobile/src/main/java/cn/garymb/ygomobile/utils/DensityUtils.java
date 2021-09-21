@@ -11,7 +11,7 @@ public class DensityUtils {
             return 0;
         }
         float density = ctx.getResources().getDisplayMetrics().density;
-        int px = (int) (dp * density + 0.5f);// 4.9->5 4.4->4
+        int px = Math.round(dp * density);// 4.9->5 4.4->4
         return px;
     }
 

@@ -17,6 +17,8 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -217,6 +219,20 @@ public class YGOMobileActivity extends GameActivity implements
     public void setContentView(View view) {
         super.setContentView(view);
         app().attachGame(this);
+        //可以通过mLayout.addView添加view，增加功能
+        //test code
+//        int size = (int) (getResources().getDisplayMetrics().density * 100);
+//        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(size, size);
+//        lp.gravity = Gravity.RIGHT|Gravity.BOTTOM;
+//        ImageView imageView = new ImageView(this);
+//        imageView.setImageResource(android.R.drawable.sym_def_app_icon);
+//        imageView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                refreshTextures();
+//            }
+//        });
+//        mLayout.addView(imageView, lp);
     }
 
     private void initExtraView() {
