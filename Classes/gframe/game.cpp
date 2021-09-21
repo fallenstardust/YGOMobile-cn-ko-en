@@ -27,15 +27,6 @@ namespace ygo {
 
 Game *mainGame;
 
-void Game::process(irr::SEvent &event) {
-	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
-		s32 x = event.MouseInput.X;
-		s32 y = event.MouseInput.Y;
-		event.MouseInput.X = optX(x);
-		event.MouseInput.Y = optY(y);
-	}
-}
-
 #ifdef _IRR_ANDROID_PLATFORM_
 
 void Game::stopBGM() {
@@ -123,9 +114,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
-	core::position2di appPosition = android::initJavaBridge(app, device);
-	setPositionFix(appPosition);
-	device->setProcessReceiver(this);
+	android::initJavaBridge(app, device);
 
 	app->onInputEvent = android::handleInput;
 	ILogger* logger = device->getLogger();
@@ -892,6 +881,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wDMQuery = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager->GetSysString(1460));
 	wDMQuery->getCloseButton()->setVisible(false);
 	wDMQuery->setVisible(false);
+	wDMQuery->setDraggable(false);
 	    ChangeToIGUIImageWindow(wDMQuery, bgDMQuery, imageManager->tDialog_L);
 	stDMMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wDMQuery);
 	stDMMessage2 = env->addStaticText(L"", rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), false, false, wDMQuery, -1, true);

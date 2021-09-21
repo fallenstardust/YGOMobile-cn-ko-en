@@ -126,7 +126,7 @@ extern void toggleGlobalIME(ANDROID_APP app, bool pShow);
 extern void toggleIME(ANDROID_APP app, bool pShow, const char* hint);
 
 //Init Java Irrlicht world.
-extern core::position2di initJavaBridge(ANDROID_APP app, void* handle);
+extern void initJavaBridge(ANDROID_APP app, void* handle);
 
 //Cause a haptic feedback.
 extern void perfromHapticFeedback(ANDROID_APP app);

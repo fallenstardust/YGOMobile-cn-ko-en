@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.InputQueue;
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.controller.InputQueueCompat;
 import cn.garymb.ygomobile.controller.NetworkController;
+import cn.garymb.ygomobile.core.GameActivity;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lib.R;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
@@ -52,7 +54,7 @@ import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 /**
  * @author mabin
  */
-public class YGOMobileActivity extends NativeActivity implements
+public class YGOMobileActivity extends GameActivity implements
         IrrlichtBridge.IrrlichtHost,
         View.OnClickListener,
         PopupWindow.OnDismissListener,
@@ -78,23 +80,14 @@ public class YGOMobileActivity extends NativeActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-    private static int sChainControlXPostion = -1;
-    private static int sChainControlYPostion = -1;
+//    private static int sChainControlXPostion = -1;
+//    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
-    private Handler handler = new Handler();
     private FullScreenUtils mFullScreenUtils;
-    private volatile int mPositionX, mPositionY;
-    private FrameLayout mLayout;
-    private SurfaceView mSurfaceView;
-    private boolean replaced = false;
-    private static boolean USE_SURFACE = true;
+
     private String[] mArgV;
     private boolean onGameExiting;
-    //尝试调准触摸事件
-    private static final boolean USE_MY_INPUT = true;
-    private InputQueueCompat inputQueueCompat;
 
-//    public static int notchHeight;
 
     private GameApplication app() {
         if (mApp == null) {
@@ -111,29 +104,22 @@ public class YGOMobileActivity extends NativeActivity implements
         return mApp;
     }
 
-    @SuppressWarnings("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        if (USE_SURFACE) {
-            mSurfaceView = new SurfaceView(this);
-        }
-        if (USE_MY_INPUT) {
-            inputQueueCompat = new InputQueueCompat();
-            if (!inputQueueCompat.isValid()) {
-                inputQueueCompat = null;
-            }
-        }
+    protected void initBeforeOnCreate() {
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
         //argv
         mArgV = IrrlichtBridge.getArgs(getIntent());
         //
-        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void initAfterOnCreate() {
         Log.e("YGOStarter", "跳转完成" + System.currentTimeMillis());
-        if (sChainControlXPostion < 0) {
-            initPostion();
-        }
+//        if (sChainControlXPostion < 0) {
+//            initPostion();
+//        }
         if (app().isLockSreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
@@ -180,25 +166,20 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void initPostion() {
-        final Resources res = getResources();
-        sChainControlXPostion = (int) (CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE * app()
-                .getXScale());
-        sChainControlYPostion = (int) (app().getSmallerSize()
-                - CHAIN_CONTROL_PANEL_Y_REVERT_POSITION
-                * app().getYScale() - (res
-                .getDimensionPixelSize(R.dimen.chain_control_button_height) * 2 + res
-                .getDimensionPixelSize(R.dimen.chain_control_margin)));
+//        final Resources res = getResources();
+//        sChainControlXPostion = (int) (CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE * app()
+//                .getXScale());
+//        sChainControlYPostion = (int) (app().getSmallerSize()
+//                - CHAIN_CONTROL_PANEL_Y_REVERT_POSITION
+//                * app().getYScale() - (res
+//                .getDimensionPixelSize(R.dimen.chain_control_button_height) * 2 + res
+//                .getDimensionPixelSize(R.dimen.chain_control_margin)));
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleExternalCommand(intent);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
     private void handleExternalCommand(Intent intent) {
@@ -222,18 +203,15 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     private void fullscreen() {
-
         //如果是沉浸模式
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
-            if (USE_SURFACE) {
-                changeGameSize();
-            }
         }
     }
 
-    private int[] getGameSize() {
+    @Override
+    protected Size getGameWindowSize() {
         //调整padding
         float xScale = app().getXScale();
         float yScale = app().getYScale();
@@ -245,88 +223,13 @@ public class YGOMobileActivity extends NativeActivity implements
                 + ", surface=" + w + "x" + h
                 + ", screen=" + sw + "x" + sh
                 + ", xScale=" + xScale + ",yScale=" + yScale);
-        return new int[]{w, h};
+        return new Size(w, h);
     }
 
-    @Override
-    public int getPositionX() {
-        synchronized (this) {
-            return mPositionX;
-        }
-    }
-
-    @Override
-    public int getPositionY() {
-        synchronized (this) {
-            return mPositionY;
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void setContentView(View view) {
-        int[] size = getGameSize();
-        int w = size[0];
-        int h = size[1];
-        mLayout = new FrameLayout(this);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-        mLayout.setBackgroundColor(Color.BLACK);
-        lp.gravity = Gravity.CENTER;
-        if (USE_SURFACE) {
-            mLayout.addView(mSurfaceView, lp);
-            mLayout.addView(view, lp);
-            super.setContentView(mLayout);
-            app().attachGame(this);
-            changeGameSize();
-            getWindow().takeSurface(null);
-            if (USE_MY_INPUT && inputQueueCompat != null) {
-                getWindow().takeInputQueue(null);
-            }
-            replaced = true;
-            mSurfaceView.getHolder().addCallback(this);
-            mSurfaceView.requestFocus();
-            getWindow().setGravity(Gravity.CENTER);
-            if (USE_MY_INPUT && inputQueueCompat != null) {
-                Log.e(IrrlichtBridge.TAG, "use java input queue:" + inputQueueCompat.getNativePtr());
-                mSurfaceView.setOnTouchListener((v, event) -> {
-                    if (inputQueueCompat != null) {
-                        inputQueueCompat.sendInputEvent(event, v, true);
-                    }
-                    return true;
-                });
-            }
-        } else {
-            mLayout.addView(view, lp);
-            getWindow().setGravity(Gravity.CENTER);
-            super.setContentView(mLayout);
-        }
-    }
-
-    private void changeGameSize() {
-        boolean update = false;
-        if(USE_MY_INPUT && inputQueueCompat != null) {
-            //Ignore
-            update = true;
-            mPositionX = 0;
-            mPositionY = 0;
-        } else {
-            //游戏大小
-            int[] size = getGameSize();
-            int w = (int) app().getScreenHeight();
-            int h = (int) app().getScreenWidth();
-            int spX = (int) ((w - size[0]) / 2.0f);
-            int spY = (int) ((h - size[1]) / 2.0f);
-            synchronized (this) {
-                if (spX != mPositionX || spY != mPositionY) {
-                    mPositionX = spX;
-                    mPositionY = spY;
-                    update = true;
-                }
-            }
-        }
-        if (update) {
-            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
-        }
+        super.setContentView(view);
+        app().attachGame(this);
     }
 
     private void initExtraView() {
@@ -348,15 +251,9 @@ public class YGOMobileActivity extends NativeActivity implements
 //        Log.e("YGOMobileActivity","窗口变化"+hasFocus);
         if (hasFocus) {
             fullscreen();
-            if (inputQueueCompat != null) {
-                super.onInputQueueCreated(inputQueueCompat.getInputQueue());
-            }
             mContentView.setHapticFeedbackEnabled(true);
         } else {
             mContentView.setHapticFeedbackEnabled(false);
-            if (inputQueueCompat != null) {
-                super.onInputQueueDestroyed(inputQueueCompat.getInputQueue());
-            }
         }
         super.onWindowFocusChanged(hasFocus);
     }
@@ -426,7 +323,7 @@ public class YGOMobileActivity extends NativeActivity implements
     @Override
     public void toggleOverlayView(final boolean isShow) {
         if (mOverlayShowRequest != isShow) {
-            handler.post(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     mOverlayShowRequest = isShow;
@@ -453,7 +350,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void toggleIME(final String hint, final boolean isShow) {
-        handler.post(new Runnable() {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (isShow) {
@@ -473,7 +370,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void showComboBoxCompat(final String[] items, final boolean isShow, final int mode) {
-        handler.post(new Runnable() {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mCompatGUIMode = mode;
@@ -490,7 +387,7 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void performHapticFeedback() {
-        handler.post(new Runnable() {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mContentView.performHapticFeedback(
@@ -516,48 +413,6 @@ public class YGOMobileActivity extends NativeActivity implements
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        if (USE_SURFACE) {
-            if (!replaced) {
-                return;
-            }
-//            int[] size = getGameSize();
-//            holder.setFixedSize(size[0], size[1]);
-        }
-        super.surfaceCreated(holder);
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        if (USE_SURFACE) {
-            if (!replaced) {
-                return;
-            }
-        }
-        super.surfaceChanged(holder, format, width, height);
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        if (USE_SURFACE) {
-            if (!replaced) {
-                return;
-            }
-        }
-        super.surfaceDestroyed(holder);
-    }
-
-    @Override
-    public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if (USE_SURFACE) {
-            if (!replaced) {
-                return;
-            }
-        }
-        super.surfaceRedrawNeeded(holder);
-    }
-
-    @Override
     public void shareFile(final String type, final String name) {
         //TODO 分享文件
         runOnUiThread(new Runnable() {
@@ -577,29 +432,6 @@ public class YGOMobileActivity extends NativeActivity implements
             }
         });
     }
-//
-//    @Override
-//    public boolean onKeyDown(int keyCode, KeyEvent event) {
-//        if(inputQueueCompat != null) {
-//            if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                inputQueueCompat.sendInputEvent(event, this, true);
-//                return true;
-//            }
-//        }
-//        return super.onKeyDown(keyCode, event);
-//    }
-//
-//    @Override
-//    public boolean onKeyUp(int keyCode, KeyEvent event) {
-//        if(inputQueueCompat != null) {
-//            if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                inputQueueCompat.sendInputEvent(event, this, true);
-//                return true;
-//            }
-//        }
-//        return super.onKeyUp(keyCode, event);
-//    }
-
 
     @Override
     public void onBackPressed() {
