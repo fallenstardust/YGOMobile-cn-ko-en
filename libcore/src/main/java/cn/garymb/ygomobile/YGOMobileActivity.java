@@ -6,29 +6,17 @@
  */
 package cn.garymb.ygomobile;
 
-import android.annotation.SuppressLint;
-import android.app.NativeActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
-import android.view.InputQueue;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.controller.InputQueueCompat;
 import cn.garymb.ygomobile.controller.NetworkController;
 import cn.garymb.ygomobile.core.GameActivity;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
@@ -433,14 +420,21 @@ public class YGOMobileActivity extends GameActivity implements
         });
     }
 
+    private long lasttime;
+
     @Override
     public void onBackPressed() {
-        if(mGlobalComboBox != null && mGlobalComboBox.isShowing()){
+        if (mGlobalComboBox != null && mGlobalComboBox.isShowing()) {
             mGlobalComboBox.dismiss();
             return;
         }
-        if(mGlobalEditText != null && mGlobalEditText.isShowing()){
+        if (mGlobalEditText != null && mGlobalEditText.isShowing()) {
             mGlobalEditText.dismiss();
+            return;
+        }
+        if (lasttime == 0 || (System.currentTimeMillis() - lasttime) > 1000) {
+            lasttime = System.currentTimeMillis();
+            Toast.makeText(this, R.string.tip_exit_game, Toast.LENGTH_SHORT).show();
             return;
         }
         super.onBackPressed();

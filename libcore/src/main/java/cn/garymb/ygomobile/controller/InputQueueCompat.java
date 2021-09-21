@@ -12,6 +12,9 @@ import java.lang.reflect.Proxy;
 
 import cn.garymb.ygomobile.utils.AndroidHideApi;
 
+/**
+ * 仅测试安卓7-11
+ */
 public class InputQueueCompat implements InvocationHandler {
     private static final String TAG = "kk-java";
     private static Constructor<InputQueue> InputQueue_ctr;

@@ -4,4 +4,5 @@
     <string name="ignore_chain">忽略时点</string>
     <string name="react_chain">显示时点</string>
     <string name="refresh_textures">刷新界面</string>
+    <string name="tip_exit_game">再次点击返回键退出游戏</string>
 </resources>
