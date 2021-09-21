@@ -172,7 +172,6 @@ public class AppsSettings {
         int ret = Math.min(w, h);
         //测试代码，曲面屏左右2变需要留空白，但是游戏画面比例不对，需要修改c那边代码
         int fix_h = mSharedPreferences.getInt(PREF_WINDOW_TOP_BOTTOM, DEF_PREF_WINDOW_TOP_BOTTOM);
-        Log.i(IrrlichtBridge.TAG, "get width=" + ret + "->" + (ret - fix_h * 2));
         return ret - fix_h * 2;
     }
 

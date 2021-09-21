@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -236,9 +237,14 @@ public class YGOMobileActivity extends NativeActivity implements
         //调整padding
         float xScale = app().getXScale();
         float yScale = app().getYScale();
+        float sw = app().getScreenWidth();
+        float sh = app().getScreenHeight();
         int w = (int) (app().getGameWidth() * xScale);
         int h = (int) (app().getGameHeight() * yScale);
-        Log.i("kk", "w1=" + app().getGameWidth() + ",h1=" + app().getGameHeight() + ",w2=" + w + ",h2=" + h + ",xScale=" + xScale + ",yScale=" + yScale);
+        Log.i(IrrlichtBridge.TAG, "game size=" + app().getGameWidth() + "x" + app().getGameHeight()
+                + ", surface=" + w + "x" + h
+                + ", screen=" + sw + "x" + sh
+                + ", xScale=" + xScale + ",yScale=" + yScale);
         return new int[]{w, h};
     }
 
@@ -264,6 +270,7 @@ public class YGOMobileActivity extends NativeActivity implements
         int h = size[1];
         mLayout = new FrameLayout(this);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
+        mLayout.setBackgroundColor(Color.BLACK);
         lp.gravity = Gravity.CENTER;
         if (USE_SURFACE) {
             mLayout.addView(mSurfaceView, lp);
@@ -514,6 +521,8 @@ public class YGOMobileActivity extends NativeActivity implements
             if (!replaced) {
                 return;
             }
+//            int[] size = getGameSize();
+//            holder.setFixedSize(size[0], size[1]);
         }
         super.surfaceCreated(holder);
     }
