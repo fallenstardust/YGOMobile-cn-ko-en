@@ -382,9 +382,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     private void fixString(String stringfile) {
-        String encoding = "utf-8";
-        List<String> lines = FileUtils.readLines(stringfile, encoding);
-        FileUtils.writeLines(stringfile, lines, encoding, "\n");
+        List<String> lines = FileUtils.readLines(stringfile, Constants.DEF_ENCODING);
+        FileUtils.writeLines(stringfile, lines, Constants.DEF_ENCODING, "\n");
     }
 
     public void checkWindbot() {

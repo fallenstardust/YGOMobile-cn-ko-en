@@ -16,8 +16,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -31,11 +33,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -53,7 +58,6 @@ import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
-import static cn.garymb.ygomobile.Constants.PREF_DECK_MANAGER_V2;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
@@ -133,7 +137,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_GAME_FONT, mSettings.getFontPath());
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
-        bind(PREF_DECK_MANAGER_V2, mSettings.isUseDeckManagerV2());
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
@@ -220,17 +223,43 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
+            File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
+            List<String> list = new ArrayList<>();
+            for (int i = 0; i < ypks.length; i++) {
+                list.add(ypks[i].getName());
+            }
+            SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
+            simpleListAdapter.set(list);
             final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setTitle(R.string.question);
+            dialog.setTitle(R.string.ypk_delete);
+            dialog.setContentView(R.layout.dialog_room_name);
+            EditText editText = dialog.bind(R.id.room_name);
+            editText.setVisibility(View.GONE);//不显示输入框
+            ListView listView = dialog.bind(R.id.room_list);
+            listView.setAdapter(simpleListAdapter);
+            listView.setOnItemLongClickListener((a, v, i, index) -> {
+                String name = simpleListAdapter.getItemById(index);
+                int pos = simpleListAdapter.findItem(name);
+                if (pos >= 0) {
+                    simpleListAdapter.remove(pos);
+                    simpleListAdapter.notifyDataSetChanged();
+                    FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
+                    DataManager.get().load(true);
+                    Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                }
+                return true;
+            });
+            /*
             dialog.setMessage(R.string.ask_delete_ex);
             dialog.setLeftButtonListener((dlg, s) -> {
                 FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
+                DataManager.get().load(true);
                 Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
             dialog.setRightButtonListener((dlg, s) -> {
                 dialog.dismiss();
-            });
+            });*/
             dialog.show();
         }
         if (PREF_PENDULUM_SCALE.equals(key)) {

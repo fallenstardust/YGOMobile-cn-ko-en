@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.home;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -22,20 +21,16 @@ import java.io.IOException;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
-import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.CardFavorites;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.ComponentUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.ConfigManager;
 import ocgcore.DataManager;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
@@ -59,8 +54,6 @@ public class MainActivity extends HomeActivity {
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
 
-    public ConfigManager favConf = DataManager.openConfig(AppsSettings.get().getSystemConfig());
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,7 +64,7 @@ public class MainActivity extends HomeActivity {
         //资源复制
         checkRes();
         //加载收藏夹
-        favConf.read();
+        CardFavorites.get().load();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
@@ -111,7 +104,7 @@ public class MainActivity extends HomeActivity {
                         Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
 
                         btnMasterRule.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
                             dialog.dismiss();
                         });
                         btnTutorial.setOnClickListener((v) -> {
@@ -181,7 +174,7 @@ public class MainActivity extends HomeActivity {
     @Override
     protected void onPermission(boolean isOk) {
         super.onPermission(isOk);
-        if (isOk){
+        if (isOk) {
             try {
                 FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
             } catch (Throwable e) {
@@ -195,10 +188,6 @@ public class MainActivity extends HomeActivity {
     protected void onResume() {
         super.onResume();
         YGOStarter.onResumed(this);
-        //如果游戏Activity已经不存在了，则
-        if (!ComponentUtils.isActivityRunning(this, new ComponentName(this, YGOMobileActivity.class))) {
-            sendBroadcast(new Intent(IrrlichtBridge.ACTION_STOP).setPackage(getPackageName()));
-        }
     }
 
     @Override
@@ -283,6 +272,9 @@ public class MainActivity extends HomeActivity {
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
+                String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
+                if (new File(fonts).list() != null)
+                    FileUtils.delFile(fonts);
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.FONT_DIRECTORY),
                         AppsSettings.get().getFontDirPath(), true);
                 /*
@@ -306,8 +298,16 @@ public class MainActivity extends HomeActivity {
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.REQUEST_SETTINGS_CODE) {
+            //TODO
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
     /*        checkResourceDownload((result, isNewVersion) -> {
                 Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
             });*/
-
 }

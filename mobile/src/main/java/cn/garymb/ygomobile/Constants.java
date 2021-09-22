@@ -114,9 +114,6 @@ public interface Constants {
     String PREF_READ_EX = "pref_settings_read_ex";
     boolean DEF_PREF_READ_EX = false;
 
-    String PREF_DECK_MANAGER_V2 = "pref_settings_deck_manager_v2";
-    boolean DEF_PREF_DECK_MANAGER_V2 = false;
-
     String PREF_KEEP_SCALE = "pref_settings_keep_scale";
     boolean DEF_PREF_KEEP_SCALE = false;
 
@@ -124,18 +121,12 @@ public interface Constants {
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
     int REQUEST_CHOOSE_IMG = 0x1000 + 0x21;
     int REQUEST_CHOOSE_FOLDER = 0x1000 + 0x22;
-    int STRING_TYPE_START = 1050;
-
-    int STRING_ATTRIBUTE_START = 1010;
-    int STRING_RACE_START = 1020;
-    int STRING_OT_START = 1239;
+    int REQUEST_SETTINGS_CODE = 0x1000 + 0x23;
 
     int UNSORT_TIMES = 0x80;
 
     int CARD_RESULT_GRAVITY = Gravity.LEFT;
     int CARD_SEARCH_GRAVITY = Gravity.RIGHT;
-    int STRING_LIMIT_START = 1315;
-    int STRING_CATEGORY_START = 1100;
     int DEFAULT_CARD_COUNT = 500;
     int DECK_WIDTH_MAX_COUNT = 15;
     int DECK_WIDTH_COUNT = 10;
@@ -144,10 +135,8 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
-    String URL_DONATE_CN= "https://afdian.net/@ygomobile";
-    String URL_DONATE= "https://www.paypal.me/ygomobile1";
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
-    String URL_MASTERRULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
+    String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/zh_CN/master/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
 
     String SERVER_FILE = "server_list.xml";
@@ -168,7 +157,7 @@ public interface Constants {
     /***
      * 长按删除
      */
-    long LONG_PRESS_DRAG = 600;
+    long LONG_PRESS_DRAG = 800;
     /***
      * adb shell am start -n cn.garymb.ygomobile/cn.garymb.ygomobile.ui.home.MainActivity -a ygomobile.intent.action.DECK --es android.intent.extra.TEXT 青眼白龙.ydk
      * <p>
@@ -221,4 +210,8 @@ public interface Constants {
 
     //打开ydk，是否复制到文件夹
     boolean COPY_YDK_FILE = false;
+
+    String TAG = "ygo-java";
+
+    String DEF_ENCODING = "utf-8";
 }

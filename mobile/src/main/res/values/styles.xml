@@ -35,7 +35,6 @@
         <item name="android:windowIsTranslucent">true</item>
     </style>
 
-
     <style name="AppTheme.Translucent" parent="AppTheme">
         <item name="android:windowIsTranslucent">true</item>
     </style>

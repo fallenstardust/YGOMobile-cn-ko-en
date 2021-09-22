@@ -12,7 +12,9 @@
     <color name="mediumPurple">#673AB7</color>
     <color name="mediumPurpleDark">#572AA7</color>
 
-    <color name="gold">#b8be35</color>
+    <color name="gold">#C8BE35</color>
+    <color name="gold_light">#D8DE45</color>
+    <color name="red">#EF3934</color>
 
     <color name="colorAccent">#717171</color>
     <color name="colorAccentDark">#000000</color>
@@ -65,4 +67,3 @@
     <!--<color name="background">#ff5a5a5a</color>输入框不可用时的颜色-->
     <!--<color name="background">#ffffffff</color>输入状态的框色-->
 </resources>
-

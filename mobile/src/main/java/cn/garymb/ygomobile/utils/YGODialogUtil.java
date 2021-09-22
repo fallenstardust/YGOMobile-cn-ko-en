@@ -81,11 +81,11 @@ public class YGODialogUtil {
             File file = new File(selectDeckPath);
             if (file.exists()) {
                 String name = file.getParentFile().getName();
-                String lastName=file.getParentFile().getParentFile().getName();
+                String lastName = file.getParentFile().getParentFile().getName();
                 if (name.equals("pack") || name.equals("cacheDeck")) {
                     //卡包
                     typeSelectPosition = 0;
-                } else if (name.equals("Decks")&&lastName.equals(Constants.WINDBOT_PATH)) {
+                } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
                     //ai卡组
                     typeSelectPosition = 1;
                 } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
@@ -377,10 +377,10 @@ public class YGODialogUtil {
     }
 
     private static void showAllDeckUtil() {
-        ImageUtil.reImageColor(IMAGE_MOVE, iv_move);
+        ImageUtil.reImageColor(IMAGE_MOVE, iv_move);//可用时用原图标色
         ImageUtil.reImageColor(IMAGE_DEL, iv_del);
         ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+        tv_del.setTextColor(YGOUtil.c(R.color.holo_blue_bright));//可用时字色蓝
         tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
         tv_move.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
         ll_del.setEnabled(true);
@@ -392,7 +392,7 @@ public class YGODialogUtil {
         ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
         ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
         ImageUtil.setGrayImage(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));
+        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));//不可用时字色灰
         tv_copy.setTextColor(YGOUtil.c(R.color.star_rank));
         tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
         ll_del.setEnabled(false);

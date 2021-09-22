@@ -145,9 +145,9 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                android:background="@drawable/ic_control_point"
+                android:src="@drawable/selector_favorite"
                 android:paddingRight="5dp"
-                android:scaleType="center" />
+                android:scaleType="fitCenter" />
         </LinearLayout>
 
         <LinearLayout
@@ -192,7 +192,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="5dp"
-                        android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/white"
                         tools:text="Test" />

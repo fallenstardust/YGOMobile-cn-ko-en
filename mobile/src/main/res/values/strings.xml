@@ -299,18 +299,20 @@
     <string name="done">done\！</string>
     <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work properly</string>
     <string name="code_share">Code Share</string>
-    <string name="screenshoot">Screenshoot</string>
+    <string name="screenshoot">Share Art</string>
+    <string name="ydk_share">File sahre</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
     <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
     <string name="already_top">Already the first card</string>
     <string name="already_end">Already the last card</string>
-    <string name="tip_redownload">Redownload\?</string>
+    <string name="tip_redownload">Redownload</string>
     <string name="tip_expansions_image">no Large image for pre-released data</string>
     <string name="tip_return_to_duel">Current game has been Returned</string>
     <string name="my_favorites">myFav★</string>
     <string name="ypk_installed">expansion file installed</string>
     <string name="ypk_go_setting">check \"Use Expansions\" to use it</string>
+    <string name="ypk_delete">Long-press name to delete</string>
     <string name="install_failed_bcos">file install failed, because\:</string>
     <string name="deck_back_up">BackUp</string>
     <string name="deck_restore">Restore</string>
@@ -335,8 +337,17 @@
                                 \n more duel model password you can see the tortuial.</string>
     <string name="guide_button_search">click search buttton to edit search criteria</string>
     <string name="guide_search_result_count">here shows search result count</string>
+    <string name="guide_button_search_result">click to see search result\n also here will shows favorite cards</string>
+    <string name="guide_view_deck_manager">click to change Decks\n you can manage deck categories here</string>
+    <string name="guide_view_move_card">press a card to move it to other place\nlong-press this card to delete it</string>
     <string name="title_delete_ex">delete expansions</string>
     <string name="about_delete_ex">if you need to delte all expansion cards</string>
-    <string name="yrp_installed">replay loaded, select it in \"\\Watch Replay\"\\</string>
+    <string name="file_installed">file loaded</string>
     <string name="ask_delete_ex">Click OK to confirm the deletion</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_All">All</string>
+    <string name="label_ot_CUSTOM">Custom</string>
+    <string name="label_ot_No_Exclusive">No exclusive</string>
+    <string name="label_ot_SC_OCG">SChinese OCG</string>
 </resources>

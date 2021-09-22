@@ -43,7 +43,7 @@
                     android:layout_height="50dp"
                     android:layout_marginTop="20dp"
                     android:background="@drawable/button_n"
-                    android:text="@string/screenshoot"
+                    android:text="@string/ydk_share"
                     android:textSize="15sp" />
             </LinearLayout>
 

@@ -1,4 +1,3 @@
-
 #include "config.h"
 #include "deck_con.h"
 #include "data_manager.h"
@@ -80,9 +79,9 @@ void DeckBuilder::Initialize() {
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
 	mainGame->btnSideReload->setVisible(false);
-	filterList = deckManager._lfList[0].content;
-	mainGame->cbLFList->setSelected(0);
+	filterList = &deckManager._lfList[mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : deckManager._lfList.size() - 1].content;
 	ClearSearch();
+	rnd.reset((unsigned int)time(nullptr));
 	mouse_pos.set(0, 0);
 	hovered_code = 0;
 	hovered_pos = 0;
@@ -132,7 +131,7 @@ void DeckBuilder::Terminate() {
 		//os::Printer::log("setLastDeck", linebuf);
 	mainGame->SaveConfig();
 	if(exit_on_return)
-		mainGame->device->closeDevice();
+		mainGame->OnGameClose();
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -183,7 +182,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
-				std::random_shuffle(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end());
+				rnd.shuffle_vector(deckManager.current_deck.main);
 				break;
 			}
 			case BUTTON_SAVE_DECK: {
@@ -417,7 +416,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				int catesel = mainGame->lstCategories->getSelected();
 				if(catesel != 2)
 					mainGame->cbDMCategory->addItem(dataManager.GetSysString(1452));
-				for(int i = 4; i < mainGame->lstCategories->getItemCount(); i++) {
+				for(int i = 4; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 					if(i != catesel)
 						mainGame->cbDMCategory->addItem(mainGame->lstCategories->getListItem(i));
 				}
@@ -434,7 +433,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				int catesel = mainGame->lstCategories->getSelected();
 				if(catesel != 2)
 					mainGame->cbDMCategory->addItem(dataManager.GetSysString(1452));
-				for(int i = 4; i < mainGame->lstCategories->getItemCount(); i++) {
+				for(int i = 4; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 					if(i != catesel)
 						mainGame->cbDMCategory->addItem(mainGame->lstCategories->getListItem(i));
 				}
@@ -453,7 +452,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						mainGame->lstCategories->addItem(catename);
 						catesel = mainGame->lstCategories->getItemCount() - 1;
 					} else {
-						for(int i = 3; i < mainGame->lstCategories->getItemCount(); i++) {
+						for(int i = 3; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 							if(!wcsncasecmp(mainGame->lstCategories->getListItem(i), catename, 256)) {
 								catesel = i;
 								mainGame->stACMessage->setText(dataManager.GetSysString(1474));
@@ -483,7 +482,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						catesel = mainGame->lstCategories->getItemCount() - 1;
 					} else {
 						catesel = 0;
-						for(int i = 3; i < mainGame->lstCategories->getItemCount(); i++) {
+						for(int i = 3; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 							if(!wcsncasecmp(mainGame->lstCategories->getListItem(i), newcatename, 256)) {
 								catesel = i;
 								mainGame->stACMessage->setText(dataManager.GetSysString(1474));
@@ -534,7 +533,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						RefreshDeckList();
 						ChangeCategory(mainGame->lstCategories->getSelected());
 					}
-					for(int i = 0; i < mainGame->lstDecks->getItemCount(); i++) {
+					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
 						if(!wcsncasecmp(mainGame->lstDecks->getListItem(i), deckname, 256)) {
 							deckManager.LoadDeck(filepath);
 							prev_deck = i;
@@ -568,7 +567,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					RefreshDeckList();
 					ChangeCategory(catesel);
-					for(int i = 0; i < mainGame->lstDecks->getItemCount(); i++) {
+					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
 						if(!wcsncasecmp(mainGame->lstDecks->getListItem(i), newdeckname, 256)) {
 							deckManager.LoadDeck(newfilepath);
 							prev_deck = i;
@@ -632,7 +631,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					RefreshDeckList();
 					mainGame->cbDBCategory->setSelected(catesel);
 					ChangeCategory(catesel);
-					for(int i = 0; i < mainGame->lstDecks->getItemCount(); i++) {
+					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
 						if(!wcsncasecmp(mainGame->lstDecks->getListItem(i), deckname, 256)) {
 							deckManager.LoadDeck(newfilepath);
 							prev_deck = i;
@@ -670,7 +669,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					RefreshDeckList();
 					mainGame->cbDBCategory->setSelected(catesel);
 					ChangeCategory(catesel);
-					for(int i = 0; i < mainGame->lstDecks->getItemCount(); i++) {
+					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
 						if(!wcsncasecmp(mainGame->lstDecks->getListItem(i), deckname, 256)) {
 							deckManager.LoadDeck(newfilepath);
 							prev_deck = i;
@@ -851,10 +850,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_COMBO_BOX_CHANGED: {
 			switch(id) {
-			case COMBOBOX_LFLIST: {
-				filterList = deckManager._lfList[mainGame->cbLFList->getSelected()].content;
-				break;
-			}
 			case COMBOBOX_DBCATEGORY: {
 				if(havePopupWindow()) {
 					mainGame->cbDBCategory->setSelected(prev_category);
@@ -1487,13 +1482,15 @@ void DeckBuilder::FilterCards() {
 		if(filter_lm) {
 			if(filter_lm <= 3 && (!filterList->count(ptr->first) || (*filterList).at(ptr->first) != filter_lm - 1))
 				continue;
-			if(filter_lm == 4 && data.ot != 1)
+			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
 				continue;
-			if(filter_lm == 5 && data.ot != 2)
+			if(filter_lm == 5 && !(data.ot & AVAIL_TCG))
 				continue;
-			if(filter_lm == 6 && data.ot != 3)
+			if(filter_lm == 6 && !(data.ot & AVAIL_SC))
 				continue;
-			if(filter_lm == 7 && data.ot != 4)
+			if(filter_lm == 7 && !(data.ot & AVAIL_CUSTOM))
+				continue;
+			if(filter_lm == 8 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
 				continue;
 		}
 		bool is_target = true;
@@ -1538,7 +1535,7 @@ void DeckBuilder::FilterCards() {
 	SortList();
 }
 void DeckBuilder::InstantSearch() {
-	if(mainGame->gameConf.auto_search_limit >= 0 && (wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
+	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
 		StartFilter();
 }
 void DeckBuilder::ClearSearch() {

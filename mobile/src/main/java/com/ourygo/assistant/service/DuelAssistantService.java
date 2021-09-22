@@ -1,5 +1,7 @@
 package com.ourygo.assistant.service;
 
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -13,11 +15,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.RemoteViews;
@@ -42,17 +44,15 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
-import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
-//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
-
-public class DuelAssistantService extends Service implements OnDuelAssistantListener{
+public class DuelAssistantService extends Service implements OnDuelAssistantListener {
 
 
     private static final String TAG = "DuelAssistantService";
@@ -100,7 +100,7 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
         startForeground();
         //初始化加房布局
         createFloatView();
-        duelAssistantManagement=DuelAssistantManagement.getInstance();
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
         duelAssistantManagement.addDuelAssistantListener(this);
     }
 
@@ -111,7 +111,6 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
         //关闭悬浮窗时的声明
         stopForeground(true);
     }
-
 
 
     private void startForeground() {
@@ -222,45 +221,39 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
                 mWindowManager.removeView(mFloatLayout);
             }
         }, TIME_DIS_WINDOW);
-        bt_close.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                disJoinDialog();
-            }
-        });
-        bt_join.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                disJoinDialog();
-                //如果是卡组url
-                if (isUrl) {
-                    Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
-                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-//                    Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
-//                    startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-//                    startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    startActivity(startdeck);
-                } else {
-                    //如果是卡组文本
-                    try {
-                        //以当前时间戳作为卡组名保存卡组
-                        File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-//                        Intent startdeck = new Intent(DuelAssistantService.this, DeckManagerActivity.getDeckManager());
-//                        startdeck.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-//                        startdeck.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                        startActivity(startdeck);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
-                    }
+        bt_close.setOnClickListener(v -> disJoinDialog());
+        bt_join.setOnClickListener(v -> {
+            disJoinDialog();
+            //如果是卡组url
+            if (isUrl) {
+                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+            } else {
+                //如果是卡组文本
+                try {
+                    //以当前时间戳作为卡组名保存卡组
+                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                    DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
     }
 
-    private void joinRoom(String password) {
-        tv_message.setText(getString(R.string.quick_join) + password + "\"");
+    private void joinRoom(String host, int port, String password) {
+        String message;
+        if (!TextUtils.isEmpty(host))
+            message = getString(R.string.quick_join)
+                    + "IP：" + host
+                    + "端口：" + port
+                    + "密码：" + password;
+        else
+            message = getString(R.string.quick_join) + "\"" + password + "\"";
+        tv_message.setText(message);
         bt_join.setText(R.string.join);
         bt_close.setText(R.string.search_close);
         disJoinDialog();
@@ -272,46 +265,42 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
             }
         }, TIME_DIS_WINDOW);
 
-        bt_close.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View p1) {
-                disJoinDialog();
+        bt_close.setOnClickListener(p1 -> disJoinDialog());
+        bt_join.setOnClickListener(p1 -> {
+            if (isDis) {
+                isDis = false;
+                mWindowManager.removeView(mFloatLayout);
             }
-        });
-        bt_join.setOnClickListener(new OnClickListener() {
+            ServerListAdapter mServerListAdapter = new ServerListAdapter(DuelAssistantService.this);
 
-            @Override
-            public void onClick(View p1) {
-                if (isDis) {
-                    isDis = false;
-                    mWindowManager.removeView(mFloatLayout);
+            ServerListManager mServerListManager = new ServerListManager(DuelAssistantService.this, mServerListAdapter);
+            mServerListManager.syncLoadData();
+
+            File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
+            VUiKit.defer().when(() -> {
+                ServerList assetList = ServerListManager.readList(DuelAssistantService.this.getAssets().open(ASSET_SERVER_LIST));
+                ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+                if (fileList == null) {
+                    return assetList;
                 }
-                ServerListAdapter mServerListAdapter = new ServerListAdapter(DuelAssistantService.this);
-
-                ServerListManager mServerListManager = new ServerListManager(DuelAssistantService.this, mServerListAdapter);
-                mServerListManager.syncLoadData();
-
-                File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
-                VUiKit.defer().when(() -> {
-                    ServerList assetList = ServerListManager.readList(DuelAssistantService.this.getAssets().open(ASSET_SERVER_LIST));
-                    ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
-                    if (fileList == null) {
-                        return assetList;
+                if (fileList.getVercode() < assetList.getVercode()) {
+                    xmlFile.delete();
+                    return assetList;
+                }
+                return fileList;
+            }).done((list) -> {
+                if (list != null) {
+                    String host1=host;
+                    int port1=port;
+                    ServerInfo serverInfo = list.getServerInfoList().get(0);
+                    if (TextUtils.isEmpty(host1)){
+                        host1=serverInfo.getServerAddr();
+                        port1=serverInfo.getPort();
                     }
-                    if (fileList.getVercode() < assetList.getVercode()) {
-                        xmlFile.delete();
-                        return assetList;
-                    }
-                    return fileList;
-                }).done((list) -> {
-                    if (list != null) {
-                        ServerInfo serverInfo = list.getServerInfoList().get(0);
-                        Util.duelIntent(DuelAssistantService.this, serverInfo.getServerAddr(), serverInfo.getPort(), serverInfo.getPlayerName(), password);
-                    }
-                });
+                    Util.duelIntent(DuelAssistantService.this, host1, port1, serverInfo.getPlayerName(), password);
+                }
+            });
 
-            }
         });
 
     }
@@ -366,29 +355,29 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
     }
 
     @Override
-    public void onJoinRoom(String password, int id) {
-        if (id== ClipManagement.ID_CLIP_LISTENER) {
+    public void onJoinRoom(String host, int port, String password, int id) {
+        if (id == ClipManagement.ID_CLIP_LISTENER) {
             //如果有悬浮窗权限再显示
             if (PermissionUtil.isServicePermission(this)) {
-                joinRoom(password);
+                joinRoom(host, port, password);
             }
         }
     }
 
     @Override
     public void onCardSearch(String key, int id) {
-        if (id==ClipManagement.ID_CLIP_LISTENER) {
-            Intent intent = new Intent(DuelAssistantService.this, CardSearchAcitivity.class);
+        if (id == ClipManagement.ID_CLIP_LISTENER) {
+            Intent intent = new Intent(DuelAssistantService.this, CardSearchActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
+            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
             startActivity(intent);
         }
     }
 
     @Override
     public void onSaveDeck(String message, boolean isUrl, int id) {
-        if (id==ClipManagement.ID_CLIP_LISTENER) {
-            saveDeck(message,isUrl);
+        if (id == ClipManagement.ID_CLIP_LISTENER) {
+            saveDeck(message, isUrl);
         }
     }
 

@@ -244,7 +244,7 @@ public class FileActivity extends BaseActivity implements AdapterView.OnItemClic
         } else {
             mFileAdapter.setPath(mFileOpenInfo.getDefPath());
         }
-        mFileAdapter.setFilefilter(mFileOpenInfo.getFileFilter());
+        mFileAdapter.setFileFilter(mFileOpenInfo.getFileFilter());
         mFileAdapter.setOnlyFolder(mFileOpenInfo.getType() == FileOpenType.SelectFolder);
         mFileAdapter.loadFiles();
     }

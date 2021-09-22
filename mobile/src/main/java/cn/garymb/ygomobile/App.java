@@ -18,7 +18,9 @@ import com.tencent.bugly.beta.Beta;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class App extends GameApplication {
@@ -37,12 +39,9 @@ public class App extends GameApplication {
         initBugly();
     }
 
-
-
     @Override
     public NativeInitOptions getNativeInitOptions() {
-        NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
-        return options;
+        return AppsSettings.get().getNativeInitOptions();
     }
 
     @Override
@@ -156,13 +155,19 @@ public class App extends GameApplication {
         Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
         Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
         Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
+        Beta.enableHotfix = false;
+        Beta.autoCheckHotfix = false;
+        Beta.autoCheckUpgrade = false;
+        Beta.autoCheckAppUpgrade = false;
+        //添加可显示弹窗的Activity
+        Beta.canShowUpgradeActs.add(MainActivity.class);
         ApplicationInfo appInfo = null;
         try {
             appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        String msg = appInfo.metaData.getString("669adbac35");
-        Bugly.init(this, msg, true);
+        String msg = appInfo.metaData.getString("BUGLY_APPID");
+        Bugly.init(this, msg, BuildConfig.DEBUG_MODE);
     }
 }

@@ -3,10 +3,11 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
+
+import androidx.annotation.Nullable;
 
 import org.json.JSONArray;
 
@@ -25,6 +26,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
@@ -46,13 +48,14 @@ import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 
 public class AppsSettings {
+    private static final String TAG = "AppsSettings";
     private static final String PREF_VERSION = "app_version";
     private static AppsSettings sAppsSettings;
+    private final Point mScreenSize = new Point();
+    private final Point mRealScreenSize = new Point();
     private Context context;
     private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
-    private final Point mScreenSize = new Point();
-    private final Point mRealScreenSize = new Point();
 
     private AppsSettings(Context context) {
         this.context = context;
@@ -128,10 +131,6 @@ public class AppsSettings {
      */
     public boolean isReadExpansions() {
         return mSharedPreferences.getBoolean(PREF_READ_EX, DEF_PREF_READ_EX);
-    }
-
-    public boolean isUseDeckManagerV2() {
-        return false;//mSharedPreferences.getBoolean(PREF_DECK_MANAGER_V2, DEF_PREF_DECK_MANAGER_V2);
     }
 
     public float getXScale(int w, int h) {
@@ -471,9 +470,11 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_GAME_PATH, path);
     }
 
-    //获取录像文件夹
-    public String getReplayReplay() {
-        return new File(getResourcePath(), Constants.CORE_REPLAY_PATH).getAbsolutePath();
+    /**
+     * @return 录像文件夹
+     */
+    public String getReplayDir() {
+        return new File(getResourcePath(), CORE_REPLAY_PATH).getAbsolutePath();
     }
 
     //获取卡组文件夹
@@ -517,7 +518,7 @@ public class AppsSettings {
     }
 
     //获得最后卡组绝对路径
-    public String getLastDeckPath() {
+    public @Nullable String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
             path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
@@ -528,13 +529,13 @@ public class AppsSettings {
         } else {
             path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         }
-        Log.e("Appsettings", "拼接最后路径" + path);
+        Log.e(TAG, "拼接最后路径" + path);
         return path;
     }
 
     //保存最后卡组绝对路径、分类、卡组名
     public void setLastDeckPath(String path) {
-        Log.e("Appsettings", "设置最后路径" + path);
+        Log.e(TAG, "设置最后路径" + path);
         if (TextUtils.equals(path, getLastDeckPath())) {
             //一样
             return;
@@ -623,10 +624,10 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) {
-            Log.e("AppSettings", value);
+            Log.e(TAG, value);
             mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
         } else if ("lastcategory".equals(key)) {
-            Log.e("AppSettings", value);
+            Log.e(TAG, value);
             mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
         } else {
             mSharedPreferences.putString(Constants.PREF_START + key, value);
@@ -674,5 +675,11 @@ public class AppsSettings {
         }
 //        Log.i("kk", "saveTemp:" + array);
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
+    }
+
+    @Deprecated
+    //获取收藏文件
+    public File getFavoriteFile() {
+        return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 }

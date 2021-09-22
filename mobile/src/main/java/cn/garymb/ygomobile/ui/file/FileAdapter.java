@@ -42,15 +42,15 @@ class FileAdapter extends BaseAdapterPlus<File> {
 
     public FileAdapter(Context context) {
         super(context);
-        rootPath = getRootPath();
+        try {
+            rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        } catch (Exception e) {
+            rootPath = "/";
+        }
     }
 
     public void setOnPathChangedListener(OnPathChangedListener onPathChangedListener) {
         mOnPathChangedListener = onPathChangedListener;
-    }
-
-    private String getRootPath() {
-        return "/";
     }
 
     public File getCurPath() {
@@ -101,7 +101,7 @@ class FileAdapter extends BaseAdapterPlus<File> {
         mShowHide = showHide;
     }
 
-    public void setFilefilter(String filefilter) {
+    public void setFileFilter(String filefilter) {
         mFilefilter = filefilter;
     }
 

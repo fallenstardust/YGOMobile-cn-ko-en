@@ -3,6 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/text_abt_mid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="20dp"
+        android:textColor="@color/white"
+        android:visibility="invisible" />
+
     <LinearLayout
         android:id="@+id/view_abt_menu"
         android:layout_width="match_parent"
@@ -170,8 +179,9 @@
         android:id="@+id/text_about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_gravity="bottom"
         android:layout_margin="20dp"
+        android:paddingBottom="70dp"
         android:shadowColor="#000000"
         android:shadowDy="2"
         android:shadowRadius="2"
@@ -205,19 +215,131 @@
             android:textColor="@color/white"
             android:textSize="15sp" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/view_abt_bmb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp"
+        android:orientation="vertical"
+        android:paddingBottom="80dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDy="2"
+            android:shadowRadius="2"
+            android:text="@string/guide_menu"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:shadowColor="#000000"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:text="@string/deck_name"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:src="@drawable/save" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
+                android:shadowColor="#000000"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:text="@string/save_deck"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:src="@drawable/delete" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
+                android:shadowColor="#000000"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:text="@string/delete"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:src="@drawable/search" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
+                android:shadowColor="#000000"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:text="@string/deck_back_up"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:src="@drawable/shareicon" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
+                android:shadowColor="#000000"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:text="@string/share_deck"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+    </LinearLayout>
+
     <TextView
         android:id="@+id/view_abt_join_room"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
-        android:gravity="center|left"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="100dp"
+        android:gravity="center|left"
         android:shadowColor="#000000"
         android:shadowDy="2"
         android:shadowRadius="2"
         android:text="@string/guide_join_room"
         android:textColor="@color/white"
         android:textSize="15sp"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 </FrameLayout>

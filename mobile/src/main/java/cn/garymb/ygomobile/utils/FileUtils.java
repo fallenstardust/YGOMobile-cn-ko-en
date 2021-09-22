@@ -1,6 +1,14 @@
 package cn.garymb.ygomobile.utils;
 
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,8 +20,14 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
+
 
 public class FileUtils {
+
+    public static Uri toUri(Context context, File file) {
+        return FileProvider.getUriForFile(context, context.getPackageName() + ".gamefiles", file);
+    }
 
     public static boolean deleteFile(File file) {
         if (file.isFile()) {
@@ -30,6 +44,9 @@ public class FileUtils {
         InputStreamReader in = null;
         FileInputStream inputStream = null;
         List<String> lines = new ArrayList<>();
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         try {
             inputStream = new FileInputStream(file);
             in = new InputStreamReader(inputStream, encoding);
@@ -38,8 +55,8 @@ public class FileUtils {
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
-        } catch (Exception e) {
-
+        } catch (Throwable e) {
+            //ignore
         } finally {
             IOUtils.close(in);
             IOUtils.close(inputStream);
@@ -48,6 +65,9 @@ public class FileUtils {
     }
 
     public static boolean writeLines(String file, List<String> lines, String encoding, String newLine) {
+        if(encoding == null){
+            encoding = "utf-8";
+        }
         FileOutputStream outputStream = null;
         File tmp = new File(file + ".tmp");
         boolean ok = false;
@@ -79,24 +99,21 @@ public class FileUtils {
         return true;
     }
 
-    public static void copyFile(InputStream in, File out) {
+    public static void copyFile(InputStream in, File out) throws IOException {
         FileOutputStream outputStream = null;
+        File dir = out.getParentFile();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         try {
-            File dir = out.getParentFile();
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
             outputStream = new FileOutputStream(out);
             copy(in, outputStream);
-        } catch (Throwable e) {
-            e.printStackTrace();
         } finally {
             IOUtils.close(outputStream);
-            IOUtils.close(in);
         }
     }
 
-    public static void copyFile(File in, File out) {
+    public static boolean copyFile(File in, File out) {
         FileOutputStream outputStream = null;
         FileInputStream inputStream = null;
         try {
@@ -108,11 +125,13 @@ public class FileUtils {
             outputStream = new FileOutputStream(out);
             copy(inputStream, outputStream);
         } catch (Throwable e) {
-            e.printStackTrace();
+            Log.e(Constants.TAG, "copy file", e);
+            return false;
         } finally {
             IOUtils.close(outputStream);
             IOUtils.close(inputStream);
         }
+        return true;
     }
 
     public static void copyFile(String oldPath, String newPath, boolean isName) throws FileNotFoundException, IOException {

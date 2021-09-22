@@ -65,6 +65,7 @@ public:
     irr::video::ITexture* tPlay;
 	irr::video::ITexture* tTalk;
 	irr::video::ITexture* tShut;
+	irr::video::ITexture* tClose;
     irr::video::ITexture* tTitleBar;
 	irr::video::ITexture* tWindow;
 	irr::video::ITexture* tWindow_V;

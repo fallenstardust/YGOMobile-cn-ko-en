@@ -95,23 +95,19 @@ public class McchatActivity extends Activity implements ChatListener {
     }
 
     private void initListener() {
-        main_send.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View p1) {
-                String message = main_send_message.getText().toString().trim();
-                if (message.equals("")) {
-                    YGOUtil.show( getString(R.string.noting_to_send));
-                } else {
-                    try {
-                        su.sendMessage(message);
-                        main_send_message.setText("");
-                    } catch (Exception e) {
-                        YGOUtil.show( getString(R.string.sending_failed));
-                    }
+        main_send.setOnClickListener(p1 -> {
+            String message = main_send_message.getText().toString().trim();
+            if (message.equals("")) {
+                YGOUtil.show( getString(R.string.noting_to_send));
+            } else {
+                try {
+                    su.sendMessage(message);
+                    main_send_message.setText("");
+                } catch (Exception e) {
+                    YGOUtil.show( getString(R.string.sending_failed));
                 }
-                // TODO: Implement this method
             }
+            // TODO: Implement this method
         });
         // TODO: Implement this method
     }

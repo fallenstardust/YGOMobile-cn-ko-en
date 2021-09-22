@@ -31,7 +31,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     private boolean mItemBg;
     private ImageLoader imageLoader;
     private boolean mEnableSwipe = false;
-    private BaseActivity mContext;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {
         super(context);
@@ -103,6 +102,9 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Card item = getItem(position);
+        if(item == null){
+            return;
+        }
         imageLoader.bindImage(holder.cardImage, item.Code);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {
@@ -122,7 +124,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
             }
             if (item.isType(CardType.Pendulum)) {
                 holder.layout_p_scale.setVisibility(View.VISIBLE);
-                holder.cardScale.setText(String.valueOf(item.LScale));
+                holder.cardScale.setText(String.valueOf(item.LeftScale));
             } else {
                 holder.layout_p_scale.setVisibility(View.GONE);
             }

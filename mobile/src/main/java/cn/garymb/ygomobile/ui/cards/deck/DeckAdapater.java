@@ -160,7 +160,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         if (d1.getType() == d2.getType()) {
             Card c1 = d1.getCardInfo();
             Card c2 = d2.getCardInfo();
-            return CardSort.ASC.compare(c1, c2) < 0;
+            return CardSort.FULL_ASC.compare(c1, c2) > 0;
         }
         return (d1.getType().ordinal() - d2.getType().ordinal()) > 0;
     }

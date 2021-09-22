@@ -46,6 +46,7 @@
                     android:layout_weight="1"
                     android:background="@color/transparent"
                     android:text="@string/my_favorites"
+                    android:textColor="@color/selector_text_color_white_gold"
                     android:visibility="visible" />
 
             </LinearLayout>
@@ -137,12 +138,19 @@
                     android:visibility="gone" />
 
                 <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/sp_type_st"
+                    android:id="@+id/sp_type_spell"
                     style="@style/itemSpinnerStyle"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/label_width_small"
                     android:layout_weight="1"
-                    android:visibility="invisible" />
+                    android:visibility="gone" />
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/sp_type_trap"
+                    style="@style/itemSpinnerStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/label_width_small"
+                    android:layout_weight="1"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout

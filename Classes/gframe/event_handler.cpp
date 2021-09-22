@@ -145,7 +145,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
 					if(exit_on_return)
-						mainGame->device->closeDevice();
+						mainGame->OnGameClose();
 				} else {
 					mainGame->PopupElement(mainGame->wSurrender);
 				}
@@ -396,7 +396,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			case BUTTON_ANNUMBER_11:
 			case BUTTON_ANNUMBER_12: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-				for(int i = 0; i < mainGame->cbANNumber->getItemCount(); ++i) {
+				for(int i = 0; i < (int)mainGame->cbANNumber->getItemCount(); ++i) {
 					if(id - BUTTON_ANNUMBER_1 + 1 == mainGame->cbANNumber->getItemData(i)) {
 						mainGame->cbANNumber->setSelected(i);
 						break;
@@ -1436,11 +1436,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					clicked_card->is_selected = true;
 					selected_cards.push_back(clicked_card);
 				}
-				if(selected_cards.size() >= select_max) {
+				if((int)selected_cards.size() >= select_max) {
 					SetResponseSelectedCards();
 					ShowCancelOrFinishButton(0);
 					DuelClient::SendResponse();
-				} else if(selected_cards.size() >= select_min) {
+				} else if((int)selected_cards.size() >= select_min) {
 					if(selected_cards.size() == selectable_cards.size()) {
 						SetResponseSelectedCards();
 						ShowCancelOrFinishButton(0);
@@ -1799,7 +1799,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                     ShowLocationCard();
                 }
 			}
-		    break;
+			break;
 		}
 		case irr::EMIE_RMOUSE_PRESSED_DOWN: {
 			if(!mainGame->dInfo.isStarted)
@@ -2006,6 +2006,15 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+			case CHECKBOX_LFLIST: {
+				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
+				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
+				mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
+				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
+				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()].content;
+				return true;
+				break;
+			}
  			case CHECKBOX_DRAW_FIELD_SPELL: {
  			    mainGame->gameConf.draw_field_spell = mainGame->chkDrawFieldSpell->isChecked() ? 1 : 0;
 				return true;
@@ -2023,6 +2032,18 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                 } else {
                     mainGame->imgVol->setImage(imageManager.tMute);
                 }
+				return true;
+				break;
+			}
+			}
+			break;
+		}
+		case irr::gui::EGET_COMBO_BOX_CHANGED: {
+			switch(id) {
+			case COMBOBOX_LFLIST: {
+				mainGame->gameConf.default_lflist = mainGame->cbLFlist->getSelected();
+				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_lflist);
+				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_lflist].content;
 				return true;
 				break;
 			}

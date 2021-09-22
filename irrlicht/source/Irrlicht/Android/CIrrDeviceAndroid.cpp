@@ -200,7 +200,9 @@ E_DEVICE_TYPE CIrrDeviceAndroid::getType() const
 void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 {
 	CIrrDeviceAndroid* device = (CIrrDeviceAndroid*)app->userData;
-
+    if(device->onAppCmd != nullptr){
+        device->onAppCmd(app, cmd);
+    }
 	switch (cmd)
 	{
 		case APP_CMD_SAVE_STATE:

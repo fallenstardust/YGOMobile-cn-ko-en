@@ -6,6 +6,7 @@
 #include "replay_mode.h"
 #include "single_mode.h"
 #include "image_manager.h"
+#include "sound_manager.h"
 #include "game.h"
 
 namespace ygo {
@@ -63,7 +64,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MODE_EXIT: {
 				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
-				mainGame->device->closeDevice();
+				mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_MODE: {
@@ -121,7 +122,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_LAN_REFRESH: {
@@ -214,7 +215,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->wChat->setVisible(false);
 				mainGame->SaveConfig();
 				if(exit_on_return)
-					mainGame->device->closeDevice();
+					mainGame->OnGameClose();
 				break;
 			}
 			case BUTTON_REPLAY_MODE: {
@@ -273,6 +274,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 				break;
 			}
+				case BUTTON_SHARE_REPLAY: {
+					int sel = mainGame->lstReplayList->getSelected();
+					if(sel == -1)
+						break;
+					mainGame->gMutex.lock();
+                    char name[1024];
+					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
+					mainGame->gMutex.unlock();
+					prev_operation = id;
+					prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+					ALOGD("1share replay file=%s", name);
+					android::OnShareFile(mainGame->appMain, "yrp", name);
+					ALOGD("2after share replay file:index=%d", sel);
+#endif
+					break;
+				}
 			case BUTTON_RENAME_REPLAY: {
 				int sel = mainGame->lstReplayList->getSelected();
 				if(sel == -1)
@@ -292,42 +310,42 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_EXPORT_DECK: {
-            	if(mainGame->lstReplayList->getSelected() == -1)
-            		break;
-            	Replay replay;
-            	wchar_t ex_filename[256];
-            	wchar_t namebuf[4][20];
-            	wchar_t filename[256];
-            	myswprintf(ex_filename, L"%ls", mainGame->lstReplayList->getListItem(mainGame->lstReplayList->getSelected()));
-            	if(!replay.OpenReplay(ex_filename))
-            		break;
-            	const ReplayHeader& rh = replay.pheader;
-            	if(rh.flag & REPLAY_SINGLE_MODE)
-            		break;
-            	int max = (rh.flag & REPLAY_TAG) ? 4 : 2;
-            	//player name
-            	for(int i = 0; i < max; ++i)
-            		replay.ReadName(namebuf[i]);
-            	//skip pre infos
-            	for(int i = 0; i < 4; ++i)
-            		replay.ReadInt32();
-            	//deck
-            	for(int i = 0; i < max; ++i) {
-            		int main = replay.ReadInt32();
-            		Deck tmp_deck;
-            		for(int j = 0; j < main; ++j)
-            			tmp_deck.main.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
-            		int extra = replay.ReadInt32();
-            		for(int j = 0; j < extra; ++j)
-            			tmp_deck.extra.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
-            			myswprintf(filename, L"./deck/%ls %ls.ydk", ex_filename, namebuf[i]);
-            		    deckManager.SaveDeck(tmp_deck, filename);
-            	}
-            	mainGame->stACMessage->setText(dataManager.GetSysString(1335));
-            	mainGame->PopupElement(mainGame->wACMessage, 20);
-            	break;
-            }
-			//TEST BOT MODE
+				if(mainGame->lstReplayList->getSelected() == -1)
+					break;
+				Replay replay;
+				wchar_t ex_filename[256];
+				wchar_t namebuf[4][20];
+				wchar_t filename[256];
+				myswprintf(ex_filename, L"%ls", mainGame->lstReplayList->getListItem(mainGame->lstReplayList->getSelected()));
+				if(!replay.OpenReplay(ex_filename))
+					break;
+				const ReplayHeader& rh = replay.pheader;
+				if(rh.flag & REPLAY_SINGLE_MODE)
+					break;
+				int max = (rh.flag & REPLAY_TAG) ? 4 : 2;
+				//player name
+				for(int i = 0; i < max; ++i)
+					replay.ReadName(namebuf[i]);
+				//skip pre infos
+				for(int i = 0; i < 4; ++i)
+					replay.ReadInt32();
+				//deck
+				for(int i = 0; i < max; ++i) {
+					int main = replay.ReadInt32();
+					Deck tmp_deck;
+					for(int j = 0; j < main; ++j)
+						tmp_deck.main.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
+					int extra = replay.ReadInt32();
+					for(int j = 0; j < extra; ++j)
+						tmp_deck.extra.push_back(dataManager.GetCodePointer(replay.ReadInt32()));
+					FileSystem::SafeFileName(namebuf[i]);
+					myswprintf(filename, L"deck/%ls-%d %ls.ydk", ex_filename, i + 1, namebuf[i]);
+					deckManager.SaveDeck(tmp_deck, filename);
+				}
+				mainGame->stACMessage->setText(dataManager.GetSysString(1335));
+				mainGame->PopupElement(mainGame->wACMessage, 20);
+				break;
+			}
 			case BUTTON_BOT_START: {
 				int sel = mainGame->lstBotList->getSelected();
 				if(sel == -1)
@@ -523,7 +541,11 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t infobuf[256];
 				std::wstring repinfo;
-				time_t curtime = ReplayMode::cur_replay.pheader.seed;
+				time_t curtime;
+				if(ReplayMode::cur_replay.pheader.flag & REPLAY_UNIFORM)
+					curtime = ReplayMode::cur_replay.pheader.start_time;
+				else
+					curtime = ReplayMode::cur_replay.pheader.seed;
 				tm* st = localtime(&curtime);
 				wcsftime(infobuf, 256, L"%Y/%m/%d %H:%M:%S\n", st);
 				repinfo.append(infobuf);
