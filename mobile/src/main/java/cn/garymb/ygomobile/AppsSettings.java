@@ -677,8 +677,9 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
     }
 
+    @Deprecated
     //获取收藏文件
-    public String getFavoriteTxt() {
-        return new File(getResourcePath(), CORE_SYSTEM_PATH).getAbsolutePath();
+    public File getFavoriteFile() {
+        return new File(getResourcePath(), CORE_SYSTEM_PATH);
     }
 }

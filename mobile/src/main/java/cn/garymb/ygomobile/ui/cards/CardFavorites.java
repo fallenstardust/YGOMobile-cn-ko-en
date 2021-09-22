@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.cards;
 import android.text.TextUtils;
 import android.util.SparseArray;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,8 +70,16 @@ public class CardFavorites {
     }
 
     public void load() {
-        List<String> lines = FileUtils.readLines(AppsSettings.get().getFavoriteTxt(), Constants.DEF_ENCODING);
         mList.clear();
+        File config = AppsSettings.get().getFavoriteFile();
+        List<String> lines;
+        if (!config.exists()) {
+            config = AppsSettings.get().getSystemConfig();
+        }
+        if (!config.exists()) {
+            return;
+        }
+        lines = FileUtils.readLines(config.getPath(), Constants.DEF_ENCODING);
         for (String line : lines) {
             String tmp = line.trim();
             if (TextUtils.isDigitsOnly(tmp)) {
@@ -84,6 +93,7 @@ public class CardFavorites {
         for (Integer id : mList) {
             ret.add(String.valueOf(id));
         }
-        FileUtils.writeLines(AppsSettings.get().getFavoriteTxt(), ret, Constants.DEF_ENCODING, "\n");
+        File conf = AppsSettings.get().getSystemConfig();
+        FileUtils.writeLines(conf.getPath(), ret, Constants.DEF_ENCODING, "\n");
     }
 }
