@@ -46,7 +46,7 @@ public class CardFavorites {
         return false;
     }
 
-    public boolean hasCard(Integer id){
+    public boolean hasCard(Integer id) {
         return mList.contains(id);
     }
 
