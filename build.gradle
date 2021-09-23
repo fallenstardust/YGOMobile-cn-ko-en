@@ -2,12 +2,16 @@
 
 buildscript {
     repositories {
-        jcenter()
-        maven { url "https://jitpack.io" }
-        google()
+        maven { url'https://maven.aliyun.com/repository/public/' }
+        maven { url'https://maven.aliyun.com/repository/google/' }
+        maven { url'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://dl.bintray.com/umsdk/release' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle:7.0.2'
         //classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
 }
@@ -20,10 +24,13 @@ ext {
 
 allprojects {
     repositories {
-        jcenter()
-        google()
-        maven { url "https://jitpack.io" }
-//        maven { url "https://raw.githubusercontent.com/Pgyer/mvn_repo_pgyer/master" }
+        maven { url'https://maven.aliyun.com/repository/public/' }
+        maven { url'https://maven.aliyun.com/repository/google/' }
+        maven { url'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://dl.bintray.com/umsdk/release' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        mavenCentral()
         //smack
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'

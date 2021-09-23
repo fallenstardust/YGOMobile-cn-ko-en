@@ -24,7 +24,6 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -215,7 +214,7 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
-                DeckManagerActivity.start(activity, file.getAbsolutePath());
+//                DeckManagerActivity.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSeting);
@@ -251,7 +250,7 @@ public class GameUriManager {
                 } else {
                     Deck deckInfo = new Deck(uri);
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    DeckManagerActivity.start(activity, file.getAbsolutePath());
+//                    DeckManagerActivity.start(activity, file.getAbsolutePath());
                 }
             }
 //            else if (PATH_ROOM.equals(path)) {
@@ -279,7 +278,7 @@ public class GameUriManager {
             }
         }
         if (deck != null && deck.exists()) {
-            DeckManagerActivity.start(activity, deck.getAbsolutePath());
+//            DeckManagerActivity.start(activity, deck.getAbsolutePath());
         } else {
             Log.w("kk", "no find " + name);
             activity.finish();

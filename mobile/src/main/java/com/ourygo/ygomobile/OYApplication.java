@@ -6,6 +6,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.multidex.MultiDex;
+
 import com.ourygo.ygomobile.util.LogUtil;
 
 import java.util.ArrayList;
@@ -73,6 +75,12 @@ public class OYApplication extends App {
                 AppsSettings.init(this);
             }
         }
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 
     private String getProcessName(Context context) {

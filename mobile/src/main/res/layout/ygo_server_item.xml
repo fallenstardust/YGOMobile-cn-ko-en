@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="150dp"
     android:layout_height="200dp"
-    android:layout_marginTop="5dp"
     android:layout_marginRight="10dp"
     android:clickable="true"
     android:foreground="?android:attr/selectableItemBackground"
@@ -23,58 +22,58 @@
             android:padding="12dp">
 
             <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@color/white"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
                 android:text="Text"
-                android:textStyle="bold"
+                android:textColor="@color/white"
                 android:textSize="16sp"
-                android:id="@+id/tv_name" />
+                android:textStyle="bold" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:layout_marginTop="4dp"
                 android:id="@+id/tv_ip"
-                android:textSize="10sp"
-                android:text="ip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/colorAccent" />
+                android:layout_marginTop="4dp"
+                android:text="ip"
+                android:textColor="@color/colorAccent"
+                android:textSize="10sp" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:textSize="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="禁限表"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:textSize="10dp" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:layout_marginTop="4dp"
                 android:id="@+id/tv_lflist"
-                android:textSize="10sp"
-                android:text="OCG 2019.1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/colorAccent" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_marginTop="10dp"
-                android:textSize="10dp"
-                android:text="模式"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
                 android:layout_marginTop="4dp"
-                android:textSize="10sp"
-                android:text="双局对战"
-                android:id="@+id/tv_mode"
+                android:text="OCG 2019.1"
                 android:textColor="@color/colorAccent"
+                android:textSize="10sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="模式"
+                android:textColor="@color/white"
+                android:textSize="10dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="双局对战"
+                android:textColor="@color/colorAccent"
+                android:textSize="10sp" />
 
         </LinearLayout>
 

@@ -46,29 +46,20 @@ public class YGOServerFragemnt extends Fragment {
 
 
     private void initServiceList() {
-        YGOUtil.getYGOServerList(new OnYGOServerListQueryListener() {
-            @Override
-            public void onYGOServerListQuery(YGOServerList serverList) {
-                ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
-                rv_service_list.setAdapter(ygoServerAdp);
-                ygoServerAdp.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {
-                    @Override
-                    public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
-                        switch (view.getId()) {
-                            case R.id.tv_create_and_share:
-                                joinRoom((ServerInfo) adapter.getItem(position),true);
-                                break;
-                        }
-                    }
-                });
-                ygoServerAdp.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                        ServerInfo serverInfo = (ServerInfo) adapter.getItem(position);
-                        joinRoom(serverInfo,false);
-                    }
-                });
-            }
+        YGOUtil.getYGOServerList(serverList -> {
+            ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
+            rv_service_list.setAdapter(ygoServerAdp);
+            ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
+                switch (view.getId()) {
+                    case R.id.tv_create_and_share:
+                        joinRoom((ServerInfo) adapter.getItem(position),true);
+                        break;
+                }
+            });
+            ygoServerAdp.setOnItemClickListener((adapter, view, position) -> {
+                ServerInfo serverInfo = (ServerInfo) adapter.getItem(position);
+                joinRoom(serverInfo,false);
+            });
         });
 
     }

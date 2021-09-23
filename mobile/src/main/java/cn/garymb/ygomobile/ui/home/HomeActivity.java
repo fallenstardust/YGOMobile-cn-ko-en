@@ -66,7 +66,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
+//import cn.garymb.ygomobile.ui.cards.CardSearchAcitivity;
 //import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
@@ -106,7 +106,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
-        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
+//        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
         mServerList = $(R.id.list_server);
         mServerListAdapter = new ServerListAdapter(this);
         //server list
@@ -185,7 +185,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     @Override
-    public void onJoinRoom(String password, int id) {
+    public void onJoinRoom(String host,int port,String password,int id) {
         if (id == ID_MAINACTIVITY) {
             QuickjoinRoom(password);
         }
@@ -194,9 +194,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ID_MAINACTIVITY) {
-            Intent intent = new Intent(this, CardSearchAcitivity.class);
-            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
-            startActivity(intent);
+//            Intent intent = new Intent(this, CardSearchAcitivity.class);
+//            intent.putExtra(CardSearchAcitivity.SEARCH_MESSAGE, key);
+//            startActivity(intent);
         }
     }
 
@@ -334,7 +334,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 mServerListManager.addServer();
                 break;
             case R.id.action_card_search:
-                startActivity(new Intent(this, CardSearchAcitivity.class));
+//                startActivity(new Intent(this, CardSearchAcitivity.class));
                 break;
             case R.id.action_deck_manager:
 //                startActivity(new Intent(this, DeckManagerActivity.getDeckManager()));
@@ -353,7 +353,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
 
                 btnMasterRule.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
+//                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTERRULE_CN);
                     dialog.dismiss();
                 });
                 btnTutorial.setOnClickListener((v) -> {

@@ -160,13 +160,14 @@ public class OYMainActivity extends BaseActivity {
         fragmentList.add(FragmentData.toFragmentData(s(R.string.other_funstion), otherFunctionFragment));
 
         vp_pager.setAdapter(new FmPagerAdapter(getSupportFragmentManager()));
-        tl_tab.setTabMode(TabLayout.MODE_FIXED);
-        //TabLayout加载viewpager
-        tl_tab.setupWithViewPager(vp_pager);
+//        tl_tab.setTabMode(TabLayout.MODE_FIXED);
         //缓存两个页面
         vp_pager.setOffscreenPageLimit(3);
+        //TabLayout加载viewpager
+        tl_tab.setViewPager(vp_pager);
+       tl_tab.setCurrentTab(0);
 
-        tl_tab.setSelectTextSize(22);
+//        tl_tab.setSelectTextSize(22);
 
 //        YGOServerFragemnt ygoFragemnt=new YGOServerFragemnt();
 //        FragmentManager fragmentManager = getSupportFragmentManager();

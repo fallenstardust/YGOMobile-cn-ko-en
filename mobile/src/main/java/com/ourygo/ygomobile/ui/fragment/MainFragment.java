@@ -89,25 +89,24 @@ public class MainFragment extends BaseFragemnt {
 
         fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.start_game),new YGOServerFragemnt()));
         fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.local_duel),new LocalDuelFragment()));
-        tl_replay.addTab(tl_replay.newTab().setText("对战录像"));
-        tl_replay.initTabTextStyle(null);
+//        tl_replay.addTab(tl_replay.newTab().setText("对战录像"));
+//        tl_replay.initTabTextStyle(null);
 //        tb_game_option.initTabTextStyle(null);
 
 
 
-        vp_game.setAdapter(new FmPagerAdapter(getActivity().getSupportFragmentManager()));
-        //TabLayout加载viewpager
-        tl_game_option.setupWithViewPager(vp_game);
+        vp_game.setAdapter(new FmPagerAdapter(getChildFragmentManager()));
         //缓存两个页面
         vp_game.setOffscreenPageLimit(3);
+        //TabLayout加载viewpager
+        tl_game_option.setViewPager(vp_game);
+        tl_game_option.setCurrentTab(0);
 
 
-        xb_banner.post(new Runnable() {
-            @Override
-            public void run() {
+        xb_banner.post(() -> {
 //                Log.e("MainFragment","宽"+xb_banner.getWidth());
 //                Log.e("MainFragment","算数"+OYUtil.px2dp(xb_banner.getHeight())*2);
-                xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
+            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
 
 //                xb_banner.setClipChildrenLeftRightMargin(75);
 //                ViewGroup.LayoutParams layoutParams=xb_banner.getLayoutParams();
@@ -118,7 +117,6 @@ public class MainFragment extends BaseFragemnt {
 //                xb_banner.setClipChildrenLeftRightMargin(50);
 //                xb_banner.setma
 
-            }
         });
 //        xb_banner.setOnItemClickListener(new XBanner.OnItemClickListener() {
 //            @Override
@@ -126,46 +124,40 @@ public class MainFragment extends BaseFragemnt {
 //                startActivity(IntentUtil.getUrlIntent(myCardNewsList.get(position).getNews_url()));
 //            }
 //        });
-        xb_banner.loadImage(new XBanner.XBannerAdapter() {
-            @Override
-            public void loadBanner(XBanner banner, Object model, View view, int position) {
-                TextView tv_time,tv_title,tv_type;
-                ImageView iv_image;
+        xb_banner.loadImage((banner, model, view, position) -> {
+            TextView tv_time,tv_title,tv_type;
+            ImageView iv_image;
 
-                tv_time=view.findViewById(R.id.tv_time);
-                tv_title=view.findViewById(R.id.tv_title);
-                tv_type=view.findViewById(R.id.tv_type);
-                iv_image=view.findViewById(R.id.iv_image);
+            tv_time=view.findViewById(R.id.tv_time);
+            tv_title=view.findViewById(R.id.tv_title);
+            tv_type=view.findViewById(R.id.tv_type);
+            iv_image=view.findViewById(R.id.iv_image);
 
-                MyCardNews myCardNews=myCardNewsList.get(position);
-                ImageUtil.setImage(getContext(),myCardNews.getImage_url(),iv_image);
-                tv_time.setText(MyCardUtil.getMyCardNewsData(myCardNews.getCreate_time()));
-                tv_title.setText(myCardNews.getTitle());
-                tv_type.setVisibility(View.GONE);
+            MyCardNews myCardNews=myCardNewsList.get(position);
+            ImageUtil.setImage(getContext(),myCardNews.getImage_url(),iv_image);
+            tv_time.setText(MyCardUtil.getMyCardNewsData(myCardNews.getCreate_time()));
+            tv_title.setText(myCardNews.getTitle());
+            tv_type.setVisibility(View.GONE);
 //
 //                Log.e("MainFragment","Height"+view.getHeight());
 //                Log.e("MainFragment","Width"+view.getWidth());
 
-            }
         });
-        MyCardUtil.findMyCardNews(new OnMyCardNewsQueryListener() {
-            @Override
-            public void onMyCardNewsQuery(List<MyCardNews> myCardNewsList, String exception) {
-                Message message = new Message();
-                if (TextUtils.isEmpty(exception)) {
-                    Log.e("MainFragemnt", "查询成功");
-                    while (myCardNewsList.size()>5){
-                        myCardNewsList.remove(myCardNewsList.size()-1);
-                    }
-                    MainFragment.this.myCardNewsList = myCardNewsList;
-                    message.what = TYPE_BANNER_QUERY_OK;
-                } else {
-                    Log.e("MainFragemnt", "查询失败" + exception);
-                    message.obj = exception;
-                    message.what = TYPE_BANNER_QUERY_EXCEPTION;
+        MyCardUtil.findMyCardNews((myCardNewsList, exception) -> {
+            Message message = new Message();
+            if (TextUtils.isEmpty(exception)) {
+                Log.e("MainFragemnt", "查询成功");
+                while (myCardNewsList.size()>5){
+                    myCardNewsList.remove(myCardNewsList.size()-1);
                 }
-                handler.sendMessage(message);
+                MainFragment.this.myCardNewsList = myCardNewsList;
+                message.what = TYPE_BANNER_QUERY_OK;
+            } else {
+                Log.e("MainFragemnt", "查询失败" + exception);
+                message.obj = exception;
+                message.what = TYPE_BANNER_QUERY_EXCEPTION;
             }
+            handler.sendMessage(message);
         });
 
     }

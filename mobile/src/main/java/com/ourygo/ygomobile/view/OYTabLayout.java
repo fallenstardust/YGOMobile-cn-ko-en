@@ -4,112 +4,89 @@ package com.ourygo.ygomobile.view;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.util.Log;
 import android.widget.TextView;
 
-import com.google.android.material.tabs.TabLayout;
+import com.flyco.tablayout.SlidingTabLayout;
 import com.ourygo.ygomobile.util.OYUtil;
 
-import androidx.annotation.Nullable;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 import cn.garymb.ygomobile.lite.R;
 
-public class OYTabLayout extends TabLayout {
+public class OYTabLayout extends SlidingTabLayout {
 
-    private int selectTextSize=20;
+    private float selectTextSize = 24;
+
+    private boolean isAugment = true;
 
     public OYTabLayout(Context context) {
         super(context);
-        initTabLayout();
+        Log.e("SCTablayout", "初始选择" + getCurrentTab());
+        updateTabSelection(getCurrentTab());
     }
 
     public OYTabLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initTabLayout();
+        Log.e("SCTablayout",
+                "初始选择1" + getCurrentTab());
+        updateTabSelection(getCurrentTab());
     }
 
     public OYTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initTabLayout();
+        Log.e("SCTablayout", "初始选择2" + getCurrentTab());
+        updateTabSelection(getCurrentTab());
     }
 
-    private void initTabLayout(){
-        setSelectedTabIndicatorHeight(0);
-        setTabMode(TabLayout.MODE_FIXED);
-        setTabGravity(TabLayout.INDICATOR_GRAVITY_BOTTOM);
+
+    @Override
+    public void onPageSelected(int position) {
+        super.onPageSelected(position);
+        updateTabSelection(position);
     }
 
     @Override
-    public void setupWithViewPager(@Nullable ViewPager viewPager) {
-        super.setupWithViewPager(viewPager);
-        initTabTextStyle(viewPager.getAdapter());
+    public void setCurrentTab(int currentTab) {
+        super.setCurrentTab(currentTab);
+        updateTabSelection(currentTab);
     }
 
-    public void initTabTextStyle(PagerAdapter fragmentPagerAdapter) {
-        for (int i = 0; i < getTabCount(); i++) {
-            TabLayout.Tab tab = getTabAt(i);
-            if (tab != null) {
-                if (fragmentPagerAdapter != null)
-                    tab.setCustomView(getTabView(fragmentPagerAdapter.getPageTitle(i), tab.isSelected()));
-                else
-                    tab.setCustomView(getTabView(tab.getText(), tab.isSelected()));
-            }
-        }
-
-        addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                TextView textView = tab.getCustomView().findViewById(R.id.text1);
-                setTabText(textView, true);
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                TextView textView = tab.getCustomView().findViewById(R.id.text1);
-                setTabText(textView, false);
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
+    public boolean isAugment() {
+        return isAugment;
     }
 
-    public void setSelectTextSize(int textSize){
-        this.selectTextSize=textSize;
-        for (int i = 0; i < getTabCount(); i++) {
-            TabLayout.Tab tab = getTabAt(i);
-            if (tab != null) {
-                TextView textView = tab.getCustomView().findViewById(R.id.text1);
-                setTabText(textView, tab.isSelected());
+    public void setAugment(boolean augment) {
+        isAugment = augment;
+    }
+
+    private void updateTabSelection(int position) {
+
+        for (int i = 0; i < getTabCount(); ++i) {
+            final boolean isSelect = i == position;
+            TextView tab_title = getTitleView(i);
+            tab_title.setPadding(OYUtil.dp2px(6), OYUtil.dp2px(3),OYUtil.dp2px(6),OYUtil.dp2px(3));
+            Log.e("SCTablayout", "是否为空" + (tab_title == null));
+            if (tab_title != null) {
+                tab_title.setBackgroundResource(R.drawable.click_window_background_radius);
+                if (isSelect) {
+//                    tab_title.setTextColor(SCUtil.c(R.color.colorAccentDark));
+                    if (isAugment)
+                        tab_title.setTextSize(selectTextSize);
+                    tab_title.setTypeface(Typeface.DEFAULT_BOLD);
+                } else {
+//                    tab_title.setTextColor(SCUtil.c(R.color.colorAccent));
+                    if (isAugment)
+                        tab_title.setTextSize(14);
+                    tab_title.setTypeface(Typeface.DEFAULT);
+                }
+                if (getTextBold() == 1) {
+                    tab_title.getPaint().setFakeBoldText(isSelect);
+                }
+//                tab_title.setTextColor(isSelect ? mTextSelectColor : mTextUnselectColor);
+//                if (mTextBold == TEXT_BOLD_WHEN_SELECT) {
+//                    tab_title.getPaint().setFakeBoldText(isSelect);
+//                }
             }
         }
     }
-
-    private View getTabView(CharSequence title, boolean isSelecd) {
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.tab_layout_text, null);
-        TextView textView = view.findViewById(R.id.text1);
-        textView.setText(title);
-        setTabText(textView, isSelecd);
-        return view;
-    }
-
-    private void setTabText(TextView textView, boolean isSelecd) {
-        textView.setGravity(Gravity.BOTTOM);
-        if (isSelecd) {
-            textView.setTextColor(OYUtil.c(R.color.colorAccentDark));
-            textView.setTextSize(selectTextSize);
-            textView.setTypeface(Typeface.DEFAULT_BOLD);
-        } else {
-            textView.setTextColor(OYUtil.c(R.color.colorAccent));
-            textView.setTextSize(13);
-            textView.setTypeface(Typeface.DEFAULT);
-        }
-    }
-
 
 }

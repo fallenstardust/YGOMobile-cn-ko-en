@@ -44,8 +44,8 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
-import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+//import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
+//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
@@ -228,13 +228,13 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                 File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+//                DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+//                    DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
@@ -367,10 +367,10 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ClipManagement.ID_CLIP_LISTENER) {
-            Intent intent = new Intent(DuelAssistantService.this, CardSearchActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
-            startActivity(intent);
+//            Intent intent = new Intent(DuelAssistantService.this, CardSearchActivity.class);
+//            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
+//            startActivity(intent);
         }
     }
 

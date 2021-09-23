@@ -25,12 +25,33 @@
         android:layout_marginLeft="@dimen/main_margin"
         android:layout_marginRight="@dimen/main_margin">
 
+
         <com.ourygo.ygomobile.view.OYTabLayout
-            app:tabPaddingStart="0dp"
-            android:layout_centerVertical="true"
             android:id="@+id/tl_game_option"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp"
+            app:tl_indicator_color="@color/colorAccent"
+            app:tl_indicator_corner_radius="2dp"
+            app:tl_indicator_gravity="BOTTOM"
+            app:tl_indicator_height="0dp"
+            app:tl_indicator_margin_bottom="2dp"
+            app:tl_indicator_margin_top="10dp"
+            app:tl_indicator_style="NORMAL"
+            app:tl_indicator_width="30dp"
+            app:tl_tab_padding="10dp"
+            app:tl_tab_space_equal="false"
+            app:tl_textBold="SELECT"
+            app:tl_textSelectColor="@color/black"
+            app:tl_textUnselectColor="@color/grayDark"
+            app:tl_textsize="25sp"
+            app:tl_underline_color="@color/transparent"
+            app:tl_underline_height="10dp" />
+
+
+
 
         <androidx.appcompat.widget.AppCompatTextView
             android:background="@drawable/click_background"
@@ -60,11 +81,29 @@
         android:layout_marginRight="@dimen/main_margin">
 
         <com.ourygo.ygomobile.view.OYTabLayout
-            app:tabPaddingStart="0dp"
-            android:layout_centerVertical="true"
             android:id="@+id/tl_replay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="10dp"
+            app:tl_indicator_color="@color/colorAccent"
+            app:tl_indicator_corner_radius="2dp"
+            app:tl_indicator_gravity="BOTTOM"
+            app:tl_indicator_height="0dp"
+            app:tl_indicator_margin_bottom="2dp"
+            app:tl_indicator_margin_top="10dp"
+            app:tl_indicator_style="NORMAL"
+            app:tl_indicator_width="30dp"
+            app:tl_tab_padding="10dp"
+            app:tl_tab_space_equal="false"
+            app:tl_textBold="SELECT"
+            app:tl_textSelectColor="@color/black"
+            app:tl_textUnselectColor="@color/grayDark"
+            app:tl_textsize="25sp"
+            app:tl_underline_color="@color/transparent"
+            app:tl_underline_height="10dp" />
+
 
         <androidx.appcompat.widget.AppCompatTextView
             android:padding="10dp"

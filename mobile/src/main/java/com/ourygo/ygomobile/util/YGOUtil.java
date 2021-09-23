@@ -83,7 +83,7 @@ public class YGOUtil {
 
     public static List<Replay> getReplayList(){
         List<Replay> replayList=new ArrayList<>();
-        File file=new File(AppsSettings.get().getReplayReplay());
+        File file=new File(AppsSettings.get().getReplayDir());
 
         for (File file1:file.listFiles()){
             if (!file1.isDirectory()&&file1.getName().endsWith(".yrp")){

@@ -65,7 +65,6 @@
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:excludeFromRecents="false"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
             android:screenOrientation="portrait"
             android:launchMode="singleTop"
@@ -213,8 +212,8 @@
 
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
-            android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
-            android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:name="cn.garymb.ygomobile.ui.preference.OYYGOPreferencesProvider"
+            android:authorities="cn.garymb.ygomobile.ui.preference.OYYGOPreferencesProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
         <provider

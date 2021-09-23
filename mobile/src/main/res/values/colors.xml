@@ -37,9 +37,17 @@
 
     <color name="colorAccentLight">#E2E2E2</color>
     <color name="banner_type_background">#FFC936</color>
-    <color name="white_text_backgrotnd">#30000000</color>
+    <color name="white_text_backgrotnd">#50000000</color>
     <color name="gray_dark">#BBBBBB</color>
     <color name="replay_text_color">#3E3E3E</color>
+
+<!--    <color name="windowBackground">#ECECF1</color>-->
+<!--    <color name="windowBackgroundDark">#BBBBBF</color>-->
+
+    <color name="windowBackground">#ffffff</color>
+    <color name="windowBackgroundDark">#E6E6E6</color>
+    <color name="grayDark">#686868</color>
+
     <!--<color name="">#717171</color>-->
 
     <!--<color name="background">#ff090229</color>左侧卡图背景底色-->
