@@ -184,9 +184,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     @Override
-    public void onJoinRoom(String password, int id) {
+    public void onJoinRoom(String host,int port,String password, int id) {
         if (id == ID_MAINACTIVITY) {
-            QuickjoinRoom(password);
+            QuickjoinRoom(host,port,password);
         }
     }
 
@@ -606,10 +606,20 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         });
     }
 
-    private void QuickjoinRoom(String password) {
+    private void QuickjoinRoom(String host,int port,String password) {
+
+        String message;
+        if (!TextUtils.isEmpty(host))
+            message = getString(R.string.quick_join)
+                    + "IP：" + host
+                    + "端口：" + port
+                    + "密码：" + password;
+        else
+            message = getString(R.string.quick_join) + "\"" + password + "\"";
+
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
-        dialog.setMessage(getString(R.string.quick_join) + password + "\"");
+        dialog.setMessage(message);
         dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
         dialog.setLeftButtonText(R.string.Cancel);
         dialog.setRightButtonText(R.string.join);
@@ -633,7 +643,13 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 return fileList;
             }).done((list) -> {
                 if (list != null) {
+                    String host1=host;
+                    int port1=port;
                     ServerInfo serverInfo = list.getServerInfoList().get(0);
+                    if (!TextUtils.isEmpty(host1)){
+                        serverInfo.setServerAddr(host1);
+                        serverInfo.setPort(port1);
+                    }
                     joinGame(serverInfo, password);
                 }
             });

@@ -71,15 +71,20 @@ public class CardFavorites {
 
     public void load() {
         mList.clear();
+        boolean delete = false;
         File config = AppsSettings.get().getFavoriteFile();
         List<String> lines;
         if (!config.exists()) {
             config = AppsSettings.get().getSystemConfig();
+        } else {
+            //需要删除旧文件
+            delete = true;
         }
         if (!config.exists()) {
             return;
         }
         lines = FileUtils.readLines(config.getPath(), Constants.DEF_ENCODING);
+        FileUtils.deleteFile(AppsSettings.get().getFavoriteFile());
         for (String line : lines) {
             String tmp = line.trim();
             if (TextUtils.isDigitsOnly(tmp)) {
