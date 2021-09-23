@@ -16,6 +16,7 @@ import android.util.Size;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -454,6 +455,15 @@ public class YGOMobileActivity extends GameActivity implements
             return;
         }
         onGameExit();
+    }
+
+    @Override
+    protected void onSurfaceTouch(View v, MotionEvent event) {
+        if (event.getPointerCount() > 1) {
+            //多指操作不处理
+            return;
+        }
+        super.onSurfaceTouch(v, event);
     }
 
     @Override

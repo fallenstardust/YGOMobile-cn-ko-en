@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -78,9 +79,7 @@ public abstract class GameActivity extends NativeActivity {
             if (USE_MY_INPUT && inputQueueCompat != null) {
                 Log.d(IrrlichtBridge.TAG, "use java input queue:" + inputQueueCompat.getNativePtr());
                 mSurfaceView.setOnTouchListener((v, event) -> {
-                    if (inputQueueCompat != null) {
-                        inputQueueCompat.sendInputEvent(event, v, true);
-                    }
+                    onSurfaceTouch(v, event);
                     return true;
                 });
             }
@@ -88,6 +87,12 @@ public abstract class GameActivity extends NativeActivity {
             mLayout.addView(view, lp);
             getWindow().setGravity(Gravity.CENTER);
             super.setContentView(mLayout);
+        }
+    }
+
+    protected void onSurfaceTouch(View v, MotionEvent event){
+        if (inputQueueCompat != null) {
+            inputQueueCompat.sendInputEvent(event, v, true);
         }
     }
 
