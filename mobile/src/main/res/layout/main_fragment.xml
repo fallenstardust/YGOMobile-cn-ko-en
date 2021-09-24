@@ -5,11 +5,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
-    <com.stx.xhb.xbanner.XBanner
+    <com.stx.xhb.androidx.XBanner
         android:id="@+id/xb_banner"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="120dp"
         app:AutoPlayTime="3500"
         app:isClipChildrenMode="true"
         app:isClipChildrenModeLessThree="true"
@@ -18,6 +17,91 @@
         app:tipTextSize="12sp"
         app:clipChildrenTopBottomMargin="5dp"
         app:isHandLoop="true"/>
+
+    <LinearLayout
+        android:layout_marginTop="20dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_ai"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="60dp"
+            app:cardCornerRadius="@dimen/dialog_corner_radius"
+            app:elevation="0dp"
+            app:cardElevation="0dp"
+            android:clickable="true"
+            android:foreground="?android:attr/selectableItemBackground"
+            app:cardUseCompatPadding="false"
+            app:cardBackgroundColor="@color/colorDialogBackground">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_aigame" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/mainCardShader"
+                    android:paddingLeft="20dp"
+                    android:paddingTop="20dp"
+                    android:text="AI对战"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:clickable="true"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:layout_marginLeft="20dp"
+            android:id="@+id/cv_endgame"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="60dp"
+            app:cardCornerRadius="@dimen/dialog_corner_radius"
+            app:elevation="0dp"
+            app:cardElevation="0dp"
+            app:cardUseCompatPadding="false"
+            app:cardBackgroundColor="@color/colorDialogBackground">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:src="@drawable/ic_endgame"
+                    android:scaleType="centerCrop"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/mainCardShader"
+                    android:paddingLeft="20dp"
+                    android:paddingTop="20dp"
+                    android:text="残局"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -51,26 +135,22 @@
             app:tl_underline_height="10dp" />
 
 
-
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:background="@drawable/click_background"
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_add_setting"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:textColor="@color/colorAccent"
-            android:id="@+id/tv_add_setting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:background="@drawable/click_background_radius"
             android:gravity="right"
-            android:padding="10dp"
-            android:text="@string/add_setting"
-            android:textSize="10sp" />
+            android:padding="5dp"
+            app:srcCompat="@drawable/ic_add_gray" />
     </RelativeLayout>
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/vp_game"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/main_margin"
         android:layout_marginRight="@dimen/main_margin" />
 

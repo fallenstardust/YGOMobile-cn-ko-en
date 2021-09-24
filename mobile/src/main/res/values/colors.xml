@@ -40,6 +40,7 @@
     <color name="white_text_backgrotnd">#50000000</color>
     <color name="gray_dark">#BBBBBB</color>
     <color name="replay_text_color">#3E3E3E</color>
+    <color name="whiteDark">#D7D7D7</color>
 
 <!--    <color name="windowBackground">#ECECF1</color>-->
 <!--    <color name="windowBackgroundDark">#BBBBBF</color>-->
@@ -47,6 +48,12 @@
     <color name="windowBackground">#ffffff</color>
     <color name="windowBackgroundDark">#E6E6E6</color>
     <color name="grayDark">#686868</color>
+
+    <color name="colorRoot_light">#fafafa</color>
+    <color name="colorRoot_dark">#292929</color>
+    <color name="mainCardShader">#45000000</color>
+
+
 
     <!--<color name="">#717171</color>-->
 

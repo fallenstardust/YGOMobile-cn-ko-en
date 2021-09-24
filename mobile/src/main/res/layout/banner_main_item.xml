@@ -2,7 +2,7 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:clickable="true"
     android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical"
@@ -50,14 +50,14 @@
                 android:layout_above="@id/ll_title"
                 android:layout_marginBottom="5dp"
                 android:textColor="@color/white"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <LinearLayout
                 android:id="@+id/ll_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="13dp"
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -69,7 +69,7 @@
                     android:gravity="bottom"
                     android:maxLines="3"
                     android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <LinearLayout

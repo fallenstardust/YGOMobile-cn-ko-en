@@ -28,6 +28,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ourygo.ygomobile.util.DisplayUtils;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.view.OYToolbar;
 
@@ -42,6 +43,7 @@ import androidx.appcompat.widget.Toolbar;
 import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import ocgcore.data.Card;
 
@@ -236,6 +238,10 @@ public class BaseActivity extends AppCompatActivity {
 //        }
 
         super.onCreate(savedInstanceState);
+        boolean darkMode = DisplayUtils.isDarkMode(this);
+        DisplayUtils.setSystemBarStyle(this, getWindow(),
+                false, true, false, !darkMode);
+
     }
 
     protected void setupActionBar() {

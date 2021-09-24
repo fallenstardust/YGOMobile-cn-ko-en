@@ -2,7 +2,86 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
+
+<!--    <LinearLayout-->
+<!--        android:orientation="horizontal"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content">-->
+
+<!--        <androidx.cardview.widget.CardView-->
+<!--            android:id="@+id/cv_ai"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:layout_height="60dp"-->
+<!--            app:cardCornerRadius="@dimen/dialog_corner_radius"-->
+<!--            app:elevation="0dp"-->
+<!--            app:cardElevation="0dp"-->
+<!--            app:cardUseCompatPadding="false"-->
+<!--            app:cardBackgroundColor="@color/colorDialogBackground">-->
+
+<!--            <RelativeLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+
+<!--                <androidx.appcompat.widget.AppCompatImageView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:scaleType="centerCrop"-->
+<!--                    android:src="@drawable/ic_aigame" />-->
+
+<!--                <androidx.appcompat.widget.AppCompatTextView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:background="#80000000"-->
+<!--                    android:paddingLeft="20dp"-->
+<!--                    android:paddingTop="20dp"-->
+<!--                    android:text="AI对战"-->
+<!--                    android:textColor="@color/white"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:textStyle="bold" />-->
+<!--            </RelativeLayout>-->
+
+<!--        </androidx.cardview.widget.CardView>-->
+
+<!--        <androidx.cardview.widget.CardView-->
+<!--            android:layout_marginLeft="20dp"-->
+<!--            android:id="@+id/cv_endgame"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:layout_height="60dp"-->
+<!--            app:cardCornerRadius="@dimen/dialog_corner_radius"-->
+<!--            app:elevation="0dp"-->
+<!--            app:cardElevation="0dp"-->
+<!--            app:cardUseCompatPadding="false"-->
+<!--            app:cardBackgroundColor="@color/colorDialogBackground">-->
+
+<!--            <RelativeLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+
+<!--                <androidx.appcompat.widget.AppCompatImageView-->
+<!--                    android:src="@drawable/ic_endgame"-->
+<!--                    android:scaleType="centerCrop"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"/>-->
+
+<!--                <androidx.appcompat.widget.AppCompatTextView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:background="#80000000"-->
+<!--                    android:paddingLeft="20dp"-->
+<!--                    android:paddingTop="20dp"-->
+<!--                    android:text="残局"-->
+<!--                    android:textColor="@color/white"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:textStyle="bold" />-->
+
+<!--            </RelativeLayout>-->
+<!--        </androidx.cardview.widget.CardView>-->
+
+<!--    </LinearLayout>-->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_service_list"

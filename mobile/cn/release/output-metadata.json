@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.ourygo.ygomobile",
+  "variantName": "cnRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 330601002,
+      "versionName": "@string/app_version_name",
+      "outputFile": "mobile-cn-release.apk"
+    }
+  ],
+  "elementType": "File"
+}

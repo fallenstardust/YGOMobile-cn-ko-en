@@ -1,9 +1,9 @@
 package com.ourygo.ygomobile.bean;
 
 import com.ourygo.ygomobile.util.Record;
-import com.stx.xhb.xbanner.entity.SimpleBannerInfo;
+import com.stx.xhb.androidx.entity.BaseBannerInfo;
 
-public class MyCardNews extends SimpleBannerInfo {
+public class MyCardNews implements BaseBannerInfo {
 
     private String id;
     private String title;
@@ -65,5 +65,10 @@ public class MyCardNews extends SimpleBannerInfo {
     @Override
     public Object getXBannerUrl() {
         return null;
+    }
+
+    @Override
+    public String getXBannerTitle() {
+        return title;
     }
 }

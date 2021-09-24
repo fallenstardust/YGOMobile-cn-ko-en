@@ -409,20 +409,17 @@ public class YGOMobileActivity extends NativeActivity implements
 
     @Override
     public void toggleIME(final String hint, final boolean isShow) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (isShow) {
+        handler.post(() -> {
+            if (isShow) {
 //                if (mOverlayShowRequest) {
 //                    mOverlayView.hide();
 //                    mChainOverlayView.hide();
 //                }
-                    mGlobalEditText.fillContent(hint);
-                    mGlobalEditText.showAtLocation(mContentView,
-                            Gravity.BOTTOM, 0, 0);
-                } else {
-                    mGlobalEditText.dismiss();
-                }
+                mGlobalEditText.fillContent(hint);
+                mGlobalEditText.showAtLocation(mContentView,
+                        Gravity.BOTTOM, 0, 0);
+            } else {
+                mGlobalEditText.dismiss();
             }
         });
     }

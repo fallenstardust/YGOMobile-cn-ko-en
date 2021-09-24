@@ -2,6 +2,7 @@ package com.ourygo.ygomobile.ui.fragment;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,13 +23,14 @@ import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
-import com.stx.xhb.xbanner.XBanner;
+import com.stx.xhb.androidx.XBanner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -40,19 +42,20 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 
-public class MainFragment extends BaseFragemnt {
+public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
 
     private XBanner xb_banner;
     private List<MyCardNews> myCardNewsList;
-    private TextView tv_add_setting;
+    private ImageView iv_add_setting;
     private OYTabLayout tl_game_option,tl_replay;
     private ViewPager vp_game;
 
     private List<FragmentData> fragmentDataList;
     private RecyclerView rv_replay;
+    private CardView cv_ai,cv_endgame;
 
 
     @Nullable
@@ -64,23 +67,32 @@ public class MainFragment extends BaseFragemnt {
         return v;
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.cv_ai:
+
+                break;
+            case R.id.cv_endgame:
+
+                break;
+        }
+    }
+
     private void initView(View v) {
         xb_banner = v.findViewById(R.id.xb_banner);
-        tv_add_setting=v.findViewById(R.id.tv_add_setting);
+        iv_add_setting=v.findViewById(R.id.iv_add_setting);
         tl_game_option=v.findViewById(R.id.tl_game_option);
         vp_game=v.findViewById(R.id.vp_game);
         tl_replay=v.findViewById(R.id.tl_replay);
         rv_replay=v.findViewById(R.id.rv_replay);
+        cv_ai=v.findViewById(R.id.cv_ai);
+        cv_endgame=v.findViewById(R.id.cv_endgame);
 
 
         fragmentDataList=new ArrayList<>();
 
-        tv_add_setting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(getActivity(), NewServerActivity.class));
-            }
-        });
+        iv_add_setting.setOnClickListener(v1 -> startActivity(new Intent(getActivity(), NewServerActivity.class)));
 
         LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getActivity());
         linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
@@ -88,25 +100,33 @@ public class MainFragment extends BaseFragemnt {
         rv_replay.setAdapter(new ReplayAdapter(YGOUtil.getReplayList()));
 
         fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.start_game),new YGOServerFragemnt()));
-        fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.local_duel),new LocalDuelFragment()));
+//        fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.local_duel),new LocalDuelFragment()));
 //        tl_replay.addTab(tl_replay.newTab().setText("对战录像"));
 //        tl_replay.initTabTextStyle(null);
 //        tb_game_option.initTabTextStyle(null);
 
-
+        cv_endgame.setOnClickListener(this);
+        cv_ai.setOnClickListener(this);
 
         vp_game.setAdapter(new FmPagerAdapter(getChildFragmentManager()));
         //缓存两个页面
         vp_game.setOffscreenPageLimit(3);
         //TabLayout加载viewpager
         tl_game_option.setViewPager(vp_game);
+        tl_game_option.setTextSizeM();
         tl_game_option.setCurrentTab(0);
 
+//        xb_banner.loadImage((banner, model, view, position) -> {
+//            ViewGroup.LayoutParams layoutParams=view.getLayoutParams();
+//            layoutParams.width=layoutParams.height*2;
+//            view.setLayoutParams(layoutParams);
+//        });
 
         xb_banner.post(() -> {
+//            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
 //                Log.e("MainFragment","宽"+xb_banner.getWidth());
 //                Log.e("MainFragment","算数"+OYUtil.px2dp(xb_banner.getHeight())*2);
-            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
+//            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
 
 //                xb_banner.setClipChildrenLeftRightMargin(75);
 //                ViewGroup.LayoutParams layoutParams=xb_banner.getLayoutParams();

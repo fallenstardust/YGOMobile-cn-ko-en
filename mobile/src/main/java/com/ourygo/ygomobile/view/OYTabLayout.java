@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.lite.R;
 public class OYTabLayout extends SlidingTabLayout {
 
     private float selectTextSize = 24;
+    private float normalTextSize=14;
 
     private boolean isAugment = true;
 
@@ -48,6 +49,18 @@ public class OYTabLayout extends SlidingTabLayout {
     public void setCurrentTab(int currentTab) {
         super.setCurrentTab(currentTab);
         updateTabSelection(currentTab);
+    }
+
+    public void setTextSizeL(){
+        selectTextSize=24;
+        normalTextSize=14;
+        updateTabSelection(getCurrentTab());
+    }
+
+    public void setTextSizeM(){
+        selectTextSize=20;
+        normalTextSize=12;
+        updateTabSelection(getCurrentTab());
     }
 
     public boolean isAugment() {

@@ -115,8 +115,8 @@ dependencies {
 
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
-    //轮播图
-    implementation 'com.github.xiaohaibin:XBanner:1.6.4'
+    //androidX 版本使用下面的依赖
+    implementation 'com.github.xiaohaibin:XBanner:androidx_v1.2.0'
 
     //图片选择
     implementation 'com.yuyh.imgsel:library:2.1.0'
