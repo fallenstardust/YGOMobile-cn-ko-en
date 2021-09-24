@@ -437,7 +437,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         process.waitFor();
 
                         IOUtils.delete(soFile);
-                        FileUtils.copyFile(file, soFile.getAbsolutePath(), true);
+                        FileUtils.copyFile(file, soFile.getAbsolutePath());
                         me.what = COPY_SO_OK;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -546,22 +546,22 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private void setPendlumScale(boolean ok) {
         if (Constants.DEBUG)
             Log.i("kk", "setPendlumScale " + ok);
-        File file = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
+        File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
         if (ok) {
             //rename
             Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
                 try {
-                    IOUtils.createFolder(file);
+                    IOUtils.createFolder(dir);
                     IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
-                            file.getAbsolutePath(), false);
+                            dir.getAbsolutePath(), false);
                 } catch (IOException e) {
                 }
             }).done((re) -> {
                 dlg.dismiss();
             });
         } else {
-            IOUtils.delete(file);
+            IOUtils.delete(dir);
         }
     }
 
