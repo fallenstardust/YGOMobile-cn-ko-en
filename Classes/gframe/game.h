@@ -6,6 +6,8 @@
 #include "deck_con.h"
 #include "menu_handler.h"
 #include "sound_manager.h"
+#include "deck_manager.h"
+#include "image_manager.h"
 #include <unordered_map>
 #include <vector>
 #include <list>
@@ -127,7 +129,7 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game :IProcessEventReceiver{
+class Game{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -152,7 +154,7 @@ public:
 	void DrawBackGround();
 	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
 	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
-	void CheckMutual(ClientCard* pcard, int mark);
+	void CheckMutual(ClientCard* pcard, int mark){}
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
 	void DrawShadowText(irr::gui::CGUITTFont* font, const core::stringw& text, const core::rect<s32>& position, const core::rect<s32>& padding, video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = 0);
@@ -206,6 +208,9 @@ public:
 
 // don't merge
 	std::unique_ptr<SoundManager> soundManager;
+	std::unique_ptr<DeckManager> deckManager;
+	std::unique_ptr<ImageManager> imageManager;
+	std::unique_ptr<DataManager> dataManager;
 	std::mutex gMutex;
 	Signal frameSignal;
 	Signal actionSignal;
@@ -657,27 +662,6 @@ public:
 	Signal externalSignal;
 	static void onHandleAndroidCommand(ANDROID_APP app, int32_t cmd);
 #endif
-	void setPositionFix(core::position2di fix){
-		InputFix = fix;
-	}
-	float optX(float x) {
-		float x2 = x - InputFix.X;
-		if (x2 < 0) {
-			return 0;
-		}
-		return x2;
-	}
-
-	float optY(float y) {
-		float y2 = y - InputFix.Y;
-		if (y2 < 0) {
-			return 0;
-		}
-		return y2;
-	}
-    void process(irr::SEvent &event);
-private:
-	core::position2di InputFix;
     };
 
     extern Game *mainGame;

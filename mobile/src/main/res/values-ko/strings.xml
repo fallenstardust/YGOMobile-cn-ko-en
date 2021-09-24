@@ -93,8 +93,7 @@
     <string name="search_open">필터</string>
     <string name="search_close">종료</string>
     <string name="reset">초기화</string>
-    <string name="hit_keyword1">검색어 1</string>
-    <string name="hit_keyword2">검색어 2</string>
+    <string name="hit_keyword1">검색어 </string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">종족</string>
@@ -318,4 +317,5 @@
     <string name="label_ot_All">모든 카드</string>
     <string name="label_ot_No_Exclusive">ID 없는 카드</string>
     <string name="label_ot_CUSTOM">커스텀 카드</string>
+    <string name="settings_screen_padding">曲面屏预留高度</string>
 </resources>

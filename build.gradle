@@ -2,12 +2,15 @@
 
 buildscript {
     repositories {
+        maven { url 'https://maven.aliyun.com/repository/public'}
+        maven { url 'https://maven.aliyun.com/repository/google'}
         jcenter()
         maven { url "https://jitpack.io" }
         google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle-experimental:0.11.1'
         //classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
 }
@@ -20,6 +23,8 @@ ext {
 
 allprojects {
     repositories {
+        maven { url 'https://maven.aliyun.com/repository/public'}
+        maven { url 'https://maven.aliyun.com/repository/google'}
         jcenter()
         google()
         maven { url "https://jitpack.io" }

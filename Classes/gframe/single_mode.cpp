@@ -75,7 +75,7 @@ int SingleMode::SinglePlayThread() {
 	mainGame->wInfos->setVisible(true);
 	mainGame->wPallet->setVisible(true);
 	mainGame->btnLeaveGame->setVisible(true);
-	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1210));
+	mainGame->btnLeaveGame->setText(mainGame->dataManager->GetSysString(1210));
 	mainGame->wPhase->setVisible(true);
 	mainGame->dField.Clear();
 	mainGame->dInfo.isFirst = true;
@@ -122,7 +122,7 @@ int SingleMode::SinglePlayThread() {
 	wcsftime(timetext, 40, L"%Y-%m-%d %H-%M-%S", localedtime);
 	mainGame->ebRSName->setText(timetext);
 	if(!mainGame->chkAutoSaveReplay->isChecked()) {
-		mainGame->wReplaySave->setText(dataManager.GetSysString(1340));
+		mainGame->wReplaySave->setText(mainGame->dataManager->GetSysString(1340));
 		mainGame->PopupElement(mainGame->wReplaySave);
 		mainGame->gMutex.unlock();
 		mainGame->replaySignal.Reset();
@@ -130,7 +130,7 @@ int SingleMode::SinglePlayThread() {
 	} else {
 		mainGame->actionParam = 1;
 		wchar_t msgbuf[256];
-		myswprintf(msgbuf, dataManager.GetSysString(1367), timetext);
+		myswprintf(msgbuf, mainGame->dataManager->GetSysString(1367), timetext);
 		mainGame->SetStaticText(mainGame->stACMessage, 310, mainGame->guiFont, msgbuf);
 		mainGame->PopupElement(mainGame->wACMessage, 20);
 		mainGame->gMutex.unlock();
