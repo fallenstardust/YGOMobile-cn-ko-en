@@ -289,6 +289,7 @@ public class Deck implements Parcelable {
         if (!TextUtils.isEmpty(name)) {
             uri.appendQueryParameter(Constants.QUERY_NAME, name);
         }
+        uri.appendQueryParameter(QUERY_YGO_TYPE, ARG_DECK);
         uri.appendQueryParameter(Constants.QUERY_VERSION, "1");
         if (mainlist.size() != 0)
             uri.appendQueryParameter(Constants.QUERY_MAIN, toString(mainlist));
