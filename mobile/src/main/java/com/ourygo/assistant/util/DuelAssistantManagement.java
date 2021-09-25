@@ -3,12 +3,10 @@ package com.ourygo.assistant.util;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -87,6 +85,19 @@ public class DuelAssistantManagement implements OnClipChangedListener {
         if (deckStart != -1) {
             onSaveDeck(message.substring(deckStart + Record.DECK_URL_PREFIX.length()), true, id);
             return true;
+        } else if (message.contains("?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_DECK) || message.contains("&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_DECK)) {
+            String m1 = "?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_DECK;
+            String m2 = "&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_DECK;
+            int s1 = message.indexOf(m1);
+            if (s1 == -1)
+                s1 = message.indexOf(m2);
+            int start=message.lastIndexOf(Record.DECK_URL_PREFIX,s1);
+            if (start==-1)
+                start=message.lastIndexOf(Record.HTTP_URL_PREFIX,s1);
+            if (start==-1)
+                start=message.lastIndexOf(Record.HTTPS_URL_PREFIX,s1);
+            onSaveDeck(message.substring(start + Record.DECK_URL_PREFIX.length()), true, id);
+            return true;
         }
         return false;
     }
@@ -94,17 +105,18 @@ public class DuelAssistantManagement implements OnClipChangedListener {
     public boolean roomCheck(String message, int id) {
         int start = -1;
         int end = -1;
-        start=message.indexOf(Record.ROOM_PREFIX);
-        if (start!=-1){
-            end=message.indexOf(Record.ROOM_END,start);
-            if (end!=-1){
-                message=message.substring(start,end);
-                JSONObject jsonObject= null;
+        start = message.indexOf(Record.ROOM_PREFIX);
+        if (start != -1) {
+            end = message.indexOf(Record.ROOM_END, start);
+            if (end != -1) {
+                message = message.substring(start, end);
+                JSONObject jsonObject = null;
                 try {
                     jsonObject = new JSONObject(message);
-                    onJoinRoom(jsonObject.getString(Record.ARG_HOST),jsonObject.getInt(Record.ARG_PORT),jsonObject.getString(Record.ARG_PASSWORD),id);
+                    onJoinRoom(jsonObject.getString(Record.ARG_HOST), jsonObject.getInt(Record.ARG_PORT), jsonObject.getString(Record.ARG_PASSWORD), id);
                     return true;
-                } catch (JSONException e) {                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -131,8 +143,8 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                 if (end - start == passwordPrefixKey.length())
                     return false;
             }
-                onJoinRoom(null,0,message.substring(start, end), id);
-                return true;
+            onJoinRoom(null, 0, message.substring(start, end), id);
+            return true;
         }
         return false;
     }
@@ -160,12 +172,12 @@ public class DuelAssistantManagement implements OnClipChangedListener {
         return false;
     }
 
-    private void onJoinRoom(String host,int port,String password, int id) {
+    private void onJoinRoom(String host, int port, String password, int id) {
         int i = 0;
         while (i < onDuelAssistantListenerList.size()) {
             OnDuelAssistantListener onDuelAssistantListener = onDuelAssistantListenerList.get(i);
             if (onDuelAssistantListener.isListenerEffective()) {
-                onDuelAssistantListener.onJoinRoom(host,port,password, id);
+                onDuelAssistantListener.onJoinRoom(host, port, password, id);
                 i++;
             } else {
                 onDuelAssistantListenerList.remove(i);

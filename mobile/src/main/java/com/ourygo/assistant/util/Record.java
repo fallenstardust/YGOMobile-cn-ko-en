@@ -32,7 +32,12 @@ public class Record {
 
     //卡组url前缀
     public static final String DECK_URL_PREFIX = "ygo://deck";
+    public static final String HTTP_URL_PREFIX = "http://";
+    public static final String HTTPS_URL_PREFIX = "https://";
     public static final String ARG_PORT = "port";
     public static final String ARG_HOST = "host";
     public static final String ARG_PASSWORD = "password";
+    public static final String ARG_YGO_TYPE="ygotype";
+    public static final String ARG_DECK="deck";
+
 }
