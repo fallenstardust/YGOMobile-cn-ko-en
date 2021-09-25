@@ -176,7 +176,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
             if (mCurImageInfo != null) {
                 String cachePath = photos.get(0);
                 try {
-                    FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile, true);
+                    FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile);
                 } catch (IOException e) {
                     Toast.makeText(getContext(), e + "", Toast.LENGTH_LONG).show();
                     onChooseFileFail(curPreference);

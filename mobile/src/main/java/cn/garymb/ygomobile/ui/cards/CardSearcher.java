@@ -20,6 +20,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
@@ -44,9 +45,8 @@ public class CardSearcher implements View.OnClickListener {
     protected StringManager mStringManager;
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
-    int lineKey;
-    private final EditText prefixWord;
-    private final EditText suffixWord;
+    private int lineKey;
+    private final EditText keyWord;
     private final Spinner otSpinner;
     private final Spinner limitSpinner;
     private final Spinner limitListSpinner;
@@ -92,8 +92,7 @@ public class CardSearcher implements View.OnClickListener {
         this.mSettings = AppsSettings.get();
         mStringManager = DataManager.get().getStringManager();
         mLimitManager = DataManager.get().getLimitManager();
-        prefixWord = findViewById(R.id.edt_word1);
-        suffixWord = findViewById(R.id.edt_word2);
+        keyWord = findViewById(R.id.edt_word1);
         otSpinner = findViewById(R.id.sp_ot);
         limitSpinner = findViewById(R.id.sp_limit);
         limitListSpinner = findViewById(R.id.sp_limit_list);
@@ -131,8 +130,7 @@ public class CardSearcher implements View.OnClickListener {
             return false;
         };
 
-        prefixWord.setOnEditorActionListener(searchListener);
-        suffixWord.setOnEditorActionListener(searchListener);
+        keyWord.setOnEditorActionListener(searchListener);
 
         myFavButton.setOnClickListener(v -> {
             if(isShowFavorite()){
@@ -525,6 +523,10 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
+    private int getIntSelect(Spinner spinner) {
+        return (int)getSelect(spinner);
+    }
+
     private long getSelect(Spinner spinner) {
         return SimpleSpinnerAdapter.getSelect(spinner);
     }
@@ -554,19 +556,35 @@ public class CardSearcher implements View.OnClickListener {
         if (TextUtils.isEmpty(message)) {
             message = "";
         }
-        prefixWord.setText(message);
+        keyWord.setText(message);
         search();
     }
 
     private void search() {
         if (dataLoader != null) {
-            dataLoader.search(text(prefixWord), text(suffixWord), getSelect(attributeSpinner)
-                    , getSelect(levelSpinner), getSelect(raceSpinner), getSelectText(limitListSpinner), getSelect(limitSpinner),
-                    text(atkText), text(defText),
-                    getSelect(pScale),
-                    getSelect(setCodeSpinner)
-                    , getSelect(categorySpinner), getSelect(otSpinner), lineKey, getSelect(typeSpinner), getSelect(typeMonsterSpinner), getSelect(typeSpellSpinner), getSelect(typeTrapSpinner)
-                    , getSelect(typeMonsterSpinner2));
+            CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                    .keyword(text(keyWord))
+                    .attribute(getIntSelect(attributeSpinner))
+                    .level(getIntSelect(levelSpinner))
+                    .race(getSelect(raceSpinner))
+                    .atk(text(atkText))
+                    .def(text(defText))
+                    .pscale(getIntSelect(pScale))
+                    .limitType(getIntSelect(limitSpinner))
+                    .limitName(getSelectText(limitListSpinner))
+                    .setcode(getSelect(setCodeSpinner))
+                    .category(getSelect(categorySpinner))
+                    .ot(getIntSelect(otSpinner))
+                    .types(new long[]{
+                            getSelect(typeSpinner),
+                            getSelect(typeMonsterSpinner),
+                            getSelect(typeSpellSpinner),
+                            getSelect(typeTrapSpinner),
+                            getSelect(typeMonsterSpinner2)
+                    })
+                    .linkKey(lineKey)
+                    .build();
+            dataLoader.search(searchInfo);
             lineKey = 0;
         }
     }
@@ -575,8 +593,7 @@ public class CardSearcher implements View.OnClickListener {
         if (dataLoader != null) {
             dataLoader.onReset();
         }
-        prefixWord.setText(null);
-        suffixWord.setText(null);
+        keyWord.setText(null);
         reset(otSpinner);
         reset(limitSpinner);
 //        reset(limitListSpinner);
