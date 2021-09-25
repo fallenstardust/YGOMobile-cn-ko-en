@@ -7,7 +7,6 @@ namespace ygo {
 const wchar_t* DataManager::unknown_string = L"???";
 byte DataManager::scriptBuffer[0x20000];
 IFileSystem* DataManager::FileSystem;
-DataManager dataManager;
 
 bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
@@ -153,7 +152,6 @@ bool DataManager::Error(spmemvfs_db_t* pDB, sqlite3_stmt* pStmt, int errNo) {
 	BufferIO::DecodeUTF8(msg, strBuffer);
 	if(pStmt)
 		sqlite3_finalize(pStmt);
-	int len = strlen(msg);
 	ALOGE("cdb Error code=%d,msg=%s", errNo, msg);
 	spmemvfs_close_db(pDB);
 	spmemvfs_env_fini();
@@ -359,7 +357,7 @@ const wchar_t* DataManager::FormatLinkMarker(int link_marker) {
 	return lmBuffer;
 }
 int DataManager::CardReader(int code, void* pData) {
-	if(!dataManager.GetData(code, (CardData*)pData))
+	if(!mainGame->dataManager->GetData(code, (CardData*)pData))
 		memset(pData, 0, sizeof(CardData));
 	return 0;
 }

@@ -54,9 +54,6 @@ public:
 	bool DeleteCategory(const wchar_t* name);
 	int TypeCount(std::vector<code_pointer> list, unsigned int ctype);
 };
-
-extern DeckManager deckManager;
-
 }
 
 #endif //DECKMANAGER_H
