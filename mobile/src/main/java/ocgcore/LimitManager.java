@@ -4,6 +4,7 @@ package ocgcore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -47,8 +48,7 @@ public class LimitManager implements Closeable {
         return mLimitNames;
     }
 
-    public @NonNull
-    LimitList getLimit(String name) {
+    public @Nullable LimitList getLimit(String name) {
         return mLimitLists.get(name);
     }
 

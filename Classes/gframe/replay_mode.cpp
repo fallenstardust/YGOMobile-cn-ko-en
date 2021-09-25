@@ -244,7 +244,7 @@ void ReplayMode::EndDuel() {
 	if(!is_closing) {
 		mainGame->actionSignal.Reset();
 		mainGame->gMutex.lock();
-		mainGame->stMessage->setText(dataManager.GetSysString(1501));
+		mainGame->stMessage->setText(mainGame->dataManager->GetSysString(1501));
 		mainGame->HideElement(mainGame->wCardSelect);
 		mainGame->PopupElement(mainGame->wMessage);
 		mainGame->gMutex.unlock();

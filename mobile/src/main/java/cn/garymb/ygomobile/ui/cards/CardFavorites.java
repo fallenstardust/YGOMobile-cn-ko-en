@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import android.util.SparseArray;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +74,16 @@ public class CardFavorites {
         mList.clear();
         File config = AppsSettings.get().getFavoriteFile();
         List<String> lines;
-        if (!config.exists()) {
+        if (config.exists()) {
+            //重命名
+            if(config.renameTo(AppsSettings.get().getSystemConfig())) {
+                try {
+                    FileUtils.copyFile(AppsSettings.get().getFavoriteFile().getPath(), AppsSettings.get().getSystemConfig().getPath());
+                } catch (IOException e) {
+                    //TODO 复制失败，直接删除?
+                    FileUtils.deleteFile(AppsSettings.get().getFavoriteFile());
+                }
+            }
             config = AppsSettings.get().getSystemConfig();
         }
         if (!config.exists()) {

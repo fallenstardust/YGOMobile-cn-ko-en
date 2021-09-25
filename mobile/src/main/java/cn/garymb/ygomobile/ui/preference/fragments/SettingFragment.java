@@ -74,6 +74,7 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
+import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
@@ -138,6 +139,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
+        bind(PREF_WINDOW_TOP_BOTTOM, ""+mSettings.getScreenPadding());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -435,7 +437,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         process.waitFor();
 
                         IOUtils.delete(soFile);
-                        FileUtils.copyFile(file, soFile.getAbsolutePath(), true);
+                        FileUtils.copyFile(file, soFile.getAbsolutePath());
                         me.what = COPY_SO_OK;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -544,22 +546,22 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private void setPendlumScale(boolean ok) {
         if (Constants.DEBUG)
             Log.i("kk", "setPendlumScale " + ok);
-        File file = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
+        File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
         if (ok) {
             //rename
             Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
                 try {
-                    IOUtils.createFolder(file);
+                    IOUtils.createFolder(dir);
                     IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
-                            file.getAbsolutePath(), false);
+                            dir.getAbsolutePath(), false);
                 } catch (IOException e) {
                 }
             }).done((re) -> {
                 dlg.dismiss();
             });
         } else {
-            IOUtils.delete(file);
+            IOUtils.delete(dir);
         }
     }
 

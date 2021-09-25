@@ -324,9 +324,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         File dirFile = null;
         for (String dir : dirs) {
             dirFile = new File(mSettings.getResourcePath(), dir);
-            if (!dirFile.exists()) {
-                dirFile.mkdirs();
-            }
+            IOUtils.createFolder(dirFile);
         }
     }
 

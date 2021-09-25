@@ -7,6 +7,8 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -160,17 +162,17 @@ public class IOUtils {
     }
 
     public static void createFolderByFile(File file) {
-        File dir = file.getParentFile();
-        if (dir != null && !dir.exists()) {
-            dir.mkdirs();
-        }
+        createFolder(file.getParentFile());
     }
 
-    public static boolean createFolder(File file) {
+    public static boolean createFolder(@Nullable File file) {
+        if(file == null){
+            return false;
+        }
         if (!file.exists()) {
             return file.mkdirs();
         }
-        return false;
+        return true;
     }
 
     public static void copy(InputStream in, OutputStream out) throws IOException {

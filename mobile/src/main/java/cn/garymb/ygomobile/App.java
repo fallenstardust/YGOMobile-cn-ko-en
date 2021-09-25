@@ -64,6 +64,16 @@ public class App extends GameApplication {
     public float getYScale() {
         return AppsSettings.get().getYScale(getGameWidth(), getGameHeight());
     }
+//
+//    @Override
+//    public int getGameHeight() {
+//        return 720;
+//    }
+//
+//    @Override
+//    public int getGameWidth() {
+//        return 1280;
+//    }
 
     @Override
     public String getCardImagePath() {

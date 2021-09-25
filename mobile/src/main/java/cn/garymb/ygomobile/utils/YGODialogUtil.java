@@ -228,10 +228,11 @@ public class YGODialogUtil {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
                         DeckType toType = otherType.get(position);
+                        IOUtils.createFolder(new File(toType.getPath()));
                         List<DeckFile> deckFileList = deckAdp.getSelectList();
                         for (DeckFile deckFile : deckFileList) {
                             try {
-                                FileUtils.moveFile(deckFile.getPath(), toType.getPath(), false);
+                                FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -257,10 +258,11 @@ public class YGODialogUtil {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         du.dis();
                         DeckType toType = otherType.get(position);
+                        IOUtils.createFolder(new File(toType.getPath()));
                         List<DeckFile> deckFileList = deckAdp.getSelectList();
                         for (DeckFile deckFile : deckFileList) {
                             try {
-                                FileUtils.copyFile(deckFile.getPath(), toType.getPath(), false);
+                                FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }

@@ -121,8 +121,8 @@ namespace ygo {
 		}
 	}
 
-	void Utils::changeCursor(irr::gui::ECURSOR_ICON icon) {
-		irr::gui::ICursorControl* cursor = mainGame->device->getCursorControl();
+	void Utils::changeCursor(irr::IrrlichtDevice* device, irr::gui::ECURSOR_ICON icon) {
+		irr::gui::ICursorControl* cursor = device->getCursorControl();
 		if (cursor->getActiveIcon() != icon) {
 			cursor->setActiveIcon(icon);
 		}
@@ -205,8 +205,8 @@ namespace ygo {
 
 		return res;
 	}
-	irr::io::IReadFile* Utils::FindandOpenFileFromArchives(const path_string & path, const path_string & name) {
-		for(auto& archive : mainGame->archives) {
+	irr::io::IReadFile* Utils::FindandOpenFileFromArchives(std::vector<Utils::IrrArchiveHelper> archives, const path_string & path, const path_string & name) {
+		for(auto& archive : archives) {
 			int res = -1;
 			Utils::FindfolderFiles(archive, path, [match = &name, &res](int index, path_string name, bool isdir, void* payload)->bool {
 				if(isdir)

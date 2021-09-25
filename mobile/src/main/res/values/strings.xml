@@ -83,6 +83,13 @@
         <item>Speed</item>
         <item>Quality</item>
     </string-array>
+    <string-array name="screen_top_bottom_desc"  translatable="false">
+        <item>Disable</item>
+        <item>5</item>
+        <item>8</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
     <!-- settings -->
 
     <string name="server_name">Name:</string>
@@ -103,8 +110,7 @@
     <string name="search">Search</string>
     <string name="search_open">Select</string>
     <string name="search_close">Close</string>
-    <string name="hit_keyword1">prefix word</string>
-    <string name="hit_keyword2">suffix word</string>
+    <string name="hit_keyword1">keywords(separated by SPACE)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">Reset</string>
@@ -321,4 +327,5 @@
     <string name="label_ot_CUSTOM">Custom</string>
     <string name="label_ot_No_Exclusive">No exclusive</string>
     <string name="label_ot_SC_OCG">SChinese OCG</string>
+    <string name="settings_screen_padding">Reserved height of curved screen</string>
 </resources>

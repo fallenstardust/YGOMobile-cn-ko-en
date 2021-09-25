@@ -7,8 +7,11 @@ public class DensityUtils {
      * dp转px
      */
     public static int dp2px(Context ctx, float dp) {
+        if(dp == 0){
+            return 0;
+        }
         float density = ctx.getResources().getDisplayMetrics().density;
-        int px = (int) (dp * density + 0.5f);// 4.9->5 4.4->4
+        int px = Math.round(dp * density);// 4.9->5 4.4->4
         return px;
     }
 

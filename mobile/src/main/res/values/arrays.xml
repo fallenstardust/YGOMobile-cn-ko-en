@@ -9,6 +9,13 @@
         <item>0</item>
         <item>1</item>
     </string-array>
+    <string-array name="screen_top_bottom_value"  translatable="false">
+        <item>0</item>
+        <item>5</item>
+        <item>8</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
         <item>Duel is One Thing, Kind is Everything</item>
         <item>Touching Inaccurately in Duelling? to Ephone「Settings」→「Display」→「NotchDisplay」→「Hide the notch area」</item>

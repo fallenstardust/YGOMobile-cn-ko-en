@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -261,10 +262,7 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
             if (file.exists()) {
                 file.delete();
             } else {
-                File dir = file.getParentFile();
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
+                IOUtils.createFolder(file.getParentFile());
             }
             file.createNewFile();
             mConnection = (HttpURLConnection) new URL(url).openConnection();
