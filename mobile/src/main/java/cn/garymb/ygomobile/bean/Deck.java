@@ -350,13 +350,15 @@ public class Deck implements Parcelable {
         StringBuilder compressedId1 = new StringBuilder();
         StringBuilder compressedId2 = new StringBuilder();
         String ids = id + "";
-        while (ids.startsWith("0")) {
-            ids = ids.substring(1);
-        }
+//        while (ids.startsWith("0")) {
+//            ids = ids.substring(1);
+//        }
         int lenght = ids.length();
 
-
-        for (int i = 0; i < lenght / 2; i++) {
+        int n=lenght / 2;
+        if (lenght%2!=0)
+            n++;
+        for (int i = 0; i <n;  i++) {
             int start = i * 2;
             int end = Math.min(start + 2, lenght);
             compressedId1.append(getCardIdCompressedId(ids.substring(start, end)));
