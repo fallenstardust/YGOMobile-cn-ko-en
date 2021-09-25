@@ -3,6 +3,7 @@ package cn.garymb.ygomobile;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
+import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -18,9 +19,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
@@ -33,6 +36,7 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.DEF_PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
@@ -43,6 +47,7 @@ import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
+import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
@@ -53,8 +58,8 @@ public class AppsSettings {
     private static AppsSettings sAppsSettings;
     private final Point mScreenSize = new Point();
     private final Point mRealScreenSize = new Point();
-    private Context context;
-    private PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
+    private final Context context;
+    private final PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
 
     private AppsSettings(Context context) {
@@ -134,6 +139,7 @@ public class AppsSettings {
     }
 
     public float getXScale(int w, int h) {
+        //曲面屏
         if (isKeepScale()) {
             float sx = getScreenHeight() / w;
             float sy = getScreenWidth() / h;
@@ -156,6 +162,15 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
     }
 
+    public int getScreenPadding() {
+        //ListPreference都是string
+        String str = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, null);
+        if (!TextUtils.isEmpty(str) && TextUtils.isDigitsOnly(str)) {
+            return Integer.parseInt(str);
+        }
+        return 0;
+    }
+
     public float getScreenWidth() {
         int w, h;
         if (isImmerSiveMode()) {
@@ -165,7 +180,11 @@ public class AppsSettings {
             w = mScreenSize.x;
             h = mScreenSize.y;
         }
-        return Math.min(w, h);
+        int ret = Math.min(w, h);
+        //测试代码，曲面屏左右2变需要留空白，但是游戏画面比例不对，需要修改c那边代码
+        int fix_h = DensityUtils.dp2px(context, getScreenPadding());
+        Log.d(IrrlichtBridge.TAG, "screen padding=" + fix_h);
+        return ret - fix_h * 2;
     }
 
     public float getScreenHeight() {
@@ -518,7 +537,8 @@ public class AppsSettings {
     }
 
     //获得最后卡组绝对路径
-    public @Nullable String getLastDeckPath() {
+    public @Nullable
+    String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
             path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
@@ -680,6 +700,6 @@ public class AppsSettings {
     @Deprecated
     //获取收藏文件
     public File getFavoriteFile() {
-        return new File(getResourcePath(), CORE_SYSTEM_PATH);
+        return new File(getResourcePath(), "/favorite.txt");
     }
 }
