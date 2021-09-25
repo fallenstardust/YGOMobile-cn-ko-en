@@ -37,6 +37,12 @@
             android:key="pref_settings_keep_scale"
             android:persistent="false"
             android:title="@string/about_pref_settings_keep_scale" />
+        <ListPreference
+            android:entries="@array/screen_top_bottom_desc"
+            android:entryValues="@array/screen_top_bottom_value"
+            android:key="pref_settings_window_top_bottom"
+            android:persistent="true"
+            android:title="@string/settings_screen_padding" />
 
         <ListPreference
             android:entries="@array/opengl_version"

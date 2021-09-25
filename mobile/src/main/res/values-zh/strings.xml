@@ -93,8 +93,7 @@
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
     <string name="reset">重置</string>
-    <string name="hit_keyword1">关键词1</string>
-    <string name="hit_keyword2">关键词2</string>
+    <string name="hit_keyword1">关键词(空格隔开)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">种族</string>
@@ -318,4 +317,5 @@
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
     <string name="file_installed">文件已导入</string>
+    <string name="settings_screen_padding">曲面屏预留高度</string>
 </resources>
