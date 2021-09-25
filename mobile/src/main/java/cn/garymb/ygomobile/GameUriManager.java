@@ -114,9 +114,7 @@ public class GameUriManager {
             }
             return new File(dir, "tmp_" + System.currentTimeMillis() + ".ydk");
         } else {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            IOUtils.createFolder(dir);
         }
         return file;
     }
@@ -180,10 +178,7 @@ public class GameUriManager {
         ParcelFileDescriptor pfd = null;
         FileInputStream input = null;
         try {
-            File dir = local.getParentFile();
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            IOUtils.createFolder(local.getParentFile());
             if (remoteFile != null) {
                 FileUtils.copyFile(remoteFile, local);
             } else {

@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
@@ -101,10 +102,7 @@ public class FileUtils {
 
     public static void copyFile(InputStream in, File out) throws IOException {
         FileOutputStream outputStream = null;
-        File dir = out.getParentFile();
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+        IOUtils.createFolder(out.getParentFile());
         try {
             outputStream = new FileOutputStream(out);
             copy(in, outputStream);
@@ -117,10 +115,7 @@ public class FileUtils {
         FileOutputStream outputStream = null;
         FileInputStream inputStream = null;
         try {
-            File dir = out.getParentFile();
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            IOUtils.createFolder(out.getParentFile());
             inputStream = new FileInputStream(in);
             outputStream = new FileOutputStream(out);
             copy(inputStream, outputStream);
@@ -134,7 +129,11 @@ public class FileUtils {
         return true;
     }
 
-    public static void copyFile(String oldPath, String newPath, boolean isName) throws FileNotFoundException, IOException {
+    public static void copyFile(String oldPath, String newPath) throws IOException {
+        copyFile(oldPath, newPath, true);
+    }
+
+    public static void copyFile(String oldPath, String newPath, boolean isName) throws IOException {
 
         //判断复制后的路径是否含有文件名,如果没有则加上
         if (!isName) {
@@ -155,16 +154,7 @@ public class FileUtils {
 
     }
 
-
-    public static void moveFile(String oldPath, String newPath, boolean isName) throws FileNotFoundException, IOException {
-
-        //判断复制后的路径是否含有文件名,如果没有则加上
-        if (!isName) {
-            //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
-            String abb[] = oldPath.split("/");
-            newPath = newPath + "/" + abb[abb.length - 1];
-        }
-
+    public static void moveFile(String oldPath, String newPath) throws IOException {
         FileInputStream fis = new FileInputStream(oldPath);
         FileOutputStream fos = new FileOutputStream(newPath);
         byte[] buf = new byte[1024];
@@ -199,20 +189,18 @@ public class FileUtils {
         if (filePath == null)
             return;
 
-        if (!(new File(newPath)).exists()) {
-            (new File(newPath)).mkdirs();
-        }
+        IOUtils.createFolder(new File(newPath));
 
-        for (int i = 0; i < filePath.length; i++) {
-            if ((new File(oldPath + file.separator + filePath[i])).isDirectory()) {
-                copyDir(oldPath + file.separator + filePath[i], newPath + file.separator + filePath[i], false);
+        for (String path : filePath) {
+            File src = new File(oldPath, path);
+            File dst = new File(newPath, path);
+            if (src.isDirectory()) {
+                copyDir(src.getPath(), dst.getPath(), false);
+            } else if (src.isFile()) {
+                if (!dst.exists() || isReplaced) {
+                    copyFile(src.getPath(), dst.getPath());
+                }
             }
-
-            if (new File(oldPath + file.separator + filePath[i]).isFile()) {
-                if (!(new File(newPath + file.separator + filePath[i]).exists()) || isReplaced)
-                    copyFile(oldPath + file.separator + filePath[i], newPath + file.separator + filePath[i], true);
-            }
-
         }
     }
 
