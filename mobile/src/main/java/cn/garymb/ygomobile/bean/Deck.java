@@ -58,6 +58,7 @@ public class Deck implements Parcelable {
 
     public Deck(String name, Uri uri) {
         this(name);
+        Log.e("DeckUU", "Uri:" + uri);
         int version = YGO_PROTOCOL_0;
 
         try {
@@ -148,6 +149,7 @@ public class Deck implements Parcelable {
         }
 
         for (String m : mList) {
+            Log.e("DeckUU", "Main:" + m);
             int[] idNum = toIdAndNum(m, version);
             if (idNum[0] > 0) {
                 for (int i = 0; i < idNum[1]; i++) {
@@ -220,7 +222,7 @@ public class Deck implements Parcelable {
     private int[] toIdAndNum1(String m) {
         //元素0为卡密，元素1为卡片数量
         int[] idNum = {0, 1};
-        idNum[0] = toId(m.substring(0, m.length() - 1));
+        idNum[0] = toId(m.substring(0, m.length() - 1),YGO_PROTOCOL_1);
         idNum[1] = Integer.parseInt(m.substring(m.length() - 1));
         return idNum;
     }
@@ -234,11 +236,10 @@ public class Deck implements Parcelable {
             } catch (Exception e) {
 
             }
-            idNum[0] = toId(m.substring(0, m.length() - 2));
+            idNum[0] = toId(m.substring(0, m.length() - 2),YGO_PROTOCOL_0);
         } else {
-            idNum[0] = toId(m);
+            idNum[0] = toId(m,YGO_PROTOCOL_0);
         }
-
         return idNum;
     }
 
@@ -380,12 +381,18 @@ public class Deck implements Parcelable {
         return file;
     }
 
-    private int toId(String str) {
+    private int toId(String str, int version) {
         if (TextUtils.isEmpty(str)) return 0;
         try {
-            //如果需要返回16进制码：
-            return unId(str);
-//            return Integer.parseInt(str);
+            switch (version) {
+                case YGO_PROTOCOL_0:
+                    return Integer.parseInt(str);
+                case YGO_PROTOCOL_1:
+                    //如果需要返回40进制码：
+                    return unId(str);
+                default:
+                    return Integer.parseInt(str);
+            }
         } catch (Exception e) {
             return 0;
         }

@@ -129,7 +129,7 @@ public class CardLoader implements ICardSearcher {
             List<Card> list = new ArrayList<>();
             for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.valueAt(i);
-                //Ö¸¶¨ËÑË÷·¶Î§
+                //æŒ‡å®šæœç´¢èŒƒå›´
                 if (inCards != null && (!inCards.contains(card.Code) && !inCards.contains(card.Alias))) {
                     continue;
                 }
