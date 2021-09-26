@@ -5,5 +5,4 @@
     <string name="react_chain">표시 시간 </string>
     <string name="refresh_textures">인터페이스 새로 고침 </string>
     <string name="tip_exit_game">게임을 종료하려면 뒤로 버튼을 다시 클릭하십시오. </string>
-    <string name="tip_please_quit_in_game">请在游戏主菜单点击\"退出游戏\"</string>
 </resources>

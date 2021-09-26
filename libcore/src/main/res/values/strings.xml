@@ -6,5 +6,4 @@
     <string name="react_chain">Show All Timing</string>
     <string name="refresh_textures">Refresh Textures</string>
     <string name="tip_exit_game">Click the BACK key again to exit the game </string>
-    <string name="tip_please_quit_in_game">Please click \"退出游戏\" in game.</string>
 </resources>

@@ -5,5 +5,4 @@
     <string name="react_chain">显示时点</string>
     <string name="refresh_textures">刷新界面</string>
     <string name="tip_exit_game">再次点击返回键退出游戏</string>
-    <string name="tip_please_quit_in_game">请在游戏主菜单点击\"退出游戏\"</string>
 </resources>
