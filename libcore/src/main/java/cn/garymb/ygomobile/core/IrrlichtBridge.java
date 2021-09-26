@@ -82,6 +82,8 @@ public final class IrrlichtBridge {
 
     private static native void nativeJoinGame(long handle, ByteBuffer buffer, int length);
 
+    private static native void nativeSetInputFix(long handle, int x, int y);
+
     private static final boolean DEBUG = false;
 
     public static void setArgs(Intent intent, String[] args) {
@@ -151,6 +153,10 @@ public final class IrrlichtBridge {
                 Log.e(TAG, "zip image", e);
             return null;
         }
+    }
+
+    public static void setInputFix(int x, int y) {
+        nativeSetInputFix(sNativeHandle, x, y);
     }
 
     public static void cancelChain() {
@@ -237,6 +243,10 @@ public final class IrrlichtBridge {
         int getLocalAddress();
 
         void setNativeHandle(long nativeHandle);
+
+        int getPositionX();
+
+        int getPositionY();
 
         void onGameExit();
     }

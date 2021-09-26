@@ -107,6 +107,12 @@ public class InputQueueCompat implements InvocationHandler {
         return inputQueue;
     }
 
+    /**
+     *
+     * @param e
+     * @param token
+     * @param predispatch 跳过输入法
+     */
     public void sendInputEvent(InputEvent e, Object token, boolean predispatch) {
 
         if (sendInputEvent_method == null) {

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
 import android.view.Gravity;
+import android.view.InputEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -19,10 +20,10 @@ public abstract class GameActivity extends NativeActivity {
     protected SurfaceView mSurfaceView;
     private boolean replaced = false;
     //自定义surface，方便控制窗口大小
-    private static final boolean USE_SURFACE = true;
-    //精准触摸事件
-    private static final boolean USE_MY_INPUT = true;
-    protected InputQueueCompat inputQueueCompat;
+    protected static final boolean USE_SURFACE = true;
+    //接管系统触摸事件，再次分发给游戏
+    protected static final boolean USE_MY_INPUT = true;
+    private InputQueueCompat inputQueueCompat;
 
     @Override
     protected final void onCreate(Bundle savedInstanceState) {
@@ -91,11 +92,14 @@ public abstract class GameActivity extends NativeActivity {
     }
 
     protected void onSurfaceTouch(View v, MotionEvent event){
-        if (inputQueueCompat != null) {
-            inputQueueCompat.sendInputEvent(event, v, true);
-        }
+        sendInputEvent(event, false);
     }
 
+    protected void sendInputEvent(InputEvent event, boolean predispatch){
+        if (inputQueueCompat != null) {
+            inputQueueCompat.sendInputEvent(event, this, predispatch);
+        }
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
@@ -136,28 +140,6 @@ public abstract class GameActivity extends NativeActivity {
         }
         super.surfaceRedrawNeeded(holder);
     }
-//
-//    @Override
-//    public boolean onKeyDown(int keyCode, KeyEvent event) {
-//        if(inputQueueCompat != null) {
-//            if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                inputQueueCompat.sendInputEvent(event, this, true);
-//                return true;
-//            }
-//        }
-//        return super.onKeyDown(keyCode, event);
-//    }
-//
-//    @Override
-//    public boolean onKeyUp(int keyCode, KeyEvent event) {
-//        if(inputQueueCompat != null) {
-//            if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                inputQueueCompat.sendInputEvent(event, this, true);
-//                return true;
-//            }
-//        }
-//        return super.onKeyUp(keyCode, event);
-//    }
 
     protected abstract Size getGameWindowSize();
     protected abstract void initBeforeOnCreate();

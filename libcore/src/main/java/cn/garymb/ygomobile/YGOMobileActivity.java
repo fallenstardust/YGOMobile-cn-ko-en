@@ -18,8 +18,6 @@ import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +49,7 @@ public class YGOMobileActivity extends GameActivity implements
         TextView.OnEditorActionListener,
         OverlayOvalView.OnDuelOptionsSelectListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
@@ -70,13 +68,14 @@ public class YGOMobileActivity extends GameActivity implements
     private NetworkController mNetController;
     private volatile boolean mOverlayShowRequest = false;
     private volatile int mCompatGUIMode;
-//    private static int sChainControlXPostion = -1;
+    //    private static int sChainControlXPostion = -1;
 //    private static int sChainControlYPostion = -1;
     private GameApplication mApp;
     private FullScreenUtils mFullScreenUtils;
-
+    private volatile int mPositionX, mPositionY;
     private String[] mArgV;
     private boolean onGameExiting;
+    private static final boolean blockKey = false;
 
 
     private GameApplication app() {
@@ -96,6 +95,8 @@ public class YGOMobileActivity extends GameActivity implements
 
     @Override
     protected void initBeforeOnCreate() {
+        mPositionX = 0;
+        mPositionY = 0;
         mFullScreenUtils = new FullScreenUtils(this, app().isImmerSiveMode());
         mFullScreenUtils.fullscreen();
         mFullScreenUtils.onCreate();
@@ -155,17 +156,6 @@ public class YGOMobileActivity extends GameActivity implements
         }
     }
 
-    private void initPostion() {
-//        final Resources res = getResources();
-//        sChainControlXPostion = (int) (CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE * app()
-//                .getXScale());
-//        sChainControlYPostion = (int) (app().getSmallerSize()
-//                - CHAIN_CONTROL_PANEL_Y_REVERT_POSITION
-//                * app().getYScale() - (res
-//                .getDimensionPixelSize(R.dimen.chain_control_button_height) * 2 + res
-//                .getDimensionPixelSize(R.dimen.chain_control_margin)));
-    }
-
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -197,6 +187,9 @@ public class YGOMobileActivity extends GameActivity implements
         if (app().isImmerSiveMode()) {
             mFullScreenUtils.fullscreen();
             app().attachGame(this);
+            if (USE_SURFACE) {
+                changeGameSize();
+            }
         }
     }
 
@@ -217,9 +210,24 @@ public class YGOMobileActivity extends GameActivity implements
     }
 
     @Override
+    public int getPositionX() {
+        synchronized (this) {
+            return mPositionX;
+        }
+    }
+
+    @Override
+    public int getPositionY() {
+        synchronized (this) {
+            return mPositionY;
+        }
+    }
+
+    @Override
     public void setContentView(View view) {
         super.setContentView(view);
         app().attachGame(this);
+        changeGameSize();
         //可以通过mLayout.addView添加view，增加功能
         //test code
 //        int size = (int) (getResources().getDisplayMetrics().density * 100);
@@ -234,6 +242,29 @@ public class YGOMobileActivity extends GameActivity implements
 //            }
 //        });
 //        mLayout.addView(imageView, lp);
+    }
+
+    private void changeGameSize() {
+        if (USE_MY_INPUT) {
+            return;
+        }
+        //游戏大小
+        Size size = getGameWindowSize();
+        int w = (int) app().getScreenHeight();
+        int h = (int) app().getScreenWidth();
+        int spX = (int) ((w - size.getWidth()) / 2.0f);
+        int spY = (int) ((h - size.getHeight()) / 2.0f);
+        boolean update = false;
+        synchronized (this) {
+            if (spX != mPositionX || spY != mPositionY) {
+                mPositionX = spX;
+                mPositionY = spY;
+                update = true;
+            }
+        }
+        if (update) {
+            IrrlichtBridge.setInputFix(mPositionX, mPositionY);
+        }
     }
 
     private void initExtraView() {
@@ -437,7 +468,30 @@ public class YGOMobileActivity extends GameActivity implements
         });
     }
 
-    private long lasttime;
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (blockKey && USE_MY_INPUT) {
+            if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN
+                    && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
+                sendInputEvent(event, false);
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (blockKey && USE_MY_INPUT) {
+            if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN
+                    && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
+                sendInputEvent(event, false);
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
+    }
 
     @Override
     public void onBackPressed() {
@@ -449,12 +503,6 @@ public class YGOMobileActivity extends GameActivity implements
             mGlobalEditText.dismiss();
             return;
         }
-        if (lasttime == 0 || (System.currentTimeMillis() - lasttime) > 1000) {
-            lasttime = System.currentTimeMillis();
-            Toast.makeText(this, R.string.tip_exit_game, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        onGameExit();
     }
 
     @Override

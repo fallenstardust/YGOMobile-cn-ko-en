@@ -27,6 +27,15 @@ namespace ygo {
 
 Game *mainGame;
 
+void Game::process(irr::SEvent &event) {
+	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
+		s32 x = event.MouseInput.X;
+		s32 y = event.MouseInput.Y;
+		event.MouseInput.X = optX(x);
+		event.MouseInput.Y = optY(y);
+	}
+}
+
 #ifdef _IRR_ANDROID_PLATFORM_
 
 void Game::stopBGM() {
@@ -114,7 +123,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
-	android::initJavaBridge(app, device);
+	core::position2di appPosition = android::initJavaBridge(app, device);
+	setPositionFix(appPosition);
+	device->setProcessReceiver(this);
 
 	app->onInputEvent = android::handleInput;
 	ILogger* logger = device->getLogger();

@@ -47,6 +47,7 @@ import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
+import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -57,6 +58,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
