@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,7 +27,29 @@ import cn.garymb.ygomobile.Constants;
 
 
 public class FileUtils {
+    public static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
 
+    public static String readToString(String fileName) throws IOException {
+        InputStream is = null;
+        try {
+            is = new FileInputStream(fileName);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int i;
+            while ((i = is.read()) != -1) {
+                baos.write(i);
+            }
+            return baos.toString();
+        } finally {
+            closeQuietly(is);
+        }
+    }
     public static Uri toUri(Context context, File file) {
         return FileProvider.getUriForFile(context, context.getPackageName() + ".gamefiles", file);
     }
