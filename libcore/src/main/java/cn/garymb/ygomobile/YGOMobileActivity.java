@@ -504,11 +504,11 @@ public class YGOMobileActivity extends GameActivity implements
             mGlobalEditText.dismiss();
             return;
         }
-        if (lasttime == 0 || (System.currentTimeMillis() - lasttime) < 1000) {
+        if (lasttime == 0 || (System.currentTimeMillis() - lasttime) > 1000) {
             lasttime = System.currentTimeMillis();
-            Toast.makeText(this, R.string.tip_please_quit_in_game, Toast.LENGTH_SHORT).show();
             return;
         }
+        Toast.makeText(this, R.string.tip_please_quit_in_game, Toast.LENGTH_SHORT).show();
 //        super.onWindowFocusChanged(false);
 //        onGameExit();
     }
