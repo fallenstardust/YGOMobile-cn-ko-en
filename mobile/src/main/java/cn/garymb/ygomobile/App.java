@@ -15,13 +15,18 @@ import com.bumptech.glide.Glide;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
+import com.tencent.smtt.export.external.TbsCoreSettings;
+import com.tencent.smtt.sdk.QbSdk;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
+
+import java.util.HashMap;
 
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.ProcessUtils;
 
 public class App extends GameApplication {
 
@@ -33,10 +38,17 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-        //初始化图片选择器
-        initImgsel();
         //初始化bugly
         initBugly();
+        if(!ProcessUtils.getCurrentProcessName(this).endsWith(":game")){
+            //初始化图片选择器
+            initImgsel();
+            //x5
+            HashMap map = new HashMap();
+            map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
+            map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
+            QbSdk.initTbsSettings(map);
+        }
     }
 
     @Override

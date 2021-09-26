@@ -194,7 +194,7 @@
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
             android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
-            android:authorities="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:authorities="${applicationId}.ui.preference.YGOPreferencesProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
         <provider
@@ -206,6 +206,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <service
+            android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
+            android:label="dexopt"
+            android:process=":dexopt" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
