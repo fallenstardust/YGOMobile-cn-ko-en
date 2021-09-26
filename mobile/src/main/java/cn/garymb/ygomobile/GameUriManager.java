@@ -239,7 +239,7 @@ public class GameUriManager {
 //            if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
 //                return;
 //            }
-            if (Constants.URI_HOST.equals(host)) {
+            if (Constants.URI_DECK.equals(host)) {
                 String name = uri.getQueryParameter(QUERY_NAME);
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);

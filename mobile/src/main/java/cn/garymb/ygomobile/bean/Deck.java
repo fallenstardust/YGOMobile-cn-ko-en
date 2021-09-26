@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.bean;
 
 import static cn.garymb.ygomobile.Constants.ARG_DECK;
+import static cn.garymb.ygomobile.Constants.NUM_40_LIST;
 import static cn.garymb.ygomobile.Constants.QUERY_EXTRA;
 import static cn.garymb.ygomobile.Constants.QUERY_EXTRA_ALL;
 import static cn.garymb.ygomobile.Constants.QUERY_MAIN;
@@ -16,9 +17,11 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -40,65 +43,7 @@ public class Deck implements Parcelable {
     private static final int YGO_PROTOCOL_1 = 1;
     private static final String CARD_DIVIDE_ID = "_";
     private static final String CARD_DIVIDE_NUM = "*";
-    private static final String CARD_NUM_2 = "-";
-    private static final String CARD_NUM_3 = "!";
-    private static List<CardIdNum> cardIdNumList;
 
-    static {
-        cardIdNumList = new ArrayList<>();
-        cardIdNumList.add(new CardIdNum("10", "a"));
-        cardIdNumList.add(new CardIdNum("11", "b"));
-        cardIdNumList.add(new CardIdNum("12", "c"));
-        cardIdNumList.add(new CardIdNum("13", "d"));
-        cardIdNumList.add(new CardIdNum("14", "e"));
-        cardIdNumList.add(new CardIdNum("15", "f"));
-        cardIdNumList.add(new CardIdNum("16", "g"));
-        cardIdNumList.add(new CardIdNum("17", "h"));
-        cardIdNumList.add(new CardIdNum("18", "i"));
-        cardIdNumList.add(new CardIdNum("19", "j"));
-        cardIdNumList.add(new CardIdNum("20", "k"));
-        cardIdNumList.add(new CardIdNum("21", "l"));
-        cardIdNumList.add(new CardIdNum("22", "m"));
-        cardIdNumList.add(new CardIdNum("23", "n"));
-        cardIdNumList.add(new CardIdNum("24", "o"));
-        cardIdNumList.add(new CardIdNum("25", "p"));
-        cardIdNumList.add(new CardIdNum("26", "q"));
-        cardIdNumList.add(new CardIdNum("27", "r"));
-        cardIdNumList.add(new CardIdNum("28", "s"));
-        cardIdNumList.add(new CardIdNum("29", "t"));
-        cardIdNumList.add(new CardIdNum("30", "u"));
-        cardIdNumList.add(new CardIdNum("31", "v"));
-        cardIdNumList.add(new CardIdNum("32", "w"));
-        cardIdNumList.add(new CardIdNum("33", "x"));
-        cardIdNumList.add(new CardIdNum("34", "y"));
-        cardIdNumList.add(new CardIdNum("35", "z"));
-        cardIdNumList.add(new CardIdNum("36", "A"));
-        cardIdNumList.add(new CardIdNum("37", "B"));
-        cardIdNumList.add(new CardIdNum("38", "C"));
-        cardIdNumList.add(new CardIdNum("39", "D"));
-        cardIdNumList.add(new CardIdNum("40", "E"));
-        cardIdNumList.add(new CardIdNum("41", "F"));
-        cardIdNumList.add(new CardIdNum("42", "G"));
-        cardIdNumList.add(new CardIdNum("43", "H"));
-        cardIdNumList.add(new CardIdNum("44", "I"));
-        cardIdNumList.add(new CardIdNum("45", "J"));
-        cardIdNumList.add(new CardIdNum("46", "K"));
-        cardIdNumList.add(new CardIdNum("47", "L"));
-        cardIdNumList.add(new CardIdNum("48", "M"));
-        cardIdNumList.add(new CardIdNum("49", "N"));
-        cardIdNumList.add(new CardIdNum("50", "O"));
-        cardIdNumList.add(new CardIdNum("51", "P"));
-        cardIdNumList.add(new CardIdNum("52", "Q"));
-        cardIdNumList.add(new CardIdNum("53", "R"));
-        cardIdNumList.add(new CardIdNum("54", "S"));
-        cardIdNumList.add(new CardIdNum("55", "T"));
-        cardIdNumList.add(new CardIdNum("56", "U"));
-        cardIdNumList.add(new CardIdNum("57", "V"));
-        cardIdNumList.add(new CardIdNum("58", "W"));
-        cardIdNumList.add(new CardIdNum("59", "X"));
-        cardIdNumList.add(new CardIdNum("60", "Y"));
-        cardIdNumList.add(new CardIdNum("61", "Z"));
-    }
 
     private final ArrayList<Integer> mainlist;
     private final ArrayList<Integer> extraList;
@@ -123,82 +68,114 @@ public class Deck implements Parcelable {
         } catch (Exception exception) {
             version = YGO_PROTOCOL_0;
         }
-        String main=null, extra=null, side=null;
+        String main = null, extra = null, side = null;
+
+        List<String> mList = new ArrayList<>();
+        List<String> eList = new ArrayList<>();
+        List<String> sList = new ArrayList<>();
+
         switch (version) {
             case YGO_PROTOCOL_0:
                 try {
                     main = uri.getQueryParameter(QUERY_MAIN_ALL);
-                }catch (Exception e){}
+                    String[] mains = main.split(CARD_DIVIDE_ID);
+                    mList.addAll(Arrays.asList(mains));
+                } catch (Exception ignored) {
+                }
 
                 try {
                     extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
-                }catch (Exception e){}
+                    String[] extras = extra.split(CARD_DIVIDE_ID);
+                    eList.addAll(Arrays.asList(extras));
+                } catch (Exception ignored) {
+                }
 
                 try {
                     side = uri.getQueryParameter(QUERY_SIDE_ALL);
-                }catch (Exception e){}
+                    String[] sides = side.split(CARD_DIVIDE_ID);
+                    sList.addAll(Arrays.asList(sides));
+                } catch (Exception ignored) {
+                }
+
 
                 break;
             case YGO_PROTOCOL_1:
                 try {
                     main = uri.getQueryParameter(QUERY_MAIN);
-                }catch (Exception e){}
+                    for (int i = 0; i < main.length() / 6; i++)
+                        mList.add(main.substring(i * 6, i * 6 + 6));
+
+                } catch (Exception e) {
+                }
 
                 try {
                     extra = uri.getQueryParameter(QUERY_EXTRA);
-                }catch (Exception e){}
+                    for (int i = 0; i < extra.length() / 6; i++)
+                        eList.add(extra.substring(i * 6, i * 6 + 6));
+                } catch (Exception e) {
+                }
 
                 try {
                     side = uri.getQueryParameter(QUERY_SIDE);
-                }catch (Exception e){}
+                    for (int i = 0; i < side.length() / 6; i++)
+                        sList.add(side.substring(i * 6, i * 6 + 6));
+                } catch (Exception e) {
+                }
+
+
                 break;
             default:
                 try {
                     main = uri.getQueryParameter(QUERY_MAIN_ALL);
-                }catch (Exception e){}
+                    String[] mains = main.split(CARD_DIVIDE_ID);
+                    mList.addAll(Arrays.asList(mains));
+                } catch (Exception ignored) {
+                }
 
                 try {
                     extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
-                }catch (Exception e){}
+                    String[] extras = extra.split(CARD_DIVIDE_ID);
+                    eList.addAll(Arrays.asList(extras));
+                } catch (Exception ignored) {
+                }
 
                 try {
                     side = uri.getQueryParameter(QUERY_SIDE_ALL);
-                }catch (Exception e){}
+                    String[] sides = side.split(CARD_DIVIDE_ID);
+                    sList.addAll(Arrays.asList(sides));
+                } catch (Exception ignored) {
+                }
         }
 
-        if (!TextUtils.isEmpty(main)) {
-            String[] mains = main.split(CARD_DIVIDE_ID);
-            for (String m : mains) {
-                int[] idNum = toIdAndNum(m, version);
-                if (idNum[0] > 0) {
-                    for (int i = 0; i < idNum[1]; i++) {
-                        mainlist.add(idNum[0]);
-                    }
+        for (String m : mList) {
+            int[] idNum = toIdAndNum(m, version);
+            if (idNum[0] > 0) {
+                for (int i = 0; i < idNum[1]; i++) {
+                    mainlist.add(idNum[0]);
                 }
             }
         }
-        if (!TextUtils.isEmpty(extra)) {
-            String[] extras = extra.split(CARD_DIVIDE_ID);
-            for (String m : extras) {
-                int[] idNum = toIdAndNum(m, version);
-                if (idNum[0] > 0) {
-                    for (int i = 0; i < idNum[1]; i++) {
-                        extraList.add(idNum[0]);
-                    }
+
+
+        for (String m : eList) {
+            int[] idNum = toIdAndNum(m, version);
+            if (idNum[0] > 0) {
+                for (int i = 0; i < idNum[1]; i++) {
+                    extraList.add(idNum[0]);
                 }
             }
         }
-        if (!TextUtils.isEmpty(side)) {
-            String[] sides = side.split(CARD_DIVIDE_ID);
-            for (String m : sides) {
-                int[] idNum = toIdAndNum(m, version);
-                if (idNum[0] > 0) {
-                    for (int i = 0; i < idNum[1]; i++) {
-                        sideList.add(idNum[0]);
-                    }
+
+
+        for (String m : sList) {
+            int[] idNum = toIdAndNum(m, version);
+            if (idNum[0] > 0) {
+                for (int i = 0; i < idNum[1]; i++) {
+                    sideList.add(idNum[0]);
                 }
             }
         }
+
     }
 
     public Deck(Uri uri) {
@@ -228,13 +205,13 @@ public class Deck implements Parcelable {
 
         switch (protocol) {
             case YGO_PROTOCOL_0:
-                idNum=toIdAndNum0(m);
+                idNum = toIdAndNum0(m);
                 break;
             case YGO_PROTOCOL_1:
-                idNum=toIdAndNum1(m);
+                idNum = toIdAndNum1(m);
                 break;
             default:
-                idNum=toIdAndNum0(m);
+                idNum = toIdAndNum0(m);
                 break;
         }
         return idNum;
@@ -243,16 +220,8 @@ public class Deck implements Parcelable {
     private int[] toIdAndNum1(String m) {
         //元素0为卡密，元素1为卡片数量
         int[] idNum = {0, 1};
-        if (m.contains(CARD_NUM_2)) {
-            idNum[0] = toId(m.substring(0, m.length() - 1));
-            idNum[1] = 2;
-        } else if (m.contains(CARD_NUM_3)) {
-            idNum[0] = toId(m.substring(0, m.length() - 1));
-            idNum[1] = 3;
-        } else {
-            idNum[0] = toId(m);
-        }
-
+        idNum[0] = toId(m.substring(0, m.length() - 1));
+        idNum[1] = Integer.parseInt(m.substring(m.length() - 1));
         return idNum;
     }
 
@@ -304,9 +273,9 @@ public class Deck implements Parcelable {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < ids.size(); i++) {
             Integer id = ids.get(i);
-            if (i > 0) {
-                builder.append(CARD_DIVIDE_ID);
-            }
+//            if (i > 0) {
+//                builder.append(CARD_DIVIDE_ID);
+//            }
             if (id > 0) {
                 //如果需要使用十六进制码：
                 builder.append(compressedId(id));
@@ -330,91 +299,53 @@ public class Deck implements Parcelable {
                         }
                         i++;
                     }
-                    //如果有同名卡
-                    if (tNum > 1) {
-                        if (tNum == 2) {
-                            builder.append(CARD_NUM_2);
-                        } else {
-                            builder.append(CARD_NUM_3);
-                        }
-
-                    }
+                    tNum = Math.min(3, tNum);
+                    builder.append(tNum);
+                } else {
+                    builder.append(1);
                 }
             }
         }
         return builder.toString();
     }
 
-    //压缩卡密,目前直接转换为16进制
+    //压缩卡密,目前直接转换为40进制
     private String compressedId(int id) {
         StringBuilder compressedId1 = new StringBuilder();
-        StringBuilder compressedId2 = new StringBuilder();
-        String ids = id + "";
-//        while (ids.startsWith("0")) {
-//            ids = ids.substring(1);
-//        }
-        int lenght = ids.length();
 
-        int n=lenght / 2;
-        if (lenght%2!=0)
-            n++;
-        for (int i = 0; i <n;  i++) {
-            int start = i * 2;
-            int end = Math.min(start + 2, lenght);
-            compressedId1.append(getCardIdCompressedId(ids.substring(start, end)));
+        while (id > 40) {
+            compressedId1.insert(0, NUM_40_LIST[id % 40]);
+            id /= 40;
         }
-
-        int currentPosition = 0;
-        while (currentPosition < lenght) {
-            int start = currentPosition;
-            int end = Math.min(start + 2, lenght);
-            String message = ids.substring(start, end);
-            String result = getCardIdCompressedId(message);
-            if (message.equals(result)) {
-                compressedId2.append(ids.charAt(start));
-                currentPosition++;
-            } else {
-                compressedId2.append(result);
-                currentPosition = currentPosition + 2;
-            }
-        }
-
-
-        return compressedId2.length() < compressedId1.length() ? compressedId2.toString() : compressedId1.toString();
+        compressedId1.insert(0, NUM_40_LIST[id]);
+        if (compressedId1.length() < 5)
+            for (int i = compressedId1.length(); i < 5; i++)
+                compressedId1.insert(0, "0");
+        return compressedId1.toString();
     }
 
-    private String getCardIdCompressedId(String idNum) {
-        for (CardIdNum cardIdNum : cardIdNumList) {
-            if (cardIdNum.getCardIdNum().equals(idNum)) {
-                return cardIdNum.getCardIdNumCompressed();
-            }
-        }
-        return idNum;
-    }
 
-    private String getCardIdUnCompressedId(String compressedNum) {
-        for (CardIdNum cardIdNum : cardIdNumList) {
-            if (cardIdNum.getCardIdNumCompressed().equals(compressedNum)) {
-                return cardIdNum.getCardIdNum();
-            }
+    private int getCardIdUnCompressedId(String compressedNum) {
+        for (int i = 0; i < NUM_40_LIST.length; i++) {
+            if (compressedNum.equals(NUM_40_LIST[i]))
+                return i;
         }
-        return compressedNum;
+        return 0;
     }
 
     //解析卡密，目前直接16进制转换为10进制
     private int unId(String id) {
-        StringBuilder compressedId = new StringBuilder();
-        String[] sList = id.split("");
-        for (String s : sList)
-            compressedId.append(getCardIdUnCompressedId(s));
-        int cardId;
-        try {
-            cardId = Integer.parseInt(compressedId.toString());
-        } catch (Exception e) {
-            cardId = 0;
+        int num = 0;
+        id = id.trim();
+        String[] sList = new String[id.length()];
+        for (int i = 0; i < id.length(); i++) {
+            sList[i] = id.charAt(i) + "";
         }
 
-        return cardId;
+        for (int i = sList.length - 1; i >= 0; i--)
+            num += (getCardIdUnCompressedId(sList[i]) * Math.pow(40, sList.length - 1 - i));
+//        Log.e("DeckUU",(getCardIdUnCompressedId(sList[0]) * Math.pow(40, sList.length-1)+"   "+sList.length+"   num"+num));
+        return num;
     }
 
     public String getName() {

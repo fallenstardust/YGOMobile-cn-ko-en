@@ -197,6 +197,7 @@ public interface Constants {
     String SCHEME_HTTPS = "https";
     String SCHEME_APP = "ygo";
     String URI_HOST = "deck";
+    String URI_DECK = "deck";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
@@ -225,5 +226,48 @@ public interface Constants {
     String TAG = "ygo-java";
 
     String DEF_ENCODING = "utf-8";
+
+    String[] NUM_40_LIST={
+            "0"
+            ,"1"
+            ,"2"
+            ,"3"
+            ,"4"
+            ,"5"
+            ,"6"
+            ,"7"
+            ,"8"
+            ,"9"
+            ,"a"
+            ,"b"
+            ,"c"
+            ,"d"
+            ,"e"
+            ,"f"
+            ,"g"
+            ,"h"
+            ,"i"
+            ,"j"
+            ,"k"
+            ,"l"
+            ,"m"
+            ,"n"
+            ,"o"
+            ,"p"
+            ,"q"
+            ,"r"
+            ,"s"
+            ,"t"
+            ,"u"
+            ,"v"
+            ,"w"
+            ,"x"
+            ,"y"
+            ,"z"
+            ,"A"
+            ,"B"
+            ,"C"
+            ,"D"
+    };
 
 }
