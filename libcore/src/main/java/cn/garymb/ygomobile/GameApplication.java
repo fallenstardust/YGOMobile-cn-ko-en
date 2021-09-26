@@ -22,9 +22,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     @Override
     public void onCreate() {
         super.onCreate();
-        sGameApplication = this;
 //        Reflection.unseal(this);
-
     }
 
     public static GameApplication get() {
@@ -34,6 +32,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+        sGameApplication = this;
     }
 
     @Override
