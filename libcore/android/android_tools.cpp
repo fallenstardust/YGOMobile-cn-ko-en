@@ -749,9 +749,9 @@ void toggleGlobalIME(ANDROID_APP app, bool pShow) {
 	app->activity->vm->DetachCurrentThread();
 }
 
-void initJavaBridge(ANDROID_APP app, void* handle) {
+core::position2di initJavaBridge(ANDROID_APP app, void* handle) {
 	if (!app || !app->activity || !app->activity->vm)
-		return;
+		return core::position2di(0, 0);
 	JNIEnv* jni = nullptr;
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
 	jobject lNativeActivity = app->activity->clazz;
@@ -760,9 +760,18 @@ void initJavaBridge(ANDROID_APP app, void* handle) {
 												 "setNativeHandle", "(J)V");
 	jlong code = (jlong) handle;
 	jni->CallVoidMethod(lNativeActivity, MethodSetHandle, code);
+
+
+	jmethodID methodX = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionX", "()I");
+    jint posX = jni->CallIntMethod(lNativeActivity, methodX);
+	jmethodID methodY = jni->GetMethodID(ClassNativeActivity,
+										 "getPositionY", "()I");
+	jint posY = jni->CallIntMethod(lNativeActivity, methodY);
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
-	__android_log_print(ANDROID_LOG_INFO, "ygo", "Android command initJavaBridge");
+	__android_log_print(ANDROID_LOG_INFO, "ygo", "Android command initJavaBridge posX=%d, posY=%d", posX, posY);
+	return core::position2di((int)posX, (int)posY);
 }
 
 InitOptions* getInitOptions(ANDROID_APP app) {
@@ -858,6 +867,30 @@ void toggleOverlayView(ANDROID_APP app, bool pShow) {
 	jni->CallVoidMethod(lNativeActivity, overlayMethod, pShow);
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
+}
+
+void process_input(ANDROID_APP app,
+		struct android_poll_source* source) {
+	AInputEvent* event = NULL;
+	if (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
+		int type = AInputEvent_getType(event);
+		bool skip_predispatch = AInputEvent_getType(event)
+				== AINPUT_EVENT_TYPE_KEY
+				&& AKeyEvent_getKeyCode(event) == AKEYCODE_BACK;
+
+		// skip predispatch (all it does is send to the IME)
+		if (!skip_predispatch
+				&& AInputQueue_preDispatchEvent(app->inputQueue, event)) {
+			return;
+		}
+
+		int32_t handled = 0;
+		if (app->onInputEvent != NULL)
+			handled = app->onInputEvent(app, event);
+		AInputQueue_finishEvent(app->inputQueue, event, handled);
+	} else {
+//        LOGE("Failure reading next input event: %s\n", strerror(errno));
+	}
 }
 
 void onGameExit(ANDROID_APP app){

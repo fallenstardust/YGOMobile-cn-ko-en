@@ -40,6 +40,7 @@ int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	return -1;
 }
 void android_main(ANDROID_APP app) {
+	app->inputPollSource.process = android::process_input;
 #else
 int main(int argc, char* argv[]) {
 #endif

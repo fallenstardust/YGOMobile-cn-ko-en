@@ -126,7 +126,7 @@ extern void toggleGlobalIME(ANDROID_APP app, bool pShow);
 extern void toggleIME(ANDROID_APP app, bool pShow, const char* hint);
 
 //Init Java Irrlicht world.
-extern void initJavaBridge(ANDROID_APP app, void* handle);
+extern core::position2di initJavaBridge(ANDROID_APP app, void* handle);
 
 //Cause a haptic feedback.
 extern void perfromHapticFeedback(ANDROID_APP app);
@@ -185,6 +185,10 @@ extern bool getFontAntiAlias(ANDROID_APP app);
 //Show Android compat gui;
 extern void showAndroidComboBoxCompat(ANDROID_APP app, bool pShow,
 		char** pContents, int count, int mode = 0);
+
+/* android  event handlers*/
+extern void process_input(ANDROID_APP app,
+		struct android_poll_source* source);
 
 extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 

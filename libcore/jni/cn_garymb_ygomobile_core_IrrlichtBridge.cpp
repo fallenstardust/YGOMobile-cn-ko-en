@@ -294,6 +294,14 @@ static void* join_game_thread(void* param) {
 	}
 }
 
+JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetInputFix(
+		JNIEnv* env, jclass clazz, jlong handle, jint x, jint y) {
+	if(ygo::mainGame) {
+		ALOGD("setInputFix posX=%d, posY=%d", x, y);
+		ygo::mainGame->setPositionFix(core::position2di(x, y));
+	}
+}
+
 static void* cancel_chain_thread(void* param) {
 	IrrlichtDevice* device = (IrrlichtDevice*) param;
 	irr::os::Printer::log("before send cancel chain");
