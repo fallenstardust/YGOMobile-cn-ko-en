@@ -194,14 +194,21 @@ public interface Constants {
      */
     String PATH_DECK = "/deck";
     String SCHEME_HTTP = "http";
+    String SCHEME_HTTPS = "https";
     String SCHEME_APP = "ygo";
     String URI_HOST = "deck";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
-    String QUERY_MAIN = "main";
-    String QUERY_EXTRA = "extra";
-    String QUERY_SIDE = "side";
+    String QUERY_MAIN = "m";
+    String QUERY_EXTRA = "e";
+    String QUERY_SIDE = "s";
+    String QUERY_VERSION="v";
+    String QUERY_MAIN_ALL = "main";
+    String QUERY_EXTRA_ALL = "extra";
+    String QUERY_SIDE_ALL = "side";
+    String QUERY_YGO_TYPE="ygotype";
+    String ARG_DECK="deck";
     String PATH_ROOM = "/room";
     String QUERY_HOST = "host";
     String QUERY_PORT = "port";
@@ -218,4 +225,5 @@ public interface Constants {
     String TAG = "ygo-java";
 
     String DEF_ENCODING = "utf-8";
+
 }

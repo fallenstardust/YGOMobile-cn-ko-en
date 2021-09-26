@@ -804,7 +804,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         BitmapUtil.saveBitmap(bitmap, savePath, 50);
         builderShareLoading.dismiss();
         DialogUtils du = DialogUtils.getdx(this);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share, 0);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share,0);
         ImageView iv_image = viewDialog.findViewById(R.id.iv_image);
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
