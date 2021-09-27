@@ -95,7 +95,7 @@ public class ImageLoader implements Closeable {
 
     }
 
-    public void pause(){
+    public void clearZipCache(){
         //关闭zip
         for (ZipFile zipFile : zipFileCache.values()) {
             IOUtils.closeZip(zipFile);
@@ -111,7 +111,7 @@ public class ImageLoader implements Closeable {
         if (BuildConfig.DEBUG_MODE) {
             Log.d(TAG, "close and clean cache");
         }
-        pause();
+        clearZipCache();
         zipDataCache.clear();
     }
 

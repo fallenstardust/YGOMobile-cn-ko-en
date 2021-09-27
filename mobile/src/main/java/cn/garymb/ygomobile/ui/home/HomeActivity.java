@@ -159,15 +159,14 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     @Override
     protected void onResume() {
-        mImageLoader.resume();
         super.onResume();
         BacktoDuel();
     }
 
     @Override
-    protected void onPause() {
-        mImageLoader.pause();
-        super.onPause();
+    protected void onStop() {
+        mImageLoader.clearZipCache();
+        super.onStop();
     }
 
     private void duelAssistantCheck() {
