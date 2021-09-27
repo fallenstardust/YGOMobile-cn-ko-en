@@ -117,14 +117,14 @@ public class ImageLoader implements Closeable {
 
     private void bind(final byte[] data, String name, ImageView imageview, Drawable pre, int[] size) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.d(TAG, "bind data:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind data:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
         }
         bindT(data, name, imageview, pre, size);
     }
 
     private void bind(final Uri uri, String name, ImageView imageview, Drawable pre, int[] size) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.d(TAG, "bind uri:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind uri:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
         }
         bindT(uri, name, imageview, pre, size);
     }
@@ -169,7 +169,7 @@ public class ImageLoader implements Closeable {
 
     private void bind(final File file, ImageView imageview, Drawable pre, int[] size) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.d(TAG, "bind file:" + file.getPath() + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind file:" + file.getPath() + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
         }
         try {
             DrawableTypeRequest<File> resource = with(imageview.getContext()).load(file);
@@ -239,7 +239,7 @@ public class ImageLoader implements Closeable {
 
     public void bindImage(ImageView imageview, long code, Drawable pre, int[] size) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.d(TAG, "bind image:" + code + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind image:" + code + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
         }
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;

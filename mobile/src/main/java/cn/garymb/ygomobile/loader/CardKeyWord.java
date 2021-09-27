@@ -6,11 +6,11 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class CardKeyWord {
+    private static final String TAG = "CardKeyWord";
     private final String word;
     private final List<ICardFilter> filterList = new ArrayList<>();
     private final boolean empty;
@@ -42,15 +42,8 @@ public class CardKeyWord {
                             w = w.substring(1);
                         }
                     }
-                    if (!onlyText) {
-                        long setcode = DataManager.get().getStringManager().getSetCode(w);
-                        if (setcode != 0) {
-                            //如果是系列名
-                            filterList.add(new SetcodeFilter(setcode, exclude));
-                        }
-                    }
-//                    Log.d(IrrlichtBridge.TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
-                    filterList.add(new NameFilter(w, exclude));
+                    Log.d(TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
+                    filterList.add(new NameFilter(w, exclude, onlyText));
                 }
             }
         }
@@ -76,37 +69,25 @@ public class CardKeyWord {
     private static class NameFilter implements ICardFilter {
         private final boolean exclude;
         private final String word;
-
-        public NameFilter(String word, boolean exclude) {
-            this.exclude = exclude;
-            this.word = word;
-        }
-
-        @Override
-        public boolean isValid(Card card) {
-            if (exclude) {
-                return !card.Name.contains(word);
-            } else {
-                return card.Name.contains(word);
-            }
-        }
-    }
-
-    private static class SetcodeFilter implements ICardFilter {
-        private final boolean exclude;
         private final long setcode;
 
-        public SetcodeFilter(long setcode, boolean exclude) {
+        //包含系列，或者包含名字、描述
+        public NameFilter(String word, boolean exclude, boolean onlyText) {
+            this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word);
             this.exclude = exclude;
-            this.setcode = setcode;
+            this.word = word;
+            if(this.setcode > 0){
+                Log.d(TAG, "filter:setcode=" + setcode + ", exclude=" + exclude + ", word=" + word);
+            }
         }
 
         @Override
         public boolean isValid(Card card) {
+            boolean ret = (setcode != 0 && card.isSetCode(setcode)) || card.containsName(word) || card.containsDesc(word);
             if (exclude) {
-                return !card.isSetCode(setcode);
+                return !ret;
             } else {
-                return card.isSetCode(setcode);
+                return ret;
             }
         }
     }

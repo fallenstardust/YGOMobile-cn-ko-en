@@ -92,7 +92,7 @@ public class CardDetailRandom {
     public static CardDetailRandom genRandomCardDetail(Context context, ImageLoader imageLoader, Card cardInfo) {
         if (cardInfo == null) return null;
         CardDetailRandom cardDetailRandom = new CardDetailRandom(context, cardInfo);
-        cardDetailRandom.bindCardImage(imageLoader, cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code);
+        cardDetailRandom.bindCardImage(imageLoader, cardInfo.Code);
         sCardDetailRandom = cardDetailRandom;
         return cardDetailRandom;
     }

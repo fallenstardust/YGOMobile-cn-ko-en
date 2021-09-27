@@ -139,6 +139,14 @@ public class Card extends CardData implements Parcelable {
         return c.Code == this.Code || c.Alias == this.Code || c.Code == this.Alias;
     }
 
+    public boolean containsName(String key){
+        return Name != null && Name.contains(key);
+    }
+
+    public boolean containsDesc(String key){
+        return Desc != null && Desc.contains(key);
+    }
+
     @NonNull
     @Override
     public String toString() {
