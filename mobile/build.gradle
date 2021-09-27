@@ -40,7 +40,6 @@ android {
     buildTypes {
         debug {
             debuggable false
-            applicationIdSuffix ".debug"
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
