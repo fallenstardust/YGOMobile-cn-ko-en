@@ -328,4 +328,5 @@
     <string name="label_ot_No_Exclusive">No exclusive</string>
     <string name="label_ot_SC_OCG">SChinese OCG</string>
     <string name="settings_screen_padding">Reserved height of curved screen</string>
+    <string name="tip_load_cdb_error">加载数据出错</string>
 </resources>

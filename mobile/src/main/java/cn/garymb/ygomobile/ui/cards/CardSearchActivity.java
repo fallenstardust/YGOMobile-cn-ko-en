@@ -5,6 +5,7 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +32,7 @@ import com.ourygo.assistant.util.DuelAssistantManagement;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -105,6 +108,9 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
+        }).fail((e)->{
+            Toast.makeText(this, R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
+            Log.e(IrrlichtBridge.TAG, "load cdb", e);
         }).done((rs) -> {
             dlg.dismiss();
             isLoad = true;

@@ -76,7 +76,7 @@ public class CardFavorites {
         List<String> lines;
         if (config.exists()) {
             //重命名
-            if(config.renameTo(AppsSettings.get().getSystemConfig())) {
+            if(!config.renameTo(AppsSettings.get().getSystemConfig())) {
                 try {
                     FileUtils.copyFile(AppsSettings.get().getFavoriteFile().getPath(), AppsSettings.get().getSystemConfig().getPath());
                 } catch (IOException e) {
