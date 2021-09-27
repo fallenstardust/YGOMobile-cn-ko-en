@@ -171,7 +171,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         //卡片类型
         holder.cardType.setText(CardUtils.getAllTypeString(item, mStringManager));
         if (holder.codeView != null) {
-            holder.codeView.setText(String.format("%08d", item.getCardCode()));
+            holder.codeView.setText(String.format("%08d", item.getCode()));
         }
         bindMenu(holder, position);
     }

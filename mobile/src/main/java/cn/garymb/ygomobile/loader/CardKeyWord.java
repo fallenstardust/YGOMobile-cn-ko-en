@@ -101,7 +101,7 @@ public class CardKeyWord {
 
         @Override
         public boolean isValid(Card card) {
-            return card.Code == code || card.Alias == code;
+            return card.isSame(code);
         }
     }
 }

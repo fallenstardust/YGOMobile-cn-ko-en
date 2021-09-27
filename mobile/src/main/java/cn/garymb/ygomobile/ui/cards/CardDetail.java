@@ -266,7 +266,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
-        cardCode.setText(String.format("%08d", cardInfo.getCardCode()));
+        cardCode.setText(String.format("%08d", cardInfo.getCode()));
 
         //按是否存在于收藏夹切换显示图标
         mImageFav.setSelected(CardFavorites.get().hasCard(cardInfo.Code));

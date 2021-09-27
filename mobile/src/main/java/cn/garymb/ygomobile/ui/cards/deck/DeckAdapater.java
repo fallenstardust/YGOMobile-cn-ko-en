@@ -271,7 +271,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void addCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        Integer code = cardInfo.getCardCode();
+        Integer code = cardInfo.getGameCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 1);
@@ -316,7 +316,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void removeCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        int code = cardInfo.getCardCode();
+        int code = cardInfo.getGameCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 0);
