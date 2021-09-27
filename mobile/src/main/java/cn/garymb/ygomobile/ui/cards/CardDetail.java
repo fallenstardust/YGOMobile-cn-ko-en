@@ -393,7 +393,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 btn_redownload.setOnClickListener((s) -> {
                     ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
                     ll_btn.setVisibility(View.GONE);
-                    downloadCardImage(code, file);
+                    downloadCardImage(code, file, true);
                 });
 
                 btn_share.setOnClickListener((s) -> {
@@ -421,19 +421,24 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         imageLoader.bindImage(photoView, code, null, ImageLoader.Type.detail);
 
         if (!file.exists()) {
-            downloadCardImage(code, file);
+            downloadCardImage(code, file, false);
         }
 
     }
 
-    private void downloadCardImage(int code, File imgFile) {
+    private void downloadCardImage(int code, File imgFile, boolean force) {
         if (cardManager.getCard(code) == null) {
             YGOUtil.show(context.getString(R.string.tip_expansions_image));
             return;
         }
         final File tmp = new File(imgFile.getAbsolutePath() + ".tmp");
         if (tmp.exists()) {
-            return;
+            if(force){
+                //强制下载，就删除tmp,重新下载
+                FileUtils.deleteFile(tmp);
+            } else {
+                return;
+            }
         }
         isDownloadCardImage = false;
         ll_bar.setVisibility(View.VISIBLE);
