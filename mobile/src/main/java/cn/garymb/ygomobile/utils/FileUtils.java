@@ -27,6 +27,19 @@ import cn.garymb.ygomobile.Constants;
 
 
 public class FileUtils {
+
+    public static boolean isExist(String path){
+        return path != null && new File(path).exists();
+    }
+
+    public static String getFileExpansion(String path){
+        int index = path.lastIndexOf(".");
+        if(index>0){
+            return path.substring(index+1).toLowerCase();
+        }
+        return "";
+    }
+
     public static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {

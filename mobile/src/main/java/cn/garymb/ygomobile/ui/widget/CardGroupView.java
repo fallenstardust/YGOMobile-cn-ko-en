@@ -13,7 +13,9 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -23,8 +25,13 @@ public class CardGroupView extends FrameLayout {
     private int mLineLimit = 10;
     private int mOrgLineLimit = 10;
     private int mLineMaxCount = 15;
-    private int mCardWidth = 177, mCardHeight = 255;
+    private int mCardWidth = Constants.CORE_SKIN_CARD_MINI_SIZE[0], mCardHeight = Constants.CORE_SKIN_CARD_MINI_SIZE[1];
     private boolean mPausePadding;
+    private ImageLoader mImageLoader;
+
+    public void setImageLoader(ImageLoader imageLoader) {
+        mImageLoader = imageLoader;
+    }
 
     //region init
     public CardGroupView(@NonNull Context context) {
@@ -219,7 +226,7 @@ public class CardGroupView extends FrameLayout {
             refreshLayoutParams(count + 1);
         }
         CardView cardView = new CardView(getContext());
-        cardView.showCard(card);
+        cardView.showCard(mImageLoader, card);
         addView(cardView, index);
         return true;
     }

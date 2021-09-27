@@ -27,7 +27,6 @@ import com.app.hubert.guide.model.HighlightOptions;
 import com.bumptech.glide.Glide;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
-import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -77,7 +76,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
 //        setSupportActionBar(toolbar);
         enableBackHome();
         mDrawerlayout = $(R.id.drawer_layout);
-        mImageLoader = ImageLoader.get(this);
+        mImageLoader = new ImageLoader(true);
         mListView = $(R.id.list_cards);
         mCardListAdapter = new CardListAdapter(this, mImageLoader);
         mCardListAdapter.setItemBg(true);
@@ -190,12 +189,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
 
     @Override
     protected void onDestroy() {
-        ImageLoader.onDestory(this);
-        try {
-            mImageLoader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mImageLoader.close();
         super.onDestroy();
     }
 

@@ -47,7 +47,6 @@ import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
-import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -58,7 +57,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -71,6 +69,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -108,13 +107,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private ServerListManager mServerListManager;
     private DuelAssistantManagement duelAssistantManagement;
     private CardManager mCardManager;
-    private SparseArray<Card> cards;
+    private CardDetailRandom mCardDetailRandom;
+    private ImageLoader mImageLoader;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
+        mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
         //server list
         initServerlist();
@@ -158,8 +159,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     @Override
     protected void onResume() {
+        mImageLoader.resume();
         super.onResume();
         BacktoDuel();
+    }
+
+    @Override
+    protected void onPause() {
+        mImageLoader.pause();
+        super.onPause();
     }
 
     private void duelAssistantCheck() {
@@ -304,7 +312,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             break;
             case R.id.action_game:
                 setRandomCardDetail();
-                CardDetailRandom.showRandromCardDetailToast(this);
+                if(mCardDetailRandom != null){
+                    mCardDetailRandom.show();
+                }
                 openGame();
                 break;
             case R.id.action_settings: {
@@ -665,12 +675,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //加载数据库中所有卡片卡片
         mCardManager.loadCards();
         //mCardManager = DataManager.get().getCardManager();
-        cards = mCardManager.getAllCards();
+        SparseArray<Card> cards = mCardManager.getAllCards();
         int y = (int) (Math.random() * cards.size());
         Card cardInfo = cards.valueAt(y);
         if (cardInfo == null)
             return;
-        CardDetailRandom.RandomCardDetail(this, cardInfo);
+        mCardDetailRandom = CardDetailRandom.genRandomCardDetail(this, mImageLoader, cardInfo);
     }
 
     public void showTipsToast() {

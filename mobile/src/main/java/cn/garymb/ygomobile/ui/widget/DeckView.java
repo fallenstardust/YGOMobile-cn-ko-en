@@ -7,6 +7,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 
 import cn.garymb.ygomobile.bean.DeckInfo;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.cards.deck.LabelInfo;
 import ocgcore.data.Card;
@@ -19,6 +20,8 @@ public class DeckView extends LinearLayout {
     private LimitList mLimitList;
     private final ImageTop mImageTop;
     private boolean mAutoSort, mEditMode, mLimitChanged;
+
+    private ImageLoader mImageLoader;
 
     //region init
     public DeckView(Context context) {
@@ -40,6 +43,7 @@ public class DeckView extends LinearLayout {
         mMainGroup = new CardGroupView(context);
         mExtraGroup = new CardGroupView(context);
         mSideGroup = new CardGroupView(context);
+
         int cardWidth = 0;
         int cardHeight = 0;
         if (cardWidth <= 0) {
@@ -65,6 +69,13 @@ public class DeckView extends LinearLayout {
         addView(mExtraGroup, new LayoutParams(LayoutParams.MATCH_PARENT, cardHeight));
         addView(mSideLabel, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         addView(mSideGroup, new LayoutParams(LayoutParams.MATCH_PARENT, cardHeight));
+    }
+
+    public void setImageLoader(ImageLoader imageLoader) {
+        mImageLoader = imageLoader;
+        mMainGroup.setImageLoader(imageLoader);
+        mExtraGroup.setImageLoader(imageLoader);
+        mSideGroup.setImageLoader(imageLoader);
     }
 
     public ImageTop getImageTop() {

@@ -24,7 +24,6 @@ import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
 import com.bumptech.glide.Glide;
 
-import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -45,7 +44,7 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
     protected CardListAdapter mCardListAdapter;
     protected CardLoader mCardLoader;
     protected boolean isLoad = false;
-    private ImageLoader mImageLoader;
+    protected ImageLoader mImageLoader;
     protected StringManager mStringManager = DataManager.get().getStringManager();
     protected LimitManager mLimitManager = DataManager.get().getLimitManager();
     protected int screenWidth;
@@ -55,7 +54,7 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deck_cards);
         AnimationShake2();
-        mImageLoader = ImageLoader.get(this);
+        mImageLoader = new ImageLoader(true);
         mDrawerLayout = $(R.id.drawer_layout);
         screenWidth = getResources().getDisplayMetrics().widthPixels;
         mListView = $(R.id.list_cards);
@@ -218,13 +217,21 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
     }
 
     @Override
+    protected void onResume() {
+//        mImageLoader.resume();
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        //仅退出的时候才关闭zip
+//        mImageLoader.pause();
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
-        ImageLoader.onDestory(this);
-        try {
-            mImageLoader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mImageLoader.close();
         super.onDestroy();
     }
 

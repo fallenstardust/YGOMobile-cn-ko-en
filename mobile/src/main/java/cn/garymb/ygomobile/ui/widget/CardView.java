@@ -91,11 +91,11 @@ public class CardView extends FrameLayout {
         }
     }
 
-    public void showCard(Card cardInfo) {
+    public void showCard(ImageLoader imageLoader, Card cardInfo) {
         if (mCard != null && mCard.equals(cardInfo)) return;
         mCard = cardInfo;
-        if (cardInfo != null) {
-            ImageLoader.get(getContext()).bindImage(mCardView, cardInfo.Code);
+        if (cardInfo != null && imageLoader != null) {
+            imageLoader.bindImage(mCardView, cardInfo.Code, null, true);
         } else {
             mTopImage.setVisibility(View.GONE);
             mCardView.setImageBitmap(null);
