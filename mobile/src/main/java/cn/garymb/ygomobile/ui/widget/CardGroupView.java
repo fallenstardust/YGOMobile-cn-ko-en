@@ -25,7 +25,8 @@ public class CardGroupView extends FrameLayout {
     private int mLineLimit = 10;
     private int mOrgLineLimit = 10;
     private int mLineMaxCount = 15;
-    private int mCardWidth = Constants.CORE_SKIN_CARD_DECK_SIZE[0], mCardHeight = Constants.CORE_SKIN_CARD_DECK_SIZE[1];
+    private int mCardWidth = Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
+    private int mCardHeight = Constants.CORE_SKIN_CARD_SMALL_SIZE[1];
     private boolean mPausePadding;
     private ImageLoader mImageLoader;
 

@@ -105,7 +105,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         if(item == null){
             return;
         }
-        imageLoader.bindImage(holder.cardImage, item, ImageLoader.Type.list);
+        imageLoader.bindImage(holder.cardImage, item, ImageLoader.Type.small);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {
             holder.layout_atk.setVisibility(View.VISIBLE);

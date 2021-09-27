@@ -596,7 +596,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                         holder.setRightImage(null);
                     }
 //                    holder.useDefault();
-                    imageLoader.bindImage(holder.cardImage, cardInfo, ImageLoader.Type.deck);
+                    imageLoader.bindImage(holder.cardImage, cardInfo, ImageLoader.Type.small);
                 } else {
                     holder.setCardType(0);
                     holder.setRightImage(null);

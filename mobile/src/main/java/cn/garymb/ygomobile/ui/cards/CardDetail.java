@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -35,7 +34,6 @@ import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
@@ -107,7 +105,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, ImageLoader.Type.origin);
-                    imageLoader.bindImage(cardImage, msg.arg1, ImageLoader.Type.detail);
+                    imageLoader.bindImage(cardImage, msg.arg1, ImageLoader.Type.middle);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
                     tv_loading.setText(msg.arg1 + "%");
@@ -263,7 +261,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
-        imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.detail);
+        imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.middle);
         dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
@@ -418,7 +416,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
 
         //先显示普通卡片大图，判断如果没有高清图就下载
-        imageLoader.bindImage(photoView, code, null, ImageLoader.Type.detail);
+        imageLoader.bindImage(photoView, code, null, ImageLoader.Type.middle);
 
         if (!file.exists()) {
             downloadCardImage(code, file, false);

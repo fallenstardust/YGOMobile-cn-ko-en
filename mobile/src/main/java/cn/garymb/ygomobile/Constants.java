@@ -93,9 +93,8 @@ public interface Constants {
     String YDK_FILE_EX = ".ydk";
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
 
-    int[] CORE_SKIN_CARD_DECK_SIZE = new int[]{44, 64};
-    int[] CORE_SKIN_CARD_LIST_SIZE = new int[]{177, 254};
-    int[] CORE_SKIN_CARD_DETAIL_SIZE = new int[]{354, 508};
+    int[] CORE_SKIN_CARD_SMALL_SIZE = new int[]{177, 254};
+    int[] CORE_SKIN_CARD_MIDDLE_SIZE = new int[]{531, 762};
 
     int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{177, 254};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};

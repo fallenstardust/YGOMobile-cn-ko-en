@@ -48,12 +48,10 @@ public class ImageLoader implements Closeable {
     public enum Type {
         //origin size
         origin,
-        //44x64
-        deck,
         //177x254
-        list,
-        //354x508
-        detail
+        small,
+        //531x762
+        middle
     }
 
     private static class Cache {
@@ -150,14 +148,11 @@ public class ImageLoader implements Closeable {
         if (type != Type.origin) {
             int[] size = null;
             switch (type) {
-                case deck:
-                    size = Constants.CORE_SKIN_CARD_DECK_SIZE;
+                case small:
+                    size = Constants.CORE_SKIN_CARD_SMALL_SIZE;
                     break;
-                case list:
-                    size = Constants.CORE_SKIN_CARD_LIST_SIZE;
-                    break;
-                case detail:
-                    size = Constants.CORE_SKIN_CARD_DETAIL_SIZE;
+                case middle:
+                    size = Constants.CORE_SKIN_CARD_MIDDLE_SIZE;
                     break;
             }
             if (size != null) {
