@@ -3,6 +3,7 @@ package ocgcore.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
@@ -24,6 +25,8 @@ public class Card extends CardData implements Parcelable {
     public String Name;
     public String Desc;
 
+    public int RealCode;
+
     public Card() {
     }
 
@@ -32,6 +35,7 @@ public class Card extends CardData implements Parcelable {
         if (card != null) {
             this.Name = card.Name;
             this.Desc = card.Desc;
+            this.RealCode = card.RealCode;
         }
     }
 
@@ -62,6 +66,7 @@ public class Card extends CardData implements Parcelable {
         super(in);
         this.Name = in.readString();
         this.Desc = in.readString();
+        this.RealCode = in.readInt();
     }
 
     public static boolean isType(long Type, CardType type) {
@@ -79,6 +84,18 @@ public class Card extends CardData implements Parcelable {
     public Card type(long type) {
         this.Type = type;
         return this;
+    }
+
+    @Override
+    public int getCode() {
+        if(RealCode > 0){
+            return RealCode;
+        }
+        return Code;//super.getCode();
+    }
+
+    public void setRealCode(int realCode) {
+        RealCode = realCode;
     }
 
     public int getStar() {
@@ -135,16 +152,22 @@ public class Card extends CardData implements Parcelable {
         return false;
     }
 
-    public boolean isAlias(Card c){
-        return c.Code == this.Code || c.Alias == this.Code || c.Code == this.Alias;
-    }
-
     public boolean containsName(String key){
         return Name != null && Name.contains(key);
     }
 
     public boolean containsDesc(String key){
         return Desc != null && Desc.contains(key);
+    }
+
+    /**
+     * 同样一张卡，不同卡图，它们属性应该是一样的
+     */
+    public boolean isSame(Card c){
+        if(c.Code == this.Code || c.Alias == this.Code || c.Code == this.Alias) {
+            return TextUtils.equals(c.Name, this.Name) && c.Type == this.Type && c.Ot == this.Ot;
+        }
+        return false;
     }
 
     @NonNull
@@ -177,5 +200,6 @@ public class Card extends CardData implements Parcelable {
         super.writeToParcel(dest, flags);
         dest.writeString(this.Name);
         dest.writeString(this.Desc);
+        dest.writeInt(this.RealCode);
     }
 }

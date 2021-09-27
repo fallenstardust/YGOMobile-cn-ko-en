@@ -102,6 +102,7 @@ public class CardData implements Parcelable {
      * 同卡，不同卡图
      */
     public int getCode(){
+        //TODO 暂时的兼容做法
         if (Alias > 0 && Math.abs(Alias - Code) <= 10) {
            return Alias;
         } else {
