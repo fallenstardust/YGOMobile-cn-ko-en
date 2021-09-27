@@ -88,7 +88,7 @@ public class CardData implements Parcelable {
     }
 
     public int getCardCode(){
-        if (Alias == 0 || Math.abs(Alias - Code) <= 10) {
+        if (Alias > 0) {
            return Alias;
         } else {
            return Code;
