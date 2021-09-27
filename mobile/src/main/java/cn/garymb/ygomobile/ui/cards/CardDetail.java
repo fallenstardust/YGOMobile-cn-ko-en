@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -34,6 +35,7 @@ import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
@@ -424,18 +426,23 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     }
 
-    private void downloadCardImage(int code, File file) {
+    private void downloadCardImage(int code, File imgFile) {
         if (cardManager.getCard(code) == null) {
             YGOUtil.show(context.getString(R.string.tip_expansions_image));
+            return;
+        }
+        final File tmp = new File(imgFile.getAbsolutePath() + ".tmp");
+        if (tmp.exists()) {
             return;
         }
         isDownloadCardImage = false;
         ll_bar.setVisibility(View.VISIBLE);
         ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.in_from_top));
-        DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().download(YGOUtil.getCardImageDetailUrl(code), tmp.getParent(), tmp.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-                if (file.length() < 50 * 1024) {
+                boolean bad = file.length() < 50 * 1024;
+                if (bad || !tmp.renameTo(imgFile)) {
                     FileUtils.deleteFile(file);
                     Message message = new Message();
                     message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
@@ -460,7 +467,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             @Override
             public void onDownloadFailed(Exception e) {
                 //下载失败后删除下载的文件
-                FileUtils.deleteFile(file);
+                FileUtils.deleteFile(tmp);
 //                downloadCardImage(code, file);
 
                 Message message = new Message();
