@@ -95,7 +95,7 @@ public class CardView extends FrameLayout {
         if (mCard != null && mCard.equals(cardInfo)) return;
         mCard = cardInfo;
         if (cardInfo != null && imageLoader != null) {
-            imageLoader.bindImage(mCardView, cardInfo.Code, ImageLoader.Type.deck);
+            imageLoader.bindImage(mCardView, cardInfo, ImageLoader.Type.deck);
         } else {
             mTopImage.setVisibility(View.GONE);
             mCardView.setImageBitmap(null);

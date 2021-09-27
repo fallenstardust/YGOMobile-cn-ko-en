@@ -416,13 +416,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
                 mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
-                        String uri;
-                        int t = cardInfo.Alias - cardInfo.Code;
-                        if (t > 10 || t < -10) {
-                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
-                        } else {
-                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
-                        }
+                        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCardCode());
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }
 
@@ -566,7 +560,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     private boolean checkLimit(Card cardInfo) {
         SparseArray<Integer> mCount = mDeckAdapater.getCardCount();
         LimitList limitList = mDeckAdapater.getLimitList();
-        int id = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        int id = cardInfo.getCardCode();
         Integer count = mCount.get(id);
         if (limitList == null) {
             return count != null && count <= 3;

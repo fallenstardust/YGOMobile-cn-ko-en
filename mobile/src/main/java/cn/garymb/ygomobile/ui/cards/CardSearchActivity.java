@@ -282,13 +282,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                 mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
-                        String uri;
-                        int t = cardInfo.Alias - cardInfo.Code;
-                        if (t > 10 || t < -10) {
-                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Code);
-                        } else {
-                            uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.Alias);
-                        }
+                        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCardCode());
                         WebActivity.open(getContext(), cardInfo.Name, uri);
                     }
 

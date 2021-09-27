@@ -271,7 +271,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void addCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        Integer code = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        Integer code = cardInfo.getCardCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 1);
@@ -316,7 +316,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void removeCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        Integer code = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        int code = cardInfo.getCardCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 0);
@@ -596,7 +596,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                         holder.setRightImage(null);
                     }
 //                    holder.useDefault();
-                    imageLoader.bindImage(holder.cardImage, cardInfo.Code, ImageLoader.Type.deck);
+                    imageLoader.bindImage(holder.cardImage, cardInfo, ImageLoader.Type.deck);
                 } else {
                     holder.setCardType(0);
                     holder.setRightImage(null);

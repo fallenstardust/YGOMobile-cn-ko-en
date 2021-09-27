@@ -103,8 +103,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     isDownloadCardImage = true;
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    imageLoader.bindImage(photoView, msg.arg1, null, ImageLoader.Type.origin);
-                    imageLoader.bindImage(cardImage, msg.arg1, null, ImageLoader.Type.detail);
+                    imageLoader.bindImage(photoView, msg.arg1, ImageLoader.Type.origin);
+                    imageLoader.bindImage(cardImage, msg.arg1, ImageLoader.Type.detail);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
                     tv_loading.setText(msg.arg1 + "%");
@@ -259,19 +259,14 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
-        imageLoader.bindImage(cardImage, cardInfo.Code, ImageLoader.Type.detail);
+        imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.detail);
         dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
-        int t = cardInfo.Alias - cardInfo.Code;
-        if (t > 10 || t < -10) {
-            cardCode.setText(String.format("%08d", cardInfo.Code));
-        } else {
-            cardCode.setText(String.format("%08d", cardInfo.Alias));
-        }
+        cardCode.setText(String.format("%08d", cardInfo.getCardCode()));
 
         //按是否存在于收藏夹切换显示图标
         mImageFav.setSelected(CardFavorites.get().hasCard(cardInfo.Code));

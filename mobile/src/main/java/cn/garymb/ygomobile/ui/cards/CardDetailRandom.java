@@ -92,13 +92,13 @@ public class CardDetailRandom {
     public static CardDetailRandom genRandomCardDetail(Context context, ImageLoader imageLoader, Card cardInfo) {
         if (cardInfo == null) return null;
         CardDetailRandom cardDetailRandom = new CardDetailRandom(context, cardInfo);
-        cardDetailRandom.bindCardImage(imageLoader, cardInfo.Code);
+        cardDetailRandom.bindCardImage(imageLoader, cardInfo);
         sCardDetailRandom = cardDetailRandom;
         return cardDetailRandom;
     }
 
-    public void bindCardImage(ImageLoader imageLoader, long code) {
-        imageLoader.bindImage(cardImage, code, ImageLoader.Type.origin);
+    public void bindCardImage(ImageLoader imageLoader, Card cardInfo) {
+        imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.origin);
     }
 
     public View getView() {

@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import cn.garymb.ygomobile.Constants;
+
 public class CardData implements Parcelable {
 
     public CardData() {
@@ -83,6 +85,14 @@ public class CardData implements Parcelable {
         this.LeftScale = in.readInt();
         this.RightScale = in.readInt();
         this.Category = in.readLong();
+    }
+
+    public int getCardCode(){
+        if (Alias == 0 || Math.abs(Alias - Code) <= 10) {
+           return Alias;
+        } else {
+           return Code;
+        }
     }
 
     public static final Creator<CardData> CREATOR = new Creator<CardData>() {

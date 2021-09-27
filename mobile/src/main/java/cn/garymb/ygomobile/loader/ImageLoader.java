@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import ocgcore.data.Card;
 
 import static com.bumptech.glide.Glide.with;
 
@@ -235,6 +236,15 @@ public class ImageLoader implements Closeable {
         }
     }
 
+    public void bindImage(ImageView imageview, Card card, @NonNull Type type) {
+        if(card == null){
+            imageview.setImageResource(R.drawable.unknown);
+        } else {
+            bindImage(imageview, card.Code, null, type);
+        }
+    }
+
+    @Deprecated
     public void bindImage(ImageView imageview, long code, @NonNull Type type) {
         bindImage(imageview, code, null, type);
     }
