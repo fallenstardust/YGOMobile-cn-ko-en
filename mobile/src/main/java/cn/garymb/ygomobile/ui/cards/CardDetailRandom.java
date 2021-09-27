@@ -98,7 +98,7 @@ public class CardDetailRandom {
     }
 
     public void bindCardImage(ImageLoader imageLoader, long code) {
-        imageLoader.bindImage(cardImage, code, null, true);
+        imageLoader.bindImage(cardImage, code, ImageLoader.Type.origin);
     }
 
     public View getView() {

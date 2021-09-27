@@ -103,8 +103,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     isDownloadCardImage = true;
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    imageLoader.bindImage(photoView, msg.arg1, null, true);
-                    imageLoader.bindImage(cardImage, msg.arg1, null, true);
+                    imageLoader.bindImage(photoView, msg.arg1, null, ImageLoader.Type.origin);
+                    imageLoader.bindImage(cardImage, msg.arg1, null, ImageLoader.Type.detail);
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
                     tv_loading.setText(msg.arg1 + "%");
@@ -259,7 +259,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
-        imageLoader.bindImage(cardImage, cardInfo.Code, null, true);
+        imageLoader.bindImage(cardImage, cardInfo.Code, ImageLoader.Type.detail);
         dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
@@ -405,13 +405,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     }
                 });
 
-                imageLoader.bindImage(cardImage, code, null, true);
+                imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.origin);
                 return true;
             }
         });
 
         //先显示普通卡片大图，判断如果没有高清图就下载
-        imageLoader.bindImage(photoView, code, null, true);
+        imageLoader.bindImage(photoView, code, null, ImageLoader.Type.detail);
 
         if (!file.exists()) {
             downloadCardImage(code, file);

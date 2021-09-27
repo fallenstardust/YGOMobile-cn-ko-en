@@ -44,13 +44,18 @@ import cn.garymb.ygomobile.utils.NetUtils;
 import static com.bumptech.glide.Glide.with;
 
 public class ImageLoader implements Closeable {
-    public static final ImageLoader sImageLoader = new ImageLoader();
-
-    public static ImageLoader get() {
-        return sImageLoader;
+    public enum Type {
+        //origin size
+        origin,
+        //44x64
+        deck,
+        //177x254
+        list,
+        //354x508
+        detail
     }
 
-    private static class Cache{
+    private static class Cache {
         private final byte[] data;
         private final String name;
 
@@ -67,7 +72,8 @@ public class ImageLoader implements Closeable {
     private final Map<Long, Cache> zipDataCache = new ConcurrentHashMap<>();
     private ZipFile mDefaultZipFile;
     private File mPicsFile;
-    public ImageLoader(){
+
+    public ImageLoader() {
         this(false);
     }
 
@@ -76,7 +82,7 @@ public class ImageLoader implements Closeable {
     }
 
     private ZipFile openPicsZip() {
-        if(mPicsFile == null) {
+        if (mPicsFile == null) {
             mPicsFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_PICS_ZIP);
         }
         if (mDefaultZipFile == null) {
@@ -91,11 +97,11 @@ public class ImageLoader implements Closeable {
         return mDefaultZipFile;
     }
 
-    public void resume(){
+    public void resume() {
 
     }
 
-    public void clearZipCache(){
+    public void clearZipCache() {
         //关闭zip
         for (ZipFile zipFile : zipFileCache.values()) {
             IOUtils.closeZip(zipFile);
@@ -115,24 +121,24 @@ public class ImageLoader implements Closeable {
         zipDataCache.clear();
     }
 
-    private void bind(final byte[] data, String name, ImageView imageview, Drawable pre, int[] size) {
+    private void bind(final byte[] data, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind data:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind data:" + name + ", type=" + type);
         }
-        bindT(data, name, imageview, pre, size);
+        bindT(data, name, imageview, pre, type);
     }
 
-    private void bind(final Uri uri, String name, ImageView imageview, Drawable pre, int[] size) {
+    private void bind(final Uri uri, String name, ImageView imageview, Drawable pre,@NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind uri:" + name + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind uri:" + name + ", type=" + type);
         }
-        bindT(uri, name, imageview, pre, size);
+        bindT(uri, name, imageview, pre, type);
     }
 
     private <T> void setDefaults(@NonNull DrawableTypeRequest<T> resource, String name,
                                  @Nullable com.bumptech.glide.load.Key signature,
                                  @Nullable Drawable pre,
-                                 @Nullable int[] size) {
+                                 @NonNull Type type) {
         if (pre != null) {
             resource.placeholder(pre);
         } else {
@@ -140,10 +146,24 @@ public class ImageLoader implements Closeable {
         }
         resource.error(R.drawable.unknown);
         resource.animate(R.anim.push_in);
-        if (size != null) {
-            resource.override(size[0], size[1]);
+        if (type != Type.origin) {
+            int[] size = null;
+            switch (type) {
+                case deck:
+                    size = Constants.CORE_SKIN_CARD_DECK_SIZE;
+                    break;
+                case list:
+                    size = Constants.CORE_SKIN_CARD_LIST_SIZE;
+                    break;
+                case detail:
+                    size = Constants.CORE_SKIN_CARD_DETAIL_SIZE;
+                    break;
+            }
+            if (size != null) {
+                resource.override(size[0], size[1]);
+            }
         }
-        if(signature != null) {
+        if (signature != null) {
             resource.signature(signature);
         }
         String ex = FileUtils.getFileExpansion(name);
@@ -152,38 +172,32 @@ public class ImageLoader implements Closeable {
         }
     }
 
-    private <T> void bindT(final T data, String name, ImageView imageview, Drawable pre, int[] size) {
+    private <T> void bindT(final T data, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
         try {
             DrawableTypeRequest<T> resource = with(imageview.getContext()).load(data);
-            if (size == null) {
-                setDefaults(resource, name, new StringSignature(name), pre, size);
-                resource.signature(new StringSignature(name));
-            } else {
-                setDefaults(resource, name, new StringSignature(name + ":" + size[0] + "x" + size[1]), pre, size);
-            }
+            setDefaults(resource, name, new StringSignature(name + ":" + type), pre, type);
             resource.into(imageview);
         } catch (Exception e) {
             Log.e(TAG, "$", e);
         }
     }
 
-    private void bind(final File file, ImageView imageview, Drawable pre, int[] size) {
+    private void bind(final File file, ImageView imageview, Drawable pre, @NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind file:" + file.getPath() + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind file:" + file.getPath() + ", type=" + type);
         }
         try {
             DrawableTypeRequest<File> resource = with(imageview.getContext()).load(file);
-            long key = size == null ? 0:(size[0] * size[1]);
             setDefaults(resource, file.getName(),
                     new MediaStoreSignature("image/*",
-                            file.lastModified() + key, 0), pre, size);
+                            file.lastModified(), type.ordinal()), pre, type);
             resource.into(imageview);
         } catch (Exception e) {
             Log.e(TAG, "$", e);
         }
     }
 
-    private boolean bindInZip(ImageView imageView, long code, Drawable pre, ZipFile zipFile, String nameWithEx, int[] size) {
+    private boolean bindInZip(ImageView imageView, long code, Drawable pre, ZipFile zipFile, String nameWithEx, @NonNull Type type) {
         ZipEntry entry;
         InputStream inputStream = null;
         ByteArrayOutputStream outputStream;
@@ -195,10 +209,10 @@ public class ImageLoader implements Closeable {
                 outputStream = new ByteArrayOutputStream();
                 IOUtils.copy(inputStream, outputStream);
                 byte[] data = outputStream.toByteArray();
-                if(useCache){
+                if (useCache) {
                     zipDataCache.put(code, new Cache(data, nameWithEx));
                 }
-                bind(data, nameWithEx, imageView, pre, size);
+                bind(data, nameWithEx, imageView, pre, type);
                 bind = true;
             }
         } catch (Exception e) {
@@ -221,25 +235,13 @@ public class ImageLoader implements Closeable {
         }
     }
 
-
-    /**
-     * 177x254
-     */
-    public void bindImage(ImageView imageview, long code) {
-        bindImage(imageview, code, null, Constants.CORE_SKIN_CARD_MINI_SIZE);
+    public void bindImage(ImageView imageview, long code, @NonNull Type type) {
+        bindImage(imageview, code, null, type);
     }
 
-    /**
-     * @param big true则是原始大小
-     */
-    @Deprecated
-    public void bindImage(ImageView imageview, long code, Drawable pre, boolean big) {
-        bindImage(imageview, code, pre, big ? null : Constants.CORE_SKIN_CARD_MINI_SIZE);
-    }
-
-    public void bindImage(ImageView imageview, long code, Drawable pre, int[] size) {
+    public void bindImage(ImageView imageview, long code, Drawable pre, @NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind image:" + code + ", size=" + (size == null ? "null" : size[0] + "x" + size[1]));
+            Log.v(TAG, "bind image:" + code + ", type=" + type);
         }
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
@@ -248,18 +250,18 @@ public class ImageLoader implements Closeable {
             File file = new File(AppsSettings.get().getResourcePath(), name + ex);
             File file_ex = new File(AppsSettings.get().getResourcePath(), name_ex + ex);
             if (file_ex.exists()) {
-                bind(file_ex, imageview, pre, size);
+                bind(file_ex, imageview, pre, type);
                 return;
             } else if (file.exists()) {
-                bind(file, imageview, pre, size);
+                bind(file, imageview, pre, type);
                 return;
             }
         }
         //cache
-        if(useCache) {
+        if (useCache) {
             Cache cache = zipDataCache.get(code);
             if (cache != null) {
-                bind(cache.data, cache.name, imageview, pre, size);
+                bind(cache.data, cache.name, imageview, pre, type);
                 return;
             }
         }
@@ -268,7 +270,7 @@ public class ImageLoader implements Closeable {
             ZipFile pics = openPicsZip();
             if (pics != null) {
                 for (String ex : Constants.IMAGE_EX) {
-                    if (bindInZip(imageview, code, pre, pics, name + ex, size)) {
+                    if (bindInZip(imageview, code, pre, pics, name + ex, type)) {
                         return;
                     }
                 }
@@ -284,11 +286,11 @@ public class ImageLoader implements Closeable {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile()) {
-                    ZipFile zipFile = useCache ?  zipFileCache.get(file.getAbsolutePath()) : null;
+                    ZipFile zipFile = useCache ? zipFileCache.get(file.getAbsolutePath()) : null;
                     if (zipFile == null) {
                         try {
                             zipFile = new ZipFile(file);
-                            if(useCache) {
+                            if (useCache) {
                                 zipFileCache.put(file.getAbsolutePath(), zipFile);
                             }
                         } catch (Throwable e) {
@@ -299,7 +301,7 @@ public class ImageLoader implements Closeable {
                         continue;
                     }
                     for (String ex : Constants.IMAGE_EX) {
-                        if (bindInZip(imageview, code, pre, zipFile, name + ex, size)) {
+                        if (bindInZip(imageview, code, pre, zipFile, name + ex, type)) {
                             return;
                         }
                     }
@@ -308,7 +310,7 @@ public class ImageLoader implements Closeable {
         }
         //4 http
         if (Constants.NETWORK_IMAGE && NetUtils.isWifiConnected(imageview.getContext())) {
-            bind(Uri.parse(String.format(Constants.IMAGE_URL, "" + code)), code + ".jpg", imageview, pre, size);
+            bind(Uri.parse(String.format(Constants.IMAGE_URL, "" + code)), code + ".jpg", imageview, pre, type);
         } else {
             imageview.setImageResource(R.drawable.unknown);
         }
