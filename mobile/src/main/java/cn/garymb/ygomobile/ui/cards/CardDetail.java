@@ -92,6 +92,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
+    private boolean mShowAdd = false;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -216,6 +217,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     public void showAdd() {
+        mShowAdd = true;
         addSide.setVisibility(View.VISIBLE);
         addMain.setVisibility(View.VISIBLE);
     }
@@ -267,7 +269,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
-
+        if(mShowAdd) {
+            if (cardInfo.isType(CardType.Token)) {
+                addSide.setVisibility(View.INVISIBLE);
+                addMain.setVisibility(View.INVISIBLE);
+            } else {
+                addSide.setVisibility(View.VISIBLE);
+                addMain.setVisibility(View.VISIBLE);
+            }
+        }
         //按是否存在于收藏夹切换显示图标
         mImageFav.setSelected(CardFavorites.get().hasCard(cardInfo.Code));
 
