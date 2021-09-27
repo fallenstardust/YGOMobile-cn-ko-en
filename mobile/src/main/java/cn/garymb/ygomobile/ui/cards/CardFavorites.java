@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import ocgcore.data.Card;
 
 public class CardFavorites {
     private final List<Integer> mList = new ArrayList<>();
-
+    private static final String TAG = "CardFavorites";
     private static final CardFavorites sCardFavorites = new CardFavorites();
 
     public static CardFavorites get() {
@@ -76,19 +77,26 @@ public class CardFavorites {
         List<String> lines;
         if (config.exists()) {
             //重命名
-            if(!config.renameTo(AppsSettings.get().getSystemConfig())) {
+            if (!config.renameTo(AppsSettings.get().getSystemConfig())) {
+                Log.w(TAG, "copy txt to conf");
                 try {
                     FileUtils.copyFile(AppsSettings.get().getFavoriteFile().getPath(), AppsSettings.get().getSystemConfig().getPath());
                 } catch (IOException e) {
                     //TODO 复制失败，直接删除?
                     FileUtils.deleteFile(AppsSettings.get().getFavoriteFile());
                 }
+            } else {
+                Log.d(TAG, "rename txt to conf");
             }
+            config = AppsSettings.get().getSystemConfig();
+        } else {
             config = AppsSettings.get().getSystemConfig();
         }
         if (!config.exists()) {
+            Log.w(TAG, "config is no exists:" + config.getPath());
             return;
         }
+        //Log.d(TAG, "load favorites:"+config.getPath());
         lines = FileUtils.readLines(config.getPath(), Constants.DEF_ENCODING);
         for (String line : lines) {
             String tmp = line.trim();
@@ -96,6 +104,7 @@ public class CardFavorites {
                 mList.add(Integer.parseInt(tmp));
             }
         }
+        Log.d(TAG, "load favorites success:"+mList.size());
     }
 
     public void save() {

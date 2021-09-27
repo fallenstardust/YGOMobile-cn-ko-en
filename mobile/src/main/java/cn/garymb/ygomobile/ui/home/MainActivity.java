@@ -63,8 +63,6 @@ public class MainActivity extends HomeActivity {
 //        ActivityCompat.requestPermissions(this, PERMISSIONS, 0);
         //资源复制
         checkRes();
-        //加载收藏夹
-        CardFavorites.get().load();
     }
 
     @SuppressLint({"StringFormatMatches", "StringFormatInvalid"})
@@ -82,6 +80,8 @@ public class MainActivity extends HomeActivity {
 
     private void checkRes() {
         checkResourceDownload((error, isNew) -> {
+            //加载收藏夹
+            CardFavorites.get().load();
             if (error < 0) {
                 enableStart = false;
             } else {
