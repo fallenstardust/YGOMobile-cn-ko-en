@@ -21,7 +21,7 @@ public class DownloadUtil {
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
     //暂时关闭
-	private static final boolean ENABLE_CACHE = false;
+    private static final boolean ENABLE_CACHE = false;
     private static final Map<String, Call> cache = new HashMap<>();
 
     public static DownloadUtil get() {
@@ -44,18 +44,18 @@ public class DownloadUtil {
      */
 
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-    	if(ENABLE_CACHE){
-    		synchronized (cache){
-				Call old = cache.get(url);
-				if(old != null){
-					Log.w(IrrlichtBridge.TAG, "exist download task by:" +url);
-					return;
-				}
-			}
-		}
+        if (ENABLE_CACHE) {
+            synchronized (cache) {
+                Call old = cache.get(url);
+                if (old != null) {
+                    Log.w(IrrlichtBridge.TAG, "exist download task by:" + url);
+                    return;
+                }
+            }
+        }
         Request request = new Request.Builder()
-			.url(url)
-			.build();
+                .url(url)
+                .build();
 
    /*   OkHttpClient client = new OkHttpClient();
 
@@ -66,66 +66,77 @@ public class DownloadUtil {
         }*/
 
         //异步请求
-		Call call = okHttpClient.newCall(request);
-		call.enqueue(new Callback() {
-				@Override
-				public void onFailure(Call call, IOException e) {
-					// 下载失败监听回调
-					listener.onDownloadFailed(e);
-					if(ENABLE_CACHE){
-						synchronized (cache){
-							cache.remove(url);
-						}
-					}
-				}
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                // 下载失败监听回调
+                listener.onDownloadFailed(e);
+                if (ENABLE_CACHE) {
+                    synchronized (cache) {
+                        cache.remove(url);
+                    }
+                }
+            }
 
-				@Override
-				public void onResponse(Call call, Response response) throws IOException {
-					InputStream is = null;
-					byte[] buf = new byte[2048];
-					int len = 0;
-					FileOutputStream fos = null;
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(!response.isSuccessful()){
+                    listener.onDownloadFailed(new Exception("error:"+response.code()));
+                    return;
+                }
+                String contentLen = response.header("Content-Length");
+                final long contentLength = (contentLen == null || contentLen.length() == 0) ? 0 : Long.parseLong(contentLen);
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream out = null;
 
-					//储存下载文件的目录
-					File dir = new File(destFileDir);
-					if (!dir.exists()) {
-						dir.mkdirs();
-					}
-					File file = new File(dir, destFileName);
-
-					try {
-
-						is = response.body().byteStream();
-						long total = response.body().contentLength();
-						fos = new FileOutputStream(file);
-						long sum = 0;
-						while ((len = is.read(buf)) != -1) {
-							fos.write(buf, 0, len);
-							sum += len;
-							int progress = (int) (sum * 1.0f / total * 100);
-							//下载中更新进度条
-							listener.onDownloading(progress);
-						}
-						fos.flush();
-						//下载完成
+                //储存下载文件的目录
+                File dir = new File(destFileDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                File file = new File(dir, destFileName);
+                boolean saved = false;
+                try {
+                    is = response.body().byteStream();
+                    long total = response.body().contentLength();
+                    out = new FileOutputStream(file);
+                    long sum = 0;
+                    while ((len = is.read(buf)) != -1) {
+                        out.write(buf, 0, len);
+                        sum += len;
+                        int progress = (int) (sum * 1.0f / total * 100);
+                        //下载中更新进度条
+                        listener.onDownloading(progress);
+                    }
+                    out.flush();
+                    saved = true;
+                } catch (Exception ex) {
+                    listener.onDownloadFailed(ex);
+                } finally {
+                    IOUtils.close(out);
+                    IOUtils.close(is);
+                }
+                if (saved) {
+					if (contentLength > 0 && file.length() < contentLength) {
+						listener.onDownloadFailed(new Exception("file length[" + file.length() + "] < " + contentLen));
+					} else {
 						listener.onDownloadSuccess(file);
-					} catch (Exception ex) {
-						listener.onDownloadFailed(ex);
-					}finally {
-						IOUtils.close(is);
-						IOUtils.close(fos);
 					}
-					if(ENABLE_CACHE){
-						synchronized (cache){
-							cache.remove(url);
-						}
-					}
-				}
-			});
+                }
+                if (ENABLE_CACHE) {
+                    synchronized (cache) {
+                        cache.remove(url);
+                    }
+                }
+            }
+        });
     }
 
 
-    public static interface OnDownloadListener{
+    public static interface OnDownloadListener {
 
         /**
          * 下载成功之后的文件

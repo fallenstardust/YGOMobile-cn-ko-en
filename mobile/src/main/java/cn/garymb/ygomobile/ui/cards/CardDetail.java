@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -471,6 +472,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             @Override
             public void onDownloadFailed(Exception e) {
+                Log.w(IrrlichtBridge.TAG, "download image error:" + e.getMessage());
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(tmp);
 //                downloadCardImage(code, file);
