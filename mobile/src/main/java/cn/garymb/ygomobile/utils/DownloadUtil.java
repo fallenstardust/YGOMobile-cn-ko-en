@@ -1,10 +1,15 @@
 package cn.garymb.ygomobile.utils;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -15,6 +20,9 @@ public class DownloadUtil {
 
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
+    //暂时关闭
+	private static final boolean ENABLE_CACHE = false;
+    private static final Map<String, Call> cache = new HashMap<>();
 
     public static DownloadUtil get() {
         if (downloadUtil == null) {
@@ -36,7 +44,15 @@ public class DownloadUtil {
      */
 
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-
+    	if(ENABLE_CACHE){
+    		synchronized (cache){
+				Call old = cache.get(url);
+				if(old != null){
+					Log.w(IrrlichtBridge.TAG, "exist download task by:" +url);
+					return;
+				}
+			}
+		}
         Request request = new Request.Builder()
 			.url(url)
 			.build();
@@ -50,16 +66,21 @@ public class DownloadUtil {
         }*/
 
         //异步请求
-        okHttpClient.newCall(request).enqueue(new Callback() {
+		Call call = okHttpClient.newCall(request);
+		call.enqueue(new Callback() {
 				@Override
 				public void onFailure(Call call, IOException e) {
 					// 下载失败监听回调
 					listener.onDownloadFailed(e);
+					if(ENABLE_CACHE){
+						synchronized (cache){
+							cache.remove(url);
+						}
+					}
 				}
 
 				@Override
 				public void onResponse(Call call, Response response) throws IOException {
-
 					InputStream is = null;
 					byte[] buf = new byte[2048];
 					int len = 0;
@@ -88,24 +109,17 @@ public class DownloadUtil {
 						fos.flush();
 						//下载完成
 						listener.onDownloadSuccess(file);
-					} catch (Exception e) {
-						listener.onDownloadFailed(e);
+					} catch (Exception ex) {
+						listener.onDownloadFailed(ex);
 					}finally {
-
-						try {
-							if (is != null) {
-								is.close();
-							}
-							if (fos != null) {
-								fos.close();
-							}
-						} catch (IOException e) {
-
-						}
-
+						IOUtils.close(is);
+						IOUtils.close(fos);
 					}
-
-
+					if(ENABLE_CACHE){
+						synchronized (cache){
+							cache.remove(url);
+						}
+					}
 				}
 			});
     }
