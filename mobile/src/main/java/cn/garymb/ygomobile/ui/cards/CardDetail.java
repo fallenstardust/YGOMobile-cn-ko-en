@@ -434,6 +434,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             if(force){
                 //强制下载，就删除tmp,重新下载
                 FileUtils.deleteFile(tmp);
+                //删除原来卡图
+                FileUtils.deleteFile(imgFile);
             } else {
                 return;
             }
