@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import org.json.JSONArray;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -224,13 +223,23 @@ public class AppsSettings {
         return new File(getDataBasePath(), Constants.DATABASE_NAME);
     }
 
+
+    public File[] getExpansionFiles(){
+        return new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS)
+                .listFiles((file) -> {
+                    if(!file.isFile()){
+                        return false;
+                    }
+                    String s_name = file.getName().toLowerCase();
+                    return s_name.endsWith(".zip") || s_name.endsWith(".ypk");
+                });
+    }
+
     private void makeCdbList(List<String> pathList) {
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
-                File[] cdbs = expansionsDir.listFiles(file -> {
-                    return file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".cdb");
-                });
+                File[] cdbs = expansionsDir.listFiles(file -> file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".cdb"));
                 if (cdbs != null) {
                     try {
                         Arrays.sort(cdbs, (file, t1) -> {
@@ -259,25 +268,9 @@ public class AppsSettings {
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
-                File[] zips = expansionsDir.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".zip");
-                    }
-                });
-                if (zips != null) {
-                    for (File file : zips) {
-                        pathList.add(file.getAbsolutePath());
-                    }
-                }
-                File[] ypks = expansionsDir.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".ypk");
-                    }
-                });
-                if (ypks != null) {
-                    for (File file : ypks) {
+                File[] files = getExpansionFiles();
+                if (files != null) {
+                    for (File file : files) {
                         pathList.add(file.getAbsolutePath());
                     }
                 }

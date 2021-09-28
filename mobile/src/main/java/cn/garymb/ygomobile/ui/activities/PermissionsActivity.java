@@ -16,8 +16,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.bumptech.glide.GenericTranscodeRequest;
-
 import java.util.ArrayList;
 import java.util.List;
 

@@ -349,7 +349,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void showCardImageDetail(int code) {
         AppsSettings appsSettings = AppsSettings.get();
-        File file = new File(appsSettings.getCardImagePath(code));
         View view = dialog.initDialog(context, R.layout.dialog_photo);
 
         dialog.setDialogWidth(ViewGroup.LayoutParams.MATCH_PARENT);
@@ -391,7 +390,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 btn_redownload.setOnClickListener((s) -> {
                     ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
                     ll_btn.setVisibility(View.GONE);
-                    downloadCardImage(code, file, true);
+                    downloadCardImage(code, true);
                 });
 
                 btn_share.setOnClickListener((s) -> {
@@ -418,17 +417,18 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         //先显示普通卡片大图，判断如果没有高清图就下载
         imageLoader.bindImage(photoView, code, null, ImageLoader.Type.middle);
 
-        if (!file.exists()) {
-            downloadCardImage(code, file, false);
+        if (null == ImageLoader.getImageFile(code)) {
+            downloadCardImage(code, false);
         }
 
     }
 
-    private void downloadCardImage(int code, File imgFile, boolean force) {
+    private void downloadCardImage(int code, boolean force) {
         if (cardManager.getCard(code) == null) {
             YGOUtil.show(context.getString(R.string.tip_expansions_image));
             return;
         }
+        File imgFile = new File(AppsSettings.get().getCardImagePath(code));
         final File tmp = new File(imgFile.getAbsolutePath() + ".tmp");
         if (tmp.exists()) {
             if(force){

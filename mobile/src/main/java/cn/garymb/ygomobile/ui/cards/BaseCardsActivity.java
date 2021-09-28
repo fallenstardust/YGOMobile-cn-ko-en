@@ -22,7 +22,6 @@ import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
-import com.bumptech.glide.Glide;
 
 import java.util.List;
 
@@ -32,6 +31,7 @@ import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -180,10 +180,10 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        Glide.with(getContext()).resumeRequests();
+                        GlideCompat.with(getContext()).resumeRequests();
                         break;
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Glide.with(getContext()).pauseRequests();
+                        GlideCompat.with(getContext()).pauseRequests();
                         break;
                 }
             }

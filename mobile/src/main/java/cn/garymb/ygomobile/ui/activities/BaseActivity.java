@@ -256,7 +256,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public Context getContext() {
-        return getActivity();
+        return this;
     }
 
     protected <T extends View> T $(int id) {

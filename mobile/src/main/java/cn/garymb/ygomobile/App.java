@@ -6,13 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
-import com.bumptech.glide.Glide;
-import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.export.external.TbsCoreSettings;
@@ -26,6 +23,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import cn.garymb.ygomobile.utils.ProcessUtils;
 
 public class App extends GameApplication {
@@ -164,7 +162,7 @@ public class App extends GameApplication {
         ISNav.getInstance().init(new ImageLoader() {
             @Override
             public void displayImage(Context context, String path, ImageView imageView) {
-                Glide.with(context).load(path).into(imageView);
+                GlideCompat.with(context).load(path).into(imageView);
             }
         });
     }

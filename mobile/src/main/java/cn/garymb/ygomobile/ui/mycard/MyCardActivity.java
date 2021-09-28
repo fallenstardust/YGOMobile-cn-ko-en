@@ -24,7 +24,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -40,6 +39,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 import cn.garymb.ygomobile.utils.ActivityUtils;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class MyCardActivity extends BaseActivity implements MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -56,15 +56,13 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_MC_LOGIN:
-                    String[] ss = (String[]) msg.obj;
-                    if (!TextUtils.isEmpty(ss[1]) && ActivityUtils.isActivityExist(MyCardActivity.this)) {
-                        Glide.with(MyCardActivity.this).load(Uri.parse(ss[1])).into(mHeadView);
-                    }
-                    mNameView.setText(ss[0]);
-                    mStatusView.setText(ss[2]);
-                    break;
+            if (msg.what == TYPE_MC_LOGIN) {
+                String[] ss = (String[]) msg.obj;
+                if (!TextUtils.isEmpty(ss[1]) && ActivityUtils.isActivityExist(MyCardActivity.this)) {
+                    GlideCompat.with(MyCardActivity.this).load(Uri.parse(ss[1])).into(mHeadView);
+                }
+                mNameView.setText(ss[0]);
+                mStatusView.setText(ss[2]);
             }
         }
     };

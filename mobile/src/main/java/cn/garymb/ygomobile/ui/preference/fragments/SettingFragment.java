@@ -22,9 +22,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.StringSignature;
+import com.bumptech.glide.signature.MediaStoreSignature;
 import com.ourygo.assistant.service.DuelAssistantService;
 import com.tencent.bugly.beta.Beta;
 
@@ -46,6 +45,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.DataManager;
@@ -489,7 +489,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         //builder.show();
         File img = new File(outFile);
         if (img.exists()) {
-            Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
+            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
@@ -499,7 +499,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
         File img = new File(outFile);
         if (img.exists()) {
-            Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
+            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);

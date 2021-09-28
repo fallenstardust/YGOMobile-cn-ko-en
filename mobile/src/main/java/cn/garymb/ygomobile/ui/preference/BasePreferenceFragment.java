@@ -16,6 +16,11 @@ import android.view.MenuItem;
 
 abstract class BasePreferenceFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener
         , Preference.OnPreferenceChangeListener {
+
+    public BasePreferenceFragment() {
+        super();
+    }
+
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
         if (value == null) return false;

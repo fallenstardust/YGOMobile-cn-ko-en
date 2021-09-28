@@ -26,7 +26,6 @@ import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
-import com.bumptech.glide.Glide;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import java.util.List;
@@ -42,6 +41,7 @@ import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -170,11 +170,11 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_SETTLING:
                         if (!isFinishing()) {
-                            Glide.with(getContext()).resumeRequests();
+                            GlideCompat.with(getContext()).resumeRequests();
                         }
                         break;
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Glide.with(getContext()).pauseRequests();
+                        GlideCompat.with(getContext()).pauseRequests();
                         break;
                 }
             }

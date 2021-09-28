@@ -17,9 +17,24 @@
 #}
 -keepclassmembers class * implements cn.garymb.ygomobile.core.IrrlichtBridge.* { public *;}
 -keepclassmembers class * implements android.os.Parcelable { public *;}
--keep class * implements com.bumptech.glide.module.GlideModule{
-    *;
+
+#############
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep class * extends com.bumptech.glide.module.AppGlideModule {
+ <init>(...);
 }
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+  **[] $VALUES;
+  public *;
+}
+-keep class com.bumptech.glide.load.data.ParcelFileDescriptorRewinder$InternalRewinder {
+  *** rewind();
+}
+
+# for DexGuard only
+#-keepresourcexmlelements manifest/application/meta-data@value=GlideModule
+#############
+
 -keep class net.kk.xml.**{
     public *;
     protected *;
