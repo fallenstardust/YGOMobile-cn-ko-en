@@ -102,17 +102,21 @@ public class DownloadUtil {
                 try {
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
-                    out = new FileOutputStream(file);
-                    long sum = 0;
-                    while ((len = is.read(buf)) != -1) {
-                        out.write(buf, 0, len);
-                        sum += len;
-                        int progress = (int) (sum * 1.0f / total * 100);
-                        //下载中更新进度条
-                        listener.onDownloading(progress);
+                    if(contentLength > 0 && total != contentLength){
+                        listener.onDownloadFailed(new Exception("file length[" + total + "] < " + contentLen));
+                    } else {
+                        out = new FileOutputStream(file);
+                        long sum = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            out.write(buf, 0, len);
+                            sum += len;
+                            int progress = (int) (sum * 1.0f / total * 100);
+                            //下载中更新进度条
+                            listener.onDownloading(progress);
+                        }
+                        out.flush();
+                        saved = true;
                     }
-                    out.flush();
-                    saved = true;
                 } catch (Exception ex) {
                     listener.onDownloadFailed(ex);
                 } finally {
