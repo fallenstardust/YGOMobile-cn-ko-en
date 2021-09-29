@@ -12,7 +12,7 @@ public class Record {
     //加房关键字
     public static final String[] PASSWORD_PREFIX = {
             "M,", "m,",
-            "T,",
+            "T,","t#",
             "PR,", "pr,",
             "AI,", "ai,",
             "LF2,", "lf2,",
