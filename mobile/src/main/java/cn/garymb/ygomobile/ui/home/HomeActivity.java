@@ -161,6 +161,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     protected void onResume() {
         super.onResume();
         BacktoDuel();
+        duelAssistantCheck();
     }
 
     @Override
@@ -172,24 +173,22 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private void duelAssistantCheck() {
         if (AppsSettings.get().isServiceDuelAssistant()) {
             Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        FileLogUtil.writeAndTime("主页决斗助手检查");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    duelAssistantManagement.checkClip(ID_MAINACTIVITY);
+            handler.postDelayed(() -> {
+                try {
+                    FileLogUtil.writeAndTime("主页决斗助手检查");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+                duelAssistantManagement.checkClip(ID_MAINACTIVITY);
             }, 500);
         }
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
-        duelAssistantCheck();
+
     }
 
     @Override
@@ -225,7 +224,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         duelAssistantManagement.init(getApplicationContext());
         duelAssistantManagement.addDuelAssistantListener(this);
-        YGOUtil.startDuelService(this);
+//        YGOUtil.startDuelService(this);
     }
 
     //检查是否有刘海

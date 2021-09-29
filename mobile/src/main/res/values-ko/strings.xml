@@ -250,7 +250,6 @@
     <string name="return_to_duel">듀얼로 돌아가십시오</string>
     <string name="Start_ServiceDuelAssistant">듀얼 어시스턴트 시작</string>
     <string name="about_DuelAssistant">방 비밀번호를 통한 방 입장
-        \n“？”을 이용한 카드 검색
         \n덱 코드를 이용한 덱 공유</string>
     <string name="find_deck_text">덱 공유 코드가 감지 되었습니다. 덱을 저장하겠습니까？</string>
     <string name="save_failed_bcos">다음 이유로 인해 저장에 실패했습니다:</string>

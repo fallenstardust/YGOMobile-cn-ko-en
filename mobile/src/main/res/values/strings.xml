@@ -257,7 +257,6 @@
     <string name="return_to_duel">Return to Duel☞</string>
     <string name="Start_ServiceDuelAssistant">DuelAssistant</string>
     <string name="about_DuelAssistant">Copy PSW to Quick Join Game.
-        \nCopy Keywords to Search Cards.
         \nCopy Deck Text to Save as YDK and Open in Deck Editor</string>
     <string name="find_deck_text">Find your copyed Deck Text, Save or Not?</string>
     <string name="save_failed_bcos">save failed bcos of</string>

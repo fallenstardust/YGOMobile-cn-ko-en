@@ -135,36 +135,33 @@ public class MainActivity extends HomeActivity {
                                     }
                                 }
                             });*/
-                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialogInterface) {
-                            if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-                                YGOUtil.isServicePermission(MainActivity.this, true);
-                            File oriDeckFiles = new File(ORI_DECK);
-                            File deckFiles = new File(AppsSettings.get().getDeckDir());
-                            if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
-                                DialogPlus dlgpls = new DialogPlus(MainActivity.this);
-                                dlgpls.setTitle(R.string.tip);
-                                dlgpls.setMessage(R.string.restore_deck);
-                                dlgpls.setLeftButtonText(R.string.Cancel);
-                                dlgpls.setLeftButtonListener((dlg, i) -> {
-                                    dlgpls.dismiss();
-                                });
-                                dlgpls.setRightButtonText(R.string.deck_restore);
-                                dlgpls.setRightButtonListener((dlg, i) -> {
-                                    startPermissionsActivity();
-                                    dlgpls.dismiss();
-                                });
-                                dlgpls.show();
-                            }
-
+                    dialog.setOnDismissListener(dialogInterface -> {
+//                        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+//                            YGOUtil.isServicePermission(MainActivity.this, true);
+                        File oriDeckFiles = new File(ORI_DECK);
+                        File deckFiles = new File(AppsSettings.get().getDeckDir());
+                        if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
+                            DialogPlus dlgpls = new DialogPlus(MainActivity.this);
+                            dlgpls.setTitle(R.string.tip);
+                            dlgpls.setMessage(R.string.restore_deck);
+                            dlgpls.setLeftButtonText(R.string.Cancel);
+                            dlgpls.setLeftButtonListener((dlg, i) -> {
+                                dlgpls.dismiss();
+                            });
+                            dlgpls.setRightButtonText(R.string.deck_restore);
+                            dlgpls.setRightButtonListener((dlg, i) -> {
+                                startPermissionsActivity();
+                                dlgpls.dismiss();
+                            });
+                            dlgpls.show();
                         }
+
                     });
                     dialog.show();
                 }
             } else {
-                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-                    YGOUtil.isServicePermission(MainActivity.this, true);
+//                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+//                    YGOUtil.isServicePermission(MainActivity.this, true);
                 getGameUriManager().doIntent(getIntent());
             }
 

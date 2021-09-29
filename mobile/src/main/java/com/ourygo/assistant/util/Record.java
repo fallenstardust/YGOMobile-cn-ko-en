@@ -46,7 +46,7 @@ public class Record {
     public static final String ARG_PASSWORD_ALL = "password";
     public static final String ARG_YGO_TYPE="ygotype";
     public static final String ARG_DECK="deck";
-    public static final String ARG_ROOM="deck";
+    public static final String ARG_ROOM="room";
 
 
 }

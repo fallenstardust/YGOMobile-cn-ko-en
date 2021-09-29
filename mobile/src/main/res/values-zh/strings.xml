@@ -256,7 +256,6 @@
     <string name="return_to_duel">点此返回决斗</string>
     <string name="Start_ServiceDuelAssistant">开启决斗助手</string>
     <string name="about_DuelAssistant">复制约战房间号直接加房
-        \n复制“？”+关键词直接查询卡片
         \n复制卡组文本直接保存为卡组并在卡组编辑打开它</string>
     <string name="find_deck_text">检测到卡组文本，是否保存？</string>
     <string name="save_failed_bcos">保存失败，原因为</string>

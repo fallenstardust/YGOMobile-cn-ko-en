@@ -4,6 +4,7 @@ package com.ourygo.assistant.util;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
@@ -143,6 +144,7 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                     return false;
             }
             onJoinRoom(null, 0, message.substring(start, end), id);
+            return true;
         }
         return false;
     }
@@ -226,8 +228,13 @@ public class DuelAssistantManagement implements OnClipChangedListener {
             lastMessage = clipMessage;
         } else if (roomCheck(clipMessage, id)) {
             lastMessage = clipMessage;
-        } else if (cardSearchCheck(clipMessage, id))
-            lastMessage = clipMessage;
+        }
+//        else if (cardSearchCheck(clipMessage, id))
+//            lastMessage = clipMessage;
+    }
+
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
     }
 
     public void checkClip(int id) {

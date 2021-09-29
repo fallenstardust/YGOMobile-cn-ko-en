@@ -39,6 +39,7 @@ import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.ourygo.assistant.service.DuelAssistantService;
+import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -801,17 +802,18 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         ImageView iv_image = viewDialog.findViewById(R.id.iv_image);
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
-        EditText et_code = viewDialog.findViewById(R.id.et_code);
-        et_code.setText(mDeckAdapater.getDeckInfo().toDeck().toAppUri().toString());
+        TextView tv_code = viewDialog.findViewById(R.id.et_code);
+        tv_code.setText(mDeckAdapater.getDeckInfo().toDeck().toAppUri().toString());
         ImageUtil.setImage(this, savePath, iv_image);
 
         bt_code_share.setOnClickListener(v -> {
             du.dis();
-            stopService(new Intent(this, DuelAssistantService.class));
-            YGOUtil.copyMessage(this, et_code.getText().toString().trim());
+//            stopService(new Intent(this, DuelAssistantService.class));
+            YGOUtil.copyMessage(this, tv_code.getText().toString().trim());
+            DuelAssistantManagement.getInstance().setLastMessage(tv_code.getText().toString().trim());
             showToast(getString(R.string.deck_text_copyed));
             //复制完毕开启决斗助手
-            YGOUtil.startDuelService(this);
+//            YGOUtil.startDuelService(this);
 
         });
 

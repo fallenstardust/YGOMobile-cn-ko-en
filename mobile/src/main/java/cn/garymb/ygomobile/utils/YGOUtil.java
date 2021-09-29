@@ -69,11 +69,11 @@ public class YGOUtil {
     }
 
     public static void startDuelService(Context context) {
-        if (AppsSettings.get().isServiceDuelAssistant()) {
-            if (!Util.startDuelService(context)) {
-                getNotificationPermissionDialog(context).show();
-            }
-        }
+//        if (AppsSettings.get().isServiceDuelAssistant()) {
+//            if (!Util.startDuelService(context)) {
+//                getNotificationPermissionDialog(context).show();
+//            }
+//        }
     }
 
 

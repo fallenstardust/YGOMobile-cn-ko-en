@@ -192,11 +192,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
-                    if (checkBoxPreference.isChecked()) {
-                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
-                    } else {
-                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
-                    }
+//                    if (checkBoxPreference.isChecked()) {
+//                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
+//                    } else {
+//                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
+//                    }
                 }
                 return true;
             }
