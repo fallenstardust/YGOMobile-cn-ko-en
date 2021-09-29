@@ -39,8 +39,8 @@ public class Deck implements Parcelable {
             return new Deck[size];
         }
     };
-    private static final int YGO_PROTOCOL_0 = 0;
-    private static final int YGO_PROTOCOL_1 = 1;
+    private static final int YGO_DECK_PROTOCOL_0 = 0;
+    private static final int YGO_DECK_PROTOCOL_1 = 1;
     private static final String CARD_DIVIDE_ID = "_";
     private static final String CARD_DIVIDE_NUM = "*";
 
@@ -58,8 +58,7 @@ public class Deck implements Parcelable {
 
     public Deck(String name, Uri uri) {
         this(name);
-        Log.e("DeckUU", "Uri:" + uri);
-        int version = YGO_PROTOCOL_0;
+        int version = YGO_DECK_PROTOCOL_0;
 
         try {
             String ygoType = uri.getQueryParameter(QUERY_YGO_TYPE);
@@ -67,7 +66,7 @@ public class Deck implements Parcelable {
                 version = Integer.parseInt(uri.getQueryParameter(QUERY_VERSION));
             }
         } catch (Exception exception) {
-            version = YGO_PROTOCOL_0;
+            version = YGO_DECK_PROTOCOL_0;
         }
         String main = null, extra = null, side = null;
 
@@ -75,81 +74,53 @@ public class Deck implements Parcelable {
         List<String> eList = new ArrayList<>();
         List<String> sList = new ArrayList<>();
 
+        String[] mains, extras, sides;
+
         switch (version) {
-            case YGO_PROTOCOL_0:
-                try {
-                    main = uri.getQueryParameter(QUERY_MAIN_ALL);
-                    String[] mains = main.split(CARD_DIVIDE_ID);
-                    mList.addAll(Arrays.asList(mains));
-                } catch (Exception ignored) {
-                }
+            case YGO_DECK_PROTOCOL_0:
+                main = uri.getQueryParameter(QUERY_MAIN_ALL);
+                extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
+                side = uri.getQueryParameter(QUERY_SIDE_ALL);
 
-                try {
-                    extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
-                    String[] extras = extra.split(CARD_DIVIDE_ID);
-                    eList.addAll(Arrays.asList(extras));
-                } catch (Exception ignored) {
-                }
+                mains = main.split(CARD_DIVIDE_ID);
+                mList.addAll(Arrays.asList(mains));
 
-                try {
-                    side = uri.getQueryParameter(QUERY_SIDE_ALL);
-                    String[] sides = side.split(CARD_DIVIDE_ID);
-                    sList.addAll(Arrays.asList(sides));
-                } catch (Exception ignored) {
-                }
+                extras = extra.split(CARD_DIVIDE_ID);
+                eList.addAll(Arrays.asList(extras));
 
-
+                sides = side.split(CARD_DIVIDE_ID);
+                sList.addAll(Arrays.asList(sides));
                 break;
-            case YGO_PROTOCOL_1:
-                try {
-                    main = uri.getQueryParameter(QUERY_MAIN);
-                    for (int i = 0; i < main.length() / 6; i++)
-                        mList.add(main.substring(i * 6, i * 6 + 6));
+            case YGO_DECK_PROTOCOL_1:
+                main = uri.getQueryParameter(QUERY_MAIN);
+                extra = uri.getQueryParameter(QUERY_EXTRA);
+                side = uri.getQueryParameter(QUERY_SIDE);
 
-                } catch (Exception e) {
-                }
+                for (int i = 0; i < main.length() / 6; i++)
+                    mList.add(main.substring(i * 6, i * 6 + 6));
 
-                try {
-                    extra = uri.getQueryParameter(QUERY_EXTRA);
-                    for (int i = 0; i < extra.length() / 6; i++)
-                        eList.add(extra.substring(i * 6, i * 6 + 6));
-                } catch (Exception e) {
-                }
+                for (int i = 0; i < extra.length() / 6; i++)
+                    eList.add(extra.substring(i * 6, i * 6 + 6));
 
-                try {
-                    side = uri.getQueryParameter(QUERY_SIDE);
-                    for (int i = 0; i < side.length() / 6; i++)
-                        sList.add(side.substring(i * 6, i * 6 + 6));
-                } catch (Exception e) {
-                }
-
-
+                for (int i = 0; i < side.length() / 6; i++)
+                    sList.add(side.substring(i * 6, i * 6 + 6));
                 break;
             default:
-                try {
-                    main = uri.getQueryParameter(QUERY_MAIN_ALL);
-                    String[] mains = main.split(CARD_DIVIDE_ID);
-                    mList.addAll(Arrays.asList(mains));
-                } catch (Exception ignored) {
-                }
+                main = uri.getQueryParameter(QUERY_MAIN_ALL);
+                extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
+                side = uri.getQueryParameter(QUERY_SIDE_ALL);
 
-                try {
-                    extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
-                    String[] extras = extra.split(CARD_DIVIDE_ID);
-                    eList.addAll(Arrays.asList(extras));
-                } catch (Exception ignored) {
-                }
+                mains = main.split(CARD_DIVIDE_ID);
+                mList.addAll(Arrays.asList(mains));
 
-                try {
-                    side = uri.getQueryParameter(QUERY_SIDE_ALL);
-                    String[] sides = side.split(CARD_DIVIDE_ID);
-                    sList.addAll(Arrays.asList(sides));
-                } catch (Exception ignored) {
-                }
+                extras = extra.split(CARD_DIVIDE_ID);
+                eList.addAll(Arrays.asList(extras));
+
+                sides = side.split(CARD_DIVIDE_ID);
+                sList.addAll(Arrays.asList(sides));
         }
 
         for (String m : mList) {
-            Log.e("DeckUU", "Main:" + m);
             int[] idNum = toIdAndNum(m, version);
             if (idNum[0] > 0) {
                 for (int i = 0; i < idNum[1]; i++) {
@@ -206,10 +177,10 @@ public class Deck implements Parcelable {
         int[] idNum;
 
         switch (protocol) {
-            case YGO_PROTOCOL_0:
+            case YGO_DECK_PROTOCOL_0:
                 idNum = toIdAndNum0(m);
                 break;
-            case YGO_PROTOCOL_1:
+            case YGO_DECK_PROTOCOL_1:
                 idNum = toIdAndNum1(m);
                 break;
             default:
@@ -222,7 +193,7 @@ public class Deck implements Parcelable {
     private int[] toIdAndNum1(String m) {
         //元素0为卡密，元素1为卡片数量
         int[] idNum = {0, 1};
-        idNum[0] = toId(m.substring(0, m.length() - 1),YGO_PROTOCOL_1);
+        idNum[0] = toId(m.substring(0, m.length() - 1), YGO_DECK_PROTOCOL_1);
         idNum[1] = Integer.parseInt(m.substring(m.length() - 1));
         return idNum;
     }
@@ -236,9 +207,9 @@ public class Deck implements Parcelable {
             } catch (Exception e) {
 
             }
-            idNum[0] = toId(m.substring(0, m.length() - 2),YGO_PROTOCOL_0);
+            idNum[0] = toId(m.substring(0, m.length() - 2), YGO_DECK_PROTOCOL_0);
         } else {
-            idNum[0] = toId(m,YGO_PROTOCOL_0);
+            idNum[0] = toId(m, YGO_DECK_PROTOCOL_0);
         }
         return idNum;
     }
@@ -385,9 +356,9 @@ public class Deck implements Parcelable {
         if (TextUtils.isEmpty(str)) return 0;
         try {
             switch (version) {
-                case YGO_PROTOCOL_0:
+                case YGO_DECK_PROTOCOL_0:
                     return Integer.parseInt(str);
-                case YGO_PROTOCOL_1:
+                case YGO_DECK_PROTOCOL_1:
                     //如果需要返回40进制码：
                     return unId(str);
                 default:

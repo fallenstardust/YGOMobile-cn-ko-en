@@ -153,7 +153,7 @@
     <string name="no_share_app">공유할 앱이 없습니다.</string>
     <string name="intput_room_name">비밀번호를 입력하세요. (선택 사항)</string>
     <string name="join">입장</string>
-    <string name="quick_join">게임 입장\"</string>
+    <string name="quick_join">게임 입장</string>
     <string name="join_game">게임 입장</string>
     <string name="settings_game_sensor_refresh">인터페이스 새로 고침</string>
     <string name="label_pendulum">펜듈럼 스케일</string>

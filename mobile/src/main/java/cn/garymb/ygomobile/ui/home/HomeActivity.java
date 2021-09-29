@@ -195,7 +195,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     @Override
     public void onJoinRoom(String host,int port,String password, int id) {
         if (id == ID_MAINACTIVITY) {
-            QuickjoinRoom(host,port,password);
+            quickjoinRoom(host,port,password);
         }
     }
 
@@ -617,16 +617,16 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         });
     }
 
-    private void QuickjoinRoom(String host,int port,String password) {
+    public void quickjoinRoom(String host,int port,String password) {
 
         String message;
         if (!TextUtils.isEmpty(host))
             message = getString(R.string.quick_join)
-                    + "IP：" + host
-                    + "端口：" + port
-                    + "密码：" + password;
+                    + "\nIP：" + host
+                    + "\n端口：" + port
+                    + "\n密码：" + password;
         else
-            message = getString(R.string.quick_join) + "\"" + password + "\"";
+            message = getString(R.string.quick_join) + "：\"" + password + "\"";
 
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);

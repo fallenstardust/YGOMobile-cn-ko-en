@@ -201,9 +201,10 @@ public interface Constants {
     String PATH_DECK = "/deck";
     String SCHEME_HTTP = "http";
     String SCHEME_HTTPS = "https";
-    String SCHEME_APP = "ygo";
-    String URI_HOST = "deck";
+    String SCHEME_APP = "http";
+    String URI_HOST = "deck.ourygo.top";
     String URI_DECK = "deck";
+    String URI_ROOM = "room";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";

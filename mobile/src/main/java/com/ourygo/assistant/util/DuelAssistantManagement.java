@@ -2,13 +2,12 @@ package com.ourygo.assistant.util;
 
 
 import android.content.Context;
+import android.net.Uri;
 import android.text.TextUtils;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
+import com.ourygo.assistant.base.listener.OnDeRoomListener;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,59 +90,33 @@ public class DuelAssistantManagement implements OnClipChangedListener {
             int s1 = message.indexOf(m1);
             if (s1 == -1)
                 s1 = message.indexOf(m2);
-            int start=message.lastIndexOf(Record.DECK_URL_PREFIX,s1);
-            if (start==-1)
-                start=message.lastIndexOf(Record.HTTP_URL_PREFIX,s1);
-            if (start==-1)
-                start=message.lastIndexOf(Record.HTTPS_URL_PREFIX,s1);
-            onSaveDeck(message.substring(start + Record.DECK_URL_PREFIX.length()), true, id);
+            int start = message.lastIndexOf(Record.DECK_URL_PREFIX, s1);
+            if (start == -1)
+                start = message.lastIndexOf(Record.HTTP_URL_PREFIX, s1);
+            if (start == -1)
+                start = message.lastIndexOf(Record.HTTPS_URL_PREFIX, s1);
+            if (start != -1)
+                onSaveDeck(message.substring(start + Record.DECK_URL_PREFIX.length()), true, id);
             return true;
         }
         return false;
     }
 
     public boolean roomCheck(String message, int id) {
-        int start = -1;
-        int end = -1;
-        start = message.indexOf(Record.ROOM_PREFIX);
-        if (start != -1) {
-            end = message.indexOf(Record.ROOM_END, start);
-            if (end != -1) {
-                message = message.substring(start, end);
-                JSONObject jsonObject = null;
-                try {
-                    jsonObject = new JSONObject(message);
-                    onJoinRoom(jsonObject.getString(Record.ARG_HOST), jsonObject.getInt(Record.ARG_PORT), jsonObject.getString(Record.ARG_PASSWORD), id);
-                    return true;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }
 
 
-        String passwordPrefixKey = null;
-        for (String s : Record.PASSWORD_PREFIX) {
-            start = message.indexOf(s);
-            passwordPrefixKey = s;
-            if (start != -1) {
-                break;
-            }
-        }
-
-        if (start != -1) {
-            //如果密码含有空格，则以空格结尾
-            end = message.indexOf(" ", start);
-            //如果不含有空格则取片尾所有
-            if (end == -1) {
-                end = message.length();
-            } else {
-                //如果只有密码前缀而没有密码内容则不跳转
-                if (end - start == passwordPrefixKey.length())
-                    return false;
-            }
-            onJoinRoom(null, 0, message.substring(start, end), id);
+        if (message.contains("?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM) || message.contains("&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM)) {
+            String m1 = "?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM;
+            String m2 = "&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM;
+            int s1 = message.indexOf(m1);
+            if (s1 == -1)
+                s1 = message.indexOf(m2);
+            int start = message.lastIndexOf(Record.ROOM_URL_PREFIX, s1);
+            if (start == -1)
+                start = message.lastIndexOf(Record.HTTP_URL_PREFIX, s1);
+            if (start == -1)
+                start = message.lastIndexOf(Record.HTTPS_URL_PREFIX, s1);
+            onJoinRoom(message.substring(start + Record.DECK_URL_PREFIX.length()), id);
             return true;
         }
         return false;
@@ -170,6 +143,14 @@ public class DuelAssistantManagement implements OnClipChangedListener {
             }
         }
         return false;
+    }
+
+    private void onJoinRoom(String roomUrl, int id) {
+        YGODAUtil.deRoomListener(Uri.parse(roomUrl), (host, port, password, exception) -> {
+            if (TextUtils.isEmpty(exception)) {
+                onJoinRoom(host, port, password, id);
+            }
+        });
     }
 
     private void onJoinRoom(String host, int port, String password, int id) {
