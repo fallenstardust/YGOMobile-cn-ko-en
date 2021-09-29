@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
-import com.ourygo.assistant.base.listener.OnDeRoomListener;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 
 import java.util.ArrayList;
@@ -118,6 +117,32 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                 start = message.lastIndexOf(Record.HTTPS_URL_PREFIX, s1);
             onJoinRoom(message.substring(start + Record.DECK_URL_PREFIX.length()), id);
             return true;
+        }
+
+        int start = -1;
+        int end = -1;
+
+        String passwordPrefixKey = null;
+        for (String s : Record.PASSWORD_PREFIX) {
+            start = message.indexOf(s);
+            passwordPrefixKey = s;
+            if (start != -1) {
+                break;
+            }
+        }
+
+        if (start != -1) {
+            //如果密码含有空格，则以空格结尾
+            end = message.indexOf(" ", start);
+            //如果不含有空格则取片尾所有
+            if (end == -1) {
+                end = message.length();
+            } else {
+                //如果只有密码前缀而没有密码内容则不跳转
+                if (end - start == passwordPrefixKey.length())
+                    return false;
+            }
+            onJoinRoom(null, 0, message.substring(start, end), id);
         }
         return false;
     }
