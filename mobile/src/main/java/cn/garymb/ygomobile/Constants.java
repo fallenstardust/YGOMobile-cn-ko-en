@@ -209,6 +209,7 @@ public interface Constants {
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
     String QUERY_MAIN = "m";
+    String QUERY_DECK = "d";
     String QUERY_EXTRA = "e";
     String QUERY_SIDE = "s";
     String QUERY_VERSION="v";

@@ -2,11 +2,9 @@ package cn.garymb.ygomobile.bean;
 
 import static cn.garymb.ygomobile.Constants.ARG_DECK;
 import static cn.garymb.ygomobile.Constants.NUM_40_LIST;
-import static cn.garymb.ygomobile.Constants.QUERY_EXTRA;
+import static cn.garymb.ygomobile.Constants.QUERY_DECK;
 import static cn.garymb.ygomobile.Constants.QUERY_EXTRA_ALL;
-import static cn.garymb.ygomobile.Constants.QUERY_MAIN;
 import static cn.garymb.ygomobile.Constants.QUERY_MAIN_ALL;
-import static cn.garymb.ygomobile.Constants.QUERY_SIDE;
 import static cn.garymb.ygomobile.Constants.QUERY_SIDE_ALL;
 import static cn.garymb.ygomobile.Constants.QUERY_VERSION;
 import static cn.garymb.ygomobile.Constants.QUERY_YDK;
@@ -17,6 +15,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import java.io.File;
@@ -26,6 +25,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class Deck implements Parcelable {
     public static final Creator<Deck> CREATOR = new Creator<Deck>() {
@@ -90,64 +90,96 @@ public class Deck implements Parcelable {
 
                 sides = side.split(CARD_DIVIDE_ID);
                 sList.addAll(Arrays.asList(sides));
+
+                for (String m : mList) {
+                    int[] idNum = toIdAndNum(m, version);
+                    if (idNum[0] > 0) {
+                        for (int i = 0; i < idNum[1]; i++) {
+                            mainlist.add(idNum[0]);
+                        }
+                    }
+                }
+
+                for (String m : eList) {
+                    int[] idNum = toIdAndNum(m, version);
+                    if (idNum[0] > 0) {
+                        for (int i = 0; i < idNum[1]; i++) {
+                            extraList.add(idNum[0]);
+                        }
+                    }
+                }
+
+                for (String m : sList) {
+                    int[] idNum = toIdAndNum(m, version);
+                    if (idNum[0] > 0) {
+                        for (int i = 0; i < idNum[1]; i++) {
+                            sideList.add(idNum[0]);
+                        }
+                    }
+                }
+
                 break;
             case YGO_DECK_PROTOCOL_1:
-                main = uri.getQueryParameter(QUERY_MAIN);
-                extra = uri.getQueryParameter(QUERY_EXTRA);
-                side = uri.getQueryParameter(QUERY_SIDE);
 
-                for (int i = 0; i < main.length() / 6; i++)
-                    mList.add(main.substring(i * 6, i * 6 + 6));
+                String deck = uri.getQueryParameter(QUERY_DECK);
+                deck=deck.replace("-","+");
+                deck=deck.replace("_","/");
+                byte[] bytes = Base64.decode(deck, Base64.NO_WRAP);
+                Log.e("Deck",deck.length()+"字符位数"+bytes.length);
+                String[] bits = new String[bytes.length * 8];
 
-                for (int i = 0; i < extra.length() / 6; i++)
-                    eList.add(extra.substring(i * 6, i * 6 + 6));
+                for (int i = 0; i < bytes.length; i++) {
 
-                for (int i = 0; i < side.length() / 6; i++)
-                    sList.add(side.substring(i * 6, i * 6 + 6));
+                    String b = Integer.toBinaryString(bytes[i]);
+
+                    b = YGOUtil.toNumLength(b, 8);
+                    if (b.length()>8)
+                        b=b.substring(b.length()-8);
+                    if (i<8)
+                    Log.e("Deck",b+"  byte："+bytes[i]);
+                    for (int x = 0; x < 8; x++)
+                        bits[i*8+x] = b.substring(x, x + 1);
+                }
+                bits = YGOUtil.toNumLength(bits, 16);
+
+
+                int mNum = Integer.valueOf(YGOUtil.getArrayString(bits, 0, 8), 2);
+                int eNum = Integer.valueOf(YGOUtil.getArrayString(bits, 8, 12), 2);
+                int sNum = Integer.valueOf(YGOUtil.getArrayString(bits, 12, 16), 2);
+                Log.e("Deck","种类数量"+mNum+" "+eNum+" "+sNum+" ");
+                Log.e("Deck","m："+YGOUtil.getArrayString(bits, 0, 8));
+                Log.e("Deck","e："+YGOUtil.getArrayString(bits, 8, 16));
+                Log.e("Deck","s："+YGOUtil.getArrayString(bits, 16, 24));
+                for (int i = 0; i < mNum; i++) {
+                    int cStart = 16 + (i * 29);
+                    int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
+                    int cardId = Integer.valueOf(YGOUtil.getArrayString(bits, cStart + 2, cStart + 29), 2);
+                    if (i<4)
+                    for (int x = 0; x < cardNum; x++) {
+                        mainlist.add(cardId);
+                    }
+                }
+
+                for (int i = 0; i < eNum; i++) {
+                    int cStart = 16 + mNum * 29 + (i * 29);
+                    int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
+                    int cardId = Integer.valueOf(YGOUtil.getArrayString(bits, cStart + 2, cStart + 29), 2);
+                    for (int x = 0; x < cardNum; x++) {
+                        extraList.add(cardId);
+                    }
+                }
+
+                for (int i = 0; i < sNum; i++) {
+                    int cStart = 16 + mNum * 29 + eNum * 29 + (i * 29);
+                    int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
+                    int cardId = Integer.valueOf(YGOUtil.getArrayString(bits, cStart + 2, cStart + 29), 2);
+                    for (int x = 0; x < cardNum; x++) {
+                        sideList.add(cardId);
+                    }
+                }
                 break;
-            default:
-                main = uri.getQueryParameter(QUERY_MAIN_ALL);
-                extra = uri.getQueryParameter(QUERY_EXTRA_ALL);
-                side = uri.getQueryParameter(QUERY_SIDE_ALL);
-
-                mains = main.split(CARD_DIVIDE_ID);
-                mList.addAll(Arrays.asList(mains));
-
-                extras = extra.split(CARD_DIVIDE_ID);
-                eList.addAll(Arrays.asList(extras));
-
-                sides = side.split(CARD_DIVIDE_ID);
-                sList.addAll(Arrays.asList(sides));
         }
 
-        for (String m : mList) {
-            int[] idNum = toIdAndNum(m, version);
-            if (idNum[0] > 0) {
-                for (int i = 0; i < idNum[1]; i++) {
-                    mainlist.add(idNum[0]);
-                }
-            }
-        }
-
-
-        for (String m : eList) {
-            int[] idNum = toIdAndNum(m, version);
-            if (idNum[0] > 0) {
-                for (int i = 0; i < idNum[1]; i++) {
-                    extraList.add(idNum[0]);
-                }
-            }
-        }
-
-
-        for (String m : sList) {
-            int[] idNum = toIdAndNum(m, version);
-            if (idNum[0] > 0) {
-                for (int i = 0; i < idNum[1]; i++) {
-                    sideList.add(idNum[0]);
-                }
-            }
-        }
 
     }
 
@@ -180,9 +212,6 @@ public class Deck implements Parcelable {
             case YGO_DECK_PROTOCOL_0:
                 idNum = toIdAndNum0(m);
                 break;
-            case YGO_DECK_PROTOCOL_1:
-                idNum = toIdAndNum1(m);
-                break;
             default:
                 idNum = toIdAndNum0(m);
                 break;
@@ -190,13 +219,6 @@ public class Deck implements Parcelable {
         return idNum;
     }
 
-    private int[] toIdAndNum1(String m) {
-        //元素0为卡密，元素1为卡片数量
-        int[] idNum = {0, 1};
-        idNum[0] = toId(m.substring(0, m.length() - 1), YGO_DECK_PROTOCOL_1);
-        idNum[1] = Integer.parseInt(m.substring(m.length() - 1));
-        return idNum;
-    }
 
     private int[] toIdAndNum0(String m) {
         //元素0为卡密，元素1为卡片数量
@@ -232,26 +254,87 @@ public class Deck implements Parcelable {
         }
         uri.appendQueryParameter(QUERY_YGO_TYPE, ARG_DECK);
         uri.appendQueryParameter(Constants.QUERY_VERSION, "1");
-        if (mainlist.size() != 0)
-            uri.appendQueryParameter(Constants.QUERY_MAIN, toString(mainlist));
-        if (extraList.size() != 0)
-            uri.appendQueryParameter(Constants.QUERY_EXTRA, toString(extraList));
-        if (sideList.size() != 0)
-            uri.appendQueryParameter(Constants.QUERY_SIDE, toString(sideList));
+
+//        if (mainlist.size() != 0)
+//            deck+=toString(mainlist);
+//        if (extraList.size() != 0)
+//            deck+=toString(extraList);
+//        if (sideList.size() != 0)
+//            deck+=toString(sideList);
+        int mNum = getTypeNum(mainlist);
+        int eNum = getTypeNum(extraList);
+        int sNum = getTypeNum(sideList);
+
+        String deck = toBit(mainlist, extraList, sideList, mNum, eNum, sNum);
+
+        String m = Integer.toBinaryString(mNum);
+        String e = Integer.toBinaryString(eNum);
+        String s = Integer.toBinaryString(sNum);
+
+        m = YGOUtil.toNumLength(m, 8);
+        e = YGOUtil.toNumLength(e, 4);
+        s = YGOUtil.toNumLength(s, 4);
+
+        Log.e("Deck","分享数量"+mNum+" "+eNum+"  "+sNum);
+
+        deck = m + e + s + deck;
+        byte[] bytes=YGOUtil.toBytes(deck);
+        String message = Base64.encodeToString(bytes, Base64.NO_WRAP);
+Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
+        message=message.replace("+","-");
+        message=message.replace("/","_");
+        message=message.replace("=","");
+        Log.e("Deck","转换后数据"+message);
+        for (int i=0;i<8;i++){
+
+        }
+        uri.appendQueryParameter(QUERY_DECK,message);
+
         return uri.build();
     }
 
-    private String toString(List<Integer> ids) {
-        StringBuilder builder = new StringBuilder();
+    private String toBit(ArrayList<Integer> mainlist, ArrayList<Integer> extraList, ArrayList<Integer> sideList, int mNum, int eNum, int sNum) {
+        String mains = tobyte(mainlist, mNum);
+        String extras = tobyte(extraList, eNum);
+        String sides = tobyte(sideList, sNum);
+        String message = mains+extras+sides;
+        return message;
+    }
+
+    public int getTypeNum(List<Integer> list) {
+        int num = 0;
+        for (int i = 0; i < list.size(); i++) {
+            Integer id = list.get(i);
+            if (id > 0) {
+                num++;
+                //如果是最后一张就不用对比下张卡
+                if (i != list.size() - 1) {
+                    int id1 = list.get(i + 1);
+                    //如果下张是同名卡
+                    if (id1 == id) {
+                        //如果是倒数第二张就不用对比下下张卡
+                        if (i != list.size() - 2) {
+                            id1 = list.get(i + 2);
+                            //如果下下张是同名卡
+                            if (id1 == id) {
+                                i++;
+                            }
+                        }
+                        i++;
+                    }
+                }
+            }
+        }
+        return num;
+    }
+
+    private String tobyte(List<Integer> ids, int typeNum) {
+       String bytes="";
         for (int i = 0; i < ids.size(); i++) {
             Integer id = ids.get(i);
-//            if (i > 0) {
-//                builder.append(CARD_DIVIDE_ID);
-//            }
             if (id > 0) {
-                //如果需要使用十六进制码：
-                builder.append(compressedId(id));
-//                builder.append(id);
+                //转换为29位二进制码
+                String idB = toB(id);
                 //如果是最后一张就不用对比下张卡
                 if (i != ids.size() - 1) {
                     int id1 = ids.get(i + 1);
@@ -272,13 +355,29 @@ public class Deck implements Parcelable {
                         i++;
                     }
                     tNum = Math.min(3, tNum);
-                    builder.append(tNum);
+                    switch (tNum) {
+                        case 1:
+                            idB="01"+idB;
+                            break;
+                        case 2:
+                            idB="10"+idB;
+                            break;
+                        case 3:
+                            idB="11"+idB;
+                            break;
+                    }
                 } else {
-                    builder.append(1);
+                    idB="01"+idB;
                 }
+                bytes+=idB;
             }
         }
-        return builder.toString();
+        return bytes;
+    }
+
+
+    private String toB(int id) {
+        return YGOUtil.toNumLength(Integer.toBinaryString(id), 27);
     }
 
     //压缩卡密,目前直接转换为40进制
