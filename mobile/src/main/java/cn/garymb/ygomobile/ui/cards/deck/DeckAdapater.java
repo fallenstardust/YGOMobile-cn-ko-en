@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
@@ -388,7 +389,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return mLimitList;
     }
 
-    public File getYdkFile(){
+    public @Nullable File getYdkFile(){
         if(mDeckInfo != null){
             return mDeckInfo.source;
         }

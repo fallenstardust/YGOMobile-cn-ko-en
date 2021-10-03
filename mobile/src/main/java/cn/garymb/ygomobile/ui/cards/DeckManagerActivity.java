@@ -1145,9 +1145,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType) {
-        String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
+        File ydk = mDeckAdapater.getYdkFile();
+        if(ydk == null){
+            return;
+        }
+        String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
+            if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
                 loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
                 return;
             }
@@ -1156,9 +1160,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckCopy(List<DeckFile> deckFileList, DeckType toDeckType) {
-        String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
+        File ydk = mDeckAdapater.getYdkFile();
+        if(ydk == null){
+            return;
+        }
+        String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
+            if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
                 loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
                 return;
             }

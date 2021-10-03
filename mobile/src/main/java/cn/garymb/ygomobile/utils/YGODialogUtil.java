@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -128,6 +129,7 @@ public class YGODialogUtil {
                 public void onItemSelect(int position, DeckType item) {
                     clearDeckSelect();
                     deckList.clear();
+                    Log.d("kk-test", "read path"+item.getPath());
                     deckList.addAll(DeckUtil.getDeckList(item.getPath()));
                     if (position == 0) {
                         if (AppsSettings.get().isReadExpansions()) {
@@ -237,7 +239,7 @@ public class YGODialogUtil {
                             List<DeckFile> deckFileList = deckAdp.getSelectList();
                             for (DeckFile deckFile : deckFileList) {
                                 try {
-                                    FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
+                                    FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName() + ".ydk").getPath());
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -267,7 +269,7 @@ public class YGODialogUtil {
                             List<DeckFile> deckFileList = deckAdp.getSelectList();
                             for (DeckFile deckFile : deckFileList) {
                                 try {
-                                    FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
+                                    FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName() + ".ydk").getPath());
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
