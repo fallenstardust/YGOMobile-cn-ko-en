@@ -38,7 +38,6 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.ourygo.assistant.service.DuelAssistantService;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import org.greenrobot.eventbus.EventBus;
@@ -418,6 +417,12 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
+                    }
+
+                    @Override
+                    public void onImageUpdate(Card cardInfo) {
+                        mDeckAdapater.notifyItemChanged(cardInfo);
+                        mCardListAdapter.notifyItemChanged(cardInfo);
                     }
 
                     @Override

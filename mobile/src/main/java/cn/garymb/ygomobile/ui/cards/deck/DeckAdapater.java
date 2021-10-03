@@ -190,7 +190,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     @Override
-    public Card getCard(int posotion) {
+    public @Nullable Card getCard(int posotion) {
         int count = mMainCount;
         int index = 0;
         if (posotion < count) {
@@ -476,6 +476,16 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     public void addItem(DeckItem deckItem) {
         addCount(deckItem.getCardInfo(), deckItem.getType());
         mItems.add(deckItem);
+    }
+
+    public void notifyItemChanged(Card card){
+        for (int i = 0; i < getItemCount(); i++) {
+            DeckItem item = getItem(i);
+            Card c = item.getCardInfo();
+            if (c != null && c.Code == card.Code) {
+                notifyItemChanged(i);
+            }
+        }
     }
 
     public void addItem(int pos, DeckItem deckItem) {

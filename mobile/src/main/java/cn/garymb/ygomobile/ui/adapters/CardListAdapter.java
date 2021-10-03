@@ -1,10 +1,13 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
@@ -63,6 +66,14 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         return false;
     }
 
+    public void notifyItemChanged(Card card) {
+        for (int i = 0; i < getItemCount(); i++) {
+            if (getCard(i).Code == card.Code) {
+                notifyItemChanged(i);
+            }
+        }
+    }
+
     public void hideMenu(View view) {
         if (view == null) {
             view = mShowMenuView;
@@ -88,6 +99,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         }
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = inflate(R.layout.item_search_card_swipe, parent, false);
@@ -100,8 +112,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Card item = getItem(position);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Card item = getCard(position);
         if(item == null){
             return;
         }
