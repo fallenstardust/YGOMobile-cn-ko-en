@@ -32,6 +32,9 @@ public class DeckFile extends TextSelect {
     public String getName() {
         return name;
     }
+    public String getFileName(){
+        return new File(path).getName();
+    }
 
     public void setName(String name) {
         this.name = name;
