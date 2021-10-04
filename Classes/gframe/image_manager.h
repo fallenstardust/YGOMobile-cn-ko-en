@@ -80,6 +80,8 @@ public:
     std::list<std::string> support_types;
 };
 
+extern ImageManager imageManager;
+
 }
 
 #endif // IMAGEMANAGER_H

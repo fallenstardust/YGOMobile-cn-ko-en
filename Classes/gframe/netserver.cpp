@@ -1,7 +1,6 @@
 #include "netserver.h"
 #include "single_duel.h"
 #include "tag_duel.h"
-#include "game.h"
 
 namespace ygo {
 std::unordered_map<bufferevent*, DuelPlayer> NetServer::users;
@@ -239,14 +238,14 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, char* data, unsigned int len) {
 		if(pkt->info.mode > 2)
 			pkt->info.mode = 0;
 		unsigned int hash = 1;
-		for(auto lfit = mainGame->deckManager->_lfList.begin(); lfit != mainGame->deckManager->_lfList.end(); ++lfit) {
+		for(auto lfit = deckManager._lfList.begin(); lfit != deckManager._lfList.end(); ++lfit) {
 			if(pkt->info.lflist == lfit->hash) {
 				hash = pkt->info.lflist;
 				break;
 			}
 		}
 		if(hash == 1)
-			pkt->info.lflist = mainGame->deckManager->_lfList[0].hash;
+			pkt->info.lflist = deckManager._lfList[0].hash;
 #ifdef _IRR_ANDROID_PLATFORM_
         HostInfo tmp;
         memcpy(&tmp, &pkt->info, sizeof(struct HostInfo));
