@@ -46,9 +46,9 @@ int main(int argc, char* argv[]) {
 #endif
 	evthread_use_pthreads();
 	auto game = new ygo::Game;
-	if(ygo::mainGame != nullptr){
-	    delete ygo::mainGame;
-    }
+//	if(ygo::mainGame != nullptr){
+//	    delete ygo::mainGame;
+//    }
 	ygo::mainGame = game;
 #ifdef _IRR_ANDROID_PLATFORM_
     android::InitOptions *options = android::getInitOptions(app);
