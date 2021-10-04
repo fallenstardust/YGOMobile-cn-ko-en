@@ -73,25 +73,8 @@ public class CardFavorites {
 
     public void load() {
         mList.clear();
-        File config = AppsSettings.get().getFavoriteFile();
         List<String> lines;
-        if (config.exists()) {
-            //重命名
-            if (!config.renameTo(AppsSettings.get().getSystemConfig())) {
-                Log.w(TAG, "copy txt to conf");
-                try {
-                    FileUtils.copyFile(AppsSettings.get().getFavoriteFile().getPath(), AppsSettings.get().getSystemConfig().getPath());
-                } catch (IOException e) {
-                    //TODO 复制失败，直接删除?
-                    FileUtils.deleteFile(AppsSettings.get().getFavoriteFile());
-                }
-            } else {
-                Log.d(TAG, "rename txt to conf");
-            }
-            config = AppsSettings.get().getSystemConfig();
-        } else {
-            config = AppsSettings.get().getSystemConfig();
-        }
+        File config = AppsSettings.get().getSystemConfig();
         if (!config.exists()) {
             Log.w(TAG, "config is no exists:" + config.getPath());
             return;
