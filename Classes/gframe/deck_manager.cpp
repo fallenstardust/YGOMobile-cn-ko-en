@@ -6,6 +6,8 @@
 
 namespace ygo {
 
+DeckManager deckManager;
+
 void DeckManager::LoadLFListSingle(const char* path) {
 	LFList* cur = nullptr;
 	FILE* fp = fopen(path, "r");
@@ -61,7 +63,7 @@ const wchar_t* DeckManager::GetLFListName(int lfhash) {
 	});
 	if(lit != _lfList.end())
 		return lit->listName.c_str();
-	return mainGame->dataManager->unknown_string;
+	return dataManager.unknown_string;
 }
 std::unordered_map<int, int>* DeckManager::GetLFListContent(int lfhash) {
 	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
@@ -147,7 +149,7 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec) {
 	CardData cd;
 	for(int i = 0; i < mainc; ++i) {
 		code = dbuf[i];
-		if(!mainGame->dataManager->GetData(code, &cd)) {
+		if(!dataManager.GetData(code, &cd)) {
 			errorcode = code;
 			continue;
 		}
@@ -156,21 +158,21 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec) {
 		else if(cd.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)) {
 			if(deck.extra.size() >= 15)
 				continue;
-			deck.extra.push_back(mainGame->dataManager->GetCodePointer(code));	//verified by GetData()
+			deck.extra.push_back(dataManager.GetCodePointer(code));	//verified by GetData()
 		} else if(deck.main.size() < 60) {
-			deck.main.push_back(mainGame->dataManager->GetCodePointer(code));
+			deck.main.push_back(dataManager.GetCodePointer(code));
 		}
 	}
 	for(int i = 0; i < sidec; ++i) {
 		code = dbuf[mainc + i];
-		if(!mainGame->dataManager->GetData(code, &cd)) {
+		if(!dataManager.GetData(code, &cd)) {
 			errorcode = code;
 			continue;
 		}
 		if(cd.type & TYPE_TOKEN)
 			continue;
 		if(deck.side.size() < 15)
-			deck.side.push_back(mainGame->dataManager->GetCodePointer(code));	//verified by GetData()
+			deck.side.push_back(dataManager.GetCodePointer(code));	//verified by GetData()
 	}
 	return errorcode;
 }

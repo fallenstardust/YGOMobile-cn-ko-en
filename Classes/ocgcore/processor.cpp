@@ -2622,7 +2622,7 @@ int32 field::process_battle_command(uint16 step) {
 		if(!core.units.begin()->arg1) {
 			core.phase_action = TRUE;
 			core.attack_state_count[infos.turn_player]++;
-			check_card_counter(core.attacker, 5, infos.turn_player);
+			check_card_counter(core.attacker, ACTIVITY_ATTACK, infos.turn_player);
 			core.attacker->attack_announce_count++;
 		}
 		if(core.units.begin()->arg3) {//attack announce failed
@@ -3236,7 +3236,7 @@ int32 field::process_damage_step(uint16 step, uint32 new_attack) {
 		if(new_attack) {
 			core.attack_state_count[infos.turn_player]++;
 			core.battled_count[infos.turn_player]++;
-			check_card_counter(core.attacker, 5, infos.turn_player);
+			check_card_counter(core.attacker, ACTIVITY_ATTACK, infos.turn_player);
 		}
 		core.attacker->announced_cards.addcard(core.attack_target);
 		attack_all_target_check();
@@ -3420,7 +3420,7 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 					}
 					effect_set eset;
 					core.attacker->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
-					core.attack_target->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					core.attack_target->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 					filter_player_effect(pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 					filter_player_effect(1 - pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 					eset.sort();
@@ -3540,7 +3540,7 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 		effect_set eset;
 		reason_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 		if(dam_card)
-			dam_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+			dam_card->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 		filter_player_effect(damp, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 		filter_player_effect(1 - damp, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 		eset.sort();

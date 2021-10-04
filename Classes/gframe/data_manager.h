@@ -64,6 +64,8 @@ public:
 	static IFileSystem* FileSystem;
 };
 
+extern DataManager dataManager;
+
 }
 
 #endif // DATAMANAGER_H

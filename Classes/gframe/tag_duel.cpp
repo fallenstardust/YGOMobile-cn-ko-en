@@ -226,7 +226,7 @@ void TagDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 			if(deck_error[dp->type]) {
 				deckerror = (DECKERROR_UNKNOWNCARD << 28) + deck_error[dp->type];
 			} else {
-				deckerror = mainGame->deckManager->CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
+				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
 			}
 		}
 		if(deckerror) {
@@ -269,7 +269,7 @@ void TagDuel::UpdateDeck(DuelPlayer* dp, void* pdata, unsigned int len) {
 		NetServer::SendPacketToPlayer(dp, STOC_ERROR_MSG, scem);
 		return;
 	}
-	deck_error[dp->type] = mainGame->deckManager->LoadDeck(pdeck[dp->type], (int*)deckbuf, mainc, sidec);
+	deck_error[dp->type] = deckManager.LoadDeck(pdeck[dp->type], (int*)deckbuf, mainc, sidec);
 }
 void TagDuel::StartDuel(DuelPlayer* dp) {
 	if(dp != host_player)

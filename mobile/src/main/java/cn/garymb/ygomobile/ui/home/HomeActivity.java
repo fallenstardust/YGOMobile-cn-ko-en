@@ -166,7 +166,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
 
     @Override
     protected void onStop() {
-        mImageLoader.clearZipCache();
+        //mImageLoader.clearZipCache();
         super.onStop();
     }
 
