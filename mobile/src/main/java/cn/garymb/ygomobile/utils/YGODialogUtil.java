@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -216,23 +217,19 @@ public class YGODialogUtil {
             }
         });
 
-        ll_move.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<DeckType> otherType = getOtherTypeList();
+        ll_move.setOnClickListener(v -> {
+            List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl(context.getString(please_select_target_category),
-                        getStringType(otherType),
-                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            du.dialogl(context.getString(please_select_target_category),
+                    getStringType(otherType),
+                    R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
                         du.dis();
                         DeckType toType = otherType.get(position);
                         IOUtils.createFolder(new File(toType.getPath()));
                         List<DeckFile> deckFileList = deckAdp.getSelectList();
                         for (DeckFile deckFile : deckFileList) {
                             try {
-                                FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
+                                FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -241,28 +238,22 @@ public class YGODialogUtil {
                         YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
                         clearDeckSelect();
-                    }
-                });
-            }
+                    });
         });
 
-        ll_copy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<DeckType> otherType = getOtherTypeList();
+        ll_copy.setOnClickListener(v -> {
+            List<DeckType> otherType = getOtherTypeList();
 
-                du.dialogl(context.getString(please_select_target_category),
-                        getStringType(otherType),
-                        R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            du.dialogl(context.getString(please_select_target_category),
+                    getStringType(otherType),
+                    R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
                         du.dis();
                         DeckType toType = otherType.get(position);
                         IOUtils.createFolder(new File(toType.getPath()));
                         List<DeckFile> deckFileList = deckAdp.getSelectList();
                         for (DeckFile deckFile : deckFileList) {
                             try {
-                                FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName()).getPath());
+                                FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -270,9 +261,7 @@ public class YGODialogUtil {
                         YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
                         clearDeckSelect();
-                    }
-                });
-            }
+                    });
         });
 
         ll_del.setOnClickListener(new View.OnClickListener() {

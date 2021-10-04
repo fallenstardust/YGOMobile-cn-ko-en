@@ -19,12 +19,14 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class Deck implements Parcelable {
@@ -146,15 +148,23 @@ public class Deck implements Parcelable {
                 int mNum = Integer.valueOf(YGOUtil.getArrayString(bits, 0, 8), 2);
                 int eNum = Integer.valueOf(YGOUtil.getArrayString(bits, 8, 12), 2);
                 int sNum = Integer.valueOf(YGOUtil.getArrayString(bits, 12, 16), 2);
+                try {
+                    FileLogUtil.write("种类数量"+mNum+" "+eNum+" "+sNum+" ");
+                    FileLogUtil.write("m："+YGOUtil.getArrayString(bits, 0, 8));
+                    FileLogUtil.write("s："+YGOUtil.getArrayString(bits, 8, 12));
+                    FileLogUtil.write("e："+YGOUtil.getArrayString(bits, 12, 16));
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 Log.e("Deck","种类数量"+mNum+" "+eNum+" "+sNum+" ");
                 Log.e("Deck","m："+YGOUtil.getArrayString(bits, 0, 8));
-                Log.e("Deck","e："+YGOUtil.getArrayString(bits, 8, 16));
-                Log.e("Deck","s："+YGOUtil.getArrayString(bits, 16, 24));
+                Log.e("Deck","e："+YGOUtil.getArrayString(bits, 8, 12));
+                Log.e("Deck","s："+YGOUtil.getArrayString(bits, 12, 16));
                 for (int i = 0; i < mNum; i++) {
                     int cStart = 16 + (i * 29);
                     int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
                     int cardId = Integer.valueOf(YGOUtil.getArrayString(bits, cStart + 2, cStart + 29), 2);
-                    if (i<4)
                     for (int x = 0; x < cardNum; x++) {
                         mainlist.add(cardId);
                     }
