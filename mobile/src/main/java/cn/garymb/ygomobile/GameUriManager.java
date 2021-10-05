@@ -113,7 +113,8 @@ public class GameUriManager {
             }
             return new File(dir, "tmp_" + System.currentTimeMillis() + ".ydk");
         } else {
-            IOUtils.createFolder(dir);
+           IOUtils.createFolder(dir);
+           file=new File(dir,name+".ydk");
         }
         return file;
     }
@@ -196,6 +197,7 @@ public class GameUriManager {
     }
 
     private void doUri(Uri uri) {
+
         Intent startSeting = new Intent(activity, SettingsActivity.class);
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
