@@ -99,9 +99,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mStatusView = navHead.findViewById(R.id.tv_dp);
         //mWebViewPlus.enableHtml5();
 
-        tv_back_mc.setOnClickListener(view->{
-            mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
-        });
+        tv_back_mc.setOnClickListener(view-> onHome());
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
