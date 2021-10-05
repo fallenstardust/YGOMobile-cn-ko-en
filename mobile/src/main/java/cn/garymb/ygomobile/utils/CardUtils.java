@@ -14,6 +14,11 @@ public class CardUtils {
         if (card.isType(CardType.Spell)) {
             for (CardType type : cardTypes) {
                 if (card.isType(type)) {
+                    if (!isFrst) {
+                        stringBuilder.append("|");
+                    } else {
+                        isFrst = false;
+                    }
                     stringBuilder.append(stringManager.getTypeString(type.getId()));
 //                    break;
                 }
@@ -22,6 +27,11 @@ public class CardUtils {
         } else if (card.isType(CardType.Trap)) {
             for (CardType type : cardTypes) {
                 if (card.isType(type)) {
+                    if (!isFrst) {
+                        stringBuilder.append("|");
+                    } else {
+                        isFrst = false;
+                    }
                     stringBuilder.append(stringManager.getTypeString(type.getId()));
                 }
 //                break;
