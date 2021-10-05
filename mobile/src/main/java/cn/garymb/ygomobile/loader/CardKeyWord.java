@@ -18,7 +18,7 @@ public class CardKeyWord {
     public CardKeyWord(String word) {
         this.word = word;
         if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word)) {
+            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
                 //搜索卡密
                 filterList.add(new CodeFilter(Long.parseLong(word)));
             } else {
