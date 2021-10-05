@@ -39,7 +39,7 @@ android {
     }
     buildTypes {
         debug {
-            debuggable true
+            debuggable false
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
