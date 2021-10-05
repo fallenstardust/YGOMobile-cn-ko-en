@@ -40,6 +40,8 @@ public class MyCard {
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
     private static final String mCommunityUrl = "https://ygobbs.com/login";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
+    private static final String HOST_MC = "mycard.moe";
+    private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
     private final User mUser = new User();
@@ -123,6 +125,14 @@ public class MyCard {
 
     public String getBBSUrl() {
         return mCommunityUrl;
+    }
+
+    public String getMcHost() {
+        return HOST_MC;
+    }
+
+    public String getMcMainUrl() {
+        return MC_MAIN_URL;
     }
 
     @SuppressLint("AddJavascriptInterface")

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -67,6 +68,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         }
     };
     private ProgressBar mProgressBar;
+    private TextView tv_back_mc;
     private ValueCallback<Uri> uploadMessage;
     private ValueCallback<Uri[]> mUploadCallbackAboveL;
 
@@ -86,6 +88,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mWebViewPlus = $(R.id.webbrowser);
         mDrawerlayout = $(R.id.drawer_layout);
         mProgressBar = $(R.id.progressBar);
+        tv_back_mc = $(R.id.tv_back_mc);
         mProgressBar.setMax(100);
 
         NavigationView navigationView = $(R.id.nav_main);
@@ -95,6 +98,10 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
         mNameView = navHead.findViewById(R.id.tv_name);
         mStatusView = navHead.findViewById(R.id.tv_dp);
         //mWebViewPlus.enableHtml5();
+
+        tv_back_mc.setOnClickListener(view->{
+            mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
+        });
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -109,6 +116,10 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
             public void onProgressChanged(WebView view, int newProgress) {
                 if (newProgress == 100) {
                     mProgressBar.setVisibility(View.GONE);
+                    if (view.getUrl().contains(mMyCard.getMcHost()))
+                        tv_back_mc.setVisibility(View.GONE);
+                    else
+                        tv_back_mc.setVisibility(View.VISIBLE);
                 } else {
                     if (View.GONE == mProgressBar.getVisibility()) {
                         mProgressBar.setVisibility(View.VISIBLE);
@@ -193,6 +204,10 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
     protected void onBackHome() {
         if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
             closeDrawer();
+            return;
+        }
+        if (mWebViewPlus.getUrl().equals(mMyCard.getMcMainUrl())) {
+            finish();
             return;
         }
         if (mWebViewPlus.canGoBack()) {
