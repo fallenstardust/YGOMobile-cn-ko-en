@@ -3,6 +3,8 @@ package cn.garymb.ygomobile.loader;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,33 +20,32 @@ public class CardKeyWord {
     public CardKeyWord(String word) {
         this.word = word;
         if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word)) {
+            if (TextUtils.isDigitsOnly(word) && word.length() > 5) {
                 //搜索卡密
                 filterList.add(new CodeFilter(Long.parseLong(word)));
-            } else {
-                String[] ws = word.split(" ");
-                for (String w : ws) {
-                    if (TextUtils.isEmpty(w)) {
-                        continue;
-                    }
-                    boolean exclude = false;
-                    if (w.startsWith("-")) {
-                        exclude = true;
+            }
+            String[] ws = word.split(" ");
+            for (String w : ws) {
+                if (TextUtils.isEmpty(w)) {
+                    continue;
+                }
+                boolean exclude = false;
+                if (w.startsWith("-")) {
+                    exclude = true;
+                    w = w.substring(1);
+                }
+                boolean onlyText = false;
+                if (w.startsWith("\"") || w.startsWith("“") || w.startsWith("”")) {
+                    //只搜索文字
+                    onlyText = true;
+                    if (w.endsWith("\"") || w.endsWith("“") || w.endsWith("”")) {
+                        w = w.substring(1, w.length() - 1);
+                    } else {
                         w = w.substring(1);
                     }
-                    boolean onlyText = false;
-                    if (w.startsWith("\"") || w.startsWith("“") || w.startsWith("”")) {
-                        //只搜索文字
-                        onlyText = true;
-                        if (w.endsWith("\"") || w.endsWith("“") || w.endsWith("”")) {
-                            w = w.substring(1, w.length() - 1);
-                        } else {
-                            w = w.substring(1);
-                        }
-                    }
-                    Log.d(TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
-                    filterList.add(new NameFilter(w, exclude, onlyText));
                 }
+                Log.d(TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
+                filterList.add(new NameFilter(w, exclude, onlyText));
             }
         }
         empty = filterList.size() == 0;
@@ -72,10 +73,10 @@ public class CardKeyWord {
         private final long setcode;
 
         //包含系列，或者包含名字、描述
-        public NameFilter(String word, boolean exclude, boolean onlyText) {
+        public NameFilter(@NonNull String word, boolean exclude, boolean onlyText) {
             this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word);
             this.exclude = exclude;
-            this.word = word;
+            this.word = word.toLowerCase();
             if(this.setcode > 0){
                 Log.d(TAG, "filter:setcode=" + setcode + ", exclude=" + exclude + ", word=" + word);
             }

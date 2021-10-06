@@ -153,11 +153,11 @@ public class Card extends CardData implements Parcelable {
     }
 
     public boolean containsName(String key){
-        return Name != null && Name.contains(key);
+        return Name != null && Name.toLowerCase().contains(key);
     }
 
     public boolean containsDesc(String key){
-        return Desc != null && Desc.contains(key);
+        return Desc != null && Desc.toLowerCase().contains(key);
     }
 
     /**
