@@ -1,7 +1,6 @@
 #include "netserver.h"
 #include "single_duel.h"
 #include "tag_duel.h"
-#include "game.h"
 
 namespace ygo {
 std::unordered_map<bufferevent*, DuelPlayer> NetServer::users;

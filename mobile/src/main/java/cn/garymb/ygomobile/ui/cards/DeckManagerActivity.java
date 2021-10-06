@@ -1122,7 +1122,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckSelect(DeckFile deckFile) {
-        loadDeckFromFile(new File(deckFile.getPath()));
+        loadDeckFromFile(deckFile.getPathFile());
     }
 
     @Override
@@ -1132,7 +1132,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             return;
         String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
+            if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;
                 if (files != null && files.size() > 0) {
@@ -1157,7 +1157,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
             if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
-                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
+                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getFileName()));
                 return;
             }
         }
@@ -1172,7 +1172,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
             if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
-                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
+                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getFileName()));
                 return;
             }
         }

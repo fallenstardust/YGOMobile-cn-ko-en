@@ -83,14 +83,14 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
                 ygo::mainGame->playBGM();
 			}
             break;
-        case APP_CMD_INIT_WINDOW:
-        case APP_CMD_WINDOW_RESIZED:
 		case APP_CMD_STOP:
+        case APP_CMD_INIT_WINDOW:
         case APP_CMD_SAVE_STATE:
         case APP_CMD_TERM_WINDOW:
         case APP_CMD_GAINED_FOCUS:
         case APP_CMD_LOST_FOCUS:
         case APP_CMD_DESTROY:
+        case APP_CMD_WINDOW_RESIZED:
         default:
             break;
     }
@@ -131,7 +131,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
-	soundManager = Utils::make_unique<SoundManager>();
 
 	dataManager.FileSystem = device->getFileSystem();
     ((CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
@@ -1199,6 +1198,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnCancelOrFinish = env->addButton(rect<s32>(200 * yScale, 205 * yScale, 310 * yScale, 255 * yScale), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
         ChangeToIGUIImageButton(btnCancelOrFinish, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnCancelOrFinish->setVisible(false);
+	soundManager = Utils::make_unique<SoundManager>();
 	if(!soundManager->Init((double)gameConf.sound_volume / 100, (double)gameConf.music_volume / 100, gameConf.enable_sound, gameConf.enable_music, nullptr)) {
 		chkEnableSound->setChecked(false);
 		chkEnableSound->setEnabled(false);
@@ -2079,7 +2079,7 @@ void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITe
     button->setOverrideFont(font);
 }
 
-void Game::OnGameClose() const {
+void Game::OnGameClose() {
 	android::onGameExit(appMain);
     this->device->closeDevice();
 }

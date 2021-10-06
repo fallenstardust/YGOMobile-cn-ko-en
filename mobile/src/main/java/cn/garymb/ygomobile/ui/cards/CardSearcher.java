@@ -26,7 +26,6 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.widget.SearchableSpinner;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -56,7 +55,7 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner typeMonsterSpinner2;
     private final Spinner typeSpellSpinner;
     private final Spinner typeTrapSpinner;
-    private final SearchableSpinner setCodeSpinner;
+    private final Spinner setCodeSpinner;
     private final Spinner categorySpinner;
     private final Spinner raceSpinner;
     private final Spinner levelSpinner;
@@ -441,7 +440,7 @@ public class CardSearcher implements View.OnClickListener {
     private void initSetNameSpinners(Spinner spinner) {
         List<CardSet> setnames = mStringManager.getCardSets();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, mContext.getString(R.string.label_set)));
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_set)));
         for (CardSet set : setnames) {
             items.add(new SimpleSpinnerItem(set.getCode(), set.getName()));
         }

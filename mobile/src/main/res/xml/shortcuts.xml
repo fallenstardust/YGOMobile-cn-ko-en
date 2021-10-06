@@ -12,6 +12,7 @@
             android:action="android.intent.action.VIEW"
             android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
             android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -25,6 +26,7 @@
             android:action="android.intent.action.VIEW"
             android:targetClass="cn.garymb.ygomobile.ui.cards.CardSearchActivity"
             android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -38,5 +40,6 @@
             android:action="android.intent.action.VIEW"
             android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
             android:targetPackage="cn.garymb.ygomobile" />
+        <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>

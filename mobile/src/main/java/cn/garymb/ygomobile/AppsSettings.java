@@ -687,10 +687,4 @@ public class AppsSettings {
 //        Log.i("kk", "saveTemp:" + array);
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
     }
-
-    @Deprecated
-    //获取收藏文件
-    public File getFavoriteFile() {
-        return new File(getResourcePath(), "/favorite.txt");
-    }
 }

@@ -10,33 +10,20 @@ public class CardUtils {
     public static String getAllTypeString(Card card, StringManager stringManager) {
         StringBuilder stringBuilder = new StringBuilder();
         CardType[] cardTypes = CardType.values();
-        if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
-            for (CardType type : cardTypes) {
-                if(type == CardType.Spell || type == CardType.Trap){
-                    continue;
+        boolean isFirst = true;
+        for (CardType type : cardTypes) {
+            if (card.isType(type)) {
+                if (!isFirst) {
+                    stringBuilder.append("/");
+                } else {
+                    isFirst = false;
                 }
-                if (card.isType(type)) {
-                    stringBuilder.append(stringManager.getTypeString(type.getId()));
-                }
-            }
-            //先显示速攻，后显示魔法
-            stringBuilder.append(stringManager.getTypeString(CardType.Spell.getId()));
-        } else {
-            boolean isFrst = true;
-            for (CardType type : cardTypes) {
-                if (card.isType(type)) {
-                    if (!isFrst) {
-                        stringBuilder.append("/");
-                    } else {
-                        isFrst = false;
-                    }
-                    String str = stringManager.getTypeString(type.getId());
-                    if (TextUtils.isEmpty(str)) {
-                        stringBuilder.append("0x");
-                        stringBuilder.append(String.format("%X", type.getId()));
-                    } else {
-                        stringBuilder.append(str);
-                    }
+                String str = stringManager.getTypeString(type.getId());
+                if (TextUtils.isEmpty(str)) {
+                    stringBuilder.append("0x");
+                    stringBuilder.append(String.format("%X", type.getId()));
+                } else {
+                    stringBuilder.append(str);
                 }
             }
         }

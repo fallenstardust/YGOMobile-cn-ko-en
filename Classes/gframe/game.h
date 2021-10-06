@@ -6,8 +6,6 @@
 #include "deck_con.h"
 #include "menu_handler.h"
 #include "sound_manager.h"
-#include "deck_manager.h"
-#include "image_manager.h"
 #include <unordered_map>
 #include <vector>
 #include <list>
@@ -154,7 +152,7 @@ public:
 	void DrawBackGround();
 	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
 	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
-	void CheckMutual(ClientCard* pcard, int mark){}
+	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
 	void DrawShadowText(irr::gui::CGUITTFont* font, const core::stringw& text, const core::rect<s32>& position, const core::rect<s32>& padding, video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = 0);
@@ -184,9 +182,9 @@ public:
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
-	void OnGameClose() const;
+	void OnGameClose();
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
-	static void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
+	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
 	int LocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);

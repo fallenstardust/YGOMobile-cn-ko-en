@@ -60,7 +60,8 @@ public class YGODialogUtil {
         private final Dialog ygoDialog;
 
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener){
-            View viewDialog = DialogUtils.getdx(context).dialogBottomSheet(R.layout.dialog_deck_select, 0);
+		    DialogUtils du = DialogUtils.getdx(context);
+            View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, 0);
             RecyclerView rv_type, rv_deck;
 
             rv_deck = viewDialog.findViewById(R.id.rv_deck);
@@ -129,7 +130,6 @@ public class YGODialogUtil {
                 public void onItemSelect(int position, DeckType item) {
                     clearDeckSelect();
                     deckList.clear();
-                    Log.d("kk-test", "read path"+item.getPath());
                     deckList.addAll(DeckUtil.getDeckList(item.getPath()));
                     if (position == 0) {
                         if (AppsSettings.get().isReadExpansions()) {
@@ -176,12 +176,12 @@ public class YGODialogUtil {
             ll_add.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    DialogUtils.getdx(context).dialogl(context.getString(R.string.new_deck),
+                    du.dialogl(context.getString(R.string.new_deck),
                             new String[]{context.getString(R.string.category_name),
                                     context.getString(R.string.deck_name)}, R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            DialogUtils.getdx(context).dis();
+                            du.dis();
                             switch (position) {
                                 case 0:
                                     //if (deckList.size()>=8){
@@ -223,53 +223,43 @@ public class YGODialogUtil {
                 }
             });
 
-            ll_move.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    List<DeckType> otherType = getOtherTypeList();
+            ll_move.setOnClickListener(v -> {
+                List<DeckType> otherType = getOtherTypeList();
 
-                    DialogUtils.getdx(context).dialogl(context.getString(please_select_target_category),
-                            getStringType(otherType),
-                            R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            DialogUtils.getdx(context).dis();
-                            DeckType toType = otherType.get(position);
-                            IOUtils.createFolder(new File(toType.getPath()));
-                            List<DeckFile> deckFileList = deckAdp.getSelectList();
-                            for (DeckFile deckFile : deckFileList) {
-                                try {
-                                    FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName() + ".ydk").getPath());
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                deckList.remove(deckFile);
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
+                    R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
+                        du.dis();
+                        DeckType toType = otherType.get(position);
+                        IOUtils.createFolder(new File(toType.getPath()));
+                        List<DeckFile> deckFileList = deckAdp.getSelectList();
+                        for (DeckFile deckFile : deckFileList) {
+                            try {
+                            FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
-                            YGOUtil.show(context.getString(R.string.done));
-                            onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
-                            clearDeckSelect();
+                            deckList.remove(deckFile);
                         }
-                    });
-                }
+                        YGOUtil.show(context.getString(R.string.done));
+                        onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
+                        clearDeckSelect();
+                });
             });
 
-            ll_copy.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    List<DeckType> otherType = getOtherTypeList();
+            ll_copy.setOnClickListener(v -> {
+                List<DeckType> otherType = getOtherTypeList();
 
-                    DialogUtils.getdx(context).dialogl(context.getString(please_select_target_category),
-                            getStringType(otherType),
-                            R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            DialogUtils.getdx(context).dis();
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
+                        R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
+                            du.dis();
                             DeckType toType = otherType.get(position);
                             IOUtils.createFolder(new File(toType.getPath()));
                             List<DeckFile> deckFileList = deckAdp.getSelectList();
                             for (DeckFile deckFile : deckFileList) {
                                 try {
-                                    FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getName() + ".ydk").getPath());
+                                FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -277,9 +267,7 @@ public class YGODialogUtil {
                             YGOUtil.show(context.getString(R.string.done));
                             onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
                             clearDeckSelect();
-                        }
-                    });
-                }
+                        });
             });
 
             ll_del.setOnClickListener(new View.OnClickListener() {
@@ -298,7 +286,7 @@ public class YGODialogUtil {
                         public void onClick(DialogInterface dialog, int which) {
                             List<DeckFile> selectDeckList = deckAdp.getSelectList();
                             for (DeckFile deckFile : selectDeckList) {
-                                new File(deckFile.getPath()).delete();
+                                deckFile.getPathFile().delete();
                                 deckList.remove(deckFile);
                             }
                             YGOUtil.show(context.getString(R.string.done));
@@ -317,7 +305,7 @@ public class YGODialogUtil {
                 }
             });
 
-            ygoDialog = DialogUtils.getdx(context).getDialog();
+            ygoDialog = du.getDialog();
             ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
