@@ -114,6 +114,7 @@ public class GameUriManager {
             return new File(dir, "tmp_" + System.currentTimeMillis() + ".ydk");
         } else {
             IOUtils.createFolder(dir);
+            file = new File(dir, name + ".ydk");
         }
         return file;
     }

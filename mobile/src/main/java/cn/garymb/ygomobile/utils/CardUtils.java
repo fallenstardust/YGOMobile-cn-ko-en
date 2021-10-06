@@ -10,24 +10,19 @@ public class CardUtils {
     public static String getAllTypeString(Card card, StringManager stringManager) {
         StringBuilder stringBuilder = new StringBuilder();
         CardType[] cardTypes = CardType.values();
-        boolean isFrst = true;
-        if (card.isType(CardType.Spell)) {
+        if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
             for (CardType type : cardTypes) {
-                if (card.isType(type)) {
-                    stringBuilder.append(stringManager.getTypeString(type.getId()));
-//                    break;
+                if(type == CardType.Spell || type == CardType.Trap){
+                    continue;
                 }
-            }
-//            stringBuilder.append(stringManager.getTypeString(CardType.Spell.value()));
-        } else if (card.isType(CardType.Trap)) {
-            for (CardType type : cardTypes) {
                 if (card.isType(type)) {
                     stringBuilder.append(stringManager.getTypeString(type.getId()));
                 }
-//                break;
             }
-//            stringBuilder.append(stringManager.getTypeString(CardType.Trap.value()));
+            //先显示速攻，后显示魔法
+            stringBuilder.append(stringManager.getTypeString(CardType.Spell.getId()));
         } else {
+            boolean isFrst = true;
             for (CardType type : cardTypes) {
                 if (card.isType(type)) {
                     if (!isFrst) {
