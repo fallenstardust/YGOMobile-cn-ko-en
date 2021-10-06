@@ -251,7 +251,7 @@ void SingleDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 			if(deck_error[dp->type]) {
 				deckerror = (DECKERROR_UNKNOWNCARD << 28) + deck_error[dp->type];
 			} else {
-				deckerror = mainGame->deckManager->CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
+				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
 			}
 		}
 		if(deckerror) {
@@ -295,9 +295,9 @@ void SingleDuel::UpdateDeck(DuelPlayer* dp, void* pdata, unsigned int len) {
 		return;
 	}
 	if(duel_count == 0) {
-		deck_error[dp->type] = mainGame->deckManager->LoadDeck(pdeck[dp->type], (int*)deckbuf, mainc, sidec);
+		deck_error[dp->type] = deckManager.LoadDeck(pdeck[dp->type], (int*)deckbuf, mainc, sidec);
 	} else {
-		if(mainGame->deckManager->LoadSide(pdeck[dp->type], (int*)deckbuf, mainc, sidec)) {
+		if(deckManager.LoadSide(pdeck[dp->type], (int*)deckbuf, mainc, sidec)) {
 			ready[dp->type] = true;
 			NetServer::SendPacketToPlayer(dp, STOC_DUEL_START);
 			if(ready[0] && ready[1]) {

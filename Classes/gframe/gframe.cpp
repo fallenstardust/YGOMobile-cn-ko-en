@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
 			BufferIO::DecodeUTF8(tmp, fname);
-			game->dataManager->LoadDB(fname);
+			ygo::dataManager.LoadDB(fname);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return
 			exit_on_return = false;

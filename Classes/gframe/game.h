@@ -184,9 +184,9 @@ public:
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
-	void OnGameClose();
+	void OnGameClose() const;
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
-	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
+	static void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
 	int LocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
@@ -208,9 +208,6 @@ public:
 
 // don't merge
 	std::unique_ptr<SoundManager> soundManager;
-	std::unique_ptr<DeckManager> deckManager;
-	std::unique_ptr<ImageManager> imageManager;
-	std::unique_ptr<DataManager> dataManager;
 	std::mutex gMutex;
 	Signal frameSignal;
 	Signal actionSignal;
