@@ -8,7 +8,10 @@
         android:shortcutLongLabel="@string/mycard"
         android:shortcutShortLabel="@string/mycard">
 
-        <intent android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity" />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="cn.garymb.ygomobile.ui.mycard.MyCardActivity"
+            android:targetPackage="cn.garymb.ygomobile" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -18,7 +21,10 @@
         android:shortcutLongLabel="@string/card_search"
         android:shortcutShortLabel="@string/card_search">
 
-        <intent android:targetClass="cn.garymb.ygomobile.ui.cards.CardSearchAcitivity" />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="cn.garymb.ygomobile.ui.cards.CardSearchActivity"
+            android:targetPackage="cn.garymb.ygomobile" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -28,6 +34,9 @@
         android:shortcutLongLabel="@string/deck_manager"
         android:shortcutShortLabel="@string/deck_manager">
 
-        <intent android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity" />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
+            android:targetPackage="cn.garymb.ygomobile" />
     </shortcut>
 </shortcuts>
