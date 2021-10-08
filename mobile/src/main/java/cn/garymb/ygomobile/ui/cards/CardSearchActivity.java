@@ -292,6 +292,11 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                     }
 
                     @Override
+                    public void onImageUpdate(Card cardInfo) {
+                        mCardListAdapter.notifyItemChanged(cardInfo);
+                    }
+
+                    @Override
                     public void onClose() {
                         mDialog.dismiss();
                     }

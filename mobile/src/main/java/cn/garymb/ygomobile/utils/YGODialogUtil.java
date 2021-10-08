@@ -40,188 +40,194 @@ import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 import static cn.garymb.ygomobile.lite.R.string.please_select_target_category;
 
 public class YGODialogUtil {
+    private static class ViewHolder{
 
-    private static final int IMAGE_MOVE = 0;
-    private static final int IMAGE_COPY = 1;
-    private static final int IMAGE_DEL = 2;
+        private final int IMAGE_MOVE = 0;
+        private final int IMAGE_COPY = 1;
+        private final int IMAGE_DEL = 2;
 
-    private static LinearLayout ll_move, ll_copy, ll_del, ll_add;
-    private static ImageView iv_move, iv_copy, iv_del;
-    private static TextView tv_move, tv_copy, tv_del;
-    private static TextSelectAdapter typeAdp, deckAdp;
-    private static Dialog ygoDialog;
+        private final LinearLayout ll_move;
+        private final LinearLayout ll_copy;
+        private final LinearLayout ll_del;
+        private final ImageView iv_move;
+        private final ImageView iv_copy;
+        private final ImageView iv_del;
+        private final TextView tv_move;
+        private final TextView tv_copy;
+        private final TextView tv_del;
+        private final TextSelectAdapter<DeckType> typeAdp;
+        private final TextSelectAdapter<DeckFile> deckAdp;
+        private final Dialog ygoDialog;
 
-    public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
-        DialogUtils du = DialogUtils.getdx(context);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, 0);
-        RecyclerView rv_type, rv_deck;
+        public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener){
+		    DialogUtils du = DialogUtils.getdx(context);
+            View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, 0);
+            RecyclerView rv_type, rv_deck;
 
-        rv_deck = viewDialog.findViewById(R.id.rv_deck);
-        rv_type = viewDialog.findViewById(R.id.rv_type);
-        ll_move = viewDialog.findViewById(R.id.ll_move);
-        ll_copy = viewDialog.findViewById(R.id.ll_copy);
-        ll_del = viewDialog.findViewById(R.id.ll_del);
-        ll_add = viewDialog.findViewById(R.id.ll_add);
-        iv_copy = viewDialog.findViewById(R.id.iv_copy);
-        iv_move = viewDialog.findViewById(R.id.iv_move);
-        iv_del = viewDialog.findViewById(R.id.iv_del);
-        tv_move = viewDialog.findViewById(R.id.tv_move);
-        tv_copy = viewDialog.findViewById(R.id.tv_copy);
-        tv_del = viewDialog.findViewById(R.id.tv_del);
+            rv_deck = viewDialog.findViewById(R.id.rv_deck);
+            rv_type = viewDialog.findViewById(R.id.rv_type);
+            ll_move = viewDialog.findViewById(R.id.ll_move);
+            ll_copy = viewDialog.findViewById(R.id.ll_copy);
+            ll_del = viewDialog.findViewById(R.id.ll_del);
+            LinearLayout ll_add = viewDialog.findViewById(R.id.ll_add);
+            iv_copy = viewDialog.findViewById(R.id.iv_copy);
+            iv_move = viewDialog.findViewById(R.id.iv_move);
+            iv_del = viewDialog.findViewById(R.id.iv_del);
+            tv_move = viewDialog.findViewById(R.id.tv_move);
+            tv_copy = viewDialog.findViewById(R.id.tv_copy);
+            tv_del = viewDialog.findViewById(R.id.tv_del);
 
-        hideAllDeckUtil();
-        rv_deck.setLayoutManager(new LinearLayoutManager(context));
-        rv_type.setLayoutManager(new LinearLayoutManager(context));
+            hideAllDeckUtil();
+            rv_deck.setLayoutManager(new LinearLayoutManager(context));
+            rv_type.setLayoutManager(new LinearLayoutManager(context));
 
-        List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
+            List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
 
-        int typeSelectPosition = 2;
-        int deckSelectPosition = -1;
-        List<DeckFile> deckList;
-        if (!TextUtils.isEmpty(selectDeckPath)) {
-            File file = new File(selectDeckPath);
-            if (file.exists()) {
-                String name = file.getParentFile().getName();
-                String lastName = file.getParentFile().getParentFile().getName();
-                if (name.equals("pack") || name.equals("cacheDeck")) {
-                    //卡包
-                    typeSelectPosition = 0;
-                } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
-                    //ai卡组
-                    typeSelectPosition = 1;
-                } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
-                    //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
-                } else {
-                    //其他卡包
-                    for (int i = 3; i < typeList.size(); i++) {
-                        DeckType deckType = typeList.get(i);
-                        if (deckType.getName().equals(name)) {
-                            typeSelectPosition = i;
-                            break;
+            int typeSelectPosition = 2;
+            int deckSelectPosition = -1;
+            List<DeckFile> deckList;
+            if (!TextUtils.isEmpty(selectDeckPath)) {
+                File file = new File(selectDeckPath);
+                if (file.exists()) {
+                    String name = file.getParentFile().getName();
+                    String lastName = file.getParentFile().getParentFile().getName();
+                    if (name.equals("pack") || name.equals("cacheDeck")) {
+                        //卡包
+                        typeSelectPosition = 0;
+                    } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
+                        //ai卡组
+                        typeSelectPosition = 1;
+                    } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
+                        //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
+                    } else {
+                        //其他卡包
+                        for (int i = 3; i < typeList.size(); i++) {
+                            DeckType deckType = typeList.get(i);
+                            if (deckType.getName().equals(name)) {
+                                typeSelectPosition = i;
+                                break;
+                            }
                         }
                     }
                 }
             }
-        }
-        deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
-        if (typeSelectPosition == 0) {
-            if (AppsSettings.get().isReadExpansions()) {
-                try {
-                    deckList.addAll(DeckUtil.getExpansionsDeckList());
-                } catch (IOException e) {
-                    YGOUtil.show("额外卡库加载失败,原因为" + e);
-                }
-            }
-        }
-        typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
-        deckAdp = new TextSelectAdapter<>(deckList, deckSelectPosition);
-        rv_type.setAdapter(typeAdp);
-        rv_deck.setAdapter(deckAdp);
-        typeAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckType>() {
-            @Override
-            public void onItemSelect(int position, DeckType item) {
-                clearDeckSelect();
-                deckList.clear();
-                deckList.addAll(DeckUtil.getDeckList(item.getPath()));
-                if (position == 0) {
-                    if (AppsSettings.get().isReadExpansions()) {
-                        try {
-                            deckList.addAll(DeckUtil.getExpansionsDeckList());
-                        } catch (IOException e) {
-                            YGOUtil.show("额外卡库加载失败,原因为" + e);
-                        }
+            deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
+            if (typeSelectPosition == 0) {
+                if (AppsSettings.get().isReadExpansions()) {
+                    try {
+                        deckList.addAll(DeckUtil.getExpansionsDeckList());
+                    } catch (IOException e) {
+                        YGOUtil.show("额外卡库加载失败,原因为" + e);
                     }
                 }
-                deckAdp.notifyDataSetChanged();
             }
-        });
-        deckAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckFile>() {
-            @Override
-            public void onItemSelect(int position, DeckFile item) {
-                if (deckAdp.isManySelect()) {
-                    deckAdp.addManySelect(item);
+            typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
+            deckAdp = new TextSelectAdapter<>(deckList, deckSelectPosition);
+            rv_type.setAdapter(typeAdp);
+            rv_deck.setAdapter(deckAdp);
+            typeAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckType>() {
+                @Override
+                public void onItemSelect(int position, DeckType item) {
+                    clearDeckSelect();
+                    deckList.clear();
+                    deckList.addAll(DeckUtil.getDeckList(item.getPath()));
+                    if (position == 0) {
+                        if (AppsSettings.get().isReadExpansions()) {
+                            try {
+                                deckList.addAll(DeckUtil.getExpansionsDeckList());
+                            } catch (IOException e) {
+                                YGOUtil.show("额外卡库加载失败,原因为" + e);
+                            }
+                        }
+                    }
+                    deckAdp.notifyDataSetChanged();
+                }
+            });
+            deckAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckFile>() {
+                @Override
+                public void onItemSelect(int position, DeckFile item) {
+                    if (deckAdp.isManySelect()) {
+                        deckAdp.addManySelect(item);
+                        deckAdp.notifyItemChanged(position);
+                    } else {
+                        dismiss();
+                        onDeckMenuListener.onDeckSelect(item);
+                    }
+                }
+            });
+            deckAdp.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
+                    if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
+                        return true;
+
+                    deckAdp.setManySelect(true);
+                    if (typeAdp.getSelectPosition() == 1) {
+                        showCopyDeckUtil();
+                    } else {
+                        showAllDeckUtil();
+                    }
+                    deckAdp.addManySelect((DeckFile) adapter.getItem(position));
                     deckAdp.notifyItemChanged(position);
-                } else {
-                    dis();
-                    onDeckMenuListener.onDeckSelect(item);
-                }
-            }
-        });
-        deckAdp.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
-                if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
                     return true;
-
-                deckAdp.setManySelect(true);
-                if (typeAdp.getSelectPosition() == 1) {
-                    showCopyDeckUtil();
-                } else {
-                    showAllDeckUtil();
                 }
-                deckAdp.addManySelect((DeckFile) adapter.getItem(position));
-                deckAdp.notifyItemChanged(position);
-                return true;
-            }
-        });
+            });
 
-        ll_add.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                du.dialogl(context.getString(R.string.new_deck),
-                        new String[]{context.getString(R.string.category_name),
-                                context.getString(R.string.deck_name)}, R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        du.dis();
-                        switch (position) {
-                            case 0:
-                                //if (deckList.size()>=8){
-                                //    YGOUtil.show("最多只能有5个自定义分类");
-                                //}
-                                DialogPlus builder = new DialogPlus(context);
-                                builder.setTitle(R.string.please_input_category_name);
-                                EditText editText = new EditText(context);
-                                editText.setGravity(Gravity.TOP | Gravity.LEFT);
-                                editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-                                editText.setSingleLine();
-                                builder.setContentView(editText);
-                                builder.setOnCloseLinster((dlg) -> {
-                                    dlg.dismiss();
-                                });
-                                builder.setLeftButtonListener((dlg, s) -> {
-                                    String name = editText.getText().toString().trim();
-                                    if (TextUtils.isEmpty(name)) {
-                                        YGOUtil.show(context.getString(R.string.invalid_category_name));
-                                        return;
-                                    }
-                                    File file = new File(AppsSettings.get().getDeckDir(), name);
-                                    if (IOUtils.createFolder(file)) {
-                                        typeList.add(new DeckType(name, file.getAbsolutePath()));
-                                        typeAdp.notifyItemInserted(typeList.size() - 1);
-                                        dlg.dismiss();
-                                    } else {
-                                        YGOUtil.show(context.getString(R.string.create_new_failed));
-                                    }
+            ll_add.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    du.dialogl(context.getString(R.string.new_deck),
+                            new String[]{context.getString(R.string.category_name),
+                                    context.getString(R.string.deck_name)}, R.drawable.radius).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            du.dis();
+                            switch (position) {
+                                case 0:
+                                    //if (deckList.size()>=8){
+                                    //    YGOUtil.show("最多只能有5个自定义分类");
+                                    //}
+                                    DialogPlus builder = new DialogPlus(context);
+                                    builder.setTitle(R.string.please_input_category_name);
+                                    EditText editText = new EditText(context);
+                                    editText.setGravity(Gravity.TOP | Gravity.LEFT);
+                                    editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                                    editText.setSingleLine();
+                                    builder.setContentView(editText);
+                                    builder.setOnCloseLinster(DialogInterface::dismiss);
+                                    builder.setLeftButtonListener((dlg, s) -> {
+                                        String name = editText.getText().toString().trim();
+                                        if (TextUtils.isEmpty(name)) {
+                                            YGOUtil.show(context.getString(R.string.invalid_category_name));
+                                            return;
+                                        }
+                                        File file = new File(AppsSettings.get().getDeckDir(), name);
+                                        if (IOUtils.createFolder(file)) {
+                                            typeList.add(new DeckType(name, file.getAbsolutePath()));
+                                            typeAdp.notifyItemInserted(typeList.size() - 1);
+                                            dlg.dismiss();
+                                        } else {
+                                            YGOUtil.show(context.getString(R.string.create_new_failed));
+                                        }
 
-                                });
-                                builder.show();
-                                break;
-                            case 1:
-                                onDeckMenuListener.onDeckNew(typeList.get(typeAdp.getSelectPosition()));
-                                dis();
-                                break;
+                                    });
+                                    builder.show();
+                                    break;
+                                case 1:
+                                    onDeckMenuListener.onDeckNew(typeList.get(typeAdp.getSelectPosition()));
+                                    dismiss();
+                                    break;
+                            }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
 
-        ll_move.setOnClickListener(v -> {
-            List<DeckType> otherType = getOtherTypeList();
+            ll_move.setOnClickListener(v -> {
+                List<DeckType> otherType = getOtherTypeList();
 
-            du.dialogl(context.getString(please_select_target_category),
-                    getStringType(otherType),
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
                     R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
                         du.dis();
                         DeckType toType = otherType.get(position);
@@ -229,7 +235,7 @@ public class YGODialogUtil {
                         List<DeckFile> deckFileList = deckAdp.getSelectList();
                         for (DeckFile deckFile : deckFileList) {
                             try {
-                                FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
+                            FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -238,181 +244,195 @@ public class YGODialogUtil {
                         YGOUtil.show(context.getString(R.string.done));
                         onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
                         clearDeckSelect();
-                    });
-        });
+                });
+            });
 
-        ll_copy.setOnClickListener(v -> {
-            List<DeckType> otherType = getOtherTypeList();
+            ll_copy.setOnClickListener(v -> {
+                List<DeckType> otherType = getOtherTypeList();
 
-            du.dialogl(context.getString(please_select_target_category),
-                    getStringType(otherType),
-                    R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
-                        du.dis();
-                        DeckType toType = otherType.get(position);
-                        IOUtils.createFolder(new File(toType.getPath()));
-                        List<DeckFile> deckFileList = deckAdp.getSelectList();
-                        for (DeckFile deckFile : deckFileList) {
-                            try {
+                du.dialogl(context.getString(please_select_target_category),
+                        getStringType(otherType),
+                        R.drawable.radius).setOnItemClickListener((parent, view, position, id) -> {
+                            du.dis();
+                            DeckType toType = otherType.get(position);
+                            IOUtils.createFolder(new File(toType.getPath()));
+                            List<DeckFile> deckFileList = deckAdp.getSelectList();
+                            for (DeckFile deckFile : deckFileList) {
+                                try {
                                 FileUtils.copyFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
+                            YGOUtil.show(context.getString(R.string.done));
+                            onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
+                            clearDeckSelect();
+                        });
+            });
+
+            ll_del.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (deckAdp.getSelectList().size() == 0) {
+                        YGOUtil.show(context.getString(R.string.no_deck_is_selected));
+                        return;
+                    }
+                    DialogPlus dialogPlus = new DialogPlus(context);
+                    dialogPlus.setMessage(R.string.question_delete_deck);
+                    dialogPlus.setLeftButtonText(YGOUtil.s(R.string.delete));
+                    dialogPlus.setRightButtonText(R.string.Cancel);
+                    dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            List<DeckFile> selectDeckList = deckAdp.getSelectList();
+                            for (DeckFile deckFile : selectDeckList) {
+                                deckFile.getPathFile().delete();
+                                deckList.remove(deckFile);
+                            }
+                            YGOUtil.show(context.getString(R.string.done));
+                            dialogPlus.dismiss();
+                            onDeckMenuListener.onDeckDel(selectDeckList);
+                            clearDeckSelect();
                         }
-                        YGOUtil.show(context.getString(R.string.done));
-                        onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
-                        clearDeckSelect();
                     });
-        });
-
-        ll_del.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (deckAdp.getSelectList().size() == 0) {
-                    YGOUtil.show(context.getString(R.string.no_deck_is_selected));
-                    return;
-                }
-                DialogPlus dialogPlus = new DialogPlus(context);
-                dialogPlus.setMessage(R.string.question_delete_deck);
-                dialogPlus.setLeftButtonText(YGOUtil.s(R.string.delete));
-                dialogPlus.setRightButtonText(R.string.Cancel);
-                dialogPlus.setLeftButtonListener(new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        List<DeckFile> selectDeckList = deckAdp.getSelectList();
-                        for (DeckFile deckFile : selectDeckList) {
-                            new File(deckFile.getPath()).delete();
-                            deckList.remove(deckFile);
+                    dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialogPlus.dismiss();
                         }
-                        YGOUtil.show(context.getString(R.string.done));
-                        dialogPlus.dismiss();
-                        onDeckMenuListener.onDeckDel(selectDeckList);
-                        clearDeckSelect();
-                    }
-                });
-                dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialogPlus.dismiss();
-                    }
-                });
-                dialogPlus.show();
-            }
-        });
-
-        ygoDialog = du.getDialog();
-        ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                clearDeckSelect();
-            }
-        });
-        ygoDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-            @Override
-            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK) {
-                    if (deckAdp.isManySelect()) {
-                        clearDeckSelect();
-                        return true;
-                    }
-
+                    });
+                    dialogPlus.show();
                 }
-                return false;
-            }
-        });
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new DeckTypeTouchHelperCallback(new OnDeckTypeListener() {
-            @Override
-            public void onDeckTypeListener(int positon) {
-                File file = new File(typeList.get(positon).getPath());
-                File[] files = file.listFiles();
-                List<DeckFile> deckFileList = new ArrayList<>();
-                if (files != null) {
-                    for (File file1 : files) {
-                        deckFileList.add(new DeckFile(file1));
-                    }
-                }
-                IOUtils.delete(file);
-                YGOUtil.show(context.getString(R.string.done));
-                onDeckMenuListener.onDeckDel(deckFileList);
-                typeAdp.remove(positon);
-                if (typeAdp.getSelectPosition() == positon) {
-                    typeAdp.setSelectPosition(2);
-                    typeAdp.notifyItemChanged(2);
-                }
-                clearDeckSelect();
-                deckList.clear();
-                deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
-                deckAdp.notifyDataSetChanged();
-            }
-        }));
-        itemTouchHelper.attachToRecyclerView(rv_type);
-    }
+            });
 
-    private static String[] getStringType(List<DeckType> deckTypeList) {
-        String[] types = new String[deckTypeList.size()];
-        for (int i = 0; i < types.length; i++) {
-            types[i] = deckTypeList.get(i).getName();
+            ygoDialog = du.getDialog();
+            ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    clearDeckSelect();
+                }
+            });
+            ygoDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                @Override
+                public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                    if (keyCode == KeyEvent.KEYCODE_BACK) {
+                        if (deckAdp.isManySelect()) {
+                            clearDeckSelect();
+                            return true;
+                        }
+
+                    }
+                    return false;
+                }
+            });
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new DeckTypeTouchHelperCallback(new OnDeckTypeListener() {
+                @Override
+                public void onDeckTypeListener(int positon) {
+                    File file = new File(typeList.get(positon).getPath());
+                    File[] files = file.listFiles();
+                    List<DeckFile> deckFileList = new ArrayList<>();
+                    if (files != null) {
+                        for (File file1 : files) {
+                            deckFileList.add(new DeckFile(file1));
+                        }
+                    }
+                    IOUtils.delete(file);
+                    YGOUtil.show(context.getString(R.string.done));
+                    onDeckMenuListener.onDeckDel(deckFileList);
+                    typeAdp.remove(positon);
+                    if (typeAdp.getSelectPosition() == positon) {
+                        typeAdp.setSelectPosition(2);
+                        typeAdp.notifyItemChanged(2);
+                    }
+                    clearDeckSelect();
+                    deckList.clear();
+                    deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
+                    deckAdp.notifyDataSetChanged();
+                }
+            }));
+            itemTouchHelper.attachToRecyclerView(rv_type);
         }
-        return types;
-    }
 
-    //获取可以移动的分类
-    private static List<DeckType> getOtherTypeList() {
-        List<DeckType> typeList = typeAdp.getData();
-        List<DeckType> moveTypeList = new ArrayList<>();
-        DeckType selectType = typeList.get(typeAdp.getSelectPosition());
-        for (int i = 2; i < typeList.size(); i++) {
-            DeckType deckType = typeList.get(i);
-            if (!deckType.getPath().equals(selectType.getPath())) {
-                moveTypeList.add(deckType);
+        private String[] getStringType(List<DeckType> deckTypeList) {
+            String[] types = new String[deckTypeList.size()];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = deckTypeList.get(i).getName();
+            }
+            return types;
+        }
+
+        //获取可以移动的分类
+        private List<DeckType> getOtherTypeList() {
+            List<DeckType> typeList = typeAdp.getData();
+            List<DeckType> moveTypeList = new ArrayList<>();
+            DeckType selectType = typeList.get(typeAdp.getSelectPosition());
+            for (int i = 2; i < typeList.size(); i++) {
+                DeckType deckType = typeList.get(i);
+                if (!deckType.getPath().equals(selectType.getPath())) {
+                    moveTypeList.add(deckType);
+                }
+            }
+            return moveTypeList;
+        }
+
+        private void showAllDeckUtil() {
+            ImageUtil.reImageColor(IMAGE_MOVE, iv_move);//可用时用原图标色
+            ImageUtil.reImageColor(IMAGE_DEL, iv_del);
+            ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
+            tv_del.setTextColor(YGOUtil.c(R.color.holo_blue_bright));//可用时字色蓝
+            tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+            tv_move.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+            ll_del.setEnabled(true);
+            ll_copy.setEnabled(true);
+            ll_move.setEnabled(true);
+        }
+
+        private void hideAllDeckUtil() {
+            ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
+            ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
+            ImageUtil.setGrayImage(IMAGE_COPY, iv_copy);
+            tv_del.setTextColor(YGOUtil.c(R.color.star_rank));//不可用时字色灰
+            tv_copy.setTextColor(YGOUtil.c(R.color.star_rank));
+            tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
+            ll_del.setEnabled(false);
+            ll_copy.setEnabled(false);
+            ll_move.setEnabled(false);
+        }
+
+        private void showCopyDeckUtil() {
+            ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
+            ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
+            ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
+            tv_del.setTextColor(YGOUtil.c(R.color.star_rank));
+            tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+            tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
+            ll_del.setEnabled(false);
+            ll_copy.setEnabled(true);
+            ll_move.setEnabled(false);
+        }
+
+        private void clearDeckSelect() {
+            deckAdp.setManySelect(false);
+            hideAllDeckUtil();
+        }
+
+        public void show(){
+            if(ygoDialog != null && !ygoDialog.isShowing()) {
+                ygoDialog.show();
             }
         }
-        return moveTypeList;
+
+        public void dismiss() {
+            if (ygoDialog != null && ygoDialog.isShowing())
+                ygoDialog.dismiss();
+        }
+
     }
 
-    private static void showAllDeckUtil() {
-        ImageUtil.reImageColor(IMAGE_MOVE, iv_move);//可用时用原图标色
-        ImageUtil.reImageColor(IMAGE_DEL, iv_del);
-        ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.holo_blue_bright));//可用时字色蓝
-        tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-        tv_move.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-        ll_del.setEnabled(true);
-        ll_copy.setEnabled(true);
-        ll_move.setEnabled(true);
-    }
 
-    private static void hideAllDeckUtil() {
-        ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
-        ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
-        ImageUtil.setGrayImage(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));//不可用时字色灰
-        tv_copy.setTextColor(YGOUtil.c(R.color.star_rank));
-        tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
-        ll_del.setEnabled(false);
-        ll_copy.setEnabled(false);
-        ll_move.setEnabled(false);
-    }
-
-    private static void showCopyDeckUtil() {
-        ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
-        ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
-        ImageUtil.reImageColor(IMAGE_COPY, iv_copy);
-        tv_del.setTextColor(YGOUtil.c(R.color.star_rank));
-        tv_copy.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-        tv_move.setTextColor(YGOUtil.c(R.color.star_rank));
-        ll_del.setEnabled(false);
-        ll_copy.setEnabled(true);
-        ll_move.setEnabled(false);
-    }
-
-    private static void clearDeckSelect() {
-        deckAdp.setManySelect(false);
-        hideAllDeckUtil();
-    }
-
-    public static void dis() {
-        if (ygoDialog != null)
-            ygoDialog.dismiss();
+    public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
+        ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);
+        viewHolder.show();
     }
 
     public interface OnDeckMenuListener {

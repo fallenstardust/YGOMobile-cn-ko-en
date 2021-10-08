@@ -131,20 +131,17 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
+
 	dataManager.FileSystem = device->getFileSystem();
     ((CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
 	xScale = android::getXScale(app);
 	yScale = android::getYScale(app);
 
-	char log_scale[256] = {0};
-	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
-	Printer::log(log_scale);
+	ALOGD("xScale = %f, yScale = %f", xScale, yScale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
-	char log_working[256] = {0};
-	sprintf(log_working, "workingDir= %s", workingDir.c_str());
-	Printer::log(log_working);
+    ALOGD("workingDir= %s", workingDir.c_str());
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
@@ -201,9 +198,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	} else {
 		isNPOTSupported = ((COGLES1Driver *) driver)->queryOpenGLFeature(COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
-	char log_npot[256];
-	sprintf(log_npot, "isNPOTSupported = %d", isNPOTSupported);
-	Printer::log(log_npot);
+	ALOGD("isNPOTSupported = %d", isNPOTSupported);
 	if (isNPOTSupported) {
 		if (quality == 1) {
 			driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -1301,14 +1296,14 @@ void Game::MainLoop() {
 		if (!driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1))
 		{
-			Printer::log("WARNING: Pixel shaders disabled "
+			ALOGD("WARNING: Pixel shaders disabled "
 					"because of missing driver/hardware support.");
 			psFileName = "";
 		}
 		if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
 		{
-			Printer::log("WARNING: Vertex shaders disabled "
+			ALOGD("WARNING: Vertex shaders disabled "
 					"because of missing driver/hardware support.");
 			solidvsFileName = "";
 			TACvsFileName = "";
@@ -1316,7 +1311,6 @@ void Game::MainLoop() {
 		}
 		video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
 		if (gpu) {
-			char log_custom_shader[1024];
 			const video::E_GPU_SHADING_LANGUAGE shadingLanguage = video::EGSL_DEFAULT;
 			ogles2Solid = gpu->addHighLevelShaderMaterialFromFiles(
 					psFileName, "vertexMain", video::EVST_VS_1_1,
@@ -1330,12 +1324,9 @@ void Game::MainLoop() {
 					psFileName, "vertexMain", video::EVST_VS_1_1,
 					blendvsFileName, "pixelMain", video::EPST_PS_1_1,
 					&customShadersCallback, video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
-			sprintf(log_custom_shader, "ogles2Sold = %d", ogles2Solid);
-			Printer::log(log_custom_shader);
-			sprintf(log_custom_shader, "ogles2BlendTexture = %d", ogles2BlendTexture);
-			Printer::log(log_custom_shader);
-			sprintf(log_custom_shader, "ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
-			Printer::log(log_custom_shader);
+			ALOGD("ogles2Sold = %d", ogles2Solid);
+			ALOGD("ogles2BlendTexture = %d", ogles2BlendTexture);
+			ALOGD("ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
 	matManager.mCard.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;

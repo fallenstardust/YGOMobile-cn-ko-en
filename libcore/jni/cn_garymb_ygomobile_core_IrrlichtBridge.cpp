@@ -186,6 +186,8 @@ static void* join_game_thread(void* param) {
 		ygo::mainGame->gMutex.unlock();
 		return NULL;
 	}
+	//auto exit when join game by mycard.
+	exit_on_return = true;
 	irr::android::YGOGameOptions options = irr::android::YGOGameOptions(param);
 	irr::SEvent event;
 

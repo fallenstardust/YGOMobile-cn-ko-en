@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.widget;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -16,88 +15,81 @@ import android.widget.SpinnerAdapter;
 import androidx.appcompat.widget.AppCompatSpinner;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
 
 public class SearchableSpinner extends AppCompatSpinner implements View.OnTouchListener,
-        SearchableListDialog.SearchableItem {
+        SearchableListDialog.onSearchItemClickListener {
 
     public static final int NO_ITEM_SELECTED = -1;
-    private Context _context;
-    private List _items;
     private SearchableListDialog _searchableListDialog;
 
+    private final ArrayList<Object> _items = new ArrayList<>();
     private boolean _isDirty;
     private BaseAdapter _arrayAdapter;
     private String _strHintText;
     private boolean _isFromInit;
     private String mTitleString = "Select Item";
+    private int mFirstIndex = 0;
 
     public SearchableSpinner(Context context) {
-        super(context);
-        this._context = context;
-        init();
+        this(context, null);
     }
 
     public SearchableSpinner(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        this._context = context;
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SearchableSpinner);
-        final int N = a.getIndexCount();
-        for (int i = 0; i < N; ++i) {
-            int attr = a.getIndex(i);
-            if (attr == R.styleable.SearchableSpinner_hintText) {
-                _strHintText = a.getString(attr);
-            } else if (attr == R.styleable.SearchableSpinner_searchTitle) {
-                mTitleString = a.getString(attr);
-            }
-        }
-        a.recycle();
-        init();
+        this(context, attrs, 0);
     }
 
     public SearchableSpinner(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        this._context = context;
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SearchableSpinner);
+        if (a != null) {
+            final int N = a.getIndexCount();
+            for (int i = 0; i < N; ++i) {
+                int attr = a.getIndex(i);
+                if (attr == R.styleable.SearchableSpinner_hintText) {
+                    _strHintText = a.getString(attr);
+                } else if (attr == R.styleable.SearchableSpinner_searchTitle) {
+                    mTitleString = a.getString(attr);
+                }
+            }
+            a.recycle();
+        }
         init();
     }
 
     private void init() {
-        _items = new ArrayList();
-        _searchableListDialog = SearchableListDialog.newInstance
-                (_items);
+        _searchableListDialog = new SearchableListDialog(getContext());
         _searchableListDialog.setTitle(mTitleString);
         _searchableListDialog.setOnSearchableItemClickListener(this);
         setOnTouchListener(this);
 
         _arrayAdapter = (BaseAdapter) getAdapter();
         if (!TextUtils.isEmpty(_strHintText)) {
-            ArrayAdapter arrayAdapter = new ArrayAdapter(_context, android.R.layout
-                    .simple_list_item_1, new String[]{_strHintText});
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(getContext(),
+                    android.R.layout.simple_list_item_1,
+                    new String[]{_strHintText});
             _isFromInit = true;
             setAdapter(arrayAdapter);
         }
     }
 
+    public void setFirstIndex(int firstIndex) {
+        this.mFirstIndex = firstIndex;
+    }
+
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-
             if (null != _arrayAdapter) {
-
-                // Refresh content #6
-                // Change Start
-                // Description: The items were only set initially, not reloading the data in the
-                // spinner every time it is loaded with items in the adapter.
-                // Change end.
                 //修复 重复点击 bug
-                if (!_searchableListDialog.isAdded()) {
+                if(!_searchableListDialog.isShowing()) {
                     _items.clear();
-                    for (int i = 0; i < _arrayAdapter.getCount(); i++) {
+                    int N = _arrayAdapter.getCount();
+                    for (int i = mFirstIndex; i < N; i++) {
                         _items.add(_arrayAdapter.getItem(i));
                     }
-                    _searchableListDialog.show(scanForActivity(_context).getFragmentManager(), "TAG");
+                    _searchableListDialog.show(_items);
                 }
             }
         }
@@ -109,7 +101,7 @@ public class SearchableSpinner extends AppCompatSpinner implements View.OnTouchL
         if (!_isFromInit) {
             _arrayAdapter = (BaseAdapter) adapter;
             if (!TextUtils.isEmpty(_strHintText) && !_isDirty) {
-                ArrayAdapter arrayAdapter = new ArrayAdapter(_context, android.R.layout
+                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(getContext(), android.R.layout
                         .simple_list_item_1, new String[]{_strHintText});
                 super.setAdapter(arrayAdapter);
             } else {
@@ -124,8 +116,7 @@ public class SearchableSpinner extends AppCompatSpinner implements View.OnTouchL
 
     @Override
     public void onSearchableItemClicked(Object item, int position) {
-        setSelection(_items.indexOf(item));
-
+        setSelection(_items.indexOf(item) + mFirstIndex);
         if (!_isDirty) {
             _isDirty = true;
             setAdapter(_arrayAdapter);
@@ -135,14 +126,6 @@ public class SearchableSpinner extends AppCompatSpinner implements View.OnTouchL
 
     public void setTitle(String strTitle) {
         _searchableListDialog.setTitle(strTitle);
-    }
-
-    public void setPositiveButton(String strPositiveButtonText) {
-        _searchableListDialog.setPositiveButton(strPositiveButtonText);
-    }
-
-    public void setPositiveButton(String strPositiveButtonText, DialogInterface.OnClickListener onClickListener) {
-        _searchableListDialog.setPositiveButton(strPositiveButtonText, onClickListener);
     }
 
     public void setOnSearchTextChangedListener(SearchableListDialog.OnSearchTextChanged onSearchTextChanged) {
