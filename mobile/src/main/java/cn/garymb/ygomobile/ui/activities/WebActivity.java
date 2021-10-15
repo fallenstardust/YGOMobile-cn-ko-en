@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.activities;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,8 +7,11 @@ import android.view.MenuItem;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
+import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
     private WebViewPlus mWebViewPlus;
@@ -116,5 +118,10 @@ public class WebActivity extends BaseActivity {
         intent.putExtra(Intent.EXTRA_STREAM, url);
         intent.putExtra(Intent.EXTRA_TEXT, title);
         context.startActivity(intent);
+    }
+
+    public static void openFAQ(Context context, Card cardInfo){
+        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode());
+        WebActivity.open(context, cardInfo.Name, uri);
     }
 }

@@ -16,6 +16,8 @@ import android.util.Log;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 
@@ -190,6 +192,19 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         if (Constants.DEBUG)
             Log.d(TAG, "check start");
         boolean needsUpdate = isNewVersion;
+        //清空下载缓存
+        File imgDir = new File(AppsSettings.get().getCardImagePath());
+        File[] files = imgDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".tmp");
+            }
+        });
+        if(files != null){
+            for(File file : files){
+                FileUtils.deleteFile(file);
+            }
+        }
         //core config
         setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.core_config)));
         //res
@@ -327,9 +342,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         File dirFile = null;
         for (String dir : dirs) {
             dirFile = new File(mSettings.getResourcePath(), dir);
-            if (!dirFile.exists()) {
-                dirFile.mkdirs();
-            }
+            IOUtils.createFolder(dirFile);
         }
     }
 

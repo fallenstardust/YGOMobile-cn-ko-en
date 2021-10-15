@@ -6,22 +6,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
-import com.bumptech.glide.Glide;
-import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
+import com.tencent.smtt.export.external.TbsCoreSettings;
+import com.tencent.smtt.sdk.QbSdk;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
+
+import java.util.HashMap;
 
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import cn.garymb.ygomobile.utils.ProcessUtils;
 
 public class App extends GameApplication {
 
@@ -33,10 +36,17 @@ public class App extends GameApplication {
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
-        //初始化图片选择器
-        initImgsel();
         //初始化bugly
         initBugly();
+        if(!ProcessUtils.getCurrentProcessName(this).endsWith(":game")){
+            //初始化图片选择器
+            initImgsel();
+            //x5
+            HashMap map = new HashMap();
+            map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
+            map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
+            QbSdk.initTbsSettings(map);
+        }
     }
 
     @Override
@@ -64,6 +74,16 @@ public class App extends GameApplication {
     public float getYScale() {
         return AppsSettings.get().getYScale(getGameWidth(), getGameHeight());
     }
+//
+//    @Override
+//    public int getGameHeight() {
+//        return 720;
+//    }
+//
+//    @Override
+//    public int getGameWidth() {
+//        return 1280;
+//    }
 
     @Override
     public String getCardImagePath() {
@@ -142,7 +162,7 @@ public class App extends GameApplication {
         ISNav.getInstance().init(new ImageLoader() {
             @Override
             public void displayImage(Context context, String path, ImageView imageView) {
-                Glide.with(context).load(path).into(imageView);
+                GlideCompat.with(context).load(path).into(imageView);
             }
         });
     }

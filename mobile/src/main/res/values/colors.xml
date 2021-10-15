@@ -35,6 +35,9 @@
     <color name="background">#ECEFF1</color>
     <color name="transparent">#00000000</color>
 
+    <color name="search_text_color">#ff8800</color>
+    <color name="search_list_item_color">#b8be35</color>
+
     <color name="colorAccentLight">#E2E2E2</color>
     <color name="banner_type_background">#FFC936</color>
     <color name="white_text_backgrotnd">#50000000</color>

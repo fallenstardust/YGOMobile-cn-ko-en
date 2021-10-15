@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import cn.garymb.ygomobile.Constants;
+
 public class CardData implements Parcelable {
 
     public CardData() {
@@ -83,6 +85,36 @@ public class CardData implements Parcelable {
         this.LeftScale = in.readInt();
         this.RightScale = in.readInt();
         this.Category = in.readLong();
+    }
+
+    /**
+     * 规则同名卡
+     */
+    public int getGameCode(){
+        if (Alias > 0) {
+            return Alias;
+        } else {
+            return Code;
+        }
+    }
+
+    /**
+     * 同卡，不同卡图
+     */
+    public int getCode(){
+        //TODO 暂时的兼容做法
+        if (Alias > 0 && Math.abs(Alias - Code) <= 10) {
+           return Alias;
+        } else {
+           return Code;
+        }
+    }
+
+    /**
+     * 根据卡密判断是否是一张卡，只判断多卡图的
+     */
+    public boolean isSame(long code){
+        return this.Code == code || getCode() == code;
     }
 
     public static final Creator<CardData> CREATOR = new Creator<CardData>() {

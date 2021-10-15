@@ -93,8 +93,7 @@
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
     <string name="reset">重置</string>
-    <string name="hit_keyword1">关键词1</string>
-    <string name="hit_keyword2">关键词2</string>
+    <string name="hit_keyword1">关键词(空格隔开)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">种族</string>
@@ -160,7 +159,7 @@
     <string name="no_share_app">没有找到分享应用</string>
     <string name="intput_room_name">输入密码（可不填）</string>
     <string name="join">加入</string>
-    <string name="quick_join">加入房间\"</string>
+    <string name="quick_join">加入房间</string>
     <string name="join_game">进入游戏</string>
     <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
     <string name="label_pendulum">灵摆刻度</string>
@@ -281,7 +280,6 @@
     <string name="return_to_duel">点此返回决斗</string>
     <string name="Start_ServiceDuelAssistant">开启决斗助手</string>
     <string name="about_DuelAssistant">复制约战房间号直接加房
-        \n复制“？”+关键词直接查询卡片
         \n复制卡组文本直接保存为卡组并在卡组编辑打开它</string>
     <string name="find_deck_text">检测到卡组文本，是否保存？</string>
     <string name="save_failed_bcos">保存失败，原因为</string>
@@ -342,4 +340,6 @@
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
     <string name="file_installed">文件已导入</string>
+    <string name="settings_screen_padding">瀑布屏预留高度</string>
+    <string name="tip_load_cdb_error">加载数据出错</string>
 </resources>

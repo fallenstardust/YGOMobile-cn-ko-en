@@ -1,21 +1,25 @@
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
+import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
+import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
+import static cn.garymb.ygomobile.Constants.QUERY_NAME;
+import static cn.garymb.ygomobile.Constants.REQUEST_SETTINGS_CODE;
+
 import android.app.Activity;
-import android.content.ContentUris;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.documentfile.provider.DocumentFile;
+import com.ourygo.assistant.base.listener.OnDeRoomListener;
+import com.ourygo.assistant.util.YGODAUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,17 +28,13 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
-
-import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
-import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
-import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
-import static cn.garymb.ygomobile.Constants.QUERY_NAME;
-import static cn.garymb.ygomobile.Constants.REQUEST_SETTINGS_CODE;
 
 
 public class GameUriManager {
@@ -113,9 +113,8 @@ public class GameUriManager {
             }
             return new File(dir, "tmp_" + System.currentTimeMillis() + ".ydk");
         } else {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            IOUtils.createFolder(dir);
+            file = new File(dir, name + ".ydk");
         }
         return file;
     }
@@ -168,7 +167,7 @@ public class GameUriManager {
             local = new File(AppsSettings.get().getResourcePath() + "/temp", name);
         }
         if (local.exists()) {
-            Log.w(Constants.TAG, "Overwrite file "+local.getAbsolutePath());
+            Log.w(Constants.TAG, "Overwrite file " + local.getAbsolutePath());
         }
         if (remoteFile != null && TextUtils.equals(remoteFile.getAbsolutePath(), local.getAbsolutePath())) {
             //is same path
@@ -179,10 +178,7 @@ public class GameUriManager {
         ParcelFileDescriptor pfd = null;
         FileInputStream input = null;
         try {
-            File dir = local.getParentFile();
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            IOUtils.createFolder(local.getParentFile());
             if (remoteFile != null) {
                 FileUtils.copyFile(remoteFile, local);
             } else {
@@ -243,7 +239,7 @@ public class GameUriManager {
 //            if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
 //                return;
 //            }
-            if (Constants.URI_HOST.equals(host)) {
+            if (Constants.URI_DECK.equals(host)) {
                 String name = uri.getQueryParameter(QUERY_NAME);
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
@@ -252,6 +248,16 @@ public class GameUriManager {
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
 //                    DeckManagerActivity.start(activity, file.getAbsolutePath());
                 }
+            } else if (Constants.URI_ROOM.equals(host)) {
+                YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
+                    if (TextUtils.isEmpty(exception))
+                        if (activity instanceof MainActivity) {
+                            MainActivity mainActivity = (MainActivity) activity;
+                            mainActivity.quickjoinRoom(host1, port, password);
+                        } else {
+                            YGOUtil.show(exception);
+                        }
+                });
             }
 //            else if (PATH_ROOM.equals(path)) {
 //                try {

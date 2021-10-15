@@ -12,8 +12,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +23,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 class FileAdapter extends BaseAdapterPlus<File> {
     public interface OnPathChangedListener {
@@ -221,7 +220,7 @@ class FileAdapter extends BaseAdapterPlus<File> {
         }
         if (!item.isDirectory()) {
             if (isimage) {
-                Glide.with(context).load(item).into(viewHolder.icon);
+                GlideCompat.with(context).load(item).into(viewHolder.icon);
             } else {
                 viewHolder.icon.setImageResource(R.drawable.ic_insert_drive_file);
             }

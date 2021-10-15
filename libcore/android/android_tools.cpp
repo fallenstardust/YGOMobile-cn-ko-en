@@ -807,7 +807,7 @@ int getLocalAddr(ANDROID_APP app) {
 	return addr;
 }
 
-void OnShareFile(ANDROID_APP app, const char* title, const char* ext){
+void OnShareFile(ANDROID_APP app, const char* _type, const char* name){
     if (!app || !app->activity || !app->activity->vm)
         return;
     JNIEnv* jni = nullptr;
@@ -817,8 +817,8 @@ void OnShareFile(ANDROID_APP app, const char* title, const char* ext){
    	jobject lNativeActivity = app->activity->clazz;
    	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
    	jmethodID methodId = jni->GetMethodID(ClassNativeActivity, "shareFile", "(Ljava/lang/String;Ljava/lang/String;)V");
-   	jstring s_title = jni->NewStringUTF(title);
-   	jstring s_ext = jni->NewStringUTF(ext);
+   	jstring s_title = jni->NewStringUTF(_type);
+   	jstring s_ext = jni->NewStringUTF(name);
    	jni->CallVoidMethod(lNativeActivity, methodId, s_title, s_ext);
    	if (s_title) {
    	    //不需要用ReleaseStringUTFChars，因为是c变量，函数外面自己释放

@@ -1,10 +1,13 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
@@ -63,6 +66,14 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         return false;
     }
 
+    public void notifyItemChanged(Card card) {
+        for (int i = 0; i < getItemCount(); i++) {
+            if (getCard(i).Code == card.Code) {
+                notifyItemChanged(i);
+            }
+        }
+    }
+
     public void hideMenu(View view) {
         if (view == null) {
             view = mShowMenuView;
@@ -88,6 +99,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         }
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = inflate(R.layout.item_search_card_swipe, parent, false);
@@ -100,12 +112,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Card item = getItem(position);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Card item = getCard(position);
         if(item == null){
             return;
         }
-        imageLoader.bindImage(holder.cardImage, item.Code);
+        imageLoader.bindImage(holder.cardImage, item, ImageLoader.Type.small);
         holder.cardName.setText(item.Name);
         if (item.isType(CardType.Monster)) {
             holder.layout_atk.setVisibility(View.VISIBLE);
@@ -171,12 +183,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, ViewHolder> i
         //卡片类型
         holder.cardType.setText(CardUtils.getAllTypeString(item, mStringManager));
         if (holder.codeView != null) {
-            int t = item.Alias - item.Code;
-            if (t > 10 || t < -10) {
-                holder.codeView.setText(String.format("%08d", item.Code));
-            } else {
-                holder.codeView.setText(String.format("%08d", item.Alias));
-            }
+            holder.codeView.setText(String.format("%08d", item.getCode()));
         }
         bindMenu(holder, position);
     }

@@ -9,13 +9,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
@@ -65,6 +67,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private ImageLoader imageLoader;
     private boolean showHead = false;
     private String mDeckMd5;
+    private DeckInfo mDeckInfo;
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
         this.context = context;
@@ -187,7 +190,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     @Override
-    public Card getCard(int posotion) {
+    public @Nullable Card getCard(int posotion) {
         int count = mMainCount;
         int index = 0;
         if (posotion < count) {
@@ -269,7 +272,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void addCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        Integer code = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        Integer code = cardInfo.getGameCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 1);
@@ -314,7 +317,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     private void removeCount(Card cardInfo, DeckItemType type) {
         if (cardInfo == null) return;
-        Integer code = cardInfo.Alias > 0 ? cardInfo.Alias : cardInfo.Code;
+        int code = cardInfo.getGameCode();
         Integer i = mCount.get(code);
         if (i == null) {
             mCount.put(code, 0);
@@ -378,7 +381,23 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return mSideCount;
     }
 
+    public DeckInfo getDeckInfo() {
+        return mDeckInfo;
+    }
+
+    public LimitList getLimitList() {
+        return mLimitList;
+    }
+
+    public @Nullable File getYdkFile(){
+        if(mDeckInfo != null){
+            return mDeckInfo.source;
+        }
+        return null;
+    }
+
     public void setDeck(DeckInfo deck) {
+        mDeckInfo = deck;
         if (deck != null) {
             loadData(deck);
         }
@@ -386,7 +405,9 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     public DeckInfo read(CardLoader cardLoader, File file, LimitList limitList) {
-        setLimitList(limitList);
+        if(limitList != null) {
+            setLimitList(limitList);
+        }
         return DeckLoader.readDeck(cardLoader, file, limitList);
     }
 
@@ -455,6 +476,16 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     public void addItem(DeckItem deckItem) {
         addCount(deckItem.getCardInfo(), deckItem.getType());
         mItems.add(deckItem);
+    }
+
+    public void notifyItemChanged(Card card){
+        for (int i = 0; i < getItemCount(); i++) {
+            DeckItem item = getItem(i);
+            Card c = item.getCardInfo();
+            if (c != null && c.Code == card.Code) {
+                notifyItemChanged(i);
+            }
+        }
     }
 
     public void addItem(int pos, DeckItem deckItem) {
@@ -576,7 +607,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                         holder.setRightImage(null);
                     }
 //                    holder.useDefault();
-                    imageLoader.bindImage(holder.cardImage, cardInfo.Code);
+                    imageLoader.bindImage(holder.cardImage, cardInfo, ImageLoader.Type.small);
                 } else {
                     holder.setCardType(0);
                     holder.setRightImage(null);

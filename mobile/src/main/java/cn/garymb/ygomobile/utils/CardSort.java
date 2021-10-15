@@ -62,7 +62,7 @@ public class CardSort implements Comparator<Card> {
             return 1;
         }
         //同名卡
-        if(c1.isAlias(c2)){
+        if(c1.getCode() == c2.getCode()){
             return comp(c1.Code, c2.Code);
         }
         int sortKey1 = getSortKey1(c1);

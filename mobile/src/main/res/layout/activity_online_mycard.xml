@@ -11,26 +11,39 @@
     tools:openDrawer="left">
 
 
-
-    <RelativeLayout
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:visibility="gone"
+            android:id="@+id/tv_back_mc"
+            android:background="@drawable/click_background"
+            android:textColor="@color/black"
+            android:layout_width="match_parent"
+            android:text="返回萌卡大厅"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_height="wrap_content"/>
 
         <cn.garymb.ygomobile.ui.mycard.MyCardWebView
             android:id="@+id/webbrowser"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="@style/StyleProgressBarMini"
                 android:layout_width="match_parent"
-                android:layout_height="5px"
-                />
+                android:layout_height="5px" />
 
         </cn.garymb.ygomobile.ui.mycard.MyCardWebView>
 
-    </RelativeLayout>
+    </LinearLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_main"
@@ -42,7 +55,6 @@
         app:itemIconTint="@color/gold"
         app:itemTextColor="@color/mediumPurple"
         app:menu="@menu/nav_mycard_menu" />
-
 
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -22,9 +22,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.StringSignature;
+import com.bumptech.glide.signature.MediaStoreSignature;
 import com.ourygo.assistant.service.DuelAssistantService;
 import com.tencent.bugly.beta.Beta;
 
@@ -46,6 +45,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import ocgcore.DataManager;
@@ -74,6 +74,7 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
+import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
@@ -138,6 +139,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
+        bind(PREF_WINDOW_TOP_BOTTOM, ""+mSettings.getScreenPadding());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -190,11 +192,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
-                    if (checkBoxPreference.isChecked()) {
-                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
-                    } else {
-                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
-                    }
+//                    if (checkBoxPreference.isChecked()) {
+//                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
+//                    } else {
+//                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
+//                    }
                 }
                 return true;
             }
@@ -435,7 +437,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         process.waitFor();
 
                         IOUtils.delete(soFile);
-                        FileUtils.copyFile(file, soFile.getAbsolutePath(), true);
+                        FileUtils.copyFile(file, soFile.getAbsolutePath());
                         me.what = COPY_SO_OK;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -487,7 +489,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         //builder.show();
         File img = new File(outFile);
         if (img.exists()) {
-            Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
+            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
@@ -497,7 +499,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
         File img = new File(outFile);
         if (img.exists()) {
-            Glide.with(this).load(img).signature(new StringSignature(img.getName() + img.lastModified()))
+            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
@@ -544,22 +546,22 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private void setPendlumScale(boolean ok) {
         if (Constants.DEBUG)
             Log.i("kk", "setPendlumScale " + ok);
-        File file = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
+        File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
         if (ok) {
             //rename
             Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
                 try {
-                    IOUtils.createFolder(file);
+                    IOUtils.createFolder(dir);
                     IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
-                            file.getAbsolutePath(), false);
+                            dir.getAbsolutePath(), false);
                 } catch (IOException e) {
                 }
             }).done((re) -> {
                 dlg.dismiss();
             });
         } else {
-            IOUtils.delete(file);
+            IOUtils.delete(dir);
         }
     }
 

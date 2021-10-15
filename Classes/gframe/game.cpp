@@ -46,7 +46,7 @@ void Game::stopBGM() {
 }
 
 void Game::playBGM() {
-    ALOGV("play bgm");
+ //   ALOGV("play bgm dInfo.isStarted=%d, is_building=%d", dInfo.isStarted, is_building);
 	gMutex.lock();
 	if(dInfo.isStarted) {
 		if(dInfo.isFinished && showcardcode == 1)
@@ -77,7 +77,7 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
             }
             break;
         case APP_CMD_RESUME:
-			//第一次不一定调用
+        	//第一次不一定调用
 			ALOGD("APP_CMD_RESUME");
 			if(ygo::mainGame != nullptr){
                 ygo::mainGame->playBGM();
@@ -131,20 +131,17 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
+
 	dataManager.FileSystem = device->getFileSystem();
     ((CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
 	xScale = android::getXScale(app);
 	yScale = android::getYScale(app);
 
-	char log_scale[256] = {0};
-	sprintf(log_scale, "xScale = %f, yScale = %f", xScale, yScale);
-	Printer::log(log_scale);
+	ALOGD("xScale = %f, yScale = %f", xScale, yScale);
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
-	char log_working[256] = {0};
-	sprintf(log_working, "workingDir= %s", workingDir.c_str());
-	Printer::log(log_working);
+    ALOGD("workingDir= %s", workingDir.c_str());
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
@@ -201,9 +198,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	} else {
 		isNPOTSupported = ((COGLES1Driver *) driver)->queryOpenGLFeature(COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
-	char log_npot[256];
-	sprintf(log_npot, "isNPOTSupported = %d", isNPOTSupported);
-	Printer::log(log_npot);
+	ALOGD("isNPOTSupported = %d", isNPOTSupported);
 	if (isNPOTSupported) {
 		if (quality == 1) {
 			driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -893,6 +888,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wDMQuery = env->addWindow(rect<s32>(490 * xScale, 180 * yScale, 840 * xScale, 340 * yScale), false, dataManager.GetSysString(1460));
 	wDMQuery->getCloseButton()->setVisible(false);
 	wDMQuery->setVisible(false);
+	wDMQuery->setDraggable(false);
 	    ChangeToIGUIImageWindow(wDMQuery, bgDMQuery, imageManager.tDialog_L);
 	stDMMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 25 * yScale, 290 * xScale, 45 * yScale), false, false, wDMQuery);
 	stDMMessage2 = env->addStaticText(L"", rect<s32>(20 * xScale, 50 * yScale, 330 * xScale, 90 * yScale), false, false, wDMQuery, -1, true);
@@ -1084,7 +1080,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnExportDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnShareReplay = env->addButton(rect<s32>(320 * xScale, 260 * yScale, 430 * xScale, 300 * yScale), wReplay, BUTTON_SHARE_REPLAY, dataManager.GetSysString(1368));
 		ChangeToIGUIImageButton(btnShareReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	//single play window
+        //single play window
 	wSinglePlay = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1201));
 	wSinglePlay->getCloseButton()->setVisible(false);
 	wSinglePlay->setDrawBackground(false);
@@ -1300,14 +1296,14 @@ void Game::MainLoop() {
 		if (!driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1))
 		{
-			Printer::log("WARNING: Pixel shaders disabled "
+			ALOGD("WARNING: Pixel shaders disabled "
 					"because of missing driver/hardware support.");
 			psFileName = "";
 		}
 		if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
 		{
-			Printer::log("WARNING: Vertex shaders disabled "
+			ALOGD("WARNING: Vertex shaders disabled "
 					"because of missing driver/hardware support.");
 			solidvsFileName = "";
 			TACvsFileName = "";
@@ -1315,7 +1311,6 @@ void Game::MainLoop() {
 		}
 		video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
 		if (gpu) {
-			char log_custom_shader[1024];
 			const video::E_GPU_SHADING_LANGUAGE shadingLanguage = video::EGSL_DEFAULT;
 			ogles2Solid = gpu->addHighLevelShaderMaterialFromFiles(
 					psFileName, "vertexMain", video::EVST_VS_1_1,
@@ -1329,12 +1324,9 @@ void Game::MainLoop() {
 					psFileName, "vertexMain", video::EVST_VS_1_1,
 					blendvsFileName, "pixelMain", video::EPST_PS_1_1,
 					&customShadersCallback, video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
-			sprintf(log_custom_shader, "ogles2Sold = %d", ogles2Solid);
-			Printer::log(log_custom_shader);
-			sprintf(log_custom_shader, "ogles2BlendTexture = %d", ogles2BlendTexture);
-			Printer::log(log_custom_shader);
-			sprintf(log_custom_shader, "ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
-			Printer::log(log_custom_shader);
+			ALOGD("ogles2Sold = %d", ogles2Solid);
+			ALOGD("ogles2BlendTexture = %d", ogles2BlendTexture);
+			ALOGD("ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
 	matManager.mCard.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;

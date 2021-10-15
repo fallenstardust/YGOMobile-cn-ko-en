@@ -88,6 +88,13 @@
         <item>Speed</item>
         <item>Quality</item>
     </string-array>
+    <string-array name="screen_top_bottom_desc"  translatable="false">
+        <item>Disable</item>
+        <item>5</item>
+        <item>8</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
     <!-- settings -->
 
     <string name="server_name">Name:</string>
@@ -108,8 +115,7 @@
     <string name="search">Search</string>
     <string name="search_open">Select</string>
     <string name="search_close">Close</string>
-    <string name="hit_keyword1">prefix word</string>
-    <string name="hit_keyword2">suffix word</string>
+    <string name="hit_keyword1">keywords(separated by SPACE)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">Reset</string>
@@ -159,7 +165,7 @@
     <string name="no_share_app">no find share app</string>
     <string name="intput_room_name">Input room name</string>
     <string name="join">join</string>
-    <string name="quick_join">join game\"</string>
+    <string name="quick_join">join game</string>
     <string name="join_game">Join game</string>
     <string name="settings_game_sensor_refresh">Sensor Refresh Game</string>
     <string name="label_pendulum">Pendulum scale</string>
@@ -280,7 +286,6 @@
     <string name="complete_setting">完成设置</string>
     <string name="Start_ServiceDuelAssistant">DuelAssistant</string>
     <string name="about_DuelAssistant">Copy PSW to Quick Join Game.
-        \nCopy Keywords to Search Cards.
         \nCopy Deck Text to Save as YDK and Open in Deck Editor</string>
     <string name="find_deck_text">Find your copyed Deck Text, Save or Not?</string>
     <string name="save_failed_bcos">save failed bcos of</string>
@@ -350,4 +355,6 @@
     <string name="label_ot_CUSTOM">Custom</string>
     <string name="label_ot_No_Exclusive">No exclusive</string>
     <string name="label_ot_SC_OCG">SChinese OCG</string>
+    <string name="settings_screen_padding">Reserved height of curved screen</string>
+    <string name="tip_load_cdb_error">Load database error</string>
 </resources>

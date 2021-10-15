@@ -60,6 +60,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -99,41 +100,32 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private ServerListManager mServerListManager;
     private DuelAssistantManagement duelAssistantManagement;
     private CardManager mCardManager;
-    private SparseArray<Card> cards;
+    private CardDetailRandom mCardDetailRandom;
+    private ImageLoader mImageLoader;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
-//        mCardManager = new CardManager(AppsSettings.get().getDataBaseFile().getAbsolutePath(), null);
-        mServerList = $(R.id.list_server);
-        mServerListAdapter = new ServerListAdapter(this);
+        mImageLoader = new ImageLoader(false);
+        mCardManager = DataManager.get().getCardManager();
         //server list
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        mServerList.setLayoutManager(linearLayoutManager);
-        DividerItemDecoration dividerItemDecoration =
-                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        mServerList.addItemDecoration(dividerItemDecoration);
-        mServerList.setAdapter(mServerListAdapter);
-        mServerListManager = new ServerListManager(this, mServerListAdapter);
-        mServerListManager.bind(mServerList);
-        mServerListManager.syncLoadData();
+        initServerlist();
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
-//        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
+        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
-
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
                 if (arg0) {
-                    Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -143,10 +135,16 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        //trpay
-//        TrPay.getInstance(HomeActivity.this).initPaySdk("e1014da420ea4405898c01273d6731b6", "YGOMobile");
-        //check update
-        Beta.checkUpgrade(false, false);
+        if(!BuildConfig.BUILD_TYPE.equals("debug")) {
+            //release才检查版本
+            if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
+                Log.d(Constants.TAG, "start check update");
+                //check update
+                Beta.checkUpgrade(false, false);
+            } else {
+                Log.d(Constants.TAG, "skip check update");
+            }
+        }
         //初始化决斗助手
         initDuelAssistant();
         //萌卡
@@ -159,35 +157,40 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     protected void onResume() {
         super.onResume();
         BacktoDuel();
+        duelAssistantCheck();
+    }
+
+    @Override
+    protected void onStop() {
+        //mImageLoader.clearZipCache();
+        super.onStop();
     }
 
     private void duelAssistantCheck() {
         if (AppsSettings.get().isServiceDuelAssistant()) {
             Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        FileLogUtil.writeAndTime("主页决斗助手检查");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    duelAssistantManagement.checkClip(ID_MAINACTIVITY);
+            handler.postDelayed(() -> {
+                try {
+                    FileLogUtil.writeAndTime("主页决斗助手检查");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+                duelAssistantManagement.checkClip(ID_MAINACTIVITY);
             }, 500);
         }
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
-        duelAssistantCheck();
+
     }
 
     @Override
     public void onJoinRoom(String host,int port,String password,int id) {
         if (id == ID_MAINACTIVITY) {
-            QuickjoinRoom(password);
+            quickjoinRoom(host,port,password);
         }
     }
 
@@ -217,7 +220,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         duelAssistantManagement.init(getApplicationContext());
         duelAssistantManagement.addDuelAssistantListener(this);
-        YGOUtil.startDuelService(this);
+//        YGOUtil.startDuelService(this);
     }
 
     //检查是否有刘海
@@ -309,7 +312,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             break;
             case R.id.action_game:
                 setRandomCardDetail();
-                CardDetailRandom.showRandromCardDetailToast(this);
+                if(mCardDetailRandom != null){
+                    mCardDetailRandom.show();
+                }
                 openGame();
                 break;
             case R.id.action_settings: {
@@ -615,10 +620,20 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         });
     }
 
-    private void QuickjoinRoom(String password) {
+    public void quickjoinRoom(String host,int port,String password) {
+
+        String message;
+        if (!TextUtils.isEmpty(host))
+            message = getString(R.string.quick_join)
+                    + "\nIP：" + host
+                    + "\n端口：" + port
+                    + "\n密码：" + password;
+        else
+            message = getString(R.string.quick_join) + "：\"" + password + "\"";
+
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);
-        dialog.setMessage(getString(R.string.quick_join) + password + "\"");
+        dialog.setMessage(message);
         dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
         dialog.setLeftButtonText(R.string.Cancel);
         dialog.setRightButtonText(R.string.join);
@@ -656,12 +671,12 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         //加载数据库中所有卡片卡片
         mCardManager.loadCards();
         //mCardManager = DataManager.get().getCardManager();
-        cards = mCardManager.getAllCards();
+        SparseArray<Card> cards = mCardManager.getAllCards();
         int y = (int) (Math.random() * cards.size());
         Card cardInfo = cards.valueAt(y);
         if (cardInfo == null)
             return;
-        CardDetailRandom.RandomCardDetail(this, cardInfo);
+        mCardDetailRandom = CardDetailRandom.genRandomCardDetail(this, mImageLoader, cardInfo);
     }
 
     public void showTipsToast() {

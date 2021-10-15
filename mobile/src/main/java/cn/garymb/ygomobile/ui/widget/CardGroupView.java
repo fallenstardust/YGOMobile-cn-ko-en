@@ -2,18 +2,20 @@ package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import java.util.List;
-
 import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.util.List;
+
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -23,8 +25,14 @@ public class CardGroupView extends FrameLayout {
     private int mLineLimit = 10;
     private int mOrgLineLimit = 10;
     private int mLineMaxCount = 15;
-    private int mCardWidth = 177, mCardHeight = 255;
+    private int mCardWidth = Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
+    private int mCardHeight = Constants.CORE_SKIN_CARD_SMALL_SIZE[1];
     private boolean mPausePadding;
+    private ImageLoader mImageLoader;
+
+    public void setImageLoader(ImageLoader imageLoader) {
+        mImageLoader = imageLoader;
+    }
 
     //region init
     public CardGroupView(@NonNull Context context) {
@@ -219,7 +227,7 @@ public class CardGroupView extends FrameLayout {
             refreshLayoutParams(count + 1);
         }
         CardView cardView = new CardView(getContext());
-        cardView.showCard(card);
+        cardView.showCard(mImageLoader, card);
         addView(cardView, index);
         return true;
     }

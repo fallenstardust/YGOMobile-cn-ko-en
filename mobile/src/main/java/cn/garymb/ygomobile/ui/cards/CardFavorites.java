@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +17,7 @@ import ocgcore.data.Card;
 
 public class CardFavorites {
     private final List<Integer> mList = new ArrayList<>();
-
+    private static final String TAG = "CardFavorites";
     private static final CardFavorites sCardFavorites = new CardFavorites();
 
     public static CardFavorites get() {
@@ -71,14 +73,13 @@ public class CardFavorites {
 
     public void load() {
         mList.clear();
-        File config = AppsSettings.get().getFavoriteFile();
         List<String> lines;
+        File config = AppsSettings.get().getSystemConfig();
         if (!config.exists()) {
-            config = AppsSettings.get().getSystemConfig();
-        }
-        if (!config.exists()) {
+            Log.w(TAG, "config is no exists:" + config.getPath());
             return;
         }
+        //Log.d(TAG, "load favorites:"+config.getPath());
         lines = FileUtils.readLines(config.getPath(), Constants.DEF_ENCODING);
         for (String line : lines) {
             String tmp = line.trim();
@@ -86,6 +87,7 @@ public class CardFavorites {
                 mList.add(Integer.parseInt(tmp));
             }
         }
+        Log.d(TAG, "load favorites success:"+mList.size());
     }
 
     public void save() {

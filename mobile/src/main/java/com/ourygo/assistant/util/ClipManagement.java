@@ -72,8 +72,8 @@ public class ClipManagement implements ClipboardManager.OnPrimaryClipChangedList
         if (TextUtils.isEmpty(clipMessage)) {
             return;
         }
-        if (onClipChangedListener != null)
-            onClipChangedListener.onClipChanged(clipMessage, false, ID_CLIP_LISTENER);
+//        if (onClipChangedListener != null)
+//            onClipChangedListener.onClipChanged(clipMessage, false, ID_CLIP_LISTENER);
     }
 
     public void onPrimaryClipChanged(boolean isCheck, int id) {

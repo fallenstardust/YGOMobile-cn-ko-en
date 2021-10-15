@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.cards.deck.LabelInfo;
 import ocgcore.data.Card;
@@ -43,6 +44,11 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
     private CardView mLastView;
     private boolean mAutoSort;
     private EditMode mEditMode;
+    private ImageLoader mImageLoader;
+
+    public void setImageLoader(ImageLoader imageLoader) {
+        mImageLoader = imageLoader;
+    }
 
     public enum EditMode {
         None,
@@ -257,7 +263,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                 cardView.setSelected(false);
                 if (i < mDeckInfo.getExtraCount()) {
                     if (i == index && count > 0) {
-                        cardView.showCard(mDeckInfo.getExtraCard(i));
+                        cardView.showCard(mImageLoader, mDeckInfo.getExtraCard(i));
                         index++;
                         count--;
                     }
@@ -265,7 +271,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                         cardView.updateLimit(getImageTop(), mLimitList);
                     }
                 } else {
-                    cardView.showCard(null);
+                    cardView.showCard(mImageLoader, null);
                 }
             }
             resizePadding(Type.Extra, mExtraViews);
@@ -278,11 +284,11 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                 cardView.setSelected(false);
                 orgPos = i % Constants.DECK_WIDTH_MAX_COUNT;
                 if (orgPos >= mMainLimit) {
-                    cardView.showCard(null);
+                    cardView.showCard(mImageLoader, null);
                 } else {
                     if (index < mDeckInfo.getMainCount()) {
                         if (targetIndex == i && count > 0) {
-                            cardView.showCard(mDeckInfo.getMainCard(index));
+                            cardView.showCard(mImageLoader, mDeckInfo.getMainCard(index));
                             index++;
                             targetIndex = (index / mMainLimit) * Constants.DECK_WIDTH_MAX_COUNT + (index % mMainLimit);
                             count--;
@@ -295,7 +301,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                             mMainViews.get(i).updateLimit(getImageTop(), mLimitList);
                         }
                     } else {
-                        cardView.showCard(null);
+                        cardView.showCard(mImageLoader, null);
                     }
                 }
             }
@@ -307,7 +313,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                 cardView.setSelected(false);
                 if (i < mDeckInfo.getSideCount()) {
                     if (i == index && count > 0) {
-                        cardView.showCard(mDeckInfo.getSideCard(i));
+                        cardView.showCard(mImageLoader, mDeckInfo.getSideCard(i));
                         index++;
                         count--;
                     }
@@ -315,7 +321,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                         cardView.updateLimit(getImageTop(), mLimitList);
                     }
                 } else {
-                    cardView.showCard(null);
+                    cardView.showCard(mImageLoader, null);
                 }
             }
             resizePadding(Type.Side, mSideViews);

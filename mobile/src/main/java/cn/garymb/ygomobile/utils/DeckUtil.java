@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
 import android.content.Context;
-import android.os.Build;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,23 +93,25 @@ public class DeckUtil {
                 }
             }
         }
-        files = appsSettings.getExpansionsPath().listFiles();
+        files = appsSettings.getExpansionFiles();
         for (File file : files) {
-            if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
-                ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
-                Enumeration entries = zipFile.entries();
-                while (entries.hasMoreElements()) {
-                    ZipEntry entry = (ZipEntry) entries.nextElement();
-                    if (entry.getName().endsWith(".ydk")) {
-                        String name = entry.getName();
-                        name = name.substring(name.lastIndexOf("/"), name.length());
-                        InputStream inputStream = zipFile.getInputStream(entry);
-                        deckList.add(new DeckFile(
-                                IOUtils.asFile(inputStream,
-                                        appsSettings.getCacheDeckDir() + "/" + name)));
+            if (file.isFile()) {
+                ZipFile zipFile = null;
+                try {
+                    zipFile = new ZipFile(file.getAbsoluteFile());
+                    Enumeration<?> entries = zipFile.entries();
+                    while (entries.hasMoreElements()) {
+                        ZipEntry entry = (ZipEntry) entries.nextElement();
+                        if (entry.getName().endsWith(".ydk")) {
+                            String name = entry.getName();
+                            name = name.substring(name.lastIndexOf("/"));
+                            InputStream inputStream = zipFile.getInputStream(entry);
+                            deckList.add(new DeckFile(
+                                    IOUtils.asFile(inputStream,
+                                            appsSettings.getCacheDeckDir() + "/" + name)));
+                        }
                     }
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                } finally {
                     IOUtils.close(zipFile);
                 }
             }
@@ -119,14 +120,14 @@ public class DeckUtil {
         return deckList;
     }
 
-    static Comparator nameCom = new Comparator<DeckFile>() {
+    private final static Comparator<DeckFile> nameCom = new Comparator<DeckFile>() {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
             return ydk1.getName().compareTo(ydk2.getName());
         }
     };
 
-    static Comparator dateCom = new Comparator<DeckFile>() {
+    private final static Comparator<DeckFile> dateCom = new Comparator<DeckFile>() {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
             return ydk2.getDate().compareTo(ydk1.getDate());

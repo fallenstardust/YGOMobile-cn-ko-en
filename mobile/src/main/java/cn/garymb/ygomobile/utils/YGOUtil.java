@@ -17,7 +17,6 @@ import com.ourygo.assistant.util.PermissionUtil;
 import com.ourygo.assistant.util.Util;
 
 import cn.garymb.ygomobile.App;
-import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
@@ -36,6 +35,51 @@ public class YGOUtil {
         return App.get().getResources().getString(stringId);
     }
 
+    public static byte[] toBytes(String bits) {
+
+        int y = bits.length() % 8;
+        Log.e("Deck",bits.length()+"之前余数"+y);
+        if (y != 0)
+            bits = toNumLengthLast(bits, bits.length()+8 - y);
+        Log.e("Deck",bits.length()+"余数"+y);
+        byte[] bytes=new byte[bits.length()/8];
+        for (int i=0;i<bits.length()/8;i++) {
+            bytes[i] = (byte) Integer.valueOf(bits.substring(i * 8, i * 8 + 8), 2).intValue();
+            if (i<8){
+                Log.e("Deck",bits.substring(i*8,i*8+8)+" 字节 "+bytes[i] );
+
+            }
+        }
+        Log.e("Deck","二进制"+bits );
+        return bytes;
+    }
+
+    public static String toNumLength(String message, int num) {
+        while (message.length() < num) {
+            message = "0" + message;
+        }
+        return message;
+    }
+    public static String toNumLengthLast(String message, int num) {
+        while (message.length() < num) {
+            message +="0";
+        }
+        return message;
+    }
+
+    public static String[] toNumLength(String[] nums, int num) {
+        if (nums.length < num) {
+            String[] bms = nums;
+            nums = new String[num];
+            for (int i = 0; i < num - bms.length; i++)
+                nums[i] = "0";
+            for (int i = 0; i < bms.length; i++)
+                nums[i + num - bms.length] = bms[i];
+        }
+        return nums;
+    }
+
+
     /**
      * 根据卡密获取高清图下载地址
      *
@@ -44,6 +88,14 @@ public class YGOUtil {
      */
     public static String getCardImageDetailUrl(int code) {
         return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".png";
+    }
+
+    public static String getArrayString(String[] bytes, int start, int end) {
+        String message = "";
+        for (int i = start; i < end; i++) {
+            message += bytes[i];
+        }
+        return message;
     }
 
 
@@ -69,11 +121,11 @@ public class YGOUtil {
     }
 
     public static void startDuelService(Context context) {
-        if (AppsSettings.get().isServiceDuelAssistant()) {
-            if (!Util.startDuelService(context)) {
-                getNotificationPermissionDialog(context).show();
-            }
-        }
+//        if (AppsSettings.get().isServiceDuelAssistant()) {
+//            if (!Util.startDuelService(context)) {
+//                getNotificationPermissionDialog(context).show();
+//            }
+//        }
     }
 
 
@@ -96,9 +148,9 @@ public class YGOUtil {
                 dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-                        Log.e("YGOUtil","当前版本"+Build.VERSION.SDK_INT);
-                        Log.e("YGOUtil","o的版本"+Build.VERSION_CODES.O);
-                        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O&&!PermissionUtil.isNotificationListenerEnabled(context)) {
+                        Log.e("YGOUtil", "当前版本" + Build.VERSION.SDK_INT);
+                        Log.e("YGOUtil", "o的版本" + Build.VERSION_CODES.O);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !PermissionUtil.isNotificationListenerEnabled(context)) {
                             getNotificationPermissionDialog(context).show();
                         }
                     }
@@ -118,27 +170,27 @@ public class YGOUtil {
 
     public static DialogPlus getNotificationPermissionDialog(Context context) {
 
-            DialogPlus dialog = new DialogPlus(context);
-            dialog.setTitle(R.string.tip);
-            dialog.setMessage(R.string.EXPAND_STATUS_BAR);
-            dialog.setLeftButtonText(R.string.to_open);
-            dialog.setRightButtonText(R.string.Cancel);
-            dialog.setLeftButtonListener(new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    // 根据isOpened结果，判断是否需要提醒用户跳转AppInfo页面，去打开App通知权限
-                    context.startActivity(Util.getNotificationPermissionInitent(context));
-                    dialog.dismiss();
-                }
-            });
+        DialogPlus dialog = new DialogPlus(context);
+        dialog.setTitle(R.string.tip);
+        dialog.setMessage(R.string.EXPAND_STATUS_BAR);
+        dialog.setLeftButtonText(R.string.to_open);
+        dialog.setRightButtonText(R.string.Cancel);
+        dialog.setLeftButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // 根据isOpened结果，判断是否需要提醒用户跳转AppInfo页面，去打开App通知权限
+                context.startActivity(Util.getNotificationPermissionInitent(context));
+                dialog.dismiss();
+            }
+        });
 
-            dialog.setRightButtonListener(new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialog.dismiss();
-                }
-            });
-            return dialog;
+        dialog.setRightButtonListener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialog.dismiss();
+            }
+        });
+        return dialog;
     }
 
 

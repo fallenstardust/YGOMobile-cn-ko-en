@@ -29,7 +29,6 @@ import ocgcore.enums.LimitType;
 public class CardLoader implements ICardSearcher {
     private final LimitManager mLimitManager;
     private final CardManager mCardManager;
-    private final StringManager mStringManager;
     private final Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
@@ -50,7 +49,6 @@ public class CardLoader implements ICardSearcher {
         this.context = context;
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
-        mStringManager = DataManager.get().getStringManager();
         mLimitList = mLimitManager.getTopLimit();
     }
 
@@ -91,7 +89,7 @@ public class CardLoader implements ICardSearcher {
     }
 
     public void loadData() {
-        loadData(null);
+        loadData(null, null);
     }
 
     @Override
@@ -114,7 +112,7 @@ public class CardLoader implements ICardSearcher {
         }
     }
 
-    private void loadData(CardSearchInfo searchInfo) {
+    private void loadData(CardSearchInfo searchInfo, List<Integer> inCards) {
         if (!isOpen()) {
             return;
         }
@@ -129,7 +127,10 @@ public class CardLoader implements ICardSearcher {
             List<Card> list = new ArrayList<>();
             for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.valueAt(i);
-                if (searchInfo == null || searchInfo.check(card)) {
+                if (inCards != null && !inCards.contains(card.getCode())){
+                    continue;
+                }
+                if (searchInfo == null || searchInfo.isValid(card)) {
                     list.add(card);
                 }
             }
@@ -178,38 +179,16 @@ public class CardLoader implements ICardSearcher {
     }
 
     @Override
-    public void search(String prefixWord, String suffixWord,
-                       long attribute, long level, long race,
-                       String limitName, long limit,
-                       String atk, String def, long pscale,
-                       long setcode, long category, long ot, int linkKey, long... types) {
-        CardSearchInfo searchInfo = new CardSearchInfo();
-        if (!TextUtils.isEmpty(prefixWord)) {
-            searchInfo.keyWord1 = prefixWord;
-            searchInfo.keyWordSetcode1 = mStringManager.getSetCode(prefixWord);
-        }
-        if (!TextUtils.isEmpty(suffixWord)) {
-            searchInfo.keyWord2 = suffixWord;
-            searchInfo.keyWordSetcode2 = mStringManager.getSetCode(suffixWord);
-        }
-        searchInfo.attribute = (int) attribute;
-        searchInfo.level = (int) level;
-        searchInfo.atk = atk;
-        searchInfo.def = def;
-        searchInfo.ot = (int) ot;
-        searchInfo.linkKey = linkKey;
-        searchInfo.types = types;
-
-        searchInfo.category = category;
-        searchInfo.race = race;
-        searchInfo.pscale = (int) pscale;
-        searchInfo.setcode = setcode;
+    public void search(CardSearchInfo searchInfo) {
+        String limitName = searchInfo.getLimitName();
+        int limit = searchInfo.getLimitType();
         LimitList limitList = null;
+        List<Integer> inCards = null;
         if (!TextUtils.isEmpty(limitName)) {
             limitList = mLimitManager.getLimit(limitName);
             setLimitList(limitList);
-            LimitType cardLimitType = LimitType.valueOf(limit);
             if (limitList != null) {
+                LimitType cardLimitType = LimitType.valueOf(limit);
                 List<Integer> ids;
                 if (cardLimitType == LimitType.Forbidden) {
                     ids = limitList.forbidden;
@@ -222,13 +201,11 @@ public class CardLoader implements ICardSearcher {
                 } else {
                     ids = null;
                 }
-                if (ids != null) {
-                    searchInfo.inCards = ids;
-                }
+                inCards = ids;
             }
         } else {
             setLimitList(null);
         }
-        loadData(searchInfo);
+        loadData(searchInfo, inCards);
     }
 }

@@ -16,26 +16,28 @@ import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
 import static android.view.View.inflate;
+import static android.view.View.resolveSize;
 
 public class CardDetailRandom {
-    private static View viewCardDetail;
-    private static ImageView cardImage;
-    private static TextView name;
-    private static TextView desc;
-    private static TextView level;
-    private static TextView type;
-    private static TextView race;
-    private static TextView cardAtk;
-    private static TextView cardDef;
-    private static TextView attrView;
-    private static View monsterlayout;
-    private static View atkdefView, textdefView;
-    private static ImageLoader imageLoader;
-    private static StringManager mStringManager;
+    private View viewCardDetail;
+    private ImageView cardImage;
+    private TextView name;
+    private TextView desc;
+    private TextView level;
+    private TextView type;
+    private TextView race;
+    private TextView cardAtk;
+    private TextView cardDef;
+    private TextView attrView;
+    private View monsterlayout;
+    private View atkdefView, textdefView;
+    private StringManager mStringManager;
+    private Context mContext;
 
-    public static void RandomCardDetail(Context context, Card cardInfo) {
-        if (cardInfo == null) return;
-        imageLoader = ImageLoader.get(context);
+    private static CardDetailRandom sCardDetailRandom = null;
+
+    private CardDetailRandom(Context context, Card cardInfo) {
+        mContext = context;
         viewCardDetail = inflate(context, R.layout.dialog_cardinfo_small, null);
         cardImage = viewCardDetail.findViewById(R.id.card_image_toast);
         name = viewCardDetail.findViewById(R.id.card_name_toast);
@@ -51,7 +53,6 @@ public class CardDetailRandom {
         desc = viewCardDetail.findViewById(R.id.text_desc_toast);
 
         mStringManager = DataManager.get().getStringManager();
-        imageLoader.bindImage(cardImage, cardInfo.Code);
         name.setText(cardInfo.Name);
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
@@ -88,8 +89,24 @@ public class CardDetailRandom {
         viewCardDetail.setRotationY(5);
     }
 
-    public static void showRandromCardDetailToast(Context context) {
-        Toast toast = new Toast(context);
+    public static CardDetailRandom genRandomCardDetail(Context context, ImageLoader imageLoader, Card cardInfo) {
+        if (cardInfo == null) return null;
+        CardDetailRandom cardDetailRandom = new CardDetailRandom(context, cardInfo);
+        cardDetailRandom.bindCardImage(imageLoader, cardInfo);
+        sCardDetailRandom = cardDetailRandom;
+        return cardDetailRandom;
+    }
+
+    public void bindCardImage(ImageLoader imageLoader, Card cardInfo) {
+        imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.origin);
+    }
+
+    public View getView() {
+        return viewCardDetail;
+    }
+
+    public void show(){
+        Toast toast = new Toast(mContext);
         toast.setView(viewCardDetail);
         toast.setDuration(Toast.LENGTH_LONG);
         toast.setGravity(Gravity.LEFT, 0, 0);

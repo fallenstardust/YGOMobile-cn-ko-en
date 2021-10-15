@@ -248,9 +248,9 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
         String message;
         if (!TextUtils.isEmpty(host))
             message = getString(R.string.quick_join)
-                    + "IP：" + host
-                    + "端口：" + port
-                    + "密码：" + password;
+                    + "\nIP：" + host
+                    + "\n端口：" + port
+                    + "\n密码：" + password;
         else
             message = getString(R.string.quick_join) + "\"" + password + "\"";
         tv_message.setText(message);

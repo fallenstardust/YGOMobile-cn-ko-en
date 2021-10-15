@@ -30,7 +30,7 @@ public interface Constants {
     String PREF_PENDULUM_SCALE = "pref_key_game_lab_pendulum_scale";
     boolean PREF_DEF_PENDULUM_SCALE = true;
     String PREF_START_SERVICEDUELASSISTANT = "pref_key_start_serviceduelassistant";
-    boolean PREF_DEF_START_SERVICEDUELASSISTANT = false;
+    boolean PREF_DEF_START_SERVICEDUELASSISTANT = true;
     String PREF_LOCK_SCREEN = "pref_key_game_screen_orientation";
     boolean PREF_DEF_LOCK_SCREEN = false;
     String PREF_IMMERSIVE_MODE = "pref_key_immersive_mode";
@@ -92,6 +92,12 @@ public interface Constants {
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
     int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
+
+    int[] CORE_SKIN_CARD_MINI_SIZE = new int[]{44, 64};
+    int[] CORE_SKIN_CARD_SMALL_SIZE = new int[]{177, 254};
+    //原图
+    int[] CORE_SKIN_CARD_MIDDLE_SIZE = new int[]{397, 578};
+
     int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{177, 254};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};
     boolean SUPPORT_BPG = true;
@@ -116,6 +122,10 @@ public interface Constants {
 
     String PREF_KEEP_SCALE = "pref_settings_keep_scale";
     boolean DEF_PREF_KEEP_SCALE = false;
+
+    //dp单位，游戏高度减少，留空白
+    String PREF_WINDOW_TOP_BOTTOM = "pref_settings_window_top_bottom";
+    int DEF_PREF_WINDOW_TOP_BOTTOM = 0;
 
     int REQUEST_CUT_IMG = 0x1000 + 0x10;
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
@@ -190,14 +200,24 @@ public interface Constants {
      */
     String PATH_DECK = "/deck";
     String SCHEME_HTTP = "http";
-    String SCHEME_APP = "ygo";
-    String URI_HOST = "deck";
+    String SCHEME_HTTPS = "https";
+    String SCHEME_APP = "http";
+    String URI_HOST = "deck.ourygo.top";
+    String URI_DECK = "deck";
+    String URI_ROOM = "room";
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
-    String QUERY_MAIN = "main";
-    String QUERY_EXTRA = "extra";
-    String QUERY_SIDE = "side";
+    String QUERY_MAIN = "m";
+    String QUERY_DECK = "d";
+    String QUERY_EXTRA = "e";
+    String QUERY_SIDE = "s";
+    String QUERY_VERSION="v";
+    String QUERY_MAIN_ALL = "main";
+    String QUERY_EXTRA_ALL = "extra";
+    String QUERY_SIDE_ALL = "side";
+    String QUERY_YGO_TYPE="ygotype";
+    String ARG_DECK="deck";
     String PATH_ROOM = "/room";
     String QUERY_HOST = "host";
     String QUERY_PORT = "port";
@@ -214,4 +234,48 @@ public interface Constants {
     String TAG = "ygo-java";
 
     String DEF_ENCODING = "utf-8";
+
+    String[] NUM_40_LIST={
+            "0"
+            ,"1"
+            ,"2"
+            ,"3"
+            ,"4"
+            ,"5"
+            ,"6"
+            ,"7"
+            ,"8"
+            ,"9"
+            ,"a"
+            ,"b"
+            ,"c"
+            ,"d"
+            ,"e"
+            ,"f"
+            ,"g"
+            ,"h"
+            ,"i"
+            ,"j"
+            ,"k"
+            ,"l"
+            ,"m"
+            ,"n"
+            ,"o"
+            ,"p"
+            ,"q"
+            ,"r"
+            ,"s"
+            ,"t"
+            ,"u"
+            ,"v"
+            ,"w"
+            ,"x"
+            ,"y"
+            ,"z"
+            ,"A"
+            ,"B"
+            ,"C"
+            ,"D"
+    };
+
 }
