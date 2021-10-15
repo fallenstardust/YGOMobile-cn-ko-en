@@ -7,20 +7,20 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
+//import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.YGODialogUtil;
+//import cn.garymb.ygomobile.utils.YGODialogUtil;
 
 public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
 
     private int dragFlags;
     private int swipeFlags;
     private RecyclerView recyclerView;
-    private YGODialogUtil.OnDeckTypeListener onDeckTypeListener;
+//    private YGODialogUtil.OnDeckTypeListener onDeckTypeListener;
 
-    public DeckTypeTouchHelperCallback(YGODialogUtil.OnDeckTypeListener onDeckTypeListener) {
-        this.onDeckTypeListener = onDeckTypeListener;
-    }
+//    public DeckTypeTouchHelperCallback(YGODialogUtil.OnDeckTypeListener onDeckTypeListener) {
+//        this.onDeckTypeListener = onDeckTypeListener;
+//    }
 
     @Override
     public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder p2) {
@@ -42,7 +42,7 @@ public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
     @Override
     public void onSwiped(RecyclerView.ViewHolder vh, int dire) {
         int positon = vh.getAdapterPosition();
-        TextSelectAdapter textSelectAdapter = ((TextSelectAdapter) recyclerView.getAdapter());
+//        TextSelectAdapter textSelectAdapter = ((TextSelectAdapter) recyclerView.getAdapter());
 
         DialogPlus dialogPlus = new DialogPlus(recyclerView.getContext());
         dialogPlus.setMessage(R.string.delete_confirm);
@@ -53,13 +53,13 @@ public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
             public void onClick(DialogInterface dialog, int which) {
                 dialogPlus.dismiss();
 
-                onDeckTypeListener.onDeckTypeListener(positon);
+//                onDeckTypeListener.onDeckTypeListener(positon);
             }
         });
         dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                textSelectAdapter.notifyItemChanged(positon);
+//                textSelectAdapter.notifyItemChanged(positon);
                 dialog.dismiss();
             }
         });

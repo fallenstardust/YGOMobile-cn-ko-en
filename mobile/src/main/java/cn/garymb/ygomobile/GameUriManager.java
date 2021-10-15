@@ -28,7 +28,7 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;

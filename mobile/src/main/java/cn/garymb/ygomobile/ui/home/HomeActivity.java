@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
@@ -109,15 +110,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
         mImageLoader = new ImageLoader(false);
-        mCardManager = DataManager.get().getCardManager();
+//        mCardManager = DataManager.get().getCardManager();
         //server list
-        initServerlist();
+//        initServerlist();
         //event
         EventBus.getDefault().register(this);
         initBoomMenuButton($(R.id.bmb));
         AnimationShake();
-        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
-        toggleAnimation(tv);
+//        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
+//        toggleAnimation(tv);
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
             public void onViewInitFinished(boolean arg0) {
