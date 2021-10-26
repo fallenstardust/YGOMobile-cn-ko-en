@@ -6,48 +6,39 @@ import cn.garymb.ygomobile.bean.TextSelect;
 
 public class DeckFile extends TextSelect {
 
-    private String name;
-    private String path;
-    private Long date;
+    private final File path;
+    private final String fullName;
 
     public DeckFile(String path) {
-        this.path = path;
-        name = new File(path).getName();
-        int end = name.lastIndexOf(".");
-        if (end != -1)
-            name = name.substring(0, end);
-        super.setName(name);
-        setObject(this);
+        this(new File(path));
     }
 
     public DeckFile(File file) {
-        path = file.getAbsolutePath();
-        name = file.getName();
-        name = name.substring(0, name.lastIndexOf("."));
-        date = file.lastModified();
+        path = file;
+        fullName = file.getName();
+        String name = fullName;
+        int index = name.lastIndexOf(".");
+        if(index > 0) {
+            name = name.substring(0, index);
+        }
         super.setName(name);
         setObject(this);
     }
 
-    public String getName() {
-        return name;
-    }
-    public String getFileName(){
-        return new File(path).getName();
+    public String getFileName() {
+        return fullName;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPath() {
+    public File getPathFile() {
         return path;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public String getPath() {
+        return path.getAbsolutePath();
     }
 
-    public Long getDate() { return date; }
+    public Long getDate() {
+        return path.lastModified();
+    }
 
 }

@@ -38,7 +38,6 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.ourygo.assistant.service.DuelAssistantService;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import org.greenrobot.eventbus.EventBus;
@@ -418,6 +417,12 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
+                    }
+
+                    @Override
+                    public void onImageUpdate(Card cardInfo) {
+                        mDeckAdapater.notifyItemChanged(cardInfo);
+                        mCardListAdapter.notifyItemChanged(cardInfo);
                     }
 
                     @Override
@@ -1117,7 +1122,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckSelect(DeckFile deckFile) {
-        loadDeckFromFile(new File(deckFile.getPath()));
+        loadDeckFromFile(deckFile.getPathFile());
     }
 
     @Override
@@ -1127,7 +1132,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             return;
         String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
+            if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;
                 if (files != null && files.size() > 0) {
@@ -1145,10 +1150,14 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType) {
-        String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
+        File ydk = mDeckAdapater.getYdkFile();
+        if(ydk == null){
+            return;
+        }
+        String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
-                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
+            if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
+                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getFileName()));
                 return;
             }
         }
@@ -1156,10 +1165,14 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onDeckCopy(List<DeckFile> deckFileList, DeckType toDeckType) {
-        String currentDeckPath = mDeckAdapater.getYdkFile().getAbsolutePath();
+        File ydk = mDeckAdapater.getYdkFile();
+        if(ydk == null){
+            return;
+        }
+        String currentDeckPath = ydk.getPath();
         for (DeckFile deckFile : deckFileList) {
-            if (deckFile.getPath().equals(currentDeckPath)) {
-                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getName() + ".ydk"));
+            if (TextUtils.equals(currentDeckPath, deckFile.getPath())) {
+                loadDeckFromFile(new File(toDeckType.getPath(), deckFile.getFileName()));
                 return;
             }
         }

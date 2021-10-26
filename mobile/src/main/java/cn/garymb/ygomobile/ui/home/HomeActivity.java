@@ -142,12 +142,15 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
-            Log.d(Constants.TAG, "start check update");
-            //check update
-            Beta.checkUpgrade(false, false);
-        } else {
-            Log.d(Constants.TAG, "skip check update");
+        if(!BuildConfig.BUILD_TYPE.equals("debug")) {
+            //release才检查版本
+            if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
+                Log.d(Constants.TAG, "start check update");
+                //check update
+                Beta.checkUpgrade(false, false);
+            } else {
+                Log.d(Constants.TAG, "skip check update");
+            }
         }
         //初始化决斗助手
         initDuelAssistant();

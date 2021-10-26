@@ -29,7 +29,6 @@ import ocgcore.enums.LimitType;
 public class CardLoader implements ICardSearcher {
     private final LimitManager mLimitManager;
     private final CardManager mCardManager;
-    private final StringManager mStringManager;
     private final Context context;
     private CallBack mCallBack;
     private LimitList mLimitList;
@@ -50,7 +49,6 @@ public class CardLoader implements ICardSearcher {
         this.context = context;
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
-        mStringManager = DataManager.get().getStringManager();
         mLimitList = mLimitManager.getTopLimit();
     }
 

@@ -167,22 +167,10 @@ public class FileUtils {
     }
 
     public static void copyFile(String oldPath, String newPath) throws IOException {
-        copyFile(oldPath, newPath, true);
-    }
-
-    public static void copyFile(String oldPath, String newPath, boolean isName) throws IOException {
-
-        //判断复制后的路径是否含有文件名,如果没有则加上
-        if (!isName) {
-            //由于newPath是路径加文件名,所以获取要复制的文件名与复制后的路径组成新的newPath
-            String abb[] = oldPath.split("/");
-            newPath = newPath + "/" + abb[abb.length - 1];
-        }
-
         FileInputStream fis = new FileInputStream(oldPath);
         FileOutputStream fos = new FileOutputStream(newPath);
         byte[] buf = new byte[1024];
-        int len = 0;
+        int len;
         while ((len = fis.read(buf)) != -1) {
             fos.write(buf, 0, len);
         }

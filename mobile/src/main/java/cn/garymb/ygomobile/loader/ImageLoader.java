@@ -68,7 +68,7 @@ public class ImageLoader implements Closeable {
     private final boolean useCache;
     private static final String TAG = ImageLoader.class.getSimpleName();
     private final Map<String, ZipFile> zipFileCache = new ConcurrentHashMap<>();
-    private final Map<Long, Cache> zipDataCache = new ConcurrentHashMap<>();
+    private final Map<Long, ImageLoader.Cache> zipDataCache = new ConcurrentHashMap<>();
     private ZipFile mDefaultZipFile;
     private File mPicsFile;
 
@@ -182,7 +182,7 @@ public class ImageLoader implements Closeable {
         try {
             RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).load(file);
             setDefaults(resource,
-                    new MediaStoreSignature("image/*", file.lastModified(), Type.origin.getId()),
+                    new MediaStoreSignature("image/*", file.lastModified(), ImageLoader.Type.origin.getId()),
                     pre, type);
             resource.into(imageview);
         } catch (Exception e) {

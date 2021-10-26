@@ -107,6 +107,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, ImageLoader.Type.origin);
                     imageLoader.bindImage(cardImage, msg.arg1, ImageLoader.Type.middle);
+                    if(mListener != null){
+                        mListener.onImageUpdate(mCardInfo);
+                    }
                     break;
                 case TYPE_DOWNLOAD_CARD_IMAGE_ING:
                     tv_loading.setText(msg.arg1 + "%");
@@ -128,32 +131,32 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
         mContext = context;
-        cardImage = bind(R.id.card_image);
+        cardImage = findViewById(R.id.card_image);
         this.imageLoader = imageLoader;
         mStringManager = stringManager;
-        name = bind(R.id.text_name);
-        desc = bind(R.id.text_desc);
-        close = bind(R.id.btn_close);
-        cardCode = bind(R.id.card_code);
-        level = bind(R.id.card_level);
-        linkArrow = bind(R.id.detail_link_arrows);
-        type = bind(R.id.card_type);
-        View faq = bind(R.id.btn_faq);
-        cardAtk = bind(R.id.card_atk);
-        cardDef = bind(R.id.card_def);
-        atkdefView = bind(R.id.layout_atkdef2);
-        mImageFav = bind(R.id.image_fav);
+        name = findViewById(R.id.text_name);
+        desc = findViewById(R.id.text_desc);
+        close = findViewById(R.id.btn_close);
+        cardCode = findViewById(R.id.card_code);
+        level = findViewById(R.id.card_level);
+        linkArrow = findViewById(R.id.detail_link_arrows);
+        type = findViewById(R.id.card_type);
+        View faq = findViewById(R.id.btn_faq);
+        cardAtk = findViewById(R.id.card_atk);
+        cardDef = findViewById(R.id.card_def);
+        atkdefView = findViewById(R.id.layout_atkdef2);
+        mImageFav = findViewById(R.id.image_fav);
 
-        monsterLayout = bind(R.id.layout_monster);
-        layoutDetailPScale = bind(R.id.detail_p_scale);
-        detailCardScale = bind(R.id.detail_cardscale);
-        race = bind(R.id.card_race);
-        setName = bind(R.id.card_setname);
-        addMain = bind(R.id.btn_add_main);
-        addSide = bind(R.id.btn_add_side);
-        otView = bind(R.id.card_ot);
-        attrView = bind(R.id.card_attribute);
-        lbSetCode = bind(R.id.label_setcode);
+        monsterLayout = findViewById(R.id.layout_monster);
+        layoutDetailPScale = findViewById(R.id.detail_p_scale);
+        detailCardScale = findViewById(R.id.detail_cardscale);
+        race = findViewById(R.id.card_race);
+        setName = findViewById(R.id.card_setname);
+        addMain = findViewById(R.id.btn_add_main);
+        addSide = findViewById(R.id.btn_add_side);
+        otView = findViewById(R.id.card_ot);
+        attrView = findViewById(R.id.card_attribute);
+        lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
@@ -187,10 +190,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 mListener.onOpenUrl(cardInfo);
             }
         });
-        bind(R.id.lastone).setOnClickListener((v) -> {
+        findViewById(R.id.lastone).setOnClickListener((v) -> {
             onPreCard();
         });
-        bind(R.id.nextone).setOnClickListener((v) -> {
+        findViewById(R.id.nextone).setOnClickListener((v) -> {
             onNextCard();
         });
         mImageFav.setOnClickListener((v) -> {
@@ -532,9 +535,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
-    private <T extends View> T bind(int id) {
-        return (T) findViewById(id);
-    }
 
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
@@ -546,6 +546,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onAddMainCard(Card cardInfo);
 
         void onAddSideCard(Card cardInfo);
+
+
+        void onImageUpdate(Card cardInfo);
+
 
         void onClose();
     }
@@ -561,6 +565,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         @Override
         public void onClose() {
+        }
+
+        @Override
+        public void onImageUpdate(Card cardInfo) {
+
         }
 
         @Override

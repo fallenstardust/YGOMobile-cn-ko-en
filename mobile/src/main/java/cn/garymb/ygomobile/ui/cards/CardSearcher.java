@@ -120,6 +120,7 @@ public class CardSearcher implements View.OnClickListener {
         resetButton.setOnClickListener(this);
         mCardLoader = dataLoader;
 
+//        setCodeSpinner.setFirstIndex(1);
         OnEditorActionListener searchListener = (v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

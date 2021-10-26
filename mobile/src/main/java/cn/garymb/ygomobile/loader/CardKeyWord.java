@@ -3,8 +3,11 @@ package cn.garymb.ygomobile.loader;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -72,10 +75,10 @@ public class CardKeyWord {
         private final long setcode;
 
         //包含系列，或者包含名字、描述
-        public NameFilter(String word, boolean exclude, boolean onlyText) {
+        public NameFilter(@NonNull String word, boolean exclude, boolean onlyText) {
             this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word);
             this.exclude = exclude;
-            this.word = word;
+            this.word = word.toLowerCase(Locale.US);
             if(this.setcode > 0){
                 Log.d(TAG, "filter:setcode=" + setcode + ", exclude=" + exclude + ", word=" + word);
             }
