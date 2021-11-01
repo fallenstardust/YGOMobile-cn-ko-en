@@ -1129,7 +1129,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnSinglePlayCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	env->addStaticText(dataManager.GetSysString(1352), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabSingle);
 	stSinglePlayInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 80 * yScale), false, true, tabSingle);
-	chkSinglePlayReturnDeckTop = env->addCheckBox(false, rect<s32>(310 * xScale, 260 * yScale, 560 * xScale, 280 * yScale), tabSingle, -1, dataManager.GetSysString(1238));
+	chkSinglePlayReturnDeckTop = env->addCheckBox(false, rect<s32>(310 * xScale, 200 * yScale, 560 * xScale, 230 * yScale), tabSingle, -1, dataManager.GetSysString(1238));
 
 	//replay save
 	wReplaySave = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1340));
