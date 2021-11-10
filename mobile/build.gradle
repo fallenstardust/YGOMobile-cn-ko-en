@@ -39,7 +39,7 @@ android {
     }
     buildTypes {
         debug {
-            debuggable true
+            debuggable false
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
@@ -47,6 +47,12 @@ android {
             minifyEnabled false
             buildConfigField 'boolean', 'DEBUG_MODE', 'false'
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            def fileName = "YGOMobile-${variant.name}${versionName}.apk"
+            outputFileName = fileName
         }
     }
     sourceSets {

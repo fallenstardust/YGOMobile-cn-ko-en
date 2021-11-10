@@ -187,7 +187,7 @@ static void* join_game_thread(void* param) {
 		return NULL;
 	}
 	//auto exit when join game by mycard.
-	exit_on_return = true;
+	//exit_on_return = true;
 	irr::android::YGOGameOptions options = irr::android::YGOGameOptions(param);
 	irr::SEvent event;
 

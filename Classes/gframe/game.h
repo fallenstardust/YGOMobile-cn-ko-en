@@ -415,6 +415,7 @@ public:
 	
 	irr::gui::IGUIListBox* lstSinglePlayList;
 	irr::gui::IGUIStaticText* stSinglePlayInfo;
+	irr::gui::IGUICheckBox* chkSinglePlayReturnDeckTop;
 	irr::gui::IGUIButton* btnLoadSinglePlay;//
 	irr::gui::IGUIButton* btnSinglePlayCancel;//
 	//hand

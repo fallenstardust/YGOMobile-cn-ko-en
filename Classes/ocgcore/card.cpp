@@ -1587,8 +1587,7 @@ void card::apply_field_effect() {
 	if (current.controler == PLAYER_NONE)
 		return;
 	for (auto& it : field_effect) {
-		if (it.second->in_range(this)
-				|| ((it.second->range & LOCATION_HAND) && (it.second->type & EFFECT_TYPE_TRIGGER_O) && !(it.second->code & EVENT_PHASE))) {
+		if (it.second->in_range(this) || it.second->is_hand_trigger()) {
 			pduel->game_field->add_effect(it.second);
 		}
 	}
@@ -1600,8 +1599,7 @@ void card::cancel_field_effect() {
 	if (current.controler == PLAYER_NONE)
 		return;
 	for (auto& it : field_effect) {
-		if (it.second->in_range(this)
-				|| ((it.second->range & LOCATION_HAND) && (it.second->type & EFFECT_TYPE_TRIGGER_O) && !(it.second->code & EVENT_PHASE))) {
+		if (it.second->in_range(this) || it.second->is_hand_trigger()) {
 			pduel->game_field->remove_effect(it.second);
 		}
 	}
@@ -1653,6 +1651,15 @@ int32 card::add_effect(effect* peffect) {
 	if (peffect->type & EFFECT_TYPE_SINGLE && !peffect->is_flag(EFFECT_FLAG_SINGLE_RANGE) && peffect->owner == this 
 		&& get_status(STATUS_DISABLED) && (peffect->reset_flag & RESET_DISABLE))
 		return 0;
+	if (!(peffect->type & EFFECT_TYPE_CONTINUOUS) && is_continuous_event(peffect->code))
+		return 0;
+	// the trigger effect in phase is "once per turn" by default
+	if (peffect->get_code_type() == CODE_PHASE && peffect->code & (PHASE_DRAW | PHASE_STANDBY | PHASE_END) && peffect->type & (EFFECT_TYPE_TRIGGER_O | EFFECT_TYPE_TRIGGER_F)
+		&& !peffect->is_flag(EFFECT_FLAG_COUNT_LIMIT)) {
+		peffect->flag[0] |= EFFECT_FLAG_COUNT_LIMIT;
+		peffect->count_limit = 1;
+		peffect->count_limit_max = 1;
+	}
 	card_set check_target = { this };
 	effect_container::iterator eit;
 	if (peffect->type & EFFECT_TYPE_SINGLE) {
@@ -1730,14 +1737,14 @@ int32 card::add_effect(effect* peffect) {
 	indexer.emplace(peffect, eit);
 	peffect->handler = this;
 	if((peffect->type & EFFECT_TYPE_FIELD)) {
-		if(peffect->in_range(this)
-			|| current.controler != PLAYER_NONE && ((peffect->range & LOCATION_HAND) && (peffect->type & EFFECT_TYPE_TRIGGER_O) && !(peffect->code & EVENT_PHASE)))
+		if(peffect->in_range(this) || current.controler != PLAYER_NONE && peffect->is_hand_trigger())
 			pduel->game_field->add_effect(peffect);
 	}
 	if (current.controler != PLAYER_NONE && !check_target.empty()) {
-		if(peffect->is_disable_related())
-			for(auto& target : check_target)
+		if (peffect->is_disable_related()) {
+			for (auto& target : check_target)
 				pduel->game_field->add_to_disable_check_list(target);
+		}
 	}
 	if(peffect->is_flag(EFFECT_FLAG_OATH)) {
 		pduel->game_field->effects.oath.emplace(peffect, reason_effect);
@@ -1800,14 +1807,14 @@ void card::remove_effect(effect* peffect, effect_container::iterator it) {
 			pduel->game_field->update_disable_check_list(peffect);
 		}
 		field_effect.erase(it);
-		if(peffect->in_range(this)
-			|| current.controler != PLAYER_NONE && ((peffect->range & LOCATION_HAND) && (peffect->type & EFFECT_TYPE_TRIGGER_O) && !(peffect->code & EVENT_PHASE)))
+		if(peffect->in_range(this) || current.controler != PLAYER_NONE && peffect->is_hand_trigger())
 			pduel->game_field->remove_effect(peffect);
 	}
 	if ((current.controler != PLAYER_NONE) && !get_status(STATUS_DISABLED | STATUS_FORBIDDEN) && !check_target.empty()) {
-		if (peffect->is_disable_related())
-			for(auto& target : check_target)
+		if (peffect->is_disable_related()) {
+			for (auto& target : check_target)
 				pduel->game_field->add_to_disable_check_list(target);
+		}
 	}
 	if (peffect->is_flag(EFFECT_FLAG_INITIAL) && peffect->copy_id && is_status(STATUS_EFFECT_REPLACED)) {
 		set_status(STATUS_EFFECT_REPLACED, FALSE);
@@ -3543,7 +3550,7 @@ int32 card::is_capable_send_to_hand(uint8 playerid) {
 		return FALSE;
 	if(is_affected_by_effect(EFFECT_CANNOT_TO_HAND))
 		return FALSE;
-	if(is_extra_deck_monster() && !is_capable_send_to_deck(playerid))
+	if(is_extra_deck_monster() && !is_capable_send_to_extra(playerid))
 		return FALSE;
 	if(!pduel->game_field->is_player_can_send_to_hand(playerid, this))
 		return FALSE;
@@ -3563,7 +3570,7 @@ int32 card::is_capable_send_to_deck(uint8 playerid) {
 int32 card::is_capable_send_to_extra(uint8 playerid) {
 	if(!is_extra_deck_monster() && !(data.type & TYPE_PENDULUM))
 		return FALSE;
-	if(is_affected_by_effect(EFFECT_CANNOT_TO_DECK))
+	if(is_extra_deck_monster() && is_affected_by_effect(EFFECT_CANNOT_TO_DECK))
 		return FALSE;
 	if(!pduel->game_field->is_player_can_send_to_deck(playerid, this))
 		return FALSE;
@@ -3574,7 +3581,7 @@ int32 card::is_capable_cost_to_grave(uint8 playerid) {
 	uint32 dest = LOCATION_GRAVE;
 	if(data.type & TYPE_TOKEN)
 		return FALSE;
-	if((data.type & TYPE_PENDULUM) && (current.location & LOCATION_ONFIELD) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK))
+	if((data.type & TYPE_PENDULUM) && (current.location & LOCATION_ONFIELD))
 		return FALSE;
 	if(current.location == LOCATION_GRAVE)
 		return FALSE;
