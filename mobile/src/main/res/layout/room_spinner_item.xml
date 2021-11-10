@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:background="@drawable/click_gray_light_radius"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_room"
+        android:layout_marginLeft="10dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:textColor="@color/black"
+        android:id="@+id/tv_spinner_text"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:text="233服约战"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
+

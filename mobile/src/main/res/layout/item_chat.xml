@@ -5,6 +5,7 @@
     android:background="#00000000">
 
     <cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
+        android:src="@drawable/avatar"
         android:id="@+id/ic_avatar"
         android:layout_width="35dp"
         android:layout_height="35dp"
@@ -37,6 +38,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:lineSpacingExtra="5dp"
             android:id="@+id/ic_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

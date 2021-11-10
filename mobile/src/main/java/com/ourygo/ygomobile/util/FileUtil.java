@@ -89,7 +89,7 @@ public class FileUtil
 		return rePath;
 	}
 
-	public static void copyFile(String oldPath, String newPath, boolean isname) throws FileNotFoundException, IOException {
+	public static String copyFile(String oldPath, String newPath, boolean isname) throws FileNotFoundException, IOException {
 
 		//判断复制后的路径是否含有文件名,如果没有则加上
 		if (!isname) {
@@ -107,7 +107,7 @@ public class FileUtil
 		}
 		fos.close();
 		fis.close();
-
+		return newPath;
 	}
 	
 	public static void moveFile(String oldPath, String newPath, boolean isname) throws FileNotFoundException, IOException {

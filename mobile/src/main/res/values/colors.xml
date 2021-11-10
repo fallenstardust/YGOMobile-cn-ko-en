@@ -5,7 +5,8 @@
     <color name="star">#CD6600</color>
     <color name="star_rank">#a89e9e</color>
     <color name="black">#000000</color>
-    <color name="blackLinght">#AA000000</color>
+    <color name="blackLight">#AA333333</color>
+    <color name="blackLight2">#AA202020</color>
 
     <color name="colorNavy">#0A032D</color>
     <color name="mediumPurpleLight">#775AC7</color>
@@ -16,11 +17,10 @@
     <color name="gold_light">#D8DE45</color>
     <color name="red">#EF3934</color>
 
-    <color name="colorAccent">#717171</color>
-    <color name="colorAccentDark">#000000</color>
+    <color name="colorAccent">#008cf9</color>
+    <color name="colorAccentDark">#007ADA</color>
     <color name="colorPrimary">#ffffff</color>
     <color name="colorPrimaryDark">#ffffff</color>
-    <color name="windowBackgroud">#ffffff</color>
 
     <color name="item_title">@color/gold</color>
     <color name="item_bg">#65ffffff</color>
@@ -34,6 +34,7 @@
     <color name="colorMain">#2196F3</color>
     <color name="background">#ECEFF1</color>
     <color name="transparent">#00000000</color>
+    <color name="transparentDark">#000000</color>
 
     <color name="search_text_color">#ff8800</color>
     <color name="search_list_item_color">#b8be35</color>
@@ -48,40 +49,46 @@
 <!--    <color name="windowBackground">#ECECF1</color>-->
 <!--    <color name="windowBackgroundDark">#BBBBBF</color>-->
 
-    <color name="windowBackground">#ffffff</color>
-    <color name="windowBackgroundDark">#E6E6E6</color>
-    <color name="grayDark">#686868</color>
+    <color name="windowBackground">#F1F1F2</color>
+    <color name="windowBackgroundDark">#BBBBBF</color>
+    <color name="grayLight">#E1E1E1</color>
+    <color name="grayDark">#A7A7A7</color>
+    <color name="grayDark2">#8E8E8E</color>
 
     <color name="colorRoot_light">#fafafa</color>
     <color name="colorRoot_dark">#292929</color>
-    <color name="mainCardShader">#45000000</color>
+    <color name="mainCardShader">#05000000</color>
+    <color name="redDark">#CD2F2A</color>
+
 
 
 
     <!--<color name="">#717171</color>-->
 
-    <!--<color name="background">#ff090229</color>左侧卡图背景底色-->
-    <!--<color name="background">#c0c9ccd4</color>tab background-->
-    <!--<color name="background">#6011113d</color>主面板颜色-->
-    <!--<color name="background">#ffe6f3fd</color>主面板左上高光,效果描述框下半部过渡色-->
-    <!--<color name="background">#60045f6a</color>布局高光线,窗体内层色-->
-    <!--<color name="background">#ffa2d8f4</color>按钮下侧和右侧的颜色-->
-    <!--<color name="background">#8011113d</color> 窗体标题栏色-->
-    <!--<color name="background">#ffffffff</color>窗体标题字色-->
-    <!--<color name="background">#00ff0000</color>unused-->
-    <!--<color name="background">#ffffffff</color>主要界面的字-->
-    <!--<color name="background">#3c999999</color>选项不可用时的字-->
-    <!--<color name="background">#ffa2d8f4</color>被选中的字的背景色-->
-    <!--<color name="background">#6011113d</color>被选中高亮时的字色-->
-    <!--<color name="background">#10000000</color>窗体失去焦点时的标题栏底色-->
-    <!--<color name="background">#ffff0000</color>窗体失去焦点时的标题栏字色-->
-    <!--<color name="background">#ffa2d8f4</color>滚动条底色-->
-    <!--<color name="background">#ff00011e</color>可动窗体的颜色ff002755-ff00011e-->
-    <!--<color name="background">#ff00ffff</color>打勾等的颜色-->
-    <!--<color name="background">#60ff0000</color>-->
-    <!--<color name="background">#eee6f3fd</color>-->
-    <!--<color name="background">#ffb7b7f5</color>不可动的打勾（对手准备.）-->
-    <!--<color name="background">#60045f6a</color>输入框可用时的颜色-->
-    <!--<color name="background">#ff5a5a5a</color>输入框不可用时的颜色-->
-    <!--<color name="background">#ffffffff</color>输入状态的框色-->
+<!--    <color name="background">#ff090229</color>左侧卡图背景底色-->
+<!--    <color name="background">#c0c9ccd4</color>tab background-->
+<!--    <color name="background">#6011113d</color>主面板颜色-->
+<!--    <color name="background">#ffe6f3fd</color>主面板左上高光,效果描述框下半部过渡色-->
+<!--    <color name="background">#60045f6a</color>布局高光线,窗体内层色-->
+<!--    <color name="background">#ffa2d8f4</color>按钮下侧和右侧的颜色-->
+<!--    <color name="background">#8011113d</color> 窗体标题栏色-->
+<!--    <color name="background">#ffffffff</color>窗体标题字色-->
+<!--    <color name="background">#00ff0000</color>unused-->
+<!--    <color name="background">#ffffffff</color>主要界面的字-->
+<!--    <color name="background">#3c999999</color>选项不可用时的字-->
+<!--    <color name="background">#ffa2d8f4</color>被选中的字的背景色-->
+<!--    <color name="background">#6011113d</color>被选中高亮时的字色-->
+<!--    <color name="background">#10000000</color>窗体失去焦点时的标题栏底色-->
+<!--    <color name="background">#ffff0000</color>窗体失去焦点时的标题栏字色-->
+<!--    <color name="background">#ffa2d8f4</color>滚动条底色-->
+<!--    <color name="background">#ff00011e</color>可动窗体的颜色ff002755-ff00011e-->
+<!--    <color name="background">#ff00ffff</color>打勾等的颜色-->
+<!--    <color name="background">#60ff0000</color>-->
+<!--    <color name="background">#eee6f3fd</color>-->
+<!--    <color name="background">#ffb7b7f5</color>不可动的打勾（对手准备.）-->
+<!--    <color name="background">#60045f6a</color>输入框可用时的颜色-->
+<!--    <color name="background">#ff5a5a5a</color>输入框不可用时的颜色-->
+<!--    <color name="background">#ffffffff</color>输入状态的框色-->
+
+<!--    #E7ECEE-->
 </resources>

@@ -468,7 +468,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			mainGame->stCardPos[i]->setText(formatBuffer);
 			// color
 			if (selectable_cards[i]->is_selected)
-				mainGame->stCardPos[i]->setBackgroundColor(0xffa2d8f4);
+				mainGame->stCardPos[i]->setBackgroundColor(0xffa2d8f4);//todo ygocolor 按钮下侧和右侧的颜色
 			else {
 				if(conti_selecting)
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);

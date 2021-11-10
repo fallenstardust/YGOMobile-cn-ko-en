@@ -25,7 +25,7 @@ public class SdkInitUtil {
                 @Override
                 public void onViewInitFinished(boolean arg0) {
                     //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
-                    Log.e("SdkInitUtil", "加载情况" + arg0);
+//                    Log.e("SdkInitUtil", "加载情况" + arg0);
                     isInitX5WebView=arg0;
                     //  Toast.makeText(getActivity(), "加载成功", Toast.LENGTH_LONG).show();
                 }

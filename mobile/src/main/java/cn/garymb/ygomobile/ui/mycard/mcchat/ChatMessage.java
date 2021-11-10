@@ -23,7 +23,8 @@ public class ChatMessage {
         }
         */
     public static ChatMessage toChatMessage(Message message) {
-
+        if (message == null)
+            return null;
         if (message.getBody() != null) {
             String xs = message.toString();
 

@@ -36,12 +36,9 @@ public class OYToolbar extends LinearLayout {
         View v= LayoutInflater.from(getContext()).inflate(R.layout.oy_toolbar,this,false);
         iv_back=v.findViewById(R.id.iv_back);
         tv_title=v.findViewById(R.id.tv_title);
-        iv_back.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (getContext() instanceof Activity){
-                    ((Activity)getContext()).finish();
-                }
+        iv_back.setOnClickListener(v1 -> {
+            if (getContext() instanceof Activity){
+                ((Activity)getContext()).finish();
             }
         });
         addView(v);
@@ -55,4 +52,7 @@ public class OYToolbar extends LinearLayout {
         return tv_title;
     }
 
+    public void setOnclickListener(OnClickListener onclickListener){
+        iv_back.setOnClickListener(onclickListener);
+    }
 }

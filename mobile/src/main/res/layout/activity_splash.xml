@@ -9,17 +9,17 @@
 
     <ProgressBar
         android:id="@+id/sp_jz"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_width="23dp"
+        android:layout_height="23dp" />
 
     <TextView
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="15dp"
         android:id="@+id/sp_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/logining_in"
-        android:textColor="@color/dark_purple"
-        android:textSize="18sp" />
+        android:textColor="@color/black"
+        android:textSize="16sp" />
 
 </LinearLayout>
 

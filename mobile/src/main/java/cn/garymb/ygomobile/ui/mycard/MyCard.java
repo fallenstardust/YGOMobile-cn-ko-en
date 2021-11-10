@@ -29,6 +29,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 //import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
 
@@ -36,15 +37,15 @@ import static junit.framework.Assert.assertEquals;
 
 public class MyCard {
 
-    private static final String mHomeUrl = "https://mycard.moe/mobile/";
+    public static final String mHomeUrl = "https://mycard.moe/mobile/";
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
-    private static final String mCommunityUrl = "https://ygobbs.com/login";
+    public static final String mCommunityUrl = "https://ygobbs.com/login";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
     private static final String HOST_MC = "mycard.moe";
     private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
-    private final User mUser = new User();
+    private final McUser mUser = new McUser();
     private final SharedPreferences lastModified;
     private MyCardListener mMyCardListener;
     private Activity mContext;
@@ -59,20 +60,20 @@ public class MyCard {
                     String sso = Uri.parse(url).getQueryParameter("sso");
                     String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
                     Uri info = new Uri.Builder().encodedQuery(data).build();
-                    mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
-                    mUser.username = info.getQueryParameter("username");
-                    mUser.name = info.getQueryParameter("name");
-                    mUser.email = info.getQueryParameter("email");
-                    mUser.avatar_url = info.getQueryParameter("avatar_url");
-                    mUser.admin = info.getBooleanQueryParameter("admin", false);
-                    mUser.moderator = info.getBooleanQueryParameter("moderator", false);
-                    lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
-                    lastModified.edit().putString("user_name", mUser.username).apply();
+                    mUser.setExternal_id(Integer.parseInt(info.getQueryParameter("external_id")));
+                    mUser.setUsername( info.getQueryParameter("username"));
+                    mUser.setName( info.getQueryParameter("name"));
+                    mUser.setEmail(info.getQueryParameter("email"));
+                    mUser.setAvatar_url( info.getQueryParameter("avatar_url"));
+                    mUser.setAdmin( info.getBooleanQueryParameter("admin", false));
+                    mUser.setModerator( info.getBooleanQueryParameter("moderator", false));
+                    lastModified.edit().putString("user_external_id", mUser.getExternal_id() + "").apply();
+                    lastModified.edit().putString("user_name", mUser.getUsername()).apply();
                     //UserManagement.setUserName(mUser.username);
                     //UserManagement.setUserPassword(mUser.external_id+"");
-                    mUser.login = true;
+                    mUser.setLogin( true);
                     if (getMyCardListener() != null) {
-                        getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
+                        getMyCardListener().onLogin(mUser,false, null);
                     }
                     return false;
                 }
@@ -137,6 +138,7 @@ public class MyCard {
 
     @SuppressLint("AddJavascriptInterface")
     public void attachWeb(MyCardWebView webView, MyCardListener myCardListener) {
+        Log.e("MyCardWeb","浏览回调");
         mMyCardListener = myCardListener;
         webView.setWebViewClient(getWebViewClient());
         webView.addJavascriptInterface(new MyCard.Ygopro(mContext, myCardListener), "ygopro");
@@ -144,13 +146,16 @@ public class MyCard {
         String headurl = lastModified.getString("user_avatar_url", null);
         if (mMyCardListener != null) {
             if (!TextUtils.isEmpty(name)) {
-                mMyCardListener.onLogin(name, headurl, null);
+                McUser user=new McUser();
+                user.setAvatar_url(headurl);
+                user.setUsername(name);
+                mMyCardListener.onLogin(user,true, null);
             }
         }
     }
 
     public interface MyCardListener {
-        void onLogin(String name, String icon, String statu);
+        void onLogin(McUser mcUser,boolean isUpdate, String statu);
 
         void watchReplay();
 
@@ -168,32 +173,7 @@ public class MyCard {
 
     }
 
-    public static class User {
-        int external_id;
-        String username;
-        String name;
-        String email;
-        String avatar_url;
-        boolean admin;
-        boolean moderator;
-        boolean login;
 
-        public User() {
-
-        }
-
-        public String getJID() {
-            return username + "@mycard.moe";
-        }
-
-        public String getPassword() {
-            return String.valueOf(external_id);
-        }
-
-        public String getConference() {
-            return "ygopro_china_north@conference.mycard.moe";
-        }
-    }
 
     public class Ygopro {
         Activity activity;
@@ -268,6 +248,7 @@ public class MyCard {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        Log.e("YGOStart","跳转4");
                         YGOStarter.startGame(activity, options);
                     }
                 });
@@ -358,15 +339,19 @@ public class MyCard {
 
         @JavascriptInterface
         public void updateUser(String name, String headurl, String status) {
+            Log.e("MyCardWeb","更新头像");
             if (mListener != null) {
-                mUser.name = name;
-                mUser.avatar_url = headurl;
-                mUser.login = true;
+                mUser.setUsername(name);
+                mUser.setAvatar_url( headurl);
+                mUser.setLogin( true);
                 lastModified.edit()
                         .putString("user_name", name)
                         .putString("user_avatar_url", headurl)
                         .apply();
-                mListener.onLogin(name, headurl, status);
+                McUser user=new McUser();
+                user.setUsername(name);
+                user.setAvatar_url(headurl);
+                mListener.onLogin(user,true, status);
             }
         }
 

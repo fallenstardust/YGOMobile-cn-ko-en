@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="app_name">YGOMobile-OY</string>
-    <string name="app_version_name">0.1</string>
+    <string name="app_version_name">1.0</string>
     <string name="start_exception">Start Exception</string>
     <string name="copy_exception">Copy Exception</string>
     <string name="join_room">Join Room</string>
@@ -80,9 +80,9 @@
     <string name="settings_author" translatable="false">菜菜、暗星</string>
     <string name="restart_app">"Please restart app！"</string>
     <string-array name="opengl_version">
-        <item>OpenGL ES 1.X</item>
-        <item>OpenGL ES 2.0 fixed shaders</item>
-        <item>OpenGL ES 2.0 builtin shaders</item>
+        <item>ES 1.X</item>
+        <item>ES 2.0 fixed shaders</item>
+        <item>ES 2.0 builtin shaders</item>
     </string-array>
     <string-array name="card_quality">
         <item>Speed</item>
@@ -281,9 +281,10 @@
     <string name="opponent_setting">对手设置</string>
     <string name="duel_mode">对战模式</string>
     <string name="lflist">禁限表</string>
-    <string name="duel_mode_one">单局模式</string>
-    <string name="duel_mode_match">比赛模式</string>
-    <string name="complete_setting">完成设置</string>
+    <string name="duel_mode_one">单局</string>
+    <string name="duel_mode_match">比赛</string>
+    <string name="complete_setting">完成</string>
+
     <string name="Start_ServiceDuelAssistant">DuelAssistant</string>
     <string name="about_DuelAssistant">Copy PSW to Quick Join Game.
         \nCopy Deck Text to Save as YDK and Open in Deck Editor</string>
@@ -357,4 +358,24 @@
     <string name="label_ot_SC_OCG">SChinese OCG</string>
     <string name="settings_screen_padding">Reserved height of curved screen</string>
     <string name="tip_load_cdb_error">Load database error</string>
+
+    <string name="random_match">随机匹配</string>
+    <string name="server_info">服务器信息</string>
+    <string name="fun_record">娱乐战绩</string>
+    <string name="fun_rank">娱乐排名</string>
+    <string name="match_record">竞技战绩</string>
+    <string name="match_rank">竞技排名</string>
+    <string name="win_num">胜场</string>
+    <string name="lose_num">负场</string>
+    <string name="draw_num">平局</string>
+
+    <string name="about">关于</string>
+    <string name="update_log">更新日志</string>
+    <string name="cancel">取消</string>
+    <string name="download">下载</string>
+    <string name="downloading">下载中，请稍等</string>
+    <string name="no_update">新版本还没做好呢~</string>
+    <string name="exception">错误</string>
+    <string name="download_exception">下载失败</string>
+    <string name="app_signature">OURYGO团队出品\n为创造更人性化的决斗而努力</string>
 </resources>

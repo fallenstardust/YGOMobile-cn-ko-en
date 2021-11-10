@@ -663,7 +663,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wACMessage->setVisible(false);
 	wACMessage->setDrawBackground(false);
 	stACMessage = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 350 * xScale, 60 * yScale), true, true, wACMessage, -1, true);
-	stACMessage->setBackgroundColor(0x6011113d);
+	//todo ygocolor ygo提示信息背景
+	stACMessage->setBackgroundColor(0x60ffffff);
 	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	//yes/no (370)
 	wQuery = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
@@ -816,11 +817,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
-	stHintMsg->setBackgroundColor(0xee11113d);
+	//todo ygocolor 提示的文字背景
+	stHintMsg->setBackgroundColor(0xeeffffff);
 	stHintMsg->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stHintMsg->setVisible(false);
 	stTip = env->addStaticText(L"", rect<s32>(0 * xScale, 0 * yScale, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
-	stTip->setBackgroundColor(0x6011113d);
+	//todo ygocolor 可能是发言的提示背景
+	stTip->setBackgroundColor(0x60ffffff);
 	stTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stTip->setVisible(false);
 	//cmd menu
@@ -1235,12 +1238,14 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnLeaveGame->setVisible(false);
 	//tip
 	stTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, 0, -1, true);
-	stTip->setBackgroundColor(0xc011113d);
+	//todo ygocolor 可能是ygo发言提示背景
+	stTip->setBackgroundColor(0xc0ffffff);
 	stTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stTip->setVisible(false);
 	//tip for cards in select / display list
 	stCardListTip = env->addStaticText(L"", rect<s32>(0, 0, 150 * xScale, 150 * yScale), false, true, wCardSelect, TEXT_CARD_LIST_TIP, true);
- 	stCardListTip->setBackgroundColor(0x6011113d);
+	//todo ygocolor 可能是ygo发言提示背景
+ 	stCardListTip->setBackgroundColor(0x60ffffff);
 	stCardListTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stCardListTip->setVisible(false);
 	device->setEventReceiver(&menuHandler);

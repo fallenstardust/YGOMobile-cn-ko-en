@@ -3,7 +3,7 @@
     <version>2</version>
 
     <server>
-        <player-name>Knight of Hanoi</player-name>
+        <player-name>武藤游戏</player-name>
         <name>233正式服务器</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
@@ -11,6 +11,7 @@
         <lflist_name> </lflist_name>
         <lflist_code>1</lflist_code>
         <mode>0</mode>
+        <opponent_type>0</opponent_type>
     </server>
     <!--server>
         <player-name>Knight of Hanoi</player-name>

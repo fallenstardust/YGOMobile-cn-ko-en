@@ -8,8 +8,8 @@
     <!--</item>-->
     <item>
         <shape>
-            <solid android:color="@color/colorAccent" />
-            <corners android:radius="2dp" />
+            <solid android:color="@color/gray" />
+            <corners android:radius="5dp" />
         </shape>
     </item>
 </selector>

@@ -51,11 +51,17 @@
     <dimen name="menu_text_size">6dp</dimen>
     <dimen name="menu_text_top">-5dp</dimen>
 
-    <dimen name="corner_radius">8dp</dimen>
+    <dimen name="corner_radius">6dp</dimen>
     <dimen name="main_margin">20dp</dimen>
 
 
-    <dimen name="toolbar_height">40dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
     <dimen name="toolbar_and_statusbar_height">60dp</dimen>
-    
+
+    <dimen name="setting_item_height">42dp</dimen>
+    <dimen name="setting_item_name_size">15sp</dimen>
+    <dimen name="setting_item_message_size">14sp</dimen>
+    <dimen name="frame_padding">8dp</dimen>
+    <dimen name="frame_line_width">2dp</dimen>
+
 </resources>

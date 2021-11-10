@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.ourygo.assistant.service.DuelAssistantService;
 
@@ -48,6 +49,7 @@ public class Util {
     }
 
     public static void duelIntent(Context context, String ip, int port, String name, String password) {
+        Log.e("YGOStarter","决斗跳转");
         Intent intent1 = new Intent("ygomobile.intent.action.GAME");
         intent1.putExtra("host", ip);
         intent1.putExtra("port", port);

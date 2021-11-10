@@ -6,7 +6,7 @@
 		<item name="colorPrimary">@color/colorPrimary</item>
 		<item name="colorPrimaryDark">@color/colorPrimary</item>
 		<item name="colorAccent">@color/colorAccent</item>
-		<item name="android:windowBackground">@color/windowBackgroud</item>
+		<item name="android:windowBackground">@color/windowBackground</item>
 		<item name="android:windowSoftInputMode">stateHidden|adjustPan</item>
 		<item name="android:windowContentTransitions">true</item>
 		<item name="drawerArrowStyle">@style/DrawerArrowStyle</item>

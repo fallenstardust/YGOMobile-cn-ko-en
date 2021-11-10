@@ -1,26 +1,40 @@
 package com.ourygo.ygomobile.ui.activity;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.material.tabs.TabLayout;
+import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
+import com.ourygo.assistant.util.ClipManagement;
+import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.ygomobile.adapter.FmPagerAdapter;
 import com.ourygo.ygomobile.bean.FragmentData;
+import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.fragment.MainFragment;
+import com.ourygo.ygomobile.ui.fragment.McLayoutFragment;
+import com.ourygo.ygomobile.ui.fragment.MyCardFragment;
+import com.ourygo.ygomobile.ui.fragment.MyCardWebFragment;
+import com.ourygo.ygomobile.ui.fragment.OtherFunctionFragment;
 import com.ourygo.ygomobile.util.LogUtil;
-import com.ourygo.ygomobile.util.MyCardUtil;
+import com.ourygo.ygomobile.util.OYDialogUtil;
+import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 
 import java.io.IOException;
@@ -28,49 +42,49 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
-import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
-public class OYMainActivity extends BaseActivity {
+public class OYMainActivity extends BaseActivity implements OnDuelAssistantListener {
 
     private static final String TAG = "TIME-MainActivity";
+    private static final int ID_MAINACTIVITY = 0;
 
     private Toolbar toolbar;
     private OYTabLayout tl_tab;
     private ViewPager vp_pager;
-    private ImageView iv_avatar;
-    private TextView tv_name;
 
     private List<FragmentData> fragmentList;
 
     private MainFragment mainFragment;
+    private MyCardWebFragment myCardWebFragment;
     private MyCardFragment myCardFragment;
+    private McLayoutFragment mcLayoutFragment;
     private OtherFunctionFragment otherFunctionFragment;
     private ResCheckTask mResCheckTask;
+    private DuelAssistantManagement duelAssistantManagement;
+    private DialogUtils dialogUtils;
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mian_oy);
-        LogUtil.time(TAG,"0");
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                SdkInitUtil.getInstance().initX5WebView();
-            }
-        }).start();
-        LogUtil.time(TAG,"1");
+        LogUtil.time(TAG, "0");
+        new Thread(() -> SdkInitUtil.getInstance().initX5WebView()).start();
+        LogUtil.time(TAG, "1");
         initView();
-        LogUtil.time(TAG,"2");
+        LogUtil.time(TAG, "2");
         checkNotch();
         LogUtil.time(TAG, "3");
-        checkRes();
-        LogUtil.time(TAG,"4");
+//        checkRes();
+        LogUtil.time(TAG, "4");
         LogUtil.printSumTime(TAG);
     }
 
@@ -86,17 +100,34 @@ public class OYMainActivity extends BaseActivity {
     }
 
     private void checkNotch() {
-        ScreenUtil.findNotchInformation(OYMainActivity.this, new ScreenUtil.FindNotchInformation() {
-            @Override
-            public void onNotchInformation(boolean isNotch, int notchHeight, int phoneType) {
+        ScreenUtil.findNotchInformation(OYMainActivity.this, (isNotch, notchHeight, phoneType) -> {
+            try {
+                FileLogUtil.writeAndTime("检查刘海" + isNotch + "   " + notchHeight);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            AppsSettings.get().setNotchHeight(notchHeight);
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        duelAssistantCheck();
+    }
+
+    private void duelAssistantCheck() {
+        if (AppsSettings.get().isServiceDuelAssistant()) {
+            Handler handler = new Handler();
+            handler.postDelayed(() -> {
                 try {
-                    FileLogUtil.writeAndTime("检查刘海" + isNotch + "   " + notchHeight);
+                    FileLogUtil.writeAndTime("主页决斗助手检查");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                AppsSettings.get().setNotchHeight(notchHeight);
-            }
-        });
+                duelAssistantManagement.checkClip(ID_MAINACTIVITY);
+            }, 500);
+        }
     }
 
     private void checkRes() {
@@ -138,87 +169,185 @@ public class OYMainActivity extends BaseActivity {
         });
     }
 
+    private void initDuelAssistant() {
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
+        duelAssistantManagement.init(getApplicationContext());
+        duelAssistantManagement.addDuelAssistantListener(this);
+//        YGOUtil.startDuelService(this);
+    }
+
+    public void selectMycard() {
+        tl_tab.setCurrentTab(1);
+    }
 
     private void initView() {
 
         tl_tab = findViewById(R.id.tl_tab);
         vp_pager = findViewById(R.id.vp_pager);
-        iv_avatar = findViewById(R.id.iv_avatar);
-        tv_name = findViewById(R.id.tv_name);
 
         String mcName = SharedPreferenceUtil.getMyCardUserName();
         refreshMyCardUser(mcName);
 
         mainFragment = new MainFragment();
+        myCardWebFragment = new MyCardWebFragment();
         myCardFragment = new MyCardFragment();
+        mcLayoutFragment = new McLayoutFragment();
         otherFunctionFragment = new OtherFunctionFragment();
 
+        dialogUtils = DialogUtils.getInstance(this);
         fragmentList = new ArrayList<>();
 
         fragmentList.add(FragmentData.toFragmentData(s(R.string.homepage), mainFragment));
-        fragmentList.add(FragmentData.toFragmentData(s(R.string.mycard), myCardFragment));
+        fragmentList.add(FragmentData.toFragmentData(s(R.string.mycard), mcLayoutFragment));
         fragmentList.add(FragmentData.toFragmentData(s(R.string.other_funstion), otherFunctionFragment));
 
-        vp_pager.setAdapter(new FmPagerAdapter(getSupportFragmentManager()));
+        vp_pager.setAdapter(new FmPagerAdapter(getSupportFragmentManager(), fragmentList));
 //        tl_tab.setTabMode(TabLayout.MODE_FIXED);
         //缓存两个页面
         vp_pager.setOffscreenPageLimit(3);
         //TabLayout加载viewpager
         tl_tab.setViewPager(vp_pager);
-       tl_tab.setCurrentTab(0);
+        tl_tab.setCurrentTab(0);
 
-//        tl_tab.setSelectTextSize(22);
+        initDuelAssistant();
+        checkIntent();
 
-//        YGOServerFragemnt ygoFragemnt=new YGOServerFragemnt();
-//        FragmentManager fragmentManager = getSupportFragmentManager();
-//        FragmentTransaction transaction = fragmentManager. beginTransaction();
-//        transaction.replace(R.id.fragment, ygoFragemnt);
-//        transaction.commit();
+        if (SharedPreferenceUtil.isFristStart()){
+            View[] views=dialogUtils.dialogt(null,"欢迎使用YGOMobile OY,本软件为YGOMobile原版的简约探索版，" +
+                    "这里有正在探索的功能，但相对没有原版稳定，你可以选择下载原版使用，下载地址：https://www.pgyer.com/ygomobilecn\n\n" +
+                    "如果你觉得好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");
+            Dialog dialog=dialogUtils.getDialog();
+            Button b1,b2;
+            b1= (Button) views[0];
+            b2= (Button) views[1];
+            b1.setText("取消");
+            b2.setText("支持我们");
+            b1.setOnClickListener(v -> dialog.dismiss());
+            b2.setOnClickListener(v -> {
+                dialog.dismiss();
+                OYUtil.startAifadian(OYMainActivity.this);
+            });
+            TextView tv_message=dialogUtils.getMessageTextView();
+            tv_message.setLineSpacing(OYUtil.dp2px(3),1f);
+            SharedPreferenceUtil.setFirstStart(false);
+            SharedPreferenceUtil.setNextAifadianNum(SharedPreferenceUtil.getAppStartTimes()+(10+ (int) (Math.random() * 20)));
+        }
+        if (SharedPreferenceUtil.getNextAifadianNum()==SharedPreferenceUtil.getAppStartTimes()){
+            View[] views=dialogUtils.dialogt(null,"如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");
+            Dialog dialog=dialogUtils.getDialog();
+            Button b1,b2;
+            b1= (Button) views[0];
+            b2= (Button) views[1];
+            b1.setText("取消");
+            b2.setText("支持我们");
+            b1.setOnClickListener(v -> dialogUtils.dis());
+            b2.setOnClickListener(v -> {
+                dialog.dismiss();
+                OYUtil.startAifadian(OYMainActivity.this);
+            });
+        }
+    }
+
+    private void checkIntent() {
+
+        Intent intent = getIntent();
+
+//        if (!Intent.ACTION_VIEW.equals(intent.getAction()))
+//            return;
+        if (intent.getData() != null) {
+            Uri uri = getIntent().getData();
+
+            if (Constants.URI_ROOM.equals(uri.getHost())) {
+                duelAssistantManagement.setLastMessage(ClipManagement.getInstance().getClipMessage());
+                YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
+                    if (TextUtils.isEmpty(exception))
+                        joinDARoom(host1, port, password);
+                    else
+                        OYUtil.snackExceptionToast(OYMainActivity.this, tl_tab, "加入房间失败", exception);
+                });
+                return;
+            }else if (Constants.URI_DECK.equals(uri.getHost())){
+                duelAssistantManagement.setLastMessage(ClipManagement.getInstance().getClipMessage());
+            }
+        }
+        new GameUriManager(this).doIntent(intent);
     }
 
     public void refreshMyCardUser(String name) {
-        if (TextUtils.isEmpty(name)) {
-            tv_name.setText(getString(R.string.no_login));
-            iv_avatar.setImageResource(R.drawable.avatar);
-            iv_avatar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    vp_pager.setCurrentItem(1);
-                }
-            });
-            tv_name.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    vp_pager.setCurrentItem(1);
-                }
-            });
-        } else {
-            tv_name.setText(name);
-            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name), iv_avatar);
+//        if (TextUtils.isEmpty(name)) {
+//            tv_name.setText(getString(R.string.no_login));
+//            iv_avatar.setImageResource(R.drawable.avatar);
+//            iv_avatar.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    vp_pager.setCurrentItem(1);
+//                }
+//            });
+//            tv_name.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    vp_pager.setCurrentItem(1);
+//                }
+//            });
+//        } else {
+//            tv_name.setText(name);
+//            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name), iv_avatar);
+//        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (tl_tab.getCurrentTab() != 0) {
+            tl_tab.setCurrentTab(0);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.e("MainF", requestCode + " 返回1 " + resultCode);
+    }
+
+    @Override
+    public void onJoinRoom(String host, int port, String password, int id) {
+        if (id == ID_MAINACTIVITY) {
+            joinDARoom(host, port, password);
         }
     }
 
-    class FmPagerAdapter extends FragmentPagerAdapter {
+    public void joinDARoom(String host, int port, String password) {
+        YGOUtil.getYGOServerList(serverList -> {
+            YGOServer ygoServer = serverList.getServerInfoList().get(0);
+            if (!TextUtils.isEmpty(host)) {
+                ygoServer.setServerAddr(host);
+                ygoServer.setPort(port);
+            }
+            OYDialogUtil.dialogDAJoinRoom(OYMainActivity.this, ygoServer, password);
 
-        public FmPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragmentList.get(position).getFragment();
-        }
-
-        @Override
-        public int getCount() {
-            return fragmentList.size();
-        }
-
-        @Nullable
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return fragmentList.get(position).getTitle();
-        }
+        });
     }
+
+    @Override
+    public void onCardSearch(String key, int id) {
+
+    }
+
+    @Override
+    public void onSaveDeck(String message, boolean isUrl, int id) {
+        saveDeck(message, isUrl);
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return OYUtil.isContextExisted(this);
+    }
+
+
+    private void saveDeck(String deckMessage, boolean isUrl) {
+        OYDialogUtil.dialogDASaveDeck(this, deckMessage, isUrl ? OYDialogUtil.DECK_TYPE_URL : OYDialogUtil.DECK_TYPE_MESSAGE);
+    }
+
 
 }

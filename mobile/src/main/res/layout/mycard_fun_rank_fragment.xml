@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="2dp"
+        android:id="@+id/rl_rank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <com.king.view.circleprogressview.CircleProgressView
+            android:id="@+id/cpv_rank"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            app:cpvLabelPaddingTop="10dp"
+            app:cpvLabelTextSize="30sp"
+            app:cpvProgressColor="@color/colorAccent"
+            app:cpvShowTick="false"
+            app:cpvStrokeWidth="16dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="57dp"
+            android:text="胜率"
+            android:textColor="@color/grayDark2"
+            android:textSize="12sp" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="18dp"
+        android:layout_toRightOf="@id/rl_rank">
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_rank"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@drawable/ic_rank" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_rank_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/iv_rank"
+            android:layout_marginLeft="6dp"
+            android:layout_toRightOf="@id/iv_rank"
+            android:text="@string/fun_rank"
+            android:textColor="@color/blackLight2"
+            android:textSize="10sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_rank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_rank"
+            android:layout_alignLeft="@id/tv_rank_s"
+            android:textColor="@color/black"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_win"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_below="@id/tv_rank"
+            android:layout_alignLeft="@id/iv_rank"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/ic_win" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_win_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/iv_win"
+            android:layout_marginLeft="6dp"
+            android:layout_toRightOf="@id/iv_win"
+            android:text="@string/win_num"
+            android:textColor="@color/blackLight2"
+            android:textSize="10sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_win"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_win_s"
+            android:layout_alignLeft="@id/tv_win_s"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_lose"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_below="@id/tv_win"
+            android:layout_alignLeft="@id/iv_rank"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/ic_fail" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_lose_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/iv_lose"
+            android:layout_marginLeft="6dp"
+            android:layout_toRightOf="@id/iv_lose"
+            android:text="@string/lose_num"
+            android:textColor="@color/blackLight2"
+            android:textSize="10sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_lose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_lose_s"
+            android:layout_alignLeft="@id/tv_lose_s"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_draw"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_below="@id/tv_lose"
+            android:layout_alignLeft="@id/iv_rank"
+            android:layout_marginTop="10dp"
+            android:src="@drawable/ic_friend"
+            android:visibility="gone" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_draw_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/iv_draw"
+            android:layout_marginLeft="8dp"
+            android:layout_toRightOf="@id/iv_draw"
+            android:text="@string/draw_num"
+            android:textColor="@color/blackLight2"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_draw_s"
+            android:layout_alignLeft="@id/tv_draw_s"
+            android:layout_marginTop="5dp"
+            android:text="12332"
+            android:textColor="@color/black"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+
+    </RelativeLayout>
+</RelativeLayout>

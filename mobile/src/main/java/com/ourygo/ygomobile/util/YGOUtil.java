@@ -41,11 +41,15 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 public class YGOUtil {
 
     public static void joinGame(Activity activity){
-        joinGame(activity,null,null);
+        joinGame(activity,null,null,0);
+    }
+
+    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
+    joinGame(activity,serverInfo,password,0);
     }
 
     //加入游戏
-    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
+    public static void joinGame(Activity activity, ServerInfo serverInfo, String password,int request) {
         YGOGameOptions options =null;
         if (serverInfo!=null){
             options=new YGOGameOptions();
@@ -54,7 +58,7 @@ public class YGOUtil {
             options.mPort = serverInfo.getPort();
             options.mRoomName = password;
         }
-        YGOStarter.startGame(activity, options);
+        YGOStarter.startGame(request,activity, options);
     }
 
     //获取服务器列表
@@ -110,7 +114,7 @@ public class YGOUtil {
     }
 
     
-    public void addYGOServer(YGOServer ygoService){
+    public static void addYGOServer(YGOServer ygoService){
         getYGOServerList(new OnYGOServerListQueryListener() {
             @Override
             public void onYGOServerListQuery(YGOServerList serverList) {
@@ -122,7 +126,7 @@ public class YGOUtil {
     }
 
 
-    public void setYGOServer(List<YGOServer> ygoServers){
+    public static void setYGOServer(List<YGOServer> ygoServers){
         File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
         OutputStream outputStream = null;
         try {

@@ -13,6 +13,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.base.listener.OnYGOServerListQueryListener;
+import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.bean.YGOServerList;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
@@ -49,22 +50,23 @@ public class YGOServerFragemnt extends Fragment {
         YGOUtil.getYGOServerList(serverList -> {
             ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
             rv_service_list.setAdapter(ygoServerAdp);
+
+            ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
             ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
                 switch (view.getId()) {
                     case R.id.tv_create_and_share:
-                        joinRoom((ServerInfo) adapter.getItem(position),true);
+                        joinRoom((YGOServer) adapter.getItem(position),true);
                         break;
                 }
             });
             ygoServerAdp.setOnItemClickListener((adapter, view, position) -> {
-                ServerInfo serverInfo = (ServerInfo) adapter.getItem(position);
+                YGOServer serverInfo = (YGOServer) adapter.getItem(position);
                 joinRoom(serverInfo,false);
             });
         });
-
     }
 
-    private void joinRoom(ServerInfo serverInfo, boolean isShare) {
+    private void joinRoom(YGOServer serverInfo, boolean isShare) {
         if (isShare) {
             OYDialogUtil.dialogcreateRoom(getActivity(), serverInfo);
         } else {
@@ -73,16 +75,13 @@ public class YGOServerFragemnt extends Fragment {
             Button bt = (Button) v[1];
             et.setHintTextColor(Color.GRAY);
             et.setTextColor(Color.BLACK);
-            et.setOnKeyListener(new View.OnKeyListener() {
-                @Override
-                public boolean onKey(View v, int keyCode, KeyEvent event) {
-                    if (keyCode == KeyEvent.KEYCODE_ENTER) {
-                        du.dis();
-                        YGOUtil.joinGame(getActivity(), serverInfo, et.getText().toString().trim());
-                        return true;
-                    }
-                    return false;
+            et.setOnKeyListener((v1, keyCode, event) -> {
+                if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    du.dis();
+                    YGOUtil.joinGame(getActivity(), serverInfo, et.getText().toString().trim());
+                    return true;
                 }
+                return false;
             });
             bt.setText(OYUtil.s(R.string.join_game));
             bt.setOnClickListener(new View.OnClickListener() {

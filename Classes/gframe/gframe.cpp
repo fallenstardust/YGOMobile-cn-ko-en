@@ -7,6 +7,8 @@
 int enable_log = 0;
 bool exit_on_return = false;
 bool bot_mode = false;
+bool open_file = false;
+wchar_t open_file_name[256] = L"";
 
 void ClickButton(irr::gui::IGUIElement* btn) {
 	irr::SEvent event{};
@@ -31,8 +33,10 @@ char* sub_string(const char* str, int start, int count = -1){
 #ifdef _IRR_ANDROID_PLATFORM_
 int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	int count = listbox->getItemCount();
+    ALOGD("open deck file:for count=%d",count);
 	for(int i = 0; i < count; i++){
 		auto item = listbox->getListItem(i);
+        ALOGD("open deck file:for name=%ls,name=%ls", item,target);
 		if(wcscmp(item, target) == 0){
 			return i;
 		}
@@ -62,18 +66,28 @@ int main(int argc, char* argv[]) {
  * -r: replay
  * -s：single
  */
+
     bool keep_on_return = false;
+	bool deckCategorySpecified = false;
 #ifdef _IRR_ANDROID_PLATFORM_
 	ALOGD("handle args %d", argc);
+	int wargc = argc;
+	auto wargv = std::make_unique<wchar_t[][256]>(wargc);
     //android
     for(int i = 0; i < argc; ++i) {
 		const char* arg = argv[i].c_str();
+		BufferIO::DecodeUTF8(arg, wargv[i]);
 #else
+		int wargc;
+	std::unique_ptr<wchar_t*[], void(*)(wchar_t**)> wargv(CommandLineToArgvW(GetCommandLineW(), &wargc), [](wchar_t** wargv) {
+		LocalFree(wargv);
+	});
     //pc的第一个是exe的路径
     for(int i = 1; i < argc; ++i) {
         char* arg = argv[i];
 #endif
-		if (arg[0] == '-' && arg[1] == 'e') {
+
+        if (arg[0] == '-' && arg[1] == 'e') {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
 			BufferIO::DecodeUTF8(tmp, fname);
@@ -145,6 +159,42 @@ int main(int argc, char* argv[]) {
 			    ClickButton(ygo::mainGame->btnLoadSinglePlay);
 			}
 			break;
+		} else if(!strcmp(arg, "--deck-category")) {
+			++i;
+			if(i < argc) {
+				deckCategorySpecified = true;
+				wcscpy(ygo::mainGame->gameConf.lastcategory, wargv[i]);
+			}
+		}else if(!strcmp(arg, "-d")) { // Deck
+			ALOGD("open deck file:index=%d size=%d", i,wargc);
+
+			if(!deckCategorySpecified)
+				ygo::mainGame->gameConf.lastcategory[0] = 0;
+			if(i + 1 < wargc) { // select deck
+                BufferIO::DecodeUTF8(argv[i+1].c_str(), wargv[i+1]);
+				wcscpy(ygo::mainGame->gameConf.lastdeck, wargv[i+1]);
+				ALOGD("open deck file:selct name=%ls,cate=%ls", wargv[i],wargv[i+1]);
+				ClickButton(ygo::mainGame->btnDeckEdit);
+				break;
+			} else { // open deck
+				exit_on_return = !keep_on_return;
+				if(i < wargc) {
+					open_file = true;
+					if(deckCategorySpecified) {
+#ifdef WIN32
+						myswprintf(open_file_name, L"%ls\\%ls", ygo::mainGame->gameConf.lastcategory, wargv[i]);
+#else
+						myswprintf(open_file_name, L"%ls/%ls", ygo::mainGame->gameConf.lastcategory, wargv[i]);
+#endif
+						ALOGD("open deck file:open name=%ls", open_file_name);
+					} else {
+						wcscpy(open_file_name, wargv[i]);
+						ALOGD("open deck file:open name1=%ls", wargv[i]);
+					}
+				}
+				ClickButton(ygo::mainGame->btnDeckEdit);
+				break;
+			}
 		}
 	}
 #ifdef _IRR_ANDROID_PLATFORM_

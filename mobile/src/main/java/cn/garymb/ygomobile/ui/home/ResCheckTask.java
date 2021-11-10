@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.util.LogUtil;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -72,8 +73,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mContext = context;
         mListener = listener;
         handler = new Handler(context.getMainLooper());
+        LogUtil.time(TAG, "0");
         mSettings = AppsSettings.get();
+        LogUtil.time(TAG, "0.1");
         checkWindbot();
+        LogUtil.time(TAG, "0.2");
     }
 
     public static String getDatapath(String path) {
@@ -154,8 +158,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        dialog = DialogUtils.getInstance(mContext);
-        dialog.dialogj1( null, mContext.getString(R.string.check_res));
+//        dialog = DialogUtils.getInstance(mContext);
+//        dialog.dialogj1( null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
         if (mSettings.getAppVersion() < vercode) {
             mSettings.setAppVersion(vercode);
@@ -169,26 +173,27 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     protected void onPostExecute(final Integer result) {
         super.onPostExecute(result);
         //关闭异常
-        if (dialog.getDialog().isShowing()) {
-            try {
-                dialog.dis();
-            } catch (Exception e) {
-
-            }
-        }
+//        if (dialog.getDialog().isShowing()) {
+//            try {
+//                dialog.dis();
+//            } catch (Exception e) {
+//
+//            }
+//        }
         if (mListener != null) {
             mListener.onResCheckFinished(result, isNewVersion);
         }
     }
 
     private void setMessage(String msg) {
-        handler.post(() -> {
-            dialog.setMessage(msg);
-        });
+//        handler.post(() -> {
+//            dialog.setMessage(msg);
+//        });
     }
 
     @Override
     protected Integer doInBackground(Void... params) {
+        LogUtil.time(TAG, "1");
         if (Constants.DEBUG)
             Log.d(TAG, "check start");
         boolean needsUpdate = isNewVersion;
@@ -280,7 +285,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
-
+            LogUtil.time(TAG, "2");
             han.sendEmptyMessage(0);
 
             loadData();
@@ -290,6 +295,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 Log.e(TAG, "check", e);
             return ERROR_COPY;
         }
+        LogUtil.time(TAG, "3");
         return ERROR_NONE;
     }
 

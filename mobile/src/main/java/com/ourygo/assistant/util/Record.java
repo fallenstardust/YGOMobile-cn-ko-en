@@ -49,4 +49,5 @@ public class Record {
     public static final String ARG_ROOM="room";
 
 
+    public static final String URI_ROOM_HOST = "room.ourygo.top";
 }

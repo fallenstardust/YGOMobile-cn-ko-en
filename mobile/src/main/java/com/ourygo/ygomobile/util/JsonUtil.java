@@ -1,6 +1,13 @@
 package com.ourygo.ygomobile.util;
 
-import com.ourygo.ygomobile.bean.MyCardNews;
+import android.text.TextUtils;
+import android.util.Log;
+
+import com.google.gson.Gson;
+import com.ourygo.ygomobile.bean.DuelRoom;
+import com.ourygo.ygomobile.bean.McDuelInfo;
+import com.ourygo.ygomobile.bean.McNews;
+import com.ourygo.ygomobile.bean.YGOServer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,20 +20,72 @@ public class JsonUtil {
 
 
     //解析mc新闻列表
-    public static List<MyCardNews> getMyCardNewsList(String json) throws JSONException {
-        JSONObject jsonObject = new JSONObject(json).getJSONObject(Record.ARG_TOPIC_LIST);
-        List<MyCardNews> myCardNewsList = new ArrayList<>();
-        JSONArray jsonArray = jsonObject.getJSONArray(Record.ARG_TOPICS);
+    public static List<McNews> getMyCardNewsList(String json) throws JSONException {
+        JSONArray jsonArray = new JSONArray(json);
+        JSONObject newsJson = null;
+        List<McNews> mcNewsList = new ArrayList<>();
         for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
-            MyCardNews myCardNews = new MyCardNews();
-            myCardNews.setId(jsonObject1.getString(Record.ARG_ID));
-            myCardNews.setImage_url(jsonObject1.getString(Record.ARG_IMAGE_URL));
-            myCardNews.setTitle(jsonObject1.getString(Record.ARG_TITLE));
-            myCardNews.setCreate_time(jsonObject1.getString(Record.ARG_CREATE_TIME));
-            myCardNewsList.add(myCardNews);
+            String id = jsonArray.getJSONObject(i).getString(Record.ARG_ID);
+            if (!TextUtils.isEmpty(id) && id.equals(Record.ARG_YGOPRO)) {
+                newsJson = jsonArray.getJSONObject(i);
+            }
         }
-        return myCardNewsList;
+        if (newsJson == null)
+            return mcNewsList;
+        JSONArray newsArray = newsJson.getJSONObject(Record.ARG_NEWS).getJSONArray(Record.ARG_ZH_CN);
+        for (int i = 0; i < newsArray.length(); i++) {
+            JSONObject jsonObject1 = newsArray.getJSONObject(i);
+            McNews mcNews = new McNews();
+            mcNews.setNews_url(jsonObject1.getString(Record.ARG_URL));
+            mcNews.setImage_url(jsonObject1.getString(Record.ARG_IMAGE));
+            mcNews.setTitle(jsonObject1.getString(Record.ARG_TITLE));
+            mcNews.setCreate_time(jsonObject1.getString(Record.ARG_UPDATE_AT));
+            mcNewsList.add(mcNews);
+        }
+        return mcNewsList;
     }
 
+    public static McDuelInfo getUserDuelInfo(String json) {
+        return new Gson().fromJson(json, McDuelInfo.class);
+    }
+
+
+    public static String getDuelRoomEvent(String json) throws JSONException {
+        return new JSONObject(json).getString(Record.ARG_EVENT);
+    }
+
+    public static List<DuelRoom> getDuelRoomList(String json) throws JSONException {
+        JSONObject jsonObject = new JSONObject(json);
+        List<DuelRoom> duelRoomList = new ArrayList<>();
+
+        switch (getDuelRoomEvent(json)){
+            case DuelRoom.EVENT_INIT:
+            case DuelRoom.EVENT_CREATE:
+                JSONArray jsonArray=jsonObject.getJSONArray(Record.ARG_DATA);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    DuelRoom duelRoom=new Gson().fromJson(jsonArray.getJSONObject(i).toString(), DuelRoom.class);
+                    duelRoom.setArena(duelRoom.getArena());
+                    duelRoom.setArenaType(duelRoom.getArena(),duelRoom.getId(),duelRoom.getOptions());
+                    duelRoomList.add(duelRoom);
+                }
+                break;
+            case DuelRoom.EVENT_DELETE:
+                DuelRoom duelRoom=new DuelRoom();
+                duelRoom.setId(jsonObject.getString(Record.ARG_DATA));
+                duelRoom.setTitle(jsonObject.getString(Record.ARG_DATA));
+                duelRoomList.add(duelRoom);
+                break;
+        }
+
+        return duelRoomList;
+    }
+
+    public static YGOServer getMatchYGOServer(String body) throws JSONException {
+        JSONObject jsonObject=new JSONObject(body);
+        YGOServer ygoServer=new YGOServer();
+        ygoServer.setServerAddr(jsonObject.getString(Record.ARG_ADDRESS));
+        ygoServer.setPort(jsonObject.getInt(Record.ARG_PORT));
+        ygoServer.setPassword(jsonObject.getString(Record.ARG_MC_PASSWORD));
+        return ygoServer;
+    }
 }

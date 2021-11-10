@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_type_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:text="已安装"
+        android:textColor="@color/grayDark2"
+        android:textSize="12sp" />
+    <ProgressBar
+        android:id="@+id/pb_loading"
+        android:layout_marginTop="2dp"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@id/tv_type_name"
+        android:layout_alignTop="@id/tv_type_name"
+        android:layout_width="13dp"
+        android:layout_height="13dp"/>
+
+    <LinearLayout
+        android:id="@+id/ll_item"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/setting_item_height"
+        android:layout_below="@id/tv_type_name"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/click_background"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_icon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:src="@drawable/ic_fail" />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_toRightOf="@id/iv_icon"
+            android:layout_weight="6"
+            android:ellipsize="end"
+            android:gravity="left"
+            android:paddingRight="10dp"
+            android:singleLine="true"
+            android:text="文本"
+            android:textColor="#000000"
+            android:textSize="@dimen/setting_item_name_size" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="6dp"
+            android:layout_toLeftOf="@id/iv_guide_right"
+            android:layout_toRightOf="@id/tv_name"
+            android:layout_weight="3"
+            android:ellipsize="end"
+            android:gravity="right"
+            android:lines="1"
+            android:text="dnidnidnaidnwednwuie"
+            android:textColor="@color/blackLight"
+            android:textSize="@dimen/setting_item_message_size" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_guide_right"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="15dp"
+            android:src="@drawable/ic_guide_right" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/line"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_alignBottom="@id/ll_item"
+        android:layout_marginLeft="51dp"
+        android:background="@color/grayLight" />
+
+</RelativeLayout>
+

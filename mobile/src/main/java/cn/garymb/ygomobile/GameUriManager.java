@@ -18,8 +18,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.ourygo.assistant.base.listener.OnDeRoomListener;
 import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.ygomobile.ui.activity.ExpansionsSettingActivity;
+import com.ourygo.ygomobile.ui.activity.OYMainActivity;
+import com.ourygo.ygomobile.util.OYDialogUtil;
+import com.ourygo.ygomobile.util.Record;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,8 +31,6 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-//import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -47,6 +48,7 @@ public class GameUriManager {
 
     public boolean doIntent(Intent intent) {
         Log.i(Constants.TAG, "doIntent");
+        Log.e("GameURiMan","为"+intent.getAction());
         if (ACTION_OPEN_DECK.equals(intent.getAction())) {
             if (intent.getData() != null) {
                 doUri(intent.getData());
@@ -67,10 +69,17 @@ public class GameUriManager {
                 options.mUserName = intent.getStringExtra(Constants.QUERY_USER);
                 options.mPort = intent.getIntExtra(Constants.QUERY_PORT, 0);
                 options.mRoomName = intent.getStringExtra(Constants.QUERY_ROOM);
+                Log.e("YGOStarter","跳转1"+options.mServerAddr+" "+options.mPort+" "+options.mUserName);
                 YGOStarter.startGame(getActivity(), options);
             } catch (Exception e) {
                 Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
                 activity.finish();
+            }
+        } else if (Record.ACTION_OPEN_MYCARD.equals(intent.getAction())) {
+            if (activity instanceof OYMainActivity) {
+                ((OYMainActivity) activity).selectMycard();
+            } else {
+                YGOUtil.show("请联系开发者检查错误1");
             }
         } else {
             return false;
@@ -197,7 +206,7 @@ public class GameUriManager {
     }
 
     private void doUri(Uri uri) {
-        Intent startSeting = new Intent(activity, SettingsActivity.class);
+        Intent startSeting = new Intent(activity, ExpansionsSettingActivity.class);
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
             if (file == null || !file.exists()) {
@@ -210,6 +219,7 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
+                OYDialogUtil.dialogDASaveDeck(activity,file.getAbsolutePath(),OYDialogUtil.DECK_TYPE_PATH);
 //                DeckManagerActivity.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
@@ -221,6 +231,7 @@ public class GameUriManager {
                 }
             } else if (isYrp) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
+                    Log.e("YGOStart","跳转2");
                     YGOStarter.startGame(getActivity(), null, "-r", file.getName());
                     Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
                 } else {
@@ -228,6 +239,7 @@ public class GameUriManager {
                 }
             } else if (isLua) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
+                    Log.e("YGOStart","跳转3");
                     YGOStarter.startGame(getActivity(), null, "-s", file.getName());
                     Toast.makeText(activity, "load single lua file", Toast.LENGTH_LONG).show();
                 } else {
@@ -244,19 +256,24 @@ public class GameUriManager {
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
                 } else {
-                    Deck deckInfo = new Deck(uri);
-                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                    OYDialogUtil.dialogDASaveDeck(activity,uri.toString(),OYDialogUtil.DECK_TYPE_URL);
+//                    Deck deckInfo = new Deck(uri);
+//                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+
 //                    DeckManagerActivity.start(activity, file.getAbsolutePath());
                 }
             } else if (Constants.URI_ROOM.equals(host)) {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
-                    if (TextUtils.isEmpty(exception))
-                        if (activity instanceof MainActivity) {
-                            MainActivity mainActivity = (MainActivity) activity;
-                            mainActivity.quickjoinRoom(host1, port, password);
+                    if (TextUtils.isEmpty(exception)) {
+                        if (activity instanceof OYMainActivity) {
+                            OYMainActivity mainActivity = (OYMainActivity) activity;
+                            mainActivity.joinDARoom(host1, port, password);
                         } else {
-                            YGOUtil.show(exception);
+                            YGOUtil.show("请联系开发者检查错误1");
                         }
+                    } else {
+                        YGOUtil.show(exception);
+                    }
                 });
             }
 //            else if (PATH_ROOM.equals(path)) {
@@ -284,6 +301,7 @@ public class GameUriManager {
             }
         }
         if (deck != null && deck.exists()) {
+            OYDialogUtil.dialogDASaveDeck(activity,deck.getAbsolutePath(),OYDialogUtil.DECK_TYPE_PATH);
 //            DeckManagerActivity.start(activity, deck.getAbsolutePath());
         } else {
             Log.w("kk", "no find " + name);

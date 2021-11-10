@@ -5,12 +5,13 @@
     android:background="#00000000">
 
     <cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
+        android:src="@drawable/avatar"
         android:id="@+id/icm_avatar"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_alignParentRight="true"
         android:layout_marginTop="5dp"
-        android:layout_marginRight="10dp"
+        android:layout_marginRight="8dp"
         android:scaleType="centerCrop" />
 
     <LinearLayout
@@ -38,6 +39,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:lineSpacingExtra="5dp"
             android:id="@+id/icm_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

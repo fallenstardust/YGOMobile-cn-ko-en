@@ -83,6 +83,7 @@ public class DeckUtils {
             outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
+            Log.e("DeckUtils", "卡组保存失败" + e);
             return false;
         } finally {
             IOUtils.close(writer);
@@ -121,11 +122,11 @@ public class DeckUtils {
             if (file.exists()) {
                 file.delete();
             }
-            file.createNewFile();
+            boolean iscreate=file.createNewFile();
             outputStream = new FileOutputStream(file);
             save(deck, outputStream);
         } catch (Exception e) {
-            Log.e("DeckUtil","保存出错"+e);
+            Log.e("DeckUtil", "保存出错" + e);
             //ignore
         } finally {
             IOUtils.close(outputStream);
@@ -133,11 +134,11 @@ public class DeckUtils {
         return true;
     }
 
-    public static File save(String name,String deckMessage) throws IOException {
+    public static File save(String name, String deckMessage) throws IOException {
         FileWriter fw = null;
 
         //如果文件存在，则重写内容；如果文件不存在，则创建文件
-        File f = new File(AppsSettings.get().getDeckDir(),name+".ydk");
+        File f = new File(AppsSettings.get().getDeckDir(), name + ".ydk");
         fw = new FileWriter(f, false);
 
         PrintWriter pw = new PrintWriter(fw);

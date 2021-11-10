@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_type_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:text="已安装"
+        android:textColor="@color/grayDark2"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_type_name"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/click_background"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:scaleType="fitXY"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:id="@+id/iv_card"
+            android:layout_width="39dp"
+            android:layout_height="54dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:src="@drawable/unknown" />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_toRightOf="@id/iv_icon"
+            android:layout_weight="6"
+            android:ellipsize="end"
+            android:gravity="left"
+            android:paddingRight="10dp"
+            android:singleLine="true"
+            android:text="DeckName"
+            android:textColor="#000000"
+            android:textSize="@dimen/setting_item_name_size" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:background="@drawable/click_background_radius"
+            android:id="@+id/iv_edit"
+            app:srcCompat="@drawable/ic_edit"
+            android:scaleType="fitXY"
+            android:layout_width="38dp"
+            android:layout_height="38dp" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:background="@drawable/click_background_radius"
+            android:layout_marginLeft="3dp"
+            android:id="@+id/iv_share"
+            app:srcCompat="@drawable/ic_share"
+            android:scaleType="fitXY"
+            android:layout_width="38dp"
+            android:layout_height="38dp" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_marginRight="10dp"
+            android:background="@drawable/click_background_radius"
+            android:layout_marginLeft="3dp"
+            android:id="@+id/iv_del"
+            app:srcCompat="@drawable/ic_del_red"
+            android:scaleType="fitXY"
+            android:layout_width="38dp"
+            android:layout_height="38dp" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/line"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_alignBottom="@id/ll_item"
+        android:layout_marginLeft="51dp"
+        android:background="@color/grayLight" />
+
+</RelativeLayout>
+

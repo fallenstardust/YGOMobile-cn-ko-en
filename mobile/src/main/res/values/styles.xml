@@ -7,7 +7,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowBackground">@color/windowBackgroud</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
@@ -19,9 +19,9 @@
         <item name="color">@color/black</item>
     </style>
     <style name="AppTheme.Mycard" parent="AppBaseTheme">
-        <item name="colorPrimary">@color/mediumPurpleLight</item>
-        <item name="colorPrimaryDark">@color/mediumPurple</item>
-        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
@@ -114,6 +114,15 @@
 
     <style name="itemSpinnerStyle" parent="Widget.AppCompat.DropDownItem.Spinner">
 
+    </style>
+
+    <!-- toolbar标题样式 -->
+    <style name="ToolbarTitle" parent="@style/TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@android:color/background_dark</item>
+    </style>
+    <style name="ToolbarStyle" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="colorControlNormal">@color/black</item>
     </style>
 
 </resources>

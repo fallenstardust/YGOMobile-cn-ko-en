@@ -3,12 +3,14 @@ package cn.garymb.ygomobile.ui.mycard.mcchat;
 import org.jivesoftware.smack.packet.Message;
 
 public interface ChatListener {
-    void addMessage(Message message);
+    void addChatMessage(ChatMessage message);
 
-    void removeMessage(Message message);
+    void removeChatMessage(ChatMessage message);
 
-    void reLogin(boolean state);
+    void reChatLogin(boolean state);
 
-    void reJoin(boolean state);
+    void reChatJoin(boolean state);
+
+    boolean isListenerEffective();
 
 }

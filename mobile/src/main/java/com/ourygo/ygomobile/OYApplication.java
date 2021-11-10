@@ -10,6 +10,8 @@ import androidx.multidex.MultiDex;
 
 import com.ourygo.ygomobile.util.LogUtil;
 
+import org.litepal.LitePal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +25,8 @@ public class OYApplication extends App {
 
     private static List<Activity> activitys = new ArrayList<>();
     private static int num = 0;
-    private String TAG="OYApplication";
+    public static String TAG="OYApplication";
+    private static boolean isInitRes;
 
     @Override
     public void onCreate() {
@@ -33,10 +36,12 @@ public class OYApplication extends App {
             if (processName.equals("com.ourygo.ygomobile") && num == 0) {
                 num++;
                 super.onCreate();
+                isInitRes=false;
                 registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
 
                     @Override
                     public void onActivityCreated(Activity p1, Bundle p2) {
+                        Log.e("OYApplication","入栈"+p1.getClass().getName());
                         activitys.add(p1);
                     }
 
@@ -67,9 +72,11 @@ public class OYApplication extends App {
 
                     @Override
                     public void onActivityDestroyed(Activity p1) {
+                        Log.e("OYApplication","出栈"+p1.getClass().getName());
                         activitys.remove(p1);
                     }
                 });
+                LitePal.initialize(getApplicationContext());
                 LogUtil.time(TAG,"初始化完毕");
             }else {
                 AppsSettings.init(this);
@@ -81,6 +88,14 @@ public class OYApplication extends App {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         MultiDex.install(this);
+    }
+
+    public static void setIsInitRes(boolean isInitRes) {
+        OYApplication.isInitRes = isInitRes;
+    }
+
+    public static boolean isIsInitRes() {
+        return isInitRes;
     }
 
     private String getProcessName(Context context) {

@@ -457,7 +457,8 @@ Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
             name += YDK_FILE_EX;
         }
         File file = new File(dir, name);
-        DeckUtils.save(this, file);
+        boolean isOk=DeckUtils.save(this, file);
+        Log.e("DeckUtil",file.getName()+"保存情况"+isOk);
         return file;
     }
 

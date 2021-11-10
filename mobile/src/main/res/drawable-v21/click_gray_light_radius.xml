@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/gray">
+    <corners
+        android:bottomLeftRadius="@dimen/corner_radius"
+        android:bottomRightRadius="@dimen/corner_radius"
+        android:topLeftRadius="@dimen/corner_radius"
+        android:topRightRadius="@dimen/corner_radius" />
+
+    <item>
+        <shape>
+            <corners
+                android:bottomLeftRadius="@dimen/corner_radius"
+                android:bottomRightRadius="@dimen/corner_radius"
+                android:topLeftRadius="@dimen/corner_radius"
+                android:topRightRadius="@dimen/corner_radius" />
+            <solid android:color="@color/grayLight"/>
+        </shape>
+    </item>
+</ripple>
+

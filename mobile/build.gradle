@@ -39,7 +39,7 @@ android {
     }
     buildTypes {
         debug {
-            debuggable false
+            debuggable true
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
@@ -71,10 +71,10 @@ android {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/rxjava.properties'
     }
-    aaptOptions {
-        noCompress 'dll', "config"
+    androidResources {
+        noCompress 'dll', 'config'
     }
-//    buildToolsVersion '28.0.3'
+    //    buildToolsVersion '28.0.3'
 }
     repositories {
         flatDir {
@@ -117,7 +117,7 @@ dependencies {
     //dialog库
 //    implementation(name: 'dialogutils2-release', ext: 'aar')
     //recyclerview的adapter库
-    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.4'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.3.0'
     //图片选择
@@ -144,4 +144,14 @@ dependencies {
     implementation 'com.github.xiaohaibin:XBanner:androidx_v1.2.0'
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.flyco.tablayout:FlycoTabLayout_Lib:2.1.2@aar'
+
+    implementation 'com.github.jenly1314:circleprogressview:1.1.3'
+
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation "androidx.palette:palette:1.0.0"
+
+    //litepal
+    implementation 'org.litepal.android:java:3.0.0'
+
+    implementation "org.java-websocket:Java-WebSocket:1.5.1"
 }

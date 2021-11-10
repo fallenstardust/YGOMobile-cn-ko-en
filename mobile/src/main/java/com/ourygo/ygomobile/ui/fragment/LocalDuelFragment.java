@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.ourygo.ygomobile.adapter.LocalBQAdapter;
 import com.ourygo.ygomobile.bean.LocalDuel;
 import com.ourygo.ygomobile.util.OYUtil;
@@ -52,7 +53,7 @@ public class LocalDuelFragment extends Fragment {
         localBQAdapter=new LocalBQAdapter(localDuelList);
         rv_local_list.setAdapter(localBQAdapter);
 
-        localBQAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+        localBQAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 LocalDuel localDuel= (LocalDuel) adapter.getItem(position);

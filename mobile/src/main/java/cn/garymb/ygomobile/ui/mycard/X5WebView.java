@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.tencent.smtt.sdk.CookieManager;
+import com.tencent.smtt.sdk.CookieSyncManager;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 import com.tencent.smtt.sdk.WebViewClient;
@@ -93,6 +95,22 @@ public class X5WebView extends WebView {
 		canvas.restore();
 		return ret;*/
         return super.drawChild(canvas, child, drawingTime);
+    }
+
+    //清除所有cookie
+    public void removeAllCookie(String urlpath) {
+        CookieSyncManager cookieSyncManager = CookieSyncManager.createInstance(getContext());
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.removeSessionCookie();
+        String testcookie1 = cookieManager.getCookie(urlpath);
+        cookieManager.removeAllCookie();
+        cookieSyncManager.sync();
+        String testcookie2 = cookieManager.getCookie(urlpath);
+    }
+
+    public void removeAllCookie() {
+        removeAllCookie(getUrl());
     }
 
 }

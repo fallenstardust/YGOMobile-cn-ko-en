@@ -74,7 +74,7 @@
                 android:layout_width="50dp"
                 android:layout_height="60dp"
                 android:gravity="bottom"
-                android:src="@drawable/mycard" />
+                android:src="@drawable/mc_logo" />
 
             <TextView
                 android:layout_width="50dp"

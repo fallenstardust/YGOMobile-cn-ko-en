@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingBottom="20dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_type_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:text="头像"
+        android:textColor="@color/grayDark2"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_type_name"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/edittext_message"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/ll_avatar1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:src="@drawable/avatar"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_avatar1"
+                android:layout_width="80dp"
+                android:layout_height="80dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="自己"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginLeft="40dp"
+            android:id="@+id/ll_avatar2"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:src="@drawable/avatar"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_avatar2"
+                android:layout_width="80dp"
+                android:layout_height="80dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="对手"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:text="卡背"
+        android:textColor="@color/grayDark2"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_type_name"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/edittext_message"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/ll_cover1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:src="@drawable/ic_image_load"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_cover1"
+                android:layout_width="88dp"
+                android:layout_height="127dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="自己"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginLeft="40dp"
+            android:id="@+id/ll_cover2"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:src="@drawable/ic_image_load"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_cover2"
+                android:layout_width="88dp"
+                android:layout_height="127dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="对手"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:text="背景"
+        android:textColor="@color/grayDark2"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_type_name"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/edittext_message"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/ll_bg1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="决斗背景"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_marginLeft="20dp"
+                android:src="@drawable/ic_image_load"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_bg1"
+                android:layout_width="180dp"
+                android:layout_height="90dp" />
+
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/ll_bg2"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="菜单背景"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_marginLeft="20dp"
+                android:src="@drawable/ic_image_load"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_bg2"
+                android:layout_width="180dp"
+                android:layout_height="90dp" />
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_bg3"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_marginTop="6dp"
+                android:textSize="15sp"
+                android:text="卡组背景"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_marginLeft="20dp"
+                android:src="@drawable/ic_image_load"
+                android:scaleType="centerCrop"
+                android:id="@+id/iv_bg3"
+                android:layout_width="180dp"
+                android:layout_height="90dp" />
+
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+</LinearLayout>
+

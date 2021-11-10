@@ -5,18 +5,85 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.stx.xhb.androidx.XBanner
-        android:id="@+id/xb_banner"
+    <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/cv_banner"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        app:AutoPlayTime="3500"
-        app:isClipChildrenMode="true"
-        app:isClipChildrenModeLessThree="true"
-        app:pageChangeDuration="800"
-        app:pointsVisibility="false"
-        app:tipTextSize="12sp"
-        app:clipChildrenTopBottomMargin="5dp"
-        app:isHandLoop="true"/>
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:orientation="vertical"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="@dimen/corner_radius"
+        app:elevation="0dp"
+        app:cardElevation="0dp"
+        app:cardUseCompatPadding="false">
+
+
+        <com.stx.xhb.androidx.XBanner
+            android:id="@+id/xb_banner"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            app:AutoPlayTime="4500"
+            app:pageChangeDuration="800"
+            app:pointsVisibility="true"
+            app:pointsPosition="RIGHT"
+            app:tipTextSize="12sp"
+            app:clipChildrenTopBottomMargin="5dp"
+            app:isHandLoop="true" />
+
+    </androidx.cardview.widget.CardView>
+
+
+    <RelativeLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_start_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"
+            android:gravity="center"
+            android:text="开始游戏"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pb_res_loading"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/tv_start_s" />
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_add_setting"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/click_window_background_radius"
+            android:gravity="right"
+            android:padding="5dp"
+            app:srcCompat="@drawable/ic_edit_setting" />
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:id="@+id/rv_service_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 
     <LinearLayout
         android:layout_marginTop="20dp"
@@ -27,10 +94,10 @@
         android:layout_height="wrap_content">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cv_ai"
+            android:id="@+id/cv_join_room"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="60dp"
+            android:layout_height="130dp"
             app:cardCornerRadius="@dimen/dialog_corner_radius"
             app:elevation="0dp"
             app:cardElevation="0dp"
@@ -44,163 +111,212 @@
                 android:layout_height="match_parent">
 
                 <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_marginRight="-20dp"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_aigame" />
+                    android:layout_marginTop="20dp"
+                    android:layout_marginLeft="50dp"
+                    android:scaleType="fitEnd"
+                    android:src="@drawable/ic_lizi" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@color/mainCardShader"
-                    android:paddingLeft="20dp"
-                    android:paddingTop="20dp"
-                    android:text="AI对战"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
+                    android:paddingLeft="13dp"
+                    android:paddingTop="13dp"
+                    android:text="加入房间"
+                    android:textColor="@color/blackLight2"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
             </RelativeLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:clickable="true"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:layout_marginLeft="20dp"
-            android:id="@+id/cv_endgame"
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_weight="2.2"
             android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="60dp"
-            app:cardCornerRadius="@dimen/dialog_corner_radius"
-            app:elevation="0dp"
-            app:cardElevation="0dp"
-            app:cardUseCompatPadding="false"
-            app:cardBackgroundColor="@color/colorDialogBackground">
+            android:layout_height="match_parent">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <LinearLayout
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_height="0dp">
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:src="@drawable/ic_endgame"
-                    android:scaleType="centerCrop"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
+                <androidx.cardview.widget.CardView
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/cv_deck"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="match_parent"
-                    android:background="@color/mainCardShader"
-                    android:paddingLeft="20dp"
-                    android:paddingTop="20dp"
-                    android:text="残局"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    app:cardCornerRadius="@dimen/dialog_corner_radius"
+                    app:elevation="0dp"
+                    app:cardElevation="0dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardBackgroundColor="@color/colorDialogBackground">
 
-            </RelativeLayout>
-        </androidx.cardview.widget.CardView>
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:src="@drawable/ic_image2"
+                            android:scaleType="fitEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/mainCardShader"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="卡组编辑"
+                            android:textColor="@color/blackLight"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+
+
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_height="0dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/cv_ai"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"
+                    app:cardCornerRadius="@dimen/dialog_corner_radius"
+                    app:elevation="0dp"
+                    app:cardElevation="0dp"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardUseCompatPadding="false"
+                    app:cardBackgroundColor="@color/colorDialogBackground">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_alignParentRight="true"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitEnd"
+                            android:src="@drawable/ic_image1" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/mainCardShader"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="AI/残局"
+                            android:textColor="@color/blackLight"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:visibility="gone"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/cv_loacl_duel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"
+                    app:cardCornerRadius="@dimen/dialog_corner_radius"
+                    app:elevation="0dp"
+                    app:cardElevation="0dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardBackgroundColor="@color/colorDialogBackground">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:scaleType="centerCrop"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/mainCardShader"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="本地对战"
+                            android:textColor="@color/blackLight"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/cv_replay"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"
+                    app:cardCornerRadius="@dimen/dialog_corner_radius"
+                    app:elevation="0dp"
+                    app:cardElevation="0dp"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardUseCompatPadding="false"
+                    app:cardBackgroundColor="@color/colorDialogBackground">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitEnd"
+                            android:src="@drawable/ic_replay" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/mainCardShader"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="决斗录像"
+                            android:textColor="@color/blackLight"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                </androidx.cardview.widget.CardView>
+
+
+            </LinearLayout>
+
+        </LinearLayout>
+
 
     </LinearLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin">
 
-
-        <com.ourygo.ygomobile.view.OYTabLayout
-            android:id="@+id/tl_game_option"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="5dp"
-            app:tl_indicator_color="@color/colorAccent"
-            app:tl_indicator_corner_radius="2dp"
-            app:tl_indicator_gravity="BOTTOM"
-            app:tl_indicator_height="0dp"
-            app:tl_indicator_margin_bottom="2dp"
-            app:tl_indicator_margin_top="10dp"
-            app:tl_indicator_style="NORMAL"
-            app:tl_indicator_width="30dp"
-            app:tl_tab_padding="10dp"
-            app:tl_tab_space_equal="false"
-            app:tl_textBold="SELECT"
-            app:tl_textSelectColor="@color/black"
-            app:tl_textUnselectColor="@color/grayDark"
-            app:tl_textsize="25sp"
-            app:tl_underline_color="@color/transparent"
-            app:tl_underline_height="10dp" />
-
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_add_setting"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/click_background_radius"
-            android:gravity="right"
-            android:padding="5dp"
-            app:srcCompat="@drawable/ic_add_gray" />
-    </RelativeLayout>
-
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/vp_game"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin">
-
-        <com.ourygo.ygomobile.view.OYTabLayout
-            android:id="@+id/tl_replay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="10dp"
-            app:tl_indicator_color="@color/colorAccent"
-            app:tl_indicator_corner_radius="2dp"
-            app:tl_indicator_gravity="BOTTOM"
-            app:tl_indicator_height="0dp"
-            app:tl_indicator_margin_bottom="2dp"
-            app:tl_indicator_margin_top="10dp"
-            app:tl_indicator_style="NORMAL"
-            app:tl_indicator_width="30dp"
-            app:tl_tab_padding="10dp"
-            app:tl_tab_space_equal="false"
-            app:tl_textBold="SELECT"
-            app:tl_textSelectColor="@color/black"
-            app:tl_textUnselectColor="@color/grayDark"
-            app:tl_textsize="25sp"
-            app:tl_underline_color="@color/transparent"
-            app:tl_underline_height="10dp" />
-
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:padding="10dp"
-            android:background="@drawable/click_background"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:textColor="@color/colorAccent"
-            android:id="@+id/tv_view_more"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/view_more"
-            android:textSize="10sp" />
-    </RelativeLayout>
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_replay"
-        android:layout_marginRight="@dimen/main_margin"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
 </LinearLayout>

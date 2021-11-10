@@ -34,6 +34,8 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class YGOStarter {
     private static Bitmap mLogo;
+    private static long lasttime = 0;
+    private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
 
     private static void setFullScreen(Activity activity, ActivityShowInfo activityShowInfo) {
         activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -153,16 +155,17 @@ public class YGOStarter {
         activityShowInfo.isRunning = false;
     }
 
-    private static long lasttime = 0;
+    public static void startGame(Activity activity, YGOGameOptions options, String... args) {
+        startGame(0, activity, options, args);
+    }
 
     /**
-     *
      * @param activity
      * @param options
-     * @param args 例如(播放完退出游戏)：-r 1111.yrp
-     *             或者(播放完不退出游戏)：-k -r 1111.yrp
+     * @param args     例如(播放完退出游戏)：-r 1111.yrp
+     *                 或者(播放完不退出游戏)：-k -r 1111.yrp
      */
-    public static void startGame(Activity activity, YGOGameOptions options, String... args) {
+    public static void startGame(int request, Activity activity, YGOGameOptions options, String... args) {
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
@@ -179,11 +182,14 @@ public class YGOStarter {
         IrrlichtBridge.setArgs(intent, args);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
-        activity.startActivity(intent);
+        activity.startActivityForResult(intent, request);
         Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
     }
 
-    private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
+    public static boolean isGameRunning(Context context) {
+        return ComponentUtils.isProcessRunning(context, context.getPackageName() + ":game")
+                && ComponentUtils.isActivityRunning(context, new ComponentName(context, YGOMobileActivity.class));
+    }
 
     private static class ActivityShowInfo {
         //根布局
@@ -208,10 +214,5 @@ public class YGOStarter {
 //7.unspecified：未指定，此为默认值，由Android系统自己选择适当的方向，选择策略视具体设备的配置情况而定，因此不同的设备会有不同的方向选择；
         int oldRequestedOrientation;
         boolean isRunning = false;
-    }
-
-    public static boolean isGameRunning(Context context) {
-        return ComponentUtils.isProcessRunning(context, context.getPackageName() + ":game")
-                && ComponentUtils.isActivityRunning(context, new ComponentName(context, YGOMobileActivity.class));
     }
 }

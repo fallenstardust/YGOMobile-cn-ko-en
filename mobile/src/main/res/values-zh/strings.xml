@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
-    <string name="app_name">YGOMobile</string>
+    <string name="app_name">YGOMobile-OY</string>
+    <string name="app_version_name">1.0</string>
+    <string name="start_exception">查看错误</string>
+    <string name="copy_exception">复制错误</string>
+
     <string name="action_settings">设置</string>
     <string name="action_game">单人游戏</string>
     <string name="action_about">关于</string>
@@ -65,9 +69,9 @@
     <string name="settings_game_avatar">头像图片</string>
     <string name="restart_app">请重启本应用</string>
     <string-array name="opengl_version">
-        <item>OpenGL ES 1.X</item>
-        <item>OpenGL ES 2.0 fixed shaders</item>
-        <item>OpenGL ES 2.0 builtin shaders</item>
+        <item>ES 1.X</item>
+        <item>ES 2.0 fixed shaders</item>
+        <item>ES 2.0 builtin shaders</item>
     </string-array>
     <string-array name="card_quality">
         <item>低</item>
@@ -194,7 +198,7 @@
     <string name="tip_istunning">游戏已运行</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
-    <string name="mycard">萌卡平台</string>
+    <string name="mycard">MyCard</string>
     <string name="arena">决斗数据库</string>
     <string name="mc_chat">聊天室</string>
     <string name="noting_to_send">发送内容不能为空</string>
@@ -253,8 +257,8 @@
     <string name="to_open">去开启</string>
     <string name="crashed">软件错误退出</string>
     <string name="invalid_shortcut">无效的快捷方式</string>
-    <string name="homepage">主页</string>
-    <string name="other_funstion">其他功能</string>
+    <string name="homepage">首页</string>
+    <string name="other_funstion">其他</string>
     <string name="query_exception">查询失败</string>
     <string name="add_setting">添加设置</string>
     <string name="start_game">开始游戏</string>
@@ -273,8 +277,8 @@
     <string name="opponent_setting">对手设置</string>
     <string name="duel_mode">对战模式</string>
     <string name="lflist">禁限表</string>
-    <string name="duel_mode_one">单局模式</string>
-    <string name="duel_mode_match">比赛模式</string>
+    <string name="duel_mode_one">单局</string>
+    <string name="duel_mode_match">比赛</string>
     <string name="complete_setting">完成设置</string>
 
     <string name="return_to_duel">点此返回决斗</string>
@@ -342,4 +346,17 @@
     <string name="file_installed">文件已导入</string>
     <string name="settings_screen_padding">瀑布屏预留高度</string>
     <string name="tip_load_cdb_error">加载数据出错</string>
+
+
+    <string name="join_room">加入房间</string>
+    <string name="random_match">随机匹配</string>
+    <string name="server_info">服务器信息</string>
+    <string name="fun_record">娱乐战绩</string>
+    <string name="fun_rank">娱乐排名</string>
+    <string name="match_record">竞技战绩</string>
+    <string name="match_rank">竞技排名</string>
+    <string name="win_num">胜场</string>
+    <string name="lose_num">负场</string>
+    <string name="draw_num">平局</string>
+
 </resources>

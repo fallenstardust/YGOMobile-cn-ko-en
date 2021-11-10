@@ -4,7 +4,6 @@ package com.ourygo.ygomobile.view;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.flyco.tablayout.SlidingTabLayout;
@@ -14,27 +13,30 @@ import cn.garymb.ygomobile.lite.R;
 
 public class OYTabLayout extends SlidingTabLayout {
 
+    public static final int MODE_PROMINENT = 0;
+    public static final int MODE_BACKGROUND = 1;
+
     private float selectTextSize = 24;
-    private float normalTextSize=14;
+    private float normalTextSize = 14;
+    private int showMode;
 
     private boolean isAugment = true;
 
     public OYTabLayout(Context context) {
         super(context);
-        Log.e("SCTablayout", "初始选择" + getCurrentTab());
+        showMode = MODE_PROMINENT;
         updateTabSelection(getCurrentTab());
     }
 
     public OYTabLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        Log.e("SCTablayout",
-                "初始选择1" + getCurrentTab());
+        showMode = MODE_PROMINENT;
         updateTabSelection(getCurrentTab());
     }
 
     public OYTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Log.e("SCTablayout", "初始选择2" + getCurrentTab());
+        showMode = MODE_PROMINENT;
         updateTabSelection(getCurrentTab());
     }
 
@@ -51,15 +53,15 @@ public class OYTabLayout extends SlidingTabLayout {
         updateTabSelection(currentTab);
     }
 
-    public void setTextSizeL(){
-        selectTextSize=24;
-        normalTextSize=14;
+    public void setTextSizeL() {
+        selectTextSize = 24;
+        normalTextSize = 14;
         updateTabSelection(getCurrentTab());
     }
 
-    public void setTextSizeM(){
-        selectTextSize=20;
-        normalTextSize=12;
+    public void setTextSizeM() {
+        selectTextSize = 20;
+        normalTextSize = 12;
         updateTabSelection(getCurrentTab());
     }
 
@@ -71,34 +73,40 @@ public class OYTabLayout extends SlidingTabLayout {
         isAugment = augment;
     }
 
-    private void updateTabSelection(int position) {
+    public void setShowMode(int showMode) {
+        this.showMode = showMode;
+    }
 
+    private void updateTabSelection(int position) {
         for (int i = 0; i < getTabCount(); ++i) {
             final boolean isSelect = i == position;
             TextView tab_title = getTitleView(i);
-            tab_title.setPadding(OYUtil.dp2px(6), OYUtil.dp2px(3),OYUtil.dp2px(6),OYUtil.dp2px(3));
-            Log.e("SCTablayout", "是否为空" + (tab_title == null));
-            if (tab_title != null) {
-                tab_title.setBackgroundResource(R.drawable.click_window_background_radius);
-                if (isSelect) {
-//                    tab_title.setTextColor(SCUtil.c(R.color.colorAccentDark));
-                    if (isAugment)
-                        tab_title.setTextSize(selectTextSize);
-                    tab_title.setTypeface(Typeface.DEFAULT_BOLD);
-                } else {
-//                    tab_title.setTextColor(SCUtil.c(R.color.colorAccent));
-                    if (isAugment)
-                        tab_title.setTextSize(14);
-                    tab_title.setTypeface(Typeface.DEFAULT);
+            tab_title.setPadding(OYUtil.dp2px(6), OYUtil.dp2px(3), OYUtil.dp2px(6), OYUtil.dp2px(3));
+            if (tab_title == null)
+                return;
+
+            tab_title.setBackgroundResource(R.drawable.click_window_background_radius);
+
+            tab_title.setTextSize(normalTextSize);
+            tab_title.setTypeface(Typeface.DEFAULT);
+            if (isSelect) {
+                switch (showMode) {
+                    case MODE_PROMINENT:
+                        if (isAugment)
+                            tab_title.setTextSize(selectTextSize);
+                        tab_title.setTypeface(Typeface.DEFAULT_BOLD);
+                        break;
+                    case MODE_BACKGROUND:
+                        tab_title.setBackgroundResource(R.drawable.click_gray_light_radius);
+                        tab_title.setPadding(OYUtil.dp2px(10), OYUtil.dp2px(5), OYUtil.dp2px(10), OYUtil.dp2px(5));
+                        break;
                 }
-                if (getTextBold() == 1) {
-                    tab_title.getPaint().setFakeBoldText(isSelect);
-                }
-//                tab_title.setTextColor(isSelect ? mTextSelectColor : mTextUnselectColor);
-//                if (mTextBold == TEXT_BOLD_WHEN_SELECT) {
-//                    tab_title.getPaint().setFakeBoldText(isSelect);
-//                }
+
             }
+            if (getTextBold() == 1) {
+                tab_title.getPaint().setFakeBoldText(isSelect);
+            }
+
         }
     }
 

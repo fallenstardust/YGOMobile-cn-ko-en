@@ -536,15 +536,17 @@ public class YGOMobileActivity extends GameActivity implements
 //        intent.putExtra(IrrlichtBridge.EXTRA_TASK_ID, getTaskId());
 //        intent.putExtra(IrrlichtBridge.EXTRA_GAME_EXIT_TIME, System.currentTimeMillis());
         intent.setPackage(getPackageName());
+//        finish();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    startActivity(intent);
+//                    startActivity(intent);
                     Log.d(IrrlichtBridge.TAG, "open home ok");
                 } catch (Throwable e) {
                     Log.w(IrrlichtBridge.TAG, "open home", e);
                 }
+                setResult(RESULT_OK);
                 boolean isRoot = isTaskRoot();
                 Log.d(IrrlichtBridge.TAG, "isRoot=" + isRoot + ",kill:" + Process.myPid());
                 if (isRoot) {

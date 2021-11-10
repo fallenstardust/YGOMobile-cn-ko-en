@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:background="@color/windowBackground"
+    android:layout_height="match_parent">
+
+
+    <include layout="@layout/ax_toolbar" />
+
+
+    <FrameLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent">
+
+
+        <cn.garymb.ygomobile.ui.mycard.MyCardWebView
+            android:id="@+id/wv_web"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:id="@+id/web_pro" />
+
+    </FrameLayout>
+
+</LinearLayout>

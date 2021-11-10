@@ -1,23 +1,24 @@
 package com.ourygo.ygomobile.adapter;
 
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.BaseViewHolder;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
+import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.ourygo.ygomobile.base.listener.OnOYSelectListener;
 import com.ourygo.ygomobile.bean.OYSelect;
-import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYUtil;
 
 import java.util.List;
 
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
 import cn.garymb.ygomobile.lite.R;
 
 public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder> {
@@ -26,8 +27,8 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
     private boolean isShowMessage = true;
     private int titleSize = 12;
     private int messageSize = 10;
-    private int selectPosttion;
-    private int messageColor=-1;
+    private int selectPosition;
+    private int messageColor = -1;
     private int backgroundColor;
     private int selectBackgroundColor;
     private int layoutGravity = Gravity.CENTER;
@@ -35,26 +36,30 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
     private int layoutHeight = 0;
     private boolean isMessageBold;
     private OnOYSelectListener onOYselectListener;
+    private OnItemClickListener currentOnItemClickListener;
 
     public OYSelectBQAdapter(@Nullable List<OYSelect> data) {
         super(R.layout.oy_select_item, data);
-        backgroundColor = OYUtil.c(R.color.colorAccentLight);
-        selectBackgroundColor = OYUtil.c(R.color.black);
-        messageColor=OYUtil.c(R.color.colorAccent);
-        selectPosttion = -1;
+//        backgroundColor = OYUtil.getRadiusBackground(OYUtil.c(R.color.grayLight));
+        backgroundColor = R.drawable.click_gray_light_radius;
+//        selectBackgroundColor = OYUtil.getRadiusBackground(OYUtil.c(R.color.grayDark2));
+        selectBackgroundColor = R.drawable.click_gray_dark_radius;
+        messageColor = OYUtil.c(R.color.blackLight);
+        selectPosition = -1;
         setItemClickListener();
     }
 
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.currentOnItemClickListener = onItemClickListener;
+    }
+
     private void setItemClickListener() {
-        setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                //未选中——选中
-                if (position != selectPosttion) {
-                    setSelectPosition(position);
-                    notifyDataSetChanged();
-                }
-            }
+        super.setOnItemClickListener((adapter, view, position) -> {
+            //未选中——选中
+            setSelectPosition(position);
+
+            if (currentOnItemClickListener != null)
+                currentOnItemClickListener.onItemClick(adapter, view, position);
         });
     }
 
@@ -63,25 +68,22 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
         helper.setText(R.id.tv_title, item.getName());
         helper.setText(R.id.tv_message, item.getMessage());
 
-
         TextView tv_title, tv_message;
         tv_message = helper.getView(R.id.tv_message);
         tv_title = helper.getView(R.id.tv_title);
 
-
         LinearLayout ll_layout = helper.getView(R.id.ll_layout);
         ll_layout.setGravity(layoutGravity);
-        CardView cv_card=helper.getView(R.id.cv_card);
-        if (selectPosttion == -1) {
-           cv_card.setCardBackgroundColor(backgroundColor);
+        LinearLayout cv_card = helper.getView(R.id.ll_layout);
+        if (selectPosition == -1) {
+            cv_card.setBackgroundResource(backgroundColor);
         } else {
-            if (helper.getAdapterPosition() == selectPosttion) {
-                cv_card.setCardBackgroundColor(selectBackgroundColor);
+            if (helper.getAdapterPosition() == selectPosition) {
+                cv_card.setBackgroundResource(selectBackgroundColor);
             } else {
-                cv_card.setCardBackgroundColor(backgroundColor);
+                cv_card.setBackgroundResource(backgroundColor);
             }
         }
-
 
         if (isShowTitle) {
             tv_title.setVisibility(View.VISIBLE);
@@ -95,10 +97,10 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
         } else
             tv_message.setVisibility(View.GONE);
 
-          tv_message.setTextColor(messageColor);
+        tv_message.setTextColor(messageColor);
 
         if (isMessageBold)
-        tv_message.setTypeface(Typeface.DEFAULT_BOLD);
+            tv_message.setTypeface(Typeface.DEFAULT_BOLD);
         else
             tv_message.setTypeface(Typeface.DEFAULT);
 
@@ -115,8 +117,6 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
             layoutParams.height = layoutHeight;
 
         ll_layout.setLayoutParams(layoutParams);
-
-
     }
 
     public void setLayoutSize(int width, int height) {
@@ -124,38 +124,44 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
         layoutHeight = height;
     }
 
-    public void setMessageColor(int color){
-        messageColor=color;
+    public void setMessageColor(int color) {
+        messageColor = color;
     }
 
-
-    public void setMessageBold(boolean isBold){
-        this.isMessageBold=isBold;
+    public void setMessageBold(boolean isBold) {
+        this.isMessageBold = isBold;
     }
+
     public int getSelectPosttion() {
-        return selectPosttion;
+        return selectPosition;
     }
 
     public void setSelectPosition(int selectPosition) {
-        this.selectPosttion = selectPosition;
-        if (onOYselectListener!=null)
-        onOYselectListener.onOYSelect(getItem(selectPosition),selectPosition);
+        int lastPosition = this.selectPosition;
+        setSelectPosition(lastPosition,selectPosition);
     }
 
-    public void setSelectListener(OnOYSelectListener onOYSelectListener) {
-        this.onOYselectListener=onOYSelectListener;
+    public void setSelectPosition(int lastPosition,int selectPosition) {
+        this.selectPosition = selectPosition;
+        notifyDataSetChanged();
+        if (onOYselectListener != null)
+            onOYselectListener.onOYSelect(getItem(selectPosition), lastPosition, selectPosition);
     }
 
-    public void setSelectBackground(int color) {
-        selectBackgroundColor = color;
+    public void setOnSelectListener(OnOYSelectListener onOYSelectListener) {
+        this.onOYselectListener = onOYSelectListener;
+    }
+
+    public void setSelectBackground(int drawable) {
+        selectBackgroundColor = drawable;
     }
 
     public void setLayoutGravity(int layoutGravity) {
         this.layoutGravity = layoutGravity;
     }
 
-    public void setBackground(int color) {
-        this.backgroundColor = color;
+    public void setBackground(int drawable) {
+        this.backgroundColor = drawable;
     }
 
     public void setTitleSize(int size) {
@@ -182,6 +188,4 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
     public void hideMessage() {
         isShowMessage = false;
     }
-
-
 }

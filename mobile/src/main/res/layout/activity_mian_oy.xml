@@ -5,65 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--<include-->
-        <!--layout="@layout/content_toolbar"/>-->
-    <LinearLayout
-        android:gravity="bottom"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height">
-    <RelativeLayout
-        android:layout_marginBottom="5dp"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/iv_avatar"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="10dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/avatar"
-            app:civ_border_color="@color/colorAccentLight"
-            app:civ_border_width="1dp" />
-
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:textColor="@color/colorAccent"
-            android:id="@+id/tv_name"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/iv_avatar"
-            android:textSize="12sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_setting"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/click_background_radius"
-            android:padding="5dp"
-            app:srcCompat="@drawable/ic_settings_black_24dp" />
-
-    </RelativeLayout>
-
-    </LinearLayout>
-    <View
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin"
-        android:background="@color/colorAccentLight"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-
 
     <com.ourygo.ygomobile.view.OYTabLayout
         android:layout_centerVertical="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="10dp"
+        android:paddingTop="25dp"
+        android:paddingBottom="10dp"
         android:id="@+id/tl_tab"
         app:tl_tab_padding="10dp"
         android:paddingLeft="15dp"

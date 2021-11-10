@@ -5,7 +5,8 @@ import android.graphics.Color;
 import android.view.View;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.BaseViewHolder;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
+import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,15 +55,15 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
             if (selectList.contains(item))
                 helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             else
-                helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
+                helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
         } else if (isSelect) {
             if (position == selectPosition) {
                 helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             } else {
-                helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
+                helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
             }
         }else {
-            helper.setBackgroundRes(R.id.ll_layout, Color.TRANSPARENT);
+            helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
         }
 
     }

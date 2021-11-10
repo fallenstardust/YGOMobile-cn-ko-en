@@ -1,8 +1,9 @@
 package com.ourygo.ygomobile.ui.fragment;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,115 +13,148 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import com.ourygo.ygomobile.adapter.ReplayAdapter;
-import com.ourygo.ygomobile.base.listener.OnMyCardNewsQueryListener;
-import com.ourygo.ygomobile.bean.FragmentData;
-import com.ourygo.ygomobile.bean.MyCardNews;
-import com.ourygo.ygomobile.ui.activity.NewServerActivity;
-import com.ourygo.ygomobile.util.MyCardUtil;
-import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.YGOUtil;
-import com.ourygo.ygomobile.view.OYTabLayout;
-import com.stx.xhb.androidx.XBanner;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
+
+import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.OYApplication;
+import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
+import com.ourygo.ygomobile.bean.McNews;
+import com.ourygo.ygomobile.bean.YGOServer;
+import com.ourygo.ygomobile.ui.activity.NewServerActivity;
+import com.ourygo.ygomobile.util.IntentUtil;
+import com.ourygo.ygomobile.util.LogUtil;
+import com.ourygo.ygomobile.util.MyCardUtil;
+import com.ourygo.ygomobile.util.OYDialogUtil;
+import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.YGOUtil;
+import com.stx.xhb.androidx.XBanner;
+
+import java.util.List;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 
 public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
+    private static final int TYPE_RES_LOADING_OK = 2;
+
+    private static final int REQUEST_NEW_SERVER = 0;
+    private static final String TAG = "TIME-Mainfragment";
 
     private XBanner xb_banner;
-    private List<MyCardNews> myCardNewsList;
+    private List<McNews> mcNewsList;
+    //    private OYTabLayout tl_game_option,tl_replay;
+//    private ViewPager vp_game;
     private ImageView iv_add_setting;
-    private OYTabLayout tl_game_option,tl_replay;
-    private ViewPager vp_game;
+    //    private List<FragmentData> fragmentDataList;
+//    private RecyclerView rv_replay;
+    private CardView cv_ai, cv_deck, cv_replay;
+    private RecyclerView rv_service_list;
+    private DialogUtils du;
+    private YGOServerBQAdapter ygoServerAdp;
+    private CardView cv_join_room, cv_loacl_duel, cv_banner;
+    private ProgressBar pb_res_loading;
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_BANNER_QUERY_OK:
+                    xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
+                    break;
+                case TYPE_BANNER_QUERY_EXCEPTION:
+                    OYUtil.snackExceptionToast(getActivity(), xb_banner, getString(R.string.query_exception), msg.obj.toString());
+                    break;
+                case TYPE_RES_LOADING_OK:
+                    pb_res_loading.setVisibility(View.GONE);
+                    OYApplication.setIsInitRes(true);
+                    break;
+            }
 
-    private List<FragmentData> fragmentDataList;
-    private RecyclerView rv_replay;
-    private CardView cv_ai,cv_endgame;
-
+        }
+    };
+    private ResCheckTask mResCheckTask;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.main_fragment, null);
+        LogUtil.time(TAG, "1");
+        View v = inflater.inflate(R.layout.main_fragment, container, false);
 
+        LogUtil.time(TAG, "2");
         initView(v);
+        LogUtil.time(TAG, "3");
+        initServiceList();
+        LogUtil.time(TAG, "4");
+        LogUtil.printSumTime(TAG);
+
         return v;
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.cv_ai:
-
+                IntentUtil.startYGOEndgame(getActivity());
                 break;
-            case R.id.cv_endgame:
-
+            case R.id.cv_deck:
+                IntentUtil.startYGODeck(getActivity(), "fff");
+                break;
+            case R.id.cv_loacl_duel:
+//                IntentUtil.startYGOGame(getActivity());
+                break;
+            case R.id.cv_join_room:
+                OYDialogUtil.dialogJoinRoom(getActivity(), null);
+                break;
+            case R.id.cv_replay:
+                IntentUtil.startYGOReplay(getActivity(), "233.yrp");
                 break;
         }
     }
 
     private void initView(View v) {
         xb_banner = v.findViewById(R.id.xb_banner);
-        iv_add_setting=v.findViewById(R.id.iv_add_setting);
-        tl_game_option=v.findViewById(R.id.tl_game_option);
-        vp_game=v.findViewById(R.id.vp_game);
-        tl_replay=v.findViewById(R.id.tl_replay);
-        rv_replay=v.findViewById(R.id.rv_replay);
-        cv_ai=v.findViewById(R.id.cv_ai);
-        cv_endgame=v.findViewById(R.id.cv_endgame);
+        iv_add_setting = v.findViewById(R.id.iv_add_setting);
+//        tl_game_option=v.findViewById(R.id.tl_game_option);
+//        vp_game=v.findViewById(R.id.vp_game);
+//        tl_replay=v.findViewById(R.id.tl_replay);
+//        rv_replay=v.findViewById(R.id.rv_replay);
+        cv_ai = v.findViewById(R.id.cv_ai);
+        cv_deck = v.findViewById(R.id.cv_deck);
+        cv_replay = v.findViewById(R.id.cv_replay);
+        cv_loacl_duel = v.findViewById(R.id.cv_loacl_duel);
+        rv_service_list = v.findViewById(R.id.rv_service_list);
+        cv_join_room = v.findViewById(R.id.cv_join_room);
+        pb_res_loading = v.findViewById(R.id.pb_res_loading);
+        cv_banner = v.findViewById(R.id.cv_banner);
 
-
-        fragmentDataList=new ArrayList<>();
-
-        iv_add_setting.setOnClickListener(v1 -> startActivity(new Intent(getActivity(), NewServerActivity.class)));
-
-        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getActivity());
+        du = DialogUtils.getInstance(getActivity());
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
-        rv_replay.setLayoutManager(linearLayoutManager);
-        rv_replay.setAdapter(new ReplayAdapter(YGOUtil.getReplayList()));
+        rv_service_list.setLayoutManager(linearLayoutManager);
 
-        fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.start_game),new YGOServerFragemnt()));
-//        fragmentDataList.add(FragmentData.toFragmentData(OYUtil.s(R.string.local_duel),new LocalDuelFragment()));
-//        tl_replay.addTab(tl_replay.newTab().setText("对战录像"));
-//        tl_replay.initTabTextStyle(null);
-//        tb_game_option.initTabTextStyle(null);
 
-        cv_endgame.setOnClickListener(this);
+        iv_add_setting.setOnClickListener(v1 -> startActivityForResult(new Intent(getActivity(), NewServerActivity.class), REQUEST_NEW_SERVER));
+
+
+        cv_deck.setOnClickListener(this);
+        cv_replay.setOnClickListener(this);
+        cv_loacl_duel.setOnClickListener(this);
         cv_ai.setOnClickListener(this);
+        cv_join_room.setOnClickListener(this);
 
-        vp_game.setAdapter(new FmPagerAdapter(getChildFragmentManager()));
-        //缓存两个页面
-        vp_game.setOffscreenPageLimit(3);
-        //TabLayout加载viewpager
-        tl_game_option.setViewPager(vp_game);
-        tl_game_option.setTextSizeM();
-        tl_game_option.setCurrentTab(0);
-
-//        xb_banner.loadImage((banner, model, view, position) -> {
-//            ViewGroup.LayoutParams layoutParams=view.getLayoutParams();
-//            layoutParams.width=layoutParams.height*2;
-//            view.setLayoutParams(layoutParams);
-//        });
 
         xb_banner.post(() -> {
 //            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
@@ -129,34 +163,29 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 //            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
 
 //                xb_banner.setClipChildrenLeftRightMargin(75);
-//                ViewGroup.LayoutParams layoutParams=xb_banner.getLayoutParams();
-//                layoutParams.width=xb_banner.getWidth();
-//                layoutParams.height=layoutParams.width*9/16;
-//                xb_banner.setLayoutParams(layoutParams);
+            ViewGroup.LayoutParams layoutParams = xb_banner.getLayoutParams();
+            layoutParams.width = xb_banner.getWidth();
+            layoutParams.height = layoutParams.width / 3;
+            xb_banner.setLayoutParams(layoutParams);
 
 //                xb_banner.setClipChildrenLeftRightMargin(50);
 //                xb_banner.setma
 
         });
-//        xb_banner.setOnItemClickListener(new XBanner.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(XBanner banner, Object model, View view, int position) {
-//                startActivity(IntentUtil.getUrlIntent(myCardNewsList.get(position).getNews_url()));
-//            }
-//        });
+        xb_banner.setOnItemClickListener((banner, model, view, position) -> startActivity(IntentUtil.getWebIntent(getActivity(), mcNewsList.get(position).getNews_url())));
         xb_banner.loadImage((banner, model, view, position) -> {
-            TextView tv_time,tv_title,tv_type;
+            TextView tv_time, tv_title, tv_type;
             ImageView iv_image;
 
-            tv_time=view.findViewById(R.id.tv_time);
-            tv_title=view.findViewById(R.id.tv_title);
-            tv_type=view.findViewById(R.id.tv_type);
-            iv_image=view.findViewById(R.id.iv_image);
+            tv_time = view.findViewById(R.id.tv_time);
+            tv_title = view.findViewById(R.id.tv_title);
+            tv_type = view.findViewById(R.id.tv_type);
+            iv_image = view.findViewById(R.id.iv_image);
 
-            MyCardNews myCardNews=myCardNewsList.get(position);
-            ImageUtil.setImage(getContext(),myCardNews.getImage_url(),iv_image);
-            tv_time.setText(MyCardUtil.getMyCardNewsData(myCardNews.getCreate_time()));
-            tv_title.setText(myCardNews.getTitle());
+            McNews mcNews = mcNewsList.get(position);
+            ImageUtil.setImageAndBackground(getContext(), mcNews.getImage_url(), iv_image);
+            tv_time.setText(mcNews.getCreate_time());
+            tv_title.setText(mcNews.getTitle());
             tv_type.setVisibility(View.GONE);
 //
 //                Log.e("MainFragment","Height"+view.getHeight());
@@ -166,11 +195,10 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         MyCardUtil.findMyCardNews((myCardNewsList, exception) -> {
             Message message = new Message();
             if (TextUtils.isEmpty(exception)) {
-                Log.e("MainFragemnt", "查询成功");
-                while (myCardNewsList.size()>5){
-                    myCardNewsList.remove(myCardNewsList.size()-1);
+                while (myCardNewsList.size() > 5) {
+                    myCardNewsList.remove(myCardNewsList.size() - 1);
                 }
-                MainFragment.this.myCardNewsList = myCardNewsList;
+                MainFragment.this.mcNewsList = myCardNewsList;
                 message.what = TYPE_BANNER_QUERY_OK;
             } else {
                 Log.e("MainFragemnt", "查询失败" + exception);
@@ -180,6 +208,71 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             handler.sendMessage(message);
         });
 
+        checkRes();
+    }
+
+    private void checkRes() {
+        checkResourceDownload((error, isNew) -> {
+            handler.sendEmptyMessage(TYPE_RES_LOADING_OK);
+//            if (error < 0) {
+//                enableStart = false;
+//            } else {
+//                enableStart = true;
+//            }
+//            if (isNew) {
+//                if (!getGameUriManager().doIntent(getIntent())) {
+//                    DialogPlus dialog = new DialogPlus(this)
+//                            .setTitleText(getString(R.string.settings_about_change_log))
+//                            .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
+//                            .hideButton()
+//                            .setOnCloseLinster((dlg) -> {
+//                                dlg.dismiss();
+//                                //mImageUpdater
+//                                if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+//                                    if (!mImageUpdater.isRunning()) {
+//                                        mImageUpdater.start();
+//                                    }
+//                                }
+//                            });
+//                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//                        @Override
+//                        public void onDismiss(DialogInterface dialogInterface) {
+//                            PermissionUtil.isServicePermission(cn.garymb.ygomobile.ui.home.MainActivity.this, true);
+//
+//                        }
+//                    });
+//                    dialog.show();
+//                }
+//            } else {
+//                PermissionUtil.isServicePermission(cn.garymb.ygomobile.ui.home.MainActivity.this, true);
+//                getGameUriManager().doIntent(getIntent());
+//            }
+
+        });
+    }
+
+    protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
+
+        mResCheckTask = new ResCheckTask(getActivity(), listener);
+        mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//        if (Build.VERSION.SDK_INT >= 11) {
+//            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//        } else {
+//            mResCheckTask.execute();
+//        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.e("MainF", requestCode + " 返回 " + resultCode);
+        if (resultCode == Activity.RESULT_OK)
+            switch (requestCode) {
+                case REQUEST_NEW_SERVER:
+                    YGOUtil.getYGOServerList(serverList -> ygoServerAdp.setNewData(serverList.getServerInfoList()));
+
+                    break;
+            }
     }
 
     @Override
@@ -214,45 +307,92 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         xb_banner.stopAutoPlay();
     }
 
+    private void initServiceList() {
+        YGOUtil.getYGOServerList(serverList -> {
+            ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
+            rv_service_list.setAdapter(ygoServerAdp);
+            ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
+            ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
+                switch (view.getId()) {
+                    case R.id.tv_create_and_share:
+                        joinRoom((YGOServer) adapter.getItem(position), true);
+                        break;
+                }
+            });
+            ygoServerAdp.setOnItemClickListener((adapter, view, position) -> {
+                YGOServer serverInfo = (YGOServer) adapter.getItem(position);
+                switch (serverInfo.getOpponentType()) {
+                    case YGOServer.OPPONENT_TYPE_AI:
+                        OYDialogUtil.dialogAiList(getActivity(),serverInfo);
+                        break;
+                    default:
+                        joinRoom(serverInfo, false);
+                        break;
+                }
+            });
+        });
 
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_BANNER_QUERY_OK:
-                    xb_banner.setBannerData(R.layout.banner_main_item, myCardNewsList);
+    }
+
+    private void joinRoom(YGOServer ygoServer, boolean isClickButton) {
+
+        if (isClickButton) {
+            switch (ygoServer.getOpponentType()) {
+                case YGOServer.OPPONENT_TYPE_FRIEND:
+                    OYDialogUtil.dialogcreateRoom(getActivity(), ygoServer);
                     break;
-                case TYPE_BANNER_QUERY_EXCEPTION:
-                    OYUtil.snackExceptionToast(getActivity(),xb_banner,getString(R.string.query_exception),msg.obj.toString());
+                case YGOServer.OPPONENT_TYPE_RANDOM:
+                    String password = "";
+                    switch (ygoServer.getMode()) {
+                        case YGOServer.MODE_ONE:
+                            password = "S";
+                            break;
+                        case YGOServer.MODE_MATCH:
+                            password = "M";
+                            break;
+                    }
+                    if (!OYApplication.isIsInitRes()) {
+                        OYUtil.show("请等待资源加载完毕后加入游戏");
+                        return;
+                    }
+                    YGOUtil.joinGame(getActivity(), ygoServer, password);
                     break;
+                case YGOServer.OPPONENT_TYPE_AI:
+                    if (!OYApplication.isIsInitRes()) {
+                        OYUtil.show("请等待资源加载完毕后加入游戏");
+                        return;
+                    }
+                    YGOUtil.joinGame(getActivity(), ygoServer, "AI");
+                    break;
+                default:
+                    OYDialogUtil.dialogcreateRoom(getActivity(), ygoServer);
             }
-
-        }
-    };
-
-    class FmPagerAdapter extends FragmentPagerAdapter{
-
-        public FmPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragmentDataList.get(position).getFragment();
-        }
-
-        @Override
-        public int getCount() {
-            return fragmentDataList.size();
-        }
-
-        @Nullable
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return fragmentDataList.get(position).getTitle();
+        } else {
+            OYDialogUtil.dialogJoinRoom(getActivity(), ygoServer);
         }
     }
+
+//    class FmPagerAdapter extends FragmentPagerAdapter{
+//
+//        public FmPagerAdapter(FragmentManager fm) {
+//            super(fm);
+//        }
+//
+//        @Override
+//        public Fragment getItem(int position) {
+//            return fragmentDataList.get(position).getFragment();
+//        }
+//
+//        @Override
+//        public int getCount() {
+//            return fragmentDataList.size();
+//        }
+//
+//        @Nullable
+//        @Override
+//        public CharSequence getPageTitle(int position) {
+//            return fragmentDataList.get(position).getTitle();
+//        }
+//    }
 
 }

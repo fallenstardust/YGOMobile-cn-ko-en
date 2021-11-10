@@ -1,9 +1,9 @@
 package com.ourygo.ygomobile.base.listener;
 
-import com.ourygo.ygomobile.bean.MyCardNews;
+import com.ourygo.ygomobile.bean.McNews;
 
 import java.util.List;
 
 public interface OnMyCardNewsQueryListener {
-    void onMyCardNewsQuery(List<MyCardNews> myCardNewsList,String exception);
+    void onMyCardNewsQuery(List<McNews> mcNewsList, String exception);
 }
