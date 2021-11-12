@@ -188,6 +188,7 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
         new Thread(() -> {
             Deck deck = DeckLoader.readDeck(new CardLoader(DeckManagementActivity.this), deckFile.getPathFile(), null).toDeck();
             String message = deck.toAppUri().toString();
+            message = "点击或复制打开YGO查看卡组：" + message;
             HandlerUtil.sendMessage(handler, SHARE_DECK_URI_OK, message);
         }).start();
     }

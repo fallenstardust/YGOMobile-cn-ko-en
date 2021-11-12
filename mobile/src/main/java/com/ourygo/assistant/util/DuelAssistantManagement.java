@@ -76,7 +76,6 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                     return true;
                 }
             }
-            return true;
         }
 
         //如果是卡组url
@@ -105,7 +104,9 @@ public class DuelAssistantManagement implements OnClipChangedListener {
     public boolean roomCheck(String message, int id) {
 
 
+        Log.e("DuelAssistant","决斗助手检查");
         if (message.contains("?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM) || message.contains("&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM)) {
+            Log.e("DuelAssistant","是url");
             String m1 = "?" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM;
             String m2 = "&" + Record.ARG_YGO_TYPE + "=" + Record.ARG_ROOM;
             int s1 = message.indexOf(m1);
@@ -116,6 +117,7 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                 start = message.lastIndexOf(Record.HTTP_URL_PREFIX, s1);
             if (start == -1)
                 start = message.lastIndexOf(Record.HTTPS_URL_PREFIX, s1);
+            Log.e("DuelAssistant","取值"+message.substring(start + Record.DECK_URL_PREFIX.length()));
             onJoinRoom(message.substring(start + Record.DECK_URL_PREFIX.length()), id);
             return true;
         }

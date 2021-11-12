@@ -2,7 +2,6 @@ package com.ourygo.ygomobile.util;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.Editable;
@@ -90,19 +89,21 @@ public class OYDialogUtil {
     public static void dialogDASaveDeck(Activity activity, String deckMessage, int deckType) {
         DialogUtils du = DialogUtils.getInstance(activity);
         View v = du.dialogBottomSheet(R.layout.da_save_deck_dialog);
+        Dialog dialog=du.getDialog();
         TextView tv_save_deck;
 
         tv_save_deck = v.findViewById(R.id.tv_save_deck);
         tv_save_deck.setOnClickListener(v12 -> {
-            du.dialogj1(null,"卡组保存中，请稍等");
+            dialog.dismiss();
+            du.dialogj1(null, "卡组保存中，请稍等");
             switch (deckType) {
                 case DECK_TYPE_MESSAGE:
                     //如果是卡组文本
                     try {
                         //以当前时间戳作为卡组名保存卡组
                         File file = DeckUtils.save(OYUtil.s(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                        OYUtil.show("保存成功");
-                        openYdk(activity,file);
+                        du.dis();
+                        openYdk(activity, file);
                     } catch (IOException e) {
                         e.printStackTrace();
                         OYUtil.show(OYUtil.s(R.string.save_failed_bcos) + e);
@@ -114,7 +115,8 @@ public class OYDialogUtil {
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
 //                    try {
 //                        FileUtil.copyFile(file.getAbsolutePath(), AppsSettings.get().getDeckDir(), false);
-                    openYdk(activity,file);
+                    du.dis();
+                    openYdk(activity, file);
 //                    } catch (IOException e) {
 //                        OYUtil.show(OYUtil.s(R.string.save_failed_bcos) + e);
 //                        e.printStackTrace();
@@ -122,8 +124,9 @@ public class OYDialogUtil {
                     break;
                 case DECK_TYPE_PATH:
                     try {
-                        File file1=new File(FileUtil.copyFile(deckMessage, AppsSettings.get().getDeckDir(), false));
-                        openYdk(activity,file1);
+                        File file1 = new File(FileUtil.copyFile(deckMessage, AppsSettings.get().getDeckDir(), false));
+                        du.dis();
+                        openYdk(activity, file1);
                     } catch (IOException e) {
                         OYUtil.show(OYUtil.s(R.string.save_failed_bcos) + e);
                         e.printStackTrace();
@@ -149,10 +152,10 @@ public class OYDialogUtil {
         });
         b2.setOnClickListener(v12 -> {
             dialogUtils.dis();
-            String name=ydkFile.getName();
+            String name = ydkFile.getName();
             if (name.endsWith(".ydk"))
-                name=name.substring(0,name.lastIndexOf("."));
-            IntentUtil.startYGODeck(context,name);
+                name = name.substring(0, name.lastIndexOf("."));
+            IntentUtil.startYGODeck(context, name);
         });
     }
 
@@ -334,13 +337,18 @@ public class OYDialogUtil {
 //                OYUtil.show("请等待资源加载完毕后加入游戏");
 //                return;
 //            }
-            OYUtil.copyMessage(serverInfo.toUri(tv_password.getText().toString()));
+            String message = serverInfo.toUri(tv_password.getText().toString());
+            message = "房间密码：" + tv_password.getText().toString()
+                    + "\n点击或复制打开YGO加入决斗：" + message;
+            OYUtil.copyMessage(message);
             OYUtil.show(OYUtil.s(R.string.copy_ok));
             du.dis();
         });
 
         iv_share_qq.setOnClickListener(v14 -> {
             String message = serverInfo.toUri(tv_password.getText().toString());
+            message = "房间密码：" + tv_password.getText().toString()
+                    + "\n点击或复制打开YGO加入决斗：" + message;
             OYUtil.copyMessage(message);
             ShareUtil.shareQQ(activity, message);
 //            OYUtil.show(OYUtil.s(R.string.copy_ok));
@@ -354,6 +362,8 @@ public class OYDialogUtil {
         });
         iv_share_more.setOnClickListener(v15 -> {
             String message = serverInfo.toUri(tv_password.getText().toString());
+            message = "房间密码：" + tv_password.getText().toString()
+                    + "\n点击或复制打开YGO加入决斗：" + message;
             OYUtil.copyMessage(message);
             ShareUtil.share(activity, message);
             du.dis();
