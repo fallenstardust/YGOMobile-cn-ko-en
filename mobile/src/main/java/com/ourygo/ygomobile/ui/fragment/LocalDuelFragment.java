@@ -10,6 +10,7 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.ourygo.ygomobile.adapter.LocalBQAdapter;
 import com.ourygo.ygomobile.bean.LocalDuel;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;
@@ -40,6 +41,18 @@ public class LocalDuelFragment extends Fragment {
         initView(v);
         
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     private void initView(View v) {

@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.ygomobile.base.listener.BaseDuelInfoFragment;
 import com.ourygo.ygomobile.bean.McDuelInfo;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
@@ -32,6 +33,18 @@ public class FunRecordFragment extends BaseFragemnt implements BaseDuelInfoFragm
         View view = inflater.inflate(R.layout.mycard_fun_rank_fragment, container, false);
         initView(view);
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     private void initView(View view) {

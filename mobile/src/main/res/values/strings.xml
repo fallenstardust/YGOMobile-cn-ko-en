@@ -378,4 +378,5 @@
     <string name="exception">错误</string>
     <string name="download_exception">下载失败</string>
     <string name="app_signature">OURYGO团队出品\n为创造更人性化的决斗而努力</string>
+    <string name="duel_mode_tag">双打</string>
 </resources>

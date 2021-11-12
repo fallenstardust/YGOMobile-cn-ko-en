@@ -9,6 +9,8 @@ import android.util.Log;
 import androidx.multidex.MultiDex;
 
 import com.ourygo.ygomobile.util.LogUtil;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.commonsdk.UMConfigure;
 
 import org.litepal.LitePal;
 
@@ -22,6 +24,10 @@ import cn.garymb.ygomobile.AppsSettings;
  * Create By feihua  On 2021/2/10
  */
 public class OYApplication extends App {
+
+    public static final String BUGLY_ID="669adbac35";
+    private static final String UM_KEY = "618e15c1e014255fcb77324a";
+    private static final String CHANNEL = "Group File";
 
     private static List<Activity> activitys = new ArrayList<>();
     private static int num = 0;
@@ -77,11 +83,18 @@ public class OYApplication extends App {
                     }
                 });
                 LitePal.initialize(getApplicationContext());
+                initUmeng();
                 LogUtil.time(TAG,"初始化完毕");
             }else {
                 AppsSettings.init(this);
             }
         }
+    }
+
+    public void initUmeng() {
+        UMConfigure.preInit(OYApplication.get(), OYApplication.UM_KEY, OYApplication.CHANNEL);
+        UMConfigure.init(OYApplication.get(), OYApplication.UM_KEY, OYApplication.CHANNEL, UMConfigure.DEVICE_TYPE_PHONE,"");
+        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
     }
 
     @Override

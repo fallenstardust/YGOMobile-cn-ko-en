@@ -64,6 +64,7 @@ public class YGOUtil {
     //获取服务器列表
     public static void getYGOServerList(OnYGOServerListQueryListener onYGOServerListQueryListener){
         File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
+        Log.e("YGOUtil",xmlFile.exists()+"获取列表"+xmlFile.getAbsolutePath());
         VUiKit.defer().when(() -> {
             YGOServerList assetList = readList(App.get().getAssets().open(ASSET_SERVER_LIST));
             YGOServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
@@ -128,12 +129,15 @@ public class YGOUtil {
 
     public static void setYGOServer(List<YGOServer> ygoServers){
         File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
+        Log.e("YGOUtil","路径"+xmlFile.getAbsolutePath());
         OutputStream outputStream = null;
         try {
             outputStream = new FileOutputStream(xmlFile);
             XmlUtils.get().saveXml(new YGOServerList(SystemUtils.getVersion(App.get()), ygoServers), outputStream);
+            Log.e("YGOUtil","保存成功");
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("YGOUtil","保存失败");
         } finally {
             IOUtils.close(outputStream);
         }

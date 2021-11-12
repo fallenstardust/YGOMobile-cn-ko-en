@@ -300,17 +300,24 @@ public class OYDialogUtil {
         tv_port.setText("" + serverInfo.getPort());
         String pa = OYUtil.message2Base64URL(System.currentTimeMillis() + "");
         pa = pa.substring(pa.length() - 7);
-        tv_password.setText("M#" + pa);
+
 
         switch (serverInfo.getMode()) {
             case YGOServer.MODE_ONE:
                 tv_mode.setText(OYUtil.s(R.string.duel_mode_one));
+                tv_password.setText(pa);
                 break;
             case YGOServer.MODE_MATCH:
                 tv_mode.setText(OYUtil.s(R.string.duel_mode_match));
+                tv_password.setText("M#" + pa);
+                break;
+            case YGOServer.MODE_TAG:
+                tv_mode.setText(OYUtil.s(R.string.duel_mode_tag));
+                tv_password.setText("T#" + pa);
                 break;
             default:
                 tv_mode.setText(OYUtil.s(R.string.duel_mode_one));
+                tv_password.setText(pa);
         }
 
         tv_join_room.setOnClickListener(v1 -> {

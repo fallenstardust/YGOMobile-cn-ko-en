@@ -33,6 +33,7 @@ import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 
@@ -123,6 +124,8 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 break;
         }
     }
+
+
 
     private void initView(View v) {
         xb_banner = v.findViewById(R.id.xb_banner);
@@ -278,7 +281,14 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
+        StatUtil.onResume(getClass().getName());
         xb_banner.startAutoPlay();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     @Override
@@ -349,6 +359,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                             break;
                         case YGOServer.MODE_MATCH:
                             password = "M";
+                            break;
+                        case YGOServer.MODE_TAG:
+                            password = "T";
                             break;
                     }
                     if (!OYApplication.isIsInitRes()) {

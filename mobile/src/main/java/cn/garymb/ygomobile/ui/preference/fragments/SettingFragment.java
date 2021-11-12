@@ -25,7 +25,7 @@ import android.widget.Toast;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.MediaStoreSignature;
 import com.ourygo.assistant.service.DuelAssistantService;
-import com.tencent.bugly.beta.Beta;
+//import com.tencent.bugly.beta.Beta;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -222,7 +222,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            Beta.checkUpgrade();
+//            Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
             File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();

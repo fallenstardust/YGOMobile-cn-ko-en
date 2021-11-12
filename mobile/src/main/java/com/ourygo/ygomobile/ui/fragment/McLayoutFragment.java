@@ -14,6 +14,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.ourygo.ygomobile.base.listener.OnMcUserListener;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
@@ -36,6 +37,18 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
         View view = inflater.inflate(R.layout.mycard_layout_fragment, container, false);
         initView(view);
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     private void initView(View view) {

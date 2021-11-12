@@ -36,9 +36,10 @@ import com.ourygo.ygomobile.util.McWatchDuelSocketClient;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
-import com.tencent.bugly.proguard.H;
+//import com.tencent.bugly.proguard.H;
 
 import java.net.URI;
 import java.nio.IntBuffer;
@@ -85,10 +86,12 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
             super.handleMessage(msg);
             switch (msg.what) {
                 case QUERY_DUEL_INFO_OK:
-                    matchRecordFragment.onBaseDuelInfo((McDuelInfo) msg.obj, null);
-                    funRecordFragment.onBaseDuelInfo((McDuelInfo) msg.obj, null);
+                    McDuelInfo mcDuelInfo=(McDuelInfo) msg.obj;
+                    matchRecordFragment.onBaseDuelInfo(mcDuelInfo, null);
+                    funRecordFragment.onBaseDuelInfo(mcDuelInfo, null);
+                    tv_match_title.setText("竞技匹配（D.P："+mcDuelInfo.getDp()+")");
                     pb_loading.setVisibility(View.GONE);
-                    iv_refresh.setVisibility(View.GONE);
+                    iv_refresh.setVisibility(View.VISIBLE);
                     break;
                 case QUERY_DUEL_INFO_EXCEPTION:
                     matchRecordFragment.onBaseDuelInfo(null, msg.obj.toString());
@@ -127,7 +130,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         }
     };
     private RelativeLayout rl_chat;
-    private TextView tv_message;
+    private TextView tv_message,tv_match_title;
     private LinearLayout ll_visit_duel,ll_athletic,ll_entertain;
     private ServiceManagement serviceManagement;
     private ChatMessage currentMessage;
@@ -161,6 +164,18 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
                 break;
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     private void matchEnterTain() {
@@ -214,6 +229,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         pb_chat_loading = view.findViewById(R.id.pb_chat_loading);
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
+        tv_match_title = view.findViewById(R.id.tv_match_title);
 
         serviceManagement = ServiceManagement.getDx();
         du=DialogUtils.getInstance(getActivity());

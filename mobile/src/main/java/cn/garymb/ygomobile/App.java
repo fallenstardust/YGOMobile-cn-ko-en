@@ -10,6 +10,8 @@ import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+//import com.tencent.bugly.Bugly;
+//import com.tencent.bugly.beta.Beta;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.export.external.TbsCoreSettings;
@@ -168,26 +170,27 @@ public class App extends GameApplication {
     }
 
     public void initBugly() {
-        Beta.initDelay = 0;
-        Beta.showInterruptedStrategy = true;
-        Beta.largeIconId = R.drawable.ic_icon_round;
-        Beta.defaultBannerId = R.drawable.ic_icon_round;
-        Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
-        Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
-        Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
-        Beta.enableHotfix = false;
-        Beta.autoCheckHotfix = false;
-        Beta.autoCheckUpgrade = false;
-        Beta.autoCheckAppUpgrade = false;
-        //添加可显示弹窗的Activity
-        Beta.canShowUpgradeActs.add(MainActivity.class);
-        ApplicationInfo appInfo = null;
-        try {
-            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        String msg = appInfo.metaData.getString("BUGLY_APPID");
-        Bugly.init(this, msg, BuildConfig.DEBUG_MODE);
+//        Beta.initDelay = 0;
+//        Beta.showInterruptedStrategy = true;
+//        Beta.largeIconId = R.drawable.ic_icon_round;
+//        Beta.defaultBannerId = R.drawable.ic_icon_round;
+//        Beta.strToastYourAreTheLatestVersion = this.getString(R.string.Already_Lastest);
+//        Beta.strToastCheckingUpgrade = this.getString(R.string.Checking_Update);
+//        Beta.upgradeDialogLayoutId = R.layout.dialog_upgrade;
+//        Beta.enableHotfix = false;
+//        Beta.autoCheckHotfix = false;
+//        Beta.autoCheckUpgrade = false;
+//        Beta.autoCheckAppUpgrade = false;
+//        //添加可显示弹窗的Activity
+//        Beta.canShowUpgradeActs.add(MainActivity.class);
+//        ApplicationInfo appInfo = null;
+//        try {
+//            appInfo = this.getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+//        } catch (PackageManager.NameNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        String msg = appInfo.metaData.getString("BUGLY_APPID");
+//        msg="669adbac35";
+//        Bugly.init(this, msg, BuildConfig.DEBUG_MODE);
     }
 }

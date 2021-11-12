@@ -37,7 +37,7 @@ import com.nightonke.boommenu.BoomMenuButton;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
-import com.tencent.bugly.beta.Beta;
+//import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -141,7 +141,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
                 Log.d(Constants.TAG, "start check update");
                 //check update
-                Beta.checkUpgrade(false, false);
+//                Beta.checkUpgrade(false, false);
             } else {
                 Log.d(Constants.TAG, "skip check update");
             }

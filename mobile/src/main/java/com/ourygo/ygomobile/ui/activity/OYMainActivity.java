@@ -1,6 +1,7 @@
 package com.ourygo.ygomobile.ui.activity;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -21,6 +22,7 @@ import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.ClipManagement;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.FmPagerAdapter;
 import com.ourygo.ygomobile.bean.FragmentData;
 import com.ourygo.ygomobile.bean.YGOServer;
@@ -34,8 +36,11 @@ import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
+import com.tencent.bugly.Bugly;
+//import com.tencent.bugly.Bugly;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,6 +57,8 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public class OYMainActivity extends BaseActivity implements OnDuelAssistantListener {
+
+
 
     private static final String TAG = "TIME-MainActivity";
     private static final int ID_MAINACTIVITY = 0;
@@ -84,8 +91,17 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         checkNotch();
         LogUtil.time(TAG, "3");
 //        checkRes();
+        initBugly();
         LogUtil.time(TAG, "4");
         LogUtil.printSumTime(TAG);
+
+    }
+
+    public void initBugly() {
+        Bugly.init(this, OYApplication.BUGLY_ID, false);
+
+        //检测是否有更新,不提示
+//        OYUtil.checkUpdate(false, true);
     }
 
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
@@ -93,7 +109,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         mResCheckTask = new ResCheckTask(this, listener);
         mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 //        if (Build.VERSION.SDK_INT >= 11) {
-//            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//            mResCheckTask.exefcuteOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 //        } else {
 //            mResCheckTask.execute();
 //        }
@@ -113,7 +129,14 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     @Override
     protected void onResume() {
         super.onResume();
+        StatUtil.onResume(this,true);
         duelAssistantCheck();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
     }
 
     private void duelAssistantCheck() {
@@ -231,6 +254,22 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             tv_message.setLineSpacing(OYUtil.dp2px(3),1f);
             SharedPreferenceUtil.setFirstStart(false);
             SharedPreferenceUtil.setNextAifadianNum(SharedPreferenceUtil.getAppStartTimes()+(10+ (int) (Math.random() * 20)));
+
+            dialog.setOnDismissListener(dialog12 -> {
+                Button b3=dialogUtils.dialogt1("卡组导入提示","YGOMobile OY储存路径为内部储存/ygcore，如果你之前有使用过原版" +
+                        "，可以打开原版软件，点击主页右下角的功能菜单——卡组编辑——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
+               Dialog dialog1=dialogUtils.getDialog();
+                b3.setOnClickListener(v -> dialog1.dismiss());
+                TextView tv_message1 =dialogUtils.getMessageTextView();
+                tv_message1.setLineSpacing(OYUtil.dp2px(3),1f);
+                dialog1.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+
+                    }
+                });
+            });
+
         }
         if (SharedPreferenceUtil.getNextAifadianNum()==SharedPreferenceUtil.getAppStartTimes()){
             View[] views=dialogUtils.dialogt(null,"如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");

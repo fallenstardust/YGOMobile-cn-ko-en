@@ -6,15 +6,16 @@ android {
 
     defaultConfig {
         applicationId "com.ourygo.ygomobile"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 22
-        versionCode 330601002
-        versionName "@string/app_version_name"
+        versionCode 10
+        versionName "1.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
         ndk {
-            abiFilters "armeabi-v7a"//,"x86"
+//            abiFilters "armeabi-v7a"//,"x86","armeabi"
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86"
         }
     }
     compileOptions {
@@ -23,7 +24,7 @@ android {
     }
     productFlavors {
         cn {
-            buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
+            buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ourygo"'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
@@ -131,8 +132,8 @@ dependencies {
     //跨进程SharedPreferencesPlus工具
     implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
     //Tencent bugly
-    implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
-    implementation 'com.tencent.bugly:nativecrashreport:latest.release'
+//    implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
+//    implementation 'com.tencent.bugly:nativecrashreport:latest.release'
     api 'com.tencent.tbs:tbssdk:44085'
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
@@ -160,4 +161,12 @@ dependencies {
     implementation 'org.litepal.android:java:3.0.0'
 
     implementation "org.java-websocket:Java-WebSocket:1.5.1"
+
+    // 友盟统计SDK
+    implementation  'com.umeng.umsdk:common:9.4.2'// 必选
+    implementation  'com.umeng.umsdk:asms:1.4.1'// 必选
+
+    implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.2.0
+    implementation 'com.tencent.bugly:nativecrashreport:latest.release' //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
+
 }

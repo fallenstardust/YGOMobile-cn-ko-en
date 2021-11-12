@@ -6,7 +6,6 @@ import android.os.Environment;
 import java.io.File;
 
 public class Record {
-
     public static final String DOWNLOAD_URL_EZ="http://t.cn/EchWyLi";
 
     public static final String MYCARD_NEWS_URL="https://api.mycard.moe/apps.json";

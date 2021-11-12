@@ -2,16 +2,21 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#00000000">
 
-    <cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
+
+
+    <de.hdodenhof.circleimageview.CircleImageView
         android:src="@drawable/avatar"
         android:id="@+id/ic_avatar"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="5dp"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        app:civ_border_color="@color/colorAccentLight"
+        app:civ_border_width="0.1dp" />
 
     <LinearLayout
         android:id="@+id/ic_dialog"

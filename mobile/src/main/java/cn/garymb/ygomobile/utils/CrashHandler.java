@@ -8,6 +8,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.ourygo.ygomobile.util.StatUtil;
+
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -54,7 +56,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             } catch (InterruptedException e) {
                 Log.e(TAG, "error : ", e);
             }
-
+            StatUtil.onKillProcess(context);
             System.exit(1);
             android.os.Process.killProcess(android.os.Process.myPid());
         }

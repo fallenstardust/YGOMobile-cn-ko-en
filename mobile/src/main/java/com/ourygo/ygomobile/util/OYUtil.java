@@ -23,6 +23,7 @@ import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -35,6 +36,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.OYApplication;
+import com.tencent.bugly.beta.Beta;
+//import com.tencent.bugly.beta.Beta;
 
 import org.json.JSONObject;
 
@@ -377,5 +380,8 @@ public class OYUtil {
         context.startActivity(IntentUtil.getUrlIntent(OYUtil.URL_AIFAFIAN));
     }
 
+    public static void checkUpdate(boolean isManual, final boolean b) {
+        Beta.checkUpgrade(isManual, !b);
+    }
 
 }

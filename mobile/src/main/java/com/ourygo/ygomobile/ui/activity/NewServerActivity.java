@@ -30,6 +30,7 @@ import com.ourygo.ygomobile.bean.Lflist;
 import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;
@@ -54,6 +55,17 @@ public class NewServerActivity extends BaseActivity implements OnItemClickListen
     private TextView tv_lflist_exception,tv_mode_s;
     private ImageView iv_del;
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StatUtil.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
+    }
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -362,6 +374,7 @@ public class NewServerActivity extends BaseActivity implements OnItemClickListen
         List<OYSelect> oySelectList1 = new ArrayList<>();
         oySelectList1.add(OYSelect.tOYSelect("单局", "", YGOServer.MODE_ONE));
         oySelectList1.add(OYSelect.tOYSelect("比赛", "", YGOServer.MODE_MATCH));
+        oySelectList1.add(OYSelect.tOYSelect(OYUtil.s(R.string.duel_mode_tag), "", YGOServer.MODE_TAG));
         modeAdp = new OYSelectBQAdapter(oySelectList1);
         modeAdp.setSelectPosition(0);
         modeAdp.hideMessage();
@@ -446,6 +459,9 @@ public class NewServerActivity extends BaseActivity implements OnItemClickListen
                 break;
             case YGOServer.MODE_MATCH:
                 modeAdp.setSelectPosition(1);
+                break;
+            case YGOServer.MODE_TAG:
+                modeAdp.setSelectPosition(2);
                 break;
         }
 

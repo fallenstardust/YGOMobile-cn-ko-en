@@ -13,6 +13,7 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.ourygo.ygomobile.adapter.OtherAppBQAdapter;
 import com.ourygo.ygomobile.bean.OtherApp;
 import com.ourygo.ygomobile.util.IntentUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,18 @@ public class OtherFunctionActivity extends ListAndUpdateActivity {
         initView();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StatUtil.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
+    }
+
     private void initView() {
         headView= LayoutInflater.from(OtherFunctionActivity.this).inflate(R.layout.other_function_app_header,null);
 
@@ -44,7 +57,7 @@ public class OtherFunctionActivity extends ListAndUpdateActivity {
         otherApp.setName("YGOMOBILE");
         otherApp.setMessage("YGOMobile原版软件");
         otherApp.setAppUrl("https://www.pgyer.com/ygomobilecn");
-        otherApp.setIcon(R.drawable.ic_icon_round);
+        otherApp.setIcon(R.drawable.ic_mobile);
         otherAppList.add(otherApp);
 
         otherApp=new OtherApp();

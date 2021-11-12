@@ -17,6 +17,7 @@ import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.bean.YGOServerList;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import androidx.annotation.NonNull;
@@ -45,6 +46,17 @@ public class YGOServerFragemnt extends Fragment {
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
+    }
 
     private void initServiceList() {
         YGOUtil.getYGOServerList(serverList -> {

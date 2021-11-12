@@ -65,7 +65,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         vh.ic_name.setText(cm.getName());
         //vh.ic_time.setText(cm.getTime());
         vh.ic_message.setText(cm.getMessage());
-        ImageUtil.setImage(context, cm.getAvatar(), vh.ic_avatar);
+        ImageUtil.setAvatar(context, cm.getAvatar(), vh.ic_avatar);
         if (position != 0) {
             if (cm.getName().equals(data.get(position - 1).getName())) {
                 vh.ic_name.setVisibility(View.GONE);

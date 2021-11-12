@@ -24,6 +24,7 @@ import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.ShareUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 
@@ -131,6 +132,18 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
 
         initToolbar("卡组管理");
         onRefresh();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StatUtil.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
     }
 
     private void shareDeck(DeckFile deckFile) {

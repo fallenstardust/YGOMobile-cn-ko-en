@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="cn.garymb.ygomobile.lite">
 
-    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+
+    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -59,11 +61,16 @@
             android:excludeFromRecents="false"
             android:theme="@style/TranslucentTheme"></activity>
 
+<!--        <activity-->
+<!--            android:name="com.tencent.bugly.beta.ui.BetaActivity"-->
+<!--            android:launchMode="singleTop"-->
+<!--            android:configChanges="keyboardHidden|orientation|screenSize|locale"-->
+<!--            android:excludeFromRecents="true" />-->
+
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"
-            android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize|locale"
-            android:excludeFromRecents="true" />
+            android:theme="@android:style/Theme.Translucent" />
 
         <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
@@ -117,22 +124,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.cards.CardSearchActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/card_search"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/deck_manager"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
+
         <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -157,11 +149,7 @@
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:label="@string/app_name" />
         <activity android:name="com.ourygo.ygomobile.ui.activity.NewServerActivity" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.mycard.mcchat.McchatActivity"
-            android:label="@string/app_name"
-            android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity
+            <activity
             android:name="cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity"
             android:theme="@style/AppTheme.Mycard" />
         <activity android:name="cn.garymb.ygomobile.ui.activities.FileLogActivity" />
@@ -205,7 +193,6 @@
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:excludeFromRecents="false"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
@@ -219,6 +206,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="um.618e15c1e014255fcb77324a" />
+            </intent-filter>
 
             <intent-filter>
                 <action android:name="ygomobile.intent.action.MYCARD" />
@@ -283,6 +276,10 @@
                 android:resource="@xml/shortcuts" />
 
         </activity>
+
+        <meta-data
+            android:name="android.max_aspect"
+            android:value="2.3" />
 
     </application>
 

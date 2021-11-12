@@ -44,6 +44,7 @@
             android:layout_height="18dp" />
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:padding="1dp"
             android:visibility="gone"
             android:background="@drawable/click_window_background_radius"
             app:srcCompat="@drawable/ic_refresh"
@@ -74,6 +75,7 @@
             android:layout_height="26dp" />
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_match_title"
             android:layout_marginLeft="10dp"
             android:textSize="20sp"
             android:textStyle="bold"

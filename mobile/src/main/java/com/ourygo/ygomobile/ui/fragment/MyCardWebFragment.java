@@ -22,6 +22,7 @@ import com.ourygo.ygomobile.base.listener.OnMcUserListener;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -80,6 +81,8 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
         mWebViewPlus = v.findViewById(R.id.wv_web);
         mProgressBar = v.findViewById(R.id.progressBar);
     }
+
+
 
 
 //    @Override
@@ -201,10 +204,22 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
         Log.e("MyCardWeb", "登录完毕");
     }
 
+//    @Override
+//    public void onResume() {
+////        YGOStarter.onResumed(getActivity());
+//        super.onResume();
+//    }
+
     @Override
     public void onResume() {
-//        YGOStarter.onResumed(getActivity());
         super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     @Override

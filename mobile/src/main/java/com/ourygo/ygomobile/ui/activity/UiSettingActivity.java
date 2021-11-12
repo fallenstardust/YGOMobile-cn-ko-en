@@ -29,6 +29,7 @@ import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.SettingItem;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -352,6 +353,18 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StatUtil.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
+    }
+
     public void updateImages() {
         Log.e("MainActivity", "重置资源");
         dialogUtils.dialogj1(null, getString(R.string.message));
@@ -380,7 +393,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
                         AppsSettings.get().getResourcePath(), true);
 
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
-                        AppsSettings.get().getCoreSkinPath(), false);
+                        AppsSettings.get().getCoreSkinPath(), true);
                 String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
                 if (new File(fonts).list() != null)
                     FileUtils.delFile(fonts);
@@ -391,12 +404,12 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
                         AppsSettings.get().getSoundPath(), false);*/
 
                 //复制原目录文件
-                if (new File(ORI_DECK).list() != null)
-                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
-                if (new File(ORI_REPLAY).list() != null)
-                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
-                if (new File(ORI_PICS).list() != null)
-                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
+//                if (new File(ORI_DECK).list() != null)
+//                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+//                if (new File(ORI_REPLAY).list() != null)
+//                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
+//                if (new File(ORI_PICS).list() != null)
+//                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("MainActivity", "错误" + e);

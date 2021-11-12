@@ -31,6 +31,9 @@ public class YGOServerBQAdapter extends BaseQuickAdapter<YGOServer, BaseViewHold
             case YGOServer.MODE_MATCH:
                 helper.setText(R.id.tv_mode, OYUtil.s(R.string.duel_mode_match));
                 break;
+            case YGOServer.MODE_TAG:
+                helper.setText(R.id.tv_mode, OYUtil.s(R.string.duel_mode_tag));
+                break;
             default:
                 helper.setText(R.id.tv_mode, OYUtil.s(R.string.duel_mode_one));
         }

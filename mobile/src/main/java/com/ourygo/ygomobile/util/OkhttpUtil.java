@@ -293,6 +293,7 @@ public class OkhttpUtil {
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie);
         }
+        Log.e("OkhttpUtil",json+" 状态 "+request.build().toString());
         okHttpClient.newCall(request.build()).enqueue(callback);
     }
 

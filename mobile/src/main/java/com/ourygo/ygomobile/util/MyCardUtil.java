@@ -1,6 +1,7 @@
 package com.ourygo.ygomobile.util;
 
 
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import mono.embeddinator.Obj;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -83,23 +85,23 @@ public class MyCardUtil {
             return;
         }
 
-        Map<String, String> map = new HashMap<>();
-        map.put(Record.ARG_LOCALE, Record.ARG_ZH_CN);
+        Uri.Builder uri=Uri.parse(Record.URL_MC_MATCH).buildUpon();
+        uri.appendQueryParameter(Record.ARG_LOCALE, Record.ARG_ZH_CN);
         switch (matchType) {
             case MATCH_TYPE_ATHLETIC:
-                map.put(Record.ARG_ARENA, Record.ARG_ATHLEIC);
+                uri.appendQueryParameter(Record.ARG_ARENA, Record.ARG_ATHLEIC);
                 break;
             case MATCH_TYPE_ENTERTAIN:
-                map.put(Record.ARG_ARENA, Record.ARG_ENTERTAIN);
+                uri.appendQueryParameter(Record.ARG_ARENA, Record.ARG_ENTERTAIN);
                 break;
             default:
                 onMcMatchListener.onMcMatch(null, null, "未知匹配类型");
                 return;
         }
-        Log.e("MyCardUtil","匹配类型"+map.get(Record.ARG_ARENA));
         OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, "Basic " + OYUtil.message2Base64(mcUser.getUsername() + ":" + mcUser.getExternal_id()));
 
-        OkhttpUtil.postJson(Record.URL_MC_MATCH, OYUtil.map2jsonStr(map),null, oyHeader, Record.ARG_ARENA,30, new Callback() {
+
+        OkhttpUtil.post(uri.toString(), null, oyHeader, Record.ARG_ARENA,30, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e("MyCardUtil", e.getMessage() + "失败 " + e);

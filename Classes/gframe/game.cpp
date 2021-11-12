@@ -490,11 +490,11 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stName = env->addStaticText(L"", rect<s32>(10 * xScale, 10 * yScale, 250 * xScale, 32 * yScale), true, false, wInfos, -1, false);
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 37 * yScale, 260 * xScale, 60 * yScale), false, true, wInfos, -1, false);
-	stInfo->setOverrideColor(SColor(255, 149, 211, 137));//255, 0, 0, 255
+	stInfo->setOverrideColor(SColor(255, 0, 128, 255));//255, 0, 0, 255 todo ygocolor 卡片类型/种族颜色
 	stDataInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 60 * yScale, 260 * xScale, 83 * yScale), false, true, wInfos, -1, false);
-	stDataInfo->setOverrideColor(SColor(255, 222, 215, 100));//255, 0, 0, 255
+	stDataInfo->setOverrideColor(SColor(255, 190, 0, 0));//255, 0, 0, 255 todo ygocolor 等级/攻击力颜色
 	stSetName = env->addStaticText(L"", rect<s32>(10 * xScale, 83 * yScale, 260 * xScale, 106 * yScale), false, true, wInfos, -1, false);
-	stSetName->setOverrideColor(SColor(255, 255, 152, 42));//255, 0, 0, 255
+	stSetName->setOverrideColor(SColor(255, 208, 104, 0));//255, 0, 0, 255 todo ygocolor 字段
 	stText = env->addStaticText(L"", rect<s32>(10 * xScale, 106 * yScale, 260 * xScale, 345 * yScale), false, true, wInfos, -1, false);
 #ifdef _IRR_ANDROID_PLATFORM_
 	scrCardText = env->addScrollBar(false, rect<s32>(238 * xScale, 106 * yScale, 258 * xScale, 639 * yScale), wInfos, SCROLL_CARDTEXT);

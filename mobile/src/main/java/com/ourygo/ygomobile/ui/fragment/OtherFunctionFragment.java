@@ -31,6 +31,7 @@ import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +82,18 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
         initView(v);
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatUtil.onResume(getClass().getName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        StatUtil.onPause(getClass().getName());
     }
 
     private void initView(View v) {

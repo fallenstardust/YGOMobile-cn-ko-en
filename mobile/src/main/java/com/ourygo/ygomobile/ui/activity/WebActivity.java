@@ -39,6 +39,7 @@ import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.tencent.smtt.export.external.interfaces.IX5WebChromeClient;
 import com.tencent.smtt.export.external.interfaces.JsPromptResult;
 import com.tencent.smtt.export.external.interfaces.JsResult;
@@ -148,13 +149,15 @@ public class WebActivity extends BaseActivity implements Toolbar.OnMenuItemClick
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
+        StatUtil.onResume(this);
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
+        StatUtil.onPause(this);
     }
 
     private void initView() {

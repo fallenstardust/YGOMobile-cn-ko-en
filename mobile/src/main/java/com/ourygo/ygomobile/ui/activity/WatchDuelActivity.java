@@ -17,6 +17,7 @@ import com.ourygo.ygomobile.bean.WebSocketEvent;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.WatchDuelManagement;
 import com.ourygo.ygomobile.util.YGOUtil;
 
@@ -43,6 +44,18 @@ public class WatchDuelActivity extends ListAndUpdateActivity implements OnDuelRo
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StatUtil.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this);
     }
 
     private void initView() {

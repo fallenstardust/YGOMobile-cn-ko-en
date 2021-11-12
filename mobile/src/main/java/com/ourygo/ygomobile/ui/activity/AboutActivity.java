@@ -19,7 +19,8 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import com.tencent.bugly.beta.Beta;
+import com.ourygo.ygomobile.util.StatUtil;
+//import com.tencent.bugly.beta.Beta;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -90,13 +91,15 @@ public class AboutActivity extends BaseActivity {
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
+        StatUtil.onResume(this);
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
+        StatUtil.onPause(this);
     }
 
     private void initView() {
@@ -202,7 +205,7 @@ public class AboutActivity extends BaseActivity {
 //    }
 
     private void checkUpdate() {
-        Beta.checkUpgrade(true, false);
+        OYUtil.checkUpdate(true,true);
 //		QueryUtil.checkUpdate(new OnCheckUpdateListener(){
 //
 //				@Override

@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 330601002,
-      "versionName": "@string/app_version_name",
-      "outputFile": "mobile-cn-release.apk"
+      "versionCode": 10,
+      "versionName": "1.0",
+      "outputFile": "YGOMobile-cnRelease1.0.apk"
     }
   ],
   "elementType": "File"
