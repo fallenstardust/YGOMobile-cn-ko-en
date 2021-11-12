@@ -803,6 +803,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		}
 		mainGame->gMutex.lock();
 		mainGame->stHostPrepDuelist[pkt->pos]->setText(name);
+		mainGame->stHostPrepDuelist[pkt->pos]->setBackgroundColor(0x60045f6a);
 		mainGame->gMutex.unlock();
 		break;
 	}
@@ -817,7 +818,9 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::PLAYER_ENTER);
 			wchar_t* prename = (wchar_t*)mainGame->stHostPrepDuelist[pos]->getText();
 			mainGame->stHostPrepDuelist[state]->setText(prename);
+			mainGame->stHostPrepDuelist[state]->setBackgroundColor(0x60045f6a);
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+			mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 			if(pos == 0)
 				BufferIO::CopyWStr(prename, mainGame->dInfo.hostname, 20);
@@ -841,12 +844,14 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			}
 		} else if(state == PLAYERCHANGE_LEAVE) {
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+			mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 		} else if(state == PLAYERCHANGE_OBSERVE) {
 			watching++;
 			wchar_t watchbuf[32];
 			myswprintf(watchbuf, L"%ls%d", dataManager.GetSysString(1253), watching);
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+            mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 			mainGame->stHostPrepOB->setText(watchbuf);
 		}
