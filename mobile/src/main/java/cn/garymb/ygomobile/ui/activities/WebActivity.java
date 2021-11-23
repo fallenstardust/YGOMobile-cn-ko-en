@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.activities;
 
+import static android.view.View.VISIBLE;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -127,7 +129,7 @@ public class WebActivity extends BaseActivity {
     public static void open(Context context, String title, String url, boolean showButton) {
         open(context, title, url);
         if (showButton){
-            btn_download.setVisibility(View.VISIBLE);
+            btn_download.setVisibility(VISIBLE);
         }
 
     }

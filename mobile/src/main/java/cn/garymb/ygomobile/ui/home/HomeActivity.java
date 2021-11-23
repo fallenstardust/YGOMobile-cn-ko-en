@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -501,7 +502,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         addMenuButton(mMenuIds, menu, R.id.action_game, R.string.action_game, R.drawable.start);
         addMenuButton(mMenuIds, menu, R.id.action_help, R.string.help, R.drawable.help);
 
-        addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.downloadimages);
+        addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.reset);
         addMenuButton(mMenuIds, menu, R.id.action_settings, R.string.settings, R.drawable.setting);
         addMenuButton(mMenuIds, menu, R.id.nav_webpage, R.string.donation, R.drawable.about);
 
@@ -696,6 +697,16 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     public void initServerlist() {
         mServerList = $(R.id.list_server);
         mServerListAdapter = new ServerListAdapter(this);
+        LayoutInflater infla = LayoutInflater.from(this);
+        View footView = infla.inflate(R.layout.item_ic_add, null);
+        TextView add_server = footView.findViewById(R.id.add_server);
+        add_server.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mServerListManager.addServer();
+            }
+        });
+        mServerListAdapter.addFooterView(footView);
         //server list
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mServerList.setLayoutManager(linearLayoutManager);
