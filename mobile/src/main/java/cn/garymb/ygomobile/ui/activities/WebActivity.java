@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
@@ -17,6 +19,7 @@ public class WebActivity extends BaseActivity {
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
+    private static Button btn_download;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,6 +29,7 @@ public class WebActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         enableBackHome();
         mWebViewPlus = $(R.id.webbrowser);
+        btn_download = $(R.id.web_btn_download_prerelease);
         /*mWebViewPlus.enableHtml5();
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
             @Override
@@ -118,6 +122,14 @@ public class WebActivity extends BaseActivity {
         intent.putExtra(Intent.EXTRA_STREAM, url);
         intent.putExtra(Intent.EXTRA_TEXT, title);
         context.startActivity(intent);
+    }
+
+    public static void open(Context context, String title, String url, boolean showButton) {
+        open(context, title, url);
+        if (showButton){
+            btn_download.setVisibility(View.VISIBLE);
+        }
+
     }
 
     public static void openFAQ(Context context, Card cardInfo){

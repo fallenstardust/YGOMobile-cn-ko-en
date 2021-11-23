@@ -148,6 +148,8 @@ public interface Constants {
     String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://www.ourocg.cn/S.aspx?key=";
+    String URL_YGO233_ADVANCE = "https://ygo233.com/pre";
+    String URL_YGO233_FILE = "https://cdn.233.momobako.com/ygosrv233/20211122084301/ygosrv233-pre-mobile.zip";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";
