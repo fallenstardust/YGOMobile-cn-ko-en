@@ -76,7 +76,6 @@ public class DuelAssistantManagement implements OnClipChangedListener {
                     return true;
                 }
             }
-            return true;
         }
 
         //如果是卡组url

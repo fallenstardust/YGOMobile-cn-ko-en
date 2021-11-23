@@ -15,11 +15,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemLongClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
@@ -155,9 +157,9 @@ public class YGODialogUtil {
                     }
                 }
             });
-            deckAdp.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
+            deckAdp.setOnItemLongClickListener(new OnItemLongClickListener() {
                 @Override
-                public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
+                public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
                     if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
                         return true;
 

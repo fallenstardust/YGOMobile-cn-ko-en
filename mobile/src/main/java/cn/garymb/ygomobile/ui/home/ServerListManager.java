@@ -176,8 +176,8 @@ public class ServerListManager {
                     mChanged = true;
                     mAdapter.notifyItemMoved(left, right);
                     Collections.swap(mAdapter.getItems(), left, right);
-                    mAdapter.bindMenu((ServerInfoViewHolder) viewHolder, right);
-                    mAdapter.bindMenu((ServerInfoViewHolder) target, left);
+//                    mAdapter.bindMenu((ServerInfoViewHolder) viewHolder, right);
+//                    mAdapter.bindMenu((ServerInfoViewHolder) target, left);
                     return true;
                 }
                 return true;
