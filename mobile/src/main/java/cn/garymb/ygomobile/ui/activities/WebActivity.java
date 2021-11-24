@@ -1,20 +1,35 @@
 package cn.garymb.ygomobile.ui.activities;
 
 import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
+import java.io.File;
+
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
+import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
@@ -22,6 +37,36 @@ public class WebActivity extends BaseActivity {
     private String mUrl;
     private String mTitle;
     private Button btn_download;
+    private static final int TYPE_DOWNLOAD_OK = 0;
+    private static final int TYPE_DOWNLOAD_EXCEPTION = 1;
+    private static final int TYPE_DOWNLOAD_ING = 2;
+    private boolean isDownloadCardImage = true;
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_DOWNLOAD_OK:
+                    isDownloadCardImage = true;
+                    btn_download.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.out_from_bottom));
+                    btn_download.setVisibility(View.GONE);
+                    //这里解压
+                    break;
+                case TYPE_DOWNLOAD_ING:
+                    btn_download.setText(msg.arg1 + "%");
+                    break;
+                case TYPE_DOWNLOAD_EXCEPTION:
+                    isDownloadCardImage = true;
+                    btn_download.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.out_from_bottom));
+                    btn_download.setVisibility(View.GONE);
+                    YGOUtil.show("error" + msg.obj);
+                    break;
+
+            }
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,7 +76,7 @@ public class WebActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         enableBackHome();
         mWebViewPlus = $(R.id.webbrowser);
-        btn_download = $(R.id.web_btn_download_prerelease);
+        initButton();
         /*mWebViewPlus.enableHtml5();
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
             @Override
@@ -134,5 +179,59 @@ public class WebActivity extends BaseActivity {
     public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode());
         WebActivity.open(context, cardInfo.Name, uri);
+    }
+
+    public void initButton() {
+        btn_download = $(R.id.web_btn_download_prerelease);
+        btn_download.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+    }
+    private void downloadfromWeb() {
+        File file = new File(AppsSettings.get().getResourcePath());
+        final File tmp = new File(file.getAbsolutePath() + ".tmp");
+        if (tmp.exists()) {
+            FileUtils.deleteFile(tmp);
+        }
+        isDownloadCardImage = false;
+        DownloadUtil.get().download(URL_YGO233_FILE, tmp.getParent(), tmp.getName(), new DownloadUtil.OnDownloadListener() {
+            @Override
+            public void onDownloadSuccess(File file) {
+                if (!tmp.renameTo(file)) {
+                    FileUtils.deleteFile(file);
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_EXCEPTION;
+                    message.obj = getContext().getString(R.string.download_image_error);
+                    handler.sendMessage(message);
+                } else {
+                    Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_OK;
+                    handler.sendMessage(message);
+                }
+            }
+
+            @Override
+            public void onDownloading(int progress) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_ING;
+                message.arg1 = progress;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onDownloadFailed(Exception e) {
+                //下载失败后删除下载的文件
+                FileUtils.deleteFile(tmp);
+//                downloadCardImage(code, file);
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_EXCEPTION;
+                message.obj = e.toString();
+                handler.sendMessage(message);
+            }
+        });
+
     }
 }
