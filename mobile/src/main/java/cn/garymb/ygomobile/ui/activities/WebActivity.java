@@ -1,6 +1,6 @@
 package cn.garymb.ygomobile.ui.activities;
 
-import static android.view.View.VISIBLE;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 
 import android.content.Context;
 import android.content.Intent;
@@ -21,7 +21,7 @@ public class WebActivity extends BaseActivity {
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
-    private static Button btn_download;
+    private Button btn_download;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,6 +46,11 @@ public class WebActivity extends BaseActivity {
         });*/
         if (doIntent(getIntent())) {
             mWebViewPlus.loadUrl(mUrl);
+            if (mUrl.equals(URL_YGO233_ADVANCE)) {
+                btn_download.setVisibility(View.VISIBLE);
+            } else {
+                btn_download.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -126,15 +131,7 @@ public class WebActivity extends BaseActivity {
         context.startActivity(intent);
     }
 
-    public static void open(Context context, String title, String url, boolean showButton) {
-        open(context, title, url);
-        if (showButton){
-            btn_download.setVisibility(VISIBLE);
-        }
-
-    }
-
-    public static void openFAQ(Context context, Card cardInfo){
+    public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode());
         WebActivity.open(context, cardInfo.Name, uri);
     }
