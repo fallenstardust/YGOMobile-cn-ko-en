@@ -9,11 +9,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,9 +23,7 @@ import java.io.File;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -40,6 +38,10 @@ public class WebActivity extends BaseActivity {
     private static final int TYPE_DOWNLOAD_OK = 0;
     private static final int TYPE_DOWNLOAD_EXCEPTION = 1;
     private static final int TYPE_DOWNLOAD_ING = 2;
+    private static final int ZIP_READY = 600;
+    private static final int ZIP_UPDATE_PATH_PROGRESS = 601;
+    private static final int ZIP_UNZIP_OK = 602;
+    private static final int ZIP_UNZIP_EXCEPTION = 603;
     private boolean isDownloadCardImage = true;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -62,6 +64,18 @@ public class WebActivity extends BaseActivity {
                     btn_download.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.out_from_bottom));
                     btn_download.setVisibility(View.GONE);
                     YGOUtil.show("error" + msg.obj);
+                    break;
+                case ZIP_READY:
+                    btn_download.setText("安装准备中");
+                    break;
+                case ZIP_UPDATE_PATH_PROGRESS:
+                    btn_download.setText(msg.obj.toString());
+                    break;
+                case ZIP_UNZIP_OK:
+                    Toast.makeText(getContext(),getString(R.string.ypk_installed) + msg.obj, Toast.LENGTH_SHORT).show();
+                    break;
+                case ZIP_UNZIP_EXCEPTION:
+                    Toast.makeText(getContext(),getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
                     break;
 
             }
