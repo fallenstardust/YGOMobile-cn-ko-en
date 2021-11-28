@@ -191,7 +191,7 @@ public class WebActivity extends BaseActivity {
     }
 
     public static void openFAQ(Context context, Card cardInfo) {
-        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode());
+        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
         WebActivity.open(context, cardInfo.Name, uri);
     }
 
