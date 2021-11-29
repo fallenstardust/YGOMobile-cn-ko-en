@@ -24,9 +24,11 @@ import java.io.File;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.UnzipUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
 
@@ -42,7 +44,6 @@ public class WebActivity extends BaseActivity {
     private static final int ZIP_UPDATE_PATH_PROGRESS = 601;
     private static final int ZIP_UNZIP_OK = 602;
     private static final int ZIP_UNZIP_EXCEPTION = 603;
-    private boolean isDownloadCardImage = true;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -51,18 +52,11 @@ public class WebActivity extends BaseActivity {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_DOWNLOAD_OK:
-                    isDownloadCardImage = true;
-                    btn_download.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.out_from_bottom));
-                    btn_download.setVisibility(View.GONE);
-                    //这里解压
                     break;
                 case TYPE_DOWNLOAD_ING:
                     btn_download.setText(msg.arg1 + "%");
                     break;
                 case TYPE_DOWNLOAD_EXCEPTION:
-                    isDownloadCardImage = true;
-                    btn_download.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.out_from_bottom));
-                    btn_download.setVisibility(View.GONE);
                     YGOUtil.show("error" + msg.obj);
                     break;
                 case ZIP_READY:
@@ -72,10 +66,12 @@ public class WebActivity extends BaseActivity {
                     btn_download.setText(msg.obj.toString());
                     break;
                 case ZIP_UNZIP_OK:
-                    Toast.makeText(getContext(),getString(R.string.ypk_installed) + msg.obj, Toast.LENGTH_SHORT).show();
+                    Intent startSetting = new Intent(getContext(), SettingsActivity.class);
+                    startActivity(startSetting);
+                    Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                     break;
                 case ZIP_UNZIP_EXCEPTION:
-                    Toast.makeText(getContext(),getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
                     break;
 
             }
@@ -204,13 +200,13 @@ public class WebActivity extends BaseActivity {
             }
         });
     }
+
     private void downloadfromWeb() {
         File file = new File(AppsSettings.get().getResourcePath());
         final File tmp = new File(file.getAbsolutePath() + ".tmp");
         if (tmp.exists()) {
             FileUtils.deleteFile(tmp);
         }
-        isDownloadCardImage = false;
         DownloadUtil.get().download(URL_YGO233_FILE, tmp.getParent(), tmp.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
@@ -224,6 +220,11 @@ public class WebActivity extends BaseActivity {
                     Message message = new Message();
                     message.what = TYPE_DOWNLOAD_OK;
                     handler.sendMessage(message);
+                }
+                try {
+                    UnzipUtils.UnZip(file.toString(), AppsSettings.get().getResourcePath());
+                } catch (Exception e) {
+                    YGOUtil.show("error" + e);
                 }
             }
 

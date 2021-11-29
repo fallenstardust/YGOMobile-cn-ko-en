@@ -117,7 +117,7 @@ public class UnzipUtils {
      * @return InputStream
      * @throws Exception
      */
-    public static InputStream UpZip(String zipFileString, String fileString)throws Exception {
+    public static InputStream UnZip(String zipFileString, String fileString)throws Exception {
         ZipFile zipFile = new ZipFile(zipFileString);
         ZipEntry zipEntry = zipFile.getEntry(fileString);
         return zipFile.getInputStream(zipEntry);

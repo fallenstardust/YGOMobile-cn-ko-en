@@ -197,7 +197,7 @@ public class GameUriManager {
     }
 
     private void doUri(Uri uri) {
-        Intent startSeting = new Intent(activity, SettingsActivity.class);
+        Intent startSetting = new Intent(activity, SettingsActivity.class);
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
             if (file == null || !file.exists()) {
@@ -213,7 +213,7 @@ public class GameUriManager {
                 DeckManagerActivity.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
-                    activity.startActivity(startSeting);
+                    activity.startActivity(startSetting);
                     Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                 } else {
                     DataManager.get().load(true);
