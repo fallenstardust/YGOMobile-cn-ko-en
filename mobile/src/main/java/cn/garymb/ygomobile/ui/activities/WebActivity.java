@@ -202,31 +202,25 @@ public class WebActivity extends BaseActivity {
     }
 
     private void downloadfromWeb() {
-        File file = new File(AppsSettings.get().getResourcePath());
-        final File tmp = new File(file.getAbsolutePath() + ".tmp");
-        if (tmp.exists()) {
-            FileUtils.deleteFile(tmp);
+        File file = new File(AppsSettings.get().getResourcePath() + ".zip");
+        if (file.exists()) {
+            FileUtils.deleteFile(file);
         }
-        DownloadUtil.get().download(URL_YGO233_FILE, tmp.getParent(), tmp.getName(), new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().download(URL_YGO233_FILE, file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-                if (!tmp.renameTo(file)) {
-                    FileUtils.deleteFile(file);
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_EXCEPTION;
-                    message.obj = getContext().getString(R.string.download_image_error);
-                    handler.sendMessage(message);
-                } else {
-                    Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_OK;
-                    handler.sendMessage(message);
-                }
+                Message message = new Message();
+                message.what = ZIP_READY;
+                handler.sendMessage(message);
                 try {
                     UnzipUtils.UnZip(file.toString(), AppsSettings.get().getResourcePath());
                 } catch (Exception e) {
+                    message.what = ZIP_UNZIP_EXCEPTION;
+                    handler.sendMessage(message);
                     YGOUtil.show("error" + e);
                 }
             }
+
 
             @Override
             public void onDownloading(int progress) {
@@ -239,7 +233,7 @@ public class WebActivity extends BaseActivity {
             @Override
             public void onDownloadFailed(Exception e) {
                 //下载失败后删除下载的文件
-                FileUtils.deleteFile(tmp);
+                FileUtils.deleteFile(file);
 //                downloadCardImage(code, file);
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_EXCEPTION;
