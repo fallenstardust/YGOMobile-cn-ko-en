@@ -200,7 +200,7 @@ public class WebActivity extends BaseActivity {
         btn_download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                downloadfromWeb();
             }
         });
     }
