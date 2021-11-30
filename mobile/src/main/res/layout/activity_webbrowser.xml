@@ -26,7 +26,7 @@
             android:id="@+id/web_btn_download_prerelease"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/button_n"
+            android:background="@drawable/button_bg"
             android:text="@string/Download"
             android:visibility="gone"/>
 

@@ -49,7 +49,7 @@
             android:layout_height="45dp"
             android:layout_below="@id/tv_upgrade_feature"
             android:layout_weight="1"
-            android:background="@drawable/button_n"
+            android:background="@drawable/button_bg"
             android:gravity="center"
             android:tag="beta_confirm_button"
             android:text="@string/Download"
