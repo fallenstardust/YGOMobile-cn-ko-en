@@ -1683,6 +1683,13 @@ int32 field::process_quick_effect(int16 step, int32 skip_freechain, uint8 priori
 					core.select_chains.push_back(newchain);
 				}
 			}
+			pr = effects.quick_o_effect.equal_range(ev.event_code);
+			for(auto eit = pr.first; eit != pr.second;) {
+				effect* peffect = eit->second;
+				++eit;
+				if(peffect->is_flag(EFFECT_FLAG_DELAY) && peffect->is_condition_check(peffect->get_handler()->current.controler, ev))
+					core.delayed_quick.emplace(peffect, ev);
+			}
 		}
 		// delayed quick
 		for(auto eit = core.delayed_quick.begin(); eit != core.delayed_quick.end();) {
@@ -3420,6 +3427,7 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 					}
 					effect_set eset;
 					core.attacker->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+					core.attacker->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 					core.attack_target->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 					filter_player_effect(pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
 					filter_player_effect(1 - pa, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
@@ -3539,6 +3547,7 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 		}
 		effect_set eset;
 		reason_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+		reason_card->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 		if(dam_card)
 			dam_card->filter_effect(EFFECT_CHANGE_INVOLVING_BATTLE_DAMAGE, &eset, FALSE);
 		filter_player_effect(damp, EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
@@ -5010,8 +5019,10 @@ int32 field::adjust_step(uint16 step) {
 		return FALSE;
 	}
 	case 15: {
-		raise_event((card*)0, EVENT_ADJUST, 0, 0, PLAYER_NONE, PLAYER_NONE, 0);
-		process_instant_event();
+		if(!check_event(EVENT_ADJUST)) {
+			raise_event((card*)0, EVENT_ADJUST, 0, 0, PLAYER_NONE, PLAYER_NONE, 0);
+			process_instant_event();
+		}
 		return FALSE;
 	}
 	case 16: {
