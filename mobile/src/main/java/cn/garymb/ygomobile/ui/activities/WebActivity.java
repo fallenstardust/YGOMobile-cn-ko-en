@@ -37,7 +37,6 @@ public class WebActivity extends BaseActivity {
     private String mUrl;
     private String mTitle;
     private Button btn_download;
-    private static final int TYPE_DOWNLOAD_OK = 0;
     private static final int TYPE_DOWNLOAD_EXCEPTION = 1;
     private static final int TYPE_DOWNLOAD_ING = 2;
     private static final int ZIP_READY = 600;
@@ -51,8 +50,6 @@ public class WebActivity extends BaseActivity {
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case TYPE_DOWNLOAD_OK:
-                    break;
                 case TYPE_DOWNLOAD_ING:
                     btn_download.setText(msg.arg1 + "%");
                     break;
@@ -60,7 +57,7 @@ public class WebActivity extends BaseActivity {
                     YGOUtil.show("error" + msg.obj);
                     break;
                 case ZIP_READY:
-                    btn_download.setText("安装准备中");
+                    btn_download.setText(R.string.title_use_ex);
                     break;
                 case ZIP_UPDATE_PATH_PROGRESS:
                     btn_download.setText(msg.obj.toString());
@@ -211,14 +208,12 @@ public class WebActivity extends BaseActivity {
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
                 message.what = ZIP_READY;
-                handler.sendMessage(message);
                 try {
-                    UnzipUtils.UnZip(file.toString(), AppsSettings.get().getResourcePath());
+                    UnzipUtils.unZipFolder(file.toString(), AppsSettings.get().getResourcePath());
                 } catch (Exception e) {
                     message.what = ZIP_UNZIP_EXCEPTION;
-                    handler.sendMessage(message);
-                    YGOUtil.show("error" + e);
                 }
+                handler.sendMessage(message);
             }
 
 

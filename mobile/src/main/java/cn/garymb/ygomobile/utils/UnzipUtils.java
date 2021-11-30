@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
+import android.content.Context;
+
 import com.file.zip.ZipEntry;
 import com.file.zip.ZipFile;
 import com.file.zip.ZipOutputStream;
@@ -12,6 +14,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipInputStream;
+
+import cn.garymb.ygomobile.lite.R;
 
 public class UnzipUtils {
     public UnzipUtils(){
@@ -49,7 +53,7 @@ public class UnzipUtils {
                 out.close();
             }
         }
-        LogUtils.e("解压成功!");
+        LogUtils.e(R.string.done);
         inZip.close();
     }
 
