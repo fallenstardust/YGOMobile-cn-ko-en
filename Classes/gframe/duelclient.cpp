@@ -1263,10 +1263,14 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->dField.conti_act = true;
 			} else {
 				pcard->cmdFlag |= COMMAND_ACTIVATE;
-				if (pcard->location == LOCATION_GRAVE)
-					mainGame->dField.grave_act = true;
-				else if (pcard->location == LOCATION_REMOVED)
-					mainGame->dField.remove_act = true;
+				if(pcard->controler == 0) {
+					if(pcard->location == LOCATION_GRAVE)
+						mainGame->dField.grave_act = true;
+					else if(pcard->location == LOCATION_REMOVED)
+						mainGame->dField.remove_act = true;
+					else if(pcard->location == LOCATION_EXTRA)
+						mainGame->dField.extra_act = true;
+				}
 			}
 		}
 		mainGame->dField.attackable_cards.clear();
@@ -1393,10 +1397,14 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->dField.conti_act = true;
 			} else {
 				pcard->cmdFlag |= COMMAND_ACTIVATE;
-				if (pcard->location == LOCATION_GRAVE)
-					mainGame->dField.grave_act = true;
-				else if (pcard->location == LOCATION_REMOVED)
-					mainGame->dField.remove_act = true;
+				if(pcard->controler == 0) {
+					if(pcard->location == LOCATION_GRAVE)
+						mainGame->dField.grave_act = true;
+					else if(pcard->location == LOCATION_REMOVED)
+						mainGame->dField.remove_act = true;
+					else if(pcard->location == LOCATION_EXTRA)
+						mainGame->dField.extra_act = true;
+				}
 			}
 		}
 		if(BufferIO::ReadInt8(pbuf)) {
