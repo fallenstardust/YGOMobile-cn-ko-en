@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.activities;
 
 import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
+import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -38,12 +39,6 @@ public class WebActivity extends BaseActivity {
     private String mUrl;
     private String mTitle;
     private Button btn_download;
-    private static final int TYPE_DOWNLOAD_EXCEPTION = 1;
-    private static final int TYPE_DOWNLOAD_ING = 2;
-    private static final int ZIP_READY = 600;
-    private static final int ZIP_UPDATE_PATH_PROGRESS = 601;
-    private static final int ZIP_UNZIP_OK = 602;
-    private static final int ZIP_UNZIP_EXCEPTION = 603;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -51,16 +46,16 @@ public class WebActivity extends BaseActivity {
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case TYPE_DOWNLOAD_ING:
+                case DownloadUtil.TYPE_DOWNLOAD_ING:
                     btn_download.setText(msg.arg1 + "%");
                     break;
-                case TYPE_DOWNLOAD_EXCEPTION:
+                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
                     YGOUtil.show("error" + msg.obj);
                     break;
-                case ZIP_READY:
+                case UnzipUtils.ZIP_READY:
                     btn_download.setText(R.string.title_use_ex);
                     break;
-                case ZIP_UNZIP_OK:
+                case UnzipUtils.ZIP_UNZIP_OK:
                     if (!AppsSettings.get().isReadExpansions()) {
                         Intent startSetting = new Intent(getContext(), SettingsActivity.class);
                         startActivity(startSetting);
@@ -71,7 +66,7 @@ public class WebActivity extends BaseActivity {
                     }
                     btn_download.setVisibility(View.GONE);
                     break;
-                case ZIP_UNZIP_EXCEPTION:
+                case UnzipUtils.ZIP_UNZIP_EXCEPTION:
                     Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
                     break;
 
@@ -211,13 +206,13 @@ public class WebActivity extends BaseActivity {
             @Override
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
-                message.what = ZIP_READY;
+                message.what = UnzipUtils.ZIP_READY;
                 try {
                     UnzipUtils.upZipFile(file, AppsSettings.get().getResourcePath());
                 } catch (Exception e) {
-                    message.what = ZIP_UNZIP_EXCEPTION;
+                    message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
                 } finally {
-                    message.what = ZIP_UNZIP_OK;
+                    message.what = UnzipUtils.ZIP_UNZIP_OK;
                 }
                 handler.sendMessage(message);
             }
@@ -226,7 +221,7 @@ public class WebActivity extends BaseActivity {
             @Override
             public void onDownloading(int progress) {
                 Message message = new Message();
-                message.what = TYPE_DOWNLOAD_ING;
+                message.what = DownloadUtil.TYPE_DOWNLOAD_ING;
                 message.arg1 = progress;
                 handler.sendMessage(message);
             }

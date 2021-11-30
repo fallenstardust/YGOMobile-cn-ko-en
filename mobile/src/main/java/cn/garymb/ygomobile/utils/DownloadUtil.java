@@ -20,6 +20,8 @@ public class DownloadUtil {
 
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
+    public static final int TYPE_DOWNLOAD_EXCEPTION = 1;
+    public static final int TYPE_DOWNLOAD_ING = 2;
     //暂时关闭
     private static final boolean ENABLE_CACHE = false;
     private static final Map<String, Call> cache = new HashMap<>();

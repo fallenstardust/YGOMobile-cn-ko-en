@@ -12,7 +12,9 @@ import java.util.zip.ZipFile;
 
 public class UnzipUtils {
     private static final int BUFFER_SIZE = 1024 * 1024;//1M Byte
-
+    public static final int ZIP_READY = 600;
+    public static final int ZIP_UNZIP_OK = 601;
+    public static final int ZIP_UNZIP_EXCEPTION = 602;
     /**
      * 解压缩一个文件
      *
