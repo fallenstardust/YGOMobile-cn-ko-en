@@ -30,6 +30,7 @@ import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.UnzipUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
@@ -59,13 +60,16 @@ public class WebActivity extends BaseActivity {
                 case ZIP_READY:
                     btn_download.setText(R.string.title_use_ex);
                     break;
-                case ZIP_UPDATE_PATH_PROGRESS:
-                    btn_download.setText(msg.obj.toString());
-                    break;
                 case ZIP_UNZIP_OK:
-                    Intent startSetting = new Intent(getContext(), SettingsActivity.class);
-                    startActivity(startSetting);
-                    Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                    if (!AppsSettings.get().isReadExpansions()) {
+                        Intent startSetting = new Intent(getContext(), SettingsActivity.class);
+                        startActivity(startSetting);
+                        Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                    } else {
+                        DataManager.get().load(true);
+                        Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                    }
+                    btn_download.setVisibility(View.GONE);
                     break;
                 case ZIP_UNZIP_EXCEPTION:
                     Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
@@ -209,9 +213,11 @@ public class WebActivity extends BaseActivity {
                 Message message = new Message();
                 message.what = ZIP_READY;
                 try {
-                    UnzipUtils.unZipFolder(file.toString(), AppsSettings.get().getResourcePath());
+                    UnzipUtils.upZipFile(file, AppsSettings.get().getResourcePath());
                 } catch (Exception e) {
                     message.what = ZIP_UNZIP_EXCEPTION;
+                } finally {
+                    message.what = ZIP_UNZIP_OK;
                 }
                 handler.sendMessage(message);
             }

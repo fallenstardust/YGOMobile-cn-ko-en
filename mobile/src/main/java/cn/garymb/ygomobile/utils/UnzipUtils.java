@@ -1,163 +1,108 @@
 package cn.garymb.ygomobile.utils;
 
-import android.content.Context;
-
-import com.file.zip.ZipEntry;
-import com.file.zip.ZipFile;
-import com.file.zip.ZipOutputStream;
-import com.yuyh.library.imgsel.utils.LogUtils;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.ZipInputStream;
-
-import cn.garymb.ygomobile.lite.R;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class UnzipUtils {
-    public UnzipUtils(){
-    }
-    /**
-     * DeCompress the ZIP to the path
-     * @param zipFileString  name of ZIP
-     * @param outPathString   path to be unZIP
-     * @throws Exception
-     */
-    public static void unZipFolder(String zipFileString, String outPathString) throws Exception {
-        ZipInputStream inZip = new ZipInputStream(new FileInputStream(zipFileString));
-        ZipEntry zipEntry;
-        String szName = "";
-        while ((zipEntry = (ZipEntry) inZip.getNextEntry()) != null) {
-            szName = zipEntry.getName();
-            if (zipEntry.isDirectory()) {
-                // get the folder name of the widget
-                szName = szName.substring(0, szName.length() - 1);
-                File folder = new File(outPathString + File.separator + szName);
-                folder.mkdirs();
-            } else {
-                File file = new File(outPathString + File.separator + szName);
-                file.createNewFile();
-                // get the output stream of the file
-                FileOutputStream out = new FileOutputStream(file);
-                int len;
-                byte[] buffer = new byte[1024];
-                // read (len) bytes into buffer
-                while ((len = inZip.read(buffer)) != -1) {
-                    // write (len) byte from buffer at the position 0
-                    out.write(buffer, 0, len);
-                    out.flush();
-                }
-                out.close();
-            }
-        }
-        LogUtils.e(R.string.done);
-        inZip.close();
-    }
+    private static final int BUFFER_SIZE = 1024 * 1024;//1M Byte
 
     /**
-     * Compress file and folder
-     * @param srcFileString   file or folder to be Compress
-     * @param zipFileString   the path name of result ZIP
-     * @throws Exception
-     */
-    public static void ZipFolder(String srcFileString, String zipFileString)throws Exception {
-        //create ZIP
-        ZipOutputStream outZip = new ZipOutputStream(new FileOutputStream(zipFileString));
-        //create the file
-        File file = new File(srcFileString);
-        //compress
-        ZipFiles(file.getParent()+File.separator, file.getName(), outZip);
-        //finish and close
-        outZip.finish();
-        outZip.close();
-    }
-
-    /**
-     * compress files
-     * @param folderString
-     * @param fileString
-     * @param zipOutputSteam
-     * @throws Exception
-     */
-    private static void ZipFiles(String folderString, String fileString, ZipOutputStream zipOutputSteam)throws Exception{
-        if(zipOutputSteam == null)
-            return;
-        File file = new File(folderString+fileString);
-        if (file.isFile()) {
-            ZipEntry zipEntry =  new ZipEntry(fileString);
-            FileInputStream inputStream = new FileInputStream(file);
-            zipOutputSteam.putNextEntry(zipEntry);
-            int len;
-            byte[] buffer = new byte[4096];
-            while((len=inputStream.read(buffer)) != -1)
-            {
-                zipOutputSteam.write(buffer, 0, len);
-            }
-            zipOutputSteam.closeEntry();
-        }
-        else {
-            //folder
-            String fileList[] = file.list();
-            //no child file and compress
-            if (fileList.length <= 0) {
-                ZipEntry zipEntry =  new ZipEntry(fileString+File.separator);
-                zipOutputSteam.putNextEntry(zipEntry);
-                zipOutputSteam.closeEntry();
-            }
-            //child files and recursion
-            for (int i = 0; i < fileList.length; i++) {
-                ZipFiles(folderString, fileString+java.io.File.separator+fileList[i], zipOutputSteam);
-            }//end of for
-        }
-    }
-
-    /**
-     * return the InputStream of file in the ZIP
-     * @param zipFileString  name of ZIP
-     * @param fileString     name of file in the ZIP
-     * @return InputStream
-     * @throws Exception
-     */
-    public static InputStream UnZip(String zipFileString, String fileString)throws Exception {
-        ZipFile zipFile = new ZipFile(zipFileString);
-        ZipEntry zipEntry = zipFile.getEntry(fileString);
-        return zipFile.getInputStream(zipEntry);
-    }
-
-    /**
-     * return files list(file and folder) in the ZIP
-     * @param zipFileString     ZIP name
-     * @param bContainFolder    contain folder or not
-     * @param bContainFile      contain file or not
+     * 解压缩一个文件
+     *
+     * @param zipFile    压缩文件
+     * @param folderPath 解压缩的目标目录
      * @return
-     * @throws Exception
+     * @throws IOException 当解压缩过程出错时抛出
      */
-    public static List<File> GetFileList(String zipFileString, boolean bContainFolder, boolean bContainFile)throws Exception {
-        List<File> fileList = new ArrayList<File>();
-        ZipInputStream inZip = new ZipInputStream(new FileInputStream(zipFileString));
-        ZipEntry zipEntry;
-        String szName = "";
-        while ((zipEntry = (ZipEntry) inZip.getNextEntry()) != null) {
-            szName = zipEntry.getName();
-            if (zipEntry.isDirectory()) {
-                // get the folder name of the widget
-                szName = szName.substring(0, szName.length() - 1);
-                File folder = new File(szName);
-                if (bContainFolder) {
-                    fileList.add(folder);
+    public static ArrayList<File> upZipFile(File zipFile, String folderPath) throws IOException {
+        ArrayList<File> fileList = new ArrayList<File>();
+        File desDir = new File(folderPath);
+        if (!desDir.exists()) {
+            desDir.mkdirs();
+        }
+        ZipFile zf = new ZipFile(zipFile);
+        for (Enumeration<?> entries = zf.entries(); entries.hasMoreElements(); ) {
+            ZipEntry entry = (ZipEntry) entries.nextElement();
+            if (entry.isDirectory()) {
+                continue;
+            }
+            InputStream is = zf.getInputStream(entry);
+            String str = folderPath + File.separator + entry.getName();
+            str = new String(str.getBytes("8859_1"), "UTF-8");
+            File desFile = new File(str);
+            if (!desFile.exists()) {
+                File fileParentDir = desFile.getParentFile();
+                if (!fileParentDir.exists()) {
+                    fileParentDir.mkdirs();
                 }
+                desFile.createNewFile();
+            }
+            OutputStream os = new FileOutputStream(desFile);
+            byte buffer[] = new byte[BUFFER_SIZE];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+            os.flush();
+            os.close();
+            is.close();
+            fileList.add(desFile);
+        }
+        return fileList;
+    }
 
-            } else {
-                File file = new File(szName);
-                if (bContainFile) {
-                    fileList.add(file);
+    /**
+     * 解压文件名包含传入文字的文件
+     *
+     * @param zipFile      压缩文件
+     * @param folderPath   目标文件夹
+     * @param nameContains 传入的文件匹配名
+     * @return
+     * @throws IOException 当解压缩过程出错时抛出
+     */
+    public static ArrayList<File> upZipSelectFile(File zipFile, String folderPath, String nameContains) throws IOException {
+        ArrayList<File> fileList = new ArrayList<File>();
+        File desDir = new File(folderPath);
+        if (!desDir.exists()) {
+            desDir.mkdirs();
+        }
+        ZipFile zf = new ZipFile(zipFile);
+        for (Enumeration<?> entries = zf.entries(); entries.hasMoreElements(); ) {
+            ZipEntry entry = (ZipEntry) entries.nextElement();
+            if (entry.isDirectory()) {
+                continue;
+            }
+            if (entry.getName().contains(nameContains)) {
+                InputStream is = zf.getInputStream(entry);
+                String str = folderPath + File.separator + entry.getName();
+                str = new String(str.getBytes("8859_1"), "UTF-8");
+                File desFile = new File(str);
+                if (!desFile.exists()) {
+                    File fileParentDir = desFile.getParentFile();
+                    if (!fileParentDir.exists()) {
+                        fileParentDir.mkdirs();
+                    }
+                    desFile.createNewFile();
                 }
+                OutputStream os = new FileOutputStream(desFile);
+                byte buffer[] = new byte[BUFFER_SIZE];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    os.write(buffer, 0, length);
+                }
+                is.close();
+                os.flush();
+                os.close();
+                fileList.add(desFile);
             }
         }
-        inZip.close();
         return fileList;
     }
 }
