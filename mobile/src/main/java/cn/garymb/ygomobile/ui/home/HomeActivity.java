@@ -143,7 +143,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         };
         //x5内核初始化接口
         QbSdk.initX5Environment(this, cb);
-        if(!BuildConfig.BUILD_TYPE.equals("debug")) {
+        if (!BuildConfig.BUILD_TYPE.equals("debug")) {
             //release才检查版本
             if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
                 Log.d(Constants.TAG, "start check update");
@@ -166,6 +166,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         super.onResume();
         BacktoDuel();
         duelAssistantCheck();
+        //server list
+        mServerListManager.syncLoadData();
     }
 
     @Override
@@ -196,9 +198,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     }
 
     @Override
-    public void onJoinRoom(String host,int port,String password, int id) {
+    public void onJoinRoom(String host, int port, String password, int id) {
         if (id == ID_MAINACTIVITY) {
-            quickjoinRoom(host,port,password);
+            quickjoinRoom(host, port, password);
         }
     }
 
@@ -314,7 +316,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             break;
             case R.id.action_game:
                 setRandomCardDetail();
-                if(mCardDetailRandom != null){
+                if (mCardDetailRandom != null) {
                     mCardDetailRandom.show();
                 }
                 openGame();
@@ -620,7 +622,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         });
     }
 
-    public void quickjoinRoom(String host,int port,String password) {
+    public void quickjoinRoom(String host, int port, String password) {
 
         String message;
         if (!TextUtils.isEmpty(host))
@@ -657,10 +659,10 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 return fileList;
             }).done((list) -> {
                 if (list != null) {
-                    String host1=host;
-                    int port1=port;
+                    String host1 = host;
+                    int port1 = port;
                     ServerInfo serverInfo = list.getServerInfoList().get(0);
-                    if (!TextUtils.isEmpty(host1)){
+                    if (!TextUtils.isEmpty(host1)) {
                         serverInfo.setServerAddr(host1);
                         serverInfo.setPort(port1);
                     }
