@@ -155,7 +155,11 @@ public class ServerListManager {
         ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
             @Override
             public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
-                return makeMovementFlags(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0);
+                if (viewHolder.getAdapterPosition() != mAdapter.getFooterViewPosition()) {
+                    return makeMovementFlags(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0);
+                } else {
+                    return makeMovementFlags(ItemTouchHelper.ACTION_STATE_IDLE, 0);
+                }
             }
 
             @Override
@@ -172,7 +176,8 @@ public class ServerListManager {
             public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                 int left = viewHolder.getAdapterPosition();
                 int right = target.getAdapterPosition();
-                if (left >= 0) {
+                int footer = mAdapter.getFooterViewPosition();
+                if (left >= 0 && left != footer && right != footer) {
                     mChanged = true;
                     mAdapter.notifyItemMoved(left, right);
                     Collections.swap(mAdapter.getItems(), left, right);
