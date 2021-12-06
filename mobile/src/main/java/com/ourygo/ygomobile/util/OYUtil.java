@@ -57,13 +57,9 @@ public class OYUtil {
 
         if (isBack) {
             toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material);//  context.getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha));
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View p1) {
-                    activity.finish();
-                    // TODO: Implement this method
-                }
+            toolbar.setNavigationOnClickListener(p1 -> {
+                activity.finish();
+                // TODO: Implement this method
             });
         }
     }
