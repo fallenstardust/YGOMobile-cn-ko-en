@@ -215,7 +215,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	imageManager.SetDevice(device);
 	if(!imageManager.Initial(workingDir))
 		return false;
-	LoadExpansions();
 	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
 	io::path* cdbs = options->getDBFiles();
 	len = options->getDbCount();
@@ -237,6 +236,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str()))
 		return false;
+	LoadExpansions();
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, (int)16 * yScale, isAntialias, false);

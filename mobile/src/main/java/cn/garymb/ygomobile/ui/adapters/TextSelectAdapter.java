@@ -55,15 +55,15 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
             if (selectList.contains(item))
                 helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             else
-                helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
+                helper.setBackgroundResource(R.id.ll_layout, Color.TRANSPARENT);
         } else if (isSelect) {
             if (position == selectPosition) {
                 helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
             } else {
-                helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
+                helper.setBackgroundResource(R.id.ll_layout, Color.TRANSPARENT);
             }
         }else {
-            helper.setBackgroundColor(R.id.ll_layout, Color.TRANSPARENT);
+            helper.setBackgroundResource(R.id.ll_layout, Color.TRANSPARENT);
         }
 
     }

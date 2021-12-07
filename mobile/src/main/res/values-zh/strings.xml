@@ -32,6 +32,7 @@
     <string name="bg_menu">菜单背景</string>
     <string name="bg_deck">卡组背景</string>
     <string name="action_add_server">添加服务器</string>
+    <string name="action_download_expansions">拓展卡下载</string>
     <string name="no_find_file_selectotr">没有找到文件选择器</string>
     <string name="no_find_image_selector">没有找到图片选择器</string>
     <string name="no_find_image_cutor">没有找到裁剪工具</string>

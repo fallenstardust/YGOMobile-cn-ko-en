@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.adapters;
 
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,23 +7,24 @@ import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.viewholder.BaseViewHolder;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import androidx.recyclerview.widget.RecyclerView;
-
-public abstract class BaseRecyclerAdapterPlus<T, V extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<V> {
+public abstract class BaseRecyclerAdapterPlus<T, V extends BaseViewHolder> extends BaseQuickAdapter<T,V> {
     protected Context context;
     private LayoutInflater mLayoutInflater;
-    protected final List<T> mItems = new ArrayList<T>();
+//    protected final List<T> mItems = new ArrayList<T>();
 
-    public BaseRecyclerAdapterPlus(Context context) {
-        super();
+    public BaseRecyclerAdapterPlus(Context context,int layout) {
+        super(layout,new ArrayList<>());
         this.context = context;
         mLayoutInflater = LayoutInflater.from(context);
     }
-    public Context getContext() {
+    public Context getAdapterContext() {
         return context;
     }
 
@@ -40,23 +40,21 @@ public abstract class BaseRecyclerAdapterPlus<T, V extends RecyclerView.ViewHold
                 }
             }
             if (pos >= 0) {
-                mItems.add(pos, item);
+                addData(pos, item);
             } else {
-                mItems.add(item);
+                addData(item);
             }
             return true;
         }
         return true;
     }
 
-    public T remove(int pos) {
-        return mItems.remove(pos);
-    }
+
     public void removeItem(T item) {
-        mItems.remove(item);
+        remove(item);
     }
     public List<T> getItems() {
-        return mItems;
+        return getData();
     }
 
     protected <VW extends View> VW inflate(int resource, ViewGroup root) {
@@ -68,7 +66,7 @@ public abstract class BaseRecyclerAdapterPlus<T, V extends RecyclerView.ViewHold
     }
 
     public void clear() {
-        mItems.clear();
+        getData().clear();
     }
 
     public void set(Collection<T> items) {
@@ -78,36 +76,36 @@ public abstract class BaseRecyclerAdapterPlus<T, V extends RecyclerView.ViewHold
 
     public void addAll(Collection<T> items) {
         if (items != null) {
-            mItems.addAll(items);
+            addData(items);
         }
     }
 
     public int findItem(T item) {
-        return mItems.indexOf(item);
+        return getItems().indexOf(item);
     }
 
     public boolean exist(T item) {
         if (item == null) return false;
-        return mItems.contains(item);
+        return getItems().contains(item);
     }
 
-    @Override
-    public abstract V onCreateViewHolder(ViewGroup parent, int viewType);
+//    @Override
+//    public abstract V onCreateViewHolder(ViewGroup parent, int viewType);
 
-    @Override
-    public abstract void onBindViewHolder(V holder, int position);
+//    @Override
+//    public abstract void onBindViewHolder(V holder, int position);
 
-    public final T getItem(int position) {
-        if (position >= 0 && position < getItemCount()) {
-            return mItems.get(position);
-        }
-        return null;
-    }
+//    public final T getItem(int position) {
+//        if (position >= 0 && position < getItemCount()) {
+//            return getItems().get(position);
+//        }
+//        return null;
+//    }
 
-    @Override
-    public int getItemCount() {
-        return mItems.size();
-    }
+//    @Override
+//    public int getItemCount() {
+//        return mItems.size();
+//    }
 
     public final T getItemById(long id) {
         return getItem((int) id);

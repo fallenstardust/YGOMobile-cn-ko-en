@@ -4,7 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -284,17 +288,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
             avatar1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar),
-                        outFile,
-                        true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
             avatar2.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar),
-                        outFile,
-                        true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
         } else if (SETTINGS_COVER.equals(key)) {
@@ -467,26 +467,14 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
     private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
         int width = getResources().getDisplayMetrics().widthPixels;
-        //DialogPlus builder = new DialogPlus(getActivity());
         final ImageView imageView = new ImageView(getActivity());
         FrameLayout frameLayout = new FrameLayout(getActivity());
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        //builder.setTitle(title);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         frameLayout.addView(imageView, layoutParams);
-        // builder.setContentView(frameLayout);
-        //builder.setLeftButtonText(R.string.settings);
-        //builder.setLeftButtonListener((dlg, s) -> {
-        showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile,
-                isJpeg, outWidth, outHeight);
-        //dlg.dismiss();
-        // });
-//        builder.setOnCancelListener((dlg) -> {
-//            BitmapUtil.destroy(imageView.getDrawable());
-//        });
-        //builder.show();
+        showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, isJpeg, outWidth, outHeight);
         File img = new File(outFile);
         if (img.exists()) {
             GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
@@ -495,7 +483,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .into(imageView);
         }
     }
-
     public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
         File img = new File(outFile);
         if (img.exists()) {

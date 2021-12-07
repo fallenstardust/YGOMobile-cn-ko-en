@@ -9,7 +9,7 @@
         android:icon="@drawable/ic_edit"
         android:title="@string/deck_manager" />
     <item
-        android:id="@+id/action_add_server"
+        android:id="@+id/action_download_ex"
         android:icon="@drawable/ic_add"
         android:title="@string/action_add_server" />
     <item

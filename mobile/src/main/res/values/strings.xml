@@ -358,6 +358,7 @@
     <string name="label_ot_SC_OCG">SChinese OCG</string>
     <string name="settings_screen_padding">Reserved height of curved screen</string>
     <string name="tip_load_cdb_error">Load database error</string>
+    <string name="action_download_expansions">download\\nexpansions</string>
 
     <string name="random_match">随机匹配</string>
     <string name="server_info">服务器信息</string>

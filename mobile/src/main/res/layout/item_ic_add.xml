@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center|top">
+
+    <TextView
+        android:id="@+id/add_server"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/addserver"
+        android:gravity="center"
+        android:text="@string/action_add_server"
+        android:textSize="10sp"
+        android:textColor="@color/selector_text_color_white_gold"></TextView>
+</LinearLayout>

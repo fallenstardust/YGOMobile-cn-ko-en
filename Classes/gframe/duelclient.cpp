@@ -803,6 +803,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		}
 		mainGame->gMutex.lock();
 		mainGame->stHostPrepDuelist[pkt->pos]->setText(name);
+		mainGame->stHostPrepDuelist[pkt->pos]->setBackgroundColor(0x60045f6a);
 		mainGame->gMutex.unlock();
 		break;
 	}
@@ -817,7 +818,9 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::PLAYER_ENTER);
 			wchar_t* prename = (wchar_t*)mainGame->stHostPrepDuelist[pos]->getText();
 			mainGame->stHostPrepDuelist[state]->setText(prename);
+			mainGame->stHostPrepDuelist[state]->setBackgroundColor(0x60045f6a);
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+			mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 			if(pos == 0)
 				BufferIO::CopyWStr(prename, mainGame->dInfo.hostname, 20);
@@ -841,12 +844,14 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			}
 		} else if(state == PLAYERCHANGE_LEAVE) {
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+			mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 		} else if(state == PLAYERCHANGE_OBSERVE) {
 			watching++;
 			wchar_t watchbuf[32];
 			myswprintf(watchbuf, L"%ls%d", dataManager.GetSysString(1253), watching);
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
+            mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);
 			mainGame->stHostPrepOB->setText(watchbuf);
 		}
@@ -1258,10 +1263,14 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->dField.conti_act = true;
 			} else {
 				pcard->cmdFlag |= COMMAND_ACTIVATE;
-				if (pcard->location == LOCATION_GRAVE)
-					mainGame->dField.grave_act = true;
-				else if (pcard->location == LOCATION_REMOVED)
-					mainGame->dField.remove_act = true;
+				if(pcard->controler == 0) {
+					if(pcard->location == LOCATION_GRAVE)
+						mainGame->dField.grave_act = true;
+					else if(pcard->location == LOCATION_REMOVED)
+						mainGame->dField.remove_act = true;
+					else if(pcard->location == LOCATION_EXTRA)
+						mainGame->dField.extra_act = true;
+				}
 			}
 		}
 		mainGame->dField.attackable_cards.clear();
@@ -1388,10 +1397,14 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 				mainGame->dField.conti_act = true;
 			} else {
 				pcard->cmdFlag |= COMMAND_ACTIVATE;
-				if (pcard->location == LOCATION_GRAVE)
-					mainGame->dField.grave_act = true;
-				else if (pcard->location == LOCATION_REMOVED)
-					mainGame->dField.remove_act = true;
+				if(pcard->controler == 0) {
+					if(pcard->location == LOCATION_GRAVE)
+						mainGame->dField.grave_act = true;
+					else if(pcard->location == LOCATION_REMOVED)
+						mainGame->dField.remove_act = true;
+					else if(pcard->location == LOCATION_EXTRA)
+						mainGame->dField.extra_act = true;
+				}
 			}
 		}
 		if(BufferIO::ReadInt8(pbuf)) {
