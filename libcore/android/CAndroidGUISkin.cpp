@@ -112,7 +112,7 @@ CAndroidGUISkin::CAndroidGUISkin(EGUI_SKIN_TYPE type,
         		Colors[EGDC_WINDOW_SYMBOL] = 0xff000000;//打勾的颜色
         		Colors[EGDC_ICON] = 0xffff0000;
         		Colors[EGDC_ICON_HIGH_LIGHT] = 0xffff0000;
-        		Colors[EGDC_GRAY_WINDOW_SYMBOL] = 0xffD0D0D0;//不可动的打勾（对手准备.）
+        		Colors[EGDC_GRAY_WINDOW_SYMBOL] = 0xff000000;//不可动的打勾（对手准备.）
         		Colors[EGDC_EDITABLE] = 0xFFF7F7F7;//输入框可用时的颜色
         		Colors[EGDC_GRAY_EDITABLE] = 0xffA9B9C9;//输入框不可用时的颜色
         		Colors[EGDC_FOCUSED_EDITABLE] = 0xFFCECDCD;//输入状态的框色。。。

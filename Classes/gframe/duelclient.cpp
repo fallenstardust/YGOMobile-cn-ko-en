@@ -803,7 +803,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 		}
 		mainGame->gMutex.lock();
 		mainGame->stHostPrepDuelist[pkt->pos]->setText(name);
-		mainGame->stHostPrepDuelist[pkt->pos]->setBackgroundColor(0x60045f6a);
+		mainGame->stHostPrepDuelist[pkt->pos]->setBackgroundColor(0x60C0C0C0);//todo ygocolor 房间中有玩家的底色
 		mainGame->gMutex.unlock();
 		break;
 	}
@@ -818,7 +818,7 @@ void DuelClient::HandleSTOCPacketLan(char* data, unsigned int len) {
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::PLAYER_ENTER);
 			wchar_t* prename = (wchar_t*)mainGame->stHostPrepDuelist[pos]->getText();
 			mainGame->stHostPrepDuelist[state]->setText(prename);
-			mainGame->stHostPrepDuelist[state]->setBackgroundColor(0x60045f6a);
+			mainGame->stHostPrepDuelist[state]->setBackgroundColor(0x60C0C0C0);//todo ygocolor 房间中有玩家的底色
 			mainGame->stHostPrepDuelist[pos]->setText(L"");
 			mainGame->stHostPrepDuelist[pos]->setDrawBackground(false);
 			mainGame->chkHostPrepReady[pos]->setChecked(false);

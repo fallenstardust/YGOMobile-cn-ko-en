@@ -34,6 +34,7 @@ import com.ourygo.ygomobile.util.StatUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -62,6 +63,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
     private static final int ID_MODE = 1;
     private static final int ID_HORIZONTAL = 2;
     private static final int ID_RE_RES = 3;
+    private static final int ID_DECK_EDIT_TYPE = 4;
 
     private static final int GROUP_SCALE = 0;
     private static final int GROUP_MODE = 1;
@@ -174,6 +176,22 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         settingItem.setNext(false);
         settingItemList.add(settingItem);
 
+        settingItem = SettingItem.toSettingItem(ID_DECK_EDIT_TYPE, "卡组编辑跳转", SettingItem.ITEM_SAME, GROUP_HORIZONTAL);
+        String type="";
+        switch (SharedPreferenceUtil.getDeckEditType()){
+            case SharedPreferenceUtil.DECK_EDIT_TYPE_LOCAL:
+                type="横屏YGO";
+                break;
+            case SharedPreferenceUtil.DECK_EDIT_TYPE_DECK_MANAGEMENT:
+                type="卡组管理";
+                break;
+            case SharedPreferenceUtil.DECK_EDIT_TYPE_OURYGO_EZ:
+                type="OURYGO EZ";
+                break;
+        }
+        settingItem.setMessage(type);
+        settingItemList.add(settingItem);
+
         settingItem = SettingItem.toSettingItem(ID_SCALE, null, SettingItem.ITEM_IMAGE_SELECT, GROUP_SCALE, "比例");
         OYSelect oySelect = new OYSelect();
         List<ImageSelectItem> imageSelectItemList = new ArrayList<>();
@@ -249,6 +267,9 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
                 case ID_RE_RES:
                     updateImages();
                     break;
+                case ID_DECK_EDIT_TYPE:
+                   setDeckEditType();
+                    break;
             }
         });
 
@@ -278,6 +299,19 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         });
 
 
+    }
+
+    private void setDeckEditType() {
+        List<String> data =new ArrayList<>();
+        data.add("横屏YGO");
+        data.add("卡组管理");
+        data.add("OURYGO EZ");
+        dialogUtils.dialogRadio("瀑布屏高度", data, SharedPreferenceUtil.getDeckEditType()).setOnRadioListener((data1, position) -> {
+            SharedPreferenceUtil.setDeckEditType(position);
+            settingAdp.getItem2Id(ID_DECK_EDIT_TYPE).setMessage(data1.get(position));
+            settingAdp.notifyItemChanged(settingAdp.getItem2IdPosition(ID_DECK_EDIT_TYPE));
+            dialogUtils.dis();
+        });
     }
 
     @Override

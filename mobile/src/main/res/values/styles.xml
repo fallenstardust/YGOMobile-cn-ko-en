@@ -42,7 +42,7 @@
     <style name="AppTheme.Game" parent="android:Theme.Holo.NoActionBar.Fullscreen">
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowDisablePreview">true</item>
-        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowBackground">@color/black</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">

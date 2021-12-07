@@ -8,15 +8,17 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 
 import android.content.SharedPreferences;
-import android.text.TextUtils;
-
-import com.ourygo.ygomobile.OYApplication;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 
 public class SharedPreferenceUtil {
+
+    public static final int DECK_EDIT_TYPE_LOCAL = 0;
+    public static final int DECK_EDIT_TYPE_DECK_MANAGEMENT = 1;
+    public static final int DECK_EDIT_TYPE_OURYGO_EZ = 2;
+
 
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
@@ -109,10 +111,10 @@ public class SharedPreferenceUtil {
     }
 
     public static int getScreenPaddingPosition() {
-        String value=AppsSettings.get().getScreenPadding()+"";
-        String[] valueList=OYUtil.getArray(R.array.screen_top_bottom_value);
-        for (int i=0;i<valueList.length;i++) {
-            String s=valueList[i];
+        String value = AppsSettings.get().getScreenPadding() + "";
+        String[] valueList = OYUtil.getArray(R.array.screen_top_bottom_value);
+        for (int i = 0; i < valueList.length; i++) {
+            String s = valueList[i];
             if (s.equals(value))
                 return i;
         }
@@ -120,15 +122,16 @@ public class SharedPreferenceUtil {
     }
 
     public static int getOpenglVersionPosition() {
-        String value=AppsSettings.get().getOpenglVersion()+"";
-        String[] valueList=OYUtil.getArray(R.array.opengl_version_value);
-        for (int i=0;i<valueList.length;i++) {
-            String s=valueList[i];
+        String value = AppsSettings.get().getOpenglVersion() + "";
+        String[] valueList = OYUtil.getArray(R.array.opengl_version_value);
+        for (int i = 0; i < valueList.length; i++) {
+            String s = valueList[i];
             if (s.equals(value))
                 return i;
         }
         return -1;
     }
+
     public static boolean setImmersiveMode(boolean isImmeriveMode) {
         return AppsSettings.get().getSharedPreferences().edit().putBoolean(PREF_IMMERSIVE_MODE, isImmeriveMode).commit();
     }
@@ -141,33 +144,44 @@ public class SharedPreferenceUtil {
         return AppsSettings.get().getSharedPreferences().edit().putBoolean(PREF_LOCK_SCREEN, isHorizontal).commit();
     }
 
-    public static boolean isShowEz(){
-        return getShareKaiguan().getBoolean("isShowEz",true);
-    }
-    public static boolean setIsShowEz(boolean isShow){
-        return getShareKaiguan().edit().putBoolean("isShowEz",isShow).commit();
+    public static boolean isShowEz() {
+        return getShareKaiguan().getBoolean("isShowEz", true);
     }
 
-    public static boolean isShowVisitDeck(){
-        return getShareKaiguan().getBoolean("isShowVisitDeck",true);
-    }
-    public static boolean setShowVisitDeck(boolean isShow){
-        return getShareKaiguan().edit().putBoolean("isShowVisitDeck",isShow).commit();
+    public static boolean setIsShowEz(boolean isShow) {
+        return getShareKaiguan().edit().putBoolean("isShowEz", isShow).commit();
     }
 
-    public static boolean isFristStart(){
-        return getShareRecord().getBoolean("isFirstStart",true);
+    public static boolean isShowVisitDeck() {
+        return getShareKaiguan().getBoolean("isShowVisitDeck", true);
     }
 
-    public static boolean setFirstStart(boolean isFirstStart){
-        return getShareRecord().edit().putBoolean("isFirstStart",isFirstStart).commit();
+    public static boolean setShowVisitDeck(boolean isShow) {
+        return getShareKaiguan().edit().putBoolean("isShowVisitDeck", isShow).commit();
     }
 
-    public static int getNextAifadianNum(){
-        return getShareRecord().getInt("nextAifadianNum",(10+ (int) (Math.random() * 20)));
+    public static boolean isFristStart() {
+        return getShareRecord().getBoolean("isFirstStart", true);
     }
-    public static void setNextAifadianNum(int num){
-        getShareRecord().edit().putInt("nextAifadianNum",num).apply();
+
+    public static boolean setFirstStart(boolean isFirstStart) {
+        return getShareRecord().edit().putBoolean("isFirstStart", isFirstStart).commit();
+    }
+
+    public static int getNextAifadianNum() {
+        return getShareRecord().getInt("nextAifadianNum", (10 + (int) (Math.random() * 20)));
+    }
+
+    public static void setNextAifadianNum(int num) {
+        getShareRecord().edit().putInt("nextAifadianNum", num).apply();
+    }
+
+    public static int getDeckEditType() {
+        return getShareType().getInt("deckEditType", DECK_EDIT_TYPE_LOCAL);
+    }
+
+    public static void setDeckEditType(int type) {
+        getShareType().edit().putInt("deckEditType", type).apply();
     }
 
 }

@@ -27,12 +27,15 @@ import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.bean.McNews;
 import com.ourygo.ygomobile.bean.YGOServer;
+import com.ourygo.ygomobile.ui.activity.DeckManagementActivity;
 import com.ourygo.ygomobile.ui.activity.NewServerActivity;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.Record;
+import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
@@ -111,7 +114,20 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 IntentUtil.startYGOEndgame(getActivity());
                 break;
             case R.id.cv_deck:
-                IntentUtil.startYGODeck(getActivity(), "fff");
+                switch (SharedPreferenceUtil.getDeckEditType()) {
+                    case SharedPreferenceUtil.DECK_EDIT_TYPE_LOCAL:
+                        IntentUtil.startYGODeck(getActivity(), "");
+                        break;
+                    case SharedPreferenceUtil.DECK_EDIT_TYPE_DECK_MANAGEMENT:
+                        startActivity(new Intent(getActivity(), DeckManagementActivity.class));
+                        break;
+                    case SharedPreferenceUtil.DECK_EDIT_TYPE_OURYGO_EZ:
+                        if (OYUtil.isApp(Record.PACKAGE_NAME_EZ))
+                           startActivity(IntentUtil.getAppIntent(getActivity(), Record.PACKAGE_NAME_EZ));
+                        else
+                            startActivity(IntentUtil.getWebIntent(getActivity(), "http://ez.ourygo.top/"));
+                        break;
+                }
                 break;
             case R.id.cv_loacl_duel:
 //                IntentUtil.startYGOGame(getActivity());
@@ -120,11 +136,10 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 OYDialogUtil.dialogJoinRoom(getActivity(), null);
                 break;
             case R.id.cv_replay:
-                IntentUtil.startYGOReplay(getActivity(), "233.yrp");
+                IntentUtil.startYGOReplay(getActivity(), "");
                 break;
         }
     }
-
 
 
     private void initView(View v) {
@@ -333,7 +348,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 YGOServer serverInfo = (YGOServer) adapter.getItem(position);
                 switch (serverInfo.getOpponentType()) {
                     case YGOServer.OPPONENT_TYPE_AI:
-                        OYDialogUtil.dialogAiList(getActivity(),serverInfo);
+                        OYDialogUtil.dialogAiList(getActivity(), serverInfo);
                         break;
                     default:
                         joinRoom(serverInfo, false);

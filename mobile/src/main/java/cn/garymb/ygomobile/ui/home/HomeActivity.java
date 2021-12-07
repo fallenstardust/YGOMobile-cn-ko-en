@@ -336,9 +336,8 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
                 builder.show();
             }
             break;
-            case R.id.action_add_server:
-                mServerListManager.addServer();
-                break;
+//            case R.id.action_add_server:
+//                mServerListManager.addServer();break;
             case R.id.action_card_search:
 //                startActivity(new Intent(this, CardSearchAcitivity.class));
                 break;
@@ -495,7 +494,7 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
         addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.card_search, R.drawable.search);
         addMenuButton(mMenuIds, menu, R.id.action_deck_manager, R.string.deck_manager, R.drawable.deck);
 
-        addMenuButton(mMenuIds, menu, R.id.action_add_server, R.string.action_add_server, R.drawable.addsever);
+//        addMenuButton(mMenuIds, menu, R.id.action_add_server, R.string.action_add_server, R.drawable.addsever);
         addMenuButton(mMenuIds, menu, R.id.action_game, R.string.action_game, R.drawable.start);
         addMenuButton(mMenuIds, menu, R.id.action_help, R.string.help, R.drawable.help);
 

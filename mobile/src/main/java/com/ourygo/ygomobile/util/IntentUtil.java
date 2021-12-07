@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.ourygo.ygomobile.ui.activity.WebActivity;
 
@@ -84,27 +83,42 @@ public class IntentUtil {
     }
 
     public static void startYGOReplay(Activity activity, String replayName) {
-		if (TextUtils.isEmpty(replayName))
-			YGOStarter.startGame(activity, null, "-k","--r");
-		else
-			YGOStarter.startGame(activity, null,  "-r", replayName);
+        startYGOReplay(activity, replayName, false);
     }
 
-	public static void startYGOGame(Activity activity){
-		YGOStarter.startGame(activity, null);
-	}
+    public static void startYGOReplay(Activity activity, String replayName, boolean isKeep) {
+        if (TextUtils.isEmpty(replayName)) {
+            if (isKeep)
+                YGOStarter.startGame(activity, null, "-k", "-r");
+            else
+                YGOStarter.startGame(activity, null, "-r");
+        } else {
+            YGOStarter.startGame(activity, null, "-r", replayName);
+        }
+    }
+
+    public static void startYGOGame(Activity activity) {
+        YGOStarter.startGame(activity, null);
+    }
 
     public static void startYGOEndgame(Activity activity) {
         startYGOEndgame(activity, null);
     }
 
     public static void startYGOEndgame(Activity activity, String endgameName) {
-		if (TextUtils.isEmpty(endgameName))
-			YGOStarter.startGame(activity, null, "-k", "-s");
-		else
-			YGOStarter.startGame(activity, null, "-s", endgameName);
+        startYGOEndgame(activity, endgameName, false);
     }
 
+    public static void startYGOEndgame(Activity activity, String endgameName, boolean isKeep) {
+        if (TextUtils.isEmpty(endgameName)) {
+            if (isKeep)
+                YGOStarter.startGame(activity, null, "-k", "-s");
+            else
+                YGOStarter.startGame(activity, null, "-s");
+        } else {
+            YGOStarter.startGame(activity, null, "-s", endgameName);
+        }
+    }
 
     public static void startYGODeck(Activity activity) {
         startYGODeck(activity, null);
@@ -112,9 +126,9 @@ public class IntentUtil {
 
     public static void startYGODeck(Activity activity, String deckName) {
         if (TextUtils.isEmpty(deckName))
-            YGOStarter.startGame(activity, null, "-k","-d");
+            YGOStarter.startGame(activity, null, "-k", "-d");
         else
-            YGOStarter.startGame(activity, null,  "-d", deckName);
+            YGOStarter.startGame(activity, null, "-d", deckName);
     }
 
     public static Intent getWebIntent(Context context, String url) {
