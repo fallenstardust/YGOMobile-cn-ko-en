@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := lua5.4
+LOCAL_MODULE    := lua5.3
 LOCAL_SRC_FILES := lapi.c \
                    lauxlib.c \
                    lbaselib.c \
