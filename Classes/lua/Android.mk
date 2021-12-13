@@ -39,7 +39,7 @@ LOCAL_SRC_FILES := lapi.c \
                    lutf8lib.c \
                    lvm.c \
                    lzio.c
-LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -DLUA_COMPAT_5_2 -D"getlocaledecpoint()='.'" -Wno-psabi -fexceptions
+LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -D"getlocaledecpoint()='.'" -Wno-psabi -fexceptions
 #LOCAL_CPP_EXTENSION := .c
 include $(BUILD_STATIC_LIBRARY)
 
