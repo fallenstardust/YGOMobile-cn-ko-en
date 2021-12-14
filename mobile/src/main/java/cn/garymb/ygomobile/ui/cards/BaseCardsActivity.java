@@ -22,6 +22,9 @@ import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
+import com.chad.library.adapter.base.listener.OnItemLongClickListener;
 
 import java.util.List;
 
@@ -157,22 +160,30 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
     }
 
     protected void setListeners() {
-        mListView.addOnItemTouchListener(new RecyclerViewItemListener(mListView, new RecyclerViewItemListener.OnItemListener() {
-            @Override
-            public void onItemClick(View view, int pos) {
-                onCardClick(view, mCardListAdapter.getItem(pos), pos);
-            }
+        mCardListAdapter.setOnItemClickListener((adapter, view, position) -> {
+            onCardClick(view, mCardListAdapter.getItem(position), position);
+        });
+        mCardListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+            onCardLongClick(view, mCardListAdapter.getItem(position), position);
+            return true;
+        });
 
-            @Override
-            public void onItemLongClick(View view, int pos) {
-                onCardLongClick(view, mCardListAdapter.getItem(pos), pos);
-            }
-
-            @Override
-            public void onItemDoubleClick(View view, int pos) {
-
-            }
-        }));
+//        mListView.addOnItemTouchListener(new RecyclerViewItemListener(mListView, new RecyclerViewItemListener.OnItemListener() {
+//            @Override
+//            public void onItemClick(View view, int pos) {
+//                onCardClick(view, mCardListAdapter.getItem(pos), pos);
+//            }
+//
+//            @Override
+//            public void onItemLongClick(View view, int pos) {
+//                onCardLongClick(view, mCardListAdapter.getItem(pos), pos);
+//            }
+//
+//            @Override
+//            public void onItemDoubleClick(View view, int pos) {
+//
+//            }
+//        }));
         mListView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
