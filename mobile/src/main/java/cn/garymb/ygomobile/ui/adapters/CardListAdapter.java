@@ -224,14 +224,14 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
            holder.getView(R.id.btn_add_main).setOnClickListener((v) -> {
                 mShowMenuView = holder.itemView;
                 EventBus.getDefault().post(new CardInfoEvent(position, true));
-               ((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
+               //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
             });
 //        }
 //        if (holder.btnSide != null) {
             holder.getView(R.id.btn_add_side).setOnClickListener((v) -> {
                 mShowMenuView = holder.itemView;
                 EventBus.getDefault().post(new CardInfoEvent(position, false));
-                ((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
+                //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
             });
 //        }
         ((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).setSwipeEnable(mEnableSwipe);
