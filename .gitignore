@@ -60,3 +60,6 @@ output.json
 /libygo/.cxx
 /mobile/assets/data/single
 /mobile/assets/data/pack
+
+/mobile/assets/data/sound/BGM
+/mobile/assets/data/sound/chants
