@@ -28,6 +28,8 @@ interpreter::interpreter(duel* pd): coroutines(256) {
 	lua_setglobal(lua_state, "os");
 	lua_pushnil(lua_state);
 	lua_setglobal(lua_state, "package");
+	lua_pushnil(lua_state);
+	lua_setglobal(lua_state, "debug");
 	luaL_getsubtable(lua_state, LUA_REGISTRYINDEX, "_LOADED");
 	lua_pushnil(lua_state);
 	lua_setfield(lua_state, -2, "io");
@@ -35,6 +37,8 @@ interpreter::interpreter(duel* pd): coroutines(256) {
 	lua_setfield(lua_state, -2, "os");
 	lua_pushnil(lua_state);
 	lua_setfield(lua_state, -2, "package");
+	lua_pushnil(lua_state);
+	lua_setfield(lua_state, -2, "debug");
 	lua_pop(lua_state, 1);
 	//open all libs
 	scriptlib::open_cardlib(lua_state);
@@ -575,12 +579,23 @@ int32 interpreter::call_coroutine(int32 f, uint32 param_count, uint32 * yield_va
 	push_param(rthread, true);
 	lua_State* prev_state = current_state;
 	current_state = rthread;
+#if (LUA_VERSION_NUM >= 504)
 	int32 nresults;
 	int32 result = lua_resume(rthread, prev_state, param_count, &nresults);
+#else
+	int32 result = lua_resume(rthread, 0, param_count);
+	int32 nresults = lua_gettop(rthread);
+#endif
 	if (result == 0) {
 		coroutines.erase(f);
-		if(yield_value)
-			*yield_value = lua_isboolean(rthread, -1) ? lua_toboolean(rthread, -1) : (uint32)lua_tointeger(rthread, -1);
+		if(yield_value) {
+			if(nresults == 0)
+				*yield_value = 0;
+			else if(lua_isboolean(rthread, -1))
+				*yield_value = lua_toboolean(rthread, -1);
+			else
+				*yield_value = (uint32)lua_tointeger(rthread, -1);
+		}
 		current_state = lua_state;
 		call_depth--;
 		if(call_depth == 0) {

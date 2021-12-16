@@ -42,7 +42,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         super(context,R.layout.item_search_card_swipe);
         this.imageLoader = imageLoader;
         mStringManager = DataManager.get().getStringManager();
-
     }
 
     @Override
@@ -225,16 +224,17 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
            holder.getView(R.id.btn_add_main).setOnClickListener((v) -> {
                 mShowMenuView = holder.itemView;
                 EventBus.getDefault().post(new CardInfoEvent(position, true));
-//                holder.mMenuLayout.smoothCloseMenu();
+               //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
             });
 //        }
 //        if (holder.btnSide != null) {
             holder.getView(R.id.btn_add_side).setOnClickListener((v) -> {
                 mShowMenuView = holder.itemView;
                 EventBus.getDefault().post(new CardInfoEvent(position, false));
-//                holder.mMenuLayout.smoothCloseMenu();
+                //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
             });
 //        }
+        ((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).setSwipeEnable(mEnableSwipe);
     }
 
     private View mShowMenuView;
