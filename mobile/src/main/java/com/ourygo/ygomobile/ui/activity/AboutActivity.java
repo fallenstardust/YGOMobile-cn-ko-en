@@ -152,6 +152,8 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.0.3","更新ygo内核\n" +
+               "更新卡包22PP+SSB1+VJ"));
        updateList.add(UpdateLog.toUpdateLog("1.0.2", "更新ygo内核\n" +
                "更新卡包SD43\n" +
                "更新2021.1 OCG禁卡表"));

@@ -43,8 +43,22 @@ public class PaletteUtil {
                 Palette.Swatch s4 = palette.getMutedSwatch();           //获取柔和的色调
                 Palette.Swatch s5 = palette.getDarkMutedSwatch();      //获取柔和的黑
                 Palette.Swatch s6 = palette.getLightMutedSwatch();    //获取柔和的亮
-                if (s1 != null) {
-                    view.setBackgroundColor(s1.getRgb());
+                Palette.Swatch ss=s1;
+                if(ss==null)
+                    ss=s;
+                if(ss==null)
+                    ss=s2;
+                if(ss==null)
+                    ss=s3;
+                if(ss==null)
+                    ss=s4;
+                if(ss==null)
+                    ss=s5;
+
+                if(ss==null)
+                    ss=s6;
+                if (ss != null) {
+                    view.setBackgroundColor(ss.getRgb());
                 }
             }
         });
