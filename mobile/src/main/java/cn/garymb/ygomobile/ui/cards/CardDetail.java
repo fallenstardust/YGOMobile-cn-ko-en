@@ -69,6 +69,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView attrView;
     private final View monsterLayout;
     private final View close;
+    private final View faq;
     private final View addMain;
     private final View addSide;
     private final View linkArrow;
@@ -107,7 +108,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     ll_bar.setVisibility(View.GONE);
                     imageLoader.bindImage(photoView, msg.arg1, ImageLoader.Type.origin);
                     imageLoader.bindImage(cardImage, msg.arg1, ImageLoader.Type.middle);
-                    if(mListener != null){
+                    if (mListener != null) {
                         mListener.onImageUpdate(mCardInfo);
                     }
                     break;
@@ -141,7 +142,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         level = findViewById(R.id.card_level);
         linkArrow = findViewById(R.id.detail_link_arrows);
         type = findViewById(R.id.card_type);
-        View faq = findViewById(R.id.btn_faq);
+        faq = findViewById(R.id.btn_faq);
         cardAtk = findViewById(R.id.card_atk);
         cardDef = findViewById(R.id.card_def);
         atkdefView = findViewById(R.id.layout_atkdef2);
@@ -207,7 +208,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public void doMyFavorites(Card cardInfo) {
         boolean ret = CardFavorites.get().toggle(cardInfo.Code);
         mImageFav.setSelected(ret);
-        if(mCallBack != null){
+        if (mCallBack != null) {
             mCallBack.onFavoriteChange(cardInfo, ret);
         }
     }
@@ -273,7 +274,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
-        if(mShowAdd) {
+        if (cardInfo.isType(CardType.Token)) {
+            faq.setVisibility(View.INVISIBLE);
+        } else {
+            faq.setVisibility(View.VISIBLE);
+        }
+        if (mShowAdd) {
             if (cardInfo.isType(CardType.Token)) {
                 addSide.setVisibility(View.INVISIBLE);
                 addMain.setVisibility(View.INVISIBLE);
@@ -435,7 +441,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         File imgFile = new File(AppsSettings.get().getCardImagePath(code));
         final File tmp = new File(imgFile.getAbsolutePath() + ".tmp");
         if (tmp.exists()) {
-            if(force){
+            if (force) {
                 //强制下载，就删除tmp,重新下载
                 FileUtils.deleteFile(tmp);
                 //删除原来卡图
