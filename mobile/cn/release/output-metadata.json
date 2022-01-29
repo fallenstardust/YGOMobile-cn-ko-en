@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 10,
-      "versionName": "1.0",
-      "outputFile": "YGOMobile-cnRelease1.0.apk"
+      "versionCode": 13,
+      "versionName": "1.1.0",
+      "outputFile": "YGOMobile_OY_1.1.0.apk"
     }
   ],
   "elementType": "File"

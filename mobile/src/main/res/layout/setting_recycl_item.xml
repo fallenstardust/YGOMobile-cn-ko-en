@@ -14,7 +14,8 @@
         android:layout_marginTop="20dp"
         android:text="已安装"
         android:textColor="@color/grayDark2"
-        android:textSize="12sp" />
+        android:textSize="@dimen/setting_item_type_size" />
+
     <ProgressBar
         android:id="@+id/pb_loading"
         android:layout_marginTop="2dp"
@@ -22,7 +23,7 @@
         android:layout_toRightOf="@id/tv_type_name"
         android:layout_alignTop="@id/tv_type_name"
         android:layout_width="13dp"
-        android:layout_height="13dp"/>
+        android:layout_height="13dp" />
 
     <LinearLayout
         android:id="@+id/ll_item"
@@ -36,8 +37,8 @@
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/iv_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="@dimen/setting_item_icon_size"
+            android:layout_height="@dimen/setting_item_icon_size"
             android:layout_centerVertical="true"
             android:layout_marginLeft="15dp"
             android:src="@drawable/ic_fail" />

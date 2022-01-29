@@ -10,7 +10,7 @@
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="120dp"
         android:clickable="true"
         android:foreground="?android:attr/selectableItemBackground"
         android:orientation="vertical"
@@ -20,18 +20,33 @@
         app:cardElevation="0dp"
         app:cardUseCompatPadding="false">
 
-
-        <com.stx.xhb.androidx.XBanner
-            android:id="@+id/xb_banner"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="120dp"
-            app:AutoPlayTime="4500"
-            app:pageChangeDuration="800"
-            app:pointsVisibility="true"
-            app:pointsPosition="RIGHT"
-            app:tipTextSize="12sp"
-            app:clipChildrenTopBottomMargin="5dp"
-            app:isHandLoop="true" />
+            android:layout_height="match_parent">
+
+
+            <com.stx.xhb.androidx.XBanner
+                android:id="@+id/xb_banner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:AutoPlayTime="4500"
+                app:pageChangeDuration="800"
+                app:pointsVisibility="true"
+                app:pointsPosition="RIGHT"
+                app:tipTextSize="12sp"
+                app:clipChildrenTopBottomMargin="5dp"
+                app:isHandLoop="true" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:textSize="15sp"
+                android:id="@+id/tv_banner_loading"
+                android:gravity="center"
+                android:text="加载失败，点击重试"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+
+        </RelativeLayout>
 
     </androidx.cardview.widget.CardView>
 
@@ -97,7 +112,7 @@
             android:id="@+id/cv_join_room"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="130dp"
+            android:layout_height="@dimen/main_card_height"
             app:cardCornerRadius="@dimen/dialog_corner_radius"
             app:elevation="0dp"
             app:cardElevation="0dp"
@@ -127,7 +142,7 @@
                     android:paddingTop="13dp"
                     android:text="加入房间"
                     android:textColor="@color/blackLight2"
-                    android:textSize="15sp"
+                    android:textSize="@dimen/main_card_key_text_size"
                     android:textStyle="bold" />
             </RelativeLayout>
 
@@ -178,7 +193,7 @@
                             android:paddingTop="13dp"
                             android:text="卡组编辑"
                             android:textColor="@color/blackLight"
-                            android:textSize="13sp"
+                            android:textSize="@dimen/main_card_text_size"
                             android:textStyle="bold" />
 
                     </RelativeLayout>
@@ -228,7 +243,7 @@
                             android:paddingTop="13dp"
                             android:text="AI/残局"
                             android:textColor="@color/blackLight"
-                            android:textSize="13sp"
+                            android:textSize="@dimen/main_card_text_size"
                             android:textStyle="bold" />
                     </RelativeLayout>
 
@@ -304,7 +319,7 @@
                             android:paddingTop="13dp"
                             android:text="决斗录像"
                             android:textColor="@color/blackLight"
-                            android:textSize="13sp"
+                            android:textSize="@dimen/main_card_text_size"
                             android:textStyle="bold" />
                     </RelativeLayout>
 

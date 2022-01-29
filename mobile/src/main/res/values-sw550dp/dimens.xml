@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<dimen name="corner_radius">7dp</dimen>
+
+
+	<dimen name="setting_item_height">52dp</dimen>
+	<dimen name="setting_item_name_size">18sp</dimen>
+	<dimen name="setting_item_message_size">16sp</dimen>
+	<dimen name="frame_padding">8dp</dimen>
+	<dimen name="frame_line_width">2dp</dimen>
+
+	<dimen name="main_card_height">180dp</dimen>
+
+	<dimen name="setting_header_avatar_size">58dp</dimen>
+	<dimen name="setting_header_name_size">20sp</dimen>
+	<dimen name="setting_item_guide_size">26dp</dimen>
+	<dimen name="setting_header_avatar_margin">18dp</dimen>
+	<dimen name="setting_item_icon_size">30dp</dimen>
+	<dimen name="banner_time_size">13sp</dimen>
+	<dimen name="banner_title_size">16sp</dimen>
+	<dimen name="main_card_key_text_size">18sp</dimen>
+	<dimen name="main_card_text_size">15sp</dimen>
+	<dimen name="ygo_server_height">130dp</dimen>
+	<dimen name="ygo_server_name_size">18sp</dimen>
+	<dimen name="ygo_server_ip_size">13sp</dimen>
+	<dimen name="ygo_server_create_size">13sp</dimen>
+	<dimen name="ygo_server_mode_icon_size">18dp</dimen>
+	<dimen name="ygo_server_mode_text_size">12sp</dimen>
+	<dimen name="ygo_server_padding">10dp</dimen>
+	<dimen name="ygo_server_vertical_width">250dp</dimen>
+
+	<dimen name="tab_normal_text_size_m">16sp</dimen>
+	<dimen name="tab_select_text_size_m">26sp</dimen>
+
+	<dimen name="tab_normal_text_size_l">22sp</dimen>
+	<dimen name="tab_select_text_size_l">30sp</dimen>
+	<dimen name="mycard_rank_cpv_size">220dp</dimen>
+	<dimen name="mycard_rank_cpv_text_size">33sp</dimen>
+	<dimen name="mycard_rank_cpv_text_s_size">18sp</dimen>
+	<dimen name="mycard_rank_cpv_text_s_top_margin">62dp</dimen>
+	<dimen name="mycard_rank_cpv_width">22dp</dimen>
+
+	<dimen name="mycard_rank_icon_size">24dp</dimen>
+	<dimen name="mycard_rank_text_s_size">18sp</dimen>
+	<dimen name="mycard_rank_text_size">20sp</dimen>
+	<dimen name="mycard_win_icon_size">22dp</dimen>
+	<dimen name="mycard_lose_icon_size">22dp</dimen>
+	<dimen name="mycard_win_text_size">18sp</dimen>
+	<dimen name="mycard_lose_text_size">18sp</dimen>
+	<dimen name="ui_setting_bg_width">360dp</dimen>
+	<dimen name="ui_setting_bg_height">180dp</dimen>
+    <dimen name="set_bg_image_width">500dp</dimen>
+	<dimen name="set_bg_image_height">250dp</dimen>
+    <dimen name="set_bg_cb_text_size">16sp</dimen>
+	<dimen name="image_select_image_width">230dp</dimen>
+	<dimen name="image_select_image_height">115dp</dimen>
+	<dimen name="ui_setting_avatar_image_size">120dp</dimen>
+	<dimen name="ui_setting_cover_image_width">132dp</dimen>
+	<dimen name="ui_setting_cover_image_height">190dp</dimen>
+	<dimen name="setting_item_type_size">14sp</dimen>
+
+
+</resources>

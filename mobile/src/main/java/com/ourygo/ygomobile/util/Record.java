@@ -3,6 +3,8 @@ package com.ourygo.ygomobile.util;
 import android.content.Context;
 import android.os.Environment;
 
+import com.ourygo.ygomobile.OYApplication;
+
 import java.io.File;
 
 public class Record {
@@ -60,6 +62,14 @@ public class Record {
     public static String getImagePath(Context context) {
 //        return context.getExternalFilesDir("image").getAbsolutePath();
         return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),"YGOMobile OY").getAbsolutePath();
+    }
+
+    public static String getImageCachePath() {
+        return OYApplication.get().getExternalFilesDir("cache/image").getAbsolutePath();
+    }
+
+    public static String getCachePath() {
+        return OYApplication.get().getExternalFilesDir("cache").getAbsolutePath();
     }
 
 }

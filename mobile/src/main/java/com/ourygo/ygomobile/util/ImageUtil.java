@@ -2,21 +2,31 @@ package com.ourygo.ygomobile.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.text.TextUtils;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.signature.ObjectKey;
+import com.ourygo.ygomobile.base.listener.OnBlurImageListener;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.config.ISListConfig;
 import com.yuyh.library.imgsel.ui.ISListActivity;
 
+import java.io.File;
 import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.BitmapUtil;
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 /**
  * Create By feihua  On 2021/10/28
@@ -98,5 +108,43 @@ public class ImageUtil {
         }
     }
 
+
+    public static void showBlur(Context context, String uri, final ImageView im, String objectKey) {
+        if (!OYUtil.isContextExisted(context))
+            return;
+        Glide.with(context)
+                .load(uri)
+                .signature(new ObjectKey(objectKey))
+                .apply(RequestOptions.bitmapTransform(new BlurTransformation(50)))
+                .into(im);
+    }
+
+    public static void getBlurImage(Context context, String imagePath, OnBlurImageListener onBlurImageListener) {
+//        SimpleTarget<Bitmap> simpleTarget=
+        Glide.with(context)
+                .asBitmap()
+                .load(imagePath)
+                .apply(RequestOptions.bitmapTransform(new BlurTransformation(50)))
+                .into(new SimpleTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        String path = new File(Record.getImageCachePath(), System.currentTimeMillis() + ".jpg").getAbsolutePath();
+                        if (BitmapUtil.saveBitmap(resource, path, 100))
+                            onBlurImageListener.onBlurImage(path, null);
+                        else
+                            onBlurImageListener.onBlurImage(null, "保存失败");
+                    }
+                });
+//        new ViewTarget<ImageView, Drawable>(iv_bg1) {
+//                    @Override
+//                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+//                        Drawable current = resource.getCurrent();
+//                        //设置背景图
+//                        //image2.setBackground(current);
+//                        //设置图片
+//                        iv_bg1.setImageDrawable(current);
+//                    }
+//                });
+    }
 
 }

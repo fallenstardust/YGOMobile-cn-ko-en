@@ -1,6 +1,7 @@
 package com.ourygo.ygomobile.ui.fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,17 +26,22 @@ import cn.garymb.ygomobile.ui.mycard.bean.McUser;
  */
 public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
 
+    private static final String ARG_MC_WEB = "mcWeb";
+    private static final String ARG_MC = "mc";
+    private static final String ARG_CURRENT_FRAGMENT = "currentFragment";
     private MyCardWebFragment myCardWebFragment;
     private MyCardFragment myCardFragment;
     private FragmentManager fragmentManager;
     private int currentPosition;
     private Fragment currentFragment;
+    private Bundle currentSaveBundle;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.mycard_layout_fragment, container, false);
-        initView(view);
+        this.currentSaveBundle=savedInstanceState;
+        initView(view, savedInstanceState);
         return view;
     }
 
@@ -51,22 +57,43 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
         StatUtil.onPause(getClass().getName());
     }
 
-    private void initView(View view) {
-        myCardFragment = new MyCardFragment();
-        myCardWebFragment = new MyCardWebFragment();
+    private void initView(View view, Bundle saveBundle) {
         fragmentManager = getChildFragmentManager();
+        if (saveBundle != null) {
+            myCardFragment = (MyCardFragment) fragmentManager.getFragment(saveBundle, ARG_MC);
+            myCardWebFragment = (MyCardWebFragment) fragmentManager.getFragment(saveBundle, ARG_MC_WEB);
+            currentFragment=fragmentManager.getFragment(saveBundle,ARG_CURRENT_FRAGMENT);
+        }
+
+        if (myCardFragment == null)
+            myCardFragment = new MyCardFragment();
+        if (myCardWebFragment == null)
+            myCardWebFragment = new MyCardWebFragment();
+
 
         myCardFragment.onMcLayout(this);
         myCardWebFragment.onMcLayout(this);
 
     }
 
-
-    private void initData() {
-        initFragment();
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        if (myCardWebFragment != null && myCardWebFragment.isAdded())
+            fragmentManager.putFragment(outState, ARG_MC_WEB, myCardWebFragment);
+        if (myCardFragment != null && myCardFragment.isAdded())
+            fragmentManager.putFragment(outState, ARG_MC, myCardFragment);
+        if (currentFragment != null && currentFragment.isAdded())
+            fragmentManager.putFragment(outState, ARG_CURRENT_FRAGMENT, currentFragment);
+        super.onSaveInstanceState(outState);
     }
 
-    private void initFragment(){
+    private void initData() {
+        if (currentSaveBundle==null||currentFragment==null) {
+            setCurrentFragment(0);
+        }
+    }
+
+    private void initFragment() {
         currentFragment = myCardWebFragment;
         fragmentManager.beginTransaction().add(R.id.fm_mc, currentFragment).commit();
         McUserManagement.getInstance().addListener(this);
@@ -87,10 +114,17 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
                 break;
         }
         if (!f3.isAdded()) {
-            // 先判断是否被add过
-            fragmentTransaction.hide(currentFragment).add(R.id.fm_mc, f3).commitAllowingStateLoss(); // 隐藏当前的fragment，add下一个到Activity中
+            if (currentFragment == null)
+                initFragment();
+            else
+                // 先判断是否被add过
+                fragmentTransaction.hide(currentFragment).add(R.id.fm_mc, f3).commitAllowingStateLoss(); // 隐藏当前的fragment，add下一个到Activity中
         } else {
-            fragmentTransaction.hide(currentFragment).show(f3).commitAllowingStateLoss(); // 隐藏当前的fragment，显示下一个
+            Log.e("McLayoutFragment","切换"+(currentFragment!=null));
+            fragmentTransaction
+                    .hide(currentFragment)
+                    .show(f3)
+                    .commitAllowingStateLoss(); // 隐藏当前的fragment，显示下一个
         }
         currentFragment = f3;
 

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="20dp"
-        android:textSize="12sp"
+        android:textSize="@dimen/setting_item_type_size"
         android:text="已安装"
         android:textColor="@color/grayDark2" />
 

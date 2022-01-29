@@ -3,7 +3,9 @@ package com.ourygo.ygomobile.bean;
 import com.ourygo.ygomobile.util.Record;
 import com.stx.xhb.androidx.entity.BaseBannerInfo;
 
-public class McNews implements BaseBannerInfo {
+import java.io.Serializable;
+
+public class McNews implements BaseBannerInfo, Serializable {
 
     private String id;
     private String title;

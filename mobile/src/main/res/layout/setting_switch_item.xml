@@ -12,9 +12,9 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="20dp"
-        android:textSize="12sp"
         android:text="已安装"
-        android:textColor="@color/grayDark2" />
+        android:textColor="@color/grayDark2"
+        android:textSize="@dimen/setting_item_type_size" />
 
     <LinearLayout
         android:id="@+id/ll_item"

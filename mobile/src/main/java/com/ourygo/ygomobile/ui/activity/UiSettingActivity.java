@@ -3,30 +3,27 @@ package com.ourygo.ygomobile.ui.activity;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.ORI_PICS;
-import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.adapter.SettingRecyclerViewAdapter1;
 import com.ourygo.ygomobile.bean.ImageSelectItem;
 import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.SettingItem;
+import com.ourygo.ygomobile.util.ImageUtil;
+import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 import com.ourygo.ygomobile.util.StatUtil;
@@ -34,14 +31,12 @@ import com.ourygo.ygomobile.util.StatUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -161,7 +156,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         iv_bg2 = footView.findViewById(R.id.iv_bg2);
         iv_bg3 = footView.findViewById(R.id.iv_bg3);
 
-        dialogUtils=DialogUtils.getInstance(this);
+        dialogUtils = DialogUtils.getInstance(this);
 
         rv_list.setLayoutManager(new LinearLayoutManager(this));
 
@@ -177,16 +172,16 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         settingItemList.add(settingItem);
 
         settingItem = SettingItem.toSettingItem(ID_DECK_EDIT_TYPE, "卡组编辑跳转", SettingItem.ITEM_SAME, GROUP_HORIZONTAL);
-        String type="";
-        switch (SharedPreferenceUtil.getDeckEditType()){
+        String type = "";
+        switch (SharedPreferenceUtil.getDeckEditType()) {
             case SharedPreferenceUtil.DECK_EDIT_TYPE_LOCAL:
-                type="横屏YGO";
+                type = "横屏YGO";
                 break;
             case SharedPreferenceUtil.DECK_EDIT_TYPE_DECK_MANAGEMENT:
-                type="卡组管理";
+                type = "卡组管理";
                 break;
             case SharedPreferenceUtil.DECK_EDIT_TYPE_OURYGO_EZ:
-                type="OURYGO EZ";
+                type = "OURYGO EZ";
                 break;
         }
         settingItem.setMessage(type);
@@ -263,12 +258,12 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         iv_bg3.setOnClickListener(this);
 
         settingAdp.setOnItemClickListener((adapter, view, position) -> {
-            switch (settingAdp.getItem(position).getId()){
+            switch (settingAdp.getItem(position).getId()) {
                 case ID_RE_RES:
                     updateImages();
                     break;
                 case ID_DECK_EDIT_TYPE:
-                   setDeckEditType();
+                    setDeckEditType();
                     break;
             }
         });
@@ -302,7 +297,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
     }
 
     private void setDeckEditType() {
-        List<String> data =new ArrayList<>();
+        List<String> data = new ArrayList<>();
         data.add("横屏YGO");
         data.add("卡组管理");
         data.add("OURYGO EZ");
@@ -359,30 +354,60 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
                 break;
             case REQUEST_BG_1:
                 imagePath = com.ourygo.ygomobile.util.ImageUtil.getImageList(data).get(0);
-                com.ourygo.ygomobile.util.ImageUtil.show(this, imagePath, iv_bg1, new File(imagePath).lastModified() + "");
-                try {
-                    FileUtils.copyFile(imagePath, new File(appsSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
-                } catch (IOException e) {
-                    OYUtil.snackExceptionToast(this, toolbar, "替换失败", e.toString());
-                }
+                OYDialogUtil.dialogSetBg(UiSettingActivity.this, imagePath, new int[]{OYDialogUtil.BG_TYPE_DUEL}, exception -> {
+                    if (TextUtils.isEmpty(exception)) {
+                        File file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg1, file.lastModified() + "");
+                        file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg2, file.lastModified() + "");
+                        file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg3, file.lastModified() + "");
+                    } else {
+                        OYUtil.snackExceptionToast(this, toolbar, "替换失败", exception);
+                    }
+                });
                 break;
             case REQUEST_BG_2:
                 imagePath = com.ourygo.ygomobile.util.ImageUtil.getImageList(data).get(0);
-                com.ourygo.ygomobile.util.ImageUtil.show(this, imagePath, iv_bg2, new File(imagePath).lastModified() + "");
-                try {
-                    FileUtils.copyFile(imagePath, new File(appsSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath());
-                } catch (IOException e) {
-                    OYUtil.snackExceptionToast(this, toolbar, "替换失败", e.toString());
-                }
+                OYDialogUtil.dialogSetBg(UiSettingActivity.this, imagePath, new int[]{OYDialogUtil.BG_TYPE_MENU}, exception -> {
+                    if (TextUtils.isEmpty(exception)) {
+                        File file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg1, file.lastModified() + "");
+                        file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg2, file.lastModified() + "");
+                        file = new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg3, file.lastModified() + "");
+                    } else {
+                        OYUtil.snackExceptionToast(this, toolbar, "替换失败", exception);
+                    }
+                });
+//                com.ourygo.ygomobile.util.ImageUtil.show(this, imagePath, iv_bg2, new File(imagePath).lastModified() + "");
+//                try {
+//                    FileUtils.copyFile(imagePath, new File(appsSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath());
+//                } catch (IOException e) {
+//                    OYUtil.snackExceptionToast(this, toolbar, "替换失败", e.toString());
+//                }
                 break;
             case REQUEST_BG_3:
                 imagePath = com.ourygo.ygomobile.util.ImageUtil.getImageList(data).get(0);
-                com.ourygo.ygomobile.util.ImageUtil.show(this, imagePath, iv_bg3, new File(imagePath).lastModified() + "");
-                try {
-                    FileUtils.copyFile(imagePath, new File(appsSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath());
-                } catch (IOException e) {
-                    OYUtil.snackExceptionToast(this, toolbar, "替换失败", e.toString());
-                }
+                OYDialogUtil.dialogSetBg(UiSettingActivity.this, imagePath, new int[]{OYDialogUtil.BG_TYPE_DECK}, exception -> {
+                    if (TextUtils.isEmpty(exception)) {
+                        File file=new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg1, file.lastModified() + "");
+                        file=new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg2, file.lastModified() + "");
+                        file=new File(AppsSettings.get().getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK);
+                        ImageUtil.show(this, file.getAbsolutePath(), iv_bg3, file.lastModified() + "");
+                    } else {
+                        OYUtil.snackExceptionToast(this, toolbar, "替换失败", exception);
+                    }
+                });
+//                com.ourygo.ygomobile.util.ImageUtil.show(this, imagePath, iv_bg3, new File(imagePath).lastModified() + "");
+//                try {
+//                    FileUtils.copyFile(imagePath, new File(appsSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath());
+//                } catch (IOException e) {
+//                    OYUtil.snackExceptionToast(this, toolbar, "替换失败", e.toString());
+//                }
                 break;
         }
     }
@@ -451,7 +476,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         }).done((rs) -> {
             Log.e("MainActivity", "复制完毕");
             dialogUtils.dis();
-            OYUtil.snackShow(toolbar,"重置资源成功");
+            OYUtil.snackShow(toolbar, "重置资源成功");
         });
     }
 

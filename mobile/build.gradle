@@ -8,8 +8,8 @@ android {
         applicationId "com.ourygo.ygomobile"
         minSdkVersion 21
         targetSdkVersion 22
-        versionCode 13
-        versionName "1.0.3"
+        versionCode 14
+        versionName "1.1.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
@@ -144,7 +144,7 @@ dependencies {
 
 
     //dialog库
-    implementation 'com.github.feihuaduo:DialogUtils:1.8.9.14'
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.9.20'
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     //androidX 版本使用下面的依赖
@@ -168,5 +168,9 @@ dependencies {
 
     implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.2.0
     implementation 'com.tencent.bugly:nativecrashreport:latest.release' //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
+
+    implementation 'q.rorbin:VerticalTabLayout:1.2.5'
+
+    implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
 }

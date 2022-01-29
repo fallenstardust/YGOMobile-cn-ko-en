@@ -11,7 +11,7 @@
     android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="@dimen/corner_radius"
     app:elevation="3dp"
-    app:cardBackgroundColor="@color/colorAccentLight">
+    app:cardBackgroundColor="@color/grayLight">
     <RelativeLayout
         android:padding="5dp"
         android:layout_width="match_parent"

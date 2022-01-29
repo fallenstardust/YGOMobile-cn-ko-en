@@ -14,8 +14,15 @@ import cn.garymb.ygomobile.lite.R;
 
 public class YGOServerBQAdapter extends BaseQuickAdapter<YGOServer, BaseViewHolder> {
 
+    private boolean isHorizontal;
+
     public YGOServerBQAdapter(@Nullable List<YGOServer> data) {
-        super(R.layout.ygo_server_item, data);
+        this(data, false);
+    }
+
+    public YGOServerBQAdapter(@Nullable List<YGOServer> data, boolean isHorizontal) {
+        super(isHorizontal ? R.layout.ygo_server_horizontal_item : R.layout.ygo_server_item, data);
+        this.isHorizontal = isHorizontal;
     }
 
     @Override
@@ -39,28 +46,28 @@ public class YGOServerBQAdapter extends BaseQuickAdapter<YGOServer, BaseViewHold
         }
         switch (item.getOpponentType()) {
             case YGOServer.OPPONENT_TYPE_FRIEND:
-                helper.setImageResource(R.id.iv_opponent_type,R.drawable.ic_friend);
-                helper.setText(R.id.tv_create_and_share,OYUtil.s(R.string.create_room_and_share));
-                helper.setGone(R.id.line_mode,false);
+                helper.setImageResource(R.id.iv_opponent_type, R.drawable.ic_friend);
+                helper.setText(R.id.tv_create_and_share, OYUtil.s(R.string.create_room_and_share));
+                helper.setGone(R.id.line_mode, false);
 //                helper.setGone(R.id.tv_mode,true);
                 break;
             case YGOServer.OPPONENT_TYPE_RANDOM:
-                helper.setImageResource(R.id.iv_opponent_type,R.drawable.ic_random);
-                helper.setText(R.id.tv_create_and_share,"开始匹配");
-                helper.setGone(R.id.line_mode,false);
+                helper.setImageResource(R.id.iv_opponent_type, R.drawable.ic_random);
+                helper.setText(R.id.tv_create_and_share, "开始匹配");
+                helper.setGone(R.id.line_mode, false);
 //                helper.setGone(R.id.tv_mode,true);
                 break;
             case YGOServer.OPPONENT_TYPE_AI:
-                helper.setImageResource(R.id.iv_opponent_type,R.drawable.ic_ai);
-                helper.setText(R.id.tv_create_and_share,"开始");
-                helper.setGone(R.id.line_mode,true);
+                helper.setImageResource(R.id.iv_opponent_type, R.drawable.ic_ai);
+                helper.setText(R.id.tv_create_and_share, "开始");
+                helper.setGone(R.id.line_mode, true);
 //                helper.setGone(R.id.tv_mode,false);
                 helper.setText(R.id.tv_mode, "AI");
                 break;
             default:
-                helper.setImageResource(R.id.iv_opponent_type,R.drawable.ic_friend);
-                helper.setText(R.id.tv_create_and_share,OYUtil.s(R.string.create_room_and_share));
-                helper.setGone(R.id.line_mode,false);
+                helper.setImageResource(R.id.iv_opponent_type, R.drawable.ic_friend);
+                helper.setText(R.id.tv_create_and_share, OYUtil.s(R.string.create_room_and_share));
+                helper.setGone(R.id.line_mode, false);
 //                helper.setGone(R.id.tv_mode,true);
                 break;
         }

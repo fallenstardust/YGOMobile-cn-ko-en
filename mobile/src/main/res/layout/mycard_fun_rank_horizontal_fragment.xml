@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <RelativeLayout
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="2dp"
+            android:id="@+id/rl_rank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.king.view.circleprogressview.CircleProgressView
+                android:id="@+id/cpv_rank"
+                android:layout_width="@dimen/mycard_rank_cpv_size"
+                android:layout_height="@dimen/mycard_rank_cpv_size"
+                app:cpvLabelPaddingTop="10dp"
+                app:cpvLabelTextSize="@dimen/mycard_rank_cpv_text_size"
+                app:cpvProgressColor="@color/colorAccent"
+                app:cpvShowTick="false"
+                app:cpvStrokeWidth="@dimen/mycard_rank_cpv_width" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/mycard_rank_cpv_text_s_top_margin"
+                android:text="胜率"
+                android:textColor="@color/grayDark2"
+                android:textSize="@dimen/mycard_rank_cpv_text_s_size" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@id/rl_rank">
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_rank"
+                android:layout_width="@dimen/mycard_rank_icon_size"
+                android:layout_height="@dimen/mycard_rank_icon_size"
+                android:src="@drawable/ic_rank" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_rank_s"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/iv_rank"
+                android:layout_marginLeft="3dp"
+                android:layout_toRightOf="@id/iv_rank"
+                android:text="@string/fun_rank"
+                android:textColor="@color/blackLight2"
+                android:textSize="@dimen/mycard_rank_text_s_size" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_rank"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_toRightOf="@id/tv_rank_s"
+                android:textColor="@color/black"
+                android:textSize="@dimen/mycard_rank_text_size"
+                android:textStyle="bold|italic" />
+
+
+            <LinearLayout
+                android:id="@+id/ll_win"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/iv_rank"
+                android:layout_alignLeft="@id/iv_rank"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/green_light_background_radius"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="20dp"
+                android:paddingTop="5dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="5dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_win"
+                    android:layout_width="@dimen/mycard_win_icon_size"
+                    android:layout_height="@dimen/mycard_win_icon_size"
+                    android:src="@drawable/ic_win" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_win_s"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="3dp"
+                    android:text="@string/win_num"
+                    android:textColor="@color/blackLight2"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_win"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/mycard_win_text_size"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/ll_win"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/ll_win"
+                android:background="@drawable/red_light_background_radius"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="20dp"
+                android:paddingTop="5dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="5dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_lose"
+                    android:layout_width="@dimen/mycard_lose_icon_size"
+                    android:layout_height="@dimen/mycard_lose_icon_size"
+                    android:layout_below="@id/tv_win"
+                    android:layout_alignLeft="@id/iv_rank"
+                    android:src="@drawable/ic_fail" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_lose_s"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="3dp"
+                    android:text="@string/lose_num"
+                    android:textColor="@color/blackLight2"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_lose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/mycard_lose_text_size"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!--            <androidx.appcompat.widget.AppCompatImageView-->
+            <!--                android:id="@+id/iv_draw"-->
+            <!--                android:layout_width="14dp"-->
+            <!--                android:layout_height="14dp"-->
+            <!--                android:layout_below="@id/tv_lose"-->
+            <!--                android:layout_alignLeft="@id/iv_rank"-->
+            <!--                android:layout_marginTop="10dp"-->
+            <!--                android:src="@drawable/ic_friend"-->
+            <!--                android:visibility="gone" />-->
+
+            <!--            <androidx.appcompat.widget.AppCompatTextView-->
+            <!--                android:id="@+id/tv_draw_s"-->
+            <!--                android:layout_width="wrap_content"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_alignTop="@id/iv_draw"-->
+            <!--                android:layout_marginLeft="8dp"-->
+            <!--                android:layout_toRightOf="@id/iv_draw"-->
+            <!--                android:text="@string/draw_num"-->
+            <!--                android:textColor="@color/blackLight2"-->
+            <!--                android:textSize="10sp"-->
+            <!--                android:visibility="gone" />-->
+
+            <!--            <androidx.appcompat.widget.AppCompatTextView-->
+            <!--                android:layout_width="wrap_content"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_below="@id/tv_draw_s"-->
+            <!--                android:layout_alignLeft="@id/tv_draw_s"-->
+            <!--                android:layout_marginTop="5dp"-->
+            <!--                android:text="12332"-->
+            <!--                android:textColor="@color/black"-->
+            <!--                android:textSize="13sp"-->
+            <!--                android:textStyle="bold"-->
+            <!--                android:visibility="gone" />-->
+
+
+        </RelativeLayout>
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

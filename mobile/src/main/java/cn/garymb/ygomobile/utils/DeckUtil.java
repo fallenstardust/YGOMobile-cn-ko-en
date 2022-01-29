@@ -30,7 +30,15 @@ public class DeckUtil {
     private final static Comparator<DeckFile> nameCom = new Comparator<DeckFile>() {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
-            int id = ydk1.getTypeName().compareTo(ydk1.getTypeName());
+
+            if (!ydk1.getTypeName().equals(YGOUtil.s(R.string.category_Uncategorized))
+                    && ydk2.getTypeName().equals(YGOUtil.s(R.string.category_Uncategorized)))
+                return 1;
+            else if (ydk1.getTypeName().equals(YGOUtil.s(R.string.category_Uncategorized))
+                    && !ydk2.getTypeName().equals(YGOUtil.s(R.string.category_Uncategorized)))
+                return -1;
+
+            int id = ydk1.getTypeName().compareTo(ydk2.getTypeName());
             if (id == 0)
                 return ydk1.getName().compareTo(ydk2.getName());
             else
@@ -101,12 +109,15 @@ public class DeckUtil {
                 }
             }
         }
-        if (!isDir)
+        if (!isDir) {
+            Log.e("DeckUtil", "路径 " + path);
+            Log.e("DeckUtil", "路径1 " + AppsSettings.get().getPackDeckDir());
             if (path.equals(AppsSettings.get().getPackDeckDir())) {
                 Collections.sort(deckList, dateCom);
             } else {
                 Collections.sort(deckList, nameCom);
             }
+        }
         return deckList;
     }
 

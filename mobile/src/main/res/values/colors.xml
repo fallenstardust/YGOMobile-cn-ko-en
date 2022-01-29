@@ -5,7 +5,7 @@
     <color name="star">#CD6600</color>
     <color name="star_rank">#a89e9e</color>
     <color name="black">#000000</color>
-    <color name="blackLight">#AA333333</color>
+    <color name="blackLight">#7C7C7C</color>
     <color name="blackLight2">#AA202020</color>
 
     <color name="colorNavy">#0A032D</color>
@@ -15,10 +15,15 @@
 
     <color name="gold">#C8BE35</color>
     <color name="gold_light">#D8DE45</color>
-    <color name="red">#EF3934</color>
+    <color name="red">#FF0700</color>
+    <color name="redLight">#FFB5B3</color>
+    <color name="green">#00E676</color>
+    <color name="greenLight">#A1FACE</color>
 
     <color name="colorAccent">#008cf9</color>
     <color name="colorAccentDark">#007ADA</color>
+    <color name="colorAccentLight">#D8EAFF</color>
+    <color name="colorAccentLight2">#93C5FD</color>
     <color name="colorPrimary">#ffffff</color>
     <color name="colorPrimaryDark">#ffffff</color>
 
@@ -39,7 +44,7 @@
     <color name="search_text_color">#ff8800</color>
     <color name="search_list_item_color">#b8be35</color>
 
-    <color name="colorAccentLight">#E2E2E2</color>
+
     <color name="banner_type_background">#FFC936</color>
     <color name="white_text_backgrotnd">#50000000</color>
     <color name="gray_dark">#BBBBBB</color>

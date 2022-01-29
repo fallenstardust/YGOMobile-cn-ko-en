@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.flyco.tablayout.SlidingTabLayout;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.ScaleUtils;
 
 import cn.garymb.ygomobile.lite.R;
 
@@ -16,8 +17,8 @@ public class OYTabLayout extends SlidingTabLayout {
     public static final int MODE_PROMINENT = 0;
     public static final int MODE_BACKGROUND = 1;
 
-    private float selectTextSize = 24;
-    private float normalTextSize = 14;
+    private float selectTextSize = OYUtil.sp(R.dimen.tab_select_text_size_l);
+    private float normalTextSize = OYUtil.sp(R.dimen.tab_normal_text_size_l);
     private int showMode;
 
     private boolean isAugment = true;
@@ -54,14 +55,14 @@ public class OYTabLayout extends SlidingTabLayout {
     }
 
     public void setTextSizeL() {
-        selectTextSize = 24;
-        normalTextSize = 14;
+        selectTextSize = OYUtil.sp(R.dimen.tab_select_text_size_l);
+        normalTextSize = OYUtil.sp(R.dimen.tab_normal_text_size_l);;
         updateTabSelection(getCurrentTab());
     }
 
     public void setTextSizeM() {
-        selectTextSize = 20;
-        normalTextSize = 12;
+        selectTextSize = OYUtil.sp(R.dimen.tab_select_text_size_m);
+        normalTextSize = OYUtil.sp(R.dimen.tab_normal_text_size_m);
         updateTabSelection(getCurrentTab());
     }
 

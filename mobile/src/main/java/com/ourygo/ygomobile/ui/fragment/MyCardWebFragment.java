@@ -71,7 +71,7 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.mycard_web_fragment, null);
-
+        Log.e("MyCardWeb","Web加载");
         initView(v);
         initData();
         return v;

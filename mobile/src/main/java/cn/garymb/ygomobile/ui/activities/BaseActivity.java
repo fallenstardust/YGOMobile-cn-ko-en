@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -30,10 +31,12 @@ import android.widget.Toast;
 
 import com.ourygo.ygomobile.util.DisplayUtils;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.ScaleUtils;
 import com.ourygo.ygomobile.view.OYToolbar;
 
 import java.io.IOException;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
@@ -113,6 +116,35 @@ public class BaseActivity extends AppCompatActivity {
     protected String[] getPermissions() {
         return PERMISSIONS;
     }
+
+
+//    @Override
+//    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//
+//        // 获取到屏幕的方向
+//        int orientation = newConfig.orientation;
+//        switch (orientation) {
+//            // 横屏
+//            case Configuration.ORIENTATION_LANDSCAPE:
+//                setContentView(R.layout.ending_horizontal_activity);
+//                break;
+//            // 竖屏
+//            case Configuration.ORIENTATION_PORTRAIT:
+//                setContentView(R.layout.ending_activity);
+//                break;
+//        }
+//    }
+
+
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    protected boolean isHorizontal=false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -242,9 +274,30 @@ public class BaseActivity extends AppCompatActivity {
         DisplayUtils.setSystemBarStyle(this, getWindow(),
                 false, true, false, !darkMode);
 
+        if(savedInstanceState != null){
+            //竖屏
+            if( ScaleUtils.ScreenOrient(this)==ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE  ) {
+//                setContentView(R.layout.ending_activity);
+                isHorizontal=false;
+
+            }else if( ScaleUtils.ScreenOrient(this)==ActivityInfo.SCREEN_ORIENTATION_PORTRAIT  ) {
+                //横屏
+//                setContentView(R.layout.ending_horizontal_activity);
+                isHorizontal=true;
+            }
+        }else{
+            if(ScaleUtils.isScreenOriatationPortrait()) {
+//                setContentView(R.layout.ending_activity);
+                isHorizontal=false;
+            }else {
+//                setContentView(R.layout.ending_horizontal_activity);
+                isHorizontal=true;
+            }
+        }
+
     }
 
-    protected void setupActionBar() {
+        protected void setupActionBar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);

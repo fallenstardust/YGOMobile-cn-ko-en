@@ -6,24 +6,24 @@
 
     <RelativeLayout
         android:id="@+id/rl_user"
-        android:background="@drawable/click_background_radius"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:background="@drawable/click_background_radius">
 
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/iv_avatar"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
+            android:layout_width="@dimen/setting_header_avatar_size"
+            android:layout_height="@dimen/setting_header_avatar_size"
             android:layout_centerVertical="true"
             android:layout_marginLeft="20dp"
-            android:layout_marginTop="13dp"
-            android:layout_marginBottom="13dp"
+            android:layout_marginTop="@dimen/setting_header_avatar_margin"
+            android:layout_marginBottom="@dimen/setting_header_avatar_margin"
             android:scaleType="centerCrop"
             android:src="@drawable/avatar"
-            app:civ_border_color="@color/colorAccentLight"
+            app:civ_border_color="@color/grayLight"
             app:civ_border_width="1dp" />
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -35,7 +35,7 @@
             android:layout_toRightOf="@id/iv_avatar"
             android:text="登录MyCard"
             android:textColor="@color/black"
-            android:textSize="18sp" />
+            android:textSize="@dimen/setting_header_name_size" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/iv_guide_right"

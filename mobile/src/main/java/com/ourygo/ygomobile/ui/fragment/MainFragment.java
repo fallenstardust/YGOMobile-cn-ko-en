@@ -40,7 +40,7 @@ import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
@@ -55,9 +55,10 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private static final int REQUEST_NEW_SERVER = 0;
     private static final String TAG = "TIME-Mainfragment";
+    private static final String ARG_MC_NEWS_LIST = "mcNewsList";
 
     private XBanner xb_banner;
-    private List<McNews> mcNewsList;
+    private ArrayList<McNews> mcNewsList;
     //    private OYTabLayout tl_game_option,tl_replay;
 //    private ViewPager vp_game;
     private ImageView iv_add_setting;
@@ -69,6 +70,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     private YGOServerBQAdapter ygoServerAdp;
     private CardView cv_join_room, cv_loacl_duel, cv_banner;
     private ProgressBar pb_res_loading;
+    private TextView tv_banner_loading;
+    private boolean isMcNewsLoadException = false;
+
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
@@ -76,10 +80,13 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_BANNER_QUERY_OK:
+                    tv_banner_loading.setVisibility(View.GONE);
                     xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
-                    OYUtil.snackExceptionToast(getActivity(), xb_banner, getString(R.string.query_exception), msg.obj.toString());
+                    tv_banner_loading.setText("加载失败，点击重试");
+                    isMcNewsLoadException = true;
+//                    OYUtil.snackExceptionToast(getActivity(), xb_banner, getString(R.string.query_exception), msg.obj.toString());
                     break;
                 case TYPE_RES_LOADING_OK:
                     pb_res_loading.setVisibility(View.GONE);
@@ -91,20 +98,33 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     };
     private ResCheckTask mResCheckTask;
 
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         LogUtil.time(TAG, "1");
-        View v = inflater.inflate(R.layout.main_fragment, container, false);
+        super.onCreateView(inflater, container, savedInstanceState);
+        View layoutView;
+        if (isHorizontal)
+            layoutView = inflater.inflate(R.layout.main_horizontal_fragment, container, false);
+        else
+            layoutView = inflater.inflate(R.layout.main_fragment, container, false);
 
         LogUtil.time(TAG, "2");
-        initView(v);
+        initView(layoutView, savedInstanceState);
         LogUtil.time(TAG, "3");
         initServiceList();
         LogUtil.time(TAG, "4");
         LogUtil.printSumTime(TAG);
 
-        return v;
+        return layoutView;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        if (mcNewsList != null)
+            outState.putSerializable(ARG_MC_NEWS_LIST, mcNewsList);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -123,7 +143,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                         break;
                     case SharedPreferenceUtil.DECK_EDIT_TYPE_OURYGO_EZ:
                         if (OYUtil.isApp(Record.PACKAGE_NAME_EZ))
-                           startActivity(IntentUtil.getAppIntent(getActivity(), Record.PACKAGE_NAME_EZ));
+                            startActivity(IntentUtil.getAppIntent(getActivity(), Record.PACKAGE_NAME_EZ));
                         else
                             startActivity(IntentUtil.getWebIntent(getActivity(), "http://ez.ourygo.top/"));
                         break;
@@ -138,11 +158,15 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             case R.id.cv_replay:
                 IntentUtil.startYGOReplay(getActivity(), "");
                 break;
+            case R.id.tv_banner_loading:
+                if (isMcNewsLoadException)
+                    findMcNews();
+                break;
         }
     }
 
 
-    private void initView(View v) {
+    private void initView(View v, Bundle saveBundle) {
         xb_banner = v.findViewById(R.id.xb_banner);
         iv_add_setting = v.findViewById(R.id.iv_add_setting);
 //        tl_game_option=v.findViewById(R.id.tl_game_option);
@@ -157,12 +181,15 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         cv_join_room = v.findViewById(R.id.cv_join_room);
         pb_res_loading = v.findViewById(R.id.pb_res_loading);
         cv_banner = v.findViewById(R.id.cv_banner);
+        tv_banner_loading = v.findViewById(R.id.tv_banner_loading);
 
         du = DialogUtils.getInstance(getActivity());
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
+        if (isHorizontal)
+            linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
+        else
+            linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
         rv_service_list.setLayoutManager(linearLayoutManager);
-
 
         iv_add_setting.setOnClickListener(v1 -> startActivityForResult(new Intent(getActivity(), NewServerActivity.class), REQUEST_NEW_SERVER));
 
@@ -172,19 +199,23 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         cv_loacl_duel.setOnClickListener(this);
         cv_ai.setOnClickListener(this);
         cv_join_room.setOnClickListener(this);
+        tv_banner_loading.setOnClickListener(this);
 
 
-        xb_banner.post(() -> {
+        cv_banner.post(() -> {
 //            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
 //                Log.e("MainFragment","宽"+xb_banner.getWidth());
 //                Log.e("MainFragment","算数"+OYUtil.px2dp(xb_banner.getHeight())*2);
 //            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
 
 //                xb_banner.setClipChildrenLeftRightMargin(75);
-            ViewGroup.LayoutParams layoutParams = xb_banner.getLayoutParams();
-            layoutParams.width = xb_banner.getWidth();
+            ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
+//            if (isHorizontal)
+//                layoutParams.width = (cv_banner.getWidth() - ScaleUtils.dp2px(80)) / 2;
+//            else
+            layoutParams.width = cv_banner.getWidth();
             layoutParams.height = layoutParams.width / 3;
-            xb_banner.setLayoutParams(layoutParams);
+            cv_banner.setLayoutParams(layoutParams);
 
 //                xb_banner.setClipChildrenLeftRightMargin(50);
 //                xb_banner.setma
@@ -210,13 +241,32 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 //                Log.e("MainFragment","Width"+view.getWidth());
 
         });
+
+        if (saveBundle == null) {
+            findMcNews();
+            checkRes();
+        } else {
+//            Log.e(TAG,"列表"+mcNewsList.size());
+            MainFragment.this.mcNewsList = (ArrayList<McNews>) saveBundle.getSerializable(ARG_MC_NEWS_LIST);
+            if (mcNewsList != null)
+                handler.sendEmptyMessage(TYPE_BANNER_QUERY_OK);
+            else
+                findMcNews();
+            handler.sendEmptyMessage(TYPE_RES_LOADING_OK);
+        }
+    }
+
+    private void findMcNews() {
+        isMcNewsLoadException = false;
+        tv_banner_loading.setVisibility(View.VISIBLE);
+        tv_banner_loading.setText("加载中");
         MyCardUtil.findMyCardNews((myCardNewsList, exception) -> {
             Message message = new Message();
             if (TextUtils.isEmpty(exception)) {
                 while (myCardNewsList.size() > 5) {
                     myCardNewsList.remove(myCardNewsList.size() - 1);
                 }
-                MainFragment.this.mcNewsList = myCardNewsList;
+                MainFragment.this.mcNewsList = (ArrayList<McNews>) myCardNewsList;
                 message.what = TYPE_BANNER_QUERY_OK;
             } else {
                 Log.e("MainFragemnt", "查询失败" + exception);
@@ -225,8 +275,6 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             }
             handler.sendMessage(message);
         });
-
-        checkRes();
     }
 
     private void checkRes() {
@@ -334,7 +382,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private void initServiceList() {
         YGOUtil.getYGOServerList(serverList -> {
-            ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());
+            ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList(), isHorizontal);
             rv_service_list.setAdapter(ygoServerAdp);
             ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
             ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {

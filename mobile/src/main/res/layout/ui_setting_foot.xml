@@ -42,8 +42,8 @@
                 android:src="@drawable/avatar"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_avatar1"
-                android:layout_width="80dp"
-                android:layout_height="80dp" />
+                android:layout_width="@dimen/ui_setting_avatar_image_size"
+                android:layout_height="@dimen/ui_setting_avatar_image_size" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_marginTop="6dp"
@@ -70,8 +70,8 @@
                 android:src="@drawable/avatar"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_avatar2"
-                android:layout_width="80dp"
-                android:layout_height="80dp" />
+                android:layout_width="@dimen/ui_setting_avatar_image_size"
+                android:layout_height="@dimen/ui_setting_avatar_image_size" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_marginTop="6dp"
@@ -117,8 +117,8 @@
                 android:src="@drawable/ic_image_load"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_cover1"
-                android:layout_width="88dp"
-                android:layout_height="127dp" />
+                android:layout_width="@dimen/ui_setting_cover_image_width"
+                android:layout_height="@dimen/ui_setting_cover_image_height" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_marginTop="6dp"
@@ -145,8 +145,8 @@
                 android:src="@drawable/ic_image_load"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_cover2"
-                android:layout_width="88dp"
-                android:layout_height="127dp" />
+                android:layout_width="@dimen/ui_setting_cover_image_width"
+                android:layout_height="@dimen/ui_setting_cover_image_height" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_marginTop="6dp"
@@ -201,8 +201,8 @@
                 android:src="@drawable/ic_image_load"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_bg1"
-                android:layout_width="180dp"
-                android:layout_height="90dp" />
+                android:layout_width="@dimen/ui_setting_bg_width"
+                android:layout_height="@dimen/ui_setting_bg_height" />
 
 
         </LinearLayout>
@@ -232,8 +232,8 @@
                 android:src="@drawable/ic_image_load"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_bg2"
-                android:layout_width="180dp"
-                android:layout_height="90dp" />
+                android:layout_width="@dimen/ui_setting_bg_width"
+                android:layout_height="@dimen/ui_setting_bg_height" />
 
 
         </LinearLayout>
@@ -261,8 +261,8 @@
                 android:src="@drawable/ic_image_load"
                 android:scaleType="centerCrop"
                 android:id="@+id/iv_bg3"
-                android:layout_width="180dp"
-                android:layout_height="90dp" />
+                android:layout_width="@dimen/ui_setting_bg_width"
+                android:layout_height="@dimen/ui_setting_bg_height" />
 
 
         </LinearLayout>

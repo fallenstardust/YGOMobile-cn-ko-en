@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="200dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/ygo_server_vertical_width"
+    android:layout_height="@dimen/ygo_server_height"
     android:layout_marginRight="10dp"
     android:clickable="true"
     android:foreground="?android:attr/selectableItemBackground"
@@ -20,32 +20,32 @@
             android:id="@+id/ll_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginLeft="@dimen/ygo_server_padding"
+            android:layout_marginTop="@dimen/ygo_server_padding"
             android:background="@drawable/gray_light_background_radius"
             android:gravity="center"
             android:orientation="vertical"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp">
+            android:paddingTop="3dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="3dp">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/iv_opponent_type"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_friend"
-                android:scaleType="fitCenter"/>
+                android:layout_width="@dimen/ygo_server_mode_icon_size"
+                android:layout_height="@dimen/ygo_server_mode_icon_size"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_friend" />
 
             <View
                 android:id="@+id/line_mode"
-                android:layout_marginLeft="6dp"
-                android:layout_marginRight="6dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="2dp"
-                android:background="@color/blackLight"
                 android:layout_width="match_parent"
-                android:layout_height="1dp" />
+                android:layout_height="1dp"
+                android:layout_marginLeft="6dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginRight="6dp"
+                android:layout_marginBottom="2dp"
+                android:background="@color/blackLight" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tv_mode"
@@ -53,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:text="双局"
                 android:textColor="@color/blackLight"
-                android:textSize="10sp" />
+                android:textSize="@dimen/ygo_server_mode_text_size" />
 
         </LinearLayout>
 
@@ -63,16 +63,17 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@id/ll_mode"
             android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="@dimen/ygo_server_padding"
             android:layout_toRightOf="@id/ll_mode"
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Room name"
             android:textColor="@color/black"
-            android:textSize="16sp"
+            android:textSize="@dimen/ygo_server_name_size"
             android:textStyle="bold" />
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginRight="@dimen/ygo_server_padding"
             android:id="@+id/tv_ip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -81,7 +82,7 @@
             android:layout_marginTop="1dp"
             android:text="ip"
             android:textColor="@color/blackLight"
-            android:textSize="10sp" />
+            android:textSize="@dimen/ygo_server_ip_size" />
 
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -90,8 +91,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginRight="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginRight="@dimen/ygo_server_padding"
+            android:layout_marginBottom="@dimen/ygo_server_padding"
             android:background="@drawable/click_black_light_radius"
             android:gravity="center"
             android:paddingLeft="8dp"
@@ -100,7 +101,7 @@
             android:paddingBottom="5dp"
             android:text="@string/create_room_and_share"
             android:textColor="@color/white"
-            android:textSize="10sp" />
+            android:textSize="@dimen/ygo_server_create_size" />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>
 

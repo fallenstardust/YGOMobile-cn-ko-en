@@ -2,6 +2,7 @@ package com.ourygo.ygomobile.util;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.Editable;
@@ -13,12 +14,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,6 +32,7 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.RoomSpinnerAdapter;
+import com.ourygo.ygomobile.base.listener.OnSetBgListener;
 import com.ourygo.ygomobile.bean.YGOServer;
 
 import java.io.File;
@@ -36,9 +41,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.utils.FileUtils;
 
 
 public class OYDialogUtil {
@@ -46,6 +53,11 @@ public class OYDialogUtil {
     public static final int DECK_TYPE_MESSAGE = 0;
     public static final int DECK_TYPE_URL = 1;
     public static final int DECK_TYPE_PATH = 2;
+
+    public static final int BG_TYPE_DUEL = 0;
+    public static final int BG_TYPE_MENU = 1;
+    public static final int BG_TYPE_DECK = 2;
+
 
     public static void dialogAiList(Activity activity, YGOServer ygoServer) {
         Dialog builder = new BottomSheetDialog(activity);
@@ -58,23 +70,23 @@ public class OYDialogUtil {
         builder.show();
 
         List<ItemData> itemDataList = new ArrayList<>();
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "悠悠"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "悠悠王"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "琪露诺"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "谜之剑士LV4"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "复制植物"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "尼亚"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "永远之魂"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "比特机灵"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "复制梁龙"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "奇異果"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "奇魔果"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "MAX龍果"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "幻煌果"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "燃血鬥士"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "報社鬥士"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "我太帅了"));
-        itemDataList.add(ItemData.toItemData(0, R.drawable.ic_ai, "玻璃女巫"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "悠悠"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "悠悠王"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "琪露诺"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "谜之剑士LV4"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "复制植物"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "尼亚"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "永远之魂"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "比特机灵"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "复制梁龙"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "奇異果"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "奇魔果"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "MAX龍果"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "幻煌果"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "燃血鬥士"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "報社鬥士"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "我太帅了"));
+        itemDataList.add(ItemData.toItemData(R.drawable.ic_ai, "玻璃女巫"));
 
         RecyclerView rv_new_file_list = view.findViewById(R.id.rv_list);
         rv_new_file_list.setLayoutManager(new LinearLayoutManager(activity));
@@ -89,7 +101,7 @@ public class OYDialogUtil {
     public static void dialogDASaveDeck(Activity activity, String deckMessage, int deckType) {
         DialogUtils du = DialogUtils.getInstance(activity);
         View v = du.dialogBottomSheet(R.layout.da_save_deck_dialog);
-        Dialog dialog=du.getDialog();
+        Dialog dialog = du.getDialog();
         TextView tv_save_deck;
 
         tv_save_deck = v.findViewById(R.id.tv_save_deck);
@@ -224,7 +236,10 @@ public class OYDialogUtil {
 
         iv_close.setOnClickListener(v1 -> dialog.dismiss());
 
-        new Handler().postDelayed(() -> OYUtil.showKeyboard(et_password), 100);
+        new Handler().postDelayed(() -> {
+//            OYUtil.showKeyboard(et_password);
+            et_password.performClick();
+        }, 100);
 
         et_password.addTextChangedListener(new TextWatcher() {
             @Override
@@ -371,6 +386,107 @@ public class OYDialogUtil {
 
 
         iv_close.setOnClickListener(v12 -> du.dis());
+    }
+
+    public static void dialogSetBg(Context context, String imagePath, int[] bgList, OnSetBgListener onSetBgListener) {
+        DialogUtils dialogUtils = DialogUtils.getInstance(context);
+        View dialogView = dialogUtils.dialogBottomSheet(R.layout.set_bg_dialog, true);
+        SwitchCompat sc_blur = dialogView.findViewById(R.id.sc_blur);
+        CheckBox cb_duel = dialogView.findViewById(R.id.cb_duel);
+        CheckBox cb_menu = dialogView.findViewById(R.id.cb_menu);
+        CheckBox cb_deck = dialogView.findViewById(R.id.cb_deck);
+        ImageView iv_bg = dialogView.findViewById(R.id.iv_bg);
+        TextView tv_set = dialogView.findViewById(R.id.tv_set);
+
+//        ImageUtil.(context, imagePath, iv_bg, System.currentTimeMillis() + "");
+
+        List<String> nameList=new ArrayList<>();
+
+        for (int bg : bgList) {
+            switch (bg) {
+                case BG_TYPE_DUEL:
+                    cb_duel.setChecked(true);
+                    nameList.add(Constants.CORE_SKIN_BG);
+                    break;
+                case BG_TYPE_MENU:
+                    cb_menu.setChecked(true);
+                    nameList.add(Constants.CORE_SKIN_BG_MENU);
+                    break;
+                case BG_TYPE_DECK:
+                    cb_deck.setChecked(true);
+                    nameList.add(Constants.CORE_SKIN_BG_DECK);
+                    break;
+            }
+        }
+        cb_duel.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked){
+                cb_duel.setChecked(true);
+                nameList.add(Constants.CORE_SKIN_BG);
+            }else {
+                cb_duel.setChecked(false);
+                nameList.remove(Constants.CORE_SKIN_BG);
+            }
+        });
+
+        cb_menu.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked){
+                cb_menu.setChecked(true);
+                nameList.add(Constants.CORE_SKIN_BG_MENU);
+            }else {
+                cb_menu.setChecked(false);
+                nameList.remove(Constants.CORE_SKIN_BG_MENU);
+            }
+        });
+
+        cb_deck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked){
+                cb_deck.setChecked(true);
+                nameList.add(Constants.CORE_SKIN_BG_DECK);
+            }else {
+                cb_deck.setChecked(false);
+                nameList.remove(Constants.CORE_SKIN_BG_DECK);
+            }
+        });
+
+        sc_blur.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                ImageUtil.showBlur(context, imagePath, iv_bg, System.currentTimeMillis() + "");
+            } else {
+                ImageUtil.show(context, imagePath, iv_bg, System.currentTimeMillis() + "");
+            }
+        });
+
+        sc_blur.setChecked(true);
+
+        tv_set.setOnClickListener(v -> {
+            dialogUtils.dis();
+            dialogUtils.dialogj1(null,"设置中，请稍等");
+            if (sc_blur.isChecked()) {
+                ImageUtil.getBlurImage(context, imagePath, (imagePath1, exception) -> {
+                    try {
+                        for (String name:nameList) {
+                            FileUtils.copyFile(imagePath1, new File(AppsSettings.get().getCoreSkinPath(), name).getAbsolutePath());
+                        }
+                        dialogUtils.dis();
+                        onSetBgListener.onSetBg(null);
+                    } catch (IOException e) {
+                        dialogUtils.dis();
+                        onSetBgListener.onSetBg(e.toString());
+                    }
+                });
+            } else {
+                try {
+                    for (String name:nameList) {
+                        FileUtils.copyFile(imagePath, new File(AppsSettings.get().getCoreSkinPath(), name).getAbsolutePath());
+                    }
+                    dialogUtils.dis();
+                    onSetBgListener.onSetBg(null);
+                } catch (IOException e) {
+                    dialogUtils.dis();
+                    onSetBgListener.onSetBg(e.toString());
+                }
+            }
+        });
 
 
     }

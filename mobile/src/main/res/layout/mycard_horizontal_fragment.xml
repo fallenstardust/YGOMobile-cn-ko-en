@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_marginBottom="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <com.ourygo.ygomobile.view.OYTabLayout
+                android:layout_marginLeft="8dp"
+                android:layout_centerVertical="true"
+                android:id="@+id/tl_tab"
+                app:tl_tab_padding="10dp"
+                android:paddingLeft="15dp"
+                app:tl_indicator_corner_radius="2dp"
+                app:tl_indicator_margin_top="10dp"
+                app:tl_indicator_height="0dp"
+                app:tl_underline_height="10dp"
+                app:tl_indicator_width="30dp"
+                app:tl_indicator_gravity="BOTTOM"
+                app:tl_indicator_style="NORMAL"
+                app:tl_textsize="25sp"
+                app:tl_underline_color="@color/transparent"
+                app:tl_indicator_color="@color/colorAccent"
+                app:tl_textSelectColor="@color/black"
+                app:tl_textUnselectColor="@color/grayDark"
+                app:tl_indicator_margin_bottom="2dp"
+                app:tl_tab_space_equal="false"
+                app:tl_textBold="SELECT"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <ProgressBar
+                android:layout_marginLeft="10dp"
+                android:id="@+id/pb_loading"
+                android:layout_width="18dp"
+                android:layout_height="18dp" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:padding="1dp"
+                android:visibility="gone"
+                android:background="@drawable/click_window_background_radius"
+                app:srcCompat="@drawable/ic_refresh"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/iv_refresh"
+                android:layout_width="18dp"
+                android:layout_height="18dp" />
+
+        </LinearLayout>
+
+
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/vp_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_weight="1.2"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_marginLeft="20dp"
+                android:src="@drawable/ic_mc_match"
+                android:padding="2dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_match_title"
+                android:layout_marginLeft="10dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="匹配对战"
+                android:textColor="@color/black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="150dp">
+
+            <LinearLayout
+                android:id="@+id/ll_athletic"
+                android:padding="10dp"
+                android:gravity="center_horizontal"
+                android:background="@drawable/click_background_radius"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:layout_width="@dimen/label_width_50dp"
+                android:layout_height="match_parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_marginTop="20dp"
+                    android:src="@drawable/ic_match_athletic"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp" />
+
+                <View
+                    android:layout_marginTop="30dp"
+                    android:background="@color/grayDark"
+                    android:layout_width="20dp"
+                    android:layout_height="1dp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:layout_marginTop="5dp"
+                    android:text="竞技匹配"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_entertain"
+                android:padding="10dp"
+                android:gravity="center_horizontal"
+                android:background="@drawable/click_background_radius"
+                android:layout_marginLeft="10dp"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:layout_width="@dimen/label_width_50dp"
+                android:layout_height="match_parent">
+
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_marginTop="20dp"
+                    android:src="@drawable/ic_match_entertain"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp" />
+
+                <View
+                    android:layout_marginTop="30dp"
+                    android:background="@color/grayDark"
+                    android:layout_width="20dp"
+                    android:layout_height="1dp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:layout_marginTop="5dp"
+                    android:text="娱乐匹配"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RelativeLayout
+                android:id="@+id/rl_chat"
+                android:background="@drawable/click_background_radius"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:orientation="vertical"
+                android:layout_weight="5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_message_s"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="聊天室"
+                    android:textColor="@color/blackLight2"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ProgressBar
+                    android:layout_marginTop="5dp"
+                    android:layout_toRightOf="@id/tv_message_s"
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/pb_chat_loading"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_message_s"
+                    android:layout_marginTop="5dp"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:text=""
+                    android:textColor="@color/blackLight"
+                    android:textSize="13sp" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_visit_duel"
+                android:layout_marginLeft="10dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:gravity="center"
+                android:background="@drawable/click_background_radius"
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:src="@drawable/ic_watch_duel"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp" />
+
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="13sp"
+                    android:layout_marginTop="5dp"
+                    android:text="观战"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+</LinearLayout>

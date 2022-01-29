@@ -32,7 +32,13 @@ public class MatchRecordFragment extends BaseFragemnt implements BaseDuelInfoFra
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.mycard_match_rank_fragment, container, false);
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view;
+        if (isHorizontal)
+            view = inflater.inflate(R.layout.mycard_match_rank_horizontal_fragment, container, false);
+        else
+            view = inflater.inflate(R.layout.mycard_match_rank_fragment, container, false);
+        Log.e("MycardFragment","重新初始化"+(savedInstanceState!=null));
         initView(view);
         return view;
     }
@@ -50,6 +56,7 @@ public class MatchRecordFragment extends BaseFragemnt implements BaseDuelInfoFra
     }
 
     private void initView(View view) {
+
         cpv_rank = view.findViewById(R.id.cpv_rank);
         tv_rank = view.findViewById(R.id.tv_rank);
         tv_win = view.findViewById(R.id.tv_win);
@@ -58,9 +65,9 @@ public class MatchRecordFragment extends BaseFragemnt implements BaseDuelInfoFra
 
 
     private void initData() {
-
+        Log.e("MycardFragment","重新加载数据");
         cpv_rank.setMax(10000);
-        onBaseDuelInfo(mcDuelInfo,null);
+        onBaseDuelInfo(mcDuelInfo, null);
         //设置进度改变监听
         cpv_rank.setOnChangeListener((progress, max) -> {
 
@@ -91,6 +98,7 @@ public class MatchRecordFragment extends BaseFragemnt implements BaseDuelInfoFra
 
     @Override
     public void onBaseDuelInfo(McDuelInfo mcDuelInfo, String exception) {
+        Log.e("MycardFragment",(cpv_rank!=null)+" 回调 "+(mcDuelInfo!=null?mcDuelInfo.getMatchRank():"空"));
         if (!TextUtils.isEmpty(exception))
             return;
         this.mcDuelInfo = mcDuelInfo;

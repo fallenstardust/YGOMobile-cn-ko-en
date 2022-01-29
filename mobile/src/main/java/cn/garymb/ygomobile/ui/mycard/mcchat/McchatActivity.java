@@ -1,26 +1,20 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat;
 
-import android.app.Activity;
 import android.os.Bundle;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.ourygo.ygomobile.util.OYUtil;
-
-import org.jivesoftware.smack.packet.Message;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class McchatActivity extends BaseActivity implements ChatListener {
@@ -77,7 +71,7 @@ public class McchatActivity extends BaseActivity implements ChatListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.mycard_chat_activity);
 
         initView();
     }

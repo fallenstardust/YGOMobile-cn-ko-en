@@ -12,12 +12,18 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
+import android.renderscript.Type;
 import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.text.Spanned;
@@ -37,7 +43,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.OYApplication;
 import com.tencent.bugly.beta.Beta;
-//import com.tencent.bugly.beta.Beta;
 
 import org.json.JSONObject;
 
@@ -110,6 +115,18 @@ public class OYUtil {
 
     public static int c(int color) {
         return ContextCompat.getColor(App.get(), color);
+    }
+
+    public static int px(int dimen) {
+        return OYApplication.get().getResources().getDimensionPixelOffset(dimen);
+    }
+
+    public static int dp(int dimen) {
+        return ScaleUtils.px2dp(px(dimen));
+    }
+
+    public static int sp(int dimen) {
+        return ScaleUtils.px2sp(px(dimen));
     }
 
     public static void snackShow(View v, String toastMessage) {
@@ -302,6 +319,34 @@ public class OYUtil {
         return false;
     }
 
+    /**
+     * map对象转换为json
+     *
+     * @param map
+     * @return json字符串
+     */
+    public static String map2jsonStr(Map<String, String> map) {
+        return new JSONObject(map).toString();
+    }
+
+    /**
+     * map对象转换为json
+     *
+     * @param map
+     * @return json字符串
+     */
+    public static String mapObejct2jsonStr(Map<String, Object> map) {
+        return new JSONObject(map).toString();
+    }
+
+    public static void startAifadian(Context context) {
+        context.startActivity(IntentUtil.getUrlIntent(OYUtil.URL_AIFAFIAN));
+    }
+
+    public static void checkUpdate(boolean isManual, final boolean b) {
+        Beta.checkUpgrade(isManual, !b);
+    }
+
     public static class MyItemDecoration extends RecyclerView.ItemDecoration {
 
         private int mDividerHeight;
@@ -352,32 +397,66 @@ public class OYUtil {
 
     }
 
-    /**
-     * map对象转换为json
-     *
-     * @param map
-     * @return json字符串
-     */
-    public static String map2jsonStr(Map<String, String> map) {
-        return new JSONObject(map).toString();
+
+
+    public static Bitmap blurBitmap(Bitmap bitmap, float radius, Context context) {
+        //Create renderscript
+        RenderScript rs = RenderScript.create(context);
+        //Create allocation from Bitmap
+        Allocation allocation = Allocation.createFromBitmap(rs, bitmap);
+
+        Type t = allocation.getType();
+        //Create allocation with the same type
+        Allocation blurredAllocation = Allocation.createTyped(rs, t);
+        //Create script
+        ScriptIntrinsicBlur blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
+        //Set blur radius (maximum 25.0)
+        blurScript.setRadius(radius);
+        //Set input for script
+        blurScript.setInput(allocation);
+        //Call script for output allocation
+        blurScript.forEach(blurredAllocation);
+        //Copy script result into bitmap
+        blurredAllocation.copyTo(bitmap);
+        //Destroy everything to free memory
+        allocation.destroy();
+        blurredAllocation.destroy();
+        blurScript.destroy();
+        t.destroy();
+        rs.destroy();
+        return bitmap;
     }
 
-    /**
-     * map对象转换为json
-     *
-     * @param map
-     * @return json字符串
-     */
-    public static String mapObejct2jsonStr(Map<String, Object> map) {
-        return new JSONObject(map).toString();
-    }
+    public static Bitmap rsBlur(Context context,Bitmap source,int radius){
 
-    public static void startAifadian(Context context) {
-        context.startActivity(IntentUtil.getUrlIntent(OYUtil.URL_AIFAFIAN));
-    }
+        Bitmap inputBmp = source;
+        //(1)
+        RenderScript renderScript =  RenderScript.create(context);
 
-    public static void checkUpdate(boolean isManual, final boolean b) {
-        Beta.checkUpgrade(isManual, !b);
+//        Log.i(TAG,"scale size:"+inputBmp.getWidth()+"*"+inputBmp.getHeight());
+
+        // Allocate memory for Renderscript to work with
+        //(2)
+        final Allocation input = Allocation.createFromBitmap(renderScript,inputBmp);
+        final Allocation output = Allocation.createTyped(renderScript,input.getType());
+        //(3)
+        // Load up an instance of the specific script that we want to use.
+        ScriptIntrinsicBlur scriptIntrinsicBlur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript));
+        //(4)
+        scriptIntrinsicBlur.setInput(input);
+        //(5)
+        // Set the blur radius
+        scriptIntrinsicBlur.setRadius(radius);
+        //(6)
+        // Start the ScriptIntrinisicBlur
+        scriptIntrinsicBlur.forEach(output);
+        //(7)
+        // Copy the output to the blurred bitmap
+        output.copyTo(inputBmp);
+        //(8)
+        renderScript.destroy();
+
+        return inputBmp;
     }
 
 }

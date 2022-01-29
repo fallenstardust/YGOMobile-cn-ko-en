@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.feihua.dialogutils.util.DialogUtils;
@@ -32,17 +33,12 @@ import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.activity.WatchDuelActivity;
 import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
-import com.ourygo.ygomobile.util.McWatchDuelSocketClient;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
-//import com.tencent.bugly.proguard.H;
 
-import java.net.URI;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,16 +50,14 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import okio.Buffer;
 
 /**
  * Create By feihua  On 2021/10/19
  */
 public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMcUserListener, View.OnClickListener, OnJoinChatListener, ChatListener {
 
-    private static final int REQUEST_MATCH_ATHLETIC=10;
-    private static final int REQUEST_MATCH_ENTERTAIN=11;
+    private static final int REQUEST_MATCH_ATHLETIC = 10;
+    private static final int REQUEST_MATCH_ENTERTAIN = 11;
 
     private static final int QUERY_DUEL_INFO_OK = 0;
     private static final int QUERY_DUEL_INFO_EXCEPTION = 1;
@@ -71,6 +65,9 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     private static final int MC_MATCH_ATHLETIC_EXCEPTION = 3;
     private static final int MC_MATCH_ENTERTAIN_OK = 4;
     private static final int MC_MATCH_ENTERTAIN_EXCEPTION = 5;
+    private static final String ARG_MC_DUEL_INFO = "mcDuelInfo";
+    private static final String ARG_MATCH = "matchRecord";
+    private static final String ARG_FUN = "funRecord";
 
     private OYTabLayout tl_tab;
     private ViewPager vp_pager;
@@ -79,6 +76,14 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     private McLayoutFragment mcLayoutFragment;
     private ProgressBar pb_loading, pb_chat_loading;
     private ImageView iv_refresh;
+    private RelativeLayout rl_chat;
+    private TextView tv_message, tv_match_title;
+    private LinearLayout ll_visit_duel, ll_athletic, ll_entertain;
+    private ServiceManagement serviceManagement;
+    private ChatMessage currentMessage;
+    private DialogUtils du;
+    private McDuelInfo currentMcDuelInfo;
+    private Bundle currentBundle;
     Handler handler = new Handler() {
 
         @Override
@@ -86,10 +91,11 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
             super.handleMessage(msg);
             switch (msg.what) {
                 case QUERY_DUEL_INFO_OK:
-                    McDuelInfo mcDuelInfo=(McDuelInfo) msg.obj;
-                    matchRecordFragment.onBaseDuelInfo(mcDuelInfo, null);
-                    funRecordFragment.onBaseDuelInfo(mcDuelInfo, null);
-                    tv_match_title.setText("竞技匹配（D.P："+mcDuelInfo.getDp()+")");
+                    currentMcDuelInfo = (McDuelInfo) msg.obj;
+                    Log.e("MycardFragment", "当前情况" + (currentBundle != null));
+                    matchRecordFragment.onBaseDuelInfo(currentMcDuelInfo, null);
+                    funRecordFragment.onBaseDuelInfo(currentMcDuelInfo, null);
+                    tv_match_title.setText("竞技匹配（D.P：" + currentMcDuelInfo.getDp() + ")");
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
                     break;
@@ -98,54 +104,62 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
                     funRecordFragment.onBaseDuelInfo(null, msg.obj.toString());
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
-                    OYUtil.snackExceptionToast(getActivity(),pb_loading,"战绩加载失败",msg.obj.toString());
+                    OYUtil.snackExceptionToast(getActivity(), pb_loading, "战绩加载失败", msg.obj.toString());
                     break;
                 case MC_MATCH_ATHLETIC_OK:
                     du.dis();
-                    YGOServer ygoServer= (YGOServer) msg.obj;
-                    if (ygoServer==null){
-                        OYUtil.snackShow(ll_athletic,"未匹配到对手");
+                    YGOServer ygoServer = (YGOServer) msg.obj;
+                    if (ygoServer == null) {
+                        OYUtil.snackShow(ll_athletic, "未匹配到对手");
                         break;
                     }
-                    YGOUtil.joinGame(getActivity(),ygoServer,ygoServer.getPassword(),REQUEST_MATCH_ATHLETIC);
+                    YGOUtil.joinGame(getActivity(), ygoServer, ygoServer.getPassword(), REQUEST_MATCH_ATHLETIC);
                     break;
                 case MC_MATCH_ATHLETIC_EXCEPTION:
                     du.dis();
-                    OYUtil.snackExceptionToast(getActivity(),ll_entertain,"匹配失败",msg.obj.toString());
+                    OYUtil.snackExceptionToast(getActivity(), ll_entertain, "匹配失败", msg.obj.toString());
                     break;
                 case MC_MATCH_ENTERTAIN_OK:
                     du.dis();
-                    YGOServer ygoServer1= (YGOServer) msg.obj;
-                    if (ygoServer1==null){
-                        OYUtil.snackShow(ll_athletic,"未匹配到对手");
+                    YGOServer ygoServer1 = (YGOServer) msg.obj;
+                    if (ygoServer1 == null) {
+                        OYUtil.snackShow(ll_athletic, "未匹配到对手");
                         break;
                     }
-                    YGOUtil.joinGame(getActivity(),ygoServer1,ygoServer1.getPassword(),REQUEST_MATCH_ENTERTAIN);
+                    YGOUtil.joinGame(getActivity(), ygoServer1, ygoServer1.getPassword(), REQUEST_MATCH_ENTERTAIN);
                     break;
                 case MC_MATCH_ENTERTAIN_EXCEPTION:
                     du.dis();
-                    OYUtil.snackExceptionToast(getActivity(),ll_entertain,"匹配失败",msg.obj.toString());
+                    OYUtil.snackExceptionToast(getActivity(), ll_entertain, "匹配失败", msg.obj.toString());
                     break;
             }
         }
     };
-    private RelativeLayout rl_chat;
-    private TextView tv_message,tv_match_title;
-    private LinearLayout ll_visit_duel,ll_athletic,ll_entertain;
-    private ServiceManagement serviceManagement;
-    private ChatMessage currentMessage;
-    private DialogUtils du;
-
-
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.mycard_fragment, container, false);
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view;
+        if (isHorizontal)
+            view = inflater.inflate(R.layout.mycard_horizontal_fragment, container, false);
+        else
+            view = inflater.inflate(R.layout.mycard_fragment, container, false);
+        this.currentBundle = savedInstanceState;
         initView(view);
         return view;
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        FragmentManager fragmentManager = getChildFragmentManager();
+        fragmentManager.putFragment(outState, ARG_MATCH, matchRecordFragment);
+        fragmentManager.putFragment(outState, ARG_FUN, funRecordFragment);
+
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(ARG_MC_DUEL_INFO, currentMcDuelInfo);
+
+    }
 
     @Override
     public void onClick(View v) {
@@ -157,7 +171,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
                 watchDuel();
                 break;
             case R.id.ll_athletic:
-               matchAthletic();
+                matchAthletic();
                 break;
             case R.id.ll_entertain:
                 matchEnterTain();
@@ -179,7 +193,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     }
 
     private void matchEnterTain() {
-        Button button=du.dialogj(null,"娱乐匹配中，请稍等");
+        Button button = du.dialogj(null, "娱乐匹配中，请稍等");
         button.setText("取消匹配");
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,14 +204,14 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         });
         MyCardUtil.startMatch(McUserManagement.getInstance().getUser(), MyCardUtil.MATCH_TYPE_ENTERTAIN, new OnMcMatchListener() {
             @Override
-            public void onMcMatch(YGOServer ygoServer,String password,String exception) {
-                HandlerUtil.sendMessage(handler,exception,MC_MATCH_ATHLETIC_OK,ygoServer,MC_MATCH_ATHLETIC_EXCEPTION);
+            public void onMcMatch(YGOServer ygoServer, String password, String exception) {
+                HandlerUtil.sendMessage(handler, exception, MC_MATCH_ATHLETIC_OK, ygoServer, MC_MATCH_ATHLETIC_EXCEPTION);
             }
         });
     }
 
     private void matchAthletic() {
-        Button button=du.dialogj(null,"竞技匹配中，请稍等");
+        Button button = du.dialogj(null, "竞技匹配中，请稍等");
         button.setText("取消匹配");
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -208,14 +222,14 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         });
         MyCardUtil.startMatch(McUserManagement.getInstance().getUser(), MyCardUtil.MATCH_TYPE_ATHLETIC, new OnMcMatchListener() {
             @Override
-            public void onMcMatch(YGOServer ygoServer,String passsword,String exception) {
-                HandlerUtil.sendMessage(handler,exception,MC_MATCH_ATHLETIC_OK,ygoServer,MC_MATCH_ATHLETIC_EXCEPTION);
+            public void onMcMatch(YGOServer ygoServer, String passsword, String exception) {
+                HandlerUtil.sendMessage(handler, exception, MC_MATCH_ATHLETIC_OK, ygoServer, MC_MATCH_ATHLETIC_EXCEPTION);
             }
         });
     }
 
     private void watchDuel() {
-        startActivity(new Intent(getActivity(),WatchDuelActivity.class));
+        startActivity(new Intent(getActivity(), WatchDuelActivity.class));
     }
 
     private void initView(View view) {
@@ -232,7 +246,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         tv_match_title = view.findViewById(R.id.tv_match_title);
 
         serviceManagement = ServiceManagement.getDx();
-        du=DialogUtils.getInstance(getActivity());
+        du = DialogUtils.getInstance(getActivity());
 
         tl_tab.setShowMode(OYTabLayout.MODE_BACKGROUND);
         tl_tab.setTextSizeM();
@@ -247,8 +261,16 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
         List<FragmentData> fragmentList = new ArrayList<>();
 
-        matchRecordFragment = new MatchRecordFragment();
-        funRecordFragment = new FunRecordFragment();
+        if (currentBundle != null) {
+            FragmentManager fragmentManager = getChildFragmentManager();
+            matchRecordFragment = (MatchRecordFragment) fragmentManager.getFragment(currentBundle, ARG_MATCH);
+            funRecordFragment = (FunRecordFragment) fragmentManager.getFragment(currentBundle, ARG_FUN);
+        }
+
+        if (matchRecordFragment == null)
+            matchRecordFragment = new MatchRecordFragment();
+        if (funRecordFragment == null)
+            funRecordFragment = new FunRecordFragment();
 
         fragmentList.add(FragmentData.toFragmentData(OYUtil.s(R.string.match_record), matchRecordFragment));
         fragmentList.add(FragmentData.toFragmentData(OYUtil.s(R.string.fun_record), funRecordFragment));
@@ -263,20 +285,35 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
         McUserManagement.getInstance().addListener(this);
         iv_refresh.setOnClickListener(v -> {
-            initData();
+            initData(null, 0);
         });
     }
 
-    private void initData() {
+    private void initData(Bundle saveBundle, int position) {
+        Log.e("MycardFragment", position + "情况" + (saveBundle != null) + "  " + (currentBundle != null));
         if (McUserManagement.getInstance().isLogin()) {
             pb_loading.setVisibility(View.VISIBLE);
             iv_refresh.setVisibility(View.GONE);
-            MyCardUtil.findUserDuelInfo(McUserManagement.getInstance().getUser().getUsername(), (mcDuelInfo, exception) -> {
-                HandlerUtil.sendMessage(handler, exception, QUERY_DUEL_INFO_OK, mcDuelInfo, QUERY_DUEL_INFO_EXCEPTION);
-            });
-            serviceManagement.start();
-        }else {
-            if (mcLayoutFragment!=null)
+
+            if (saveBundle == null) {
+                MyCardUtil.findUserDuelInfo(McUserManagement.getInstance().getUser().getUsername(), (mcDuelInfo, exception) -> {
+                    HandlerUtil.sendMessage(handler, exception, QUERY_DUEL_INFO_OK, mcDuelInfo, QUERY_DUEL_INFO_EXCEPTION);
+                });
+                serviceManagement.start();
+            } else {
+                currentMcDuelInfo = (McDuelInfo) saveBundle.getSerializable(ARG_MC_DUEL_INFO);
+                Log.e("MycardFragment", "决斗信息" + (currentMcDuelInfo != null));
+                if (currentMcDuelInfo != null) {
+                    HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, currentMcDuelInfo);
+                } else {
+                    MyCardUtil.findUserDuelInfo(McUserManagement.getInstance().getUser().getUsername(), (mcDuelInfo, exception) -> {
+                        HandlerUtil.sendMessage(handler, exception, QUERY_DUEL_INFO_OK, mcDuelInfo, QUERY_DUEL_INFO_EXCEPTION);
+                    });
+                }
+                serviceManagement.start();
+            }
+        } else {
+            if (mcLayoutFragment != null)
                 mcLayoutFragment.setCurrentFragment(0);
         }
     }
@@ -284,11 +321,11 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode== Activity.RESULT_OK){
-            switch (requestCode){
+        if (resultCode == Activity.RESULT_OK) {
+            switch (requestCode) {
                 case REQUEST_MATCH_ATHLETIC:
                 case REQUEST_MATCH_ENTERTAIN:
-                    initData();
+                    initData(null, 1);
             }
         }
     }
@@ -324,6 +361,11 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         Log.e("MyCardFragment", "登录情况" + exception);
         pb_chat_loading.setVisibility(View.GONE);
         if (TextUtils.isEmpty(exception)) {
+            if (currentMessage==null){
+                List<ChatMessage> data=serviceManagement.getData();
+                if (data!=null&&data.size()>0)
+                    currentMessage=data.get(data.size()-1);
+            }
             if (currentMessage == null)
                 tv_message.setText("聊天信息加载中");
             else
@@ -390,12 +432,12 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     @Override
     public void onLogin(McUser user, String exception) {
         if (TextUtils.isEmpty(exception))
-            initData();
+            initData(currentBundle, 2);
     }
 
     @Override
     public void onLogout() {
-        HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, null);
+//        HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, null);
     }
 
     @Override

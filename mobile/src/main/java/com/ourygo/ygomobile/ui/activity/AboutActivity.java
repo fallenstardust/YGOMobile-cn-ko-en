@@ -152,6 +152,9 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.1.0","更新ygo内核\n" +
+               "更新卡包1108+VJ\n" +
+               "适配平板布局\n设置背景时可选择背景模糊\n修复卡组分类排序错误的问题\n其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.0.3","更新ygo内核\n" +
                "更新卡包22PP+SSB1+VJ"));
        updateList.add(UpdateLog.toUpdateLog("1.0.2", "更新ygo内核\n" +

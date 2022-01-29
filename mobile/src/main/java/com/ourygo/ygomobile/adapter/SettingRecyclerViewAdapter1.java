@@ -134,7 +134,7 @@ public class SettingRecyclerViewAdapter1 extends BaseMultiItemQuickAdapter<Setti
                 baseViewHolder.setGone(R.id.tv_type_name, true);
                 baseViewHolder.setGone(R.id.line, true);
 
-                lp.setMargins(0, 0, 0, 0);
+                lp.setMargins(0, 0, 0,0);
                 break;
             case ITEM_ONE:
                 baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.click_background_radius);

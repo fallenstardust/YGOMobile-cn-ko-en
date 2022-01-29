@@ -30,7 +30,13 @@ public class FunRecordFragment extends BaseFragemnt implements BaseDuelInfoFragm
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.mycard_fun_rank_fragment, container, false);
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view;
+        if (isHorizontal)
+            view = inflater.inflate(R.layout.mycard_fun_rank_horizontal_fragment, container, false);
+        else
+            view = inflater.inflate(R.layout.mycard_fun_rank_fragment, container, false);
+
         initView(view);
         return view;
     }
