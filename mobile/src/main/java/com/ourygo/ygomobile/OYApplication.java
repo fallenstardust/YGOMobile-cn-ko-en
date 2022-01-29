@@ -27,7 +27,7 @@ public class OYApplication extends App {
 
     public static final String BUGLY_ID="669adbac35";
     private static final String UM_KEY = "618e15c1e014255fcb77324a";
-    private static final String CHANNEL = "群文件";
+    private static final String CHANNEL = "Group File";
 //Group File
     private static List<Activity> activitys = new ArrayList<>();
     private static int num = 0;
