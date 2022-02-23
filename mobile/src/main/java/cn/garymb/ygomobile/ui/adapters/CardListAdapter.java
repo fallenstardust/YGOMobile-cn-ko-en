@@ -269,7 +269,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 holder.setGone(R.id.card_level,true);
                 holder.setGone(R.id.search_link_arrows,false);
                 holder.setText(R.id.card_def,item.getStar() < 0 ? "?" : "LINK-" + String.valueOf(item.getStar()));
-                holder.setText(R.id.card_def,"");
                 BaseActivity.showLinkArrows(item, holder.getView(R.id.search_link_arrows));
             } else {
                 holder.setGone(R.id.card_level,false);
