@@ -51,6 +51,7 @@ public class Deck implements Parcelable {
     private final ArrayList<Integer> extraList;
     private final ArrayList<Integer> sideList;
     private String name;
+    private boolean isCompleteDeck = true;
 
     public Deck() {
         mainlist = new ArrayList<>();
@@ -124,10 +125,10 @@ public class Deck implements Parcelable {
             case YGO_DECK_PROTOCOL_1:
 
                 String deck = uri.getQueryParameter(QUERY_DECK);
-                deck=deck.replace("-","+");
-                deck=deck.replace("_","/");
+                deck = deck.replace("-", "+");
+                deck = deck.replace("_", "/");
                 byte[] bytes = Base64.decode(deck, Base64.NO_WRAP);
-                Log.e("Deck",deck.length()+"字符位数"+bytes.length);
+                Log.e("Deck", deck.length() + "字符位数" + bytes.length);
                 String[] bits = new String[bytes.length * 8];
 
                 for (int i = 0; i < bytes.length; i++) {
@@ -135,12 +136,12 @@ public class Deck implements Parcelable {
                     String b = Integer.toBinaryString(bytes[i]);
 
                     b = YGOUtil.toNumLength(b, 8);
-                    if (b.length()>8)
-                        b=b.substring(b.length()-8);
-                    if (i<8)
-                    Log.e("Deck",b+"  byte："+bytes[i]);
+                    if (b.length() > 8)
+                        b = b.substring(b.length() - 8);
+                    if (i < 8)
+                        Log.e("Deck", b + "  byte：" + bytes[i]);
                     for (int x = 0; x < 8; x++)
-                        bits[i*8+x] = b.substring(x, x + 1);
+                        bits[i * 8 + x] = b.substring(x, x + 1);
                 }
                 bits = YGOUtil.toNumLength(bits, 16);
 
@@ -149,18 +150,22 @@ public class Deck implements Parcelable {
                 int eNum = Integer.valueOf(YGOUtil.getArrayString(bits, 8, 12), 2);
                 int sNum = Integer.valueOf(YGOUtil.getArrayString(bits, 12, 16), 2);
                 try {
-                    FileLogUtil.write("种类数量"+mNum+" "+eNum+" "+sNum+" ");
-                    FileLogUtil.write("m："+YGOUtil.getArrayString(bits, 0, 8));
-                    FileLogUtil.write("s："+YGOUtil.getArrayString(bits, 8, 12));
-                    FileLogUtil.write("e："+YGOUtil.getArrayString(bits, 12, 16));
+                    FileLogUtil.write("种类数量" + mNum + " " + eNum + " " + sNum + " ");
+                    FileLogUtil.write("m：" + YGOUtil.getArrayString(bits, 0, 8));
+                    FileLogUtil.write("s：" + YGOUtil.getArrayString(bits, 8, 12));
+                    FileLogUtil.write("e：" + YGOUtil.getArrayString(bits, 12, 16));
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.e("Deck","种类数量"+mNum+" "+eNum+" "+sNum+" ");
-                Log.e("Deck","m："+YGOUtil.getArrayString(bits, 0, 8));
-                Log.e("Deck","e："+YGOUtil.getArrayString(bits, 8, 12));
-                Log.e("Deck","s："+YGOUtil.getArrayString(bits, 12, 16));
+                Log.e("Deck", "种类数量" + mNum + " " + eNum + " " + sNum + " ");
+                Log.e("Deck", "m：" + YGOUtil.getArrayString(bits, 0, 8));
+                Log.e("Deck", "e：" + YGOUtil.getArrayString(bits, 8, 12));
+                Log.e("Deck", "s：" + YGOUtil.getArrayString(bits, 12, 16));
+                if (bits.length < (16 + (mNum * 29))) {
+                    mNum = (bits.length - 16) / 29;
+                    isCompleteDeck = false;
+                }
                 for (int i = 0; i < mNum; i++) {
                     int cStart = 16 + (i * 29);
                     int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
@@ -169,16 +174,28 @@ public class Deck implements Parcelable {
                         mainlist.add(cardId);
                     }
                 }
-
+                if (!isCompleteDeck)
+                    return;
+                if (bits.length < (16 + mNum * 29 + (eNum * 29))) {
+                    eNum = (bits.length - 16 - (mNum * 29)) / 29;
+                    isCompleteDeck = false;
+                }
                 for (int i = 0; i < eNum; i++) {
                     int cStart = 16 + mNum * 29 + (i * 29);
                     int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
+                    Log.e("DeckSetting", eNum + " 当前 " + i + "  " + cStart);
                     int cardId = Integer.valueOf(YGOUtil.getArrayString(bits, cStart + 2, cStart + 29), 2);
                     for (int x = 0; x < cardNum; x++) {
                         extraList.add(cardId);
                     }
                 }
 
+                if (!isCompleteDeck)
+                    return;
+                if (bits.length < (16 + mNum * 29 + (eNum * 29) + (sNum * 29))) {
+                    sNum = (bits.length - 16 - (mNum * 29) - (eNum * 29)) / 29;
+                    isCompleteDeck = false;
+                }
                 for (int i = 0; i < sNum; i++) {
                     int cStart = 16 + mNum * 29 + eNum * 29 + (i * 29);
                     int cardNum = Integer.valueOf(YGOUtil.getArrayString(bits, cStart, cStart + 2), 2);
@@ -229,6 +246,9 @@ public class Deck implements Parcelable {
         return idNum;
     }
 
+    public boolean isCompleteDeck() {
+        return isCompleteDeck;
+    }
 
     private int[] toIdAndNum0(String m) {
         //元素0为卡密，元素1为卡片数量
@@ -285,20 +305,20 @@ public class Deck implements Parcelable {
         e = YGOUtil.toNumLength(e, 4);
         s = YGOUtil.toNumLength(s, 4);
 
-        Log.e("Deck","分享数量"+mNum+" "+eNum+"  "+sNum);
+        Log.e("Deck", "分享数量" + mNum + " " + eNum + "  " + sNum);
 
         deck = m + e + s + deck;
-        byte[] bytes=YGOUtil.toBytes(deck);
+        byte[] bytes = YGOUtil.toBytes(deck);
         String message = Base64.encodeToString(bytes, Base64.NO_WRAP);
-Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
-        message=message.replace("+","-");
-        message=message.replace("/","_");
-        message=message.replace("=","");
-        Log.e("Deck","转换后数据"+message);
-        for (int i=0;i<8;i++){
+        Log.e("Deck", message.length() + " 转换时位数 " + bytes.length);
+        message = message.replace("+", "-");
+        message = message.replace("/", "_");
+        message = message.replace("=", "");
+        Log.e("Deck", "转换后数据" + message);
+        for (int i = 0; i < 8; i++) {
 
         }
-        uri.appendQueryParameter(QUERY_DECK,message);
+        uri.appendQueryParameter(QUERY_DECK, message);
 
         return uri.build();
     }
@@ -307,7 +327,7 @@ Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
         String mains = tobyte(mainlist, mNum);
         String extras = tobyte(extraList, eNum);
         String sides = tobyte(sideList, sNum);
-        String message = mains+extras+sides;
+        String message = mains + extras + sides;
         return message;
     }
 
@@ -339,7 +359,7 @@ Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
     }
 
     private String tobyte(List<Integer> ids, int typeNum) {
-       String bytes="";
+        String bytes = "";
         for (int i = 0; i < ids.size(); i++) {
             Integer id = ids.get(i);
             if (id > 0) {
@@ -367,19 +387,19 @@ Log.e("Deck",message.length()+" 转换时位数 "+bytes.length);
                     tNum = Math.min(3, tNum);
                     switch (tNum) {
                         case 1:
-                            idB="01"+idB;
+                            idB = "01" + idB;
                             break;
                         case 2:
-                            idB="10"+idB;
+                            idB = "10" + idB;
                             break;
                         case 3:
-                            idB="11"+idB;
+                            idB = "11" + idB;
                             break;
                     }
                 } else {
-                    idB="01"+idB;
+                    idB = "01" + idB;
                 }
-                bytes+=idB;
+                bytes += idB;
             }
         }
         return bytes;

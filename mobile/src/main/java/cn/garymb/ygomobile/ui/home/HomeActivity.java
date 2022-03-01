@@ -607,6 +607,9 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                 File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                if (!deckInfo.isCompleteDeck()){
+                    YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                }
                 DeckManagerActivity.start(this, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
