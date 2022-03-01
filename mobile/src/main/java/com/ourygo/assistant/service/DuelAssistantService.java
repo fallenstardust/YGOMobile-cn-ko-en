@@ -50,6 +50,7 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 
 public class DuelAssistantService extends Service implements OnDuelAssistantListener {

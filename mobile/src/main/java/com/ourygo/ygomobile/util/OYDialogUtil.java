@@ -125,6 +125,9 @@ public class OYDialogUtil {
                     Deck deckInfo = new Deck(OYUtil.s(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                     Log.e("OYDialogUtil", "数量" + deckInfo.getMainCount() + " " + deckInfo.getExtraCount() + " " + deckInfo.getSideCount());
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                    if (!deckInfo.isCompleteDeck()){
+                        cn.garymb.ygomobile.utils.YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                    }
 //                    try {
 //                        FileUtil.copyFile(file.getAbsolutePath(), AppsSettings.get().getDeckDir(), false);
                     du.dis();
