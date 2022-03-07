@@ -2,11 +2,12 @@
 
 buildscript {
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/public'}
-        maven { url 'https://maven.aliyun.com/repository/google'}
-        jcenter()
-        maven { url "https://jitpack.io" }
-        google()
+        maven { url'https://maven.aliyun.com/repository/public/' }
+        maven { url'https://maven.aliyun.com/repository/google/' }
+        maven { url'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.2'
@@ -23,11 +24,16 @@ ext {
 
 allprojects {
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/public'}
-        maven { url 'https://maven.aliyun.com/repository/google'}
-        jcenter()
-        google()
-        maven { url "https://jitpack.io" }
+        maven { url'https://maven.aliyun.com/repository/public/' }
+        maven { url'https://maven.aliyun.com/repository/google/' }
+        maven { url'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        mavenCentral()
+        //smack
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
     }
 }
 
