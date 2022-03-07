@@ -152,6 +152,9 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.1.1","更新ygo内核\n" +
+               "更新卡包HC01+T1107+VJ\n" +
+               "修复卡组码不完整时的闪退问题" ));
        updateList.add(UpdateLog.toUpdateLog("1.1.0","更新ygo内核\n" +
                "更新卡包1108+VJ\n" +
                "适配平板布局\n设置背景时可选择背景模糊\n修复卡组分类排序错误的问题\n其他优化"));
