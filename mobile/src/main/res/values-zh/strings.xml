@@ -241,7 +241,7 @@
     <string name="avatarSelect">点击相应头像选择文件</string>
     <string name="ClickLinkArrows">点亮箭头</string>
     <string name="tip_no_permission" formatted="false">权限 %s 被你禁止了</string>
-    <string name="Already_Lastest">已经是最新版本</string>
+    <string name="Already_Lastest">未发现新版本</string>
     <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
     <string name="Download">下载</string>
     <string name="Downloading">下载中，请稍候</string>
