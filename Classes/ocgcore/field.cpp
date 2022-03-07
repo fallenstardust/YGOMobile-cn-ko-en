@@ -1824,6 +1824,9 @@ int32 field::get_summon_count_limit(uint8 playerid) {
 	return count;
 }
 int32 field::get_draw_count(uint8 playerid) {
+	if ((core.duel_rule >= 3) && (infos.turn_id == 1) && (infos.turn_player == playerid)) {
+		return 0;
+	}
 	effect_set eset;
 	filter_player_effect(playerid, EFFECT_DRAW_COUNT, &eset);
 	int32 count = player[playerid].draw_count;
@@ -3069,7 +3072,8 @@ int32 field::is_player_can_spsummon(effect* reason_effect, uint32 sumtype, uint8
 		return FALSE;
 	if(pcard->data.type & TYPE_LINK)
 		sumpos &= POS_FACEUP_ATTACK;
-	if(sumpos == 0)
+	uint8 position = pcard->get_spsummonable_position(reason_effect, sumtype, sumpos, playerid, toplayer);
+	if(position == 0)
 		return FALSE;
 	sumtype |= SUMMON_TYPE_SPECIAL;
 	save_lp_cost();
@@ -3078,8 +3082,8 @@ int32 field::is_player_can_spsummon(effect* reason_effect, uint32 sumtype, uint8
 		return FALSE;
 	}
 	restore_lp_cost();
-	if(sumpos & POS_FACEDOWN && is_player_affected_by_effect(playerid, EFFECT_DIVINE_LIGHT))
-		sumpos = (sumpos & POS_FACEUP) | ((sumpos & POS_FACEDOWN) >> 1);
+	if(position & POS_FACEDOWN && is_player_affected_by_effect(playerid, EFFECT_DIVINE_LIGHT))
+		position = (position & POS_FACEUP) | ((position & POS_FACEDOWN) >> 1);
 	effect_set eset;
 	filter_player_effect(playerid, EFFECT_CANNOT_SPECIAL_SUMMON, &eset);
 	for(int32 i = 0; i < eset.size(); ++i) {
@@ -3089,7 +3093,7 @@ int32 field::is_player_can_spsummon(effect* reason_effect, uint32 sumtype, uint8
 		pduel->lua->add_param(pcard, PARAM_TYPE_CARD);
 		pduel->lua->add_param(playerid, PARAM_TYPE_INT);
 		pduel->lua->add_param(sumtype, PARAM_TYPE_INT);
-		pduel->lua->add_param(sumpos, PARAM_TYPE_INT);
+		pduel->lua->add_param(position, PARAM_TYPE_INT);
 		pduel->lua->add_param(toplayer, PARAM_TYPE_INT);
 		pduel->lua->add_param(reason_effect, PARAM_TYPE_EFFECT);
 		if (pduel->lua->check_condition(eset[i]->target, 7))
@@ -3377,8 +3381,9 @@ int32 field::get_cteffect(effect* peffect, int32 playerid, int32 store) {
 			continue;
 		uint32 code = efit.first;
 		if(code == EVENT_FREE_CHAIN || code == EVENT_PHASE + infos.phase) {
-			nil_event.event_code = code;
-			if(get_cteffect_evt(feffect, playerid, nil_event, store) && !store)
+			tevent test_event;
+			test_event.event_code = code;
+			if(get_cteffect_evt(feffect, playerid, test_event, store) && !store)
 				return TRUE;
 		} else {
 			for(const auto& ev : core.point_event) {
@@ -3427,8 +3432,9 @@ int32 field::check_cteffect_hint(effect* peffect, uint8 playerid) {
 			continue;
 		uint32 code = efit.first;
 		if(code == EVENT_FREE_CHAIN || code == EVENT_PHASE + infos.phase) {
-			nil_event.event_code = code;
-			if(get_cteffect_evt(feffect, playerid, nil_event, FALSE)
+			tevent test_event;
+			test_event.event_code = code;
+			if(get_cteffect_evt(feffect, playerid, test_event, FALSE)
 				&& (code != EVENT_FREE_CHAIN || check_hint_timing(feffect)))
 				return TRUE;
 		} else {
