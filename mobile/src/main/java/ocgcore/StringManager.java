@@ -63,7 +63,7 @@ public class StringManager implements Closeable {
                         Log.e("StringManager", "读取压缩包");
                         try {
                             ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
-                            ZipEntry entry = zipFile.getEntry(Constants.CORE_STRING_PATH);
+                            ZipEntry entry = zipFile.getEntry(Constants.CORE_CUSTOM_STRING_PATH);
                             if (entry != null) {
                                 res3 &= loadFile(zipFile.getInputStream(entry));
                             }
