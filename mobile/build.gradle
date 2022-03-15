@@ -9,7 +9,7 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 390500307
+        versionCode 390500316
         versionName "3.9.5"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
