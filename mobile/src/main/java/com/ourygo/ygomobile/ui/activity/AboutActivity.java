@@ -152,6 +152,8 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.1.2","更新ygo内核；\n" +
+               "更新卡包DBTM+VX+VJ"));
        updateList.add(UpdateLog.toUpdateLog("1.1.1","更新ygo内核\n" +
                "更新卡包HC01+T1107+VJ\n" +
                "修复卡组码不完整时的闪退问题" ));
