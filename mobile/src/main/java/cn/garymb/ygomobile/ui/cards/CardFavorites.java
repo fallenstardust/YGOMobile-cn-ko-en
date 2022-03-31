@@ -87,15 +87,19 @@ public class CardFavorites {
                 mList.add(Integer.parseInt(tmp));
             }
         }
-        Log.d(TAG, "load favorites success:"+mList.size());
+        Log.d(TAG, "load favorites success:" + mList.size());
     }
 
     public void save() {
         List<String> ret = new ArrayList<>();
-        for (Integer id : mList) {
-            ret.add(String.valueOf(id));
+        if (!mList.isEmpty()) {
+            for (Integer id : mList) {
+                ret.add(String.valueOf(id));
+            }
+            File conf = AppsSettings.get().getSystemConfig();
+            FileUtils.writeLines(conf.getPath(), ret, Constants.DEF_ENCODING, "\n");
+        } else {
+            load();
         }
-        File conf = AppsSettings.get().getSystemConfig();
-        FileUtils.writeLines(conf.getPath(), ret, Constants.DEF_ENCODING, "\n");
     }
 }
