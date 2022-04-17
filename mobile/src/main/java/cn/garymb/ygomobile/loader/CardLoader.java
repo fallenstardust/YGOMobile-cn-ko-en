@@ -125,17 +125,24 @@ public class CardLoader implements ICardSearcher {
         VUiKit.defer().when(() -> {
             SparseArray<Card> cards = mCardManager.getAllCards();
             List<Card> list = new ArrayList<>();
+            List<Card> keywordtmp = new ArrayList<>();
             for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.valueAt(i);
-                if (inCards != null && !inCards.contains(card.getCode())){
+                if (inCards != null && !inCards.contains(card.getCode())) {
                     continue;
+                }
+                if (searchInfo != null && card.Name.equals(searchInfo.getKeyWord().getValue())) {
+                    cards.remove(i);
+                    keywordtmp.add(card);
+                    continue;//±ÜÃâÖØ¸´
                 }
                 if (searchInfo == null || searchInfo.isValid(card)) {
                     list.add(card);
                 }
             }
             Collections.sort(list, CardSort.ASC);
-            return list;
+            keywordtmp.addAll(list);
+            return keywordtmp;
         }).fail((e) -> {
             if (mCallBack != null) {
                 ArrayList<Card> noting = new ArrayList<Card>();
@@ -152,7 +159,7 @@ public class CardLoader implements ICardSearcher {
     }
 
     @Override
-    public List<Card> sort(List<Card> cards){
+    public List<Card> sort(List<Card> cards) {
         Collections.sort(cards, CardSort.ASC);
         return cards;
     }
