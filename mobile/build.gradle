@@ -9,8 +9,8 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 390600401
-        versionName "3.9.6"
+        versionCode 390700430
+        versionName "3.9.7"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
@@ -28,12 +28,12 @@ android {
         }
         en {
             applicationIdSuffix ".EN"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
+            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
             applicationIdSuffix ".KO"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
+            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }

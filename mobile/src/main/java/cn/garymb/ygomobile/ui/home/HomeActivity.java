@@ -308,7 +308,6 @@ public abstract class HomeActivity extends BaseActivity implements NavigationVie
     private boolean doMenu(int id) {
         switch (id) {
             case R.id.nav_webpage: {
-                String url;
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(BuildConfig.URL_DONATE));
                 startActivity(intent);
