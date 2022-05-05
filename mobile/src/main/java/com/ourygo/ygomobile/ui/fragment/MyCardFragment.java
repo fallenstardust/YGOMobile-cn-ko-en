@@ -35,7 +35,7 @@ import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 

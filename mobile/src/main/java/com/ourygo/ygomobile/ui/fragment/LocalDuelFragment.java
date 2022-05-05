@@ -10,7 +10,7 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.ourygo.ygomobile.adapter.LocalBQAdapter;
 import com.ourygo.ygomobile.bean.LocalDuel;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;

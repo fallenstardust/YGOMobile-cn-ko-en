@@ -28,4 +28,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 //    implementation "me.weishu:free_reflection:2.1.0"
+    // 友盟统计SDK
+    implementation 'com.umeng.umsdk:common:9.4.4'// 必选
+    implementation 'com.umeng.umsdk:asms:1.5.0'// 必选
 }

@@ -1,7 +1,6 @@
 package com.ourygo.ygomobile.ui.activity;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -30,7 +29,7 @@ import com.ourygo.ygomobile.bean.Lflist;
 import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;

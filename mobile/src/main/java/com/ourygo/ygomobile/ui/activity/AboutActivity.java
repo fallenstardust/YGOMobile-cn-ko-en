@@ -2,14 +2,11 @@ package com.ourygo.ygomobile.ui.activity;
 
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,18 +16,15 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 //import com.tencent.bugly.beta.Beta;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
-import cn.garymb.ygomobile.utils.DownloadUtil;
 
 public class AboutActivity extends BaseActivity {
     private static final int TYPE_NO_UPDATE = 0;
@@ -152,7 +146,9 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
-       updateList.add(UpdateLog.toUpdateLog("1.1.2","更新ygo内核；\n" +
+       updateList.add(UpdateLog.toUpdateLog("1.1.3","更新ygo内核\n" +
+               "更新卡包1109+KC01+VJ"));
+       updateList.add(UpdateLog.toUpdateLog("1.1.2","更新ygo内核\n" +
                "更新卡包DBTM+VX+VJ"));
        updateList.add(UpdateLog.toUpdateLog("1.1.1","更新ygo内核\n" +
                "更新卡包HC01+T1107+VJ\n" +

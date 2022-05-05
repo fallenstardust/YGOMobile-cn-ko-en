@@ -13,7 +13,7 @@ import androidx.annotation.Nullable;
 import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.ygomobile.base.listener.BaseDuelInfoFragment;
 import com.ourygo.ygomobile.bean.McDuelInfo;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;

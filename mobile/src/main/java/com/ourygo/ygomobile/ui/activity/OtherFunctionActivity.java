@@ -1,25 +1,20 @@
 package com.ourygo.ygomobile.ui.activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.ourygo.ygomobile.adapter.OtherAppBQAdapter;
 import com.ourygo.ygomobile.bean.OtherApp;
 import com.ourygo.ygomobile.util.IntentUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.BaseActivity;
 
 /**
  * Create By feihua  On 2021/11/2

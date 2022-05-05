@@ -9,15 +9,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
-import com.ourygo.ygomobile.base.listener.OnYGOServerListQueryListener;
 import com.ourygo.ygomobile.bean.YGOServer;
-import com.ourygo.ygomobile.bean.YGOServerList;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import androidx.annotation.NonNull;
@@ -25,8 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.bean.ServerList;
+
 import cn.garymb.ygomobile.lite.R;
 
 public class YGOServerFragemnt extends Fragment {

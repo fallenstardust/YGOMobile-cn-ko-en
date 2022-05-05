@@ -162,6 +162,9 @@
         <activity android:name="com.ourygo.ygomobile.ui.activity.WebActivity" />
         <activity android:name="com.ourygo.ygomobile.ui.activity.OtherFunctionActivity" />
         <activity android:name="com.ourygo.ygomobile.ui.activity.DeckManagementActivity" />
+            tools:ignore="MissingClass" />
+<!--        <activity android:name="com.ourygo.ygomobile.ui.activity." />-->
+<!--        <activity android:name="cn.garymb.ygomobile.YGOMobileActivity" />-->
         <activity
             android:name="com.ourygo.ygomobile.ui.activity.WatchDuelActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"

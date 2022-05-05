@@ -8,8 +8,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.ourygo.ygomobile.util.StatUtil;
-
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;

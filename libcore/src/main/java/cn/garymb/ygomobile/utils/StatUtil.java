@@ -1,4 +1,4 @@
-package com.ourygo.ygomobile.util;
+package cn.garymb.ygomobile.utils;
 
 
 import android.content.Context;

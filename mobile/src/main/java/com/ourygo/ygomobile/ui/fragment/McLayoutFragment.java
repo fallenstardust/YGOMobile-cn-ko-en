@@ -15,7 +15,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.ourygo.ygomobile.base.listener.OnMcUserListener;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;

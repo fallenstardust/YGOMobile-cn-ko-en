@@ -33,13 +33,12 @@ import androidx.appcompat.widget.Toolbar;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import com.ourygo.ygomobile.OYApplication;
-import com.ourygo.ygomobile.util.CookieUtil;
 import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.tencent.smtt.export.external.interfaces.IX5WebChromeClient;
 import com.tencent.smtt.export.external.interfaces.JsPromptResult;
 import com.tencent.smtt.export.external.interfaces.JsResult;
@@ -60,7 +59,6 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 
 public class WebActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener {

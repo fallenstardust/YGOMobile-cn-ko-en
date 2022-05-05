@@ -18,7 +18,7 @@ import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -3,7 +3,6 @@ package com.ourygo.ygomobile.ui.activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,16 +13,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemChildClickListener;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.ClipManagement;
@@ -33,7 +28,6 @@ import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.FmPagerAdapter;
 import com.ourygo.ygomobile.adapter.VerTabBQAdapter;
 import com.ourygo.ygomobile.bean.FragmentData;
-import com.ourygo.ygomobile.bean.VerTab;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.fragment.MainFragment;
 import com.ourygo.ygomobile.ui.fragment.McLayoutFragment;
@@ -45,7 +39,7 @@ import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 import com.tencent.bugly.Bugly;
@@ -62,11 +56,6 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
-import q.rorbin.verticaltablayout.VerticalTabLayout;
-import q.rorbin.verticaltablayout.adapter.TabAdapter;
-import q.rorbin.verticaltablayout.widget.ITabView;
-import q.rorbin.verticaltablayout.widget.QTabView;
-import q.rorbin.verticaltablayout.widget.TabView;
 
 public class OYMainActivity extends BaseActivity implements OnDuelAssistantListener {
 

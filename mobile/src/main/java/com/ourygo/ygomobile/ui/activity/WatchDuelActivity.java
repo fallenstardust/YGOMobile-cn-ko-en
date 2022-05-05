@@ -2,35 +2,23 @@ package com.ourygo.ygomobile.ui.activity;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
-import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.ygomobile.adapter.DuelRoomBQAdapter;
 import com.ourygo.ygomobile.base.listener.OnDuelRoomListener;
 import com.ourygo.ygomobile.bean.DuelRoom;
-import com.ourygo.ygomobile.bean.WebSocketEvent;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import com.ourygo.ygomobile.util.StatUtil;
+import cn.garymb.ygomobile.utils.StatUtil;
 import com.ourygo.ygomobile.util.WatchDuelManagement;
 import com.ourygo.ygomobile.util.YGOUtil;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 
 /**
  * Create By feihua  On 2021/11/3

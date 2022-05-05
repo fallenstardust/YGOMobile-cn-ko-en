@@ -4,17 +4,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
-
 import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.View;
+import android.view.WindowInsets;
+
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-
-import androidx.annotation.RequiresApi;
 
 //屏幕工具类
 public class ScreenUtil {
@@ -30,11 +30,6 @@ public class ScreenUtil {
     public static final int NOTCH_TYPE_PHONE_XIAOMI = 3;
     public static final int NOTCH_TYPE_PHONE_ANDROID_P = 4;
     public static final int NOTCH_TYPE_PHONE_OTHER = 5;
-
-    public static interface FindNotchInformation {
-        void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
-    }
-
 
     //是否是刘海屏
     public static void findNotchInformation(Activity activity, FindNotchInformation findNotchInformation) {
@@ -56,7 +51,6 @@ public class ScreenUtil {
         }
     }
 
-
     @RequiresApi(api = Build.VERSION_CODES.P)
     public static void findNotchPInformation(Activity activity, final FindNotchInformation findNotchPInformation) {
 
@@ -65,7 +59,10 @@ public class ScreenUtil {
         decorView.post(new Runnable() {
             @Override
             public void run() {
-                DisplayCutout cutout = decorView.getRootWindowInsets().getDisplayCutout();
+                WindowInsets windowInsets = decorView.getRootWindowInsets();
+                if (windowInsets == null)
+                    return;
+                DisplayCutout cutout = windowInsets.getDisplayCutout();
                 if (cutout == null) {
                     try {
                         FileLogUtil.writeAndTime("Android P刘海：  cotout为空");
@@ -78,14 +75,14 @@ public class ScreenUtil {
                     List<Rect> rects = cutout.getBoundingRects();
                     if (rects == null || rects.size() == 0) {
                         try {
-                            FileLogUtil.writeAndTime("Android P刘海：  rects:"+(rects==null));
+                            FileLogUtil.writeAndTime("Android P刘海：  rects:" + (rects == null));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                         findNotchPInformation.onNotchInformation(false, 0, NOTCH_TYPE_PHONE_ANDROID_P);
                     } else {
                         try {
-                            FileLogUtil.writeAndTime("Android P刘海：  刘海存在，个数为"+rects.size());
+                            FileLogUtil.writeAndTime("Android P刘海：  刘海存在，个数为" + rects.size());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -112,7 +109,6 @@ public class ScreenUtil {
         return activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
     }
 
-
     //小米的状态栏高度会略高于刘海屏的高度，因此可以通过获取状态栏的高度来间接避开刘海屏
     public static int getNotchHeightXiaomi(Activity activity) {
         if (isNotchXiaomi(activity))
@@ -129,7 +125,6 @@ public class ScreenUtil {
         }
         return statusBarHeight;
     }
-
 
     //OPPO是否有刘海
     public static boolean isNotchOPPO(Context context) {
@@ -218,6 +213,15 @@ public class ScreenUtil {
         return result;
     }
 
+    //获取oppo刘海高度
+    public static int getNotchHeightOPPO(Context context) {
+        if (isNotchVivo(context)) {
+            //oppo刘海区域则都是宽度为324px, 高度为80px
+            return (int) DensityUtils.px2dp(context, 80);
+        }
+        return 0;
+    }
+
 //    //其他安卓p的机子是否有刘海
 //    @RequiresApi(api = Build.VERSION_CODES.P)
 //    public static boolean isNotchP(Activity activity) {
@@ -236,16 +240,6 @@ public class ScreenUtil {
 ////        }
 //    }
 
-
-    //获取oppo刘海高度
-    public static int getNotchHeightOPPO(Context context) {
-        if (isNotchVivo(context)) {
-            //oppo刘海区域则都是宽度为324px, 高度为80px
-            return (int) DensityUtils.px2dp(context, 80);
-        }
-        return 0;
-    }
-
     //获取vivo刘海高度
     public static int getNotchHeightVivo(Context context) {
         if (isNotchVivo(context)) {
@@ -254,7 +248,6 @@ public class ScreenUtil {
         }
         return 0;
     }
-
 
     //获取华为刘海高度
     public static int getNotchHeightHuawei(Context context) {
@@ -281,6 +274,10 @@ public class ScreenUtil {
         } finally {
             return ret;
         }
+    }
+
+    public static interface FindNotchInformation {
+        void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
     }
 
 
