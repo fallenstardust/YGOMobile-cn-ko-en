@@ -287,6 +287,12 @@ public class WebActivity extends BaseActivity {
                 Message message = new Message();
                 message.what = UnzipUtils.ZIP_READY;
                 try {
+                    File ydks = new File(AppsSettings.get().getDeckDir());
+                    File[] subYdks = ydks.listFiles();
+                    for (File files : subYdks) {
+                        if(files.getName().contains("-") && files.getName().contains(" new cards"))
+                            files.delete();
+                    }
                     UnzipUtils.upZipFile(file, AppsSettings.get().getResourcePath());
                 } catch (Exception e) {
                     message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;

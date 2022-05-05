@@ -29,12 +29,12 @@ android {
         }
         en {
             applicationIdSuffix ".EN"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
+            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
             applicationIdSuffix ".KO"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.paypal.me/ygomobile1"'
+            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }
@@ -96,7 +96,6 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 dependencies {
-
     implementation 'junit:junit:4.12'
     implementation project(':libcore')
     //support-annotations，support-vector-drawable

@@ -3,6 +3,9 @@ package ocgcore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.Toast;
+
+import androidx.core.content.res.TypedArrayUtils;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -13,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -145,12 +149,17 @@ public class StringManager implements Closeable {
 //                        System.out.println(Arrays.toString(words));
                         //setcode
                         long id = toNumber(words[1]);
-                        CardSet cardSet;
-                        if (words.length >= 5) {
-                            cardSet = new CardSet(id, words[2] + " " + words[3]);
+                        //setname
+                        String setname;
+                        int beforeTab = line.lastIndexOf("\t");
+                        int afterSetCode = line.indexOf(words[1]) + words[1].length() + 1;
+                        if (beforeTab != -1) {
+                            setname = line.substring(afterSetCode, beforeTab);
                         } else {
-                            cardSet = new CardSet(id, words[2]);
+                            setname = line.substring(afterSetCode);
                         }
+                        CardSet cardSet;
+                        cardSet = new CardSet(id, setname);
                         int i = mCardSets.indexOf(cardSet);
                         if (i >= 0) {
                             CardSet cardSet1 = mCardSets.get(i);
@@ -203,10 +212,10 @@ public class StringManager implements Closeable {
 
     /**
      * @param index 索引
-     * @param def 默认值
+     * @param def   默认值
      */
-    public String getSystemString(Integer index, String def){
-        if(index <= 0){
+    public String getSystemString(Integer index, String def) {
+        if (index <= 0) {
             return def;
         }
         try {
@@ -222,7 +231,7 @@ public class StringManager implements Closeable {
 
     public String getLimitString(long id) {
         LimitType value = LimitType.valueOf(id);
-        if(value == null){
+        if (value == null) {
             return String.valueOf(id);
         }
         return getSystemString(value.getLanguageIndex(), value.name());
@@ -230,7 +239,7 @@ public class StringManager implements Closeable {
 
     public String getTypeString(long id) {
         CardType value = CardType.valueOf(id);
-        if(value == null){
+        if (value == null) {
             return String.valueOf(id);
         }
         return getSystemString(value.getLanguageIndex(), value.name());
@@ -238,7 +247,7 @@ public class StringManager implements Closeable {
 
     public String getAttributeString(long id) {
         CardAttribute value = CardAttribute.valueOf(id);
-        if(value == null){
+        if (value == null) {
             return String.valueOf(id);
         }
         return getSystemString(value.getLanguageIndex(), value.name());
@@ -246,27 +255,27 @@ public class StringManager implements Closeable {
 
     public String getRaceString(long id) {
         CardRace value = CardRace.valueOf(id);
-        if(value == null){
+        if (value == null) {
             return String.format("0x%x", id);
         }
         return getSystemString(value.getLanguageIndex(), value.name());
     }
 
     public String getOtString(int ot, boolean full) {
-        if(!full || ot == 0){
+        if (!full || ot == 0) {
             CardOt value = CardOt.valueOf(ot);
-            if(value == null){
+            if (value == null) {
                 return String.valueOf(ot);
             }
             return getSystemString(value.getLanguageIndex(), value.name());
         }
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
-        for(CardOt _ot : CardOt.values()){
+        for (CardOt _ot : CardOt.values()) {
             if (_ot.getId() == CardOt.NO_EXCLUSIVE.getId())
                 continue;
-            if((_ot.getId() & ot) != 0){
-                if(first){
+            if ((_ot.getId() & ot) != 0) {
+                if (first) {
                     first = false;
                 } else {
                     stringBuilder.append("|");
@@ -279,7 +288,7 @@ public class StringManager implements Closeable {
 
     public String getCategoryString(long id) {
         CardCategory value = CardCategory.valueOf(id);
-        if(value == null){
+        if (value == null) {
             return String.valueOf(id);
         }
         return getSystemString(value.getLanguageIndex(), value.name());
