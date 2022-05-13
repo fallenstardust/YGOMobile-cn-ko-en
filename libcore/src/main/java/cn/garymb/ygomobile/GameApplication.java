@@ -26,6 +26,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     @Override
     public void onCreate() {
         super.onCreate();
+        initUmeng();
 //        Reflection.unseal(this);
     }
 
@@ -33,6 +34,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
         UMConfigure.preInit(getApplicationContext(), UM_KEY, CHANNEL);
         UMConfigure.init(getApplicationContext(), UM_KEY, CHANNEL, UMConfigure.DEVICE_TYPE_PHONE,"");
         MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
+        UMConfigure.setLogEnabled(true);
     }
 
     public static GameApplication get() {

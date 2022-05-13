@@ -204,6 +204,13 @@
             </intent-filter>
 
             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="um.618e15c1e014255fcb77324a" />
+            </intent-filter>
+
+            <intent-filter>
                 <action android:name="ygomobile.intent.action.GAME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
