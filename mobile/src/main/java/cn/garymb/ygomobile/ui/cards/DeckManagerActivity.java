@@ -774,11 +774,18 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 //        if (file != null) {
 //            loadDeckFromFile(file);
 //        }
+        Deck deck = mDeckAdapater.toDeck(mDeckAdapater.getYdkFile());
+        if (deck.getDeckCount()==0){
+            builderShareLoading.dismiss();
+            YGOUtil.show("卡组中没有卡片");
+            return;
+        }
+
         //延时半秒，使整体看起来更流畅
-        new Handler().postDelayed(this::shareDeck1, 500);
+        new Handler().postDelayed(() -> shareDeck1(deck), 500);
     }
 
-    private void shareDeck1() {
+    private void shareDeck1(Deck deck) {
         //开启绘图缓存
         mRecyclerView.setDrawingCacheEnabled(true);
         //这个方法可调可不调，因为在getDrawingCache()里会自动判断有没有缓存有没有准备好，
@@ -793,7 +800,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         mRecyclerView.destroyDrawingCache();
 //        shotRecyclerView(mRecyclerView)
 
-        Deck deck = mDeckAdapater.toDeck(mDeckAdapater.getYdkFile());
+
         String deckName = deck.getName();
         int end = deckName.lastIndexOf(".");
         if (end != -1) {
@@ -803,13 +810,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         BitmapUtil.saveBitmap(bitmap, savePath, 50);
         builderShareLoading.dismiss();
         DialogUtils du = DialogUtils.getdx(this);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share,0);
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share,true);
         ImageView iv_image = viewDialog.findViewById(R.id.iv_image);
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
         TextView tv_code = viewDialog.findViewById(R.id.et_code);
-        tv_code.setText(mDeckAdapater.getDeckInfo().toDeck().toAppUri().toString());
-        ImageUtil.setImage(this, savePath, iv_image);
+        tv_code.setText(deck.toAppUri().toString());
+        ImageUtil.show(this, savePath, iv_image,System.currentTimeMillis()+"");
 
         bt_code_share.setOnClickListener(v -> {
             du.dis();
