@@ -73,7 +73,7 @@
                         android:textColor="@android:color/holo_green_light" />
 
                     <TextView
-                        android:id="@+id/card_atk"
+                        android:id="@+id/count_main"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
@@ -126,7 +126,7 @@
                         android:layout_height="wrap_content"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:text="extra/"
+                        android:text="side/"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@android:color/holo_green_light" />
 
@@ -147,7 +147,7 @@
                     android:layout_height="1dp"
                     android:layout_weight="1" />
                 <ImageView
-                    android:id="@+id/right_top"
+                    android:id="@+id/prerelease_star"
                     android:layout_width="@dimen/right_size"
                     android:layout_height="@dimen/right_size"
                     android:visibility="visible"
