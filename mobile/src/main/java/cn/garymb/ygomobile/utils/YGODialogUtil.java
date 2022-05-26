@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.adapter.TextBaseAdapter;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -90,7 +91,7 @@ public class YGODialogUtil {
         private final TextView tv_copy;
         private final TextView tv_del;
         private final TextSelectAdapter<DeckType> typeAdp;
-        private final TextSelectAdapter<DeckFile> deckAdp;
+        private final DeckListAdapter<DeckFile> deckAdp;
         private final Dialog ygoDialog;
 
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
@@ -156,7 +157,7 @@ public class YGODialogUtil {
                 }
             }
             typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
-            deckAdp = new TextSelectAdapter<>(deckList, deckSelectPosition);
+            deckAdp = new DeckListAdapter<>(deckList, deckSelectPosition);
             rv_type.setAdapter(typeAdp);
             rv_deck.setAdapter(deckAdp);
             typeAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckType>() {
@@ -177,7 +178,7 @@ public class YGODialogUtil {
                     deckAdp.notifyDataSetChanged();
                 }
             });
-            deckAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckFile>() {
+            deckAdp.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
                 @Override
                 public void onItemSelect(int position, DeckFile item) {
                     if (deckAdp.isManySelect()) {
