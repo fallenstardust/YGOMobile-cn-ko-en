@@ -157,7 +157,7 @@ public class YGODialogUtil {
                 }
             }
             typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
-            deckAdp = new DeckListAdapter<>(deckList, deckSelectPosition);
+            deckAdp = new DeckListAdapter<>(context, deckList, deckSelectPosition);
             rv_type.setAdapter(typeAdp);
             rv_deck.setAdapter(deckAdp);
             typeAdp.setOnItemSelectListener(new TextSelectAdapter.OnItemSelectListener<DeckType>() {

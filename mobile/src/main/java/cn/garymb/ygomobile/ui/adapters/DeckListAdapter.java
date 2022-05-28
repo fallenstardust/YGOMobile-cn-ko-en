@@ -1,7 +1,9 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,11 +15,16 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
+import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.LimitList;
@@ -26,7 +33,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private ImageLoader imageLoader;
     private ImageTop mImageTop;
     private LimitList mLimitList;
-    private boolean mEnableSwipe = false;
+    private CardLoader mCardLoader;
+    private DeckLoader mDeckLoader;
     private DeckInfo deckInfo;
     private DeckFile deckFile;
     private OnItemSelectListener onItemSelectListener;
@@ -35,7 +43,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private boolean isManySelect;
     private List<T> selectList;
 
-    public DeckListAdapter(List<T> data, int select) {
+    public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
         this.selectPosition = select;
         if (select >= 0)
@@ -55,29 +63,43 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
                     onItemSelectListener.onItemSelect(position, data.get(position).getObject());
             }
         });
+         mCardLoader = new CardLoader(context);
+        imageLoader = new ImageLoader();
+        mLimitList = new LimitList();
+        mDeckLoader = new DeckLoader();
+        deckInfo = new DeckInfo();
     }
 
     @SuppressLint("ResourceType")
     @Override
     protected void convert(DeckViewHolder holder, T item) {
         int position = holder.getAdapterPosition();
-
+        //item是deckFile类型
+        this.deckFile = (DeckFile) item;
+        this.deckInfo = mDeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        Log.i("看看3.9.7", deckInfo +"");
+        //填入内容
+        imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.small);
         holder.deckName.setText(item.getName());
+        holder.main.setText(String.valueOf(deckInfo.getMainCount()));
+        holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
+        holder.side.setText(String.valueOf(deckInfo.getSideCount()));
+        //多选
         if (isManySelect) {
             if (selectList.contains(item))
-                holder.deckName.setBackgroundColor(YGOUtil.c(R.color.colorMain));
+                holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
             else
-                holder.deckName.setBackgroundResource(Color.TRANSPARENT);
+                holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         } else if (isSelect) {
             if (position == selectPosition) {
-                holder.deckName.setBackgroundColor(YGOUtil.c(R.color.colorMain));
+                holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
             } else {
-                holder.deckName.setBackgroundResource(Color.TRANSPARENT);
+                holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
             }
         }else {
-            holder.deckName.setBackgroundResource(Color.TRANSPARENT);
+            holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
-        imageLoader.bindImage(cardImage, item.getFirstCode(), ImageLoader.Type.small);
+
     }
 
     public void setSelectPosition(int selectPosition) {
@@ -130,15 +152,17 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     TextView main;
     TextView extra;
     TextView side;
+    View item_deck_list;
 
     public DeckViewHolder(View view) {
         super(view);
         view.setTag(view.getId(), this);
+        item_deck_list = findView(R.id.item_deck_list);
         cardImage = findView(R.id.card_image);
         deckName = findView(R.id.deck_name);
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
-        side = findView(R.id.count_ex);
+        side = findView(R.id.count_side);
         prerelease_star = findView(R.id.prerelease_star);
     }
 }
