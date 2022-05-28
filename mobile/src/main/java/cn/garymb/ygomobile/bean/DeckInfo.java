@@ -334,9 +334,11 @@ public class DeckInfo {
 
     public List<Card> getAllCards() {
         if (allCards.size() == 0) {
-        allCards.addAll(mainCards);
-        allCards.addAll(extraCards);
-        allCards.addAll(sideCards);
+            allCards.addAll(mainCards);
+            allCards.addAll(extraCards);
+            allCards.addAll(sideCards);
+
+        }
         return allCards;
     }
 }

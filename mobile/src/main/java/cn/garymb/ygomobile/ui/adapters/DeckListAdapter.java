@@ -27,6 +27,9 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.LimitManager;
+import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
@@ -63,7 +66,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
                     onItemSelectListener.onItemSelect(position, data.get(position).getObject());
             }
         });
-         mCardLoader = new CardLoader(context);
+        //初始化
+        mCardLoader = new CardLoader(context);
         imageLoader = new ImageLoader();
         mLimitList = new LimitList();
         mDeckLoader = new DeckLoader();
@@ -77,7 +81,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         //item是deckFile类型
         this.deckFile = (DeckFile) item;
         this.deckInfo = mDeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
-        Log.i("看看3.9.7", deckInfo +"");
         //填入内容
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.small);
         holder.deckName.setText(item.getName());
@@ -96,8 +99,23 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             } else {
                 holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
             }
-        }else {
+        } else {
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
+        }
+        //判断是否含有先行卡
+        Deck deck = this.deckInfo.toDeck();
+        List<Integer> intList = new ArrayList<>();
+        intList.addAll(deck.getAlllist());
+        int len;
+        for (int i = 0; i < deck.getDeckCount(); i++) {
+            len = intList.get(i).toString().length();
+            if (len > 8) {
+                holder.prerelease_star.setVisibility(View.VISIBLE);
+                break;
+            } else {
+                holder.prerelease_star.setVisibility(View.GONE);
+                continue;
+            }
         }
 
     }
