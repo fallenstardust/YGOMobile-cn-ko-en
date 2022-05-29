@@ -31,6 +31,7 @@ import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+import ocgcore.enums.LimitType;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
     private ImageLoader imageLoader;
@@ -72,6 +73,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         mLimitList = new LimitList();
         mDeckLoader = new DeckLoader();
         deckInfo = new DeckInfo();
+        mLimitList = DataManager.get().getLimitManager().getTopLimit();
     }
 
     @SuppressLint("ResourceType")
@@ -104,17 +106,52 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
         //判断是否含有先行卡
         Deck deck = this.deckInfo.toDeck();
-        List<Integer> intList = new ArrayList<>();
-        intList.addAll(deck.getAlllist());
-        int len;
+        List<String> strList = new ArrayList<>();
         for (int i = 0; i < deck.getDeckCount(); i++) {
-            len = intList.get(i).toString().length();
-            if (len > 8) {
+            strList.add(deck.getAlllist().get(i).toString());
+        }
+        for (int i = 0; i < deck.getDeckCount(); i++) {
+            if (strList.get(i).length() > 8) {
                 holder.prerelease_star.setVisibility(View.VISIBLE);
                 break;
             } else {
                 holder.prerelease_star.setVisibility(View.GONE);
                 continue;
+            }
+        }
+        if (mLimitList != null) {
+
+            for (int i = 0; i < deck.getDeckCount(); i++) {
+                if (mLimitList.getStringForbidden().contains(strList.get(i))) {
+                    holder.banned_mark.setVisibility(View.VISIBLE);
+                    break;
+                } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
+                    int limitcount = 0;
+                    for (int j = 0; j < deck.getDeckCount(); j++) {
+                        if (strList.get(i).equals(strList.get(j))) {
+                            limitcount++;
+                        }
+                    }
+                    if (limitcount > 1) {
+                        holder.banned_mark.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
+                    int semicount = 0;
+                    for (int k = 0; k < deck.getDeckCount(); k++) {
+                        if (strList.get(i).equals(strList.get(k))) {
+                            semicount++;
+                        }
+
+                    }
+                    if (semicount > 2) {
+                        holder.banned_mark.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                } else {
+                    holder.banned_mark.setVisibility(View.GONE);
+                    continue;
+                }
             }
         }
 
@@ -163,9 +200,11 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         void onItemSelect(int position, T item);
     }
 }
+
 class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {
     ImageView cardImage;
     ImageView prerelease_star;
+    ImageView banned_mark;
     TextView deckName;
     TextView main;
     TextView extra;
@@ -182,5 +221,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
         prerelease_star = findView(R.id.prerelease_star);
+        banned_mark = findView(R.id.banned_mark);
     }
 }

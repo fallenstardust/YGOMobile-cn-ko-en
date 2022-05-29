@@ -52,9 +52,17 @@
                 android:id="@+id/prerelease_star"
                 android:layout_width="15dp"
                 android:layout_height="15dp"
+                android:layout_marginRight="5dp"
+                android:visibility="visible"
+                android:background="@drawable/ic_expansions"/>
+
+            <ImageView
+                android:id="@+id/banned_mark"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
                 android:layout_marginRight="@dimen/dp_10"
                 android:visibility="visible"
-                android:background="@drawable/ic_fav"/>
+                android:background="@drawable/ic_banned"/>
 
             <TextView
                 android:id="@+id/count_main"
