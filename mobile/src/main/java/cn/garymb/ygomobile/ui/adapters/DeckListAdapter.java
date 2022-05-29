@@ -35,7 +35,7 @@ import ocgcore.enums.LimitType;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
     private ImageLoader imageLoader;
-    private ImageTop mImageTop;
+    private Context mContext;
     private LimitList mLimitList;
     private CardLoader mCardLoader;
     private DeckLoader mDeckLoader;
@@ -74,6 +74,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         mDeckLoader = new DeckLoader();
         deckInfo = new DeckInfo();
         mLimitList = DataManager.get().getLimitManager().getTopLimit();
+        mContext = context;
     }
 
     @SuppressLint("ResourceType")
@@ -87,6 +88,11 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.small);
         holder.deckName.setText(item.getName());
         holder.main.setText(String.valueOf(deckInfo.getMainCount()));
+        if (deckInfo.getMainCount() < 40) {
+            holder.main.setTextColor(Color.YELLOW);
+        } else {
+            holder.main.setTextColor(mContext.getColor(R.color.holo_blue_bright));
+        }
         holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
         holder.side.setText(String.valueOf(deckInfo.getSideCount()));
         //多选
@@ -120,7 +126,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             }
         }
         if (mLimitList != null) {
-
             for (int i = 0; i < deck.getDeckCount(); i++) {
                 if (mLimitList.getStringForbidden().contains(strList.get(i))) {
                     holder.banned_mark.setVisibility(View.VISIBLE);
