@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.adapters;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -91,7 +92,9 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         if (deckInfo.getMainCount() < 40) {
             holder.main.setTextColor(Color.YELLOW);
         } else {
-            holder.main.setTextColor(mContext.getColor(R.color.holo_blue_bright));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                holder.main.setTextColor(mContext.getColor(R.color.holo_blue_bright));
+            }
         }
         holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
         holder.side.setText(String.valueOf(deckInfo.getSideCount()));
