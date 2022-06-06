@@ -167,8 +167,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         onItemSelect();
     }
     private void initBottomNavigationBar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-
         // 获取页面上的底部导航栏控件
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // 配置navigation与底部菜单之间的联系
@@ -180,7 +178,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 启动
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
-
+        getSupportActionBar().hide();
     }
     //调用
     private void onItemSelect() {
