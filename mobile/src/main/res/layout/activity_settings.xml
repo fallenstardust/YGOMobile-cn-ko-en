@@ -10,8 +10,6 @@
         android:background="#80000000"
         android:orientation="vertical">
 
-        <include layout="@layout/content_toolbar" />
-
         <FrameLayout
             android:id="@+id/fragment"
             android:layout_width="match_parent"

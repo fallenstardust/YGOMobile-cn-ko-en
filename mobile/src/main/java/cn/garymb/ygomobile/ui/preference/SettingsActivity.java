@@ -14,8 +14,7 @@ public class SettingsActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        Toolbar toolbar = $(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        getSupportActionBar().hide();
         enableBackHome();
         getFragmentManager().beginTransaction().replace(R.id.fragment, new SettingFragment()).commit();
     }

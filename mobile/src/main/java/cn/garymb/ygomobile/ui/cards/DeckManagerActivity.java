@@ -120,7 +120,7 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        getSupportActionBar().hide();
         tv_deck = $(R.id.tv_deck);
         tv_result_count = $(R.id.result_count);
         mDeckSpinner = $(R.id.toolbar_list);

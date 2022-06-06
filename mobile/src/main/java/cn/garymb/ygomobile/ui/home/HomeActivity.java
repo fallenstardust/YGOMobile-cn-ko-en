@@ -178,7 +178,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 启动
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
-
+        getSupportActionBar().hide();
     }
     //调用
     private void onItemSelect() {

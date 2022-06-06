@@ -170,7 +170,7 @@
             android:name="cn.garymb.ygomobile.ui.activities.WebActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme"
+            android:theme="@style/AppTheme.Mycard"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.mycard.MyCardActivity"

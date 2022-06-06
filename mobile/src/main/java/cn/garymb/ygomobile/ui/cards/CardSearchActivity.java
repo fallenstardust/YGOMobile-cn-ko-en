@@ -78,6 +78,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
 //        Toolbar toolbar = $(R.id.toolbar);
 //        setSupportActionBar(toolbar);
         enableBackHome();
+        getSupportActionBar().hide();
         mDrawerlayout = $(R.id.drawer_layout);
         mImageLoader = new ImageLoader(true);
         mListView = $(R.id.list_cards);
