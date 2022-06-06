@@ -11,11 +11,11 @@
         tools:layout="@layout/main_fragment" />
     <fragment
         android:id="@+id/mycard_fragment"
-        android:name="cn.garymb.ygomobile.ui.mycard.MyCardFragment"
+        android:name="cn.garymb.ygomobile.ui.mycard.MycardFragment"
         tools:layout="@layout/mycard_fragment" />
     <fragment
         android:id="@+id/setting_fragment"
-        android:name="cn.garymb.ygomobile.ui.cn.garymb.ygomobile.ui.preference.fragments.SettingFragment"
+        android:name="cn.garymb.ygomobile.ui.preference.fragments.SettingFragment"
         tools:layout="@layout/activity_settings" />
 
 </navigation>
