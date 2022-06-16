@@ -1,9 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/ic_home"
     android:orientation="vertical">
 
-</LinearLayout>
+    <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+        android:id="@+id/shimmer_tv"
+        android:layout_width="150dp"
+        android:layout_height="60dp"
+        android:layout_alignParentLeft="true"
+        android:background="@drawable/blue"
+        android:gravity="center"
+        android:text="@string/return_to_duel"
+        android:textColor="@color/item_title"
+        android:visibility="visible" />
+
+    <RelativeLayout
+        android:id="@+id/bottombar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="100dp"
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <LinearLayout
+            android:layout_width="135dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/mycard"
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:gravity="bottom"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="60dp"
+                    android:layout_height="17dp" />
+
+                <ImageView
+                    android:id="@+id/btn_mycard"
+                    android:layout_width="50dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center|bottom"
+                    android:gravity="bottom"
+                    android:src="@drawable/mycard" />
+
+                <TextView
+                    android:layout_width="60dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:text="@string/mycard" />
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>
