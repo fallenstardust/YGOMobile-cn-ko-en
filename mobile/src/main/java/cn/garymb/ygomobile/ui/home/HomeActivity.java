@@ -3,11 +3,6 @@ package cn.garymb.ygomobile.ui.home;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 import android.content.Intent;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,38 +14,23 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
-import androidx.navigation.NavGraphNavigator;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.app.hubert.guide.NewbieGuide;
-import com.app.hubert.guide.core.Controller;
-import com.app.hubert.guide.listener.OnHighlightDrewListener;
-import com.app.hubert.guide.listener.OnLayoutInflatedListener;
-import com.app.hubert.guide.model.GuidePage;
-import com.app.hubert.guide.model.HighLight;
-import com.app.hubert.guide.model.HighlightOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.nightonke.boommenu.BoomButtons.BoomButton;
-import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
-import com.nightonke.boommenu.BoomMenuButton;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
@@ -79,7 +59,6 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -87,8 +66,6 @@ import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
-import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
@@ -107,8 +84,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
-    ShimmerTextView tv;
-    Shimmer shimmer;
+
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
     private DuelAssistantManagement duelAssistantManagement;
@@ -130,10 +106,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         initServerlist();
         //event
         EventBus.getDefault().register(this);
-        initBoomMenuButton($(R.id.bmb));
-        AnimationShake();
-        tv = (ShimmerTextView) findViewById(R.id.shimmer_tv);
-        toggleAnimation(tv);
+
+
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
             public void onViewInitFinished(boolean arg0) {
@@ -159,10 +133,9 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         }
         //初始化决斗助手
         initDuelAssistant();
-        //萌卡
-        StartMycard();
+        //
         checkNotch();
-        showNewbieGuide("homePage");
+        //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onItemSelect();
     }
@@ -204,7 +177,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     protected void onResume() {
         super.onResume();
-        BacktoDuel();
         duelAssistantCheck();
         //server list
         mServerListManager.syncLoadData();
@@ -307,7 +279,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             dialogPlus.show();
         } else if (event.join) {
             joinRoom(event.position);
-            showNewbieGuide("joinRoom");
+            //showNewbieGuide("joinRoom");
         } else {
             mServerListManager.showEditDialog(event.position);
         }
@@ -525,88 +497,12 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     public abstract void updateImages();
 
-    private void initBoomMenuButton(BoomMenuButton menu) {
-        final SparseArray<Integer> mMenuIds = new SparseArray<>();
-        addMenuButton(mMenuIds, menu, R.id.action_join_qq_group, R.string.Join_QQ, R.drawable.joinqqgroup);
-        addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.card_search, R.drawable.search);
-        addMenuButton(mMenuIds, menu, R.id.action_deck_manager, R.string.deck_manager, R.drawable.deck);
-
-        addMenuButton(mMenuIds, menu, R.id.action_download_ex, R.string.action_download_expansions, R.drawable.downloadimages);
-        addMenuButton(mMenuIds, menu, R.id.action_game, R.string.action_game, R.drawable.start);
-        addMenuButton(mMenuIds, menu, R.id.action_help, R.string.help, R.drawable.help);
-
-        addMenuButton(mMenuIds, menu, R.id.action_reset_game_res, R.string.reset_game_res, R.drawable.reset);
-        addMenuButton(mMenuIds, menu, R.id.action_settings, R.string.settings, R.drawable.setting);
-        addMenuButton(mMenuIds, menu, R.id.nav_webpage, R.string.donation, R.drawable.about);
-
-        //设置展开或隐藏的延时。 默认值为 800ms。
-        menu.setDuration(100);
-        //设置每两个子按钮之间动画的延时（ms为单位）。 比如，如果延时设为0，那么所有子按钮都会同时展开或隐藏，默认值为100ms。
-        menu.setDelay(20);
-
-        menu.setOnBoomListener(new DefaultOnBoomListener() {
-            @Override
-            public void onClicked(int index, BoomButton boomButton) {
-                doMenu(mMenuIds.get(index));
-            }
-        });
-
-    }
-
-    private void addMenuButton(SparseArray<Integer> mMenuIds, BoomMenuButton menuButton, int menuId, int stringId, int image) {
-        addMenuButton(mMenuIds, menuButton, menuId, getString(stringId), image);
-    }
-
-    private void addMenuButton(SparseArray<Integer> mMenuIds, BoomMenuButton menuButton, int menuId, String str, int image) {
-        TextOutsideCircleButton.Builder builder = new TextOutsideCircleButton.Builder()
-                .shadowColor(Color.TRANSPARENT)
-                .normalColor(Color.TRANSPARENT)
-                .normalImageRes(image)
-                .normalText(str);
-        menuButton.addBuilder(builder);
-        mMenuIds.put(mMenuIds.size(), menuId);
-    }
-
-    public void AnimationShake() {
-        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
-        findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
-    }
-
-    public void toggleAnimation(View target) {
-        if (shimmer != null && shimmer.isAnimating()) {
-            shimmer.cancel();
-        } else {
-            shimmer = new Shimmer();
-            shimmer.start(tv);
+    /*
+        public void AnimationShake() {
+            Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
+            findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
         }
-    }
-
-    public void StartMycard() {
-        ImageView iv_mc = $(R.id.btn_mycard);
-        iv_mc.setOnClickListener((v) -> {
-            if (Constants.SHOW_MYCARD) {
-                startActivity(new Intent(this, MyCardActivity.class));
-            }
-        });
-        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                startActivity(new Intent(HomeActivity.this, FileLogActivity.class));
-                return true;
-            }
-        });
-    }
-
-    public void BacktoDuel() {
-        tv.setOnClickListener((v) -> {
-            openGame();
-        });
-        if (YGOStarter.isGameRunning(getActivity())) {
-            tv.setVisibility(View.VISIBLE);
-        } else {
-            tv.setVisibility(View.GONE);
-        }
-    }
+    */
 
     public boolean joinQQGroup(String key) {
         Intent intent = new Intent();
@@ -754,7 +650,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
     }
-
+/*
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide(String scene) {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
@@ -861,5 +757,5 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                     )
                     .show();
         }
-    }
+    }*/
 }
