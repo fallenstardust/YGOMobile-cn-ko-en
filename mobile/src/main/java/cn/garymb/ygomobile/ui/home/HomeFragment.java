@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.home;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -31,7 +30,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -40,7 +38,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
-import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
@@ -49,14 +46,11 @@ import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
-import cn.garymb.ygomobile.utils.YGOUtil;
 
 
 public class HomeFragment extends BaseFragemnt {
@@ -78,14 +72,17 @@ public class HomeFragment extends BaseFragemnt {
             layoutView = inflater.inflate(R.layout.main_fragment, container, false);
 
         initView(layoutView, savedInstanceState);
+        //event
+        EventBus.getDefault().register(this);//eventBus必须传this而不能是context
         return layoutView;
     }
 
     private void initView(View view, Bundle saveBundle) {
         //服务器列表
         mServerList = view.findViewById(R.id.list_server);
-        mServerListAdapter = new ServerListAdapter(getActivity());
-        LayoutInflater infla = LayoutInflater.from(getActivity());
+        mServerListAdapter = new ServerListAdapter(getContext());
+        LayoutInflater infla = LayoutInflater.from(getContext());
+        //添加服务器
         View footView = infla.inflate(R.layout.item_ic_add, null);
         TextView add_server = footView.findViewById(R.id.add_server);
         add_server.setOnClickListener(new View.OnClickListener() {
@@ -95,13 +92,13 @@ public class HomeFragment extends BaseFragemnt {
             }
         });
         mServerListAdapter.addFooterView(footView);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         mServerList.setLayoutManager(linearLayoutManager);
         DividerItemDecoration dividerItemDecoration =
-                new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL);
+                new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL);
         mServerList.addItemDecoration(dividerItemDecoration);
         mServerList.setAdapter(mServerListAdapter);
-        mServerListManager = new ServerListManager(getActivity(), mServerListAdapter);
+        mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
         //萌卡
@@ -232,7 +229,7 @@ public class HomeFragment extends BaseFragemnt {
         else
             message = getString(R.string.quick_join) + "：\"" + password + "\"";
 
-        DialogPlus dialog = new DialogPlus(getActivity());
+        DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(R.string.question);
         dialog.setMessage(message);
         dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -241,12 +238,12 @@ public class HomeFragment extends BaseFragemnt {
         dialog.show();
         dialog.setRightButtonListener((dlg, s) -> {
             dialog.dismiss();
-            ServerListAdapter mServerListAdapter = new ServerListAdapter(getActivity());
-            ServerListManager mServerListManager = new ServerListManager(getActivity(), mServerListAdapter);
+            ServerListAdapter mServerListAdapter = new ServerListAdapter(getContext());
+            ServerListManager mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
             mServerListManager.syncLoadData();
             File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
             VUiKit.defer().when(() -> {
-                ServerList assetList = ServerListManager.readList(getActivity().getAssets().open(ASSET_SERVER_LIST));
+                ServerList assetList = ServerListManager.readList(getContext().getAssets().open(ASSET_SERVER_LIST));
                 ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
                 if (fileList == null) {
                     return assetList;
@@ -353,6 +350,12 @@ public class HomeFragment extends BaseFragemnt {
         BacktoDuel();
         //server list
         mServerListManager.syncLoadData();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override

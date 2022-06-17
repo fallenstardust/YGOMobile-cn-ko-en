@@ -1,34 +1,22 @@
 package cn.garymb.ygomobile.ui.home;
 
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
@@ -36,41 +24,24 @@ import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
-import com.tubb.smrv.SwipeMenuRecyclerView;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 
-import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.Deck;
-import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.bean.ServerList;
-import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
-import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
-import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
-import cn.garymb.ygomobile.ui.widget.Shimmer;
-import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -230,7 +201,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     protected void onDestroy() {
         super.onDestroy();
         duelAssistantManagement.removeDuelAssistantListener(this);
-        EventBus.getDefault().unregister(this);
     }
 
     @Override
