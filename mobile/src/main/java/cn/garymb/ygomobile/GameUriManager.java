@@ -18,7 +18,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.ourygo.assistant.base.listener.OnDeRoomListener;
+import androidx.fragment.app.Fragment;
+
 import com.ourygo.assistant.util.YGODAUtil;
 
 import java.io.File;
@@ -29,7 +30,7 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
+import cn.garymb.ygomobile.ui.home.HomeFragment;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -39,6 +40,7 @@ import ocgcore.DataManager;
 
 public class GameUriManager {
     private Activity activity;
+    private Fragment fragment;
     private String fname;
 
     public GameUriManager(Activity activity) {
@@ -254,9 +256,9 @@ public class GameUriManager {
             } else if (Constants.URI_ROOM.equals(host)) {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
                     if (TextUtils.isEmpty(exception))
-                        if (activity instanceof MainActivity) {
-                            MainActivity mainActivity = (MainActivity) activity;
-                            mainActivity.quickjoinRoom(host1, port, password);
+                        if (fragment instanceof HomeFragment) {
+                            HomeFragment homeFragment = (HomeFragment) fragment;
+                            homeFragment.quickjoinRoom(host1, port, password);
                         } else {
                             YGOUtil.show(exception);
                         }

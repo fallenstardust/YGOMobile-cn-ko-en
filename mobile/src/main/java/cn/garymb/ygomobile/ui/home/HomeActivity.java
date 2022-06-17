@@ -82,11 +82,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     private static final int ID_MAINACTIVITY = 0;
 
-    protected SwipeMenuRecyclerView mServerList;
     long exitLasttime = 0;
 
-    private ServerListAdapter mServerListAdapter;
-    private ServerListManager mServerListManager;
     private DuelAssistantManagement duelAssistantManagement;
     private CardManager mCardManager;
     private CardDetailRandom mCardDetailRandom;
@@ -102,11 +99,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         setExitAnimEnable(false);
         mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
-        //server list
-        initServerlist();
-        //event
-        EventBus.getDefault().register(this);
-
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
@@ -137,8 +129,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         checkNotch();
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
-        onItemSelect();
     }
+
     private void initBottomNavigationBar() {
         // 获取页面上的底部导航栏控件
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -153,33 +145,12 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         NavigationUI.setupWithNavController(navView, navController);
         getSupportActionBar().hide();
     }
-    //调用
-    private void onItemSelect() {
-        mOnItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.home_fragment:
-
-                        return true;
-                    case R.id.mycard_fragment:
-
-                        return true;
-                    case R.id.setting_fragment:
-
-                        return true;
-                }
-                return false;
-            }
-        };
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         duelAssistantCheck();
-        //server list
-        mServerListManager.syncLoadData();
+
     }
 
     @Override
@@ -212,7 +183,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     public void onJoinRoom(String host, int port, String password, int id) {
         if (id == ID_MAINACTIVITY) {
-            quickjoinRoom(host, port, password);
+            //quickjoinRoom(host, port, password);
         }
     }
 
@@ -262,29 +233,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         EventBus.getDefault().unregister(this);
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onServerInfoEvent(ServerInfoEvent event) {
-        if (event.delete) {
-            DialogPlus dialogPlus = new DialogPlus(getContext());
-            dialogPlus.setTitle(R.string.question);
-            dialogPlus.setMessage(R.string.delete_server_info);
-            dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-            dialogPlus.setLeftButtonListener((dialog, which) -> {
-                mServerListManager.delete(event.position);
-                mServerListAdapter.notifyDataSetChanged();
-                dialog.dismiss();
-            });
-            dialogPlus.setCancelable(true);
-            dialogPlus.setOnCloseLinster(null);
-            dialogPlus.show();
-        } else if (event.join) {
-            joinRoom(event.position);
-            //showNewbieGuide("joinRoom");
-        } else {
-            mServerListManager.showEditDialog(event.position);
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -322,7 +270,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 if (mCardDetailRandom != null) {
                     mCardDetailRandom.show();
                 }
-                openGame();
+                //openGame();
                 break;
             case R.id.action_settings: {
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -394,102 +342,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         }
     }
 
-    public void joinRoom(int position) {
-        ServerInfo serverInfo = mServerListAdapter.getItem(position);
-        if (serverInfo == null) {
-            return;
-        }
-        //进入房间
-        DialogPlus builder = new DialogPlus(getContext());
-        builder.setTitle(R.string.intput_room_name);
-        builder.setContentView(R.layout.dialog_room_name);
-        EditText editText = builder.bind(R.id.room_name);
-        ListView listView = builder.bind(R.id.room_list);
-        TextView text_abt_roomlist = builder.bind(R.id.abt_room_list);
-        SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
-        simpleListAdapter.set(AppsSettings.get().getLastRoomList());
-        if (AppsSettings.get().getLastRoomList().size() > 0)
-            text_abt_roomlist.setVisibility(View.VISIBLE);
-        else text_abt_roomlist.setVisibility(View.GONE);
-        listView.setAdapter(simpleListAdapter);
-        listView.setOnItemClickListener((a, v, pos, index) -> {
-            String name = simpleListAdapter.getItemById(index);
-            editText.setText(name);
-        });
-        editText.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                builder.dismiss();
-                String name = editText.getText().toString();
-                if (!TextUtils.isEmpty(name)) {
-                    List<String> items = simpleListAdapter.getItems();
-                    int index = items.indexOf(name);
-                    if (index >= 0) {
-                        items.remove(index);
-                        items.add(0, name);
-                    } else {
-                        items.add(0, name);
-                    }
-                    AppsSettings.get().setLastRoomList(items);
-                    simpleListAdapter.notifyDataSetChanged();
-                }
-                joinGame(serverInfo, name);
-                return true;
-            }
-            return false;
-        });
-        listView.setOnItemLongClickListener((a, v, i, index) -> {
-            String name = simpleListAdapter.getItemById(index);
-            int pos = simpleListAdapter.findItem(name);
-            if (pos >= 0) {
-                simpleListAdapter.remove(pos);
-                simpleListAdapter.notifyDataSetChanged();
-                AppsSettings.get().setLastRoomList(simpleListAdapter.getItems());
-            }
-            return true;
-        });
-        builder.setLeftButtonText(R.string.join_game);
-        builder.setLeftButtonListener((dlg, i) -> {
-            dlg.dismiss();
-            if (Build.VERSION.SDK_INT >= 23 && YGOStarter.isGameRunning(getActivity())) {
-                Toast toast = Toast.makeText(getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
-                openGame();
-            } else {
-                //保存名字
-                String name = editText.getText().toString();
-                if (!TextUtils.isEmpty(name)) {
-                    List<String> items = simpleListAdapter.getItems();
-                    int index = items.indexOf(name);
-                    if (index >= 0) {
-                        items.remove(index);
-                        items.add(0, name);
-                    } else {
-                        items.add(0, name);
-                    }
-                    AppsSettings.get().setLastRoomList(items);
-                    simpleListAdapter.notifyDataSetChanged();
-                }
-                joinGame(serverInfo, name);
-            }
-        });
-        builder.setOnCloseLinster((dlg) -> {
-            dlg.dismiss();
-        });
-        builder.setOnCancelListener((dlg) -> {
-        });
-        builder.show();
-    }
 
-    void joinGame(ServerInfo serverInfo, String name) {
-        showTipsToast();
-        YGOGameOptions options = new YGOGameOptions();
-        options.mServerAddr = serverInfo.getServerAddr();
-        options.mUserName = serverInfo.getPlayerName();
-        options.mPort = serverInfo.getPort();
-        options.mRoomName = name;
-        YGOStarter.startGame(this, options);
-    }
 
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
 
@@ -552,59 +405,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         });
     }
 
-    public void quickjoinRoom(String host, int port, String password) {
-
-        String message;
-        if (!TextUtils.isEmpty(host))
-            message = getString(R.string.quick_join)
-                    + "\nIP：" + host
-                    + "\n端口：" + port
-                    + "\n密码：" + password;
-        else
-            message = getString(R.string.quick_join) + "：\"" + password + "\"";
-
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle(R.string.question);
-        dialog.setMessage(message);
-        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonText(R.string.Cancel);
-        dialog.setRightButtonText(R.string.join);
-        dialog.show();
-        dialog.setRightButtonListener((dlg, s) -> {
-            dialog.dismiss();
-            ServerListAdapter mServerListAdapter = new ServerListAdapter(this);
-            ServerListManager mServerListManager = new ServerListManager(this, mServerListAdapter);
-            mServerListManager.syncLoadData();
-            File xmlFile = new File(getFilesDir(), Constants.SERVER_FILE);
-            VUiKit.defer().when(() -> {
-                ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));
-                ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
-                if (fileList == null) {
-                    return assetList;
-                }
-                if (fileList.getVercode() < assetList.getVercode()) {
-                    xmlFile.delete();
-                    return assetList;
-                }
-                return fileList;
-            }).done((list) -> {
-                if (list != null) {
-                    String host1 = host;
-                    int port1 = port;
-                    ServerInfo serverInfo = list.getServerInfoList().get(0);
-                    if (!TextUtils.isEmpty(host1)) {
-                        serverInfo.setServerAddr(host1);
-                        serverInfo.setPort(port1);
-                    }
-                    joinGame(serverInfo, password);
-                }
-            });
-        });
-        dialog.setLeftButtonListener((dlg, s) -> {
-            dialog.dismiss();
-        });
-    }
-
     public void setRandomCardDetail() {
         //加载数据库中所有卡片卡片
         mCardManager.loadCards();
@@ -617,39 +417,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         mCardDetailRandom = CardDetailRandom.genRandomCardDetail(this, mImageLoader, cardInfo);
     }
 
-    public void showTipsToast() {
-        if (!YGOStarter.isGameRunning(getActivity())) {
-            String[] tipsList = this.getResources().getStringArray(R.array.tips);
-            int x = (int) (Math.random() * tipsList.length);
-            String tips = tipsList[x];
-            Toast.makeText(this, tips, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void initServerlist() {
-        mServerList = $(R.id.list_server);
-        mServerListAdapter = new ServerListAdapter(this);
-        LayoutInflater infla = LayoutInflater.from(this);
-        View footView = infla.inflate(R.layout.item_ic_add, null);
-        TextView add_server = footView.findViewById(R.id.add_server);
-        add_server.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mServerListManager.addServer();
-            }
-        });
-        mServerListAdapter.addFooterView(footView);
-        //server list
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        mServerList.setLayoutManager(linearLayoutManager);
-        DividerItemDecoration dividerItemDecoration =
-                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        mServerList.addItemDecoration(dividerItemDecoration);
-        mServerList.setAdapter(mServerListAdapter);
-        mServerListManager = new ServerListManager(this, mServerListAdapter);
-        mServerListManager.bind(mServerList);
-        mServerListManager.syncLoadData();
-    }
 /*
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide(String scene) {
