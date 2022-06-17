@@ -274,7 +274,7 @@ public class HomeFragment extends BaseFragemnt {
 
     public void BacktoDuel() {
         tv.setOnClickListener((v) -> {
-            //openGame();
+            openGame();
         });
         if (YGOStarter.isGameRunning(getActivity())) {
             tv.setVisibility(View.VISIBLE);

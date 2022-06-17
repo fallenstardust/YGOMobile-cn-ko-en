@@ -1,56 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#80000000"
     android:orientation="vertical">
+
+    <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/cv_banner"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:clickable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:orientation="vertical"
+        app:cardBackgroundColor="#80000018"
+        app:cardElevation="0dp"
+        app:cardUseCompatPadding="false"
+        app:elevation="0dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.stx.xhb.androidx.XBanner
+                android:id="@+id/xb_banner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:AutoPlayTime="4500"
+                app:clipChildrenTopBottomMargin="5dp"
+                app:isHandLoop="true"
+                app:pageChangeDuration="800"
+                app:pointsPosition="RIGHT"
+                app:pointsVisibility="true"
+                app:tipTextSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_banner_loading"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/logining_failed"
+                android:textSize="15sp" />
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#80000000"
-        android:orientation="vertical"></LinearLayout>
+        android:orientation="horizontal">
 
-    <com.tubb.smrv.SwipeMenuRecyclerView
-        android:id="@+id/list_server"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <cn.garymb.ygomobile.ui.widget.ShimmerTextView
-        android:id="@+id/shimmer_tv"
-        android:layout_width="150dp"
-        android:layout_height="60dp"
-        android:layout_alignParentLeft="true"
-        android:background="@drawable/blue"
-        android:gravity="center"
-        android:text="@string/return_to_duel"
-        android:textColor="@color/item_title"
-        android:visibility="visible" />
+            <FrameLayout
+                android:id="@+id/serverlist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="60dp">
 
-    <RelativeLayout
-        android:id="@+id/bottombar"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="100dp"
-        android:orientation="horizontal"
-        android:weightSum="1">
+                <com.tubb.smrv.SwipeMenuRecyclerView
+                    android:id="@+id/list_server"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none" />
 
+                <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+                    android:id="@+id/shimmer_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentLeft="true"
+                    android:background="@drawable/window2s"
+                    android:gravity="center"
+                    android:text="@string/return_to_duel"
+                    android:textColor="@color/item_title"
+                    android:visibility="visible" />
+            </FrameLayout>
+        </LinearLayout>
 
-            <LinearLayout
+        <RelativeLayout
+            android:id="@+id/bottombar"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <FrameLayout
                 android:id="@+id/mycard"
-                android:layout_width="60dp"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="bottom"
                 android:orientation="vertical">
 
                 <ImageView
                     android:id="@+id/btn_mycard"
-                    android:layout_width="50dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center|bottom"
-                    android:gravity="bottom"
-                    android:src="@drawable/mycard" />
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/window"/>
 
                 <TextView
                     android:layout_width="60dp"
@@ -58,6 +109,7 @@
                     android:layout_gravity="center"
                     android:gravity="center"
                     android:text="@string/mycard" />
-            </LinearLayout>
-    </RelativeLayout>
-</FrameLayout>
+            </FrameLayout>
+        </RelativeLayout>
+    </LinearLayout>
+</LinearLayout>
