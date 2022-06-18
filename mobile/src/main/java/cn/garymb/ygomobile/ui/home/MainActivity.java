@@ -1,14 +1,17 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
+import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -16,7 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import java.io.File;
-import java.io.IOException;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -28,18 +30,7 @@ import cn.garymb.ygomobile.ui.cards.CardFavorites;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
-import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.DataManager;
-
-import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
-import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.ORI_PICS;
-import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 public class MainActivity extends HomeActivity {
     private final String[] PERMISSIONS = {
@@ -239,61 +230,7 @@ public class MainActivity extends HomeActivity {
     }
 
     @Override
-    public void updateImages() {
-        Log.e("MainActivity", "重置资源");
-        DialogPlus dialog = DialogPlus.show(this, null, getString(R.string.message));
-        dialog.show();
-        VUiKit.defer().when(() -> {
-            Log.e("MainActivity", "开始复制");
-            try {
-                IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
-
-                FileUtils.delFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
-
-                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_PICS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_PICS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
-                }
-                if (IOUtils.hasAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
-                }
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.DATABASE_NAME),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_STRING_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.WINDBOT_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SKIN_PATH),
-                        AppsSettings.get().getCoreSkinPath(), false);
-                String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
-                if (new File(fonts).list() != null)
-                    FileUtils.delFile(fonts);
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.FONT_DIRECTORY),
-                        AppsSettings.get().getFontDirPath(), true);
-                /*
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
-                        AppsSettings.get().getSoundPath(), false);*/
-
-                //复制原目录文件
-                if (new File(ORI_DECK).list() != null)
-                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
-                if (new File(ORI_REPLAY).list() != null)
-                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
-                if (new File(ORI_PICS).list() != null)
-                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.e("MainActivity", "错误" + e);
-            }
-        }).done((rs) -> {
-            Log.e("MainActivity", "复制完毕");
-            dialog.dismiss();
-        });
-    }
+    public void updateImages() {}
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

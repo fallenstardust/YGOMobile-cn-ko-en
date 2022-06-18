@@ -4,12 +4,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -33,21 +30,14 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.activities.WebActivity;
-import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.CardManager;
-import ocgcore.DataManager;
-import ocgcore.data.Card;
 
 public abstract class HomeActivity extends BaseActivity implements OnDuelAssistantListener {
 
@@ -56,11 +46,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     long exitLasttime = 0;
 
     private DuelAssistantManagement duelAssistantManagement;
-    private CardManager mCardManager;
-    private CardDetailRandom mCardDetailRandom;
-    private ImageLoader mImageLoader;
-    private NavigationUI mNavigationUI;
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnItemSelectedListener;
     private AppBarConfiguration appBarConfiguration;
 
     @Override
@@ -68,8 +53,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
-        mImageLoader = new ImageLoader(false);
-        mCardManager = DataManager.get().getCardManager();
 
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
@@ -108,7 +91,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 配置navigation与底部菜单之间的联系
         // 底部菜单的样式里面的item里面的ID与navigation布局里面指定的ID必须相同，否则会出现绑定失败的情况
         appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.home_fragment,R.id.mycard_fragment,R.id.setting_fragment).build();
+                R.id.home_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
         // 建立fragment容器的控制器，这个容器就是页面的上的fragment容器
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         // 启动
@@ -121,7 +104,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     protected void onResume() {
         super.onResume();
         duelAssistantCheck();
-
     }
 
     @Override
@@ -153,9 +135,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     @Override
     public void onJoinRoom(String host, int port, String password, int id) {
-        if (id == ID_MAINACTIVITY) {
-            //quickjoinRoom(host, port, password);
-        }
     }
 
     @Override
@@ -211,10 +190,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (doMenu(item.getItemId())) {
-            return true;
-        }
         return super.onOptionsItemSelected(item);
+
     }
 
     @Override
@@ -227,81 +204,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         super.startActivity(intent);
     }
 
-    private boolean doMenu(int id) {
-        switch (id) {
-            case R.id.nav_webpage: {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
-                startActivity(intent);
-            }
-            break;
-            case R.id.action_game:
-                setRandomCardDetail();
-                if (mCardDetailRandom != null) {
-                    mCardDetailRandom.show();
-                }
-                //openGame();
-                break;
-            case R.id.action_settings: {
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-            }
-            break;
-            case R.id.action_quit: {
-//                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                DialogPlus builder = new DialogPlus(this);
-                builder.setTitle(R.string.question);
-                builder.setMessage(R.string.quit_tip);
-                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                builder.setLeftButtonListener((dlg, s) -> {
-                    dlg.dismiss();
-                    finish();
-                });
-                builder.show();
-            }
-            break;
-            case R.id.action_download_ex:
-                WebActivity.open(this, getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
-                break;
-            case R.id.action_card_search:
-                startActivity(new Intent(this, CardSearchActivity.class));
-                break;
-            case R.id.action_deck_manager:
-                DeckManagerActivity.start(this, null);
-                break;
-            case R.id.action_join_qq_group:
-                String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
-                joinQQGroup(key);
-                break;
-            case R.id.action_help: {
-                final DialogPlus dialog = new DialogPlus(getContext());
-                dialog.setContentView(R.layout.dialog_help);
-                dialog.setTitle(R.string.question);
-                dialog.show();
-                View viewDialog = dialog.getContentView();
-                Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
-                Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
-
-                btnMasterRule.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
-                    dialog.dismiss();
-                });
-                btnTutorial.setOnClickListener((v) -> {
-                    WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
-                    dialog.dismiss();
-                });
-
-            }
-            break;
-            case R.id.action_reset_game_res:
-                updateImages();
-                break;
-            default:
-                return false;
-        }
-        return true;
-    }
-
     @Override
     public void onBackPressed() {
         if (System.currentTimeMillis() - exitLasttime <= 3000) {
@@ -311,7 +213,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             exitLasttime = System.currentTimeMillis();
         }
     }
-
 
 
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
@@ -326,19 +227,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
         }
     */
-
-    public boolean joinQQGroup(String key) {
-        Intent intent = new Intent();
-        intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));
-        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面    //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            startActivity(intent);
-            return true;
-        } catch (Exception e) {
-            // 未安装手Q或安装的版本不支持
-            return false;
-        }
-    }
 
     private void saveDeck(String deckMessage, boolean isUrl) {
         DialogPlus dialog = new DialogPlus(this);
@@ -373,18 +261,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 }
             }
         });
-    }
-
-    public void setRandomCardDetail() {
-        //加载数据库中所有卡片卡片
-        mCardManager.loadCards();
-        //mCardManager = DataManager.get().getCardManager();
-        SparseArray<Card> cards = mCardManager.getAllCards();
-        int y = (int) (Math.random() * cards.size());
-        Card cardInfo = cards.valueAt(y);
-        if (cardInfo == null)
-            return;
-        mCardDetailRandom = CardDetailRandom.genRandomCardDetail(this, mImageLoader, cardInfo);
     }
 
 /*
