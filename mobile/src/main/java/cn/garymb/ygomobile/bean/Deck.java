@@ -46,7 +46,7 @@ public class Deck implements Parcelable {
     private static final String CARD_DIVIDE_ID = "_";
     private static final String CARD_DIVIDE_NUM = "*";
 
-
+    private ArrayList<Integer> allList;
     private final ArrayList<Integer> mainlist;
     private final ArrayList<Integer> extraList;
     private final ArrayList<Integer> sideList;
@@ -57,6 +57,7 @@ public class Deck implements Parcelable {
         mainlist = new ArrayList<>();
         extraList = new ArrayList<>();
         sideList = new ArrayList<>();
+        allList = new ArrayList<>();
     }
 
     public Deck(String name, Uri uri) {
@@ -466,7 +467,7 @@ public class Deck implements Parcelable {
     }
 
     public int getDeckCount() {
-        return getMainCount() + getExtraCount();
+        return getMainCount() + getExtraCount() + getSideCount();
     }
 
     public File saveTemp(String dir) {
@@ -509,6 +510,15 @@ public class Deck implements Parcelable {
 
     public List<Integer> getExtraList() {
         return extraList;
+    }
+
+    public List<Integer> getAlllist() {
+        if (allList.size() == 0) {
+            allList.addAll(mainlist);
+            allList.addAll(extraList);
+            allList.addAll(sideList);
+        }
+        return allList;
     }
 
     public void addMain(Integer id) {

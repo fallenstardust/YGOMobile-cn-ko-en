@@ -9,7 +9,7 @@ public class DeckFile extends TextSelect {
 
     private final File path;
     private final String fullName;
-    //分类名
+    //分类
     private String typeName;
     private int firstCode;
 

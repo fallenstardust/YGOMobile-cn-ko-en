@@ -134,7 +134,7 @@ public class CardLoader implements ICardSearcher {
                 if (searchInfo != null && card.Name.equals(searchInfo.getKeyWord().getValue())) {
                     cards.remove(i);
                     keywordtmp.add(card);
-                    continue;
+                    continue;//避免重复
                 }
                 if (searchInfo == null || searchInfo.isValid(card)) {
                     list.add(card);

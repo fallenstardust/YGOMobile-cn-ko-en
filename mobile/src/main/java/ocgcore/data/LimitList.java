@@ -29,6 +29,42 @@ public class LimitList {
         allList = new ArrayList<>();
     }
 
+    public List<Integer> getForbidden() {
+        return forbidden;
+    }
+
+    public List<Integer> getLimit() {
+        return limit;
+    }
+
+    public List<Integer> getSemiLimit() {
+        return semiLimit;
+    }
+
+    public List<String> getStringForbidden() {
+        List<String> strFobidden = new ArrayList<>();
+        for (int i = 0; i< forbidden.size(); i++) {
+            strFobidden.add(forbidden.get(i).toString());
+        }
+        return strFobidden;
+    }
+
+    public List<String> getStringLimit() {
+        List<String> strLimit = new ArrayList<>();
+        for (int i = 0; i< limit.size(); i++) {
+            strLimit.add(limit.get(i).toString());
+        }
+        return strLimit;
+    }
+
+    public List<String> getStringSemiLimit() {
+        List<String> strSemiLimit = new ArrayList<>();
+        for (int i = 0; i< semiLimit.size(); i++) {
+            strSemiLimit.add(semiLimit.get(i).toString());
+        }
+        return strSemiLimit;
+    }
+
     public String getName() {
         return name;
     }

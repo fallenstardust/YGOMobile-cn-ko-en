@@ -23,6 +23,7 @@ public class DeckInfo {
     private final List<Card> mainCards;
     private final List<Card> extraCards;
     private final List<Card> sideCards;
+    private final List<Card> allCards;
 
     public File source;
 
@@ -32,6 +33,7 @@ public class DeckInfo {
         mainCards = new ArrayList<>();
         extraCards = new ArrayList<>();
         sideCards = new ArrayList<>();
+        allCards = new ArrayList<>();
     }
 
     public void move(Type type, int from, int to) {
@@ -328,5 +330,15 @@ public class DeckInfo {
 
     public List<Card> getSideCards() {
         return sideCards;
+    }
+
+    public List<Card> getAllCards() {
+        if (allCards.size() == 0) {
+            allCards.addAll(mainCards);
+            allCards.addAll(extraCards);
+            allCards.addAll(sideCards);
+
+        }
+        return allCards;
     }
 }

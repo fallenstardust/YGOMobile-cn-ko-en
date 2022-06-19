@@ -5,13 +5,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemChildClickListener;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
@@ -20,7 +16,6 @@ import org.greenrobot.eventbus.EventBus;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.ServerInfoViewHolder;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 
 public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseViewHolder> {
@@ -65,28 +60,28 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
 //    }
 
     public void bindMenu() {
-        addChildClickViewIds(R.id.smContentView,R.id.btn_edit_delete,R.id.btn_delete,R.id.iv_fond);
+        addChildClickViewIds(R.id.smContentView, R.id.btn_edit_delete, R.id.btn_delete, R.id.iv_fond);
         setOnItemChildClickListener((adapter, view, position) -> {
-            switch (view.getId()){
+            switch (view.getId()) {
                 case R.id.smContentView:
                     ServerInfoEvent event = new ServerInfoEvent(position, false);
                     event.join = true;
                     EventBus.getDefault().post(event);
-                    SwipeHorizontalMenuLayout menuLayout= (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position,R.id.swipe_layout);
+                    SwipeHorizontalMenuLayout menuLayout = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
                     if (menuLayout.isMenuOpen()) {
                         menuLayout.smoothCloseMenu();
                     }
                     break;
                 case R.id.btn_edit_delete:
                     EventBus.getDefault().post(new ServerInfoEvent(position, false));
-                    SwipeHorizontalMenuLayout menuLayout1= (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position,R.id.swipe_layout);
+                    SwipeHorizontalMenuLayout menuLayout1 = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
                     if (menuLayout1.isMenuOpen()) {
                         menuLayout1.smoothCloseMenu();
                     }
                     break;
                 case R.id.btn_delete:
                     EventBus.getDefault().post(new ServerInfoEvent(position, true));
-                    SwipeHorizontalMenuLayout menuLayout2= (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position,R.id.swipe_layout);
+                    SwipeHorizontalMenuLayout menuLayout2 = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
 
                     if (menuLayout2.isMenuOpen()) {
                         menuLayout2.smoothCloseMenu();
