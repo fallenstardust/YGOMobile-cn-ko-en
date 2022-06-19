@@ -39,7 +39,7 @@ import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 import com.tencent.bugly.Bugly;
@@ -334,7 +334,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             SharedPreferenceUtil.setNextAifadianNum(SharedPreferenceUtil.getAppStartTimes() + (10 + (int) (Math.random() * 20)));
 
             dialog.setOnDismissListener(dialog12 -> {
-                Button b3 = dialogUtils.dialogt1("卡组导入提示", "YGOMobile OY储存路径为内部储存/ygcore，如果你之前有使用过原版" +
+                Button b3 = dialogUtils.dialogt1("卡组导入提示", "YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
                         "，可以打开原版软件，点击主页右下角的功能菜单——卡组编辑——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
                 Dialog dialog1 = dialogUtils.getDialog();
                 b3.setOnClickListener(v -> dialog1.dismiss());

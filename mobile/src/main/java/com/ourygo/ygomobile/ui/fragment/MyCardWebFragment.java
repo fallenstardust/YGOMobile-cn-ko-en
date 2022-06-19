@@ -22,7 +22,7 @@ import com.ourygo.ygomobile.base.listener.OnMcUserListener;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;

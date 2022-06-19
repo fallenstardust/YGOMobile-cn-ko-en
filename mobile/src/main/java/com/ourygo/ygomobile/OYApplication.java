@@ -9,6 +9,8 @@ import android.util.Log;
 import androidx.multidex.MultiDex;
 
 import com.ourygo.ygomobile.util.LogUtil;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.commonsdk.UMConfigure;
 
 
 import org.litepal.LitePal;
@@ -27,6 +29,9 @@ public class OYApplication extends App {
     public static final String BUGLY_ID="669adbac35";
     private static List<Activity> activitys = new ArrayList<>();
     private static int num = 0;
+    private static final String UM_KEY = "618e15c1e014255fcb77324a";
+    private static final String CHANNEL = "Group File";
+    //Group File
     public static String TAG="OYApplication";
     private static boolean isInitRes;
 
@@ -85,6 +90,13 @@ public class OYApplication extends App {
                 AppsSettings.init(this);
             }
         }
+    }
+
+    public void initUmeng() {
+        UMConfigure.preInit(getApplicationContext(), UM_KEY, CHANNEL);
+        UMConfigure.init(getApplicationContext(), UM_KEY, CHANNEL, UMConfigure.DEVICE_TYPE_PHONE,"");
+        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
+        UMConfigure.setLogEnabled(true);
     }
 
 //    public void initUmeng() {

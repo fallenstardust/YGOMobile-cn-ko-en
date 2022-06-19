@@ -30,7 +30,7 @@ import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;

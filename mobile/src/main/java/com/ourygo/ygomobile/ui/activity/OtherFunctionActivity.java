@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 import com.ourygo.ygomobile.adapter.OtherAppBQAdapter;
 import com.ourygo.ygomobile.bean.OtherApp;
 import com.ourygo.ygomobile.util.IntentUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 import java.util.List;

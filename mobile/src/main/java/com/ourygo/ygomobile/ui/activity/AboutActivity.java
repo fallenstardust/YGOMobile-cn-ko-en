@@ -16,8 +16,8 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import cn.garymb.ygomobile.utils.StatUtil;
-//import com.tencent.bugly.beta.Beta;
+import com.ourygo.ygomobile.util.StatUtil;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -146,6 +146,10 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.1.4","更新ygo内核\n" +
+               "更新卡包DP27+VP22+T1108+AC02+VJ\n" +
+               "OCG禁卡表更新至2022.7.1\n" +
+               "TCG禁卡表更新至2022.5.17\n其他优化" ));
        updateList.add(UpdateLog.toUpdateLog("1.1.3","更新ygo内核\n" +
                "更新卡包1109+KC01+VJ"));
        updateList.add(UpdateLog.toUpdateLog("1.1.2","更新ygo内核\n" +

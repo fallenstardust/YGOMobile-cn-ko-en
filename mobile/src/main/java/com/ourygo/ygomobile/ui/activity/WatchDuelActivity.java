@@ -11,7 +11,7 @@ import com.ourygo.ygomobile.bean.DuelRoom;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.WatchDuelManagement;
 import com.ourygo.ygomobile.util.YGOUtil;
 

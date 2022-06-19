@@ -38,7 +38,7 @@ import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.tencent.smtt.export.external.interfaces.IX5WebChromeClient;
 import com.tencent.smtt.export.external.interfaces.JsPromptResult;
 import com.tencent.smtt.export.external.interfaces.JsResult;

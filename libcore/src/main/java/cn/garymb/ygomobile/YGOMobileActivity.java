@@ -32,7 +32,6 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lib.R;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.SignUtils;
-import cn.garymb.ygomobile.utils.StatUtil;
 import cn.garymb.ygomobile.widget.ComboBoxCompat;
 import cn.garymb.ygomobile.widget.EditWindowCompat;
 import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
@@ -129,7 +128,6 @@ public class YGOMobileActivity extends GameActivity implements
     protected void onResume() {
         super.onResume();
         Log.e("YGOStarter", "ygo显示" + System.currentTimeMillis());
-        StatUtil.onResume(this);
         if (mLock == null) {
             if (mPM == null) {
                 mPM = (PowerManager) getSystemService(POWER_SERVICE);
@@ -143,7 +141,6 @@ public class YGOMobileActivity extends GameActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        StatUtil.onPause(this);
         if (mLock != null) {
             if (mLock.isHeld()) {
                 mLock.release();

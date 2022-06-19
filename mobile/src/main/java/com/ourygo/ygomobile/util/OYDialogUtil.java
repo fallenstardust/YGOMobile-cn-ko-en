@@ -240,8 +240,8 @@ public class OYDialogUtil {
         iv_close.setOnClickListener(v1 -> dialog.dismiss());
 
         new Handler().postDelayed(() -> {
-//            OYUtil.showKeyboard(et_password);
-            et_password.performClick();
+            OYUtil.showKeyboard(et_password);
+//            et_password.performClick();
         }, 100);
 
         et_password.addTextChangedListener(new TextWatcher() {

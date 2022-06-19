@@ -173,7 +173,11 @@
         <service
             android:name="com.ourygo.assistant.service.DuelAssistantService"
             android:priority="1000" />
-
+        <service
+            android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
+            android:label="dexopt"
+            android:process=":dexopt" >
+        </service>
 
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
@@ -197,7 +201,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
+            android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -213,13 +217,6 @@
             <intent-filter>
                 <action android:name="ygomobile.intent.action.GAME" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="um.618e15c1e014255fcb77324a" />
             </intent-filter>
 
             <intent-filter>

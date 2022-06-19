@@ -12,7 +12,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:windowSoftInputMode">stateHidden|adjustPan</item>
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
     </style>
     <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">

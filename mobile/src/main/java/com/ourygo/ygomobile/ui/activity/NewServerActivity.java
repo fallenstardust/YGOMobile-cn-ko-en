@@ -29,7 +29,7 @@ import com.ourygo.ygomobile.bean.Lflist;
 import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;

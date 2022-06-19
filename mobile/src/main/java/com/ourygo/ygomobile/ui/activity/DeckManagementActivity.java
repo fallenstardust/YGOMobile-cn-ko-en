@@ -24,7 +24,7 @@ import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.ShareUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 
@@ -118,7 +118,7 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             tv_close_visit = visitView.findViewById(R.id.tv_close_visit);
 
             tv_visit.setOnClickListener(v -> {
-                dialogUtils.dialogt1(null,"YGOMobile OY储存路径为内部储存/ygcore，如果你之前有使用过原版" +
+                dialogUtils.dialogt1(null,"YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
                         "，可以打开原版软件，点击主页右下角的功能菜单——卡组编辑——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
                 TextView tv_message=dialogUtils.getMessageTextView();
                 tv_message.setLineSpacing(OYUtil.dp2px(3),1f);

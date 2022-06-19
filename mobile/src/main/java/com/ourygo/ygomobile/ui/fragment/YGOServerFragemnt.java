@@ -14,7 +14,7 @@ import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 
 import androidx.annotation.NonNull;

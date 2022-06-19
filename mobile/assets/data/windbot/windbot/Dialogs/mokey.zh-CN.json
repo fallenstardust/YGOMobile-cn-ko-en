@@ -1,0 +1,41 @@
+{
+  "welcome": [
+    "你好，我是一个机器人。",
+    "AI功能正在测试中，遇到问题请及时反馈。",
+    "总有人叫我沙包……"
+  ],
+  "deckerror": [
+    "抱歉，我的卡组里的{0}的数量似乎出了问题。"
+  ],
+  "duelstart": [
+    "别打我！"
+  ],
+  "newturn": [
+    ""
+  ],
+  "endturn": [
+    ""
+  ],
+  "directattack": [
+    ""
+  ],
+  "attack": [
+    ""
+  ],
+  "ondirectattack": [
+    "我生气了！"
+  ],
+  "facedownmonstername": "怪兽",
+  "activate": [
+    "我喜欢{0}。"
+  ],
+  "summon": [
+    ""
+  ],
+  "setmonster": [
+    ""
+  ],
+  "chaining": [
+    ""
+  ]
+}

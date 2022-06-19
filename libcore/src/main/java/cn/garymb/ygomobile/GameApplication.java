@@ -13,28 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
-import com.umeng.analytics.MobclickAgent;
-import com.umeng.commonsdk.UMConfigure;
 
 public abstract class GameApplication extends Application implements IrrlichtBridge.IrrlichtApplication {
 
     private static GameApplication sGameApplication;
-    private static final String UM_KEY = "618e15c1e014255fcb77324a";
-    private static final String CHANNEL = "群文件";
-//Group File
 
     @Override
     public void onCreate() {
         super.onCreate();
-        initUmeng();
 //        Reflection.unseal(this);
-    }
-
-    public void initUmeng() {
-        UMConfigure.preInit(getApplicationContext(), UM_KEY, CHANNEL);
-        UMConfigure.init(getApplicationContext(), UM_KEY, CHANNEL, UMConfigure.DEVICE_TYPE_PHONE,"");
-        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
-        UMConfigure.setLogEnabled(true);
     }
 
     public static GameApplication get() {

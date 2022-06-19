@@ -36,7 +36,7 @@ import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 

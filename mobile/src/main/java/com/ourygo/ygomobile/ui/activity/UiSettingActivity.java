@@ -26,7 +26,7 @@ import com.ourygo.ygomobile.util.ImageUtil;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.StatUtil;
+import com.ourygo.ygomobile.util.StatUtil;
 
 import java.io.File;
 import java.io.IOException;
