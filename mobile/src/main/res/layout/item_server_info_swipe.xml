@@ -59,7 +59,7 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Title"
                     android:textColor="@color/brightgreen"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     tools:text="233正式服务器" />
 
                 <LinearLayout
@@ -114,7 +114,7 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/holo_blue_bright"
-                    android:textSize="12sp"
+                    android:textSize="10sp"
                     tools:text="player" />
 
                 <LinearLayout

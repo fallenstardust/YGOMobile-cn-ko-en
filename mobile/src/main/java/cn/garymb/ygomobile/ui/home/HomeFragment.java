@@ -124,7 +124,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
-        //萌卡
+        /*/萌卡
         ImageView iv_mc = view.findViewById(R.id.btn_mycard);
         iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
@@ -138,7 +138,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
-        });
+        });*/
 
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
