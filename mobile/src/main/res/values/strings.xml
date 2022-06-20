@@ -329,4 +329,6 @@
     <string name="settings_screen_padding">Reserved height of curved screen</string>
     <string name="tip_load_cdb_error">Load database error</string>
     <string name="action_download_expansions">download\\nexpansions</string>
+    <string name="replay">Watch replay</string>
+    <string name="bot_mode">Bot game</string>
 </resources>
