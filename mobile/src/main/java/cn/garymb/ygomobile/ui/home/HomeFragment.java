@@ -491,18 +491,18 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.nav_webpage: {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
-                startActivity(intent);
-            }
-            break;
+            case R.id.action_about:
+                break;
+            case R.id.action_replay:
+                break;
+            case R.id.action_bot:
+                break;
             case R.id.action_game:
                 setRandomCardDetail();
                 if (mCardDetailRandom != null) {
                     mCardDetailRandom.show();
                 }
-                //openGame();
+                openGame();
                 break;
             case R.id.action_settings: {
                 Intent intent = new Intent(getContext(), SettingsActivity.class);
@@ -545,6 +545,12 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             case R.id.action_reset_game_res:
                 updateImages();
                 break;
+            case R.id.nav_webpage: {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
+                startActivity(intent);
+            }
+            break;
         }
     }
 }

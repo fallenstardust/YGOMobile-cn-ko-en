@@ -21,6 +21,14 @@
         android:id="@+id/action_reset_game_res"
         android:icon="@drawable/ic_file_download_black_24dp"
         android:title="@string/reset_game_res" />
+    <item
+        android:id="@+id/action_replay"
+        android:icon="@drawable/ic_album"
+        android:title="@string/replay" />
+    <item
+        android:id="@+id/action_bot"
+        android:icon="@drawable/ic_copy"
+        android:title="@string/bot_mode" />
 
     <item android:title="@string/menu">
         <menu>

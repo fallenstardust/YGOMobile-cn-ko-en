@@ -319,4 +319,6 @@
     <string name="file_installed">文件已导入</string>
     <string name="settings_screen_padding">瀑布屏预留高度</string>
     <string name="tip_load_cdb_error">加载数据出错</string>
+    <string name="replay">查看录像</string>
+    <string name="bot_mode">人机练习</string>
 </resources>
