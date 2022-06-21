@@ -1,5 +1,9 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
+
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -8,6 +12,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +26,8 @@ import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,13 +36,23 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatSpinner;
 import androidx.appcompat.widget.RecyclerViewItemListener;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
+import com.chad.library.adapter.base.listener.OnItemLongClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -60,7 +79,11 @@ import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
@@ -80,18 +103,15 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
+import ocgcore.LimitManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
-
-@SuppressWarnings({"unused", "deprecated"})
-public class DeckManagerActivity extends BaseCardsActivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener {
-
+public abstract class DeckManagerActivity extends BaseActivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     public static void start(Context context, String path) {
         Intent starter = new Intent(context, DeckManagerActivity.class);
         starter.putExtra(Intent.EXTRA_TEXT, path);
@@ -100,6 +120,16 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         }
         context.startActivity(starter);
     }
+    protected DrawerLayout mDrawerLayout;
+    protected RecyclerView mListView;
+    protected CardSearcher mCardSelector;
+    protected CardListAdapter mCardListAdapter;
+    protected CardLoader mCardLoader;
+    protected boolean isLoad = false;
+    protected ImageLoader mImageLoader;
+    protected StringManager mStringManager = DataManager.get().getStringManager();
+    protected LimitManager mLimitManager = DataManager.get().getLimitManager();
+    protected int screenWidth;
 
     //region ui onCreate/onDestroy
     private RecyclerView mRecyclerView;
@@ -120,7 +150,24 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
+        setContentView(R.layout.activity_deck_cards);
+        AnimationShake2();
+        mImageLoader = new ImageLoader(true);
+        mDrawerLayout = $(R.id.drawer_layout);
+        screenWidth = getResources().getDisplayMetrics().widthPixels;
+        mListView = $(R.id.list_cards);
+        mCardListAdapter = new CardListAdapter(this, mImageLoader);
+        mCardListAdapter.setEnableSwipe(true);
+        mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
+        mListView.setAdapter(mCardListAdapter);
+        setListeners();
+
+        mCardLoader = new CardLoader(this);
+        mCardLoader.setCallBack(this);
+        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector.setCallBack(this);
+        showNewbieGuide("deckmain");
+
         tv_deck = $(R.id.tv_deck);
         tv_result_count = $(R.id.result_count);
         mDeckSpinner = $(R.id.toolbar_list);
@@ -175,7 +222,134 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         EventBus.getDefault().register(this);
         tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
     }
-    //endregion
+
+    //https://www.jianshu.com/p/99649af3b191
+    public void showNewbieGuide(String scene) {
+        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
+                .setOnHighlightDrewListener((canvas, rectF) -> {
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(20);
+                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                    canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
+                }).build();
+        HighlightOptions options2 = new HighlightOptions.Builder()//绘制一个高亮虚线矩形
+                .setOnHighlightDrewListener((canvas, rectF) -> {
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(20);
+                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                    canvas.drawRect(rectF, paint);
+                }).build();
+        if (scene.equals("deckmain")) {
+            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                    .setLabel("deckmainGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
+                                        view.findViewById(R.id.view_abt_bmb).setVisibility(View.VISIBLE);
+                                    })
+
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_button_search);
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_button_search_result);
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_view_deck_manager);
+                                    })
+
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(new RectF(screenWidth / 10.0f, screenWidth / 20.0f, screenWidth / 5.0f, screenWidth / 20.0f + screenWidth / 10.0f * 254.0f / 177.0f), HighLight.Shape.RECTANGLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_abt_mid);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_view_move_card);
+                                    })
+                    )
+                    //.alwaysShow(true)//总是显示，调试时可以打开
+                    .show();
+
+        }
+    }
+
+    protected void setListeners() {
+        mCardListAdapter.setOnItemClickListener((adapter, view, position) -> {
+            onCardClick(view, mCardListAdapter.getItem(position), position);
+        });
+        mCardListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+            onCardLongClick(view, mCardListAdapter.getItem(position), position);
+            return true;
+        });
+
+        mListView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                    case RecyclerView.SCROLL_STATE_SETTLING:
+                        GlideCompat.with(getContext()).resumeRequests();
+                        break;
+                    case RecyclerView.SCROLL_STATE_DRAGGING:
+                        GlideCompat.with(getContext()).pauseRequests();
+                        break;
+                }
+            }
+        });
+    }
+
+    public ImageLoader getImageLoader() {
+        return mImageLoader;
+    }
+
+    @Override
+    protected void onResume() {
+//        mImageLoader.resume();
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        //仅退出的时候才关闭zip
+//        mImageLoader.pause();
+        super.onPause();
+    }
 
     @Override
     protected void onStop() {
@@ -185,18 +359,12 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     protected void onDestroy() {
-        EventBus.getDefault().unregister(this);
+        mImageLoader.close();
         super.onDestroy();
     }
 
-    //region card edit
     @Override
-    public void onLimitListChanged(LimitList limitList) {
-
-    }
-
-    @Override
-    public void onDragStart() {
+    public void onResetSearch() {
 
     }
 
@@ -230,10 +398,42 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     }
     //endregion
 
-    @Override
-    public void onDragEnd() {
+    public void AnimationShake2() {
+        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
+        findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }
-    //endregion
+
+    protected void hideDrawers() {
+        if (mDrawerLayout.isDrawerOpen(Gravity.RIGHT)) {
+            mDrawerLayout.closeDrawer(Gravity.RIGHT);
+        }
+        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
+            mDrawerLayout.closeDrawer(Gravity.LEFT);
+        }
+    }
+
+    protected void showSearch(boolean autoClose) {
+        if (mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
+        }
+        if (autoClose && mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
+        } else if (isLoad) {
+            mDrawerLayout.openDrawer(Constants.CARD_SEARCH_GRAVITY);
+        }
+    }
+
+    protected void showResult(boolean autoClose) {
+        if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
+        }
+        if (autoClose && mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
+            showNewbieGuide("searchResult");
+        } else if (isLoad) {
+            mDrawerLayout.openDrawer(Constants.CARD_RESULT_GRAVITY);
+        }
+    }
 
     //region load deck
     private void loadDeckFromFile(File file) {
@@ -253,7 +453,6 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
             setCurDeck(rs);
         });
     }
-    //endregion
 
     //region init
     private void init(@Nullable File ydk) {
@@ -329,7 +528,6 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         hideDrawers();
     }
 
-    @Override
     protected void onCardClick(View view, Card cardInfo, int pos) {
         if (mCardListAdapter.isShowMenu(view)) {
             return;
@@ -339,7 +537,6 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         }
     }
 
-    @Override
     protected void onCardLongClick(View view, Card cardInfo, int pos) {
         //  mCardListAdapater.showMenu(view);
     }
@@ -363,8 +560,13 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        super.onSearchResult(cardInfos, isHide);
+        //super.onSearchResult(cardInfos, isHide);
         tv_result_count.setText(String.valueOf(cardInfos.size()));
+        mCardListAdapter.set(cardInfos);
+        mCardListAdapter.notifyDataSetChanged();
+        if (cardInfos != null && cardInfos.size() > 0) {
+            mListView.smoothScrollToPosition(0);
+        }
         if (!isHide)
             showResult(false);
     }
@@ -531,6 +733,15 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
         } else {
             super.onBackHome();
         }
+        if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
+            return;
+        }
+        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
+            mDrawerLayout.closeDrawer(Gravity.LEFT);
+            return;
+        }
+        finish();
     }
 
     @Override
@@ -1188,5 +1399,20 @@ public class DeckManagerActivity extends BaseCardsActivity implements RecyclerVi
     @Override
     public void onDeckNew(DeckType currentDeckType) {
         createDeck(currentDeckType.getPath());
+    }
+
+    //region card edit
+    @Override
+    public void onLimitListChanged(LimitList limitList) {
+
+    }
+
+    @Override
+    public void onDragStart() {
+
+    }
+
+    @Override
+    public void onDragEnd() {
     }
 }

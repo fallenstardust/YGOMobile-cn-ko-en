@@ -91,7 +91,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 配置navigation与底部菜单之间的联系
         // 底部菜单的样式里面的item里面的ID与navigation布局里面指定的ID必须相同，否则会出现绑定失败的情况
         appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.home_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
+                R.id.home_fragment, R.id.cardSearcher_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
         // 建立fragment容器的控制器，这个容器就是页面的上的fragment容器
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         // 启动
