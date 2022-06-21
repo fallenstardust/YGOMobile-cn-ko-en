@@ -7,10 +7,12 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +33,7 @@ import com.ourygo.assistant.util.DuelAssistantManagement;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -48,7 +51,7 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
-public class CardSearchActivity extends BaseActivity implements CardLoader.CallBack, CardSearcher.CallBack {
+public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallBack, CardSearcher.CallBack {
     public static final String SEARCH_MESSAGE = "searchMessage";
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
@@ -69,24 +72,21 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     private TextView mResult_count;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
-        mResult_count = findViewById(R.id.search_result_count);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View layoutView;
+        layoutView = inflater.inflate(R.layout.activity_search, container, false);
+        mResult_count = layoutView.findViewById(R.id.search_result_count);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
-        intentSearchMessage = getIntent().getStringExtra(CardSearchActivity.SEARCH_MESSAGE);
-//        Toolbar toolbar = $(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-        enableBackHome();
-        getSupportActionBar().hide();
-        mDrawerlayout = $(R.id.drawer_layout);
+        intentSearchMessage = getActivity().getIntent().getStringExtra(CardSearchFragment.SEARCH_MESSAGE);
+        mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
         mImageLoader = new ImageLoader(true);
-        mListView = $(R.id.list_cards);
-        mCardListAdapter = new CardListAdapter(this, mImageLoader);
+        mListView = layoutView.findViewById(R.id.list_cards);
+        mCardListAdapter = new CardListAdapter(getContext(), mImageLoader);
         mCardListAdapter.setItemBg(true);
-        mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
+        mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        Button btn_search = $(R.id.btn_search);
+        Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
 /*
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -98,19 +98,19 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         });
         toggle.syncState();
         */
-        mCardLoader = new CardLoader(this);
+        mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSelector.setCallBack(this);
         setListeners();
-        DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
+        DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
         }).fail((e)->{
-            Toast.makeText(this, R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
             Log.e(IrrlichtBridge.TAG, "load cdb", e);
         }).done((rs) -> {
             dlg.dismiss();
@@ -121,16 +121,28 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
             intentSearch(intentSearchMessage);
             isInitCdbOk = true;
         });
-        showNewbieGuide();
+        //showNewbieGuide();
+        return layoutView;
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
-        //数据库初始化完毕并且决斗助手的卡查关键字未被搜索过就卡查
-        if (isInitCdbOk && !currentCardSearchMessage.equals(duelAssistantManagement.getCardSearchMessage())) {
-            intentSearch(null);
-        }
+    public void onFirstUserVisible() {
+
+    }
+
+    @Override
+    public void onUserVisible() {
+
+    }
+
+    @Override
+    public void onFirstUserInvisible() {
+
+    }
+
+    @Override
+    public void onUserInvisible() {
+
     }
 
     private void intentSearch(String searchMessage) {
@@ -170,9 +182,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        if (!isFinishing()) {
-                            GlideCompat.with(getContext()).resumeRequests();
-                        }
+                        GlideCompat.with(getContext()).resumeRequests();
                         break;
                     case RecyclerView.SCROLL_STATE_DRAGGING:
                         GlideCompat.with(getContext()).pauseRequests();
@@ -191,11 +201,10 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
             mDrawerlayout.closeDrawer(Gravity.LEFT);
             return;
         }
-        finish();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         mImageLoader.close();
         super.onDestroy();
     }
@@ -237,12 +246,6 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.card_search2, menu);
-        return true;
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_search) {//弹条件对话框
             showSearch(true);
@@ -251,7 +254,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     }
 
     @Override
-    protected void onBackHome() {
+    public void onBackHome() {
         onBack();
     }
 
@@ -260,7 +263,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         } else {
-            super.onBackPressed();
+            //super.onBackPressed();
         }
     }
 
@@ -280,7 +283,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     protected void showCard(CardListProvider provider, Card cardInfo, final int position) {
         if (cardInfo != null) {
             if (mCardDetail == null) {
-                mCardDetail = new CardDetail(this, mImageLoader, mStringManager);
+                mCardDetail = new CardDetail(new BaseActivity(), mImageLoader, mStringManager);
                 mCardDetail.setCallBack((card, favorite) -> {
                     if(mCardSelector.isShowFavorite()) {
                         mCardSelector.showFavorites(false);
@@ -304,7 +307,7 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                 });
             }
             if (mDialog == null) {
-                mDialog = new DialogPlus(this);
+                mDialog = new DialogPlus(getContext());
                 mDialog.setView(mCardDetail.getView());
                 mDialog.hideButton();
                 mDialog.hideTitleBar();
@@ -338,11 +341,11 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
         CardFavorites.get().save();
     }
-
+/*
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide() {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
@@ -382,5 +385,5 @@ public class CardSearchActivity extends BaseActivity implements CardLoader.CallB
                 )
                 //.alwaysShow(true)//总是显示，调试时可以打开
                 .show();
-    }
+    }*/
 }

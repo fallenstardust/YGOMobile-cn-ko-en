@@ -44,7 +44,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
-import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
+import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
@@ -371,9 +371,9 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ClipManagement.ID_CLIP_LISTENER) {
-            Intent intent = new Intent(DuelAssistantService.this, CardSearchActivity.class);
+            Intent intent = new Intent(DuelAssistantService.this, CardSearchFragment.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
+            intent.putExtra(CardSearchFragment.SEARCH_MESSAGE, key);
             startActivity(intent);
         }
     }

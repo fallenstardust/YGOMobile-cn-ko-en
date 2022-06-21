@@ -58,6 +58,16 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     }
 
+    @Override
+    public void onBackHome() {
+
+    }
+
+    @Override
+    public void onBackPressed() {
+
+    }
+
     /**
      * Called when a view has been clicked.
      *

@@ -53,7 +53,7 @@
         android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="190dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:orientation="vertical">

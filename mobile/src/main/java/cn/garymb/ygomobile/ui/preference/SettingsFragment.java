@@ -57,6 +57,16 @@ public class SettingsFragment extends BaseFragemnt  implements View.OnClickListe
 
     }
 
+    @Override
+    public void onBackHome() {
+
+    }
+
+    @Override
+    public void onBackPressed() {
+
+    }
+
     /**
      * Called when a view has been clicked.
      *

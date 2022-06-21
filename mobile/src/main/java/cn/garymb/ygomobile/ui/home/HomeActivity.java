@@ -31,7 +31,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
+import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -140,8 +140,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     public void onCardSearch(String key, int id) {
         if (id == ID_MAINACTIVITY) {
-            Intent intent = new Intent(this, CardSearchActivity.class);
-            intent.putExtra(CardSearchActivity.SEARCH_MESSAGE, key);
+            Intent intent = new Intent(this, CardSearchFragment.class);
+            intent.putExtra(CardSearchFragment.SEARCH_MESSAGE, key);
             startActivity(intent);
         }
     }

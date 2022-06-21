@@ -58,7 +58,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -96,7 +95,9 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
         initView(layoutView, savedInstanceState);
         //event
-        EventBus.getDefault().register(this);//eventBus必须传this而不能是context
+        if(!EventBus.getDefault().isRegistered(this)){//加上判断
+            EventBus.getDefault().register(this);
+        }
         return layoutView;
     }
 
@@ -331,7 +332,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             quickjoinRoom(host, port, password);
         }
     }
-
+/*
     public void onCardSearch(String key, int id) {
         if (id == ID_HOMEFRAGMENT) {
             Intent intent = new Intent(getContext(), CardSearchActivity.class);
@@ -339,7 +340,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             startActivity(intent);
         }
     }
-
+*/
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
@@ -459,8 +460,9 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
     @Override
     public void onDestroy() {
+        if (EventBus.getDefault().isRegistered(this))//加上判断
+            EventBus.getDefault().unregister(this);
         super.onDestroy();
-        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -480,6 +482,16 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
     @Override
     public void onUserInvisible() {
+
+    }
+
+    @Override
+    public void onBackHome() {
+
+    }
+
+    @Override
+    public void onBackPressed() {
 
     }
 
@@ -513,7 +525,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
                 break;
             case R.id.action_card_search:
-                startActivity(new Intent(getContext(), CardSearchActivity.class));
+                //startActivity(new Intent(getContext(), CardSearchActivity.class));
                 break;
             case R.id.action_deck_manager:
                 DeckManagerActivity.start(getContext(), null);

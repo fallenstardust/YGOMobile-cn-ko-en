@@ -10,6 +10,10 @@
         android:name="cn.garymb.ygomobile.ui.home.HomeFragment"
         tools:layout="@layout/main_fragment" />
     <fragment
+        android:id="@+id/cardSearcher_fragment"
+        android:name="cn.garymb.ygomobile.ui.cards.CardSearchFragment"
+        tools:layout="@layout/activity_search"/>
+    <fragment
         android:id="@+id/mycard_fragment"
         android:name="cn.garymb.ygomobile.ui.mycard.MycardFragment"
         tools:layout="@layout/mycard_fragment" />

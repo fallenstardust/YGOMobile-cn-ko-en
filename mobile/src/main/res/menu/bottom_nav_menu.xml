@@ -7,6 +7,11 @@
         android:title="@string/mc_home"
         app:showAsAction="always" />
     <item
+        android:id="@+id/cardSearcher_fragment"
+        android:icon="@drawable/search"
+        android:title="@string/search"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/mycard_fragment"
         android:icon="@drawable/mycard"
         android:title="@string/mycard"
