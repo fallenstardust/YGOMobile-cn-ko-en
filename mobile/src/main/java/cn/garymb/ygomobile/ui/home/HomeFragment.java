@@ -60,6 +60,7 @@ import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
+import cn.garymb.ygomobile.ui.widget.CardView;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -79,6 +80,11 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardManager mCardManager;
     private CardDetailRandom mCardDetailRandom;
     private ImageLoader mImageLoader;
+
+    View cv_deckmanager;
+    View cv_donation;
+    View cv_game;
+    View cv_download_ex;
 
     @Nullable
     @Override
@@ -122,6 +128,13 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
+        cv_deckmanager = view.findViewById(R.id.action_deck_manager);
+        cv_deckmanager.setOnClickListener((v) -> {
+                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
+        });
+        cv_donation = view.findViewById(R.id.nav_webpage);
+        cv_game = view.findViewById(R.id.action_game);
+        cv_download_ex = view.findViewById(R.id.action_download_ex);
         /*/萌卡
         ImageView iv_mc = view.findViewById(R.id.btn_mycard);
         iv_mc.setOnClickListener((v) -> {
