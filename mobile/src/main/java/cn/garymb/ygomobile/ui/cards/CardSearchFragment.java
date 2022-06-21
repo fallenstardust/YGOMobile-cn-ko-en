@@ -283,7 +283,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     protected void showCard(CardListProvider provider, Card cardInfo, final int position) {
         if (cardInfo != null) {
             if (mCardDetail == null) {
-                mCardDetail = new CardDetail(new BaseActivity(), mImageLoader, mStringManager);
+                mCardDetail = new CardDetail((BaseActivity) getActivity(), mImageLoader, mStringManager);
                 mCardDetail.setCallBack((card, favorite) -> {
                     if(mCardSelector.isShowFavorite()) {
                         mCardSelector.showFavorites(false);
