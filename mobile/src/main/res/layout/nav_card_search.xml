@@ -9,7 +9,7 @@
     android:padding="10dp"
 
     android:theme="@style/AppTheme.PopupOverlay.Dark"
-    tools:showIn="@layout/activity_search">
+    tools:showIn="@layout/search_fragment">
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -75,7 +75,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
-        layoutView = inflater.inflate(R.layout.activity_search, container, false);
+        layoutView = inflater.inflate(R.layout.search_fragment, container, false);
         mResult_count = layoutView.findViewById(R.id.search_result_count);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         intentSearchMessage = getActivity().getIntent().getStringExtra(CardSearchFragment.SEARCH_MESSAGE);
@@ -88,16 +88,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mListView.setAdapter(mCardListAdapter);
         Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
-/*
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawerlayout, toolbar, R.string.search_open, R.string.search_close);
-        toggle.setDrawerIndicatorEnabled(false);
-        mDrawerlayout.addDrawerListener(toggle);
-        toggle.setToolbarNavigationClickListener((v) -> {
-            onBack();
-        });
-        toggle.syncState();
-        */
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
         mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);

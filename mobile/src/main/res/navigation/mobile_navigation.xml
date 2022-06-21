@@ -12,7 +12,7 @@
     <fragment
         android:id="@+id/cardSearcher_fragment"
         android:name="cn.garymb.ygomobile.ui.cards.CardSearchFragment"
-        tools:layout="@layout/activity_search"/>
+        tools:layout="@layout/search_fragment"/>
     <fragment
         android:id="@+id/mycard_fragment"
         android:name="cn.garymb.ygomobile.ui.mycard.MycardFragment"

@@ -168,22 +168,6 @@ public abstract class BaseCardsActivity extends BaseActivity implements CardLoad
             return true;
         });
 
-//        mListView.addOnItemTouchListener(new RecyclerViewItemListener(mListView, new RecyclerViewItemListener.OnItemListener() {
-//            @Override
-//            public void onItemClick(View view, int pos) {
-//                onCardClick(view, mCardListAdapter.getItem(pos), pos);
-//            }
-//
-//            @Override
-//            public void onItemLongClick(View view, int pos) {
-//                onCardLongClick(view, mCardListAdapter.getItem(pos), pos);
-//            }
-//
-//            @Override
-//            public void onItemDoubleClick(View view, int pos) {
-//
-//            }
-//        }));
         mListView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
