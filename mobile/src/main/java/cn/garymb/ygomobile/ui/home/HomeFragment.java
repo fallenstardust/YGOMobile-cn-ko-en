@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,7 +59,6 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 
-import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -98,7 +96,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         if (isHorizontal)
             layoutView = inflater.inflate(R.layout.main_horizontal_fragment, container, false);
         else
-            layoutView = inflater.inflate(R.layout.main_fragment, container, false);
+            layoutView = inflater.inflate(R.layout.fragment_home, container, false);
 
         initView(layoutView, savedInstanceState);
         //event

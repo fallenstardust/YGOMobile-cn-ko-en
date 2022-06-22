@@ -23,16 +23,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:divider="@android:color/transparent"
+                android:layout_marginBottom="70dp"
                 android:dividerHeight="4dp"
                 android:padding="5dp"
-                android:scrollbars="none" />
+                android:scrollbars="vertical" />
 
             <LinearLayout
                 android:layout_width="60dp"
                 android:layout_height="100dp"
                 android:layout_gravity="bottom|right"
                 android:layout_marginRight="20dp"
-                android:layout_marginBottom="60dp"
+                android:layout_marginBottom="70dp"
                 android:orientation="vertical">
 
                 <Button

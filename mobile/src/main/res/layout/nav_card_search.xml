@@ -7,9 +7,9 @@
     android:background="@drawable/red"
     android:orientation="vertical"
     android:padding="10dp"
-
+    android:layout_marginBottom="70dp"
     android:theme="@style/AppTheme.PopupOverlay.Dark"
-    tools:showIn="@layout/search_fragment">
+    tools:showIn="@layout/fragment_search">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -242,7 +242,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="60dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
@@ -269,7 +269,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="60dp"
             android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatButton

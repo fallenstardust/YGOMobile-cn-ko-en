@@ -8,19 +8,19 @@
     <fragment
         android:id="@+id/home_fragment"
         android:name="cn.garymb.ygomobile.ui.home.HomeFragment"
-        tools:layout="@layout/main_fragment" />
+        tools:layout="@layout/fragment_home" />
     <fragment
         android:id="@+id/cardSearcher_fragment"
         android:name="cn.garymb.ygomobile.ui.cards.CardSearchFragment"
-        tools:layout="@layout/search_fragment"/>
+        tools:layout="@layout/fragment_search"/>
     <fragment
         android:id="@+id/deckManager_fragment"
         android:name="cn.garymb.ygomobile.ui.cards.DeckManagerFragment"
-        tools:layout="@layout/activity_deck_cards"/>
+        tools:layout="@layout/fragment_deck_cards"/>
     <fragment
         android:id="@+id/mycard_fragment"
         android:name="cn.garymb.ygomobile.ui.mycard.MycardFragment"
-        tools:layout="@layout/mycard_fragment" />
+        tools:layout="@layout/fragment_mycard" />
     <fragment
         android:id="@+id/setting_fragment"
         android:name="cn.garymb.ygomobile.ui.preference.fragments.SettingFragment"

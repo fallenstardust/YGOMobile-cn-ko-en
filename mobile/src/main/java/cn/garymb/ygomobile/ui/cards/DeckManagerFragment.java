@@ -148,7 +148,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
-        layoutView = inflater.inflate(R.layout.activity_deck_cards, container, false);
+        layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         mImageLoader = new ImageLoader(true);
         mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);

@@ -21,7 +21,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (isHorizontal)
             view = inflater.inflate(R.layout.mycard_horizontal_fragment, container, false);
         else
-            view = inflater.inflate(R.layout.mycard_fragment, container, false);
+            view = inflater.inflate(R.layout.fragment_mycard, container, false);
         this.currentBundle = savedInstanceState;
         //initView(view);
         return view;

@@ -75,7 +75,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
-        layoutView = inflater.inflate(R.layout.search_fragment, container, false);
+        layoutView = inflater.inflate(R.layout.fragment_search, container, false);
         mResult_count = layoutView.findViewById(R.id.search_result_count);
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         intentSearchMessage = getActivity().getIntent().getStringExtra(CardSearchFragment.SEARCH_MESSAGE);
