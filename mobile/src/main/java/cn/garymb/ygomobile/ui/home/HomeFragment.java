@@ -20,12 +20,14 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -52,15 +54,16 @@ import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
-import cn.garymb.ygomobile.ui.widget.CardView;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -81,10 +84,10 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardDetailRandom mCardDetailRandom;
     private ImageLoader mImageLoader;
 
-    View cv_deckmanager;
-    View cv_donation;
-    View cv_game;
-    View cv_download_ex;
+    CardView cv_deckmanager;
+    CardView cv_donation;
+    CardView cv_game;
+    CardView cv_download_ex;
 
     @Nullable
     @Override
@@ -135,8 +138,8 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_game = view.findViewById(R.id.action_game);
         cv_download_ex = view.findViewById(R.id.action_download_ex);
-        /*/萌卡
-        ImageView iv_mc = view.findViewById(R.id.btn_mycard);
+        //萌卡
+        CardView iv_mc = view.findViewById(R.id.action_replay);
         iv_mc.setOnClickListener((v) -> {
             if (Constants.SHOW_MYCARD) {
                 startActivity(new Intent(getActivity(), MyCardActivity.class));
@@ -149,7 +152,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
-        });*/
+        });
 
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
@@ -529,7 +532,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 //startActivity(new Intent(getContext(), CardSearchActivity.class));
                 break;
             case R.id.action_deck_manager:
-                DeckManagerActivity.start(getContext(), null);
+                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
                 break;
             case R.id.action_join_qq_group:
                 String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";

@@ -111,7 +111,7 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
-public abstract class DeckManagerActivity extends BaseActivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
+public class DeckManagerActivity extends BaseActivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     public static void start(Context context, String path) {
         Intent starter = new Intent(context, DeckManagerActivity.class);
         starter.putExtra(Intent.EXTRA_TEXT, path);
