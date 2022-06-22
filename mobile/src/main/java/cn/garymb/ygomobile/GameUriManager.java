@@ -29,7 +29,7 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.home.HomeFragment;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -212,7 +212,7 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
-                DeckManagerActivity.start(activity, file.getAbsolutePath());
+                DeckManagerFragment.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     activity.startActivity(startSetting);
@@ -251,7 +251,7 @@ public class GameUriManager {
                     if (!deckInfo.isCompleteDeck()) {
                         YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                     }
-                    DeckManagerActivity.start(activity, file.getAbsolutePath());
+                    DeckManagerFragment.start(activity, file.getAbsolutePath());
                 }
             } else if (Constants.URI_ROOM.equals(host)) {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
@@ -289,7 +289,7 @@ public class GameUriManager {
             }
         }
         if (deck != null && deck.exists()) {
-            DeckManagerActivity.start(activity, deck.getAbsolutePath());
+            DeckManagerFragment.start(activity, deck.getAbsolutePath());
         } else {
             Log.w("kk", "no find " + name);
             activity.finish();

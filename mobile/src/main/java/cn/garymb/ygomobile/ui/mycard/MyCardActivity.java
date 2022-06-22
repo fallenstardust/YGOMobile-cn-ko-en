@@ -36,7 +36,8 @@ import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 import cn.garymb.ygomobile.utils.ActivityUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -305,7 +306,7 @@ public class MyCardActivity extends BaseActivity implements MyCard.MyCardListene
                 mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
                 break;
             case R.id.action_deck_manager:
-                startActivity(new Intent(this, DeckManagerActivity.class));
+                startActivity(new Intent(this, DeckManagerFragment.class));
                 closeDrawer();
                 break;
             case R.id.action_arena:

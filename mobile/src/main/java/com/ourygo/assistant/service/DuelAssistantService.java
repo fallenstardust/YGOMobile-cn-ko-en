@@ -45,7 +45,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
@@ -232,13 +232,13 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
                 if (!deckInfo.isCompleteDeck()){
                     YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                 }
-                DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+                DeckManagerFragment.start(DuelAssistantService.this, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    DeckManagerActivity.start(DuelAssistantService.this, file.getAbsolutePath());
+                    DeckManagerFragment.start(DuelAssistantService.this, file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

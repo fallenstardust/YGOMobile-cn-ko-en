@@ -59,7 +59,8 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -132,9 +133,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
         cv_deckmanager = view.findViewById(R.id.action_deck_manager);
-        cv_deckmanager.setOnClickListener((v) -> {
-                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
-        });
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_game = view.findViewById(R.id.action_game);
         cv_download_ex = view.findViewById(R.id.action_download_ex);
@@ -532,7 +530,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 //startActivity(new Intent(getContext(), CardSearchActivity.class));
                 break;
             case R.id.action_deck_manager:
-                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
+
                 break;
             case R.id.action_join_qq_group:
                 String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";

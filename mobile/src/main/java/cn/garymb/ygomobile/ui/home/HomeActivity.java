@@ -32,7 +32,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
-import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.FileLogUtil;
@@ -91,7 +91,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 配置navigation与底部菜单之间的联系
         // 底部菜单的样式里面的item里面的ID与navigation布局里面指定的ID必须相同，否则会出现绑定失败的情况
         appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.home_fragment, R.id.cardSearcher_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
+                R.id.home_fragment, R.id.cardSearcher_fragment, R.id.deckManager_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
         // 建立fragment容器的控制器，这个容器就是页面的上的fragment容器
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         // 启动
@@ -248,13 +248,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 if (!deckInfo.isCompleteDeck()) {
                     YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                 }
-                DeckManagerActivity.start(this, file.getAbsolutePath());
+                DeckManagerFragment.start(this, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    DeckManagerActivity.start(this, file.getAbsolutePath());
+                    DeckManagerFragment.start(this, file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

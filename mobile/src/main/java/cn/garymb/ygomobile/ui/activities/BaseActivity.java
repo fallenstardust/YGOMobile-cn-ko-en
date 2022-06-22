@@ -248,7 +248,7 @@ public class BaseActivity extends AppCompatActivity {
      *
      * @return 是否满足权限申请条件
      */
-    protected boolean startPermissionsActivity() {
+    public boolean startPermissionsActivity() {
         return startPermissionsActivity(getPermissions());
     }
 
@@ -258,7 +258,7 @@ public class BaseActivity extends AppCompatActivity {
      * @param permissions 要申请的权限列表
      * @return 是否满足权限申请条件
      */
-    protected boolean startPermissionsActivity(String[] permissions) {
+    public boolean startPermissionsActivity(String[] permissions) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return false;
         if (permissions == null || permissions.length == 0)

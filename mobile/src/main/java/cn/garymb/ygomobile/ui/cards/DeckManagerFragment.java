@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
@@ -12,9 +13,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,9 +21,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -46,13 +46,6 @@ import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.app.hubert.guide.NewbieGuide;
-import com.app.hubert.guide.model.GuidePage;
-import com.app.hubert.guide.model.HighLight;
-import com.app.hubert.guide.model.HighlightOptions;
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
-import com.chad.library.adapter.base.listener.OnItemLongClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -72,6 +65,7 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.DeckType;
@@ -82,6 +76,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
@@ -111,15 +106,16 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
-public class DeckManagerActivity extends BaseActivity implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
+public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     public static void start(Context context, String path) {
-        Intent starter = new Intent(context, DeckManagerActivity.class);
+        Intent starter = new Intent(context, DeckManagerFragment.class);
         starter.putExtra(Intent.EXTRA_TEXT, path);
-        if(!(context instanceof Activity)) {
+        if (!(context instanceof Activity)) {
             starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         }
         context.startActivity(starter);
     }
+
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -147,39 +143,40 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     private DialogPlus builderShareLoading;
     private boolean isExit = false;
 
+    @Nullable
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_deck_cards);
-        AnimationShake2();
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View layoutView;
+        layoutView = inflater.inflate(R.layout.activity_deck_cards, container, false);
+        AnimationShake2(layoutView);
         mImageLoader = new ImageLoader(true);
-        mDrawerLayout = $(R.id.drawer_layout);
+        mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);
         screenWidth = getResources().getDisplayMetrics().widthPixels;
-        mListView = $(R.id.list_cards);
-        mCardListAdapter = new CardListAdapter(this, mImageLoader);
+        mListView = layoutView.findViewById(R.id.list_cards);
+        mCardListAdapter = new CardListAdapter(getContext(), mImageLoader);
         mCardListAdapter.setEnableSwipe(true);
-        mListView.setLayoutManager(new FastScrollLinearLayoutManager(this));
+        mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
         setListeners();
 
-        mCardLoader = new CardLoader(this);
+        mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher($(R.id.nav_view_list), mCardLoader);
+        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSelector.setCallBack(this);
-        showNewbieGuide("deckmain");
 
-        tv_deck = $(R.id.tv_deck);
-        tv_result_count = $(R.id.result_count);
-        mDeckSpinner = $(R.id.toolbar_list);
+        tv_deck = layoutView.findViewById(R.id.tv_deck);
+        tv_result_count = layoutView.findViewById(R.id.result_count);
+        mDeckSpinner = layoutView.findViewById(R.id.toolbar_list);
         mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
-        mLimitSpinner = $(R.id.sp_limit_list);
+        mLimitSpinner = layoutView.findViewById(R.id.sp_limit_list);
         mLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
-        mRecyclerView = $(R.id.grid_cards);
+        mRecyclerView = layoutView.findViewById(R.id.grid_cards);
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), 0, mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
-        mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(this, mRecyclerView, getImageLoader())));
-        mRecyclerView.setLayoutManager(new DeckLayoutManager(this, Constants.DECK_WIDTH_COUNT));
+        mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(getContext(), mRecyclerView, getImageLoader())));
+        mRecyclerView.setLayoutManager(new DeckLayoutManager(getContext(), Constants.DECK_WIDTH_COUNT));
         mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater);
-        ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(this, mDeckItemTouchHelper);
+        ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(getContext(), mDeckItemTouchHelper);
         touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
@@ -197,11 +194,11 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             public void onNothingSelected(AdapterView<?> adapterView) {
             }
         });
-        String preLoadFile  = getIntent().getStringExtra(Intent.EXTRA_TEXT);
-        initBoomMenuButton($(R.id.bmb));
+        String preLoadFile = getActivity().getIntent().getStringExtra(Intent.EXTRA_TEXT);
+        initBoomMenuButton(layoutView.findViewById(R.id.bmb));
 
-        $(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
-        $(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
+        layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
+        layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
         //
         final File _file;
         //打开指定卡组
@@ -211,7 +208,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         } else {
             mPreLoadFile = null;
             String path = mSettings.getLastDeckPath();
-            if(TextUtils.isEmpty(path)){
+            if (TextUtils.isEmpty(path)) {
                 _file = null;
             } else {
                 //最后卡组
@@ -219,11 +216,15 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             }
         }
         init(_file);
-        EventBus.getDefault().register(this);
+        //event
+        if (!EventBus.getDefault().isRegistered(this)) {//加上判断
+            EventBus.getDefault().register(this);
+        }
         tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        return layoutView;
     }
 
-    //https://www.jianshu.com/p/99649af3b191
+    /*/https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide(String scene) {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
                 .setOnHighlightDrewListener((canvas, rectF) -> {
@@ -306,7 +307,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                     .show();
 
         }
-    }
+    }*/
 
     protected void setListeners() {
         mCardListAdapter.setOnItemClickListener((adapter, view, position) -> {
@@ -339,26 +340,43 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     }
 
     @Override
-    protected void onResume() {
-//        mImageLoader.resume();
+    public void onResume() {
         super.onResume();
     }
 
     @Override
-    protected void onPause() {
-        //仅退出的时候才关闭zip
-//        mImageLoader.pause();
+    public void onPause() {
         super.onPause();
     }
 
     @Override
-    protected void onStop() {
+    public void onFirstUserVisible() {
+
+    }
+
+    @Override
+    public void onUserVisible() {
+
+    }
+
+    @Override
+    public void onFirstUserInvisible() {
+
+    }
+
+    @Override
+    public void onUserInvisible() {
+
+    }
+
+    @Override
+    public void onStop() {
         super.onStop();
         CardFavorites.get().save();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         mImageLoader.close();
         super.onDestroy();
     }
@@ -378,7 +396,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             if (deckItem == null || deckItem.getCardInfo() == null) {
                 return;
             }
-            DialogPlus dialogPlus = new DialogPlus(this);
+            DialogPlus dialogPlus = new DialogPlus(getContext());
             dialogPlus.setTitle(R.string.question);
             dialogPlus.setMessage(getString(R.string.delete_card, deckItem.getCardInfo().Name));
             dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -398,9 +416,9 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     }
     //endregion
 
-    public void AnimationShake2() {
-        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
-        findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
+    public void AnimationShake2(View view) {
+        Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.shake);//加载动画资源文件
+        view.findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }
 
     protected void hideDrawers() {
@@ -429,7 +447,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         }
         if (autoClose && mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
-            showNewbieGuide("searchResult");
+            //showNewbieGuide("searchResult");
         } else if (isLoad) {
             mDrawerLayout.openDrawer(Constants.CARD_RESULT_GRAVITY);
         }
@@ -441,7 +459,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             setCurDeck(new DeckInfo());
             return;
         }
-        DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
+        DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             if (mCardLoader.isOpen() && file.exists()) {
                 return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
@@ -456,7 +474,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
 
     //region init
     private void init(@Nullable File ydk) {
-        DialogPlus dlg = DialogPlus.show(this, null, getString(R.string.loading));
+        DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
             //默认第一个卡表
@@ -504,15 +522,8 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         File file = deckInfo.source;
         if (file != null && file.exists()) {
             String name = IOUtils.tirmName(file.getName(), Constants.YDK_FILE_EX);
-            setActionBarSubTitle(name);
-//            if (inDeckDir(file)) {
-            //记住最后打开的卡组
             mSettings.setLastDeckPath(file.getAbsolutePath());
-
             tv_deck.setText(name);
-//            }
-        } else {
-            setActionBarSubTitle(getString(R.string.noname));
         }
         mDeckAdapater.setDeck(deckInfo);
         mDeckAdapater.notifyDataSetChanged();
@@ -614,7 +625,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         if (cardInfo != null) {
             if (isShowCard()) return;
             if (mCardDetail == null) {
-                mCardDetail = new CardDetail(this, getImageLoader(), mStringManager);
+                mCardDetail = new CardDetail((BaseActivity) getActivity(), getImageLoader(), mStringManager);
                 mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
@@ -650,7 +661,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             }
             mCardDetail.showAdd();
             if (mDialog == null) {
-                mDialog = new DialogPlus(this);
+                mDialog = new DialogPlus(getContext());
                 mDialog.setView(mCardDetail.getView());
                 mDialog.hideButton();
                 mDialog.hideTitleBar();
@@ -679,9 +690,9 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         if (checkLimit(cardInfo)) {
             boolean rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.SideCard);
             if (rs) {
-                showToast(R.string.add_card_tip_ok, Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), R.string.add_card_tip_ok, Toast.LENGTH_SHORT).show();
             } else {
-                showToast(R.string.add_card_tip_fail, Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), R.string.add_card_tip_fail, Toast.LENGTH_SHORT).show();
             }
             return rs;
         }
@@ -697,9 +708,9 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.MainCard);
             }
             if (rs) {
-                showToast(R.string.add_card_tip_ok, Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), R.string.add_card_tip_ok, Toast.LENGTH_SHORT).show();
             } else {
-                showToast(R.string.add_card_tip_fail, Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), R.string.add_card_tip_fail, Toast.LENGTH_SHORT).show();
             }
             return rs;
         }
@@ -707,11 +718,11 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     }
 
     @Override
-    protected void onBackHome() {
+    public void onBackHome() {
         if (mDeckAdapater.isChanged()) {
             File ydk = mDeckAdapater.getYdkFile();
             if (ydk != null && ydk.exists()) {
-                DialogPlus builder = new DialogPlus(this);
+                DialogPlus builder = new DialogPlus(getContext());
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.quit_deck_tip);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -721,17 +732,17 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                     doMenu(R.id.action_save);
                     dlg.dismiss();
                     isExit = true;
-                    finish();
+                    //finish();
                 });
                 builder.setLeftButtonListener((dlg, s) -> {
                     dlg.dismiss();
                     isExit = true;
-                    finish();
+                    //finish();
                 });
                 builder.show();
             }
         } else {
-            super.onBackHome();
+            //super.onBackHome();
         }
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
@@ -741,7 +752,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             mDrawerLayout.closeDrawer(Gravity.LEFT);
             return;
         }
-        finish();
+        //finish();
     }
 
     @Override
@@ -754,22 +765,22 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             if (mDeckAdapater.isChanged()) {
                 File ydk = mDeckAdapater.getYdkFile();
                 if (ydk != null && ydk.exists()) {
-                    DialogPlus builder = new DialogPlus(this);
+                    DialogPlus builder = new DialogPlus(getContext());
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.quit_deck_tip);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, s) -> {
                         dlg.dismiss();
                         isExit = true;
-                        finish();
+                        //finish();
                     });
                     builder.show();
                 }
             } else {
-                super.onBackPressed();
+                //super.onBackPressed();
             }
         } else {
-            super.onBackPressed();
+            //super.onBackPressed();
         }
     }
 
@@ -782,22 +793,22 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             return count != null && count <= 3;
         }
         if (limitList.check(cardInfo, LimitType.Forbidden)) {
-            showToast(getString(R.string.tip_card_max, 0), Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), getString(R.string.tip_card_max, 0), Toast.LENGTH_SHORT).show();
             return false;
         }
         if (count != null) {
             if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
-                    showToast(getString(R.string.tip_card_max, 1), Toast.LENGTH_SHORT);
+                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 1), Toast.LENGTH_SHORT).show();
                     return false;
                 }
             } else if (limitList.check(cardInfo, LimitType.SemiLimit)) {
                 if (count >= 2) {
-                    showToast(getString(R.string.tip_card_max, 2), Toast.LENGTH_SHORT);
+                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 2), Toast.LENGTH_SHORT).show();
                     return false;
                 }
             } else if (count >= Constants.CARD_MAX_COUNT) {
-                showToast(getString(R.string.tip_card_max, 3), Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), getString(R.string.tip_card_max, 3), Toast.LENGTH_SHORT).show();
                 return false;
             }
         }
@@ -814,10 +825,10 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     }
 
     public boolean doMenu(int menuId) {
-        DialogPlus builder = new DialogPlus(this);
+        DialogPlus builder = new DialogPlus(getContext());
         switch (menuId) {
             case R.id.action_deck_backup_n_restore:
-                startPermissionsActivity();
+                //startPermissionsActivity();
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.deck_explain);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -845,7 +856,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 break;
             case R.id.action_share_deck:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 shareDeck();
@@ -859,7 +870,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                         inputDeckName(null, null, true);
                     } else {
                         if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                            Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                         } else {
                             save(mDeckAdapater.getYdkFile());
                         }
@@ -868,11 +879,11 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 break;
             case R.id.action_rename:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                    Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
                 }
@@ -895,11 +906,11 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
             break;
             case R.id.action_delete_deck: {
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(this, R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                    Toast.makeText(this, R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.question_delete_deck);
@@ -933,7 +944,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
 
     private void createDeck(String savePath) {
         final File old = mDeckAdapater.getYdkFile();
-        DialogPlus builder = new DialogPlus(this);
+        DialogPlus builder = new DialogPlus(getContext());
         builder.setTitle(R.string.question);
         builder.setMessage(R.string.question_keep_cur_deck);
         builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -961,7 +972,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
     }
 
     private void shareDeck() {
-        builderShareLoading = new DialogPlus(this);
+        builderShareLoading = new DialogPlus(getContext());
         builderShareLoading.showProgressBar();
         builderShareLoading.hideTitleBar();
         builderShareLoading.setMessage(R.string.Pre_share);
@@ -1020,23 +1031,20 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         String savePath = new File(AppsSettings.get().getDeckSharePath(), deckName + ".jpg").getAbsolutePath();
         BitmapUtil.saveBitmap(bitmap, savePath, 50);
         builderShareLoading.dismiss();
-        DialogUtils du = DialogUtils.getdx(this);
-        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share,true);
+        DialogUtils du = DialogUtils.getdx(getContext());
+        View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_share, true);
         ImageView iv_image = viewDialog.findViewById(R.id.iv_image);
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
         TextView tv_code = viewDialog.findViewById(R.id.et_code);
         tv_code.setText(deck.toAppUri().toString());
-        ImageUtil.show(this, savePath, iv_image,System.currentTimeMillis()+"");
+        ImageUtil.show(getContext(), savePath, iv_image, System.currentTimeMillis() + "");
 
         bt_code_share.setOnClickListener(v -> {
             du.dis();
-//            stopService(new Intent(this, DuelAssistantService.class));
-            YGOUtil.copyMessage(this, tv_code.getText().toString().trim());
+            YGOUtil.copyMessage(getContext(), tv_code.getText().toString().trim());
             DuelAssistantManagement.getInstance().setLastMessage(tv_code.getText().toString().trim());
-            showToast(getString(R.string.deck_text_copyed));
-            //复制完毕开启决斗助手
-//            YGOUtil.startDuelService(this);
+            Toast.makeText(getContext(), getString(R.string.deck_text_copyed), Toast.LENGTH_SHORT).show();
 
         });
 
@@ -1053,7 +1061,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 String cname = DeckUtil.getDeckTypeName(mDeckAdapater.getYdkFile().getAbsolutePath());
                 intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, cname + "/" + fname);
             }
-            intent.setPackage(getPackageName());
+            intent.setPackage(getActivity().getPackageName());
             try {
                 startActivity(intent);
             } catch (Throwable e) {
@@ -1074,14 +1082,14 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
 
     private void shareUrl(String uri, String label) {
         String url = getString(R.string.deck_share_head) + "  " + uri;
-        ShareUtil.shareText(this, getString(R.string.share_deck), url, null);
-        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        ShareUtil.shareText(getContext(), getString(R.string.share_deck), url, null);
+        ClipboardManager clipboardManager = (ClipboardManager) getContext().getSystemService(CLIPBOARD_SERVICE);
         if (Build.VERSION.SDK_INT > 19) {
             clipboardManager.setPrimaryClip(ClipData.newPlainText(label, uri));
         } else {
             clipboardManager.setText(uri);
         }
-        showToast(R.string.copy_to_clipbroad, Toast.LENGTH_SHORT);
+        Toast.makeText(getContext(), R.string.copy_to_clipbroad, Toast.LENGTH_SHORT).show();
     }
 
     private File getSelectDeck(Spinner spinner) {
@@ -1136,7 +1144,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 items.add(new SimpleSpinnerItem(i++, filename).setTag(file));
             }
         }
-        SimpleSpinnerAdapter simpleSpinnerAdapter = new SimpleSpinnerAdapter(this);
+        SimpleSpinnerAdapter simpleSpinnerAdapter = new SimpleSpinnerAdapter(getContext());
         simpleSpinnerAdapter.set(items);
         simpleSpinnerAdapter.setColor(Color.WHITE);
         simpleSpinnerAdapter.setSingleLine(true);
@@ -1146,25 +1154,6 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         }
     }
 
-    //    private void initLimitListSpinners(Spinner spinner) {
-//        List<SimpleSpinnerItem> items = new ArrayList<>();
-//        List<Integer> ids = mLimitManager.getLists();
-//        int index = -1;
-//        int i = 0;
-//        for (Integer id : ids) {
-//            LimitList list = mLimitManager.getLimitFromIndex(id);
-//            if (list == mLimitList) {
-//                index = i;
-//            }
-//            items.add(new SimpleSpinnerItem(id, list.getName()));
-//            i++;
-//        }
-//        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(this);
-//        adapter.set(items);
-//        spinner.setAdapter(adapter);
-//        if (index >= 0) {
-//            spinner.setSelection(index);
-//        }
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limitLists = mLimitManager.getLimitNames();
@@ -1179,7 +1168,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 index = j;
             }
         }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(this);
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(getContext());
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
@@ -1205,20 +1194,20 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
         boolean nochanged = last != null && TextUtils.equals(last.getName(), limitList.getName());
         if (!nochanged) {
             mDeckAdapater.setLimitList(limitList);
-            runOnUiThread(() -> {
+            getActivity().runOnUiThread(() -> {
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.SideStart, DeckItem.SideEnd);
             });
         }
         mCardListAdapter.setLimitList(limitList);
-        runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+        getActivity().runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
     }
 
     private void inputDeckName(File oldYdk, String savePath, boolean keepOld) {
-        DialogPlus builder = new DialogPlus(this);
+        DialogPlus builder = new DialogPlus(getContext());
         builder.setTitle(R.string.intpu_name);
-        EditText editText = new EditText(this);
+        EditText editText = new EditText(getContext());
         editText.setGravity(Gravity.TOP | Gravity.LEFT);
         editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         editText.setSingleLine();
@@ -1240,7 +1229,7 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
                 else
                     ydk = new File(savePath, filename);
                 if (ydk.exists()) {
-                    showToast(R.string.file_exist, Toast.LENGTH_SHORT);
+                    Toast.makeText(getContext(), R.string.file_exist, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (!keepOld && oldYdk != null && oldYdk.exists()) {
@@ -1271,9 +1260,9 @@ public class DeckManagerActivity extends BaseActivity implements RecyclerViewIte
 
     private void save(File ydk) {
         if (mDeckAdapater.save(ydk)) {
-            showToast(R.string.save_tip_ok, Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), R.string.save_tip_ok, Toast.LENGTH_SHORT).show();
         } else {
-            showToast(R.string.save_tip_fail, Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), R.string.save_tip_fail, Toast.LENGTH_SHORT).show();
         }
     }
 
