@@ -131,6 +131,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private RecyclerView mRecyclerView;
     private DeckAdapater mDeckAdapater;
     private final AppsSettings mSettings = AppsSettings.get();
+    private BaseActivity mContext;
 
     private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
@@ -828,7 +829,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         DialogPlus builder = new DialogPlus(getContext());
         switch (menuId) {
             case R.id.action_deck_backup_n_restore:
-                //startPermissionsActivity();
+                mContext.startPermissionsActivity();
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.deck_explain);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -844,9 +845,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 });
                 builder.show();
                 break;
-//            case R.id.action_refresh:
-//                mDeckAdapater.notifyDataSetChanged();
-//                break;
             case R.id.action_search:
                 //弹条件对话框
                 showSearch(true);

@@ -130,7 +130,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
-        cv_deckmanager = view.findViewById(R.id.action_deck_manager);
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_game = view.findViewById(R.id.action_game);
         cv_download_ex = view.findViewById(R.id.action_download_ex);

@@ -221,13 +221,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     public abstract void updateImages();
 
-    /*
-        public void AnimationShake() {
-            Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);//加载动画资源文件
-            findViewById(R.id.cube).startAnimation(shake); //给组件播放动画效果
-        }
-    */
-
     private void saveDeck(String deckMessage, boolean isUrl) {
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.question);

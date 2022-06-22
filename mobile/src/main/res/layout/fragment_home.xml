@@ -264,52 +264,13 @@
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
-                <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/action_deck_manager"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginBottom="10dp"
-                    android:clickable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="vertical"
-                    app:cardBackgroundColor="@color/transparent"
-                    app:cardElevation="0dp"
-                    app:cardUseCompatPadding="false"
-                    app:elevation="0dp">
-
-                    <RelativeLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
-                            android:scaleType="fitEnd"
-                            android:src="@drawable/downloadimages" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
-                            android:paddingLeft="13dp"
-                            android:paddingTop="13dp"
-                            android:text="@string/deck_manager"
-                            android:textColor="@color/holo_blue_bright"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
-                </androidx.cardview.widget.CardView>
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
+
                 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/action_join_qq_group"
                     android:layout_width="100dp"
