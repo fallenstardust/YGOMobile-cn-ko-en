@@ -17,6 +17,7 @@
 	<dimen name="setting_header_avatar_margin">18dp</dimen>
 	<dimen name="setting_item_icon_size">30dp</dimen>
 	<dimen name="banner_time_size">13sp</dimen>
+	<dimen name="banner_type_size">10sp</dimen>
 	<dimen name="banner_title_size">16sp</dimen>
 	<dimen name="main_card_key_text_size">18sp</dimen>
 	<dimen name="main_card_text_size">15sp</dimen>

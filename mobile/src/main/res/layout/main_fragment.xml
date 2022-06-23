@@ -29,7 +29,7 @@
                 android:id="@+id/xb_banner"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:AutoPlayTime="4500"
+                app:AutoPlayTime="3500"
                 app:pageChangeDuration="800"
                 app:pointsVisibility="true"
                 app:pointsPosition="RIGHT"
@@ -38,12 +38,12 @@
                 app:isHandLoop="true" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:textSize="15sp"
                 android:id="@+id/tv_banner_loading"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="加载失败，点击重试"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:textSize="15sp" />
 
 
         </RelativeLayout>

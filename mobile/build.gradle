@@ -147,7 +147,7 @@ dependencies {
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     //androidX 版本使用下面的依赖
-    implementation 'com.github.xiaohaibin:XBanner:androidx_v1.2.0'
+    implementation 'com.github.xiaohaibin:XBanner:androidx_v1.2.6'
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.flyco.tablayout:FlycoTabLayout_Lib:2.1.2@aar'
 

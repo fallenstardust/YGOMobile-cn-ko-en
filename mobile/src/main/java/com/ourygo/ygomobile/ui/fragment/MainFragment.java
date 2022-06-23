@@ -12,8 +12,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -82,6 +84,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 case TYPE_BANNER_QUERY_OK:
                     tv_banner_loading.setVisibility(View.GONE);
                     xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
+                    AlphaAnimation animation = new AlphaAnimation(0F, 1F);
+                    animation.setDuration(300);
+                    xb_banner.startAnimation(animation);
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
                     tv_banner_loading.setText("加载失败，点击重试");
@@ -232,10 +237,27 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             iv_image = view.findViewById(R.id.iv_image);
 
             McNews mcNews = mcNewsList.get(position);
-            ImageUtil.setImageAndBackground(getContext(), mcNews.getImage_url(), iv_image);
+            ImageUtil.setImageAndBackground(MainFragment.this.getContext(), mcNews.getImage_url(), iv_image);
             tv_time.setText(mcNews.getCreate_time());
-            tv_title.setText(mcNews.getTitle());
-            tv_type.setVisibility(View.GONE);
+            String title = mcNews.getTitle();
+            String type = null;
+            int start, end;
+            start = title.indexOf("【");
+            if (start != -1) {
+                end = title.indexOf("】", start);
+                if (end != -1) {
+                    type = title.substring(start + 1, end);
+                    title = title.substring(end + 1);
+                }
+            }
+            tv_title.setText(title);
+            if (TextUtils.isEmpty(type)) {
+                tv_type.setVisibility(View.GONE);
+            } else {
+                tv_type.setVisibility(View.VISIBLE);
+                tv_type.setBackground(OYUtil.getRadiusBackground(OYUtil.c(R.color.banner_type_background)));
+                tv_type.setText(type);
+            }
 //
 //                Log.e("MainFragment","Height"+view.getHeight());
 //                Log.e("MainFragment","Width"+view.getWidth());
