@@ -58,7 +58,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.preference.SettingsActivity;
@@ -158,7 +157,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         cv_donation.setOnClickListener(this);
         cv_help = view.findViewById(R.id.action_help);
         cv_help.setOnClickListener(this);
-        
+
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
         mImageLoader = new ImageLoader(false);
@@ -441,7 +440,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 Log.e("MainActivity", "错误" + e);
             }
         }).done((rs) -> {
-            Log.e("MainActivity", "复制完毕");
+            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
         });
     }
