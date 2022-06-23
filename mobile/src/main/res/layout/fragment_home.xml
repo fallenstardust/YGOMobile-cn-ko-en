@@ -396,6 +396,47 @@
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/action_bot"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:orientation="vertical"
+                    app:cardBackgroundColor="@color/transparent"
+                    app:cardElevation="0dp"
+                    app:cardUseCompatPadding="false"
+                    app:elevation="0dp">
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="-30dp"
+                            android:layout_marginLeft="20dp"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginEnd="-30dp"
+                            android:layout_marginRight="-20dp"
+                            android:layout_marginBottom="-20dp"
+                            android:scaleType="fitEnd"
+                            android:src="@drawable/help" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/window3"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="@string/bot_mode"
+                            android:textColor="@color/holo_blue_bright"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

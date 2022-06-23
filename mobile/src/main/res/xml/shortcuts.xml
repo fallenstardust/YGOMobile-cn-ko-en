@@ -38,7 +38,7 @@
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerActivity"
+            android:targetClass="cn.garymb.ygomobile.ui.cards.DeckManagerFragment"
             android:targetPackage="cn.garymb.ygomobile" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>

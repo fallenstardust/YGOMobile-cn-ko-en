@@ -76,12 +76,18 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_search, container, false);
-        mResult_count = layoutView.findViewById(R.id.search_result_count);
+        initView(layoutView);
+        //showNewbieGuide();
+        return layoutView;
+    }
+
+    public void initView(View layoutView){
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         intentSearchMessage = getActivity().getIntent().getStringExtra(CardSearchFragment.SEARCH_MESSAGE);
+        mResult_count = layoutView.findViewById(R.id.search_result_count);
         mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
-        mImageLoader = new ImageLoader(true);
         mListView = layoutView.findViewById(R.id.list_cards);
+        mImageLoader = new ImageLoader(true);
         mCardListAdapter = new CardListAdapter(getContext(), mImageLoader);
         mCardListAdapter.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
@@ -111,8 +117,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             intentSearch(intentSearchMessage);
             isInitCdbOk = true;
         });
-        //showNewbieGuide();
-        return layoutView;
     }
 
     @Override

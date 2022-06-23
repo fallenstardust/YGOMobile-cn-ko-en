@@ -58,7 +58,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-
 import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -82,11 +81,17 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardManager mCardManager;
     private CardDetailRandom mCardDetailRandom;
     private ImageLoader mImageLoader;
-
-    CardView cv_deckmanager;
-    CardView cv_donation;
+    //ygopro功能
     CardView cv_game;
+    CardView cv_bot_game;
+    CardView cv_watch_replay;
+    //辅助功能
     CardView cv_download_ex;
+    CardView cv_reset_res;
+    //外连
+    CardView cv_donation;
+    CardView cv_join_QQ;
+    CardView cv_help;
 
     @Nullable
     @Override
@@ -130,25 +135,30 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         mServerListManager = new ServerListManager(getContext(), mServerListAdapter);
         mServerListManager.bind(mServerList);
         mServerListManager.syncLoadData();
-        cv_donation = view.findViewById(R.id.nav_webpage);
         cv_game = view.findViewById(R.id.action_game);
+        cv_game.setOnClickListener(this);
+        cv_bot_game = view.findViewById(R.id.action_bot);
+        cv_bot_game.setOnClickListener(this);
+        cv_watch_replay = view.findViewById(R.id.action_replay);
+        cv_watch_replay.setOnClickListener(this);
         cv_download_ex = view.findViewById(R.id.action_download_ex);
-        //萌卡
-        CardView iv_mc = view.findViewById(R.id.action_replay);
-        iv_mc.setOnClickListener((v) -> {
-            if (Constants.SHOW_MYCARD) {
-                startActivity(new Intent(getActivity(), MyCardActivity.class));
-            }
-        });
-        //
-        iv_mc.setOnLongClickListener(new View.OnLongClickListener() {
+        cv_download_ex.setOnClickListener(this);
+        cv_download_ex.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
         });
-
+        cv_reset_res = view.findViewById(R.id.action_reset_game_res);
+        cv_reset_res.setOnClickListener(this);
+        cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
+        cv_join_QQ.setOnClickListener(this);
+        cv_donation = view.findViewById(R.id.nav_webpage);
+        cv_donation.setOnClickListener(this);
+        cv_help = view.findViewById(R.id.action_help);
+        cv_help.setOnClickListener(this);
+        
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
         mImageLoader = new ImageLoader(false);
@@ -504,16 +514,18 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.action_about:
                 break;
-            case R.id.action_replay:
-                break;
-            case R.id.action_bot:
-                break;
             case R.id.action_game:
                 setRandomCardDetail();
                 if (mCardDetailRandom != null) {
                     mCardDetailRandom.show();
                 }
                 openGame();
+                break;
+            case R.id.action_replay:
+                YGOStarter.startGame(getActivity(), null, "-k", "-r");
+                break;
+            case R.id.action_bot:
+                YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_settings: {
                 Intent intent = new Intent(getContext(), SettingsActivity.class);
@@ -522,12 +534,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             }
             case R.id.action_download_ex:
                 WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
-                break;
-            case R.id.action_card_search:
-                //startActivity(new Intent(getContext(), CardSearchActivity.class));
-                break;
-            case R.id.action_deck_manager:
-
                 break;
             case R.id.action_join_qq_group:
                 String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
