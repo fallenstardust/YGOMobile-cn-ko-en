@@ -151,9 +151,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
+        initView(layoutView);
+        preLoadFile();
+        //event
+        if (!EventBus.getDefault().isRegistered(this)) {//加上判断
+            EventBus.getDefault().register(this);
+        }
+        return layoutView;
+    }
+
+    public void initView(View layoutView){
+        screenWidth = getResources().getDisplayMetrics().widthPixels;
         mImageLoader = new ImageLoader(true);
         mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);
-        screenWidth = getResources().getDisplayMetrics().widthPixels;
         mListView = layoutView.findViewById(R.id.list_cards);
         mCardListAdapter = new CardListAdapter(getContext(), mImageLoader);
         mCardListAdapter.setEnableSwipe(true);
@@ -195,12 +205,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             public void onNothingSelected(AdapterView<?> adapterView) {
             }
         });
-        String preLoadFile = getActivity().getIntent().getStringExtra(Intent.EXTRA_TEXT);
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
-
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
-        //
+        tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        mContext = (BaseActivity)getActivity();
+    }
+
+    public void preLoadFile(){
+        String preLoadFile = getActivity().getIntent().getStringExtra(Intent.EXTRA_TEXT);
         final File _file;
         //打开指定卡组
         if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
@@ -217,13 +230,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }
         init(_file);
-        //event
-        if (!EventBus.getDefault().isRegistered(this)) {//加上判断
-            EventBus.getDefault().register(this);
-        }
-        tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
-        mContext = (BaseActivity)getActivity();
-        return layoutView;
     }
 
     /*/https://www.jianshu.com/p/99649af3b191
