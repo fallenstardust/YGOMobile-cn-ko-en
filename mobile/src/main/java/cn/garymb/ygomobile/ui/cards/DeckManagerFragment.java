@@ -222,6 +222,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             EventBus.getDefault().register(this);
         }
         tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        mContext = (BaseActivity)getActivity();
         return layoutView;
     }
 
