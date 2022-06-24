@@ -18,7 +18,7 @@ public class SettingsFragment extends BaseFragemnt  implements View.OnClickListe
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
 
-        layoutView = inflater.inflate(R.layout.activity_settings, container, false);
+        layoutView = inflater.inflate(R.layout.fragment_settings, container, false);
 
         //initView(layoutView, savedInstanceState);
 

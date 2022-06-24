@@ -24,6 +24,6 @@
     <fragment
         android:id="@+id/setting_fragment"
         android:name="cn.garymb.ygomobile.ui.preference.fragments.SettingFragment"
-        tools:layout="@layout/activity_settings" />
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>

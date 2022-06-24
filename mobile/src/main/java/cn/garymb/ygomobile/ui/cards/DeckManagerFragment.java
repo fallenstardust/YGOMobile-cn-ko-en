@@ -107,15 +107,6 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
-    public static void start(Context context, String path) {
-        Intent starter = new Intent(context, DeckManagerFragment.class);
-        starter.putExtra(Intent.EXTRA_TEXT, path);
-        if (!(context instanceof Activity)) {
-            starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
-        context.startActivity(starter);
-    }
-
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -230,6 +221,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }
         init(_file);
+    }
+
+    public static void start(Context context, String path) {
+        Intent starter = new Intent(context, DeckManagerFragment.class);
+        starter.putExtra(Intent.EXTRA_TEXT, path);
+        if (!(context instanceof Activity)) {
+            starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        context.startActivity(starter);
     }
 
     /*/https://www.jianshu.com/p/99649af3b191

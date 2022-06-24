@@ -144,5 +144,5 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation "androidx.palette:palette:1.0.0"
-    implementation 'com.github.xiaohaibin:XBanner:androidx_v1.2.0'
+    implementation 'com.ashokvarma.android:bottom-navigation-bar:2.2.0'
 }

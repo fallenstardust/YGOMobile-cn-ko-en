@@ -10,12 +10,10 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.ashokvarma.bottomnavigation.BottomNavigationBar;
+import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
@@ -34,7 +32,9 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.preference.fragments.SettingFragment;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -44,6 +44,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private static final int ID_MAINACTIVITY = 0;
 
     long exitLasttime = 0;
+
+    private HomeFragment fragment_home;
+    private CardSearchFragment fragment_search;
+    private DeckManagerFragment fragment_deck_cards;
+    private MycardFragment fragment_mycard;
+    private SettingFragment fragment_settings;
+
 
     private DuelAssistantManagement duelAssistantManagement;
     private AppBarConfiguration appBarConfiguration;
@@ -87,16 +94,44 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     private void initBottomNavigationBar() {
         // 获取页面上的底部导航栏控件
-        BottomNavigationView navView = findViewById(R.id.nav_view);
-        // 配置navigation与底部菜单之间的联系
-        // 底部菜单的样式里面的item里面的ID与navigation布局里面指定的ID必须相同，否则会出现绑定失败的情况
-        appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.home_fragment, R.id.cardSearcher_fragment, R.id.deckManager_fragment, R.id.mycard_fragment, R.id.setting_fragment).build();
-        // 建立fragment容器的控制器，这个容器就是页面的上的fragment容器
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        // 启动
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
+        BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
+        bottomNavigationBar
+                .addItem(new BottomNavigationItem(R.drawable.ic_home, R.string.mc_home))
+                .addItem(new BottomNavigationItem(R.drawable.ic_search, R.string.search))
+                .addItem(new BottomNavigationItem(R.drawable.ic_album, R.string.deck_manager))
+                .addItem(new BottomNavigationItem(R.drawable.ic_add, R.string.mycard))
+                .addItem(new BottomNavigationItem(R.drawable.ic_settings, R.string.settings))
+                .setActiveColor(R.color.holo_blue_bright)
+                .setBarBackgroundColor(R.color.transparent)
+                .setMode(BottomNavigationBar.MODE_FIXED)
+                .initialise();//所有的设置需在调用该方法前完成
+        bottomNavigationBar.setTabSelectedListener(new BottomNavigationBar.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(int position) {
+                //未选中->选中
+            }
+
+            @Override
+            public void onTabUnselected(int position) {
+                //选中->未选中
+            }
+
+            @Override
+            public void onTabReselected(int position) {
+                //选中->选中
+            }
+        });
+        fragment_home = new HomeFragment();
+        fragment_search = new CardSearchFragment();
+        fragment_deck_cards = new DeckManagerFragment();
+        fragment_mycard = new MycardFragment();
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_home, fragment_home)
+                .add(R.id.fragment_search, fragment_search)
+                .add(R.id.fragment_deck_cards, fragment_deck_cards)
+                .add(R.id.fragment_mycard, fragment_mycard)
+                //.add(R.id.fragment_settings,new Fragment())
+                .commit();
         getSupportActionBar().hide();
     }
 

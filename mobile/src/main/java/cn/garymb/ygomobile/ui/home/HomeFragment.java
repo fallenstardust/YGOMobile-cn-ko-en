@@ -142,13 +142,14 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         cv_watch_replay.setOnClickListener(this);
         cv_download_ex = view.findViewById(R.id.action_download_ex);
         cv_download_ex.setOnClickListener(this);
+        /*
         cv_download_ex.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
-        });
+        });*/
         cv_reset_res = view.findViewById(R.id.action_reset_game_res);
         cv_reset_res.setOnClickListener(this);
         cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
