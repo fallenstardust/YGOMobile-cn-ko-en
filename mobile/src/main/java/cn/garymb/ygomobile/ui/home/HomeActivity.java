@@ -7,9 +7,12 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.ui.AppBarConfiguration;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
@@ -44,6 +47,11 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private static final int ID_MAINACTIVITY = 0;
 
     long exitLasttime = 0;
+
+    private BottomNavigationBar bottomNavigationBar;
+    private FrameLayout frameLayout;
+    private FragmentTransaction transaction;
+    private Fragment mFragment;
 
     private HomeFragment fragment_home;
     private CardSearchFragment fragment_search;
@@ -93,8 +101,9 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     }
 
     private void initBottomNavigationBar() {
+        frameLayout = (FrameLayout) findViewById(R.id.fragment_content);
         // 获取页面上的底部导航栏控件
-        BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
+        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.ic_home, R.string.mc_home))
                 .addItem(new BottomNavigationItem(R.drawable.ic_search, R.string.search))
@@ -104,11 +113,27 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 .setActiveColor(R.color.holo_blue_bright)
                 .setBarBackgroundColor(R.color.transparent)
                 .setMode(BottomNavigationBar.MODE_FIXED)
+                .setFirstSelectedPosition(0)
                 .initialise();//所有的设置需在调用该方法前完成
         bottomNavigationBar.setTabSelectedListener(new BottomNavigationBar.OnTabSelectedListener() {
             @Override
             public void onTabSelected(int position) {
-                //未选中->选中
+                switch (position) {
+                    case 0:
+                        switchFragment(fragment_home);
+                        break;
+                    case 1:
+                        switchFragment(fragment_search);
+                        break;
+                    case 2:
+                        switchFragment(fragment_deck_cards);
+                        break;
+                    case 3:
+                        switchFragment(fragment_mycard);
+                        break;
+                    case 4:
+                        break;
+                }
             }
 
             @Override
@@ -125,14 +150,27 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         fragment_search = new CardSearchFragment();
         fragment_deck_cards = new DeckManagerFragment();
         fragment_mycard = new MycardFragment();
+        mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_home, fragment_home)
-                .add(R.id.fragment_search, fragment_search)
-                .add(R.id.fragment_deck_cards, fragment_deck_cards)
-                .add(R.id.fragment_mycard, fragment_mycard)
-                //.add(R.id.fragment_settings,new Fragment())
+                .add(R.id.fragment_content, fragment_home)
                 .commit();
         getSupportActionBar().hide();
+    }
+
+    private void switchFragment(Fragment fragment) {
+        //判断当前显示的Fragment是不是切换的Fragment
+        if (mFragment != fragment) {
+            //判断切换的Fragment是否已经添加过
+            if (!fragment.isAdded()) {
+                //如果没有，则先把当前的Fragment隐藏，把切换的Fragment添加上
+                getSupportFragmentManager().beginTransaction().hide(mFragment)
+                        .add(R.id.fragment_content, fragment).commit();
+            } else {
+                //如果已经添加过，则先把当前的Fragment隐藏，把切换的Fragment显示出来
+                getSupportFragmentManager().beginTransaction().hide(mFragment).show(fragment).commit();
+            }
+            mFragment = fragment;
+        }
     }
 
     @Override
@@ -215,12 +253,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     protected void onDestroy() {
         super.onDestroy();
         duelAssistantManagement.removeDuelAssistantListener(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
     }
 
     @Override

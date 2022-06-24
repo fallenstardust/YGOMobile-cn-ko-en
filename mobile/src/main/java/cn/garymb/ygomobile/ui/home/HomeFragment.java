@@ -512,8 +512,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.action_about:
-                break;
             case R.id.action_game:
                 setRandomCardDetail();
                 if (mCardDetailRandom != null) {
@@ -527,11 +525,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             case R.id.action_bot:
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
-            case R.id.action_settings: {
-                Intent intent = new Intent(getContext(), SettingsActivity.class);
-                startActivity(intent);
-                break;
-            }
             case R.id.action_download_ex:
                 WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
                 break;
