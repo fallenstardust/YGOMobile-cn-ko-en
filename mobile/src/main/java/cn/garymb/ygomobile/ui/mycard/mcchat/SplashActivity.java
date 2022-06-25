@@ -20,7 +20,7 @@ import org.jivesoftware.smack.XMPPException;
 import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.MyCardActivity;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -43,7 +43,7 @@ public class SplashActivity extends Activity {
                     su.setIsConnected(false);
                     sp_jz.setVisibility(View.GONE);
                     sp_tv.setText(getString(R.string.logining_failed));
-                    YGOUtil.show( getString(R.string.failed_reason) + msg.obj);
+                    YGOUtil.show(getString(R.string.failed_reason) + msg.obj);
                     break;
                 case 1:
                     startActivity(new Intent(SplashActivity.this, McchatActivity.class));
@@ -65,7 +65,7 @@ public class SplashActivity extends Activity {
                 case 5:
 					/*sp_jz.setVisibility(View.GONE);
 					sp_tv.setText("用户名或密码为空");*/
-                    startActivity(new Intent(SplashActivity.this, MyCardActivity.class));
+                    startActivity(new Intent(SplashActivity.this, MycardFragment.class));
                     finish();
 
                     break;
@@ -145,28 +145,28 @@ public class SplashActivity extends Activity {
         String password = UserManagement.getUserPassword();
         if (name != null && password != null) {
             Message me = new Message();
-                me.what = 0;
+            me.what = 0;
 
             try {
                 su.login(name, password);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                me.obj = "InterruptedException："+e;
+                me.obj = "InterruptedException：" + e;
                 han.sendMessage(me);
             } catch (IOException e) {
-                me.obj = "IOException："+e;
+                me.obj = "IOException：" + e;
                 e.printStackTrace();
                 han.sendMessage(me);
             } catch (SmackException e) {
-                me.obj = "SmackException："+e;
+                me.obj = "SmackException：" + e;
                 e.printStackTrace();
                 han.sendMessage(me);
             } catch (XMPPException e) {
-                me.obj = "XMPPException："+e;
+                me.obj = "XMPPException：" + e;
                 e.printStackTrace();
                 han.sendMessage(me);
-            } catch (Exception e){
-                me.obj = "其他错误："+e;
+            } catch (Exception e) {
+                me.obj = "其他错误：" + e;
                 e.printStackTrace();
                 han.sendMessage(me);
             }

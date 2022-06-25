@@ -11,7 +11,7 @@
         android:background="#80000000"
         android:orientation="vertical">
 
-        <FrameLayout
+        <fragment android:name="cn.garymb.ygomobile.ui.preference.fragments.SettingFragment"
             android:id="@+id/fragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

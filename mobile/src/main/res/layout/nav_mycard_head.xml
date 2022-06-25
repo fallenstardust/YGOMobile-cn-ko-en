@@ -6,7 +6,7 @@
     android:background="@color/mediumPurple"
     android:orientation="vertical"
     android:paddingTop="20dp"
-    tools:showIn="@layout/activity_online_mycard">
+    tools:showIn="@layout/fragment_mycard">
 
     <LinearLayout
         android:layout_width="match_parent"

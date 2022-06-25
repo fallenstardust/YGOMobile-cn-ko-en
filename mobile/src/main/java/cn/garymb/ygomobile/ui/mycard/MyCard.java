@@ -51,6 +51,7 @@ public class MyCard {
 
     public MyCard(Activity context) {
         mContext = context;
+        //context.getActionBar().hide();
         lastModified = context.getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         mDefWebViewClient = new DefWebViewClient() {
             @Override
@@ -108,21 +109,6 @@ public class MyCard {
         return mHomeUrl;
     }
 
-//    public String getLoginUrl() throws NoSuchAlgorithmException, InvalidKeyException {
-//        Uri.Builder payloadBuilder = new Uri.Builder();
-//        payloadBuilder.appendQueryParameter("return_sso_url", return_sso_url);
-//        byte[] payload = Base64.encode(payloadBuilder.build().getQuery().getBytes(UTF_8), Base64.NO_WRAP);
-//
-//        Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-//        SecretKeySpec secret_key = new SecretKeySpec(key.getBytes(UTF_8), "HmacSHA256");
-//        sha256_HMAC.init(secret_key);
-//        String signature = byteArrayToHexString(sha256_HMAC.doFinal(payload));
-//        Uri.Builder requestBuilder = Uri.parse(sso_url).buildUpon();
-//        requestBuilder.appendQueryParameter("sso", new String(payload, UTF_8));
-//        requestBuilder.appendQueryParameter("sig", signature);
-//        return requestBuilder.build().toString();
-//    }
-
     public String getBBSUrl() {
         return mCommunityUrl;
     }
@@ -151,10 +137,6 @@ public class MyCard {
 
     public interface MyCardListener {
         void onLogin(String name, String icon, String statu);
-
-        void watchReplay();
-
-        void puzzleMode();
 
         void openDrawer();
 
@@ -205,7 +187,7 @@ public class MyCard {
             this.activity = activity;
             mListener = listener;
         }
-
+/*
         @JavascriptInterface
         public void edit_deck() {
             activity.startActivity(new Intent(activity, DeckManagerFragment.class));
@@ -224,7 +206,7 @@ public class MyCard {
                 activity.runOnUiThread(mListener::puzzleMode);
             }
         }
-
+*/
         @JavascriptInterface
         public void openDrawer() {
             if (mListener != null) {
