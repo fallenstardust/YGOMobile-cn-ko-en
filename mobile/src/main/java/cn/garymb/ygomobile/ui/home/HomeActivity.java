@@ -50,8 +50,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     private BottomNavigationBar bottomNavigationBar;
     private FrameLayout frameLayout;
-    private FragmentTransaction transaction;
     private Fragment mFragment;
+    private SettingFragment mSettingFragment;
 
     private HomeFragment fragment_home;
     private CardSearchFragment fragment_search;
@@ -61,7 +61,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
 
     private DuelAssistantManagement duelAssistantManagement;
-    private AppBarConfiguration appBarConfiguration;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -132,6 +131,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                         switchFragment(fragment_mycard);
                         break;
                     case 4:
+                        switchSettingFragment();
                         break;
                 }
             }
@@ -150,14 +150,23 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         fragment_search = new CardSearchFragment();
         fragment_deck_cards = new DeckManagerFragment();
         fragment_mycard = new MycardFragment();
+        fragment_settings = new SettingFragment();
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragment_content, fragment_home)
+                .commit();
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_content, fragment_settings)
+                .hide(fragment_settings)
                 .commit();
         getSupportActionBar().hide();
     }
 
     private void switchFragment(Fragment fragment) {
+        if (fragment_settings.isVisible())
+            getFragmentManager().beginTransaction().hide(fragment_settings).commit();
+        if (mFragment.isHidden())
+            getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
         if (mFragment != fragment) {
             //判断切换的Fragment是否已经添加过
@@ -172,6 +181,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             mFragment = fragment;
         }
     }
+
+    private void switchSettingFragment() {
+        getSupportFragmentManager().beginTransaction().hide(mFragment).commit();
+        getFragmentManager().beginTransaction().show(fragment_settings).commit();
+
+    }
+
 
     @Override
     protected void onResume() {

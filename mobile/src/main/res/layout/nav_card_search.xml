@@ -7,7 +7,7 @@
     android:background="@drawable/red"
     android:orientation="vertical"
     android:padding="10dp"
-    android:layout_marginBottom="70dp"
+    android:layout_marginBottom="60dp"
     android:theme="@style/AppTheme.PopupOverlay.Dark"
     tools:showIn="@layout/fragment_search">
 

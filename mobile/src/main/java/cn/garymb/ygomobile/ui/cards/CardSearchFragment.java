@@ -257,6 +257,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         } else {
+            onBack();
             //super.onBackPressed();
         }
     }

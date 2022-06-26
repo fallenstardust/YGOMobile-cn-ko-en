@@ -299,7 +299,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
      */
     @Override
     public void onClick(View v) {
-
+        switch (v.getId()) {
+            case R.id.tv_back_mc:
+                onHome();
+                break;
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@
     android:background="@color/mediumPurple"
     android:orientation="vertical"
     android:paddingTop="20dp"
+    android:layout_marginBottom="60dp"
     tools:showIn="@layout/fragment_mycard">
 
     <LinearLayout

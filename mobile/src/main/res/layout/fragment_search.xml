@@ -24,7 +24,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:divider="@android:color/transparent"
-                android:layout_marginBottom="70dp"
+                android:layout_marginBottom="60dp"
                 android:dividerHeight="4dp"
                 android:padding="5dp"
                 android:scrollbars="vertical" />

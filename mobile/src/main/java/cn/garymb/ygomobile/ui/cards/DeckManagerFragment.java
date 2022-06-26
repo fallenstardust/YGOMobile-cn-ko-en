@@ -151,7 +151,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return layoutView;
     }
 
-    public void initView(View layoutView){
+    public void initView(View layoutView) {
         screenWidth = getResources().getDisplayMetrics().widthPixels;
         mImageLoader = new ImageLoader(true);
         mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);
@@ -200,10 +200,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
         tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
-        mContext = (BaseActivity)getActivity();
+        mContext = (BaseActivity) getActivity();
     }
 
-    public void preLoadFile(){
+    public void preLoadFile() {
         String preLoadFile = getActivity().getIntent().getStringExtra(Intent.EXTRA_TEXT);
         final File _file;
         //打开指定卡组
@@ -374,7 +374,37 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void onUserInvisible() {
-
+        if (mDeckAdapater.isChanged()) {
+            File ydk = mDeckAdapater.getYdkFile();
+            if (ydk != null && ydk.exists()) {
+                DialogPlus builder = new DialogPlus(getContext());
+                builder.setTitle(R.string.question);
+                builder.setMessage(R.string.quit_deck_tip);
+                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+                builder.setRightButtonText(getString(R.string.save_quit));
+                builder.setLeftButtonText(getString(R.string.quit));
+                builder.setRightButtonListener((dlg, s) -> {
+                    doMenu(R.id.action_save);
+                    dlg.dismiss();
+                    isExit = true;
+                });
+                builder.setLeftButtonListener((dlg, s) -> {
+                    dlg.dismiss();
+                    isExit = true;
+                });
+                builder.show();
+            }
+        } else {
+            //super.onBackHome();
+        }
+        if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
+            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
+            return;
+        }
+        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
+            mDrawerLayout.closeDrawer(Gravity.LEFT);
+            return;
+        }
     }
 
     @Override
@@ -662,7 +692,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
                 });
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if(mCardSelector.isShowFavorite()){
+                    if (mCardSelector.isShowFavorite()) {
                         mCardSelector.showFavorites(false);
                     }
                 });
@@ -740,12 +770,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     doMenu(R.id.action_save);
                     dlg.dismiss();
                     isExit = true;
-                    //finish();
                 });
                 builder.setLeftButtonListener((dlg, s) -> {
                     dlg.dismiss();
                     isExit = true;
-                    //finish();
                 });
                 builder.show();
             }
@@ -760,7 +788,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mDrawerLayout.closeDrawer(Gravity.LEFT);
             return;
         }
-        //finish();
     }
 
     @Override
@@ -1002,7 +1029,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 //            loadDeckFromFile(file);
 //        }
         Deck deck = mDeckAdapater.toDeck(mDeckAdapater.getYdkFile());
-        if (deck.getDeckCount()==0){
+        if (deck.getDeckCount() == 0) {
             builderShareLoading.dismiss();
             YGOUtil.show("卡组中没有卡片");
             return;
@@ -1363,7 +1390,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public void onDeckMove(List<DeckFile> deckFileList, DeckType toDeckType) {
         File ydk = mDeckAdapater.getYdkFile();
-        if(ydk == null){
+        if (ydk == null) {
             return;
         }
         String currentDeckPath = ydk.getPath();
@@ -1378,7 +1405,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public void onDeckCopy(List<DeckFile> deckFileList, DeckType toDeckType) {
         File ydk = mDeckAdapater.getYdkFile();
-        if(ydk == null){
+        if (ydk == null) {
             return;
         }
         String currentDeckPath = ydk.getPath();
