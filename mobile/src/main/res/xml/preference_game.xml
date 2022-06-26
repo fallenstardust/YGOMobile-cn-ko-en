@@ -134,5 +134,10 @@
             android:key="pref_key_test_replace_kernel"
             android:persistent="true"
             android:title="@string/settings_test_replace_kernel" />
+
+        <Preference
+            android:key=""
+            android:persistent="true"
+            android:title="" />
     </PreferenceCategory>
 </PreferenceScreen>
