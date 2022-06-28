@@ -106,8 +106,8 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.ic_home, R.string.mc_home))
                 .addItem(new BottomNavigationItem(R.drawable.ic_search, R.string.search))
-                .addItem(new BottomNavigationItem(R.drawable.ic_album, R.string.deck_manager))
-                .addItem(new BottomNavigationItem(R.drawable.ic_add, R.string.mycard))
+                .addItem(new BottomNavigationItem(R.drawable.ic_add, R.string.deck_manager))
+                .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard))
                 .addItem(new BottomNavigationItem(R.drawable.ic_settings, R.string.settings))
                 .setActiveColor(R.color.holo_blue_bright)
                 .setBarBackgroundColor(R.color.transparent)

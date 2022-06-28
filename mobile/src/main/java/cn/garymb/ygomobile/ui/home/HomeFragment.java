@@ -6,10 +6,13 @@ import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -20,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +34,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.stx.xhb.androidx.XBanner;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -39,6 +44,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -53,14 +59,15 @@ import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.activities.FileLogActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
+import cn.garymb.ygomobile.ui.mycard.McNews;
+import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -72,6 +79,13 @@ import ocgcore.data.Card;
 
 public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private static final int ID_HOMEFRAGMENT = 0;
+
+    private static final int TYPE_BANNER_QUERY_OK = 0;
+    private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
+    private static final int TYPE_RES_LOADING_OK = 2;
+    private static final String ARG_MC_NEWS_LIST = "mcNewsList";
+    private boolean isMcNewsLoadException = false;
+
     ShimmerTextView tv;
     Shimmer shimmer;
     protected SwipeMenuRecyclerView mServerList;
@@ -80,17 +94,22 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardManager mCardManager;
     private CardDetailRandom mCardDetailRandom;
     private ImageLoader mImageLoader;
+    //轮播图
+    private CardView cv_banner;
+    private TextView tv_banner_loading;
+    private XBanner xb_banner;
+    private ArrayList<McNews> mcNewsList;
     //ygopro功能
-    CardView cv_game;
-    CardView cv_bot_game;
-    CardView cv_watch_replay;
+    private CardView cv_game;
+    private CardView cv_bot_game;
+    private CardView cv_watch_replay;
     //辅助功能
-    CardView cv_download_ex;
-    CardView cv_reset_res;
+    private CardView cv_download_ex;
+    private CardView cv_reset_res;
     //外连
-    CardView cv_donation;
-    CardView cv_join_QQ;
-    CardView cv_help;
+    private CardView cv_donation;
+    private CardView cv_join_QQ;
+    private CardView cv_help;
 
     @Nullable
     @Override
@@ -101,8 +120,8 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             layoutView = inflater.inflate(R.layout.main_horizontal_fragment, container, false);
         else
             layoutView = inflater.inflate(R.layout.fragment_home, container, false);
-
-        initView(layoutView, savedInstanceState);
+        initBanner(layoutView, savedInstanceState);
+        initView(layoutView);
         //event
         if(!EventBus.getDefault().isRegistered(this)){//加上判断
             EventBus.getDefault().register(this);
@@ -110,7 +129,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         return layoutView;
     }
 
-    private void initView(View view, Bundle saveBundle) {
+    private void initView(View view) {
         //服务器列表
         mServerList = view.findViewById(R.id.list_server);
         mServerListAdapter = new ServerListAdapter(getContext());
@@ -163,6 +182,88 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         toggleAnimation(tv);
         mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
+    }
+
+    //轮播图
+    public void initBanner(View view, Bundle saveBundle){
+        xb_banner = view.findViewById(R.id.xb_banner);
+        cv_banner = view.findViewById(R.id.cv_banner);
+        tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
+        tv_banner_loading.setOnClickListener(this);
+        cv_banner.post(() -> {
+            ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
+            layoutParams.width = cv_banner.getWidth();
+            layoutParams.height = layoutParams.width / 3;
+            cv_banner.setLayoutParams(layoutParams);
+        });
+        xb_banner.setOnItemClickListener((banner, model, v, position) ->
+                WebActivity.open(getContext(), "新闻", mcNewsList.get(position).getNews_url())
+        );
+        xb_banner.loadImage((banner, model, v, position) -> {
+            TextView tv_time, tv_title, tv_type;
+            ImageView iv_image;
+
+            tv_time = v.findViewById(R.id.tv_time);
+            tv_title = v.findViewById(R.id.tv_title);
+            tv_type = v.findViewById(R.id.tv_type);
+            iv_image = v.findViewById(R.id.iv_image);
+
+            McNews mcNews = mcNewsList.get(position);
+            ImageUtil.setImageAndBackground(getContext(), mcNews.getImage_url(), iv_image);
+            tv_time.setText(mcNews.getCreate_time());
+            tv_title.setText(mcNews.getTitle());
+            tv_type.setVisibility(View.GONE);
+        });
+        if (saveBundle == null) {
+            findMcNews();
+        } else {
+            HomeFragment.this.mcNewsList = (ArrayList<McNews>) saveBundle.getSerializable(ARG_MC_NEWS_LIST);
+            if (mcNewsList != null)
+                handler.sendEmptyMessage(TYPE_BANNER_QUERY_OK);
+            else
+                findMcNews();
+            handler.sendEmptyMessage(TYPE_RES_LOADING_OK);
+        }
+    }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_BANNER_QUERY_OK:
+                    tv_banner_loading.setVisibility(View.GONE);
+                    xb_banner.setBannerData(R.layout.item_banner_main, mcNewsList);
+                    break;
+                case TYPE_BANNER_QUERY_EXCEPTION:
+                    tv_banner_loading.setText("加载失败，点击重试");
+                    isMcNewsLoadException = true;
+                    break;
+            }
+
+        }
+    };
+
+    private void findMcNews() {
+        isMcNewsLoadException = false;
+        tv_banner_loading.setVisibility(View.VISIBLE);
+        tv_banner_loading.setText("加载中");
+        MyCard.findMyCardNews((myCardNewsList, exception) -> {
+            Message message = new Message();
+            if (TextUtils.isEmpty(exception)) {
+                while (myCardNewsList.size() > 5) {
+                    myCardNewsList.remove(myCardNewsList.size() - 1);
+                }
+                HomeFragment.this.mcNewsList = (ArrayList<McNews>) myCardNewsList;
+                message.what = TYPE_BANNER_QUERY_OK;
+            } else {
+                Log.e("HomeFragemnt", "查询失败" + exception);
+                message.obj = exception;
+                message.what = TYPE_BANNER_QUERY_EXCEPTION;
+            }
+            handler.sendMessage(message);
+        });
     }
 
     public void joinRoom(int position) {
@@ -561,6 +662,10 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 startActivity(intent);
             }
             break;
+            case R.id.tv_banner_loading:
+                if (isMcNewsLoadException)
+                    findMcNews();
+                break;
         }
     }
 }

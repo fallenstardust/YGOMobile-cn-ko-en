@@ -1,11 +1,13 @@
 package cn.garymb.ygomobile.ui.mycard;
 
+import static junit.framework.Assert.assertEquals;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -14,6 +16,7 @@ import android.webkit.JavascriptInterface;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -25,14 +28,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
-
-import static junit.framework.Assert.assertEquals;
+import cn.garymb.ygomobile.utils.JsonUtil;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class MyCard {
 
@@ -42,6 +48,51 @@ public class MyCard {
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
     private static final String HOST_MC = "mycard.moe";
     private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
+    public static final String DOWNLOAD_URL_EZ = "http://t.cn/EchWyLi";
+
+    public static final String MYCARD_NEWS_URL = "https://api.mycard.moe/apps.json";
+    public static final String MYCARD_POST_URL = "https://ygobbs.com/t/";
+    public static final String YGO_LFLIST_URL = "https://raw.githubusercontent.com/moecube/ygopro/server/lflist.conf";
+
+    public static final String ARG_TOPIC_LIST = "topic_list";
+    public static final String ARG_TOPICS = "topics";
+    public static final String ARG_ID = "id";
+    public static final String ARG_TITLE = "title";
+    public static final String ARG_IMAGE_URL = "image_url";
+    public static final String ARG_CREATE_TIME = "created_at";
+    public static final String ARG_OTHER = "other";
+
+
+    public static final String ARG_MC_NAME = "name";
+    public static final String ARG_MC_PASSWORD = "password";
+    public static final String ARG_YGOPRO = "ygopro";
+    public static final String ARG_ZH_CN = "zh-CN";
+    public static final String ARG_IMAGE = "image";
+    public static final String ARG_UPDATE_AT = "updated_at";
+    public static final String ARG_URL = "url";
+    public static final String ARG_NEWS = "news";
+    public static final String ARG_USERNAME = "username";
+    public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+
+    public static final String ACTION_OPEN_MYCARD = "ygomobile.intent.action.MYCARD";
+    public static final String URL_MC_LOGIN = "https://accounts.moecube.com/";
+    public static final String ARG_SSO = "sso";
+    public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.mycard.moe:7923/?filter=started";
+    public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.mycard.moe:8923/?filter=started";
+    public static final String URL_MC_MATCH = "https://api.mycard.moe/ygopro/match";
+    public static final String ARG_EVENT = "event";
+    public static final String ARG_DATA = "data";
+    public static final String HOST_MC_MATCH = "tiramisu.mycard.moe";
+    public static final String HOST_MC_OTHER = "tiramisu.mycard.moe";
+    public static final int PORT_MC_MATCH = 8911;
+    public static final int PORT_MC_OTHER = 7911;
+    public static final String ARG_LOCALE = "locale";
+    public static final String ARG_ARENA = "arena";
+    public static final String ARG_ATHLEIC = "athletic";
+    public static final String ARG_ENTERTAIN = "entertain";
+    public static final String ARG_ADDRESS = "address";
+    public static final String ARG_PORT = "port";
+    public static final String PACKAGE_NAME_EZ = "com.ourygo.ez";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
     private final User mUser = new User();
@@ -80,6 +131,30 @@ public class MyCard {
                 return super.shouldOverrideUrlLoading(view, url);
             }
         };
+    }
+
+    //获取mc新闻列表
+    public static void findMyCardNews(OnMyCardNewsQueryListener onMyCardNewsQueryListener) {
+        OkhttpUtil.get(MYCARD_NEWS_URL, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                onMyCardNewsQueryListener.onMyCardNewsQuery(null, e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                try {
+                    onMyCardNewsQueryListener.onMyCardNewsQuery(JsonUtil.getMyCardNewsList(json), null);
+                } catch (JSONException e) {
+                    onMyCardNewsQueryListener.onMyCardNewsQuery(null, e.toString());
+                }
+            }
+        });
+    }
+
+    public interface OnMyCardNewsQueryListener {
+        void onMyCardNewsQuery(List<McNews> mcNewsList, String exception);
     }
 
     private static String byteArrayToHexString(byte[] array) {
@@ -393,5 +468,22 @@ public class MyCard {
             }
         }
 
+    }
+
+    public static String getMycardPostUrl(String id) {
+        return MYCARD_POST_URL + id;
+    }
+
+    public static String getImagePath(Context context) {
+//        return context.getExternalFilesDir("image").getAbsolutePath();
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(), "YGOMobile OY").getAbsolutePath();
+    }
+
+    public static String getImageCachePath() {
+        return App.get().getExternalFilesDir("cache/image").getAbsolutePath();
+    }
+
+    public static String getCachePath() {
+        return App.get().getExternalFilesDir("cache").getAbsolutePath();
     }
 }
