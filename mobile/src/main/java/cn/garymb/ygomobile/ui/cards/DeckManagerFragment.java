@@ -76,7 +76,6 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.activities.PermissionsActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;

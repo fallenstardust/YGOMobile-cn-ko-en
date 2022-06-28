@@ -23,8 +23,8 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
-import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import cn.garymb.ygomobile.utils.ProcessUtils;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class App extends GameApplication {
 

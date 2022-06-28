@@ -7,24 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.Display;
 import android.view.MenuItem;
-import android.view.Surface;
-import android.view.SurfaceControl;
-import android.view.SurfaceHolder;
 import android.view.View;
-import android.view.WindowManager;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -33,11 +24,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import java.io.IOException;
-import java.util.List;
-
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 import ocgcore.data.Card;
 
 

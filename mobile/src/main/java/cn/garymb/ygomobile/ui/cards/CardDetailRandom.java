@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static android.view.View.inflate;
+
 import android.content.Context;
 import android.view.Gravity;
 import android.view.View;
@@ -14,9 +16,6 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
-
-import static android.view.View.inflate;
-import static android.view.View.resolveSize;
 
 public class CardDetailRandom {
     private View viewCardDetail;

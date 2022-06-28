@@ -2,8 +2,6 @@ package cn.garymb.ygomobile.utils;
 
 import android.text.TextUtils;
 
-import com.google.gson.Gson;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

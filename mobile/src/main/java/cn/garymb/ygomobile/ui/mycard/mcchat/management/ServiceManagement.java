@@ -25,7 +25,6 @@ import java.util.List;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.TaxiConnectionListener;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 
 public class ServiceManagement {
     public static final String GROUP_ADDRESS = "ygopro_china_north@conference.mycard.moe";

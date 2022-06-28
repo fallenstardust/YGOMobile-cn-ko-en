@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import static androidx.recyclerview.widget.ItemTouchHelperPlus.ACTION_STATE_DRAG;
+import static androidx.recyclerview.widget.ItemTouchHelperPlus.ACTION_STATE_IDLE;
+
 import android.util.Log;
 
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -11,9 +14,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-
-import static androidx.recyclerview.widget.ItemTouchHelperPlus.ACTION_STATE_DRAG;
-import static androidx.recyclerview.widget.ItemTouchHelperPlus.ACTION_STATE_IDLE;
 
 public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
     private DeckDrager mDeckDrager;

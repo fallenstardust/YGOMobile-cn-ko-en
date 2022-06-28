@@ -4,10 +4,6 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.util.DisplayMetrics;
 
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.LinearSmoothScroller;
-import androidx.recyclerview.widget.RecyclerView;
-
 public class FastScrollLinearLayoutManager extends LinearLayoutManager {
     public FastScrollLinearLayoutManager(Context context) {
         super(context);

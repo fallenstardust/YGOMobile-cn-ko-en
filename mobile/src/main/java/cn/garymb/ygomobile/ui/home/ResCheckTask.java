@@ -1,5 +1,13 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.BOT_CONF;
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +22,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
@@ -29,14 +36,6 @@ import cn.garymb.ygomobile.utils.SystemUtils;
 import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
-
-import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
-import static cn.garymb.ygomobile.Constants.BOT_CONF;
-import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
-import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_NONE = 0;

@@ -30,6 +30,10 @@
             android:background="@color/transparent"
             android:padding="2dp"
             android:textColor="@color/black"
+            android:shadowColor="@color/black"
+            android:shadowRadius="1"
+            android:shadowDx="2"
+            android:shadowDy="0"
             android:textSize="15sp" />
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -39,6 +43,10 @@
             android:layout_above="@id/ll_title"
             android:layout_marginBottom="5dp"
             android:textColor="@color/white"
+            android:shadowColor="@color/FallNavy"
+            android:shadowDx="2"
+            android:shadowDy="0"
+            android:shadowRadius="1"
             android:textSize="8sp" />
 
         <LinearLayout
@@ -58,6 +66,10 @@
                 android:gravity="bottom"
                 android:maxLines="2"
                 android:textColor="@color/white"
+                android:shadowColor="@color/FallNavy"
+                android:shadowRadius="1"
+                android:shadowDx="2"
+                android:shadowDy="0"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 

@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.widget.Toast;
@@ -24,8 +26,6 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
-
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 public class ServerListManager {
     private ServerListAdapter mAdapter;

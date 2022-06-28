@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.plus;
 
 
+import static android.view.WindowManager.LayoutParams.FIRST_SYSTEM_WINDOW;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,15 +16,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
-
-import static android.view.WindowManager.LayoutParams.FIRST_SYSTEM_WINDOW;
 
 public class DialogPlus extends Dialog {
     public static final int TYPE_KEYGUARD = FIRST_SYSTEM_WINDOW + 4;

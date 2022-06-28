@@ -1,59 +1,5 @@
 package cn.garymb.ygomobile.ui.preference.fragments;
 
-import android.annotation.SuppressLint;
-import android.app.Dialog;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.MediaStoreSignature;
-import com.ourygo.assistant.service.DuelAssistantService;
-import com.tencent.bugly.beta.Beta;
-
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import cn.garymb.ygomobile.App;
-import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.ui.home.MainActivity;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
-import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.glide.GlideCompat;
-import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.SystemUtils;
-import ocgcore.DataManager;
-
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
@@ -83,6 +29,55 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
+
+import android.annotation.SuppressLint;
+import android.app.Dialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.CheckBoxPreference;
+import android.preference.ListPreference;
+import android.preference.Preference;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.MediaStoreSignature;
+import com.tencent.bugly.beta.Beta;
+
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.home.MainActivity;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.SystemUtils;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.DataManager;
 
 public class SettingFragment extends PreferenceFragmentPlus {
 

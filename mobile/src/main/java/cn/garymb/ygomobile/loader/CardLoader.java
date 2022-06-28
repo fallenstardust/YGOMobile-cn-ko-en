@@ -21,7 +21,6 @@ import cn.garymb.ygomobile.utils.CardSort;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
-import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;

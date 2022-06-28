@@ -1,14 +1,10 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,10 +20,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.app.hubert.guide.NewbieGuide;
-import com.app.hubert.guide.model.GuidePage;
-import com.app.hubert.guide.model.HighLight;
-import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import java.util.List;

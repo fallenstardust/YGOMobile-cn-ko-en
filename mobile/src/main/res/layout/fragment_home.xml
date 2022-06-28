@@ -8,17 +8,17 @@
 
     <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/cv_banner"
+        android:layout_margin="10dp"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
         android:clickable="true"
         android:foreground="?android:attr/selectableItemBackground"
         android:orientation="vertical"
-        app:cardBackgroundColor="#80000018"
+        app:cardBackgroundColor="@color/transparent"
+        app:cardCornerRadius="10dp"
+        app:elevation="0dp"
         app:cardElevation="0dp"
-        app:cardUseCompatPadding="false"
-        app:elevation="0dp">
+        app:cardUseCompatPadding="false">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -53,9 +53,10 @@
         android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:weightSum="1"
             android:orientation="vertical">
 
             <FrameLayout
@@ -84,12 +85,12 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/bottombar"
+            android:id="@+id/rightbar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:orientation="horizontal"
-            android:weightSum="1">
+            android:layout_gravity="right"
+            android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="wrap_content"

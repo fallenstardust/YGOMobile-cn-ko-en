@@ -1,7 +1,5 @@
 package ocgcore;
 
-import java.io.File;
-
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.loader.CardLoader;
 

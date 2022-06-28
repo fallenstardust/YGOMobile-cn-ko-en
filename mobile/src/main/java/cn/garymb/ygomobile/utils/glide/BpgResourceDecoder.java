@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.utils.glide;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

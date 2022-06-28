@@ -1,29 +1,5 @@
 package cn.garymb.ygomobile;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Point;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.WindowManager;
-
-import androidx.annotation.Nullable;
-
-import org.json.JSONArray;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
-import cn.garymb.ygomobile.core.IrrlichtBridge;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
-import cn.garymb.ygomobile.utils.DeckUtil;
-import cn.garymb.ygomobile.utils.DensityUtils;
-import cn.garymb.ygomobile.utils.IOUtils;
-
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
@@ -48,6 +24,30 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.Point;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.WindowManager;
+
+import androidx.annotation.Nullable;
+
+import org.json.JSONArray;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.DensityUtils;
+import cn.garymb.ygomobile.utils.IOUtils;
 
 public class AppsSettings {
     private static final String TAG = "AppsSettings";

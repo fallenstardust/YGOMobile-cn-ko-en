@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Handler;
@@ -41,8 +43,6 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
-
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 /***
  * 卡片详情

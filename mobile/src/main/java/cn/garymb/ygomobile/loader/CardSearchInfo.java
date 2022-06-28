@@ -2,8 +2,6 @@ package cn.garymb.ygomobile.loader;
 
 import android.text.TextUtils;
 
-import java.util.List;
-
 import ocgcore.data.Card;
 import ocgcore.enums.CardOt;
 import ocgcore.enums.CardType;

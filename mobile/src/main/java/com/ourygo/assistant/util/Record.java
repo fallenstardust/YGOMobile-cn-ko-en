@@ -1,7 +1,5 @@
 package com.ourygo.assistant.util;
 
-import cn.garymb.ygomobile.Constants;
-
 public class Record {
 
     //卡查关键字
