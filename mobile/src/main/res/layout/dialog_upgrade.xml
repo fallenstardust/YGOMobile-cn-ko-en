@@ -8,7 +8,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:layout_gravity="center"
-        android:background="@drawable/window">
+        android:background="@drawable/window2s">
 
         <TextView
             android:id="@+id/tv_title"

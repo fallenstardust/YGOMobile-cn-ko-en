@@ -92,6 +92,7 @@
     </string-array>
     <!-- settings -->
 
+    <string name="server_list">Duel Servers</string>
     <string name="server_name">Name:</string>
     <string name="server_ip">Host:</string>
     <string name="server_user">User:</string>
@@ -205,6 +206,7 @@
     <string name="failed_reason">Logining failed because of</string>
     <string name="send">Send</string>
     <string name="bbs">Community</string>
+    <string name="McNews">News</string>
     <string name="settings_pref_settings_only_game">Only start game</string>
     <string name="only_game_tip">reset this setting, need clean data of app</string>
     <string name="title_use_ex">Use Expansions</string>

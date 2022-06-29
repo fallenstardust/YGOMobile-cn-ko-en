@@ -75,6 +75,7 @@
         <item>高</item>
     </string-array>
     <!-- settings -->
+    <string name="server_list">直连决斗</string>
     <string name="server_name">名称:</string>
     <string name="server_ip">主机信息:</string>
     <string name="server_user">昵称:</string>
@@ -206,6 +207,7 @@
     <string name="send">发送</string>
     <string name="mc_home">大厅</string>
     <string name="bbs">社区</string>
+    <string name="McNews">公告</string>
     <string name="settings_pref_settings_only_game">直接启动游戏</string>
     <string name="only_game_tip">慎重勾选，清除应用数据或者重装才能恢复</string>
     <string name="title_use_ex">启用扩展卡包</string>
