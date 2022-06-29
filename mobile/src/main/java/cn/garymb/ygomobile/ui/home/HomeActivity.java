@@ -48,7 +48,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private BottomNavigationBar bottomNavigationBar;
     private FrameLayout frameLayout;
     private Fragment mFragment;
-    private SettingFragment mSettingFragment;
 
     private HomeFragment fragment_home;
     private CardSearchFragment fragment_search;
@@ -102,7 +101,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.ic_home, R.string.mc_home))
-                .addItem(new BottomNavigationItem(R.drawable.ic_search, R.string.search))
+                .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))
                 .addItem(new BottomNavigationItem(R.drawable.ic_add, R.string.deck_manager))
                 .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard))
                 .addItem(new BottomNavigationItem(R.drawable.ic_settings, R.string.settings))

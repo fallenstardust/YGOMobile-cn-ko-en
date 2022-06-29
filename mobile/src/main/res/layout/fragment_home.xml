@@ -68,14 +68,14 @@
         android:layout_height="match_parent"
         android:layout_margin="5dp"
         android:orientation="horizontal"
-        android:weightSum="1">
+        android:weightSum="3">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginRight="5dp"
             android:layout_marginBottom="60dp"
-            android:layout_weight="0.5"
+            android:layout_weight="2"
             android:background="@drawable/dialogshort"
             android:orientation="vertical">
 
@@ -104,9 +104,8 @@
                     android:id="@+id/shimmer_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_margin="10dp"
                     android:layout_alignParentLeft="true"
-                    android:background="@drawable/window2s"
+                    android:background="@drawable/window3"
                     android:gravity="center"
                     android:text="@string/return_to_duel"
                     android:textColor="@color/item_title"
@@ -115,67 +114,36 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/rightbar"
+            android:id="@+id/bottombar"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginRight="15dp"
+            android:layout_gravity="right"
             android:layout_marginBottom="60dp"
+
             android:layout_weight="1"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dialogshort"
                 android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="YGOPro"
+                    android:background="@drawable/veil2"
+                    android:textSize="10sp">
+
+                </androidx.appcompat.widget.AppCompatTextView>
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/action_game"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:clickable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="vertical"
-                    app:cardBackgroundColor="@color/transparent"
-                    app:cardElevation="0dp"
-                    app:cardUseCompatPadding="false"
-                    app:elevation="0dp">
-
-                    <RelativeLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
-                            android:scaleType="fitEnd"
-                            android:src="@drawable/start" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
-                            android:paddingLeft="13dp"
-                            android:paddingTop="13dp"
-                            android:text="@string/action_game"
-                            android:textColor="@color/holo_blue_bright"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
-                </androidx.cardview.widget.CardView>
-
-
-                <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/action_reset_game_res"
-                    android:layout_width="80dp"
+                    android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:orientation="vertical"
@@ -198,26 +166,25 @@
                             android:layout_marginRight="-20dp"
                             android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/reset" />
+                            android:src="@drawable/start" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
+                            android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
-                            android:text="@string/reset_game_res"
-                            android:textColor="@color/holo_blue_bright"
-                            android:textSize="10sp"
+                            android:text="@string/action_game"
+                            android:textColor="@color/holo_green_bright"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
 
-                <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/action_replay"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_marginBottom="10dp"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/action_bot"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:orientation="vertical"
@@ -233,19 +200,60 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
+                            android:layout_marginStart="-10dp"
+                            android:layout_marginLeft="30dp"
+                            android:layout_marginTop="-10dp"
+                            android:layout_marginEnd="-10dp"
                             android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
+                            android:layout_marginBottom="-10dp"
+                            android:scaleType="fitEnd"
+                            android:src="@drawable/help" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/dialogcube"
+                            android:paddingLeft="13dp"
+                            android:paddingTop="13dp"
+                            android:text="@string/bot_mode"
+                            android:textColor="@color/holo_blue_bright"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:id="@+id/action_replay"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_margin="5dp"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:orientation="vertical"
+                    app:cardBackgroundColor="@color/transparent"
+                    app:cardElevation="0dp"
+                    app:cardUseCompatPadding="false"
+                    app:elevation="0dp">
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="-10dp"
+                            android:layout_marginLeft="30dp"
+                            android:layout_marginTop="-10dp"
+                            android:layout_marginEnd="-10dp"
+                            android:layout_marginRight="-20dp"
+                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/replay" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
+                            android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/replay"
@@ -257,57 +265,9 @@
 
                 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/action_download_ex"
-                    android:layout_width="80dp"
+                    android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:layout_marginBottom="10dp"
-                    android:clickable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="vertical"
-                    app:cardBackgroundColor="@color/transparent"
-                    app:cardElevation="0dp"
-                    app:cardUseCompatPadding="false"
-                    app:elevation="0dp">
-
-                    <RelativeLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
-                            android:scaleType="fitEnd"
-                            android:src="@drawable/downloadimages" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
-                            android:paddingLeft="13dp"
-                            android:paddingTop="13dp"
-                            android:text="@string/action_download_expansions"
-                            android:textColor="@color/holo_blue_bright"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
-                </androidx.cardview.widget.CardView>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/action_join_qq_group"
-                    android:layout_width="80dp"
-                    android:layout_height="50dp"
-                    android:layout_marginBottom="5dp"
+                    android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:orientation="vertical"
@@ -330,27 +290,49 @@
                             android:layout_marginRight="-20dp"
                             android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/joinqqgroup" />
+                            android:src="@drawable/downloadimages" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
+                            android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
-                            android:text="@string/Join_QQ"
+                            android:text="@string/action_download_expansions"
                             android:textColor="@color/holo_blue_bright"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
+            </LinearLayout>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_launcher3"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dialogshort"
+                android:layout_gravity="bottom"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/Function_Menu"
+                    android:background="@drawable/veil2"
+                    android:textSize="10sp">
+
+                </androidx.appcompat.widget.AppCompatTextView>
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/action_help"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_marginRight="5dp"
-                    android:layout_marginBottom="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:orientation="vertical"
@@ -366,32 +348,32 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
+                            android:layout_marginStart="-10dp"
+                            android:layout_marginLeft="30dp"
+                            android:layout_marginTop="-10dp"
+                            android:layout_marginEnd="-10dp"
                             android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
+                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/help" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
+                            android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/help"
-                            android:textColor="@color/holo_blue_bright"
+                            android:textColor="@color/holo_green_bright"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/nav_webpage"
-                    android:layout_width="100dp"
+                    android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:orientation="vertical"
@@ -419,53 +401,12 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
+                            android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/donation"
-                            android:textColor="@color/holo_blue_bright"
+                            android:textColor="@color/selector_text_color_white_gold"
                             android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
-                </androidx.cardview.widget.CardView>
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/action_bot"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:clickable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="vertical"
-                    app:cardBackgroundColor="@color/transparent"
-                    app:cardElevation="0dp"
-                    app:cardUseCompatPadding="false"
-                    app:elevation="0dp">
-
-                    <RelativeLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="-30dp"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginEnd="-30dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-20dp"
-                            android:scaleType="fitEnd"
-                            android:src="@drawable/help" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/window3"
-                            android:paddingLeft="13dp"
-                            android:paddingTop="13dp"
-                            android:text="@string/bot_mode"
-                            android:textColor="@color/holo_blue_bright"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>

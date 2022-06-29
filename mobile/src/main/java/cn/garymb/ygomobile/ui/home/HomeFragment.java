@@ -24,6 +24,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -168,11 +169,11 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
-        });*/
+        });
         cv_reset_res = view.findViewById(R.id.action_reset_game_res);
         cv_reset_res.setOnClickListener(this);
         cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
-        cv_join_QQ.setOnClickListener(this);
+        cv_join_QQ.setOnClickListener(this);*/
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_donation.setOnClickListener(this);
         cv_help = view.findViewById(R.id.action_help);
@@ -629,10 +630,6 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             case R.id.action_download_ex:
                 WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
                 break;
-            case R.id.action_join_qq_group:
-                String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
-                joinQQGroup(key);
-                break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setContentView(R.layout.dialog_help);
@@ -652,10 +649,14 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 });
 
             }
-            break;
+            break;/*
+            case R.id.action_join_qq_group:
+                String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+                joinQQGroup(key);
+                break;
             case R.id.action_reset_game_res:
                 updateImages();
-                break;
+                break;*/
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(BuildConfig.URL_DONATE));
