@@ -89,7 +89,7 @@
     <string name="server_is_exist">服务器信息已经存在！</string>
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
-    <string name="deck_manager">卡组编辑</string>
+    <string name="deck_manager">卡组</string>
     <string name="category_manager">卡组分类选择</string>
     <string name="search">搜索</string>
     <string name="search_open">过滤</string>
@@ -196,7 +196,7 @@
     <string name="tip_istunning">游戏已运行</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
-    <string name="mycard">萌卡平台</string>
+    <string name="mycard">萌卡</string>
     <string name="arena">决斗数据库</string>
     <string name="mc_chat">聊天室</string>
     <string name="noting_to_send">发送内容不能为空</string>
