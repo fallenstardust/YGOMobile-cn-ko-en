@@ -175,7 +175,7 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/action_game"
-                            android:textColor="@color/holo_green_bright"
+                            android:textColor="@color/brightgreen"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
@@ -216,7 +216,8 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/bot_mode"
-                            android:textColor="@color/holo_blue_bright"
+                            android:textSize="10sp"
+                            android:textColor="@color/brightgreen"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
@@ -257,7 +258,7 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/replay"
-                            android:textColor="@color/holo_blue_bright"
+                            android:textColor="@color/brightgreen"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -299,7 +300,7 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/action_download_expansions"
-                            android:textColor="@color/holo_blue_bright"
+                            android:textColor="@color/brightgreen"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -364,7 +365,7 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/help"
-                            android:textColor="@color/holo_green_bright"
+                            android:textColor="@color/holo_blue_bright"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>
@@ -405,7 +406,7 @@
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/donation"
-                            android:textColor="@color/selector_text_color_white_gold"
+                            android:textColor="@color/holo_blue_bright"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
