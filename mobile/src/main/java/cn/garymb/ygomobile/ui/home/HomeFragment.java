@@ -89,7 +89,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
     ShimmerTextView tv;
     Shimmer shimmer;
-    protected SwipeMenuRecyclerView mServerList;
+    private SwipeMenuRecyclerView mServerList;
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
     private CardManager mCardManager;
@@ -169,11 +169,11 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 startActivity(new Intent(getActivity(), FileLogActivity.class));
                 return true;
             }
-        });
-        cv_reset_res = view.findViewById(R.id.action_reset_game_res);
-        cv_reset_res.setOnClickListener(this);
-        cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
-        cv_join_QQ.setOnClickListener(this);*/
+        });*/
+//        cv_reset_res = view.findViewById(R.id.action_reset_game_res);
+//       cv_reset_res.setOnClickListener(this);
+//        cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
+//        cv_join_QQ.setOnClickListener(this);
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_donation.setOnClickListener(this);
         cv_help = view.findViewById(R.id.action_help);

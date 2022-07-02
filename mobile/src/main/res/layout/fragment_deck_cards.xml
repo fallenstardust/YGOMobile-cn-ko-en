@@ -10,14 +10,7 @@
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg3"
         tools:openDrawer="left">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#80000000"
-            android:orientation="vertical"></LinearLayout>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -156,7 +149,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="left"
-            android:background="@drawable/blue"
+            android:background="@drawable/nav_left"
             android:orientation="vertical"
             android:paddingLeft="4dp"
             android:paddingTop="2dp"
