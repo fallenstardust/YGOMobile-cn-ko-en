@@ -8,6 +8,7 @@ import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -87,6 +89,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
+    private FrameLayout ll_back;
     ShimmerTextView tv;
     Shimmer shimmer;
     private SwipeMenuRecyclerView mServerList;
@@ -106,10 +109,8 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardView cv_watch_replay;
     //辅助功能
     private CardView cv_download_ex;
-    private CardView cv_reset_res;
     //外连
     private CardView cv_donation;
-    private CardView cv_join_QQ;
     private CardView cv_help;
 
     @Nullable
@@ -124,7 +125,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         initBanner(layoutView, savedInstanceState);
         initView(layoutView);
         //event
-        if(!EventBus.getDefault().isRegistered(this)){//加上判断
+        if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
         return layoutView;
@@ -179,14 +180,17 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         cv_help = view.findViewById(R.id.action_help);
         cv_help.setOnClickListener(this);
 
+        ll_back = view.findViewById(R.id.return_to_duel);
+        ll_back.setOnClickListener(this);
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
         toggleAnimation(tv);
+
         mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
     }
 
     //轮播图
-    public void initBanner(View view, Bundle saveBundle){
+    public void initBanner(View view, Bundle saveBundle) {
         xb_banner = view.findViewById(R.id.xb_banner);
         cv_banner = view.findViewById(R.id.cv_banner);
         tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
@@ -419,13 +423,10 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
 
     public void BacktoDuel() {
-        tv.setOnClickListener((v) -> {
-            openGame();
-        });
         if (YGOStarter.isGameRunning(getActivity())) {
-            tv.setVisibility(View.VISIBLE);
+            ll_back.setVisibility(View.VISIBLE);
         } else {
-            tv.setVisibility(View.GONE);
+            ll_back.setVisibility(View.GONE);
         }
     }
 
@@ -661,6 +662,10 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(BuildConfig.URL_DONATE));
                 startActivity(intent);
+            }
+            break;
+            case R.id.return_to_duel: {
+                openGame();
             }
             break;
             case R.id.tv_banner_loading:
