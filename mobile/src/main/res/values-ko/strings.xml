@@ -136,6 +136,7 @@
     <string name="save_as_deck">다른 이름 저장</string>
     <string name="deck_list">덱 목록</string>
     <string name="loading">로딩 중..."</string>
+    <string name="loading_failed">loading failed"</string>
     <string name="tip">정보</string>
     <string name="question">질문</string>
     <string name="question_delete_deck">덱을 삭제하겠습니까?</string>

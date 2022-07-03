@@ -146,6 +146,7 @@
     <string name="unsort">Unsort</string>
     <string name="sort">Sort</string>
     <string name="loading">loading..."</string>
+    <string name="loading_failed">loading failed"</string>
     <string name="question">Question</string>
     <string name="question_delete_deck">delete this deck?</string>
     <string name="noname">noname</string>

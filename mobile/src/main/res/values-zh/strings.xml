@@ -143,6 +143,7 @@
     <string name="save_as_deck">另存为</string>
     <string name="deck_list">卡组列表</string>
     <string name="loading">加载中..."</string>
+    <string name="loading_failed">加载失败"</string>
     <string name="tip">提示</string>
     <string name="question">询问</string>
     <string name="question_delete_deck">删除卡组?</string>

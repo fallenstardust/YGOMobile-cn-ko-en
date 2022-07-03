@@ -242,7 +242,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
                     xb_banner.setBannerData(R.layout.item_banner_main, mcNewsList);
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
-                    tv_banner_loading.setText("加载失败，点击重试");
+                    tv_banner_loading.setText(R.string.loading_failed);
                     isMcNewsLoadException = true;
                     break;
             }
@@ -253,7 +253,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private void findMcNews() {
         isMcNewsLoadException = false;
         tv_banner_loading.setVisibility(View.VISIBLE);
-        tv_banner_loading.setText("加载中");
+        tv_banner_loading.setText(R.string.loading);
         MyCard.findMyCardNews((myCardNewsList, exception) -> {
             Message message = new Message();
             if (TextUtils.isEmpty(exception)) {
