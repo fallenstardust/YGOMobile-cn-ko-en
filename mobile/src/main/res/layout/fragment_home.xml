@@ -56,7 +56,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="@string/logining_failed"
+                    android:text="@string/loading_failed"
                     android:textSize="15sp" />
             </RelativeLayout>
 
