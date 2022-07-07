@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.transition.Visibility;
 
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
@@ -86,7 +88,7 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
                     if (menuLayout2.isMenuOpen()) {
                         menuLayout2.smoothCloseMenu();
                     }
-                    break;
+                    break;/*
                 case R.id.iv_fond:
                     DialogPlus builder = new DialogPlus(getContext());
                     builder.setTitle(R.string.OpenTIP);
@@ -101,7 +103,7 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
                         builder.setMessage(R.string.join_helper_tip1);
                     }
                     builder.show();
-                    break;
+                    break;*/
             }
         });
     }
@@ -116,9 +118,9 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
         baseViewHolder.setText(R.id.text_port, String.valueOf(serverInfo.getPort()));
 
         if (position == 0) {
-            baseViewHolder.setBackgroundResource(R.id.iv_fond, R.drawable.cube);
+            baseViewHolder.findView(R.id.iv_fond).setVisibility(View.VISIBLE);
         } else {
-            baseViewHolder.setBackgroundResource(R.id.iv_fond, R.drawable.cube2);
+            baseViewHolder.findView(R.id.iv_fond).setVisibility(View.GONE);
         }
     }
 }
