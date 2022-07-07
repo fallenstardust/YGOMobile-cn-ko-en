@@ -1305,7 +1305,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
 
-        addMenuButton(mMenuIds, menu, R.id.action_deck_new, R.string.new_deck, R.drawable.addsever);
+        addMenuButton(mMenuIds, menu, R.id.action_deck_new, R.string.new_deck, R.drawable.add);
         addMenuButton(mMenuIds, menu, R.id.action_rename, R.string.rename_deck, R.drawable.rename);
         addMenuButton(mMenuIds, menu, R.id.action_delete_deck, R.string.delete_deck, R.drawable.delete);
 

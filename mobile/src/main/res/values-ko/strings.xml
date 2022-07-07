@@ -324,4 +324,6 @@
     <string name="action_download_expansions">다운로드 삭제</string>
     <string name="bot_mode">AI 모드</string>
     <string name="replay">리플레이 보기</string>
+    <string name="personal">나의</string>
+    <string name="login_mycard">로그인</string>
 </resources>

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.preference;
+package cn.garymb.ygomobile.ui.settings;
 
 import com.zlm.libs.preferences.PreferencesProvider;
 

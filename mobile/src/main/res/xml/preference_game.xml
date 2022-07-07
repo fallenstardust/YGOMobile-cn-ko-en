@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/settings_about">
-        <Preference
-            android:key="pref_key_about_check_update"
-            android:persistent="true"
-            android:title="@string/settings_about_check_update" />
-        <Preference
-            android:key="pref_key_change_log"
-            android:title="@string/settings_about_change_log" />
-    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_game">
         <!--Preference

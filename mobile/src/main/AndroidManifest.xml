@@ -136,7 +136,7 @@
             tools:replace="android:theme" />
 
         <activity
-            android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
+            android:name="cn.garymb.ygomobile.ui.settings.SettingsActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:label="@string/settings"
             android:launchMode="singleTop"
@@ -183,7 +183,7 @@
 
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
-            android:name="cn.garymb.ygomobile.ui.preference.YGOPreferencesProvider"
+            android:name="cn.garymb.ygomobile.ui.settings.YGOPreferencesProvider"
             android:authorities="${applicationId}.ui.preference.YGOPreferencesProvider"
             android:exported="false"
             android:grantUriPermissions="true" />

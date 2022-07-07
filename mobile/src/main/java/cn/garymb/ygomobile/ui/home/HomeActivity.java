@@ -34,7 +34,8 @@ import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.preference.fragments.SettingFragment;
+import cn.garymb.ygomobile.ui.settings.PersonalFragment;
+import cn.garymb.ygomobile.ui.settings.fragments.SettingFragment;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -53,7 +54,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private CardSearchFragment fragment_search;
     private DeckManagerFragment fragment_deck_cards;
     private MycardFragment fragment_mycard;
-    private SettingFragment fragment_settings;
+    private PersonalFragment fragment_personal;
 
 
     private DuelAssistantManagement duelAssistantManagement;
@@ -100,11 +101,11 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         // 获取页面上的底部导航栏控件
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home, R.string.mc_home))
+                .addItem(new BottomNavigationItem(R.drawable.home, R.string.mc_home))
                 .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))
-                .addItem(new BottomNavigationItem(R.drawable.ic_add, R.string.deck_manager))
+                .addItem(new BottomNavigationItem(R.drawable.deck, R.string.deck_manager))
                 .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard))
-                .addItem(new BottomNavigationItem(R.drawable.ic_settings, R.string.settings))
+                .addItem(new BottomNavigationItem(R.drawable.my, R.string.personal))
                 .setActiveColor(R.color.holo_blue_bright)
                 .setBarBackgroundColor(R.color.transparent)
                 .setMode(BottomNavigationBar.MODE_FIXED)
@@ -127,7 +128,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                         switchFragment(fragment_mycard);
                         break;
                     case 4:
-                        switchSettingFragment();
+                        switchFragment(fragment_personal);
                         break;
                 }
             }
@@ -146,21 +147,15 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         fragment_search = new CardSearchFragment();
         fragment_deck_cards = new DeckManagerFragment();
         fragment_mycard = new MycardFragment();
-        fragment_settings = new SettingFragment();
+        fragment_personal = new PersonalFragment();
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragment_content, fragment_home)
-                .commit();
-        getFragmentManager().beginTransaction()
-                .add(R.id.fragment_content, fragment_settings)
-                .hide(fragment_settings)
                 .commit();
         getSupportActionBar().hide();
     }
 
     private void switchFragment(Fragment fragment) {
-        if (fragment_settings.isVisible())
-            getFragmentManager().beginTransaction().hide(fragment_settings).commit();
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
@@ -176,12 +171,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             }
             mFragment = fragment;
         }
-    }
-
-    private void switchSettingFragment() {
-        getSupportFragmentManager().beginTransaction().hide(mFragment).commit();
-        getFragmentManager().beginTransaction().show(fragment_settings).commit();
-
     }
 
 

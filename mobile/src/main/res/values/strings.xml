@@ -334,4 +334,6 @@
     <string name="action_download_expansions">download\\nexpansions</string>
     <string name="replay">Watch replay</string>
     <string name="bot_mode">Bot game</string>
+    <string name="personal">My</string>
+    <string name="login_mycard">login</string>
 </resources>

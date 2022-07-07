@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.preference;
+package cn.garymb.ygomobile.ui.settings;
 
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
 import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.preference;
+package cn.garymb.ygomobile.ui.settings;
 
 import android.os.Bundle;
 
@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
-import cn.garymb.ygomobile.ui.preference.fragments.SettingFragment;
+import cn.garymb.ygomobile.ui.settings.fragments.SettingFragment;
 
 public class SettingsActivity extends BaseActivity {
     @Override
