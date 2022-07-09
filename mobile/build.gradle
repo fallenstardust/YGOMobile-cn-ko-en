@@ -23,15 +23,18 @@ android {
     }
     productFlavors {
         cn {
+            resValue 'string', 'app_name', 'YGOMobile'
             buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
         en {
+            resValue 'string', 'app_name', 'YGOMobile.En'
             applicationIdSuffix ".EN"
             buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "9c66525dfa"]
         }
         ko {
+            resValue 'string', 'app_name', 'YGOMobile.Kor'
             applicationIdSuffix ".KO"
             buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
             manifestPlaceholders = [APP_ID: "0488398d8a"]
