@@ -34,6 +34,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.settings.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
@@ -73,7 +74,7 @@ public class WebActivity extends BaseActivity {
                     break;
                 case UnzipUtils.ZIP_UNZIP_OK:
                     if (!AppsSettings.get().isReadExpansions()) {
-                        Intent startSetting = new Intent(getContext(), SettingsActivity.class);
+                        Intent startSetting = new Intent(getContext(), MycardFragment.class);
                         startActivity(startSetting);
                         Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                     } else {

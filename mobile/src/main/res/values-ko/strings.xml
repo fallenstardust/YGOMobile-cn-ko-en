@@ -326,4 +326,5 @@
     <string name="replay">리플레이 보기</string>
     <string name="personal">나의</string>
     <string name="login_mycard">로그인</string>
+    <string name="logout_mycard">로그아웃\?</string>
 </resources>

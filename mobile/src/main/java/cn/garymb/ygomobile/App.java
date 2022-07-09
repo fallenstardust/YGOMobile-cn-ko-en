@@ -17,6 +17,8 @@ import com.tencent.smtt.sdk.QbSdk;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import org.litepal.LitePal;
+
 import java.util.HashMap;
 
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -33,6 +35,7 @@ public class App extends GameApplication {
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
+        LitePal.initialize(getApplicationContext());
         //初始化异常工具类
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());

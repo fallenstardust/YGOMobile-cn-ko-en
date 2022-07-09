@@ -336,4 +336,5 @@
     <string name="bot_mode">Bot game</string>
     <string name="personal">My</string>
     <string name="login_mycard">login</string>
+    <string name="logout_mycard">Logout mycard\?</string>
 </resources>
