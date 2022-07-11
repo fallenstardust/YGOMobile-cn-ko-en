@@ -225,6 +225,7 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
         bt_close.setOnClickListener(v -> disJoinDialog());
         bt_join.setOnClickListener(v -> {
             disJoinDialog();
+            Intent startSetting = new Intent(getBaseContext(), MainActivity.class);
             //如果是卡组url
             if (isUrl) {
                 Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
@@ -232,13 +233,16 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
                 if (!deckInfo.isCompleteDeck()){
                     YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                 }
-                DeckManagerFragment.start(DuelAssistantService.this, file.getAbsolutePath());
+
+                startSetting.putExtra("flag", 2);
+                startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    DeckManagerFragment.start(DuelAssistantService.this, file.getAbsolutePath());
+                    startSetting.putExtra("flag", 2);
+                    startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(DuelAssistantService.this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();

@@ -227,96 +227,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public static void start(Context context, String path) {
         Intent starter = new Intent(context, MainActivity.class);
         starter.putExtra(Intent.EXTRA_TEXT, path);
-        if (!(context instanceof Activity)) {
-            starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
         context.startActivity(starter);
     }
-
-    /*/https://www.jianshu.com/p/99649af3b191
-    public void showNewbieGuide(String scene) {
-        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
-                .setOnHighlightDrewListener((canvas, rectF) -> {
-                    Paint paint = new Paint();
-                    paint.setColor(Color.WHITE);
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(20);
-                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
-                    canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
-                }).build();
-        HighlightOptions options2 = new HighlightOptions.Builder()//绘制一个高亮虚线矩形
-                .setOnHighlightDrewListener((canvas, rectF) -> {
-                    Paint paint = new Paint();
-                    paint.setColor(Color.WHITE);
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(20);
-                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
-                    canvas.drawRect(rectF, paint);
-                }).build();
-        if (scene.equals("deckmain")) {
-            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
-                    .setLabel("deckmainGuide")
-                    .addGuidePage(
-                            GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
-                                    .setLayoutRes(R.layout.view_guide_home)
-                                    .setOnLayoutInflatedListener((view, controller) -> {
-                                        //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
-                                        view.findViewById(R.id.view_abt_bmb).setVisibility(View.VISIBLE);
-                                    })
-
-                    )
-                    .addGuidePage(
-                            GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
-                                    .setLayoutRes(R.layout.view_guide_home)
-                                    .setOnLayoutInflatedListener((view, controller) -> {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_button_search);
-                                    })
-                    )
-                    .addGuidePage(
-                            GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
-                                    .setLayoutRes(R.layout.view_guide_home)
-                                    .setOnLayoutInflatedListener((view, controller) -> {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_button_search_result);
-                                    })
-                    )
-                    .addGuidePage(
-                            GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
-                                    .setLayoutRes(R.layout.view_guide_home)
-                                    .setOnLayoutInflatedListener((view, controller) -> {
-                                        TextView tv = view.findViewById(R.id.text_about);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_view_deck_manager);
-                                    })
-
-                    )
-                    .addGuidePage(
-                            GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(new RectF(screenWidth / 10.0f, screenWidth / 20.0f, screenWidth / 5.0f, screenWidth / 20.0f + screenWidth / 10.0f * 254.0f / 177.0f), HighLight.Shape.RECTANGLE, options2)
-                                    .setLayoutRes(R.layout.view_guide_home)
-                                    .setOnLayoutInflatedListener((view, controller) -> {
-                                        TextView tv = view.findViewById(R.id.text_abt_mid);
-                                        tv.setVisibility(View.VISIBLE);
-                                        tv.setText(R.string.guide_view_move_card);
-                                    })
-                    )
-                    //.alwaysShow(true)//总是显示，调试时可以打开
-                    .show();
-
-        }
-    }*/
 
     protected void setListeners() {
         mCardListAdapter.setOnItemClickListener((adapter, view, position) -> {
@@ -512,8 +424,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     //region init
-    private void init(@Nullable File ydk) {
-        DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
+    public void init(@Nullable File ydk) {
+        DialogPlus dlg = DialogPlus.show(mContext, null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
             //默认第一个卡表
@@ -1302,7 +1214,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
-        // addMenuButton(mMenuIds, menu, R.id.action_card_search, R.string.deck_list, R.drawable.listicon);
         addMenuButton(mMenuIds, menu, R.id.action_share_deck, R.string.share_deck, R.drawable.shareicon);
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
@@ -1437,4 +1348,89 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public void onDragEnd() {
     }
+
+    /*/https://www.jianshu.com/p/99649af3b191
+    public void showNewbieGuide(String scene) {
+        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
+                .setOnHighlightDrewListener((canvas, rectF) -> {
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(20);
+                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                    canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
+                }).build();
+        HighlightOptions options2 = new HighlightOptions.Builder()//绘制一个高亮虚线矩形
+                .setOnHighlightDrewListener((canvas, rectF) -> {
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(20);
+                    paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                    canvas.drawRect(rectF, paint);
+                }).build();
+        if (scene.equals("deckmain")) {
+            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                    .setLabel("deckmainGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
+                                        view.findViewById(R.id.view_abt_bmb).setVisibility(View.VISIBLE);
+                                    })
+
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_button_search);
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_button_search_result);
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_about);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_view_deck_manager);
+                                    })
+
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(new RectF(screenWidth / 10.0f, screenWidth / 20.0f, screenWidth / 5.0f, screenWidth / 20.0f + screenWidth / 10.0f * 254.0f / 177.0f), HighLight.Shape.RECTANGLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener((view, controller) -> {
+                                        TextView tv = view.findViewById(R.id.text_abt_mid);
+                                        tv.setVisibility(View.VISIBLE);
+                                        tv.setText(R.string.guide_view_move_card);
+                                    })
+                    )
+                    //.alwaysShow(true)//总是显示，调试时可以打开
+                    .show();
+
+        }
+    }*/
 }

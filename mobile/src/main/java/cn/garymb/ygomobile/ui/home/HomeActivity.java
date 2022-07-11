@@ -99,6 +99,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        String strDeck = "";
         int mFlag = intent.getIntExtra("flag", 0);
         if (mFlag == 4) { //判断获取到的flag值
             switchFragment(fragment_personal);
@@ -108,6 +109,10 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             switchFragment(fragment_deck_cards);
         } else if (mFlag == 1) {
             switchFragment(fragment_search);
+        } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
+            strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
+            Toast.makeText(getActivity(), strDeck, Toast.LENGTH_LONG).show();
+            fragment_deck_cards.init(new File(strDeck));
         }
     }
 
