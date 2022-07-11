@@ -85,6 +85,8 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
@@ -223,7 +225,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     public static void start(Context context, String path) {
-        Intent starter = new Intent(context, DeckManagerFragment.class);
+        Intent starter = new Intent(context, MainActivity.class);
         starter.putExtra(Intent.EXTRA_TEXT, path);
         if (!(context instanceof Activity)) {
             starter.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

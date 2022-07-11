@@ -193,16 +193,16 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     public void initBanner(View view, Bundle saveBundle) {
         xb_banner = view.findViewById(R.id.xb_banner);
         cv_banner = view.findViewById(R.id.cv_banner);
-        tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
-        tv_banner_loading.setOnClickListener(this);
         cv_banner.post(() -> {
             ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
             layoutParams.width = cv_banner.getWidth();
             layoutParams.height = layoutParams.width / 3;
             cv_banner.setLayoutParams(layoutParams);
         });
+        tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
+        tv_banner_loading.setOnClickListener(this);
         xb_banner.setOnItemClickListener((banner, model, v, position) ->
-                WebActivity.open(getContext(), "新闻", mcNewsList.get(position).getNews_url())
+                WebActivity.open(getContext(), getString(R.string.McNews), mcNewsList.get(position).getNews_url())
         );
         xb_banner.loadImage((banner, model, v, position) -> {
             TextView tv_time, tv_title, tv_type;

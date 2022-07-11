@@ -35,7 +35,6 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.PersonalFragment;
-import cn.garymb.ygomobile.ui.settings.fragments.SettingFragment;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -94,6 +93,22 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         checkNotch();
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
+        onNewIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        int mFlag = intent.getIntExtra("flag", 0);
+        if (mFlag == 4) { //判断获取到的flag值
+            switchFragment(fragment_personal);
+        } else if (mFlag == 3) {
+            switchFragment(fragment_mycard);
+        } else if (mFlag == 2) {
+            switchFragment(fragment_deck_cards);
+        } else if (mFlag == 1) {
+            switchFragment(fragment_search);
+        }
     }
 
     private void initBottomNavigationBar() {
@@ -155,7 +170,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         getSupportActionBar().hide();
     }
 
-    private void switchFragment(Fragment fragment) {
+    public void switchFragment(Fragment fragment) {
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment

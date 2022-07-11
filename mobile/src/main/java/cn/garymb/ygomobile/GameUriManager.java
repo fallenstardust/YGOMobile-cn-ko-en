@@ -30,7 +30,9 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.HomeFragment;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.settings.SettingsActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -199,7 +201,7 @@ public class GameUriManager {
     }
 
     private void doUri(Uri uri) {
-        Intent startSetting = new Intent(activity, SettingsActivity.class);
+        Intent startSetting = new Intent(activity, MainActivity.class);
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
             if (file == null || !file.exists()) {
@@ -212,9 +214,11 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
+                startSetting.putExtra("flag", 2);
                 DeckManagerFragment.start(activity, file.getAbsolutePath());
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
+                    startSetting.putExtra("flag", 4);
                     activity.startActivity(startSetting);
                     Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                 } else {

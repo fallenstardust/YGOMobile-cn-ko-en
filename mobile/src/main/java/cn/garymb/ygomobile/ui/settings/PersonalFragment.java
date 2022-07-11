@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.settings;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,15 +18,25 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SettingsListAdapter;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
+import cn.garymb.ygomobile.ui.mycard.base.OnMcUserListener;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.McUserManagement;
 
-public class PersonalFragment extends BaseFragemnt implements View.OnClickListener {
+public class PersonalFragment extends BaseFragemnt implements OnMcUserListener {
     private RelativeLayout rl_user;
     private TextView tv_name;
     private ImageView iv_avatar;
     private McUserManagement userManagement;
     private RecyclerView rv_list;
+    private SettingsListAdapter settingsAdapter;
+
+    private MycardFragment fragment_mycard;
+    private PersonalFragment fragment_personal;
 
     //private SettingRecyclerViewAdapter settingAdpter;
     @Nullable
@@ -42,6 +54,8 @@ public class PersonalFragment extends BaseFragemnt implements View.OnClickListen
     }
 
     public void initView(View layoutView) {
+        fragment_mycard = new MycardFragment();
+        fragment_personal = new PersonalFragment();
         //登录萌卡
         rl_user = layoutView.findViewById(R.id.rl_user);
         tv_name = layoutView.findViewById(R.id.tv_name);
@@ -62,7 +76,7 @@ public class PersonalFragment extends BaseFragemnt implements View.OnClickListen
                     dialog.dismiss();
                 });
             } else {
-                //((HomeActivity) getActivity()).selectMycard();
+               getParentFragmentManager().beginTransaction().hide(fragment_personal).show(fragment_mycard).commit();
             }
         });
         //设置列表
@@ -72,8 +86,22 @@ public class PersonalFragment extends BaseFragemnt implements View.OnClickListen
     }
 
     @Override
-    public void onClick(View view) {
+    public void onLogin(McUser user, String exception) {
+        if (TextUtils.isEmpty(exception)) {
+            tv_name.setText(user.getUsername());
+            ImageUtil.setImage(getActivity(), user.getAvatar_url(), iv_avatar);
+        }
+    }
 
+    @Override
+    public void onLogout() {
+        tv_name.setText(R.string.login_mycard);
+        iv_avatar.setImageResource(R.drawable.avatar);
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return false;
     }
 
     /**
