@@ -18,7 +18,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.fragment.app.Fragment;
 
 import com.ourygo.assistant.util.YGODAUtil;
 
@@ -42,7 +41,7 @@ import ocgcore.DataManager;
 
 public class GameUriManager {
     private Activity activity;
-    private Fragment fragment;
+    private HomeFragment homeFragment;
     private String fname;
 
     public GameUriManager(Activity activity) {
@@ -214,8 +213,8 @@ public class GameUriManager {
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
-                startSetting.putExtra("flag", 2);
                 startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                activity.startActivity(startSetting);
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     startSetting.putExtra("flag", 4);
@@ -255,14 +254,14 @@ public class GameUriManager {
                     if (!deckInfo.isCompleteDeck()) {
                         YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                     }
-                    startSetting.putExtra("flag", 2);
                     startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                    activity.startActivity(startSetting);
                 }
             } else if (Constants.URI_ROOM.equals(host)) {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
                     if (TextUtils.isEmpty(exception))
-                        if (fragment instanceof HomeFragment) {
-                            HomeFragment homeFragment = (HomeFragment) fragment;
+                        if (activity instanceof MainActivity) {
+                            homeFragment = new HomeFragment();
                             homeFragment.quickjoinRoom(host1, port, password);
                         } else {
                             YGOUtil.show(exception);
@@ -295,8 +294,8 @@ public class GameUriManager {
         }
         if (deck != null && deck.exists()) {
             Intent startSetting = new Intent(activity, MainActivity.class);
-            startSetting.putExtra("flag", 2);
             startSetting.putExtra(Intent.EXTRA_TEXT, deck.getAbsolutePath());
+            activity.startActivity(startSetting);
         } else {
             Log.w("kk", "no find " + name);
             activity.finish();

@@ -85,7 +85,6 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
@@ -200,12 +199,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
-        tv_deck.setOnClickListener(v -> YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        tv_deck.setOnClickListener(v ->
+                YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
     }
 
     public void preLoadFile() {
-        String preLoadFile = getActivity().getIntent().getStringExtra(Intent.EXTRA_TEXT);
+        Bundle bundle = getArguments();
+        String preLoadFile = bundle.getString("setDeck");
         final File _file;
         //打开指定卡组
         if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
@@ -222,12 +223,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }
         init(_file);
-    }
-
-    public static void start(Context context, String path) {
-        Intent starter = new Intent(context, MainActivity.class);
-        starter.putExtra(Intent.EXTRA_TEXT, path);
-        context.startActivity(starter);
     }
 
     protected void setListeners() {
@@ -287,6 +282,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void onUserInvisible() {
+        /*
         if (mDeckAdapater.isChanged()) {
             File ydk = mDeckAdapater.getYdkFile();
             if (ydk != null && ydk.exists()) {
@@ -317,7 +313,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
             mDrawerLayout.closeDrawer(Gravity.LEFT);
             return;
-        }
+        }*/
     }
 
     @Override

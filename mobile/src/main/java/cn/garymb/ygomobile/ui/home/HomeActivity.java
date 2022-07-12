@@ -99,20 +99,24 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        String strDeck = "";
         int mFlag = intent.getIntExtra("flag", 0);
         if (mFlag == 4) { //判断获取到的flag值
             switchFragment(fragment_personal, 4);
+
         } else if (mFlag == 3) {
-            switchFragment(fragment_mycard,3);
-        } else if (mFlag == 2) {
-            switchFragment(fragment_deck_cards,2);
-        } else if (mFlag == 1) {
-            switchFragment(fragment_search,1);
+            switchFragment(fragment_mycard, 3);
+
         } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
-            strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
-            Toast.makeText(getActivity(), strDeck, Toast.LENGTH_LONG).show();
-            fragment_deck_cards.init(new File(strDeck));
+            switchFragment(fragment_deck_cards, 2);
+            String strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (!strDeck.isEmpty()) {
+                Bundle bundle = new Bundle();
+                bundle.putString("setDeck", strDeck);
+                fragment_deck_cards.setArguments(bundle);
+            }
+
+        } else if (mFlag == 1) {
+            switchFragment(fragment_search, 1);
         }
     }
 
@@ -322,13 +326,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 if (!deckInfo.isCompleteDeck()) {
                     YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                 }
-                DeckManagerFragment.start(this, file.getAbsolutePath());
+                switchFragment(fragment_deck_cards, 2);
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    DeckManagerFragment.start(this, file.getAbsolutePath());
+                    switchFragment(fragment_deck_cards, 2);
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
