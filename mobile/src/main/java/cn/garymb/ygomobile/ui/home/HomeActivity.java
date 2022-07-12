@@ -102,13 +102,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         String strDeck = "";
         int mFlag = intent.getIntExtra("flag", 0);
         if (mFlag == 4) { //判断获取到的flag值
-            switchFragment(fragment_personal);
+            switchFragment(fragment_personal, 4);
         } else if (mFlag == 3) {
-            switchFragment(fragment_mycard);
+            switchFragment(fragment_mycard,3);
         } else if (mFlag == 2) {
-            switchFragment(fragment_deck_cards);
+            switchFragment(fragment_deck_cards,2);
         } else if (mFlag == 1) {
-            switchFragment(fragment_search);
+            switchFragment(fragment_search,1);
         } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
             strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
             Toast.makeText(getActivity(), strDeck, Toast.LENGTH_LONG).show();
@@ -148,24 +148,27 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     public void onTabSelected(int position) {
         switch (position) {
             case 0:
-                switchFragment(fragment_home);
+                switchFragment(fragment_home, 0);
                 break;
             case 1:
-                switchFragment(fragment_search);
+                switchFragment(fragment_search, 1);
                 break;
             case 2:
-                switchFragment(fragment_deck_cards);
+                switchFragment(fragment_deck_cards, 2);
                 break;
             case 3:
-                switchFragment(fragment_mycard);
+                switchFragment(fragment_mycard, 3);
                 break;
             case 4:
-                switchFragment(fragment_personal);
+                switchFragment(fragment_personal, 4);
                 break;
         }
     }
 
-    public void switchFragment(Fragment fragment) {
+    public void switchFragment(Fragment fragment, int page) {
+        //用于intent到指定fragment时底部图标也跟着设置为选中状态
+        bottomNavigationBar.setFirstSelectedPosition(page).initialise();
+        //
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
