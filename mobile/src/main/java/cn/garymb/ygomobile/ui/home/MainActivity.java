@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.ashokvarma.bottomnavigation.BottomNavigationBar;
+
 import java.io.File;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -32,7 +34,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 
-public class MainActivity extends HomeActivity {
+public class MainActivity extends HomeActivity implements BottomNavigationBar.OnTabSelectedListener {
     private final String[] PERMISSIONS = {
 //            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
@@ -239,6 +241,16 @@ public class MainActivity extends HomeActivity {
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    @Override
+    public void onTabUnselected(int position) {
+
+    }
+
+    @Override
+    public void onTabReselected(int position) {
+
     }
 
     /*        checkResourceDownload((result, isNewVersion) -> {

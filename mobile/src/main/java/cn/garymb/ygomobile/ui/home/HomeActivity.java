@@ -39,7 +39,7 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
-public abstract class HomeActivity extends BaseActivity implements OnDuelAssistantListener {
+public abstract class HomeActivity extends BaseActivity implements OnDuelAssistantListener, BottomNavigationBar.OnTabSelectedListener {
 
     private static final int ID_MAINACTIVITY = 0;
 
@@ -131,38 +131,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 .setMode(BottomNavigationBar.MODE_FIXED)
                 .setFirstSelectedPosition(0)
                 .initialise();//所有的设置需在调用该方法前完成
-        bottomNavigationBar.setTabSelectedListener(new BottomNavigationBar.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(int position) {
-                switch (position) {
-                    case 0:
-                        switchFragment(fragment_home);
-                        break;
-                    case 1:
-                        switchFragment(fragment_search);
-                        break;
-                    case 2:
-                        switchFragment(fragment_deck_cards);
-                        break;
-                    case 3:
-                        switchFragment(fragment_mycard);
-                        break;
-                    case 4:
-                        switchFragment(fragment_personal);
-                        break;
-                }
-            }
-
-            @Override
-            public void onTabUnselected(int position) {
-                //选中->未选中
-            }
-
-            @Override
-            public void onTabReselected(int position) {
-                //选中->选中
-            }
-        });
+        bottomNavigationBar.setTabSelectedListener(this);
         fragment_home = new HomeFragment();
         fragment_search = new CardSearchFragment();
         fragment_deck_cards = new DeckManagerFragment();
@@ -173,6 +142,27 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 .add(R.id.fragment_content, fragment_home)
                 .commit();
         getSupportActionBar().hide();
+    }
+
+    @Override
+    public void onTabSelected(int position) {
+        switch (position) {
+            case 0:
+                switchFragment(fragment_home);
+                break;
+            case 1:
+                switchFragment(fragment_search);
+                break;
+            case 2:
+                switchFragment(fragment_deck_cards);
+                break;
+            case 3:
+                switchFragment(fragment_mycard);
+                break;
+            case 4:
+                switchFragment(fragment_personal);
+                break;
+        }
     }
 
     public void switchFragment(Fragment fragment) {
