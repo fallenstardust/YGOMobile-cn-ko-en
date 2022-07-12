@@ -146,7 +146,7 @@ dependencies {
 
 
     //dialog库
-    implementation 'com.github.feihuaduo:DialogUtils:1.8.9.22'
+    implementation 'com.github.feihuaduo:DialogUtils:1.8.9.23'
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     //androidX 版本使用下面的依赖

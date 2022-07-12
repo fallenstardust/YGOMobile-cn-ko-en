@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
@@ -14,17 +15,27 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
 import com.bumptech.glide.request.transition.Transition;
 import com.ourygo.ygomobile.util.PaletteUtil;
+import com.ourygo.ygomobile.util.Record;
+import com.ourygo.ygomobile.util.glide.GlideBannerTransform;
 import com.ourygo.ygomobile.util.glide.GlideRoundTransform;
 
+import java.io.File;
+
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class ImageUtil {
 
@@ -66,7 +77,24 @@ public class ImageUtil {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                             im.setImageBitmap(resource);
-                            PaletteUtil.setPaletteColor(resource, im);
+                            Glide.with(context)
+                                    .asBitmap()
+                                    .load(url)
+                                    .transform(new GlideBannerTransform(),new BlurTransformation(50))
+//                                    .apply(RequestOptions.bitmapTransform(new BlurTransformation(50)))
+                                    .into(new SimpleTarget<Bitmap>() {
+                                        @Override
+                                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                            im.setBackground(new BitmapDrawable(resource));
+//                                            String path = new File(Record.getImageCachePath(), System.currentTimeMillis() + ".jpg").getAbsolutePath();
+//                                            if (BitmapUtil.saveBitmap(resource, path, 100))
+//                                                onBlurImageListener.onBlurImage(path, null);
+//                                            elseS
+//                                                onBlurImageListener.onBlurImage(null, "保存失败");
+                                        }
+                                    });
+
+//                            PaletteUtil.setPaletteColor(resource, im);
                         }
 
                         @Override

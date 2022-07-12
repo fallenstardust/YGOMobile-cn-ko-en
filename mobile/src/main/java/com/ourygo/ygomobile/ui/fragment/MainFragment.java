@@ -85,7 +85,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                     tv_banner_loading.setVisibility(View.GONE);
                     xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
                     AlphaAnimation animation = new AlphaAnimation(0F, 1F);
-                    animation.setDuration(300);
+                    animation.setDuration(1000);
                     xb_banner.startAnimation(animation);
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:

@@ -67,7 +67,8 @@ public class OtherAppBQAdapter extends BaseQuickAdapter<OtherApp, BaseViewHolder
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, OtherApp otherApp) {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.rl_item).getLayoutParams();
-        switch (getGroupType(baseViewHolder.getAdapterPosition() - getHeaderLayoutCount())) {
+
+        switch (getGroupType(getItemPosition(otherApp) - getHeaderLayoutCount())) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.rl_item, R.drawable.click_background);
                 baseViewHolder.setGone(R.id.line, false);
@@ -96,7 +97,7 @@ public class OtherAppBQAdapter extends BaseQuickAdapter<OtherApp, BaseViewHolder
 
                 break;
             default:
-                Log.e("SettingAdp", "其他情况" + (baseViewHolder.getAdapterPosition() - getHeaderLayoutCount()));
+                Log.e("SettingAdp", "其他情况" + (getItemPosition(otherApp) - getHeaderLayoutCount()));
                 break;
         }
         baseViewHolder.getView(R.id.rl_item).setLayoutParams(lp);
