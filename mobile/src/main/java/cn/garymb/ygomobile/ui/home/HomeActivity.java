@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static cn.garymb.ygomobile.ui.home.HomeFragment.ID_HOMEFRAGMENT;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -41,8 +43,6 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 
 public abstract class HomeActivity extends BaseActivity implements OnDuelAssistantListener, BottomNavigationBar.OnTabSelectedListener {
 
-    private static final int ID_MAINACTIVITY = 0;
-
     long exitLasttime = 0;
 
     private BottomNavigationBar bottomNavigationBar;
@@ -54,6 +54,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private DeckManagerFragment fragment_deck_cards;
     private MycardFragment fragment_mycard;
     private PersonalFragment fragment_personal;
+    private Bundle mBundle;
 
 
     private DuelAssistantManagement duelAssistantManagement;
@@ -63,7 +64,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
-
+        mBundle = new Bundle();
         QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
             @Override
             public void onViewInitFinished(boolean arg0) {
@@ -107,14 +108,12 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
             switchFragment(fragment_mycard, 3);
 
         } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
-            switchFragment(fragment_deck_cards, 2);
             String strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
             if (!strDeck.isEmpty()) {
-                Bundle bundle = new Bundle();
-                bundle.putString("setDeck", strDeck);
-                fragment_deck_cards.setArguments(bundle);
+                mBundle.putString("setDeck", strDeck);
+                fragment_deck_cards.setArguments(mBundle);
             }
-
+            switchFragment(fragment_deck_cards, 2);
         } else if (mFlag == 1) {
             switchFragment(fragment_search, 1);
         }
@@ -212,7 +211,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                duelAssistantManagement.checkClip(ID_MAINACTIVITY);
+                duelAssistantManagement.checkClip(ID_HOMEFRAGMENT);
             }, 500);
         }
     }
@@ -230,16 +229,17 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
 
     @Override
     public void onCardSearch(String key, int id) {
-        if (id == ID_MAINACTIVITY) {
+        /*
+        if (id == ID_HOMEFRAGMENT) {
             Intent intent = new Intent(this, CardSearchFragment.class);
             intent.putExtra(CardSearchFragment.SEARCH_MESSAGE, key);
             startActivity(intent);
-        }
+        }*/
     }
 
     @Override
     public void onSaveDeck(String message, boolean isUrl, int id) {
-        if (id == ID_MAINACTIVITY) {
+        if (fragment_home.isVisible()) {
             saveDeck(message, isUrl);
         }
     }
@@ -326,12 +326,20 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 if (!deckInfo.isCompleteDeck()) {
                     YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                 }
+                if (!file.getAbsolutePath().isEmpty()) {
+                    mBundle.putString("setDeck", file.getAbsolutePath());
+                    fragment_deck_cards.setArguments(mBundle);
+                }
                 switchFragment(fragment_deck_cards, 2);
             } else {
                 //如果是卡组文本
                 try {
                     //以当前时间戳作为卡组名保存卡组
                     File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                    if (!file.getAbsolutePath().isEmpty()) {
+                        mBundle.putString("setDeck", file.getAbsolutePath());
+                        fragment_deck_cards.setArguments(mBundle);
+                    }
                     switchFragment(fragment_deck_cards, 2);
                 } catch (IOException e) {
                     e.printStackTrace();

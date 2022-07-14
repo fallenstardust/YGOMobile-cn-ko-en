@@ -5,10 +5,8 @@ import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -85,7 +83,6 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
@@ -205,8 +202,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     public void preLoadFile() {
-        Bundle bundle = getArguments();
-        String preLoadFile = bundle.getString("setDeck");
+        String preLoadFile = "";
+        if (getArguments() != null) {
+            preLoadFile = getArguments().getString("setDeck");
+        }
         final File _file;
         //打开指定卡组
         if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
