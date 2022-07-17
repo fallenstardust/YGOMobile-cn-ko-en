@@ -39,17 +39,17 @@
 
         <ImageView
             android:id="@+id/iv_fond"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_gravity="left"
-            android:layout_marginTop="-5dp"
-            android:layout_marginEnd="-10dp"
             android:layout_marginLeft="-30dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="-10dp"
             android:layout_marginBottom="-10dp"
             android:alpha="0.5"
-            android:src="@drawable/cube2"
+            android:gravity="center"
             android:rotation="-90"
-            android:gravity="center" />
+            android:src="@drawable/cube2" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -58,94 +58,87 @@
             android:orientation="vertical"
             android:padding="@dimen/padding2">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/server_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/brightgreen"
+                android:textSize="15sp"
+                tools:text="233正式服务器" />
 
-                <TextView
-                    android:id="@+id/server_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_weight="1"
-                    android:singleLine="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                    android:textColor="@color/brightgreen"
-                    android:textSize="15sp"
-                    tools:text="233正式服务器" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/text_ip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:singleLine="true"
-                        android:textColor="@color/gray"
-                        android:textSize="10sp"
-                        tools:text="127.0.0.1" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:text=":"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/gray"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:id="@+id/text_port"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/gray"
-                        android:textSize="10sp"
-                        tools:text="233" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/text_player"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:singleLine="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/holo_blue_bright"
-                    android:textSize="10sp"
-                    tools:text="player" />
-
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/btn_edit_delete"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp"
-                        android:background="@drawable/rename"
-                        android:gravity="right" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/text_ip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:singleLine="true"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp"
+                            tools:text="127.0.0.1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:text=":"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/text_port"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp"
+                            tools:text="233" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/text_player"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@color/holo_blue_bright"
+                        android:textSize="10sp"
+                        tools:text="player" />
                 </LinearLayout>
-            </LinearLayout>
+                <ImageView
+                    android:id="@+id/btn_edit_delete"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="right|bottom"
+                    android:layout_marginRight="0dp"
+                    android:background="@drawable/rename"
+                    android:gravity="right" />
+
+            </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 

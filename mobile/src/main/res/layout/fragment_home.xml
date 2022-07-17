@@ -143,17 +143,21 @@
             android:layout_height="match_parent"
             android:layout_gravity="right"
             android:layout_weight="1"
+            android:weightSum="3"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:weightSum="2.3"
                 android:background="@drawable/dialogshort"
                 android:orientation="vertical">
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.3"
                     android:background="@drawable/veil2"
                     android:gravity="center"
                     android:text="@string/Function_Menu"
@@ -164,7 +168,8 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/action_help"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
@@ -205,7 +210,8 @@
                 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/nav_webpage"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_margin="5dp"
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
@@ -246,16 +252,18 @@
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
                 android:layout_gravity="bottom"
                 android:layout_marginTop="5dp"
                 android:background="@drawable/dialogshort"
                 android:orientation="vertical"
-                android:weightSum="4">
+                android:weightSum="4.3">
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.3"
                     android:background="@drawable/veil2"
                     android:gravity="center"
                     android:text="@string/action_game"
