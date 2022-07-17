@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.SettingsListAdapter;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcUserListener;
@@ -33,7 +32,6 @@ public class PersonalFragment extends BaseFragemnt implements OnMcUserListener {
     private ImageView iv_avatar;
     private McUserManagement userManagement;
     private RecyclerView rv_list;
-    private SettingsListAdapter settingsAdapter;
 
     private MycardFragment fragment_mycard;
     private PersonalFragment fragment_personal;

@@ -123,7 +123,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
-    private AppCompatSpinner mDeckSpinner;
     private TextView tv_deck;
     private TextView tv_result_count;
     private AppCompatSpinner mLimitSpinner;
@@ -166,8 +165,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
-        mDeckSpinner = layoutView.findViewById(R.id.toolbar_list);
-        mDeckSpinner.setPopupBackgroundResource(R.color.colorNavy);
+
         mLimitSpinner = layoutView.findViewById(R.id.sp_limit_list);
         mLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
         mRecyclerView = layoutView.findViewById(R.id.grid_cards);
@@ -180,19 +178,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
-        mDeckSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                File file = getSelectDeck(mDeckSpinner);
-                if (file != null) {
-                    loadDeckFromFile(file);
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-            }
-        });
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
@@ -205,6 +190,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         String preLoadFile = "";
         if (getArguments() != null) {
             preLoadFile = getArguments().getString("setDeck");
+            getArguments().clear();
         }
         final File _file;
         //打开指定卡组
@@ -265,19 +251,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     @Override
-    public void onFirstUserVisible() {
-
-    }
+    public void onFirstUserVisible() {}
 
     @Override
-    public void onUserVisible() {
-
-    }
+    public void onUserVisible() {}
 
     @Override
-    public void onFirstUserInvisible() {
-
-    }
+    public void onFirstUserInvisible() {}
 
     @Override
     public void onUserInvisible() {
@@ -367,7 +347,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         view.findViewById(R.id.cube2).startAnimation(shake); //给组件播放动画效果
     }
 
-    protected void hideDrawers() {
+    public void hideDrawers() {
         if (mDrawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             mDrawerLayout.closeDrawer(Gravity.RIGHT);
         }
@@ -450,7 +430,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             dlg.dismiss();
             mCardSelector.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
-            initDecksListSpinners(mDeckSpinner, rs.source);
             //设置当前卡组
             setCurDeck(rs);
             //设置收藏夹
@@ -861,7 +840,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
                             dlg.dismiss();
                             File file = getFirstYdk();
-                            initDecksListSpinners(mDeckSpinner, file);
                             loadDeckFromFile(file);
                         }
                     });
@@ -1062,38 +1040,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return null;
     }
 
-    private void initDecksListSpinners(Spinner spinner, File curYdk) {
-        List<File> files = getYdkFiles();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        String name = curYdk != null ? curYdk.getName() : null;
-        int index = -1;
-        if (files != null) {
-            Collections.sort(files, (ydk1, ydk2) -> {
-                if (ydk1.isDirectory() && ydk2.isFile())
-                    return -1;
-                if (ydk1.isFile() && ydk2.isDirectory())
-                    return 1;
-                return ydk1.getName().compareTo(ydk2.getName());
-            });
-            int i = 0;
-            for (File file : files) {
-                if (name != null && TextUtils.equals(name, file.getName())) {
-                    index = i;
-                }
-                String filename = IOUtils.tirmName(file.getName(), Constants.YDK_FILE_EX);
-                items.add(new SimpleSpinnerItem(i++, filename).setTag(file));
-            }
-        }
-        SimpleSpinnerAdapter simpleSpinnerAdapter = new SimpleSpinnerAdapter(getContext());
-        simpleSpinnerAdapter.set(items);
-        simpleSpinnerAdapter.setColor(Color.WHITE);
-        simpleSpinnerAdapter.setSingleLine(true);
-        spinner.setAdapter(simpleSpinnerAdapter);
-        if (index >= 0) {
-            spinner.setSelection(index);
-        }
-    }
-
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limitLists = mLimitManager.getLimitNames();
@@ -1174,7 +1120,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 }
                 if (!keepOld && oldYdk != null && oldYdk.exists()) {
                     if (oldYdk.renameTo(ydk)) {
-                        initDecksListSpinners(mDeckSpinner, ydk);
                         dlg.dismiss();
                         loadDeckFromFile(ydk);
                     }
@@ -1187,7 +1132,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                         boolean ret = ydk.createNewFile();
                     } catch (Throwable ignore) {
                     }
-                    initDecksListSpinners(mDeckSpinner, ydk);
                     save(ydk);
                     loadDeckFromFile(ydk);
                 }

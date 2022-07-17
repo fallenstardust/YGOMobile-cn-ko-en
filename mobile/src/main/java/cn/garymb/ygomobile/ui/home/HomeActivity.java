@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
@@ -102,20 +103,18 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         super.onNewIntent(intent);
         int mFlag = intent.getIntExtra("flag", 0);
         if (mFlag == 4) { //判断获取到的flag值
-            switchFragment(fragment_personal, 4);
-
+            switchFragment(fragment_personal, 4, false);
         } else if (mFlag == 3) {
-            switchFragment(fragment_mycard, 3);
-
+            switchFragment(fragment_mycard, 3, false);
         } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
             String strDeck = intent.getStringExtra(Intent.EXTRA_TEXT);
             if (!strDeck.isEmpty()) {
                 mBundle.putString("setDeck", strDeck);
                 fragment_deck_cards.setArguments(mBundle);
             }
-            switchFragment(fragment_deck_cards, 2);
+            switchFragment(fragment_deck_cards, 2, true);
         } else if (mFlag == 1) {
-            switchFragment(fragment_search, 1);
+            switchFragment(fragment_search, 1, false);
         }
     }
 
@@ -151,39 +150,47 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     public void onTabSelected(int position) {
         switch (position) {
             case 0:
-                switchFragment(fragment_home, 0);
+                switchFragment(fragment_home, 0, false);
                 break;
             case 1:
-                switchFragment(fragment_search, 1);
+                switchFragment(fragment_search, 1, false);
                 break;
             case 2:
-                switchFragment(fragment_deck_cards, 2);
+                switchFragment(fragment_deck_cards, 2, false);
                 break;
             case 3:
-                switchFragment(fragment_mycard, 3);
+                switchFragment(fragment_mycard, 3, false);
                 break;
             case 4:
-                switchFragment(fragment_personal, 4);
+                switchFragment(fragment_personal, 4, false);
                 break;
         }
     }
 
-    public void switchFragment(Fragment fragment, int page) {
+    public void switchFragment(Fragment fragment, int page, boolean replace) {
         //用于intent到指定fragment时底部图标也跟着设置为选中状态
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         //
+        FragmentTransaction transaction =getSupportFragmentManager().beginTransaction();
         if (mFragment.isHidden())
-            getSupportFragmentManager().beginTransaction().show(mFragment).commit();
+            transaction.show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
         if (mFragment != fragment) {
             //判断切换的Fragment是否已经添加过
             if (!fragment.isAdded()) {
                 //如果没有，则先把当前的Fragment隐藏，把切换的Fragment添加上
-                getSupportFragmentManager().beginTransaction().hide(mFragment)
+                transaction.hide(mFragment)
                         .add(R.id.fragment_content, fragment).commit();
             } else {
                 //如果已经添加过，则先把当前的Fragment隐藏，把切换的Fragment显示出来
-                getSupportFragmentManager().beginTransaction().hide(mFragment).show(fragment).commit();
+                if (replace) {
+                    //需要重新加载onCreateView需要detach再attach，而不是replace
+                    transaction.hide(mFragment).detach(fragment).attach(fragment)
+                            .show(fragment)//重启该fragment后需要重新show
+                            .commit();
+                } else {
+                    transaction.hide(mFragment).show(fragment).commit();
+                }
             }
             mFragment = fragment;
         }
@@ -330,7 +337,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                     mBundle.putString("setDeck", file.getAbsolutePath());
                     fragment_deck_cards.setArguments(mBundle);
                 }
-                switchFragment(fragment_deck_cards, 2);
+                switchFragment(fragment_deck_cards, 2, true);
             } else {
                 //如果是卡组文本
                 try {
@@ -340,7 +347,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                         mBundle.putString("setDeck", file.getAbsolutePath());
                         fragment_deck_cards.setArguments(mBundle);
                     }
-                    switchFragment(fragment_deck_cards, 2);
+                    switchFragment(fragment_deck_cards, 2, true);
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
