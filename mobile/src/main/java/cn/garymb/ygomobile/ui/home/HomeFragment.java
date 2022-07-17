@@ -7,6 +7,7 @@ import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.net.Uri;
@@ -37,6 +38,9 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
+import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.assistant.util.Util;
 import com.stx.xhb.androidx.XBanner;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -75,6 +79,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -83,9 +88,10 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 
-public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
+public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListener, View.OnClickListener {
     public static final int ID_HOMEFRAGMENT = 0;
-
+    private DuelAssistantManagement duelAssistantManagement;
+    private HomeActivity activity;
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
@@ -116,6 +122,8 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
     private CardView cv_donation;
     private CardView cv_help;
 
+    private Bundle mBundle;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -127,6 +135,10 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
             layoutView = inflater.inflate(R.layout.fragment_home, container, false);
         initBanner(layoutView, savedInstanceState);
         initView(layoutView);
+        //初始化决斗助手
+        initDuelAssistant();
+        activity = (HomeActivity) getActivity();
+        mBundle = new Bundle();
         //event
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
@@ -457,6 +469,69 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onCardSearch(String key, int id) {
+        /*
+        if (id == ID_HOMEFRAGMENT) {
+            Intent intent = new Intent(this, CardSearchFragment.class);
+            intent.putExtra(CardSearchFragment.SEARCH_MESSAGE, key);
+            startActivity(intent);
+        }*/
+    }
+
+    @Override
+    public void onSaveDeck(String message, boolean isUrl, int id) {
+        saveDeck(message, isUrl);
+    }
+
+    public void saveDeck(String deckMessage, boolean isUrl) {
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(R.string.find_deck_text);
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.save_n_open);
+        dialog.show();
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
+            //如果是卡组url
+            if (isUrl) {
+                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
+                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                if (!deckInfo.isCompleteDeck()) {
+                    YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                }
+                if (!file.getAbsolutePath().isEmpty()) {
+                    mBundle.putString("setDeck", file.getAbsolutePath());
+                    activity.fragment_deck_cards.setArguments(mBundle);
+                }
+                activity.switchFragment(activity.fragment_deck_cards, 2, true);
+            } else {
+                //如果是卡组文本
+                try {
+                    //以当前时间戳作为卡组名保存卡组
+                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
+                    if (!file.getAbsolutePath().isEmpty()) {
+                        mBundle.putString("setDeck", file.getAbsolutePath());
+                        activity.fragment_deck_cards.setArguments(mBundle);
+                    }
+                    activity.switchFragment(activity.fragment_deck_cards, 2, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getContext(), getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(getActivity());
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
         if (event.delete) {
@@ -565,9 +640,31 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
         }
     }
 
+    private void duelAssistantCheck() {
+        if (AppsSettings.get().isServiceDuelAssistant()) {
+            Handler handler = new Handler();
+            handler.postDelayed(() -> {
+                try {
+                    FileLogUtil.writeAndTime("主页决斗助手检查");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                duelAssistantManagement.checkClip(ID_HOMEFRAGMENT);
+            }, 500);
+        }
+    }
+
+    private void initDuelAssistant() {
+        duelAssistantManagement = DuelAssistantManagement.getInstance();
+        duelAssistantManagement.init(getActivity());
+        duelAssistantManagement.addDuelAssistantListener(this);
+//        YGOUtil.startDuelService(this);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        duelAssistantCheck();
         BacktoDuel();
         //server list
         mServerListManager.syncLoadData();
@@ -575,6 +672,7 @@ public class HomeFragment extends BaseFragemnt implements View.OnClickListener {
 
     @Override
     public void onDestroy() {
+        duelAssistantManagement.removeDuelAssistantListener(this);
         if (EventBus.getDefault().isRegistered(this))//加上判断
             EventBus.getDefault().unregister(this);
         super.onDestroy();

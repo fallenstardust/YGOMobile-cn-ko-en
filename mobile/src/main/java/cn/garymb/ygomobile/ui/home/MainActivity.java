@@ -231,8 +231,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
         }
     }
 
-    @Override
-    public void updateImages() {}
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

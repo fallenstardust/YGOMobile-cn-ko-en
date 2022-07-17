@@ -1,12 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
-import static cn.garymb.ygomobile.ui.home.HomeFragment.ID_HOMEFRAGMENT;
-
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -17,32 +12,21 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
-import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-import com.ourygo.assistant.util.DuelAssistantManagement;
-import com.ourygo.assistant.util.Util;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 
-import java.io.File;
-import java.io.IOException;
-
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
-import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.PersonalFragment;
-import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
-import cn.garymb.ygomobile.utils.YGOUtil;
 
-public abstract class HomeActivity extends BaseActivity implements OnDuelAssistantListener, BottomNavigationBar.OnTabSelectedListener {
+public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
 
     long exitLasttime = 0;
 
@@ -50,15 +34,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     private FrameLayout frameLayout;
     private Fragment mFragment;
 
-    private HomeFragment fragment_home;
-    private CardSearchFragment fragment_search;
-    private DeckManagerFragment fragment_deck_cards;
-    private MycardFragment fragment_mycard;
-    private PersonalFragment fragment_personal;
+    public HomeFragment fragment_home;
+    public CardSearchFragment fragment_search;
+    public DeckManagerFragment fragment_deck_cards;
+    public MycardFragment fragment_mycard;
+    public PersonalFragment fragment_personal;
     private Bundle mBundle;
 
-
-    private DuelAssistantManagement duelAssistantManagement;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,8 +71,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 Beta.checkUpgrade(false, false);
             }
         }
-        //初始化决斗助手
-        initDuelAssistant();
         //
         checkNotch();
         //showNewbieGuide("homePage");
@@ -150,19 +130,19 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     public void onTabSelected(int position) {
         switch (position) {
             case 0:
-                switchFragment(fragment_home, 0, false);
+                switchFragment(fragment_home, position, false);
                 break;
             case 1:
-                switchFragment(fragment_search, 1, false);
+                switchFragment(fragment_search, position, false);
                 break;
             case 2:
-                switchFragment(fragment_deck_cards, 2, false);
+                switchFragment(fragment_deck_cards, position, false);
                 break;
             case 3:
-                switchFragment(fragment_mycard, 3, false);
+                switchFragment(fragment_mycard, position, false);
                 break;
             case 4:
-                switchFragment(fragment_personal, 4, false);
+                switchFragment(fragment_personal, position, false);
                 break;
         }
     }
@@ -171,7 +151,7 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
         //用于intent到指定fragment时底部图标也跟着设置为选中状态
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         //
-        FragmentTransaction transaction =getSupportFragmentManager().beginTransaction();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         if (mFragment.isHidden())
             transaction.show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
@@ -193,6 +173,13 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
                 }
             }
             mFragment = fragment;
+        } else {
+            if (replace) {
+                //需要重新加载onCreateView需要detach再attach，而不是replace
+                transaction.hide(mFragment).detach(fragment).attach(fragment)
+                        .show(fragment)//重启该fragment后需要重新show
+                        .commit();
+            }
         }
     }
 
@@ -200,68 +187,17 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     protected void onResume() {
         super.onResume();
-        duelAssistantCheck();
     }
 
     @Override
     protected void onStop() {
-        //mImageLoader.clearZipCache();
         super.onStop();
     }
-
-    private void duelAssistantCheck() {
-        if (AppsSettings.get().isServiceDuelAssistant()) {
-            Handler handler = new Handler();
-            handler.postDelayed(() -> {
-                try {
-                    FileLogUtil.writeAndTime("主页决斗助手检查");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                duelAssistantManagement.checkClip(ID_HOMEFRAGMENT);
-            }, 500);
-        }
-    }
-
 
     @Override
     protected void onStart() {
         super.onStart();
 
-    }
-
-    @Override
-    public void onJoinRoom(String host, int port, String password, int id) {
-    }
-
-    @Override
-    public void onCardSearch(String key, int id) {
-        /*
-        if (id == ID_HOMEFRAGMENT) {
-            Intent intent = new Intent(this, CardSearchFragment.class);
-            intent.putExtra(CardSearchFragment.SEARCH_MESSAGE, key);
-            startActivity(intent);
-        }*/
-    }
-
-    @Override
-    public void onSaveDeck(String message, boolean isUrl, int id) {
-        if (fragment_home.isVisible()) {
-            saveDeck(message, isUrl);
-        }
-    }
-
-    @Override
-    public boolean isListenerEffective() {
-        return Util.isContextExisted(this);
-    }
-
-
-    private void initDuelAssistant() {
-        duelAssistantManagement = DuelAssistantManagement.getInstance();
-        duelAssistantManagement.init(getApplicationContext());
-        duelAssistantManagement.addDuelAssistantListener(this);
-//        YGOUtil.startDuelService(this);
     }
 
     //检查是否有刘海
@@ -277,7 +213,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        duelAssistantManagement.removeDuelAssistantListener(this);
     }
 
     @Override
@@ -310,51 +245,6 @@ public abstract class HomeActivity extends BaseActivity implements OnDuelAssista
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
 
     protected abstract void openGame();
-
-    public abstract void updateImages();
-
-    private void saveDeck(String deckMessage, boolean isUrl) {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle(R.string.question);
-        dialog.setMessage(R.string.find_deck_text);
-        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonText(R.string.Cancel);
-        dialog.setRightButtonText(R.string.save_n_open);
-        dialog.show();
-        dialog.setLeftButtonListener((dlg, s) -> {
-            dialog.dismiss();
-        });
-        dialog.setRightButtonListener((dlg, s) -> {
-            dialog.dismiss();
-            //如果是卡组url
-            if (isUrl) {
-                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
-                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                if (!deckInfo.isCompleteDeck()) {
-                    YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
-                }
-                if (!file.getAbsolutePath().isEmpty()) {
-                    mBundle.putString("setDeck", file.getAbsolutePath());
-                    fragment_deck_cards.setArguments(mBundle);
-                }
-                switchFragment(fragment_deck_cards, 2, true);
-            } else {
-                //如果是卡组文本
-                try {
-                    //以当前时间戳作为卡组名保存卡组
-                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    if (!file.getAbsolutePath().isEmpty()) {
-                        mBundle.putString("setDeck", file.getAbsolutePath());
-                        fragment_deck_cards.setArguments(mBundle);
-                    }
-                    switchFragment(fragment_deck_cards, 2, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
 
 /*
     //https://www.jianshu.com/p/99649af3b191
