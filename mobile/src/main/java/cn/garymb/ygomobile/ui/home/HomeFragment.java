@@ -129,10 +129,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
-        if (isHorizontal)
-            layoutView = inflater.inflate(R.layout.main_horizontal_fragment, container, false);
-        else
-            layoutView = inflater.inflate(R.layout.fragment_home, container, false);
+        layoutView = inflater.inflate(R.layout.fragment_home, container, false);
         initBanner(layoutView, savedInstanceState);
         initView(layoutView);
         //初始化决斗助手
@@ -207,7 +204,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     //轮播图
     public void initBanner(View view, Bundle saveBundle) {
         xb_banner = view.findViewById(R.id.xb_banner);
-        cv_banner = view.findViewById(R.id.cv_banner);
+        cv_banner = (CardView) view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
             ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
             layoutParams.width = cv_banner.getWidth();
@@ -569,75 +566,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     protected void openGame() {
         YGOStarter.startGame(getActivity(), null);
-    }
-
-    public void updateImages() {
-        Log.e("MainActivity", "重置资源");
-        DialogPlus dialog = DialogPlus.show(getContext(), null, getString(R.string.message));
-        dialog.show();
-        VUiKit.defer().when(() -> {
-            Log.e("MainActivity", "开始复制");
-            try {
-                IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
-
-                FileUtils.delFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
-
-                if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
-                }
-                if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                            AppsSettings.get().getResourcePath(), true);
-                }
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.DATABASE_NAME),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_STRING_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.WINDBOT_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PATH),
-                        AppsSettings.get().getCoreSkinPath(), false);
-                String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
-                if (new File(fonts).list() != null)
-                    FileUtils.delFile(fonts);
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.FONT_DIRECTORY),
-                        AppsSettings.get().getFontDirPath(), true);
-                /*
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
-                        AppsSettings.get().getSoundPath(), false);*/
-
-                //复制原目录文件
-                if (new File(ORI_DECK).list() != null)
-                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
-                if (new File(ORI_REPLAY).list() != null)
-                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
-                if (new File(ORI_PICS).list() != null)
-                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.e("MainActivity", "错误" + e);
-            }
-        }).done((rs) -> {
-            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-    }
-
-    public boolean joinQQGroup(String key) {
-        Intent intent = new Intent();
-        intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));
-        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面    //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            startActivity(intent);
-            return true;
-        } catch (Exception e) {
-            // 未安装手Q或安装的版本不支持
-            return false;
-        }
     }
 
     private void duelAssistantCheck() {

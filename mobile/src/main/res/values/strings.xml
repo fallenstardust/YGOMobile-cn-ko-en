@@ -234,6 +234,7 @@
     <string name="Open_Alert_Window">To Open Pop-ups</string>
     <string name="Function_Menu">MENU</string>
     <string name="Join_QQ">QQ Group</string>
+    <string name="about_Join_QQ">join QQ group to report problems</string>
     <string name="donatefor">your donation will be used for keeping severs updating, buying card to get artworks and purchasing new phone to adapt</string>
     <string name="coverSelect">click covers and select files</string>
     <string name="bgSelect">click background and select files</string>
@@ -309,7 +310,7 @@
     <string name="guide_server_edit">Server edit\: edit server information. for example\: change nickname</string>
     <string name="guide_help">Help\: specifically guide How to use YGOMobile and learn Master Rules</string>
     <string name="guide_settings">Settings\: turn on Expansions and DuelAssistant.set game avatars, background, cardback. </string>
-    <string name="guide_reset">Reset Resources\: click to reset when pictures or any files are mistaken deleted</string>
+    <string name="guide_reset">click to reset when pictures or any files are mistaken deleted</string>
     <string name="guide_abt_room_list">Inputted password will be recorded. Lone-Press to delete record(s)</string>
     <string name="guide_join_room">you can join game without password to start random duel with default mode
                                 \n use specified password and share other players to join same game

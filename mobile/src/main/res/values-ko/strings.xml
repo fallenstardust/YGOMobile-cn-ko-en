@@ -227,6 +227,7 @@
     <string name="Open_Alert_Window">알림 관리</string>
     <string name="Function_Menu">기능 메뉴</string>
     <string name="Join_QQ">QQ 가입</string>
+    <string name="about_Join_QQ">join QQ group to report problems</string>
     <string name="donatefor">기부를 통해 자동갱신 서버 비용을 지출하고 업데이트된 자료와 이미지를 정리하고 최신 디바이스에 대한 호환성있는 제작을 위해 디바이스들을 구입하는 것에 도움을 주실 수 있습니다.</string>
     <string name="coverSelect">카드 커버로 사용할 이미지를 선택하세요</string>
     <string name="bgSelect">배경으로 사용할 이미지를 선택하세요</string>
@@ -299,7 +300,7 @@
     <string name="guide_server_edit">편집 버튼:\n해당 서버 정보를 편집하려면 터치하십시오. \n게임 닉네임 등을 변경할 경우</string>
     <string name="guide_help">튜토리얼：특정 앱 사용 방법 및 마스터 룰 학습 포함(필수)</string>
     <string name="guide_settings">설정：듀얼 어시스턴트 시작, 확장 카드 팩 사용(있을 경우), 게임 아바타 , 배경, 카드 커버 변경 등</string>
-    <string name="guide_reset">리소스 초기화：누락 된 이미지 및 기타 파일이 실수로 삭제된 경우 리소스 초기화를 터치하십시오</string>
+    <string name="guide_reset">누락 된 이미지 및 기타 파일이 실수로 삭제된 경우 리소스 초기화를 터치하십시오</string>
     <string name="guide_abt_room_list">입력한 비밀번호 기록；삭제하려면 기록을 길게 누르십시오</string>
     <string name="guide_join_room">비밀번호를 입력하지 않고 무작위로 싱글 듀얼로 참여할 수 있습니다
                                 \n비밀번호를 입력하여 친구와 사귈 수도 있습니다

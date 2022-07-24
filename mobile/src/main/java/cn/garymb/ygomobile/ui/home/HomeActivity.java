@@ -23,7 +23,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
-import cn.garymb.ygomobile.ui.settings.PersonalFragment;
+import cn.garymb.ygomobile.ui.settings.fragments.SettingFragment;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -38,7 +38,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public CardSearchFragment fragment_search;
     public DeckManagerFragment fragment_deck_cards;
     public MycardFragment fragment_mycard;
-    public PersonalFragment fragment_personal;
+    public SettingFragment fragment_settings;
     private Bundle mBundle;
 
 
@@ -83,7 +83,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         super.onNewIntent(intent);
         int mFlag = intent.getIntExtra("flag", 0);
         if (mFlag == 4) { //判断获取到的flag值
-            switchFragment(fragment_personal, 4, false);
+            switchSettingFragment();
         } else if (mFlag == 3) {
             switchFragment(fragment_mycard, 3, false);
         } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
@@ -118,11 +118,10 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         fragment_search = new CardSearchFragment();
         fragment_deck_cards = new DeckManagerFragment();
         fragment_mycard = new MycardFragment();
-        fragment_personal = new PersonalFragment();
+        fragment_settings = new SettingFragment();
         mFragment = fragment_home;
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_content, fragment_home)
-                .commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
+        getFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_settings).hide(fragment_settings).commit();
         getSupportActionBar().hide();
     }
 
@@ -142,41 +141,49 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                 switchFragment(fragment_mycard, position, false);
                 break;
             case 4:
-                switchFragment(fragment_personal, position, false);
+                switchSettingFragment();
                 break;
         }
     }
 
+    public void switchSettingFragment() {
+        bottomNavigationBar.setFirstSelectedPosition(4).initialise();
+        getSupportFragmentManager().beginTransaction().hide(mFragment).commit();
+        getFragmentManager().beginTransaction().show(fragment_settings).commit();
+    }
+
     public void switchFragment(Fragment fragment, int page, boolean replace) {
+        if (fragment_settings.isVisible())
+            getFragmentManager().beginTransaction().hide(fragment_settings).commit();
         //用于intent到指定fragment时底部图标也跟着设置为选中状态
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         //
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        //FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         if (mFragment.isHidden())
-            transaction.show(mFragment).commit();
+            getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
         if (mFragment != fragment) {
             //判断切换的Fragment是否已经添加过
             if (!fragment.isAdded()) {
                 //如果没有，则先把当前的Fragment隐藏，把切换的Fragment添加上
-                transaction.hide(mFragment)
+                getSupportFragmentManager().beginTransaction().hide(mFragment)
                         .add(R.id.fragment_content, fragment).commit();
             } else {
                 //如果已经添加过，则先把当前的Fragment隐藏，把切换的Fragment显示出来
                 if (replace) {
                     //需要重新加载onCreateView需要detach再attach，而不是replace
-                    transaction.hide(mFragment).detach(fragment).attach(fragment)
+                    getSupportFragmentManager().beginTransaction().hide(mFragment).detach(fragment).attach(fragment)
                             .show(fragment)//重启该fragment后需要重新show
                             .commit();
                 } else {
-                    transaction.hide(mFragment).show(fragment).commit();
+                    getSupportFragmentManager().beginTransaction().hide(mFragment).show(fragment).commit();
                 }
             }
             mFragment = fragment;
         } else {
             if (replace) {
                 //需要重新加载onCreateView需要detach再attach，而不是replace
-                transaction.hide(mFragment).detach(fragment).attach(fragment)
+                getSupportFragmentManager().beginTransaction().hide(mFragment).detach(fragment).attach(fragment)
                         .show(fragment)//重启该fragment后需要重新show
                         .commit();
             }

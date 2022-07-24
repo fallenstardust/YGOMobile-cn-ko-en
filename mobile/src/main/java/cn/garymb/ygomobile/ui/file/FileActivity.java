@@ -41,8 +41,7 @@ public class FileActivity extends BaseActivity implements AdapterView.OnItemClic
         if (doIntent(getIntent())) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_filebrowser);
-            Toolbar toolbar = $(R.id.toolbar);
-            setSupportActionBar(toolbar);
+            getSupportActionBar().hide();
             enableBackHome();
             initViews();
             mFileAdapter.setOnPathChangedListener(this);

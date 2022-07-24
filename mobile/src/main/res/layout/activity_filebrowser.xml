@@ -12,8 +12,6 @@
         android:background="#80000000"
         android:orientation="vertical">
 
-        <include layout="@layout/content_toolbar" />
-
         <LinearLayout
             android:id="@+id/head_view"
             android:layout_width="match_parent"

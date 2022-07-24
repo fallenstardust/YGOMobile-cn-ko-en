@@ -4,6 +4,9 @@ import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
+import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.ORI_PICS;
+import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
@@ -15,12 +18,14 @@ import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_PATH;
 import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_JOIN_QQ;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.PREF_RESET_GAME_RES;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
@@ -35,6 +40,7 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -84,24 +90,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private static final int COPY_SO_OK = 0;
     private static final int COPY_SO_EXCEPTION = 1;
     private static final int COPY_SO_NO_ROOT = 2;
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case COPY_SO_OK:
-                    Toast.makeText(getActivity(), "替换成功", Toast.LENGTH_SHORT).show();
-                    break;
-                case COPY_SO_EXCEPTION:
-                    Toast.makeText(getActivity(), "替换失败，原因为" + msg.obj, Toast.LENGTH_SHORT).show();
-                    break;
-                case COPY_SO_NO_ROOT:
-                    Toast.makeText(getActivity(), "没有root权限", Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    };
     private AppsSettings mSettings;
     private boolean isInit = true;
 
@@ -123,9 +111,10 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
-        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity())
-                + "(" + SystemUtils.getVersion(getActivity()) + ")");
+        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity()) + "(" + SystemUtils.getVersion(getActivity()) + ")");
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
+        bind(PREF_RESET_GAME_RES, getString(R.string.guide_reset));
+        bind(PREF_JOIN_QQ, getString(R.string.about_Join_QQ));
         bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -138,7 +127,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
-        bind(PREF_WINDOW_TOP_BOTTOM, ""+mSettings.getScreenPadding());
+        bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -219,6 +208,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .setTitleText(getString(R.string.settings_about_change_log))
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
+        }
+        if (PREF_RESET_GAME_RES.equals(key)) {
+            updateImages();
+        }
+        if (PREF_JOIN_QQ.equals(key)) {
+            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+            joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
             Beta.checkUpgrade();
@@ -406,54 +402,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ((CheckBoxPreference) preference).setChecked(true);
             mSettings.setUseExtraCards(true);
             copyDataBase(preference, file);
-        } else if (PERF_TEST_REPLACE_KERNEL.equals(key)) {
-            File path = App.get().getFilesDir().getParentFile();
-            String name = "libYGOMobile.so";
-            File soFile = new File(path.getAbsolutePath() + "/lib", name);
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Message me = new Message();
-                    Process process = null;
-                    DataOutputStream os = null;
-                    try {
-                        String cmd = "chmod -R 777 " + soFile.getAbsolutePath();
-                        process = Runtime.getRuntime().exec("su"); //切换到root帐号
-                        if (process == null) {
-                            me.what = COPY_SO_NO_ROOT;
-                            handler.sendMessage(me);
-                            return;
-                        }
-                        os = new DataOutputStream(process.getOutputStream());
-                        os.writeBytes(cmd + "\n");
-                        os.writeBytes("exit\n");
-                        os.flush();
-                        process.waitFor();
-
-                        IOUtils.delete(soFile);
-                        FileUtils.copyFile(file, soFile.getAbsolutePath());
-                        me.what = COPY_SO_OK;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        me.what = COPY_SO_EXCEPTION;
-                        me.obj = e;
-                    } finally {
-
-                        if (os != null) {
-                            try {
-                                os.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        if (process != null)
-                            process.destroy();
-
-                    }
-                    handler.sendMessage(me);
-                }
-            }).start();
 
         } else {
             super.onChooseFileOk(preference, file);
@@ -478,6 +426,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .into(imageView);
         }
     }
+
     public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
         File img = new File(outFile);
         if (img.exists()) {
@@ -544,6 +493,75 @@ public class SettingFragment extends PreferenceFragmentPlus {
             });
         } else {
             IOUtils.delete(dir);
+        }
+    }
+
+    public void updateImages() {
+        Log.e("MainActivity", "重置资源");
+        DialogPlus dialog = DialogPlus.show(getContext(), null, getString(R.string.message));
+        dialog.show();
+        VUiKit.defer().when(() -> {
+            Log.e("MainActivity", "开始复制");
+            try {
+                IOUtils.createNoMedia(AppsSettings.get().getResourcePath());
+
+                FileUtils.delFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
+
+                if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP))) {
+                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP),
+                            AppsSettings.get().getResourcePath(), true);
+                }
+                if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP),
+                            AppsSettings.get().getResourcePath(), true);
+                }
+                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.DATABASE_NAME),
+                        AppsSettings.get().getResourcePath(), true);
+
+                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_STRING_PATH),
+                        AppsSettings.get().getResourcePath(), true);
+
+                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.WINDBOT_PATH),
+                        AppsSettings.get().getResourcePath(), true);
+
+                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PATH),
+                        AppsSettings.get().getCoreSkinPath(), false);
+                String fonts = AppsSettings.get().getResourcePath() + "/" + Constants.FONT_DIRECTORY;
+                if (new File(fonts).list() != null)
+                    FileUtils.delFile(fonts);
+                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.FONT_DIRECTORY),
+                        AppsSettings.get().getFontDirPath(), true);
+                /*
+                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
+                        AppsSettings.get().getSoundPath(), false);*/
+
+                //复制原目录文件
+                if (new File(ORI_DECK).list() != null)
+                    FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
+                if (new File(ORI_REPLAY).list() != null)
+                    FileUtils.copyDir(ORI_REPLAY, AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
+                if (new File(ORI_PICS).list() != null)
+                    FileUtils.copyDir(ORI_PICS, AppsSettings.get().getCardImagePath(), false);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e("MainActivity", "错误" + e);
+            }
+        }).done((rs) -> {
+            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+    }
+
+    public boolean joinQQGroup(String key) {
+        Intent intent = new Intent();
+        intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));
+        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面    //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            // 未安装手Q或安装的版本不支持
+            return false;
         }
     }
 

@@ -24,6 +24,7 @@ android {
     productFlavors {
         cn {
             resValue 'string', 'app_name', 'YGOMobile'
+            applicationIdSuffix ".CN"
             buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
             manifestPlaceholders = [APP_ID: "0b6f110306"]
         }
@@ -150,6 +151,4 @@ dependencies {
     implementation 'com.ashokvarma.android:bottom-navigation-bar:2.2.0'
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
-    //litepal
-    implementation 'org.litepal.android:java:3.0.0'
 }
