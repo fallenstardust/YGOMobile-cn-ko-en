@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.settings.fragments;
+package cn.garymb.ygomobile.ui.settings;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;

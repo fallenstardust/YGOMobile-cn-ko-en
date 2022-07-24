@@ -8,7 +8,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
@@ -23,7 +22,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
-import cn.garymb.ygomobile.ui.settings.fragments.SettingFragment;
+import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
 public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -44,6 +43,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            savedInstanceState.putParcelable("android:support:fragments", null);
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
@@ -53,9 +55,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             public void onViewInitFinished(boolean arg0) {
                 //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
                 if (arg0) {
-                    Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_SHORT).show();
                 }
             }
 

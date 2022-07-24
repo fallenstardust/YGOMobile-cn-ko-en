@@ -134,15 +134,6 @@
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
-
-        <activity
-            android:name="cn.garymb.ygomobile.ui.settings.SettingsActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/settings"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
