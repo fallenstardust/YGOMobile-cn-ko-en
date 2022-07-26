@@ -183,10 +183,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 return true;
             }
         });*/
-//        cv_reset_res = view.findViewById(R.id.action_reset_game_res);
-//       cv_reset_res.setOnClickListener(this);
-//        cv_join_QQ = view.findViewById(R.id.action_join_qq_group);
-//        cv_join_QQ.setOnClickListener(this);
         cv_donation = view.findViewById(R.id.nav_webpage);
         cv_donation.setOnClickListener(this);
         cv_help = view.findViewById(R.id.action_help);
@@ -204,7 +200,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     //轮播图
     public void initBanner(View view, Bundle saveBundle) {
         xb_banner = view.findViewById(R.id.xb_banner);
-        cv_banner = (CardView) view.findViewById(R.id.cv_banner);
+        cv_banner = view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
             ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
             layoutParams.width = cv_banner.getWidth();
