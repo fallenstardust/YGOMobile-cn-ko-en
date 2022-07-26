@@ -86,10 +86,6 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 
 public class SettingFragment extends PreferenceFragmentPlus {
-
-    private static final int COPY_SO_OK = 0;
-    private static final int COPY_SO_EXCEPTION = 1;
-    private static final int COPY_SO_NO_ROOT = 2;
     private AppsSettings mSettings;
     private boolean isInit = true;
 
