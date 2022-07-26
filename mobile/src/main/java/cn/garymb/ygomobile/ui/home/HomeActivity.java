@@ -123,7 +123,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         fragment_settings = new SettingFragment();
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
-        getFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_settings).hide(fragment_settings).commit();
         getSupportActionBar().hide();
     }
 
@@ -151,7 +150,14 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchSettingFragment() {
         bottomNavigationBar.setFirstSelectedPosition(4).initialise();
         getSupportFragmentManager().beginTransaction().hide(mFragment).commit();
-        getFragmentManager().beginTransaction().show(fragment_settings).commit();
+        if (fragment_settings.isAdded()) {
+            if (fragment_settings.isHidden()) {
+                getFragmentManager().beginTransaction().show(fragment_settings).commit();
+            }
+        } else {
+            getFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_settings).commit();
+        }
+
     }
 
     public void switchFragment(Fragment fragment, int page, boolean replace) {
@@ -159,8 +165,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             getFragmentManager().beginTransaction().hide(fragment_settings).commit();
         //用于intent到指定fragment时底部图标也跟着设置为选中状态
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
-        //
-        //FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction().show(mFragment).commit();
         //判断当前显示的Fragment是不是切换的Fragment
