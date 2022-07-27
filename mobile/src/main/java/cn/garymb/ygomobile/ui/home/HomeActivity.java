@@ -6,6 +6,7 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
@@ -50,34 +51,20 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
         mBundle = new Bundle();
-        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
-            @Override
-            public void onViewInitFinished(boolean arg0) {
-                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
-                if (arg0) {
-                    //Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_SHORT).show();
-                } else {
-                    //Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onCoreInitFinished() {
-            }
-        };
-        //x5内核初始化接口
-        QbSdk.initX5Environment(this, cb);
-        if (!BuildConfig.BUILD_TYPE.equals("debug")) {
-            //release才检查版本
-            if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
-                Beta.checkUpgrade(false, false);
-            }
-        }
+        //
+        initQbSdk();
         //
         checkNotch();
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //activity被回收后直接清除所有Bundle
+        outState.clear();
     }
 
     @Override
@@ -192,6 +179,32 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                 getSupportFragmentManager().beginTransaction().hide(mFragment).detach(fragment).attach(fragment)
                         .show(fragment)//重启该fragment后需要重新show
                         .commit();
+            }
+        }
+    }
+
+    private void initQbSdk() {
+        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
+            @Override
+            public void onViewInitFinished(boolean arg0) {
+                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
+                if (arg0) {
+                    //Toast.makeText(getActivity(), "加载X5内核成功", Toast.LENGTH_SHORT).show();
+                } else {
+                    //Toast.makeText(getActivity(), "加载系统内核成功", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCoreInitFinished() {
+            }
+        };
+        //x5内核初始化接口
+        QbSdk.initX5Environment(this, cb);
+        if (!BuildConfig.BUILD_TYPE.equals("debug")) {
+            //release才检查版本
+            if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
+                Beta.checkUpgrade(false, false);
             }
         }
     }
