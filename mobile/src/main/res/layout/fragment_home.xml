@@ -100,37 +100,30 @@
                     android:layout_height="wrap_content"
                     android:scrollbars="none" />
 
-                <FrameLayout
+                <RelativeLayout
                     android:id="@+id/return_to_duel"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/window3"
                     android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:orientation="vertical">
-
                         <ImageView
-                            android:layout_width="150dp"
-                            android:layout_height="150dp"
-                            android:layout_gravity="center"
+                            android:id="@+id/logo_small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:gravity="center"
                             android:src="@drawable/ic_launcher3" />
 
-                        <cn.garymb.ygomobile.ui.widget.ShimmerTextView
-                            android:id="@+id/shimmer_tv"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_alignParentLeft="true"
-                            android:gravity="center"
-                            android:text="@string/return_to_duel"
-                            android:textColor="@color/item_title" />
-                    </LinearLayout>
-
-                </FrameLayout>
+                    <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+                        android:id="@+id/shimmer_tv"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentLeft="true"
+                        android:layout_toEndOf="@id/logo_small"
+                        android:gravity="center"
+                        android:text="@string/return_to_duel"
+                        android:textColor="@color/item_title" />
+                </RelativeLayout>
 
 
             </FrameLayout>

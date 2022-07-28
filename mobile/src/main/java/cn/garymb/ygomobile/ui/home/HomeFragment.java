@@ -1,15 +1,9 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.ORI_PICS;
-import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
-import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,8 +21,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -80,8 +74,6 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
@@ -98,7 +90,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
-    private FrameLayout ll_back;
+    private RelativeLayout ll_back;
     ShimmerTextView tv;
     Shimmer shimmer;
     private SwipeMenuRecyclerView mServerList;
@@ -130,8 +122,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         super.onCreateView(inflater, container, savedInstanceState);
         View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_home, container, false);
-        initBanner(layoutView, savedInstanceState);
         initView(layoutView);
+        initBanner(layoutView, savedInstanceState);
         //初始化决斗助手
         initDuelAssistant();
         activity = (HomeActivity) getActivity();
