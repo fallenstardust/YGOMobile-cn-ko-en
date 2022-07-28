@@ -40,11 +40,10 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
-public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, NavigationView.OnNavigationItemSelectedListener {
+public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
 
-    protected DrawerLayout mDrawerlayout;
     private MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
     private ImageView mHeadView;
@@ -74,10 +73,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View view;
-        if (isHorizontal)
-            view = inflater.inflate(R.layout.mycard_horizontal_fragment, container, false);
-        else
-            view = inflater.inflate(R.layout.fragment_mycard, container, false);
+        view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
         return view;
     }
@@ -86,20 +82,15 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         YGOStarter.onCreated(getActivity());
         mMyCard = new MyCard(getActivity());
         mWebViewPlus = view.findViewById(R.id.webbrowser);
-        mDrawerlayout = view.findViewById(R.id.drawer_layout);
         mProgressBar = view.findViewById(R.id.progressBar);
-        tv_back_mc = view.findViewById(R.id.tv_back_mc);
         mProgressBar.setMax(100);
-
-        NavigationView navigationView = view.findViewById(R.id.nav_main);
-        navigationView.setNavigationItemSelectedListener(this);
-        View navHead = navigationView.getHeaderView(0);
-        mHeadView = navHead.findViewById(R.id.img_head);
-        mNameView = navHead.findViewById(R.id.tv_name);
-        mStatusView = navHead.findViewById(R.id.tv_dp);
-        //mWebViewPlus.enableHtml5();
-
+        tv_back_mc = view.findViewById(R.id.tv_back_mc);
         tv_back_mc.setOnClickListener(this);
+
+        mHeadView = view.findViewById(R.id.img_head);
+        mNameView = view.findViewById(R.id.tv_name);
+        mStatusView = view.findViewById(R.id.tv_dp);
+        //mWebViewPlus.enableHtml5();
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -218,20 +209,17 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     }
 
     private boolean doMenu(int id) {
-        closeDrawer();
         switch (id) {
             case R.id.action_home:
                 onHome();
-                break;
+                break;/*
             case R.id.action_arena:
                 mWebViewPlus.loadUrl(mMyCard.getArenaUrl());
                 break;
             case R.id.action_bbs:
                 mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
-                break;
-            case R.id.action_chat:
-                startActivity(new Intent(getActivity(), SplashActivity.class));
-                break;
+                break;*/
+
             default:
                 return false;
         }
@@ -277,18 +265,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onBackPressed() {
-        if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            closeDrawer();
-            return;
-        }
         if (mWebViewPlus.getUrl().equals(mMyCard.getMcMainUrl())) {
-            //finish();
             return;
         }
         if (mWebViewPlus.canGoBack()) {
             mWebViewPlus.goBack();
         } else {
-            //finish();
         }
     }
 
@@ -303,6 +285,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.tv_back_mc:
                 onHome();
                 break;
+            case R.id.rl_chat:
+                startActivity(new Intent(getActivity(), SplashActivity.class));
+                break;
         }
     }
 
@@ -312,20 +297,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         message.obj = new String[]{name, icon, statu};
         message.what = TYPE_MC_LOGIN;
         handler.sendMessage(message);
-    }
-
-    @Override
-    public void openDrawer() {
-        if (!mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerlayout.openDrawer(Gravity.LEFT);
-        }
-    }
-
-    @Override
-    public void closeDrawer() {
-        if (mDrawerlayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerlayout.closeDrawer(Gravity.LEFT);
-        }
     }
 
     @Override
@@ -347,16 +318,5 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onHome() {
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
-    }
-
-    /**
-     * Called when an item in the navigation menu is selected.
-     *
-     * @param item The selected item
-     * @return true to display the item as the selected item
-     */
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        return false;
     }
 }

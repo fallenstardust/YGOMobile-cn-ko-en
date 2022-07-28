@@ -8,12 +8,4 @@
         android:id="@+id/action_chat"
         android:icon="@drawable/ic_send_black_24dp"
         android:title="@string/mc_chat" />
-    <item
-        android:id="@+id/action_bbs"
-        android:icon="@drawable/ic_forum"
-        android:title="@string/bbs" />
-    <item
-        android:id="@+id/action_arena"
-        android:icon="@drawable/ic_highlight"
-        android:title="@string/arena" />
 </menu>

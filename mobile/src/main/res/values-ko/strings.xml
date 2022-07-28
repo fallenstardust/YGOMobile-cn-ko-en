@@ -328,4 +328,5 @@
     <string name="personal">나의</string>
     <string name="login_mycard">로그인</string>
     <string name="logout_mycard">로그아웃\?</string>
+    <string name="back_to_mycard_home">return to MyCard homepage</string>
 </resources>

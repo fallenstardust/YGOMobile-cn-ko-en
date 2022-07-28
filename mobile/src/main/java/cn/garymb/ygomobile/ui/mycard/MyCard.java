@@ -213,10 +213,6 @@ public class MyCard {
     public interface MyCardListener {
         void onLogin(String name, String icon, String statu);
 
-        void openDrawer();
-
-        void closeDrawer();
-
         void backHome();
 
         void share(String text);
@@ -281,7 +277,7 @@ public class MyCard {
                 activity.runOnUiThread(mListener::puzzleMode);
             }
         }
-*/
+
         @JavascriptInterface
         public void openDrawer() {
             if (mListener != null) {
@@ -289,6 +285,13 @@ public class MyCard {
             }
         }
 
+        @JavascriptInterface
+        public void closeDrawer() {
+            if (mListener != null) {
+                activity.runOnUiThread(mListener::closeDrawer);
+            }
+        }
+*/
         @JavascriptInterface
         public void backHome() {
             if (mListener != null) {
@@ -302,13 +305,6 @@ public class MyCard {
                 activity.runOnUiThread(() -> {
                     mListener.share(text);
                 });
-            }
-        }
-
-        @JavascriptInterface
-        public void closeDrawer() {
-            if (mListener != null) {
-                activity.runOnUiThread(mListener::closeDrawer);
             }
         }
 

@@ -328,4 +328,5 @@
     <string name="replay">查看录像</string>
     <string name="bot_mode">人机练习</string>
     <string name="personal">我的</string>
+    <string name="back_to_mycard_home">返回萌卡首页</string>
 </resources>
