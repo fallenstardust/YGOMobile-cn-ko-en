@@ -5,7 +5,9 @@ import static android.app.Activity.RESULT_OK;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,8 +43,9 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
-import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
@@ -74,6 +77,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 }
                 mNameView.setText(ss[0]);
                 mStatusView.setText(ss[2]);
+                initData();
             }
         }
     };
@@ -109,6 +113,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         rl_chat.setOnClickListener(this);
         tv_message = view.findViewById(R.id.tv_message);
         pb_chat_loading = view.findViewById(R.id.pb_chat_loading);
+
+        SharedPreferences lastModified = getActivity().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
+        UserManagement.setUserName(lastModified.getString("user_name", null));
+        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
+
         serviceManagement = ServiceManagement.getDx();
         serviceManagement.addJoinRoomListener(this);
         serviceManagement.addListener(this);
@@ -164,6 +173,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
+    }
+
+    private void initData() {
+        if (UserManagement.getUserName() != null) {
+            serviceManagement.start();
+        } else {
+
+        }
     }
 
     @Override
@@ -307,7 +324,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 onHome();
                 break;
             case R.id.rl_chat:
-                startActivity(new Intent(getActivity(), SplashActivity.class));
+                //这里显示聊天室fragment
                 break;
         }
     }
@@ -357,6 +374,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
             tv_message.setText(R.string.logining_failed);
+            serviceManagement.setIsListener(false);
+            YGOUtil.show(getString(R.string.failed_reason) + exception);
         }
     }
 
