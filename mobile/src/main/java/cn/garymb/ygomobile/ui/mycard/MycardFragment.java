@@ -12,42 +12,56 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.view.Gravity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.navigation.NavigationView;
+import com.ourygo.assistant.util.Util;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
+import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
+import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
-public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener {
+public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
-
-    private MyCardWebView mWebViewPlus;
-    private MyCard mMyCard;
+    //头像昵称账号
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
+    private TextView tv_back_mc;
+    //萌卡webview
+    private MyCardWebView mWebViewPlus;
+    private MyCard mMyCard;
+    //聊天室
+    private RelativeLayout rl_chat;
+    private TextView tv_message;
+    private ProgressBar pb_chat_loading;
+    private ServiceManagement serviceManagement;
+    private ChatMessage currentMessage;
+
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
@@ -64,7 +78,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
     };
     private ProgressBar mProgressBar;
-    private TextView tv_back_mc;
     private ValueCallback<Uri> uploadMessage;
     private ValueCallback<Uri[]> mUploadCallbackAboveL;
 
@@ -91,6 +104,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         mNameView = view.findViewById(R.id.tv_name);
         mStatusView = view.findViewById(R.id.tv_dp);
         //mWebViewPlus.enableHtml5();
+
+        rl_chat = view.findViewById(R.id.rl_chat);
+        rl_chat.setOnClickListener(this);
+        tv_message = view.findViewById(R.id.tv_message);
+        pb_chat_loading = view.findViewById(R.id.pb_chat_loading);
+        serviceManagement = ServiceManagement.getDx();
+        serviceManagement.addJoinRoomListener(this);
+        serviceManagement.addListener(this);
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -318,5 +339,82 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onHome() {
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
+    }
+
+    @Override
+    public void onChatLogin(String exception) {
+        Log.e("MyCardFragment", "登录情况" + exception);
+        pb_chat_loading.setVisibility(View.GONE);
+        if (TextUtils.isEmpty(exception)) {
+            if (currentMessage == null) {
+                List<ChatMessage> data = serviceManagement.getData();
+                if (data != null && data.size() > 0)
+                    currentMessage = data.get(data.size() - 1);
+            }
+            if (currentMessage == null)
+                tv_message.setText("聊天信息加载中");
+            else
+                tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
+        } else {
+            tv_message.setText(R.string.logining_failed);
+        }
+    }
+
+    @Override
+    public void onChatLoginLoading() {
+        Log.e("MyCardFragment", "加载中");
+        pb_chat_loading.setVisibility(View.VISIBLE);
+        tv_message.setText(R.string.logining_in);
+    }
+
+    @Override
+    public void onJoinRoomLoading() {
+        Log.e("MyCardFragment", "加入房间中");
+        pb_chat_loading.setVisibility(View.VISIBLE);
+        tv_message.setText(R.string.logining_in);
+    }
+
+    @Override
+    public void onChatUserNull() {
+        Log.e("MyCardFragment", "为空");
+        pb_chat_loading.setVisibility(View.GONE);
+        tv_message.setText("登录失败，请退出登录后重新登录");
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(getActivity());
+    }
+
+    @Override
+    public void addChatMessage(ChatMessage message) {
+        currentMessage = message;
+        if (message != null)
+            tv_message.setText(message.getName() + "：" + message.getMessage());
+    }
+
+    @Override
+    public void removeChatMessage(ChatMessage message) {
+
+    }
+
+    @Override
+    public void reChatLogin(boolean state) {
+        pb_chat_loading.setVisibility(View.VISIBLE);
+        if (state) {
+            tv_message.setText("登录成功");
+        } else {
+            tv_message.setText("连接断开,重新登录中……");
+        }
+    }
+
+    @Override
+    public void reChatJoin(boolean state) {
+        pb_chat_loading.setVisibility(View.VISIBLE);
+        if (state) {
+            onChatLogin(null);
+        } else {
+            tv_message.setText("重新加入聊天室中……");
+        }
     }
 }

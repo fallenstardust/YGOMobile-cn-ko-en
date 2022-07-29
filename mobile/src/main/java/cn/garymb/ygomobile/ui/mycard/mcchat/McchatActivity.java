@@ -11,7 +11,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.jivesoftware.smack.packet.Message;
+import com.ourygo.assistant.util.Util;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
@@ -30,7 +30,7 @@ public class McchatActivity extends Activity implements ChatListener {
     private ServiceManagement su;
 
     @Override
-    public void reLogin(boolean state) {
+    public void reChatLogin(boolean state) {
         main_bottom_bar.setVisibility(View.GONE);
         if (state) {
             main_title.setText("登录成功");
@@ -41,7 +41,7 @@ public class McchatActivity extends Activity implements ChatListener {
     }
 
     @Override
-    public void reJoin(boolean state) {
+    public void reChatJoin(boolean state) {
         if (state) {
             main_bottom_bar.setVisibility(View.VISIBLE);
             main_title.setText(getResources().getString(R.string.app_name));
@@ -53,7 +53,12 @@ public class McchatActivity extends Activity implements ChatListener {
     }
 
     @Override
-    public void addMessage(Message message) {
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(this);
+    }
+
+    @Override
+    public void addChatMessage(ChatMessage message) {
         cadp.sx();
         main_rec.smoothScrollToPosition(su.getData().size() - 1);
 
@@ -61,7 +66,7 @@ public class McchatActivity extends Activity implements ChatListener {
     }
 
     @Override
-    public void removeMessage(Message message) {
+    public void removeChatMessage(ChatMessage message) {
         // TODO: Implement this method
     }
 

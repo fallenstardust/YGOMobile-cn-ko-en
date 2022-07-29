@@ -4,75 +4,75 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/dialogshort"
-    android:weightSum="10"
+    android:weightSum="12"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/rl_head"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingLeft="20dp"
-        android:paddingTop="10dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="10dp">
+        android:padding="10dp">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/img_head"
-            android:layout_width="@dimen/label_width_50dp"
-            android:layout_height="@dimen/label_width_50dp"
-            android:src="@drawable/avatar" />
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_name"
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_head"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginRight="@dimen/dp_10"
+                android:src="@drawable/avatar" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_name"
+                    android:layout_marginTop="5dp"
+                    android:layout_toRightOf="@id/img_head"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:text=""
+                    android:textColor="@color/holo_orange_bright"
+                    android:textSize="10sp" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/tv_back_mc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/img_head"
-            android:text="@string/mc_chat"
-            android:textColor="@color/holo_green_bright"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tv_name"
-            android:layout_marginTop="5dp"
-            android:layout_toRightOf="@id/img_head"
-            android:ellipsize="end"
-            android:lines="1"
-            android:text="account"
-            android:textColor="@color/holo_orange_bright"
-            android:textSize="13sp" />
-
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:layout_width="@dimen/dp_40"
-            android:layout_height="@dimen/dp_40"
-            android:nextFocusRight="@string/mc_chat"/>
-
-    </RelativeLayout>
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tv_back_mc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/list_item_bg"
-        android:gravity="center"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:text="@string/back_to_mycard_home"
-        android:textColor="@color/holo_green_bright"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
+            android:layout_gravity="right"
+            android:background="@drawable/button_bg"
+            android:gravity="center"
+            android:text="@string/back_to_mycard_home"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <cn.garymb.ygomobile.ui.mycard.MyCardWebView
         android:id="@+id/webbrowser"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="8">
+        android:layout_weight="10">
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -87,12 +87,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@drawable/list_item_bg"
         android:orientation="vertical"
-        android:paddingLeft="20dp"
-        android:paddingTop="10dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="10dp">
+        android:padding="10dp">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_message_s"
@@ -100,7 +96,6 @@
             android:layout_height="wrap_content"
             android:text="@string/mc_chat"
             android:textColor="@color/holo_green_bright"
-            android:textSize="18sp"
             android:textStyle="bold" />
 
         <ProgressBar
@@ -121,6 +116,6 @@
             android:lines="1"
             android:text=""
             android:textColor="@color/holo_orange_bright"
-            android:textSize="13sp" />
+            android:textSize="10sp" />
     </RelativeLayout>
 </LinearLayout>
