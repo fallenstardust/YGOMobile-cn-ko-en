@@ -329,4 +329,8 @@
     <string name="bot_mode">人机练习</string>
     <string name="personal">我的</string>
     <string name="back_to_mycard_home">返回萌卡首页</string>
+    <string name="edit_your_message">输入聊天内容</string>
+    <string name="login_succeed">登录成功</string>
+    <string name="miss_connection">连接断开,重新登陆中……</string>
+    <string name="reChatJoining">连接断开,重新登陆中……</string>
 </resources>

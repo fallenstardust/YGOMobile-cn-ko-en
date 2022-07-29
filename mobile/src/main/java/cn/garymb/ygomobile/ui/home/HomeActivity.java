@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
+import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
@@ -39,6 +40,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public DeckManagerFragment fragment_deck_cards;
     public MycardFragment fragment_mycard;
     public SettingFragment fragment_settings;
+    public MycardChatFragment fragment_mycard_chatting_room;
     private Bundle mBundle;
 
 
@@ -108,6 +110,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         fragment_deck_cards = new DeckManagerFragment();
         fragment_mycard = new MycardFragment();
         fragment_settings = new SettingFragment();
+
+        fragment_mycard_chatting_room = new MycardChatFragment();
+
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();

@@ -2,28 +2,45 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@drawable/button_n"
     android:gravity="center"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/mediumPurpleLight">
+        android:background="@color/transparent">
 
-        <TextView
-            android:id="@+id/main_title"
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
-            android:text="@string/mc_chat"
-            android:textColor="@color/white"
-            android:textSize="20sp" />
+            android:orientation="horizontal">
 
-    </RelativeLayout>
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_head"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/mycard" />
+
+            <TextView
+                android:id="@+id/main_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:text="@string/mc_chat"
+                android:textColor="@color/holo_green_bright"
+                android:textSize="15sp" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_hide"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="right|center"
+            android:background="@drawable/ic_close_black_24dp"
+            android:gravity="center" />
+
+    </FrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/main_rec"
@@ -35,21 +52,27 @@
         android:id="@+id/main_bottom_bar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/transparent"
         android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="7dp">
+        android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/main_send_message"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="10"
-            android:background="@drawable/chat_edittext_background"
-            android:maxEms="3"
-            android:padding="7dp"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_weight="8">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/main_send_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:hint="@string/edit_your_message"
+                android:imeOptions="actionSend"
+                android:inputType="textNoSuggestions"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColorHint="@color/holo_green_bright" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -59,14 +82,15 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageButton
+            <Button
                 android:id="@+id/main_send"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/chat_message_background"
+                android:background="@drawable/button2_bg"
                 android:gravity="center"
                 android:src="@drawable/ic_send_black_24dp"
                 android:text="@string/send"
+                android:textColor="@color/brightgreen"
                 android:textSize="12sp" />
 
         </LinearLayout>

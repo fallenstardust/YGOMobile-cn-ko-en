@@ -329,4 +329,8 @@
     <string name="login_mycard">로그인</string>
     <string name="logout_mycard">로그아웃\?</string>
     <string name="back_to_mycard_home">return to MyCard homepage</string>
+    <string name="edit_your_message">Input your message</string>
+    <string name="login_succeed">Chatroom logined</string>
+    <string name="miss_connection">miss connection, relogining</string>
+    <string name="reChatJoining">relogining\.\.\.</string>
 </resources>

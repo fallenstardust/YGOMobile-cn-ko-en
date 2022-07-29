@@ -40,9 +40,11 @@ import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
+import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -51,6 +53,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
+    private HomeActivity homeActivity;
     //头像昵称账号
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
@@ -89,9 +92,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+        homeActivity = (HomeActivity)getActivity();
         View view;
         view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
+        initData();
         return view;
     }
 
@@ -173,6 +178,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
+        getChildFragmentManager().beginTransaction().add(R.id.fragment_content, homeActivity.fragment_mycard_chatting_room).hide(homeActivity.fragment_mycard_chatting_room).commit();
     }
 
     private void initData() {
@@ -238,32 +244,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         mUploadCallbackAboveL = null;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (doMenu(item.getItemId())) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private boolean doMenu(int id) {
-        switch (id) {
-            case R.id.action_home:
-                onHome();
-                break;/*
-            case R.id.action_arena:
-                mWebViewPlus.loadUrl(mMyCard.getArenaUrl());
-                break;
-            case R.id.action_bbs:
-                mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
-                break;*/
-
-            default:
-                return false;
-        }
-        return true;
-    }
-
     /**
      * 第一次fragment可见（进行初始化工作）
      */
@@ -325,6 +305,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 break;
             case R.id.rl_chat:
                 //这里显示聊天室fragment
+                if (homeActivity.fragment_mycard_chatting_room.isHidden()) {
+                    getChildFragmentManager().beginTransaction().show(homeActivity.fragment_mycard_chatting_room).commit();
+                } else {
+                    getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                }
                 break;
         }
     }
@@ -360,7 +345,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onChatLogin(String exception) {
-        Log.e("MyCardFragment", "登录情况" + exception);
         pb_chat_loading.setVisibility(View.GONE);
         if (TextUtils.isEmpty(exception)) {
             if (currentMessage == null) {
@@ -381,14 +365,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onChatLoginLoading() {
-        Log.e("MyCardFragment", "加载中");
         pb_chat_loading.setVisibility(View.VISIBLE);
         tv_message.setText(R.string.logining_in);
     }
 
     @Override
     public void onJoinRoomLoading() {
-        Log.e("MyCardFragment", "加入房间中");
         pb_chat_loading.setVisibility(View.VISIBLE);
         tv_message.setText(R.string.logining_in);
     }
@@ -421,9 +403,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void reChatLogin(boolean state) {
         pb_chat_loading.setVisibility(View.VISIBLE);
         if (state) {
-            tv_message.setText("登录成功");
+            tv_message.setText(R.string.login_succeed);
         } else {
-            tv_message.setText("连接断开,重新登录中……");
+            tv_message.setText(R.string.miss_connection);
         }
     }
 
@@ -433,7 +415,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (state) {
             onChatLogin(null);
         } else {
-            tv_message.setText("重新加入聊天室中……");
+            tv_message.setText(R.string.reChatJoining);
         }
     }
 }
