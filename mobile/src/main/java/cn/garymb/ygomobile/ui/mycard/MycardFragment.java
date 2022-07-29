@@ -352,7 +352,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     currentMessage = data.get(data.size() - 1);
             }
             if (currentMessage == null)
-                tv_message.setText("聊天信息加载中");
+                tv_message.setText(R.string.loading);
             else
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
@@ -378,7 +378,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onChatUserNull() {
         Log.e("MyCardFragment", "为空");
         pb_chat_loading.setVisibility(View.GONE);
-        tv_message.setText("登录失败，请退出登录后重新登录");
+        tv_message.setText(R.string.logining_failed);
     }
 
     @Override

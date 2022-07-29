@@ -102,7 +102,6 @@ public class MyCard {
 
     public MyCard(Activity context) {
         mContext = context;
-        //context.getActionBar().hide();
         lastModified = context.getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         mDefWebViewClient = new DefWebViewClient() {
             @Override
@@ -258,40 +257,7 @@ public class MyCard {
             this.activity = activity;
             mListener = listener;
         }
-/*
-        @JavascriptInterface
-        public void edit_deck() {
-            activity.startActivity(new Intent(activity, DeckManagerFragment.class));
-        }
 
-        @JavascriptInterface
-        public void watch_replay() {
-            if (mListener != null) {
-                activity.runOnUiThread(mListener::watchReplay);
-            }
-        }
-
-        @JavascriptInterface
-        public void puzzle_mode() {
-            if (mListener != null) {
-                activity.runOnUiThread(mListener::puzzleMode);
-            }
-        }
-
-        @JavascriptInterface
-        public void openDrawer() {
-            if (mListener != null) {
-                activity.runOnUiThread(mListener::openDrawer);
-            }
-        }
-
-        @JavascriptInterface
-        public void closeDrawer() {
-            if (mListener != null) {
-                activity.runOnUiThread(mListener::closeDrawer);
-            }
-        }
-*/
         @JavascriptInterface
         public void backHome() {
             if (mListener != null) {
