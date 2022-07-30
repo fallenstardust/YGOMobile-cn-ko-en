@@ -70,9 +70,9 @@ public class ServiceManagement {
             switch (msg.what) {
                 case TYPE_ADD_MESSAGE:
                     while (i < chatListenerList.size()) {
-                        ChatListener c = chatListenerList.get(i);
-                        if (c.isListenerEffective()) {
-                            c.addChatMessage((ChatMessage) msg.obj);
+                        ChatListener chatListener = chatListenerList.get(i);
+                        if (chatListener.isListenerEffective()) {
+                            chatListener.addChatMessage((ChatMessage) msg.obj);
                             i++;
                         } else {
                             chatListenerList.remove(i);
@@ -81,9 +81,9 @@ public class ServiceManagement {
                     break;
                 case TYPE_RE_LOGIN:
                     while (i < chatListenerList.size()) {
-                        ChatListener c = chatListenerList.get(i);
-                        if (c.isListenerEffective()) {
-                            c.reChatLogin((boolean) msg.obj);
+                        ChatListener chatListener = chatListenerList.get(i);
+                        if (chatListener.isListenerEffective()) {
+                            chatListener.reChatLogin((boolean) msg.obj);
                             i++;
                         } else {
                             chatListenerList.remove(i);
@@ -93,9 +93,9 @@ public class ServiceManagement {
                 case TYPE_RE_JOIN:
 
                     while (i < chatListenerList.size()) {
-                        ChatListener c = chatListenerList.get(i);
-                        if (c.isListenerEffective()) {
-                            c.reChatJoin((boolean) msg.obj);
+                        ChatListener chatListener = chatListenerList.get(i);
+                        if (chatListener.isListenerEffective()) {
+                            chatListener.reChatJoin((boolean) msg.obj);
                             i++;
                         } else {
                             chatListenerList.remove(i);
@@ -115,9 +115,9 @@ public class ServiceManagement {
 //                    break;
                 case CHAT_LOGIN_OK:
                     while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener ou = joinChatListenerList.get(i);
-                        if (ou.isListenerEffective()) {
-                            ou.onChatLogin(null);
+                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
+                        if (onJoinChatListener.isListenerEffective()) {
+                            onJoinChatListener.onChatLogin(null);
                             i++;
                         } else {
                             joinChatListenerList.remove(i);
@@ -126,9 +126,9 @@ public class ServiceManagement {
                     break;
                 case CHAT_LOGIN_EXCEPTION:
                     while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener ou = joinChatListenerList.get(i);
-                        if (ou.isListenerEffective()) {
-                            ou.onChatLogin(msg.obj + "");
+                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
+                        if (onJoinChatListener.isListenerEffective()) {
+                            onJoinChatListener.onChatLogin(msg.obj + "");
                             i++;
                         } else {
                             joinChatListenerList.remove(i);
@@ -137,9 +137,9 @@ public class ServiceManagement {
                     break;
                 case CHAT_LOGIN_LOADING:
                     while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener ou = joinChatListenerList.get(i);
-                        if (ou.isListenerEffective()) {
-                            ou.onChatLoginLoading();
+                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
+                        if (onJoinChatListener.isListenerEffective()) {
+                            onJoinChatListener.onChatLoginLoading();
                             i++;
                         } else {
                             joinChatListenerList.remove(i);
@@ -148,9 +148,9 @@ public class ServiceManagement {
                     break;
                 case CHAT_JOIN_ROOM_LOADING:
                     while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener ou = joinChatListenerList.get(i);
-                        if (ou.isListenerEffective()) {
-                            ou.onJoinRoomLoading();
+                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
+                        if (onJoinChatListener.isListenerEffective()) {
+                            onJoinChatListener.onJoinRoomLoading();
                             i++;
                         } else {
                             joinChatListenerList.remove(i);
@@ -159,9 +159,9 @@ public class ServiceManagement {
                     break;
                 case CHAT_USER_NULL:
                     while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener ou = joinChatListenerList.get(i);
-                        if (ou.isListenerEffective()) {
-                            ou.onChatUserNull();
+                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
+                        if (onJoinChatListener.isListenerEffective()) {
+                            onJoinChatListener.onChatUserNull();
                             i++;
                         } else {
                             joinChatListenerList.remove(i);

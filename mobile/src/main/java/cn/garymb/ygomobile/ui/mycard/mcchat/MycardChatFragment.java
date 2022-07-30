@@ -20,6 +20,7 @@ import com.ourygo.assistant.util.Util;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -55,6 +56,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         main_send = view.findViewById(R.id.main_send);
         main_send_message = view.findViewById(R.id.main_send_message);
         main_title = view.findViewById(R.id.main_title);
+        main_title.setText(getString(R.string.mc_chat) + "(" + serviceManagement.getMemberNum() + ")");
         btn_hide = view.findViewById(R.id.btn_hide);
         main_bottom_bar = view.findViewById(R.id.main_bottom_bar);
 
@@ -79,7 +81,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
     public void reChatJoin(boolean state) {
         if (state) {
             main_bottom_bar.setVisibility(View.VISIBLE);
-            main_title.setText(getString(R.string.mc_chat) + "("+serviceManagement.getMemberNum() + ")");
+            main_title.setText(getString(R.string.mc_chat) + "(" + serviceManagement.getMemberNum() + ")");
         } else {
             main_bottom_bar.setVisibility(View.GONE);
             main_title.setText(R.string.reChatJoining);
@@ -117,6 +119,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         });
         btn_hide.setOnClickListener(p1 -> {
             getParentFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+            homeActivity.fragment_mycard.mWebViewPlus.setVisibility(View.VISIBLE);
         });
     }
 

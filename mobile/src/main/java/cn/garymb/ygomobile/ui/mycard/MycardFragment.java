@@ -59,7 +59,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private TextView mNameView, mStatusView;
     private TextView tv_back_mc;
     //萌卡webview
-    private MyCardWebView mWebViewPlus;
+    public MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
     //聊天室
     private RelativeLayout rl_chat;
@@ -80,7 +80,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 }
                 mNameView.setText(ss[0]);
                 mStatusView.setText(ss[2]);
+
                 initData();
+
             }
         }
     };
@@ -92,7 +94,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        homeActivity = (HomeActivity)getActivity();
+        homeActivity = (HomeActivity) getActivity();
         View view;
         view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
@@ -119,13 +121,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         tv_message = view.findViewById(R.id.tv_message);
         pb_chat_loading = view.findViewById(R.id.pb_chat_loading);
 
-        SharedPreferences lastModified = getActivity().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        UserManagement.setUserName(lastModified.getString("user_name", null));
-        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
-
         serviceManagement = ServiceManagement.getDx();
         serviceManagement.addJoinRoomListener(this);
         serviceManagement.addListener(this);
+
+        initData();
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -178,14 +178,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
-        getChildFragmentManager().beginTransaction().add(R.id.fragment_content, homeActivity.fragment_mycard_chatting_room).hide(homeActivity.fragment_mycard_chatting_room).commit();
     }
 
     private void initData() {
+        SharedPreferences lastModified = getActivity().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
+        UserManagement.setUserName(lastModified.getString("user_name", null));
+        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
         if (UserManagement.getUserName() != null) {
             serviceManagement.start();
-        } else {
-
         }
     }
 
@@ -305,10 +305,20 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 break;
             case R.id.rl_chat:
                 //这里显示聊天室fragment
-                if (homeActivity.fragment_mycard_chatting_room.isHidden()) {
-                    getChildFragmentManager().beginTransaction().show(homeActivity.fragment_mycard_chatting_room).commit();
-                } else {
-                    getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                if (serviceManagement.isConnected()) {
+                    if (!homeActivity.fragment_mycard_chatting_room.isAdded()) {
+                        getChildFragmentManager().beginTransaction().add(R.id.fragment_content, homeActivity.fragment_mycard_chatting_room).commit();
+                        mWebViewPlus.setVisibility(View.INVISIBLE);
+                    } else {
+                        if (homeActivity.fragment_mycard_chatting_room.isHidden()) {
+                            getChildFragmentManager().beginTransaction().show(homeActivity.fragment_mycard_chatting_room).commit();
+                            mWebViewPlus.setVisibility(View.INVISIBLE);
+                        } else {
+                            getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                            mWebViewPlus.setVisibility(View.VISIBLE);
+                        }
+
+                    }
                 }
                 break;
         }
