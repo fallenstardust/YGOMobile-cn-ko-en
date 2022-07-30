@@ -47,12 +47,14 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.utils.HandlerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
+    private static final int TYPE_MC_LOGIN_FAILED = 1;
     private HomeActivity homeActivity;
     //头像昵称账号
     private ImageView mHeadView;
@@ -83,6 +85,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                 initData();
 
+            }
+            if (msg.what == TYPE_MC_LOGIN_FAILED) {
+                initData();
             }
         }
     };
@@ -371,6 +376,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
             tv_message.setText(R.string.logining_failed);
+            HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, exception);
             serviceManagement.setIsListener(false);
             YGOUtil.show(getString(R.string.failed_reason) + exception);
         }
@@ -390,8 +396,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onChatUserNull() {
-        Log.e("MyCardFragment", "为空");
         pb_chat_loading.setVisibility(View.GONE);
+        HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED,"exception");
         tv_message.setText(R.string.logining_failed);
     }
 

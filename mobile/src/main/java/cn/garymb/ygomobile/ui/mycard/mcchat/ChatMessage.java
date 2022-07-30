@@ -38,6 +38,7 @@ public class ChatMessage {
             String name = names.substring(names.indexOf(ServiceManagement.GROUP_ADDRESS) + ServiceManagement.GROUP_ADDRESS.length() + 1);
             ChatMessage cm = new ChatMessage();
             cm.setName(name);
+            cm.setAvatar(cm.getAvatarUrl(name));
             //cm.setTime(ss);
             cm.setMessage(message.getBody());
             return cm;
