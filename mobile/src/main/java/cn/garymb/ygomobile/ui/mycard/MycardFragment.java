@@ -62,7 +62,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
     //聊天室
-    private RelativeLayout rl_chat;
+    public RelativeLayout rl_chat;
     private TextView tv_message;
     private ProgressBar pb_chat_loading;
     private ServiceManagement serviceManagement;
@@ -309,13 +309,16 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     if (!homeActivity.fragment_mycard_chatting_room.isAdded()) {
                         getChildFragmentManager().beginTransaction().add(R.id.fragment_content, homeActivity.fragment_mycard_chatting_room).commit();
                         mWebViewPlus.setVisibility(View.INVISIBLE);
+                        rl_chat.setVisibility(View.INVISIBLE);
                     } else {
                         if (homeActivity.fragment_mycard_chatting_room.isHidden()) {
                             getChildFragmentManager().beginTransaction().show(homeActivity.fragment_mycard_chatting_room).commit();
                             mWebViewPlus.setVisibility(View.INVISIBLE);
+                            rl_chat.setVisibility(View.INVISIBLE);
                         } else {
                             getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
                             mWebViewPlus.setVisibility(View.VISIBLE);
+                            rl_chat.setVisibility(View.VISIBLE);
                         }
 
                     }

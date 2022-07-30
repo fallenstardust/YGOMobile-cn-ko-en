@@ -120,6 +120,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         btn_hide.setOnClickListener(p1 -> {
             getParentFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
             homeActivity.fragment_mycard.mWebViewPlus.setVisibility(View.VISIBLE);
+            homeActivity.fragment_mycard.rl_chat.setVisibility(View.VISIBLE);
         });
     }
 
