@@ -103,6 +103,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private CardView cv_banner;
     private TextView tv_banner_loading;
     private XBanner xb_banner;
+    private McNews mcNews;
     private ArrayList<McNews> mcNewsList;
     //ygopro功能
     private CardView cv_game;
@@ -191,6 +192,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     //轮播图
     public void initBanner(View view, Bundle saveBundle) {
+        Log.i("3.10.0看看", saveBundle+"");
         xb_banner = view.findViewById(R.id.xb_banner);
         cv_banner = view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
@@ -213,7 +215,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             tv_type = v.findViewById(R.id.tv_type);
             iv_image = v.findViewById(R.id.iv_image);
 
-            McNews mcNews = mcNewsList.get(position);
+            mcNews = mcNewsList.get(position);
             ImageUtil.setImageAndBackground(getContext(), mcNews.getImage_url(), iv_image);
             tv_time.setText(mcNews.getCreate_time());
             tv_title.setText(mcNews.getTitle());
@@ -222,7 +224,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (saveBundle == null) {
             findMcNews();
         } else {
-            HomeFragment.this.mcNewsList = (ArrayList<McNews>) saveBundle.getSerializable(ARG_MC_NEWS_LIST);
+            mcNewsList = (ArrayList<McNews>) saveBundle.getSerializable(ARG_MC_NEWS_LIST);
             if (mcNewsList != null)
                 handler.sendEmptyMessage(TYPE_BANNER_QUERY_OK);
             else

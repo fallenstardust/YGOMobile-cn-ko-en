@@ -10,7 +10,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 310000727
-        versionName "3.9.8"
+        versionName "3.10.0"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {

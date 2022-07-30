@@ -3,13 +3,13 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dialogshort"
     android:orientation="vertical">
 
     <FrameLayout
         android:id="@+id/fl_head"
         android:layout_width="match_parent"
         android:layout_height="60dp"
+        android:background="@drawable/dialogshort"
         android:orientation="vertical"
         android:padding="10dp">
 
@@ -95,7 +95,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:layout_gravity="bottom"
-                android:background="@drawable/button_bg"
+                android:background="@drawable/list_item_bg"
                 android:orientation="vertical"
                 android:padding="10dp">
 
