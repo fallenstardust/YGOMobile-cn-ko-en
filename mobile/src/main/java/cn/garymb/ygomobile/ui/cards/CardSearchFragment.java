@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -21,6 +24,10 @@ import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 
 import java.util.List;
@@ -65,13 +72,14 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private DialogPlus mDialog;
     private TextView mResult_count;
 
+    private View layoutView;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_search, container, false);
         initView(layoutView);
-        //showNewbieGuide();
+        showNewbieGuide();
         return layoutView;
     }
 
@@ -340,7 +348,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         super.onStop();
         CardFavorites.get().save();
     }
-/*
+
     //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide() {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
@@ -357,7 +365,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 .addGuidePage(
                         GuidePage.newInstance().setEverywhereCancelable(true)
                                 .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.btn_search), HighLight.Shape.CIRCLE, options)
+                                .addHighLightWithOptions(layoutView.findViewById(R.id.btn_search), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
                                 .setOnLayoutInflatedListener((view, controller) -> {
                                     TextView tv = view.findViewById(R.id.text_about);
@@ -369,7 +377,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 .addGuidePage(
                         GuidePage.newInstance().setEverywhereCancelable(true)
                                 .setBackgroundColor(0xbc000000)
-                                .addHighLightWithOptions(findViewById(R.id.search_result_count), HighLight.Shape.CIRCLE, options)
+                                .addHighLightWithOptions(layoutView.findViewById(R.id.search_result_count), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
                                 .setOnLayoutInflatedListener((view, controller) -> {
                                     TextView tv = view.findViewById(R.id.text_about);
@@ -380,5 +388,5 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 )
                 //.alwaysShow(true)//总是显示，调试时可以打开
                 .show();
-    }*/
+    }
 }

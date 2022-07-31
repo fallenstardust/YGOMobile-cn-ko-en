@@ -1326,7 +1326,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                         tv.setText(R.string.guide_view_move_card);
                                     })
                     )
-                    .alwaysShow(true)//总是显示，调试时可以打开
+                    //.alwaysShow(true)//总是显示，调试时可以打开
                     .show();
 
         }
