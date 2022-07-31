@@ -11,6 +11,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,6 +47,10 @@ import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -57,7 +64,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -83,6 +89,7 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
@@ -117,9 +124,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     //region ui onCreate/onDestroy
     private RecyclerView mRecyclerView;
-    private DeckAdapater mDeckAdapater;
+    public DeckAdapater mDeckAdapater;
     private final AppsSettings mSettings = AppsSettings.get();
     private BaseActivity mContext;
+    long exitLasttime = 0;
 
     private File mPreLoadFile;
     private DeckItemTouchHelper mDeckItemTouchHelper;
@@ -129,13 +137,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
-    private boolean isExit = false;
+
+    private View layoutView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         initView(layoutView);
@@ -144,6 +152,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
+        showNewbieGuide("deckmain");
         return layoutView;
     }
 
@@ -251,48 +260,24 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     @Override
-    public void onFirstUserVisible() {}
+    public void onFirstUserVisible() {
+    }
 
     @Override
-    public void onUserVisible() {}
+    public void onUserVisible() {
+    }
 
     @Override
-    public void onFirstUserInvisible() {}
+    public void onFirstUserInvisible() {
+    }
 
     @Override
     public void onUserInvisible() {
-        /*
-        if (mDeckAdapater.isChanged()) {
-            File ydk = mDeckAdapater.getYdkFile();
-            if (ydk != null && ydk.exists()) {
-                DialogPlus builder = new DialogPlus(getContext());
-                builder.setTitle(R.string.question);
-                builder.setMessage(R.string.quit_deck_tip);
-                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                builder.setRightButtonText(getString(R.string.save_quit));
-                builder.setLeftButtonText(getString(R.string.quit));
-                builder.setRightButtonListener((dlg, s) -> {
-                    doMenu(R.id.action_save);
-                    dlg.dismiss();
-                    isExit = true;
-                });
-                builder.setLeftButtonListener((dlg, s) -> {
-                    dlg.dismiss();
-                    isExit = true;
-                });
-                builder.show();
-            }
-        } else {
-            //super.onBackHome();
-        }
-        if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
-            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
-            return;
-        }
-        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerLayout.closeDrawer(Gravity.LEFT);
-            return;
-        }*/
+    }
+
+    @Override
+    public void onBackHome() {
+
     }
 
     @Override
@@ -642,68 +627,42 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return false;
     }
 
-    @Override
-    public void onBackHome() {
-        if (mDeckAdapater.isChanged()) {
-            File ydk = mDeckAdapater.getYdkFile();
-            if (ydk != null && ydk.exists()) {
-                DialogPlus builder = new DialogPlus(getContext());
-                builder.setTitle(R.string.question);
-                builder.setMessage(R.string.quit_deck_tip);
-                builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                builder.setRightButtonText(getString(R.string.save_quit));
-                builder.setLeftButtonText(getString(R.string.quit));
-                builder.setRightButtonListener((dlg, s) -> {
-                    doMenu(R.id.action_save);
-                    dlg.dismiss();
-                    isExit = true;
-                });
-                builder.setLeftButtonListener((dlg, s) -> {
-                    dlg.dismiss();
-                    isExit = true;
-                });
-                builder.show();
-            }
-        } else {
-            //super.onBackHome();
-        }
-        if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
-            mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
-            return;
-        }
-        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
-            mDrawerLayout.closeDrawer(Gravity.LEFT);
-            return;
+    public void askBeforeQuit() {
+        File ydk = mDeckAdapater.getYdkFile();
+        if (ydk != null && ydk.exists()) {
+            DialogPlus builder = new DialogPlus(getContext());
+            builder.setTitle(R.string.question);
+            builder.setMessage(R.string.quit_deck_tip);
+            builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+            builder.setLeftButtonListener((dlg, s) -> {
+                getActivity().finish();
+                dlg.dismiss();
+            });
+            builder.setRightButtonListener((dlg, s) -> {
+                dlg.dismiss();
+            });
+            builder.show();
         }
     }
 
     @Override
-    public void onBackPressed() {
+    public boolean onBackPressed() {
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
         } else if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
-        } else if (!isExit) {
-            if (mDeckAdapater.isChanged()) {
-                File ydk = mDeckAdapater.getYdkFile();
-                if (ydk != null && ydk.exists()) {
-                    DialogPlus builder = new DialogPlus(getContext());
-                    builder.setTitle(R.string.question);
-                    builder.setMessage(R.string.quit_deck_tip);
-                    builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-                    builder.setLeftButtonListener((dlg, s) -> {
-                        dlg.dismiss();
-                        isExit = true;
-                        //finish();
-                    });
-                    builder.show();
-                }
-            } else {
-                //super.onBackPressed();
-            }
+        } else if (mDeckAdapater.isChanged()) {
+            askBeforeQuit();
         } else {
-            //super.onBackPressed();
+            //与home相同双击返回
+            if (System.currentTimeMillis() - exitLasttime <= 3000) {
+                return false;
+            } else {
+                exitLasttime = System.currentTimeMillis();
+                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+            }
         }
+        return true;
     }
 
     private boolean checkLimit(Card cardInfo) {
@@ -1288,7 +1247,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public void onDragEnd() {
     }
 
-    /*/https://www.jianshu.com/p/99649af3b191
+    //https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide(String scene) {
         HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
                 .setOnHighlightDrewListener((canvas, rectF) -> {
@@ -1314,7 +1273,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
                                     .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
                                         //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
@@ -1325,7 +1284,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
                                     .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
                                         TextView tv = view.findViewById(R.id.text_about);
@@ -1336,7 +1295,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
                                     .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
                                         TextView tv = view.findViewById(R.id.text_about);
@@ -1347,7 +1306,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
                                     .setBackgroundColor(0xbc000000)
-                                    .addHighLightWithOptions(findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
                                         TextView tv = view.findViewById(R.id.text_about);
@@ -1367,9 +1326,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                         tv.setText(R.string.guide_view_move_card);
                                     })
                     )
-                    //.alwaysShow(true)//总是显示，调试时可以打开
+                    .alwaysShow(true)//总是显示，调试时可以打开
                     .show();
 
         }
-    }*/
+    }
 }

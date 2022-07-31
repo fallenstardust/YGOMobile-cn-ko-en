@@ -169,10 +169,10 @@
     <string name="all">All</string>
     <string name="refresh">Refresh</string>
     <string name="select_deck">Click here to select Deck</string>
-    <string name="quit_deck_tip">Quit deck editor?</string>
+    <string name="quit_deck_tip">Deck has not been saved yet, quit App?</string>
     <string name="deck_delete_text">Drag here to delete</string>
     <string name="question_keep_cur_deck">keep current cards?</string>
-    <string name="check_choose_file" formatted="false">Determine the choose %s ？</string>
+    <string name="check_choose_file" formatted="false">Determine the choose %s \?</string>
     <string name="settings_deck_delete_dialog">Delete Card use dialog</string>
     <string name="settings_deck_delete_dialog_desc">show delete card dialog in deck editor</string>
     <string name="delete_card" formatted="false">Delete %s ?</string>

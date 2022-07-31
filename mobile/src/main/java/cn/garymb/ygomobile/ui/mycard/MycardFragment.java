@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -56,6 +57,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_LOGIN = 0;
     private static final int TYPE_MC_LOGIN_FAILED = 1;
     private HomeActivity homeActivity;
+    long exitLasttime = 0;
     //头像昵称账号
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
@@ -287,14 +289,24 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     }
 
     @Override
-    public void onBackPressed() {
-        if (mWebViewPlus.getUrl().equals(mMyCard.getMcMainUrl())) {
-            return;
+    public boolean onBackPressed() {
+        if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
+            getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+            mWebViewPlus.setVisibility(View.VISIBLE);
+            rl_chat.setVisibility(View.VISIBLE);
+        } else if (mWebViewPlus.getUrl().equals(mMyCard.getMcMainUrl())) {
+            //与home相同双击返回
+            if (System.currentTimeMillis() - exitLasttime <= 3000) {
+                return false;
+            } else {
+                exitLasttime = System.currentTimeMillis();
+                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+            }
         }
-        if (mWebViewPlus.canGoBack()) {
+        if (mWebViewPlus.canGoBack() && !homeActivity.fragment_mycard_chatting_room.isVisible()) {
             mWebViewPlus.goBack();
-        } else {
         }
+        return true;
     }
 
     /**
@@ -397,7 +409,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onChatUserNull() {
         pb_chat_loading.setVisibility(View.GONE);
-        HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED,"exception");
+        HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, "exception");
         tv_message.setText(R.string.logining_failed);
     }
 

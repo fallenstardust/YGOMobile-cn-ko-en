@@ -179,7 +179,7 @@
         android:id="@+id/text_about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
+        android:layout_gravity="center"
         android:layout_margin="20dp"
         android:paddingBottom="70dp"
         android:shadowColor="#000000"

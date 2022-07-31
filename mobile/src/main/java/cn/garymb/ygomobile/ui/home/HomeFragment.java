@@ -192,7 +192,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     //轮播图
     public void initBanner(View view, Bundle saveBundle) {
-        Log.i("3.10.0看看", saveBundle+"");
+        Log.i("3.10.0看看", saveBundle + "");
         xb_banner = view.findViewById(R.id.xb_banner);
         cv_banner = view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
@@ -622,8 +622,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     @Override
-    public void onBackPressed() {
-
+    public boolean onBackPressed() {
+        return false;
     }
 
     /**

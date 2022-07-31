@@ -170,7 +170,7 @@
     <string name="donation">支持我们</string>
     <string name="refresh">刷新</string>
     <string name="select_deck">点击选择卡组</string>
-    <string name="quit_deck_tip">退出卡组编辑?</string>
+    <string name="quit_deck_tip">卡组未保存，是否退出本应用？</string>
     <string name="deck_delete_text">拖到这里删除</string>
     <string name="question_keep_cur_deck">保留当前卡牌？</string>
     <string name="check_choose_file" formatted="false">确定选择这个 %s ？</string>

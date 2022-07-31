@@ -46,6 +46,7 @@ import ocgcore.data.LimitList;
 
 public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallBack, CardSearcher.CallBack {
     public static final String SEARCH_MESSAGE = "searchMessage";
+    long exitLasttime = 0;
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapter;
@@ -74,7 +75,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         return layoutView;
     }
 
-    public void initView(View layoutView){
+    public void initView(View layoutView) {
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         intentSearchMessage = getActivity().getIntent().getStringExtra(CardSearchFragment.SEARCH_MESSAGE);
         mResult_count = layoutView.findViewById(R.id.search_result_count);
@@ -98,7 +99,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (mLimitManager.getCount() > 0) {
                 mCardLoader.setLimitList(mLimitManager.getTopLimit());
             }
-        }).fail((e)->{
+        }).fail((e) -> {
             Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
             Log.e(IrrlichtBridge.TAG, "load cdb", e);
         }).done((rs) -> {
@@ -246,13 +247,19 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     }
 
     @Override
-    public void onBackPressed() {
+    public boolean onBackPressed() {
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         } else {
-            onBack();
-            //super.onBackPressed();
+            //与home相同双击返回
+            if (System.currentTimeMillis() - exitLasttime <= 3000) {
+                return false;
+            } else {
+                exitLasttime = System.currentTimeMillis();
+                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+            }
         }
+        return true;
     }
 
     protected void onCardClick(int pos, CardListProvider clt) {
@@ -273,7 +280,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), mImageLoader, mStringManager);
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if(mCardSelector.isShowFavorite()) {
+                    if (mCardSelector.isShowFavorite()) {
                         mCardSelector.showFavorites(false);
                     }
                 });

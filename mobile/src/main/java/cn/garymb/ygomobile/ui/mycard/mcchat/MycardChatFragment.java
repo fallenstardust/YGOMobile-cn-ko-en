@@ -159,7 +159,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
     }
 
     @Override
-    public void onBackPressed() {
-
+    public boolean onBackPressed() {
+        return true;
     }
 }

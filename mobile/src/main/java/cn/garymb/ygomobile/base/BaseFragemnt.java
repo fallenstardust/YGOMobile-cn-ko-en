@@ -172,5 +172,5 @@ public abstract class BaseFragemnt extends Fragment {
 
     public abstract void onBackHome();
 
-    public abstract void onBackPressed();
+    public abstract boolean onBackPressed();
 }

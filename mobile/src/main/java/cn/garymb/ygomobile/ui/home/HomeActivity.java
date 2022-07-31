@@ -264,14 +264,21 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
     @Override
     public void onBackPressed() {
+        if (fragment_mycard.isVisible() && fragment_mycard.onBackPressed())
+            return;
+        if (fragment_search.isVisible() && fragment_search.onBackPressed())
+            return;
+        if (fragment_deck_cards.isVisible() && fragment_deck_cards.onBackPressed())
+            return;
+
         if (System.currentTimeMillis() - exitLasttime <= 3000) {
             super.onBackPressed();
         } else {
-            showToast(R.string.back_tip, Toast.LENGTH_SHORT);
             exitLasttime = System.currentTimeMillis();
+            if (fragment_home.isVisible() || fragment_settings.isVisible())
+                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
         }
     }
-
 
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
 
