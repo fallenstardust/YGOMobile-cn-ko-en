@@ -320,6 +320,7 @@
     <string name="guide_button_search_result">click to see search result\n also here will shows favorite cards</string>
     <string name="guide_view_deck_manager">click to change Decks\n you can manage deck categories here</string>
     <string name="guide_view_move_card">press a card to move it to other place\nlong-press this card to delete it</string>
+    <string name="guide_view_banner">Mycard News, you can click to see\only in Chinese now, Sorry</string>
     <string name="title_delete_ex">delete expansions</string>
     <string name="about_delete_ex">if you need to delte all expansion cards</string>
     <string name="file_installed">file loaded</string>
