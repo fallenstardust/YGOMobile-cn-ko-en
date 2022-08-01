@@ -222,6 +222,7 @@ public:
 	static int32 card_is_attackable(lua_State *L);
 	static int32 card_is_chain_attackable(lua_State *L);
 	static int32 card_is_faceup(lua_State *L);
+	static int32 card_is_faceup_ex(lua_State *L);
 	static int32 card_is_attack_pos(lua_State *L);
 	static int32 card_is_facedown(lua_State *L);
 	static int32 card_is_defense_pos(lua_State *L);
@@ -329,6 +330,7 @@ public:
 	static int32 effect_is_has_type(lua_State *L);
 	static int32 effect_is_activatable(lua_State *L);
 	static int32 effect_is_activated(lua_State *L);
+	static int32 effect_is_cost_checked(lua_State *L);
 	static int32 effect_get_activate_location(lua_State *L);
 	static int32 effect_get_activate_sequence(lua_State *L);
 	static int32 effect_check_count_limit(lua_State *L);
@@ -486,6 +488,7 @@ public:
 	static int32 duel_chain_attack(lua_State *L);
 	static int32 duel_readjust(lua_State *L);
 	static int32 duel_adjust_instantly(lua_State *L);
+	static int32 duel_adjust_all(lua_State *L);
 
 	static int32 duel_get_field_group(lua_State *L);
 	static int32 duel_get_field_group_count(lua_State *L);
