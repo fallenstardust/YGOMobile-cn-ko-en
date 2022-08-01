@@ -4,6 +4,11 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,6 +37,13 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.app.hubert.guide.NewbieGuide;
+import com.app.hubert.guide.core.Controller;
+import com.app.hubert.guide.listener.OnHighlightDrewListener;
+import com.app.hubert.guide.listener.OnLayoutInflatedListener;
+import com.app.hubert.guide.model.GuidePage;
+import com.app.hubert.guide.model.HighLight;
+import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
@@ -116,12 +128,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private CardView cv_help;
 
     private Bundle mBundle;
+    private View layoutView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View layoutView;
         layoutView = inflater.inflate(R.layout.fragment_home, container, false);
         initView(layoutView);
         initBanner(layoutView, savedInstanceState);
@@ -133,6 +145,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
+        //showNewbieGuide("homePage");
         return layoutView;
     }
 
@@ -693,4 +706,146 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;
         }
     }
+
+
+    /*//https://www.jianshu.com/p/99649af3b191
+    public void showNewbieGuide(String scene) {
+        HighlightOptions options = new HighlightOptions.Builder()//绘制一个高亮虚线圈
+                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
+                    @Override
+                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(20);
+                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                        canvas.drawCircle(rectF.centerX(), rectF.centerY(), rectF.width() / 2 + 10, paint);
+                    }
+                }).build();
+        HighlightOptions options2 = new HighlightOptions.Builder()//绘制一个高亮虚线矩形
+                .setOnHighlightDrewListener(new OnHighlightDrewListener() {
+                    @Override
+                    public void onHighlightDrew(Canvas canvas, RectF rectF) {
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(20);
+                        paint.setPathEffect(new DashPathEffect(new float[]{20, 20}, 0));
+                        canvas.drawRect(rectF, paint);
+                    }
+                }).build();
+        if (scene == "homePage") {
+            NewbieGuide.with(this)//with方法可以传入Activity或者Fragment，获取引导页的依附者
+                    .setLabel("homepageGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.cv_banner), HighLight.Shape.RECTANGLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            //可只创建一个引导layout并把相关内容都放在其中并GONE，获得ID并初始化相应为显示
+                                            TextView tv = view.findViewById(R.id.text_about);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_view_banner);
+                                        }
+                                    })
+
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE, options2)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_abt_mid_right);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_serverlist);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_abt_mid_right);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_serverlist);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_abt_mid_right);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_serverlist);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.action_help), HighLight.Shape.RECTANGLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_abt_mid_left);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_help);
+                                        }
+                                    })
+                    )
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .addHighLightWithOptions(layoutView.findViewById(R.id.nav_webpage), HighLight.Shape.RECTANGLE, options)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            TextView tv = view.findViewById(R.id.text_abt_mid_left);
+                                            tv.setVisibility(View.VISIBLE);
+                                            tv.setText(R.string.guide_help);
+                                        }
+                                    })
+                    )
+                    //.alwaysShow(true)//总是显示，调试时可以打开
+                    .show();
+        } else if (scene == "joinRoom") {
+            NewbieGuide.with(this)
+                    .setLabel("joinRoomGuide")
+                    .addGuidePage(
+                            GuidePage.newInstance().setEverywhereCancelable(true)
+                                    .setBackgroundColor(0xbc000000)
+                                    .setLayoutRes(R.layout.view_guide_home)
+                                    .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
+
+                                        @Override
+                                        public void onLayoutInflated(View view, Controller controller) {
+                                            view.findViewById(R.id.view_abt_join_room).setVisibility(View.VISIBLE);
+                                        }
+                                    })
+
+                    )
+                    .show();
+        }
+    }*/
 }

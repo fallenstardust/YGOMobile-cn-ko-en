@@ -319,6 +319,7 @@
     <string name="guide_button_search_result">点击显示搜索结果\n默认显示收藏的卡片</string>
     <string name="guide_view_deck_manager">点击切换卡组\n也可以在此管理多个卡组分类</string>
     <string name="guide_view_move_card">按住一张卡片可以拖动到其他位置\n长按这张卡片即可删除它</string>
+    <string name="guide_view_banner">萌卡新闻轮播，可以点击查看内容</string>
     <string name="title_delete_ex">删除扩展卡包</string>
     <string name="ask_delete_ex">点击确认以清空</string>
     <string name="about_delete_ex">如果遇到拓展卡包问题时删除是个不错的办法</string>
