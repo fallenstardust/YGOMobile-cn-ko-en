@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
@@ -95,7 +96,7 @@ public class MyCard {
     public static final String PACKAGE_NAME_EZ = "com.ourygo.ez";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final DefWebViewClient mDefWebViewClient;
-    private final User mUser = new User();
+    public final User mUser = new User();
     private final SharedPreferences lastModified;
     private MyCardListener mMyCardListener;
     private Activity mContext;
@@ -119,6 +120,8 @@ public class MyCard {
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
                     lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
                     lastModified.edit().putString("user_name", mUser.username).apply();
+                    Log.i(BuildConfig.VERSION_NAME + "看看MyCard类",
+                            lastModified.getString("user_name", null) + "和" + lastModified.getString("user_external_id", null));
                     //UserManagement.setUserName(mUser.username);
                     //UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;

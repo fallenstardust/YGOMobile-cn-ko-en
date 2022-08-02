@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
@@ -313,7 +315,7 @@ public class ServiceManagement {
 
         name = UserManagement.getUserName();
         password = UserManagement.getUserPassword();
-
+        Log.i(BuildConfig.VERSION_NAME +"看看",name+"+"+password);
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
             isStartLoading=false;
             han.sendEmptyMessage(CHAT_USER_NULL);

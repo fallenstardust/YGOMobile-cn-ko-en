@@ -14,9 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -37,6 +35,7 @@ import com.tencent.smtt.sdk.WebView;
 import java.text.MessageFormat;
 import java.util.List;
 
+import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -45,7 +44,6 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
-import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.HandlerUtil;
@@ -80,16 +78,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             if (msg.what == TYPE_MC_LOGIN) {
                 String[] ss = (String[]) msg.obj;
                 if (!TextUtils.isEmpty(ss[1])) {
-                    GlideCompat.with(getActivity()).load(Uri.parse(ss[1])).into(mHeadView);
+                    GlideCompat.with(getActivity()).load(Uri.parse(ss[1])).into(mHeadView);//刷新头像图片
                 }
-                mNameView.setText(ss[0]);
-                mStatusView.setText(ss[2]);
-
-                initData();
-
+                mNameView.setText(ss[0]);//刷新用户名
+                mStatusView.setText(ss[2]);//刷新账号信息
+                serviceManagement.start();
             }
             if (msg.what == TYPE_MC_LOGIN_FAILED) {
-                initData();
+
             }
         }
     };
@@ -105,7 +101,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         View view;
         view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
-        initData();
         return view;
     }
 
@@ -131,8 +126,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         serviceManagement = ServiceManagement.getDx();
         serviceManagement.addJoinRoomListener(this);
         serviceManagement.addListener(this);
-
-        initData();
+        serviceManagement.start();
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -185,15 +179,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
-    }
-
-    private void initData() {
-        SharedPreferences lastModified = getActivity().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        UserManagement.setUserName(lastModified.getString("user_name", null));
-        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
-        if (UserManagement.getUserName() != null) {
-            serviceManagement.start();
-        }
     }
 
     @Override
@@ -339,6 +324,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         }
 
                     }
+                } else {
+                    //点击重新登录
+                    serviceManagement.start();
                 }
                 break;
         }
