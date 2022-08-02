@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import static android.app.Activity.RESULT_OK;
 
+import static okhttp3.internal.Util.UTF_8;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ClipData;
@@ -14,6 +16,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +59,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_LOGIN = 0;
     private static final int TYPE_MC_LOGIN_FAILED = 1;
     private HomeActivity homeActivity;
+    private SharedPreferences lastModified;
     long exitLasttime = 0;
     //头像昵称账号
     private ImageView mHeadView;
@@ -98,6 +103,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         homeActivity = (HomeActivity) getActivity();
+        lastModified = App.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         View view;
         view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
@@ -338,6 +344,18 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         message.obj = new String[]{name, icon, statu};
         message.what = TYPE_MC_LOGIN;
         handler.sendMessage(message);
+        Log.i(BuildConfig.VERSION_NAME + "看看URL", mWebViewPlus.getUrl() + "");
+        if (mWebViewPlus.getUrl() != null) {
+            String url = mWebViewPlus.getUrl();
+            if (url.startsWith(mMyCard.return_sso_url_ygopro_lobby)) {
+                String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
+                Uri info = new Uri.Builder().encodedQuery(data).build();
+                mMyCard.mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
+                Log.i(BuildConfig.VERSION_NAME + "看看mUser", mMyCard.mUser.username+"/"+mMyCard.mUser.external_id);
+                lastModified.edit().putString("user_external_id", mMyCard.mUser.external_id + "").apply();
+
+            }
+        }
     }
 
     @Override

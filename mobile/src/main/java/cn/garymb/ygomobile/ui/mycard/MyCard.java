@@ -47,6 +47,7 @@ public class MyCard {
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
     private static final String mCommunityUrl = "https://ygobbs.com/login";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
+    public static final String return_sso_url_ygopro_lobby = " https://mycard.moe/mobile/ygopro/lobby?";
     private static final String HOST_MC = "mycard.moe";
     private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
     public static final String DOWNLOAD_URL_EZ = "http://t.cn/EchWyLi";
@@ -107,6 +108,7 @@ public class MyCard {
         mDefWebViewClient = new DefWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.i(BuildConfig.VERSION_NAME + "看看MyCard类url", url);
                 if (url.startsWith(return_sso_url)) {
                     String sso = Uri.parse(url).getQueryParameter("sso");
                     String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
@@ -120,8 +122,6 @@ public class MyCard {
                     mUser.moderator = info.getBooleanQueryParameter("moderator", false);
                     lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
                     lastModified.edit().putString("user_name", mUser.username).apply();
-                    Log.i(BuildConfig.VERSION_NAME + "看看MyCard类",
-                            lastModified.getString("user_name", null) + "和" + lastModified.getString("user_external_id", null));
                     //UserManagement.setUserName(mUser.username);
                     //UserManagement.setUserPassword(mUser.external_id+"");
                     mUser.login = true;

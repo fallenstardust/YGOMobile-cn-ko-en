@@ -315,7 +315,7 @@ public class ServiceManagement {
 
         name = UserManagement.getUserName();
         password = UserManagement.getUserPassword();
-        Log.i(BuildConfig.VERSION_NAME +"看看",name+"+"+password);
+        Log.i(BuildConfig.VERSION_NAME +"kk",name+"+"+password);
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
             isStartLoading=false;
             han.sendEmptyMessage(CHAT_USER_NULL);
