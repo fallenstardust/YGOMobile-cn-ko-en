@@ -716,7 +716,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wPosSelect = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
-        ChangeToIGUIImageWindow(wPosSelect, bgPosSelect, imageManager.tDialog_L);
+        ChangeToIGUIImageWindow1(wPosSelect, &bgPosSelect, imageManager.tDialog_L);
 	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(50 * xScale, 25 * yScale, 190 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_AU);
 	btnPSAU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.5f * yScale, CARD_IMG_HEIGHT * 0.5f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, rect<s32>(200 * xScale, 25 * yScale, 340 * xScale, 165 * yScale), wPosSelect, BUTTON_POS_AD);
@@ -2070,7 +2070,14 @@ void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUII
 	bgwindow = env->addImage(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
 	bgwindow->setImage(image);
 	bgwindow->setScaleImage(true);
-
+}
+void Game::ChangeToIGUIImageWindow1(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** _bgwindow, irr::video::ITexture* image) {
+    window->setDrawBackground(false);
+    recti pos = window->getRelativePosition();
+	*_bgwindow = env->addImage(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
+	irr::gui::IGUIImage* bgwindow = *_bgwindow;
+	bgwindow->setImage(image);
+	bgwindow->setScaleImage(true);
 }
 void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font) {
     button->setDrawBorder(false);

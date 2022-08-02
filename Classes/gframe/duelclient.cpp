@@ -1830,7 +1830,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			filter <<= 1;
 		}
 		if(count == 4) startpos = 10;
-		else if(count == 3) startpos = 82;
+		else if(count == 3) startpos = 50;
 		else startpos = 50;
 		if(positions & 0x1) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSAU, code));
@@ -1854,6 +1854,10 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			mainGame->btnPSDD->setVisible(true);
 			startpos += 150;
 		} else mainGame->btnPSDD->setVisible(false);
+		recti pos = mainGame->wPosSelect->getRelativePosition();
+		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + count * 150 * mainGame->xScale + 100 * mainGame->xScale;
+		mainGame->wPosSelect->setRelativePosition(pos);
+		mainGame->bgPosSelect->setRelativePosition(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()));
 		mainGame->gMutex.lock();
 		mainGame->PopupElement(mainGame->wPosSelect);
 		mainGame->gMutex.unlock();
