@@ -183,8 +183,7 @@ public:
 	void CloseGameWindow();
 	void CloseDuelWindow();
 	void OnGameClose();
-	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgwindow, irr::video::ITexture* image);
-	void ChangeToIGUIImageWindow1(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** bgwindow, irr::video::ITexture* image);
+	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
 	int LocalPlayer(int player);
