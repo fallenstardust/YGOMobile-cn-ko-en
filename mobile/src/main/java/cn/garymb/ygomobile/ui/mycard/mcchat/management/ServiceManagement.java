@@ -282,12 +282,11 @@ public class ServiceManagement {
             con.disconnect();
         }
         setIsConnected(false);
+        setIsListener(false);
     }
 
     public void disClass() {
         disSerVice();
-        setIsConnected(false);
-        setIsListener(false);
         chatMessageList.clear();
         chatListenerList.clear();
         joinChatListenerList.clear();

@@ -351,6 +351,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                 lastModified.edit().putString("user_name", mMyCard.mUser.username).apply();
                 lastModified.edit().putString("user_external_id", String.valueOf(mMyCard.mUser.external_id)).apply();
+                serviceManagement.disSerVice();//先退出当前账号，待TYPE_MC_LOGIN处重新执行start（）
             }
         }
         //登录成功发送message
