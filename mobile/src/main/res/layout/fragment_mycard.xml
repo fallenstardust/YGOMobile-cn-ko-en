@@ -51,7 +51,8 @@
                     android:lines="1"
                     android:text=""
                     android:textColor="@color/holo_orange_bright"
-                    android:textSize="10sp" />
+                    android:textSize="10sp"
+                    android:visibility="invisible"/>
             </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.appcompat.widget.LinearLayoutCompat>
 

@@ -3,16 +3,13 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.muc.MultiUserChat;
@@ -312,10 +309,9 @@ public class ServiceManagement {
         SharedPreferences lastModified = App.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         UserManagement.setUserName(lastModified.getString("user_name", null));
         UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
-
         name = UserManagement.getUserName();
         password = UserManagement.getUserPassword();
-        Log.i(BuildConfig.VERSION_NAME +"kk",name+"+"+password);
+        Log.i(BuildConfig.VERSION_NAME +"看看用户和ID",name+"+"+password);
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
             isStartLoading=false;
             han.sendEmptyMessage(CHAT_USER_NULL);
@@ -358,7 +354,7 @@ public class ServiceManagement {
                     han.sendMessage(me);
                 } catch (Exception e) {
                     isStartLoading=false;
-                    me.obj = "其他错误：" + e;
+                    me.obj = "otherException：" + e;
                     e.printStackTrace();
                     han.sendMessage(me);
                 }

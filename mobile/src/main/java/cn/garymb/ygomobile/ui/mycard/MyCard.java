@@ -47,9 +47,8 @@ public class MyCard {
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
     private static final String mCommunityUrl = "https://ygobbs.com/login";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
-    public static final String return_sso_url_ygopro_lobby = " https://mycard.moe/mobile/ygopro/lobby?";
     private static final String HOST_MC = "mycard.moe";
-    private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
+    public static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
     public static final String DOWNLOAD_URL_EZ = "http://t.cn/EchWyLi";
 
     public static final String MYCARD_NEWS_URL = "https://api.mycard.moe/apps.json";
@@ -108,7 +107,6 @@ public class MyCard {
         mDefWebViewClient = new DefWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.i(BuildConfig.VERSION_NAME + "看看MyCard类url", url);
                 if (url.startsWith(return_sso_url)) {
                     String sso = Uri.parse(url).getQueryParameter("sso");
                     String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);

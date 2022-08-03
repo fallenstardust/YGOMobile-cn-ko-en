@@ -132,7 +132,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         serviceManagement = ServiceManagement.getDx();
         serviceManagement.addJoinRoomListener(this);
         serviceManagement.addListener(this);
-        serviceManagement.start();
 
         WebSettings settings = mWebViewPlus.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + MessageFormat.format(
@@ -340,22 +339,25 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onLogin(String name, String icon, String statu) {
+        //重登、切换用户即时更新用户和id信息
+        if (mWebViewPlus.getUrl() != null) {
+            String url = mWebViewPlus.getUrl();
+            if (url.startsWith(mMyCard.MC_MAIN_URL)) {
+
+                String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
+                Uri info = new Uri.Builder().encodedQuery(data).build();
+                mMyCard.mUser.username =info.getQueryParameter("username");
+                mMyCard.mUser.external_id = Integer.parseInt(info.getQueryParameter("id"));
+
+                lastModified.edit().putString("user_name", mMyCard.mUser.username).apply();
+                lastModified.edit().putString("user_external_id", String.valueOf(mMyCard.mUser.external_id)).apply();
+            }
+        }
+        //登录成功发送message
         Message message = new Message();
         message.obj = new String[]{name, icon, statu};
         message.what = TYPE_MC_LOGIN;
         handler.sendMessage(message);
-        Log.i(BuildConfig.VERSION_NAME + "看看URL", mWebViewPlus.getUrl() + "");
-        if (mWebViewPlus.getUrl() != null) {
-            String url = mWebViewPlus.getUrl();
-            if (url.startsWith(mMyCard.return_sso_url_ygopro_lobby)) {
-                String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
-                Uri info = new Uri.Builder().encodedQuery(data).build();
-                mMyCard.mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
-                Log.i(BuildConfig.VERSION_NAME + "看看mUser", mMyCard.mUser.username+"/"+mMyCard.mUser.external_id);
-                lastModified.edit().putString("user_external_id", mMyCard.mUser.external_id + "").apply();
-
-            }
-        }
     }
 
     @Override
@@ -442,7 +444,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (state) {
             tv_message.setText(R.string.login_succeed);
         } else {
-            tv_message.setText(R.string.miss_connection);
+            tv_message.setText(R.string.reChatJoining);
         }
     }
 

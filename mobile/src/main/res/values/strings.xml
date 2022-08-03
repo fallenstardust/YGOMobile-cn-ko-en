@@ -339,9 +339,8 @@
     <string name="personal">My</string>
     <string name="login_mycard">login</string>
     <string name="logout_mycard">Logout mycard\?</string>
-    <string name="back_to_mycard_home">return to MyCard homepage</string>
+    <string name="back_to_mycard_home">back to homepage</string>
     <string name="edit_your_message">Input your message</string>
     <string name="login_succeed">Chatroom logined</string>
-    <string name="miss_connection">miss connection, relogining</string>
     <string name="reChatJoining">relogining\.\.\.</string>
 </resources>

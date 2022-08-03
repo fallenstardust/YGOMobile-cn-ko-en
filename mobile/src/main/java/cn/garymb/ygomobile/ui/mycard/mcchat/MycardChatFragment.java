@@ -73,7 +73,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         if (state) {
             main_title.setText(R.string.logining_in);
         } else {
-            main_title.setText(R.string.miss_connection);
+            main_title.setText(R.string.reChatJoining);
         }
     }
 
