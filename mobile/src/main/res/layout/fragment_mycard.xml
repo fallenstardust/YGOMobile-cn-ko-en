@@ -27,16 +27,12 @@
                 android:layout_marginRight="@dimen/dp_10"
                 android:src="@drawable/avatar" />
 
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""
+                    android:layout_gravity="center"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -54,7 +50,6 @@
                     android:textColor="@color/holo_orange_bright"
                     android:textSize="10sp"
                     android:visibility="invisible"/>
-            </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.AppCompatButton
