@@ -3,6 +3,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#dd0B2241"
     android:orientation="vertical">
 
     <FrameLayout
