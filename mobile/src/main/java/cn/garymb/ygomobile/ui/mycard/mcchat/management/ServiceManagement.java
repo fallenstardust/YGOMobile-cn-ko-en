@@ -215,7 +215,7 @@ public class ServiceManagement {
                 .setXmppDomain("mycard.moe")
                 .setKeystoreType(null)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
-                .setHost("chat.mycard.moe")
+                .setHost("chat.moecube.com")
                 .build();
         con = new XMPPTCPConnection(config);
         return con;
