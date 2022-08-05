@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -62,6 +63,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private SharedPreferences lastModified;
     long exitLasttime = 0;
     //头像昵称账号
+    private LinearLayout ll_head_login;
     private ImageView mHeadView;
     private TextView mNameView, mStatusView;
     private TextView tv_back_mc;
@@ -119,6 +121,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         tv_back_mc = view.findViewById(R.id.tv_back_mc);
         tv_back_mc.setOnClickListener(this);
 
+        ll_head_login = view.findViewById(R.id.ll_head_login);
+        ll_head_login.setOnClickListener(this);
         mHeadView = view.findViewById(R.id.img_head);
         mNameView = view.findViewById(R.id.tv_name);
         mStatusView = view.findViewById(R.id.tv_dp);
@@ -307,6 +311,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.ll_head_login:
+                mWebViewPlus.loadUrl("https://accounts.moecube.com/profiles");
+                break;
             case R.id.tv_back_mc:
                 onHome();
                 break;

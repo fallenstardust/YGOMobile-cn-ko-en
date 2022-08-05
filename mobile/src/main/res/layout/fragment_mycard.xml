@@ -3,7 +3,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#dd0B2241"
+    android:background="#80000000"
     android:orientation="vertical">
 
     <FrameLayout
@@ -14,25 +14,25 @@
         android:orientation="vertical"
         android:padding="10dp">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:id="@+id/ll_head_login"
+            android:layout_gravity="right"
             android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/img_head"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginRight="@dimen/dp_10"
-                android:src="@drawable/avatar" />
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=""
                     android:layout_gravity="center"
+                    android:text=""
                     android:textColor="@color/holo_green_bright"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -43,20 +43,29 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/tv_name"
                     android:layout_marginTop="5dp"
-                    android:layout_toRightOf="@id/img_head"
                     android:ellipsize="end"
                     android:lines="1"
                     android:text=""
                     android:textColor="@color/holo_orange_bright"
                     android:textSize="10sp"
-                    android:visibility="invisible"/>
-        </androidx.appcompat.widget.LinearLayoutCompat>
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_head"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="@dimen/dp_10"
+                android:src="@drawable/avatar" />
+
+
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/tv_back_mc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
+            android:layout_gravity="left"
             android:background="@drawable/button_bg"
             android:gravity="center"
             android:text="@string/back_to_mycard_home"
