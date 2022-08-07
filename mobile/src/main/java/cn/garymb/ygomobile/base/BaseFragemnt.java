@@ -169,4 +169,8 @@ public abstract class BaseFragemnt extends Fragment {
      * fragment不可见（切换掉或者onPause）
      */
     public abstract void onUserInvisible();
+
+    public abstract void onBackHome();
+
+    public abstract boolean onBackPressed();
 }

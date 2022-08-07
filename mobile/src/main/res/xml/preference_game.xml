@@ -2,12 +2,19 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/settings_about">
         <Preference
+            android:key="pref_key_reset_game_res"
+            android:persistent="true"
+            android:title="@string/reset_game_res" />
+        <Preference
             android:key="pref_key_about_check_update"
             android:persistent="true"
             android:title="@string/settings_about_check_update" />
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log" />
+        <Preference
+            android:key="pref_key_join_qq"
+            android:title="@string/Join_QQ" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_game">
@@ -128,11 +135,11 @@
             android:title="@string/settings_game_diy_card_db"/>-->
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/settings_test_options">
+    <!--PreferenceCategory android:title="@string/settings_test_options">
 
         <Preference
             android:key="pref_key_test_replace_kernel"
             android:persistent="true"
             android:title="@string/settings_test_replace_kernel" />
-    </PreferenceCategory>
+    </PreferenceCategory-->
 </PreferenceScreen>

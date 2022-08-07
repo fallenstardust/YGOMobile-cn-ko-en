@@ -3,8 +3,6 @@ package cn.garymb.ygomobile.ui.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import java.net.CookieManager;
-
 import cn.garymb.ygomobile.ui.mycard.X5WebView;
 
 

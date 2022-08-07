@@ -12,6 +12,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.ourygo.assistant.util.PermissionUtil;
 import com.ourygo.assistant.util.Util;
@@ -118,6 +120,27 @@ public class YGOUtil {
         if (cmb == null)
             return;
         cmb.setPrimaryClip(ClipData.newPlainText(null, message));//复制命令
+    }
+
+    public static boolean isVisBottom(RecyclerView recyclerView){
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        //屏幕中最后一个可见子项的position
+        int lastVisibleItemPosition = layoutManager.findLastCompletelyVisibleItemPosition();
+        //当前屏幕所看到的子项个数
+        int visibleItemCount = layoutManager.getChildCount();
+        //当前RecyclerView的所有子项个数
+        int totalItemCount = layoutManager.getItemCount();
+        //RecyclerView的滑动状态
+        int state = recyclerView.getScrollState();
+
+        final int offset = recyclerView.computeVerticalScrollOffset();
+        final int range = recyclerView.computeVerticalScrollRange() - recyclerView.computeVerticalScrollExtent();
+        Log.e("MycardFragment",(visibleItemCount > 0 )+"  "+( lastVisibleItemPosition >= (totalItemCount - 3 ))+"  "+( state == recyclerView.SCROLL_STATE_IDLE)+"高度"+(totalItemCount-3)+"  "+lastVisibleItemPosition+"  "+(range-offset));
+        if(visibleItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 3 && state == recyclerView.SCROLL_STATE_IDLE){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static void startDuelService(Context context) {

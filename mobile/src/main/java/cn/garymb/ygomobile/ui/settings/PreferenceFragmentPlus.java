@@ -1,4 +1,8 @@
-package cn.garymb.ygomobile.ui.preference;
+package cn.garymb.ygomobile.ui.settings;
+
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 
 import android.app.Activity;
 import android.content.Context;
@@ -26,10 +30,6 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.utils.FileUtils;
-
-import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
-import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;
-import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;

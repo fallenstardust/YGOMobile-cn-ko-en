@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -217,7 +215,7 @@ public class ServiceManagement {
                 .setXmppDomain("mycard.moe")
                 .setKeystoreType(null)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
-                .setHost("chat.mycard.moe")
+                .setHostAddress(InetAddress.getByName("mchat.moecube.com"))
                 .build();
         con = new XMPPTCPConnection(config);
         return con;
@@ -284,12 +282,11 @@ public class ServiceManagement {
             con.disconnect();
         }
         setIsConnected(false);
+        setIsListener(false);
     }
 
     public void disClass() {
         disSerVice();
-        setIsConnected(false);
-        setIsListener(false);
         chatMessageList.clear();
         chatListenerList.clear();
         joinChatListenerList.clear();

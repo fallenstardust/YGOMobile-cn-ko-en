@@ -180,7 +180,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_margin="20dp"
+        android:layout_margin="50dp"
         android:paddingBottom="70dp"
         android:shadowColor="#000000"
         android:shadowDy="2"

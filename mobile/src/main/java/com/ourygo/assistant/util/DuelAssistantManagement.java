@@ -4,7 +4,6 @@ package com.ourygo.assistant.util;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.ourygo.assistant.base.listener.OnClipChangedListener;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;

@@ -1,11 +1,11 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import static cn.garymb.ygomobile.Constants.ASSET_LIMIT_PNG;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 
 import cn.garymb.ygomobile.utils.BitmapUtil;
-
-import static cn.garymb.ygomobile.Constants.ASSET_LIMIT_PNG;
 
 public class ImageTop {
     public final Bitmap forbidden;

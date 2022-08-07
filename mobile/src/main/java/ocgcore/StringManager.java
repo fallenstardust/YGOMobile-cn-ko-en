@@ -3,9 +3,6 @@ package ocgcore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
-
-import androidx.core.content.res.TypedArrayUtils;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -16,7 +13,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;

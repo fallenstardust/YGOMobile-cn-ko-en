@@ -38,6 +38,7 @@ public class ChatMessage {
             String name = names.substring(names.indexOf(ServiceManagement.GROUP_ADDRESS) + ServiceManagement.GROUP_ADDRESS.length() + 1);
             ChatMessage cm = new ChatMessage();
             cm.setName(name);
+            cm.setAvatar(cm.getAvatarUrl(name));
             //cm.setTime(ss);
             cm.setMessage(message.getBody());
             return cm;
@@ -72,7 +73,7 @@ public class ChatMessage {
     }
 
     public String getAvatarUrl(String userName) {
-        return "https://api.moecube.com/accounts/users/" + userName + ".png";
+        return "https://sapi.moecube.com:444/avatar/avatar/" + userName + "/100/ygomobile.png";
     }
 
 }

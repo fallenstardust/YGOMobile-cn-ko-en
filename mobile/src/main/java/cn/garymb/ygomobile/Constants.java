@@ -39,6 +39,8 @@ public interface Constants {
     boolean PREF_DEF_SENSOR_REFRESH = true;
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
+    String PREF_RESET_GAME_RES = "pref_key_reset_game_res";
+    String PREF_JOIN_QQ = "pref_key_join_qq";
     String PREF_DEL_EX = "pref_key_settings_delete_ex";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";
     String PERF_TEST_REPLACE_KERNEL = "pref_key_test_replace_kernel";
@@ -146,7 +148,7 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
-    String URL_HELP = "http://note.youdao.com/noteshare?id=8ae2dc824b7dc04a95a4665a938e2251";
+    String URL_HELP = "https://www.wolai.com/hgRyrSXQuq4rzMwzXhHBqA";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_YGO233_ADVANCE = "https://ygo233.com/pre";

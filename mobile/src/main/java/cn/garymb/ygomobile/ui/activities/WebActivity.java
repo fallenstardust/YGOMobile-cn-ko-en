@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -35,9 +34,10 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.home.HomeFragment;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.preference.SettingsActivity;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -75,7 +75,8 @@ public class WebActivity extends BaseActivity {
                     break;
                 case UnzipUtils.ZIP_UNZIP_OK:
                     if (!AppsSettings.get().isReadExpansions()) {
-                        Intent startSetting = new Intent(getContext(), SettingsActivity.class);
+                        Intent startSetting = new Intent(getContext(), MainActivity.class);
+                        startSetting.putExtra("flag", 4);
                         startActivity(startSetting);
                         Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                     } else {

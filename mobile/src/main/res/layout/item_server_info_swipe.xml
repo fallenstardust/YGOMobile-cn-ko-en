@@ -23,7 +23,7 @@
             android:layout_width="@dimen/item_menu_width"
             android:layout_height="@dimen/item_menu_height"
             android:layout_gravity="right|center_vertical"
-            android:background="@drawable/red"
+            android:background="@drawable/button_bg"
             android:gravity="center"
             android:text="@string/delete"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
@@ -31,139 +31,115 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <FrameLayout
         android:id="@id/smContentView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <ImageView
+            android:id="@+id/iv_fond"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="left"
+            android:layout_marginLeft="-30dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="-10dp"
+            android:layout_marginBottom="-10dp"
+            android:alpha="0.5"
+            android:gravity="center"
+            android:rotation="-90"
+            android:src="@drawable/cube2" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/window"
+            android:background="@drawable/list_item_bg"
             android:orientation="vertical"
             android:padding="@dimen/padding2">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/server_name"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/label_height"
-                android:layout_margin="4dp"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/brightgreen"
+                android:textSize="15sp"
+                tools:text="233正式服务器" />
 
-                <ImageView
-                    android:id="@+id/btn_edit_delete"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="20dp"
-                    android:background="@drawable/rename"
-                    android:gravity="right" />
-
-                <TextView
-                    android:id="@+id/server_name"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="4dp"
-                    android:layout_weight="1"
-                    android:singleLine="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                    android:textColor="@color/brightgreen"
-                    tools:text="233正式服务器" />
-
-            </LinearLayout>
-
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/label_height"
-                android:layout_marginLeft="2dp"
-                android:layout_marginRight="2dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="2">
-
-                    <TextView
-                        android:id="@+id/textView"
-                        android:layout_width="70dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:text="@string/server_ip"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/item_title" />
-
-                    <TextView
-                        android:id="@+id/text_ip"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:singleLine="true"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/holo_blue_bright"
-                        tools:text="127.0.0.1" />
-                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/text_ip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:singleLine="true"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp"
+                            tools:text="127.0.0.1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:text=":"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/text_port"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                            android:textColor="@color/gray"
+                            android:textSize="10sp"
+                            tools:text="233" />
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="@dimen/label_width_50dp"
-                        android:layout_height="match_parent"
+                        android:id="@+id/text_player"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:text="@string/server_port"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/item_title"
-                        />
-
-                    <TextView
-                        android:id="@+id/text_port"
-                        android:layout_width="@dimen/label_width_50dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:maxLines="1"
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/holo_blue_bright"
-                        tools:text="233" />
+                        android:textSize="10sp"
+                        tools:text="player" />
                 </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/label_height"
-                android:layout_marginLeft="2dp"
-                android:layout_marginRight="2dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="70dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:text="@string/server_user"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/item_title" />
-
-                <TextView
-                    android:id="@+id/text_player"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:singleLine="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    android:textColor="@color/holo_blue_bright"
-                    tools:text="player" />
-
                 <ImageView
-                    android:id="@+id/iv_fond"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginRight="20dp"
-                    android:gravity="center" />
-            </LinearLayout>
+                    android:id="@+id/btn_edit_delete"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="right|bottom"
+                    android:layout_marginRight="0dp"
+                    android:background="@drawable/rename"
+                    android:gravity="right" />
+
+            </FrameLayout>
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 
 </com.tubb.smrv.SwipeHorizontalMenuLayout>

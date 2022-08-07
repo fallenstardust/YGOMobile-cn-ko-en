@@ -5,8 +5,6 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import cn.garymb.ygomobile.Constants;
-
 public class CardData implements Parcelable {
 
     public CardData() {

@@ -205,7 +205,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         }
         bindMenu(holder, position);
         if (mItemBg) {
-            holder.setBackgroundResource(R.id.swipe_layout, R.drawable.blue);
+            holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);
         }
     }
 }

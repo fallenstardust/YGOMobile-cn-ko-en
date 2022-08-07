@@ -23,11 +23,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/icm_avatar"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="55dp"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="5dp"
         android:layout_toLeftOf="@id/icm_avatar"
-        android:background="@drawable/chat_message_me_background"
+        android:background="@drawable/radius_p"
         android:descendantFocusability="blocksDescendants"
         android:orientation="vertical"
         android:padding="8dp">
@@ -38,8 +38,8 @@
             android:layout_height="0px"
             android:paddingBottom="4dp"
             android:text="name"
-            android:textColor="#B8630C"
-            android:textSize="13sp"
+            android:textColor="@color/holo_blue_bright"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
         <TextView
@@ -48,8 +48,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="message"
-            android:textColor="#000000"
-            android:textSize="16sp" />
+            android:textColor="@color/brightgreen"
+            android:textSize="13sp" />
 
     </LinearLayout>
 

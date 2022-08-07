@@ -22,7 +22,7 @@
         android:layout_marginLeft="2dp"
         android:layout_marginRight="2dp"
         android:layout_weight="1"
-        android:background="@drawable/blue"
+        android:background="@drawable/window2"
         android:orientation="vertical"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
