@@ -4,11 +4,14 @@ import android.os.Bundle;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
+import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 
 import cn.garymb.ygomobile.lite.R;
@@ -57,9 +60,11 @@ public class McchatActivity extends BaseActivity implements ChatListener {
 
     @Override
     public void addChatMessage(ChatMessage message) {
+        Log.e("MCChatActivity","mc列表"+message.getName()+"  "+McUserManagement.getInstance().getUser().getUsername());
+        boolean isSmooth=YGOUtil.isVisBottom(main_rec)||message.getName().equals(McUserManagement.getInstance().getUser().getUsername());
         cadp.sx();
-        main_rec.smoothScrollToPosition(su.getData().size() - 1);
-
+        if (isSmooth)
+            main_rec.smoothScrollToPosition(su.getData().size() - 1);
         // TODO: Implement this method
     }
 

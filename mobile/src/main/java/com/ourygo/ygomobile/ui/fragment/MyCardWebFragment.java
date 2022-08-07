@@ -261,23 +261,23 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
             case android.R.id.home:
                 mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
                 break;
-            case R.id.action_deck_manager:
-//                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
-                startActivity(IntentUtil.getEZIntent(getActivity()));
-//                closeDrawer();
-                break;
-            case R.id.action_arena:
-                mWebViewPlus.loadUrl(mMyCard.getArenaUrl());
-                break;
-            case R.id.action_quit:
+//            case R.id.action_deck_manager:
+////                startActivity(new Intent(getActivity(), DeckManagerActivity.class));
+//                startActivity(IntentUtil.getEZIntent(getActivity()));
+////                closeDrawer();
+//                break;
+//            case R.id.action_arena:
+//                mWebViewPlus.loadUrl(mMyCard.getArenaUrl());
+//                break;
+//            case R.id.action_quit:
 //                finish();
-                break;
+//                break;
             case R.id.action_home:
                 onHome();
                 break;
-            case R.id.action_bbs:
-                mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
-                break;
+//            case R.id.action_bbs:
+//                mWebViewPlus.loadUrl(mMyCard.getBBSUrl());
+//                break;
             case R.id.action_chat:
                 startActivity(new Intent(getActivity(), SplashActivity.class));
                 break;

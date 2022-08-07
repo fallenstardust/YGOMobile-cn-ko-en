@@ -46,7 +46,6 @@ import androidx.appcompat.widget.Toolbar;
 import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import ocgcore.data.Card;
 
@@ -373,7 +372,7 @@ public class BaseActivity extends AppCompatActivity {
         toolbar.setTitle(title);
     }
 
-    public void seTitle(String title){
+    public void setTitle(String title){
         if (toolbar!=null){
             toolbar.setTitle(title);
         }

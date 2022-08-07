@@ -21,9 +21,6 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 
 import java.util.HashMap;
 
-import cn.garymb.ygomobile.lite.BuildConfig;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ProcessUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;

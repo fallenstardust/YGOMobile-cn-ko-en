@@ -71,14 +71,6 @@ public class SharedPreferenceUtil {
         // TODO: Implement this method
     }
 
-    public static boolean setMyCardUserName(String mycardUserName) {
-        return getShareRecord().edit().putString(MyCard.ARG_MC_NAME, mycardUserName).commit();
-    }
-
-    public static String getMyCardUserName() {
-        return getShareRecord().getString(MyCard.ARG_MC_NAME, null);
-    }
-
     public static boolean setUserName(String name) {
         return getShareRecord().edit().putString("userName", name).commit();
     }

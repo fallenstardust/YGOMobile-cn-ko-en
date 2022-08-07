@@ -20,7 +20,7 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.preference.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.IOUtils;

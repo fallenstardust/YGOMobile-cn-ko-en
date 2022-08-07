@@ -47,7 +47,6 @@ import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 //import cn.garymb.ygomobile.ui.cards.CardSearchActivity;
 //import cn.garymb.ygomobile.ui.cards.DeckManagerActivity;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -173,9 +172,9 @@ public class DuelAssistantService extends Service implements OnDuelAssistantList
                         break;
 
                     case CMD_START_GAME:
-                        Intent intent2 = new Intent(DuelAssistantService.this, MainActivity.class);
-                        intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent2);
+//                        Intent intent2 = new Intent(DuelAssistantService.this, MainActivity.class);
+//                        intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(intent2);
                         break;
 
                     default:

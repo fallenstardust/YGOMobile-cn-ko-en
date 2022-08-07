@@ -27,7 +27,7 @@
         android:layout_marginRight="55dp"
         android:layout_marginBottom="5dp"
         android:layout_toRightOf="@id/ic_avatar"
-        android:background="@drawable/radius"
+        android:background="@drawable/chat_message_background"
         android:descendantFocusability="blocksDescendants"
         android:orientation="vertical"
         android:padding="8dp">
@@ -38,18 +38,18 @@
             android:layout_height="wrap_content"
             android:paddingBottom="4dp"
             android:text="name"
-            android:textColor="@color/white"
-            android:textSize="10sp"
+            android:textColor="#B8630C"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
-            android:lineSpacingExtra="5dp"
             android:id="@+id/ic_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:lineSpacingExtra="5dp"
             android:text="message"
-            android:textColor="@color/holo_blue_bright"
-            android:textSize="13sp" />
+            android:textColor="#000000"
+            android:textSize="16sp" />
 
     </LinearLayout>
 

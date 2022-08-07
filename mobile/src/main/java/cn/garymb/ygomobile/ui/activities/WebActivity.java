@@ -33,9 +33,6 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.home.HomeFragment;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
@@ -75,10 +72,10 @@ public class WebActivity extends BaseActivity {
                     break;
                 case UnzipUtils.ZIP_UNZIP_OK:
                     if (!AppsSettings.get().isReadExpansions()) {
-                        Intent startSetting = new Intent(getContext(), MainActivity.class);
-                        startSetting.putExtra("flag", 4);
-                        startActivity(startSetting);
-                        Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+//                        Intent startSetting = new Intent(getContext(), MainActivity.class);
+//                        startSetting.putExtra("flag", 4);
+//                        startActivity(startSetting);
+//                        Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                     } else {
                         DataManager.get().load(true);
                         Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();

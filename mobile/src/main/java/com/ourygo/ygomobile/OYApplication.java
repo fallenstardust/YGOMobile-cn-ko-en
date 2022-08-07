@@ -84,7 +84,7 @@ public class OYApplication extends App {
                     }
                 });
                 LitePal.initialize(getApplicationContext());
-//                initUmeng();
+                initUmeng();
                 LogUtil.time(TAG,"初始化完毕");
             }else {
                 AppsSettings.init(this);
