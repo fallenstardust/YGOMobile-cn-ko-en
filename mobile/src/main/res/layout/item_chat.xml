@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/ic_avatar"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
+        android:layout_marginRight="55dp"
         android:layout_marginBottom="5dp"
         android:layout_toRightOf="@id/ic_avatar"
         android:background="@drawable/radius"

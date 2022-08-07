@@ -48,7 +48,7 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
     @SuppressLint("ResourceType")
     @Override
     protected void convert(BaseViewHolder helper, T item) {
-        int position = helper.getAdapterPosition();
+        int position = getItemPosition(item);
 
         helper.setText(R.id.tv_name, item.getName());
         if (isManySelect) {

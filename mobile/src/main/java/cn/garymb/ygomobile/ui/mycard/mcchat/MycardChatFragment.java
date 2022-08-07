@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -20,9 +19,9 @@ import com.ourygo.assistant.util.Util;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.adapter.ChatAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MycardChatFragment extends BaseFragemnt implements ChatListener {
@@ -95,8 +94,11 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
 
     @Override
     public void addChatMessage(ChatMessage message) {
+        boolean isSmooth = YGOUtil.isVisBottom(main_rec) || message.getName().equals(UserManagement.getUserName());
         cadp.sx();
-        main_rec.smoothScrollToPosition(serviceManagement.getData().size() - 1);
+        //如果在底部新消息来了或者消息是自己发送才滑到最下面，最后一个item有显示才算在底部
+        if (isSmooth)
+            main_rec.smoothScrollToPosition(serviceManagement.getData().size() - 1);
     }
 
     @Override

@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/icm_avatar"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="55dp"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="5dp"
         android:layout_toLeftOf="@id/icm_avatar"

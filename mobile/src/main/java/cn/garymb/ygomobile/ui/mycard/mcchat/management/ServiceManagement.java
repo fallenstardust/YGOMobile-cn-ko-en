@@ -20,6 +20,7 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -215,7 +216,7 @@ public class ServiceManagement {
                 .setXmppDomain("mycard.moe")
                 .setKeystoreType(null)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
-                .setHost("chat.mycard.moe")
+                .setHostAddress(InetAddress.getByName("mchat.moecube.com"))
                 .build();
         con = new XMPPTCPConnection(config);
         return con;
