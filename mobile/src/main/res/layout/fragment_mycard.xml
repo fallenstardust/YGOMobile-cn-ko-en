@@ -57,8 +57,11 @@
                 android:layout_height="40dp"
                 android:layout_marginLeft="@dimen/dp_10"
                 android:src="@drawable/avatar" />
-
-
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_logout"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_guide_right" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton

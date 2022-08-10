@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import static android.app.Activity.RESULT_OK;
-
 import static okhttp3.internal.Util.UTF_8;
 
 import android.annotation.SuppressLint;
@@ -17,7 +16,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,7 +48,6 @@ import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.HandlerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -312,7 +309,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.ll_head_login:
-                mWebViewPlus.loadUrl("https://accounts.moecube.com/profiles");
+                mWebViewPlus.loadUrl(mMyCard.URL_MC_LOGOUT);
                 break;
             case R.id.tv_back_mc:
                 onHome();

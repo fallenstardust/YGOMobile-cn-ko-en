@@ -49,7 +49,6 @@ public class MyCard {
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
     private static final String HOST_MC = "mycard.moe";
     public static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
-    public static final String DOWNLOAD_URL_EZ = "http://t.cn/EchWyLi";
 
     public static final String MYCARD_NEWS_URL = "https://api.mycard.moe/apps.json";
     public static final String MYCARD_POST_URL = "https://ygobbs.com/t/";
@@ -77,6 +76,7 @@ public class MyCard {
 
     public static final String ACTION_OPEN_MYCARD = "ygomobile.intent.action.MYCARD";
     public static final String URL_MC_LOGIN = "https://accounts.moecube.com/";
+    public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
     public static final String ARG_SSO = "sso";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.mycard.moe:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.mycard.moe:8923/?filter=started";

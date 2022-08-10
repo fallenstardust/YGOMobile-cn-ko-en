@@ -1,7 +1,10 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static com.ashokvarma.bottomnavigation.ShapeBadgeItem.SHAPE_STAR_4_VERTICES;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -12,6 +15,8 @@ import androidx.fragment.app.Fragment;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
+import com.ashokvarma.bottomnavigation.ShapeBadgeItem;
+import com.ashokvarma.bottomnavigation.TextBadgeItem;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 
@@ -32,6 +37,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     long exitLasttime = 0;
 
     private BottomNavigationBar bottomNavigationBar;
+    private ShapeBadgeItem mShapeBadgeItem;
+    private TextBadgeItem mTextBadgeItem;
     private FrameLayout frameLayout;
     private Fragment mFragment;
 
@@ -91,19 +98,28 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
     private void initBottomNavigationBar() {
         frameLayout = (FrameLayout) findViewById(R.id.fragment_content);
+        mTextBadgeItem = new TextBadgeItem()
+                .setBorderWidth(4)//文本大小
+                .setGravity(Gravity.LEFT )//位置 默认右上
+                .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
+                .setAnimationDuration(200)//动画时间
+                .setText("3")
+                .setHideOnSelect(false)//true当选中状态时消失，非选中状态再次显示
+                .show();
         // 获取页面上的底部导航栏控件
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.home, R.string.mc_home))
                 .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))
                 .addItem(new BottomNavigationItem(R.drawable.deck, R.string.deck_manager))
-                .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard))
+                .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard).setBadgeItem(mTextBadgeItem))
                 .addItem(new BottomNavigationItem(R.drawable.my, R.string.personal))
                 .setActiveColor(R.color.holo_blue_bright)
                 .setBarBackgroundColor(R.color.transparent)
                 .setMode(BottomNavigationBar.MODE_FIXED)
                 .setFirstSelectedPosition(0)
                 .initialise();//所有的设置需在调用该方法前完成
+
         bottomNavigationBar.setTabSelectedListener(this);
         fragment_home = new HomeFragment();
         fragment_search = new CardSearchFragment();
