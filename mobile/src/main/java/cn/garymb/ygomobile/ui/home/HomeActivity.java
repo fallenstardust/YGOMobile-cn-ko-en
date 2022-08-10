@@ -98,14 +98,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
     private void initBottomNavigationBar() {
         frameLayout = (FrameLayout) findViewById(R.id.fragment_content);
-        mTextBadgeItem = new TextBadgeItem()
-                .setBorderWidth(4)//文本大小
-                .setGravity(Gravity.LEFT )//位置 默认右上
-                .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
-                .setAnimationDuration(200)//动画时间
-                .setText("3")
-                .setHideOnSelect(false)//true当选中状态时消失，非选中状态再次显示
-                .show();
         // 获取页面上的底部导航栏控件
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
@@ -132,6 +124,17 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
+    }
+
+    private void showNewsCounts() {
+        mTextBadgeItem = new TextBadgeItem()
+                .setBorderWidth(4)//文本大小
+                .setGravity(Gravity.LEFT )//位置 默认右上
+                .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
+                .setAnimationDuration(200)//动画时间
+                .setText("3")
+                .setHideOnSelect(false)//true当选中状态时消失，非选中状态再次显示
+                .show();
     }
 
     @Override
