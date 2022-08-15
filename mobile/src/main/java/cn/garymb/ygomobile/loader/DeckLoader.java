@@ -65,6 +65,9 @@ public class DeckLoader {
                         Log.w("kk", "read not number " + line);
                     continue;
                 }
+                if (line.length() > 9) {//密码如果大于9位直接过滤
+                    continue;
+                }
                 Integer id = Integer.parseInt(line);
                 if (type == DeckItemType.MainCard && deck.getMainCount() < Constants.DECK_MAIN_MAX) {
                     Integer i = mIds.get(id);
