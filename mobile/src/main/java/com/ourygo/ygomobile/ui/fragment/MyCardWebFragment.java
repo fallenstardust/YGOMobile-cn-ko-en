@@ -73,7 +73,7 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
         View v = inflater.inflate(R.layout.mycard_web_fragment, null);
         Log.e("MyCardWeb","Web加载");
         initView(v);
-        initData();
+//        initData();
         return v;
     }
 
@@ -211,32 +211,9 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
 //    }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
-    @Override
     public void onFirstUserVisible() {
+        super.onFirstUserVisible();
         initData();
-    }
-
-    @Override
-    public void onUserVisible() {
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-    }
-
-    @Override
-    public void onUserInvisible() {
     }
 
     @Override

@@ -54,18 +54,6 @@ public class NewServerActivity extends BaseActivity implements OnItemClickListen
     private TextView tv_lflist_exception,tv_mode_s;
     private ImageView iv_del;
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
-
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override

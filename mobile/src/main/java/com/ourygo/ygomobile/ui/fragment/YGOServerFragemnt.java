@@ -42,18 +42,6 @@ public class YGOServerFragemnt extends Fragment {
         return v;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void initServiceList() {
         YGOUtil.getYGOServerList(serverList -> {
             ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList());

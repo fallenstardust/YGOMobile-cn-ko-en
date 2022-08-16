@@ -412,17 +412,7 @@ public class UiSettingActivity extends BaseActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
 
     public void updateImages() {
         Log.e("MainActivity", "重置资源");

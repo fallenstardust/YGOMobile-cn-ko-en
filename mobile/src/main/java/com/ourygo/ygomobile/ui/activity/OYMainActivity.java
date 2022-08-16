@@ -88,6 +88,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             setContentView(R.layout.oy_main_horizontal_activity);
         else
             setContentView(R.layout.oy_main_activity);
+        isFragmentActivity=true;
         LogUtil.time(TAG, "0");
         new Thread(() -> SdkInitUtil.getInstance().initX5WebView()).start();
         LogUtil.time(TAG, "1");
@@ -135,14 +136,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     @Override
     protected void onResume() {
         super.onResume();
-        StatUtil.onResume(this, true);
         duelAssistantCheck();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
     }
 
     private void duelAssistantCheck() {
@@ -230,7 +224,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //        refreshMyCardUser(mcName);
         mainFragment = new MainFragment();
         myCardWebFragment = new MyCardWebFragment();
-        myCardFragment = new MyCardFragment();
+//        myCardFragment = new MyCardFragment();
         mcLayoutFragment = new McLayoutFragment();
         otherFunctionFragment = new OtherFunctionFragment();
 

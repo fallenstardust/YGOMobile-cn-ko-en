@@ -50,56 +50,6 @@
 
     </androidx.cardview.widget.CardView>
 
-
-    <RelativeLayout
-        android:layout_marginTop="15dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin">
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_start_s"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="5dp"
-            android:gravity="center"
-            android:text="开始游戏"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <ProgressBar
-            android:id="@+id/pb_res_loading"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="10dp"
-            android:layout_toRightOf="@id/tv_start_s" />
-
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_add_setting"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/click_window_background_radius"
-            android:gravity="right"
-            android:padding="5dp"
-            app:srcCompat="@drawable/ic_edit_setting" />
-    </RelativeLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_marginTop="5dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:id="@+id/rv_service_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-
     <LinearLayout
         android:layout_marginTop="20dp"
         android:paddingLeft="20dp"
@@ -332,6 +282,58 @@
 
 
     </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/main_margin"
+        android:layout_marginRight="@dimen/main_margin">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_start_s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"
+            android:gravity="center"
+            android:text="服务器列表"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pb_res_loading"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/tv_start_s" />
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_add_setting"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/click_window_background_radius"
+            android:gravity="right"
+            android:padding="5dp"
+            app:srcCompat="@drawable/ic_edit_setting" />
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:id="@+id/rv_service_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+
 
 
 </LinearLayout>

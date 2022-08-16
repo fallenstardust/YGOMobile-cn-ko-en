@@ -30,18 +30,6 @@ public class OtherFunctionActivity extends ListAndUpdateActivity {
         initView();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
-
     private void initView() {
         headView= LayoutInflater.from(OtherFunctionActivity.this).inflate(R.layout.other_function_app_header,null);
 

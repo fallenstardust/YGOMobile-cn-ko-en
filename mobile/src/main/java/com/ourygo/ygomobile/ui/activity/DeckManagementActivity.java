@@ -134,18 +134,6 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
         onRefresh();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
-
     private void shareDeck(DeckFile deckFile) {
         dialogUtils.dialogl("分享方式", new String[]{"卡组码分享", "文件分享"}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

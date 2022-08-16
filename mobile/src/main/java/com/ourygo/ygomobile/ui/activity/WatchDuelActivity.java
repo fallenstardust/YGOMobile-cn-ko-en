@@ -34,17 +34,6 @@ public class WatchDuelActivity extends ListAndUpdateActivity implements OnDuelRo
         initView();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
 
     private void initView() {
         duelManagement=WatchDuelManagement.getInstance();

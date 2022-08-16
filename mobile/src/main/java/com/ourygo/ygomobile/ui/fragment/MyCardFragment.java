@@ -180,18 +180,6 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void matchEnterTain() {
         Button button = du.dialogj(null, "娱乐匹配中，请稍等");
         button.setText("取消匹配");
@@ -328,27 +316,6 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
                     initData(null, 1);
             }
         }
-    }
-
-    @Override
-    public void onFirstUserVisible() {
-
-    }
-
-
-    @Override
-    public void onUserVisible() {
-
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-
-    }
-
-    @Override
-    public void onUserInvisible() {
-
     }
 
     @Override

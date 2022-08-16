@@ -81,18 +81,6 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
         return v;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void initView(View v) {
         rv_list = v.findViewById(R.id.rv_list);
         rv_list.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -256,23 +244,8 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
 
     @Override
     public void onFirstUserVisible() {
+        super.onFirstUserVisible();
         initData();
-    }
-
-
-    @Override
-    public void onUserVisible() {
-
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-
-    }
-
-    @Override
-    public void onUserInvisible() {
-
     }
 
     @Override

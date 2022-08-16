@@ -84,18 +84,6 @@ public class AboutActivity extends BaseActivity {
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
-
     private void initView() {
         tv_check_update = findViewById(R.id.tv_check_update);
         tv_qq_group = findViewById(R.id.tv_qq_group);

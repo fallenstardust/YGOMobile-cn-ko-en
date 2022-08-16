@@ -43,6 +43,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:autoLink="email|web"
             android:id="@+id/icm_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

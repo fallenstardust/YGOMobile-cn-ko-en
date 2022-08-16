@@ -146,18 +146,6 @@ public class WebActivity extends BaseActivity implements Toolbar.OnMenuItemClick
         initView();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this);
-    }
-
     private void initView() {
         wv_web = findViewById(R.id.wv_web);
         web_pro = findViewById(R.id.web_pro);

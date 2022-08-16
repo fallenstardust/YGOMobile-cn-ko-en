@@ -60,7 +60,6 @@ public class McchatActivity extends BaseActivity implements ChatListener {
 
     @Override
     public void addChatMessage(ChatMessage message) {
-        Log.e("MCChatActivity","mc列表"+message.getName()+"  "+McUserManagement.getInstance().getUser().getUsername());
         boolean isSmooth=YGOUtil.isVisBottom(main_rec)||message.getName().equals(McUserManagement.getInstance().getUser().getUsername());
         cadp.sx();
         if (isSmooth)

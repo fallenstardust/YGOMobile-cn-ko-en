@@ -314,7 +314,6 @@ public class ServiceManagement {
 
         name = UserManagement.getUserName();
         password = UserManagement.getUserPassword();
-
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
             isStartLoading=false;
             han.sendEmptyMessage(CHAT_USER_NULL);

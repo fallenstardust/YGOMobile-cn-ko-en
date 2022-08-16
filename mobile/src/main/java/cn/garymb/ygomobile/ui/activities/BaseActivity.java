@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.ourygo.ygomobile.util.DisplayUtils;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.ScaleUtils;
+import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.view.OYToolbar;
 
 import java.io.IOException;
@@ -50,6 +51,9 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import ocgcore.data.Card;
 
 public class BaseActivity extends AppCompatActivity {
+
+    protected boolean isFragmentActivity=false;
+
     protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
     public static int[] enImgs = new int[]{
             R.drawable.right_top_1,
@@ -306,6 +310,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        StatUtil.onResume(this,isFragmentActivity);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        StatUtil.onPause(this,isFragmentActivity);
     }
 
     public Resources getResources() {

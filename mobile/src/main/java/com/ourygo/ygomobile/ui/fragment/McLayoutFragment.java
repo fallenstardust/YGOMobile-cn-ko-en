@@ -45,18 +45,6 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void initView(View view, Bundle saveBundle) {
         fragmentManager = getChildFragmentManager();
         if (saveBundle != null) {
@@ -94,12 +82,14 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
     }
 
     private void initFragment() {
+        Log.e("MCLayoutFragment","初始化Fragment");
         currentFragment = myCardWebFragment;
         fragmentManager.beginTransaction().add(R.id.fm_mc, currentFragment).commit();
         McUserManagement.getInstance().addListener(this);
     }
 
     public void setCurrentFragment(int position) {
+        Log.e("MCLayoutFragment","设置fragment"+position);
         if (position > 1)
             position = 1;
         currentPosition = position;
@@ -120,7 +110,7 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
                 // 先判断是否被add过
                 fragmentTransaction.hide(currentFragment).add(R.id.fm_mc, f3).commitAllowingStateLoss(); // 隐藏当前的fragment，add下一个到Activity中
         } else {
-            Log.e("McLayoutFragment","切换"+(currentFragment!=null));
+            Log.e("MCLayoutFragment","切换"+(currentFragment!=null));
             fragmentTransaction
                     .hide(currentFragment)
                     .show(f3)
@@ -133,23 +123,8 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
 
     @Override
     public void onFirstUserVisible() {
+        super.onFirstUserVisible();
         initData();
-    }
-
-
-    @Override
-    public void onUserVisible() {
-
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-
-    }
-
-    @Override
-    public void onUserInvisible() {
-
     }
 
     @Override

@@ -43,18 +43,6 @@ public class LocalDuelFragment extends Fragment {
         return v;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void initView(View v) {
         rv_local_list=v.findViewById(R.id.rv_local_list);
         localDuelList=new ArrayList<>();

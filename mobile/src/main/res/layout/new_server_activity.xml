@@ -6,241 +6,258 @@
 
     <include layout="@layout/toolbar" />
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <LinearLayout
-            android:layout_marginTop="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="@dimen/main_margin"
-            android:layout_marginRight="@dimen/main_margin"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                style="@style/TitleTextStytle"
-                android:text="@string/server_select" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:layout_marginTop="13dp"
-                android:id="@+id/rv_server"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_marginTop="28dp"
-                style="@style/TitleTextStytle"
-                android:text="@string/server_info" />
-
-            <RelativeLayout
-                android:layout_marginTop="13dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <LinearLayout
-                    android:gravity="center_vertical"
-                    android:background="@drawable/click_gray_light_radius"
-                    android:id="@+id/ll_host"
-                    android:orientation="horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:visibility="gone"
-                        android:gravity="center"
-                        android:paddingLeft="10dp"
-                        android:text="IP："
-                        android:textColor="@color/grayDark2"
-                        android:textSize="13sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_marginLeft="8dp"
-                        android:src="@drawable/ic_host"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:id="@+id/tv_host"
-                        android:gravity="center"
-                        android:textColor="@color/blackLight2"
-                        android:paddingLeft="8dp"
-                        android:paddingRight="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="s1.ygo233.com" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:gravity="center_vertical"
-                    android:background="@drawable/click_gray_light_radius"
-                    android:id="@+id/ll_port"
-                    android:layout_toRightOf="@id/ll_host"
-                    android:layout_marginLeft="10dp"
-                    android:orientation="horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:visibility="gone"
-                        android:gravity="center"
-                        android:paddingLeft="10dp"
-                        android:text="端口："
-                        android:textColor="@color/grayDark2"
-                        android:textSize="13sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_marginLeft="8dp"
-                        android:src="@drawable/ic_port"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp" />
-
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:id="@+id/tv_port"
-                        android:gravity="center"
-                        android:textColor="@color/blackLight2"
-                        android:paddingLeft="8dp"
-                        android:paddingRight="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="233" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:gravity="center_vertical"
-                    android:background="@drawable/click_gray_light_radius"
-                    android:layout_below="@id/ll_host"
-                    android:id="@+id/ll_user_name"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:visibility="gone"
-                        android:gravity="center"
-                        android:paddingLeft="10dp"
-                        android:text="用户名："
-                        android:textColor="@color/grayDark2"
-                        android:textSize="13sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_marginLeft="8dp"
-                        android:src="@drawable/ic_user"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp" />
-
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:id="@+id/tv_user_name"
-                        android:gravity="center"
-                        android:textColor="@color/blackLight2"
-                        android:paddingLeft="8dp"
-                        android:paddingRight="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="点击设置" />
-                </LinearLayout>
-
-
-            </RelativeLayout>
-
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_marginTop="28dp"
-                style="@style/TitleTextStytle"
-                android:text="@string/opponent_setting" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:layout_marginTop="13dp"
-                android:id="@+id/rv_opponent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_mode_s"
-                android:layout_marginTop="28dp"
-                style="@style/TitleTextStytle"
-                android:text="@string/duel_mode" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:layout_marginBottom="20dp"
-                android:layout_marginTop="13dp"
-                android:id="@+id/rv_duel_mode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-            <LinearLayout
-                android:visibility="gone"
-                android:layout_marginTop="25dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <androidx.appcompat.widget.AppCompatTextView
-
-                    style="@style/TitleTextStytle"
-                    android:text="@string/lflist" />
-
-                <ProgressBar
-                    android:id="@+id/pb_lflist_loading"
-                    android:layout_marginLeft="10dp"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/tv_lflist_exception"
-                    android:visibility="gone"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
-                    android:layout_marginLeft="10dp"
-                    android:text="加载失败，点击重新加载"
-                    android:textSize="13sp"
-                    android:textColor="@color/blackLight2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:visibility="gone"
-                android:layout_marginBottom="7dp"
-                android:layout_marginTop="10dp"
-                android:id="@+id/rv_lflist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginLeft="@dimen/main_margin"
+            android:layout_marginRight="@dimen/main_margin"
+            style="@style/TitleTextStytle"
+            android:text="@string/server_select" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginLeft="@dimen/main_margin"
+            android:layout_marginRight="@dimen/main_margin"
+            android:layout_marginTop="13dp"
+            android:id="@+id/rv_server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <androidx.core.widget.NestedScrollView
+            android:background="@drawable/top_radius_background"
+            android:layout_marginTop="10dp"
+            android:elevation="10dp"
+            android:translationZ="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:paddingLeft="@dimen/main_margin"
+                android:paddingRight="@dimen/main_margin"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_marginTop="18dp"
+                    style="@style/TitleTextStytle"
+                    android:text="@string/server_info" />
+
+                <RelativeLayout
+                    android:layout_marginTop="13dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:gravity="center_vertical"
+                        android:background="@drawable/click_gray_light_radius"
+                        android:id="@+id/ll_host"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:paddingLeft="10dp"
+                            android:text="IP："
+                            android:textColor="@color/grayDark2"
+                            android:textSize="13sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_marginLeft="8dp"
+                            android:src="@drawable/ic_host"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:id="@+id/tv_host"
+                            android:gravity="center"
+                            android:textColor="@color/blackLight2"
+                            android:paddingLeft="8dp"
+                            android:paddingRight="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="s1.ygo233.com" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:gravity="center_vertical"
+                        android:background="@drawable/click_gray_light_radius"
+                        android:id="@+id/ll_port"
+                        android:layout_toRightOf="@id/ll_host"
+                        android:layout_marginLeft="10dp"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:paddingLeft="10dp"
+                            android:text="端口："
+                            android:textColor="@color/grayDark2"
+                            android:textSize="13sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_marginLeft="8dp"
+                            android:src="@drawable/ic_port"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp" />
+
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:id="@+id/tv_port"
+                            android:gravity="center"
+                            android:textColor="@color/blackLight2"
+                            android:paddingLeft="8dp"
+                            android:paddingRight="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="233" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:gravity="center_vertical"
+                        android:background="@drawable/click_gray_light_radius"
+                        android:layout_below="@id/ll_host"
+                        android:id="@+id/ll_user_name"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:paddingLeft="10dp"
+                            android:text="用户名："
+                            android:textColor="@color/grayDark2"
+                            android:textSize="13sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_marginLeft="8dp"
+                            android:src="@drawable/ic_user"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp" />
+
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:id="@+id/tv_user_name"
+                            android:gravity="center"
+                            android:textColor="@color/blackLight2"
+                            android:paddingLeft="8dp"
+                            android:paddingRight="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="点击设置" />
+                    </LinearLayout>
+
+
+                </RelativeLayout>
+
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_marginTop="28dp"
+                    style="@style/TitleTextStytle"
+                    android:text="@string/opponent_setting" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:layout_marginTop="13dp"
+                    android:id="@+id/rv_opponent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_mode_s"
+                    android:layout_marginTop="28dp"
+                    style="@style/TitleTextStytle"
+                    android:text="@string/duel_mode" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginTop="13dp"
+                    android:id="@+id/rv_duel_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <LinearLayout
+                    android:visibility="gone"
+                    android:layout_marginTop="25dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+
+                        style="@style/TitleTextStytle"
+                        android:text="@string/lflist" />
+
+                    <ProgressBar
+                        android:id="@+id/pb_lflist_loading"
+                        android:layout_marginLeft="10dp"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_lflist_exception"
+                        android:visibility="gone"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:layout_marginLeft="10dp"
+                        android:text="加载失败，点击重新加载"
+                        android:textSize="13sp"
+                        android:textColor="@color/blackLight2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:visibility="gone"
+                    android:layout_marginBottom="7dp"
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/rv_lflist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:background="@color/white"
         android:orientation="horizontal"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
+        android:paddingLeft="@dimen/main_margin"
+        android:paddingRight="@dimen/main_margin"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 

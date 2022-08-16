@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -189,11 +190,11 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         tv_banner_loading = v.findViewById(R.id.tv_banner_loading);
 
         du = DialogUtils.getInstance(getActivity());
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        if (isHorizontal)
-            linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
-        else
-            linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
+        RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        if (!isHorizontal)
+//            linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
+//        else
+            linearLayoutManager=new GridLayoutManager(getActivity(),2);
         rv_service_list.setLayoutManager(linearLayoutManager);
 
         iv_add_setting.setOnClickListener(v1 -> startActivityForResult(new Intent(getActivity(), NewServerActivity.class), REQUEST_NEW_SERVER));
@@ -366,34 +367,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-        StatUtil.onResume(getClass().getName());
         xb_banner.startAutoPlay();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
-    @Override
-    public void onFirstUserVisible() {
-
-    }
-
-    @Override
-    public void onUserVisible() {
-
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-
-    }
-
-    @Override
-    public void onUserInvisible() {
-
     }
 
     @Override

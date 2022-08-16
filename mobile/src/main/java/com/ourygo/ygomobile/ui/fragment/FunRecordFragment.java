@@ -41,18 +41,6 @@ public class FunRecordFragment extends BaseFragemnt implements BaseDuelInfoFragm
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        StatUtil.onResume(getClass().getName());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        StatUtil.onPause(getClass().getName());
-    }
-
     private void initView(View view) {
         cpv_rank = view.findViewById(R.id.cpv_rank);
         tv_rank = view.findViewById(R.id.tv_rank);
@@ -75,22 +63,8 @@ public class FunRecordFragment extends BaseFragemnt implements BaseDuelInfoFragm
 
     @Override
     public void onFirstUserVisible() {
+        super.onFirstUserVisible();
         initData();
-    }
-
-    @Override
-    public void onUserVisible() {
-
-    }
-
-    @Override
-    public void onFirstUserInvisible() {
-
-    }
-
-    @Override
-    public void onUserInvisible() {
-
     }
 
     @Override
