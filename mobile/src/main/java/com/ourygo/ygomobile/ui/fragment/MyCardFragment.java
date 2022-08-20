@@ -35,7 +35,6 @@ import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 
@@ -135,6 +134,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
             }
         }
     };
+    private boolean isLoadData = false;
 
     @Nullable
     @Override
@@ -163,6 +163,10 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
     @Override
     public void onClick(View v) {
+        if (!McUserManagement.getInstance().isLogin()){
+            McUserManagement.getInstance().logout();
+            return;
+        }
         switch (v.getId()) {
             case R.id.rl_chat:
                 startActivity(new Intent(getActivity(), SplashActivity.class));
@@ -175,7 +179,6 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
                 break;
             case R.id.ll_entertain:
                 matchEnterTain();
-
                 break;
         }
     }
@@ -270,8 +273,11 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         //TabLayout加载viewpager
         tl_tab.setViewPager(vp_pager);
         tl_tab.setCurrentTab(0);
-
         McUserManagement.getInstance().addListener(this);
+        if (McUserManagement.getInstance().isLogin()) {
+            isLoadData = true;
+            initData(currentBundle, 3);
+        }
         iv_refresh.setOnClickListener(v -> {
             initData(null, 0);
         });
@@ -328,16 +334,17 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
         Log.e("MyCardFragment", "登录情况" + exception);
         pb_chat_loading.setVisibility(View.GONE);
         if (TextUtils.isEmpty(exception)) {
-            if (currentMessage==null){
-                List<ChatMessage> data=serviceManagement.getData();
-                if (data!=null&&data.size()>0)
-                    currentMessage=data.get(data.size()-1);
+            if (currentMessage == null) {
+                List<ChatMessage> data = serviceManagement.getData();
+                if (data != null && data.size() > 0)
+                    currentMessage = data.get(data.size() - 1);
             }
             if (currentMessage == null)
                 tv_message.setText("聊天信息加载中");
             else
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
+            isLoadData=false;
             tv_message.setText(OYUtil.s(R.string.logining_failed));
         }
 
@@ -359,9 +366,17 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
     @Override
     public void onChatUserNull() {
+        isLoadData=false;
         Log.e("MyCardFragment", "为空");
         pb_chat_loading.setVisibility(View.GONE);
         tv_message.setText("登录失败，请退出登录后重新登录");
+    }
+
+    @Override
+    public void onLoginNoInactiveEmail() {
+        isLoadData=false;
+        pb_chat_loading.setVisibility(View.GONE);
+        tv_message.setText("邮箱未验证，点击进行验证");
     }
 
     @Override
@@ -398,12 +413,13 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
     @Override
     public void onLogin(McUser user, String exception) {
-        if (TextUtils.isEmpty(exception))
+        if (TextUtils.isEmpty(exception) && !isLoadData)
             initData(currentBundle, 2);
     }
 
     @Override
     public void onLogout() {
+        isLoadData=false;
 //        HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, null);
     }
 

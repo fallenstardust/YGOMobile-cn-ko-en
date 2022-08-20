@@ -5,7 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
+<LinearLayout
+    android:orientation="horizontal"
+    android:gravity="bottom"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
     <com.ourygo.ygomobile.view.OYTabLayout
         android:layout_centerVertical="true"
         android:paddingTop="25dp"
@@ -28,8 +32,20 @@
         app:tl_indicator_margin_bottom="2dp"
         app:tl_tab_space_equal="false"
         app:tl_textBold="SELECT"
-        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"
         android:layout_height="wrap_content" />
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/iv_card_query"
+        android:layout_marginBottom="12dp"
+        android:layout_marginRight="15dp"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_search"
+        android:background="@drawable/click_window_background_radius"
+        android:padding="5dp"
+        android:layout_width="38dp"
+        android:layout_height="38dp"/>
+</LinearLayout>
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/vp_pager"

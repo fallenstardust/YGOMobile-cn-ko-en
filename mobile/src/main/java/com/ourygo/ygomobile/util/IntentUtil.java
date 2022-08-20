@@ -11,8 +11,11 @@ import android.text.TextUtils;
 import com.ourygo.ygomobile.ui.activity.WebActivity;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.lite.R;
 
 public class IntentUtil {
 
@@ -121,14 +124,33 @@ public class IntentUtil {
     }
 
     public static void startYGODeck(Activity activity) {
-        startYGODeck(activity, null);
+        startYGODeck(activity, null, null);
     }
 
     public static void startYGODeck(Activity activity, String deckName) {
-        if (TextUtils.isEmpty(deckName))
-            YGOStarter.startGame(activity, null, "-k", "-d");
-        else
-            YGOStarter.startGame(activity, null, "-d", deckName);
+        startYGODeck(activity, null, deckName);
+    }
+
+    public static void startYGODeck(Activity activity, String deckCategary, String deckName) {
+        List<String> list = new ArrayList<>();
+
+        if (!TextUtils.isEmpty(deckCategary)&&!OYUtil.s(R.string.category_Uncategorized).equals(deckCategary)) {
+            list.add(Record.YGO_ARG_DECK_CATEGORY);
+            list.add(deckCategary);
+        }
+
+        if (TextUtils.isEmpty(deckName)) {
+            list.add("-k");
+            list.add("-d");
+        } else {
+            list.add("-d");
+            list.add(deckName);
+        }
+
+        String[] ss = new String[list.size()];
+        for (int i = 0; i < list.size(); i++)
+            ss[i] = list.get(i);
+        YGOStarter.startGame(activity, null, ss);
     }
 
     public static Intent getWebIntent(Context context, String url) {

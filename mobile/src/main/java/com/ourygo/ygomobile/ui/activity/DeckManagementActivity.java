@@ -24,11 +24,11 @@ import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.ShareUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
 
 import java.util.ArrayList;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
@@ -64,8 +64,8 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             }
         }
     };
-    private View headerView,visitView;
-    private TextView tv_download, tv_close,tv_visit,tv_close_visit;
+    private View headerView, visitView;
+    private TextView tv_download, tv_close, tv_visit, tv_close_visit;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -86,7 +86,7 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             DeckFile deckFile = deckListAdp.getItem(position);
             switch (view.getId()) {
                 case R.id.iv_edit:
-                    IntentUtil.startYGODeck(DeckManagementActivity.this, deckFile.getName());
+                    IntentUtil.startYGODeck(DeckManagementActivity.this, deckFile.getTypeName(),deckFile.getName());
                     break;
                 case R.id.iv_share:
                     shareDeck(deckFile);
@@ -112,16 +112,16 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             deckListAdp.addHeaderView(headerView);
         }
 
-        if (SharedPreferenceUtil.isShowVisitDeck()){
+        if (SharedPreferenceUtil.isShowVisitDeck()) {
             visitView = LayoutInflater.from(this).inflate(R.layout.deck_management_header1, null);
             tv_visit = visitView.findViewById(R.id.tv_visit);
             tv_close_visit = visitView.findViewById(R.id.tv_close_visit);
 
             tv_visit.setOnClickListener(v -> {
-                dialogUtils.dialogt1(null,"YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
-                        "，可以打开原版软件，点击主页右下角的功能菜单——卡组编辑——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
-                TextView tv_message=dialogUtils.getMessageTextView();
-                tv_message.setLineSpacing(OYUtil.dp2px(3),1f);
+                dialogUtils.dialogt1(null, "YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
+                        "，可以打开原版软件，点击下边栏的卡组选项——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
+                TextView tv_message = dialogUtils.getMessageTextView();
+                tv_message.setLineSpacing(OYUtil.dp2px(3), 1f);
             });
             tv_close_visit.setOnClickListener(v -> {
                 SharedPreferenceUtil.setShowVisitDeck(false);
@@ -159,6 +159,8 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
         intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, "ydk");
         if (TextUtils.equals(category, AppsSettings.get().getDeckDir())) {
             intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, fname);
+        } else if (TextUtils.equals(category, AppsSettings.get().getPackDeckDir())) {
+            intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, Constants.CORE_PACK_PATH + "/" + fname);
         } else {
             String cname = DeckUtil.getDeckTypeName(deckFile.getPathFile().getAbsolutePath());
             intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, cname + "/" + fname);

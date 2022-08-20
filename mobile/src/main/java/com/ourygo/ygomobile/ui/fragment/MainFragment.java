@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -26,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.feihua.dialogutils.util.DialogUtils;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.bean.McNews;
@@ -39,11 +39,11 @@ import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
@@ -64,18 +64,18 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     private ArrayList<McNews> mcNewsList;
     //    private OYTabLayout tl_game_option,tl_replay;
 //    private ViewPager vp_game;
-    private ImageView iv_add_setting;
+    private ImageView iv_add_setting, iv_list_mode;
     //    private List<FragmentData> fragmentDataList;
 //    private RecyclerView rv_replay;
     private CardView cv_ai, cv_deck, cv_replay;
     private RecyclerView rv_service_list;
+    private FloatingActionButton fab_join;
     private DialogUtils du;
-    private YGOServerBQAdapter ygoServerAdp;
+    private YGOServerBQAdapter ygoServerAdp, ygoServerListAdp, ygoServerGridAdp;
     private CardView cv_join_room, cv_loacl_duel, cv_banner;
     private ProgressBar pb_res_loading;
     private TextView tv_banner_loading;
     private boolean isMcNewsLoadException = false;
-
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
@@ -102,6 +102,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
         }
     };
+    private ImageView iv_card_bag;
     private ResCheckTask mResCheckTask;
 
 
@@ -140,9 +141,15 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 IntentUtil.startYGOEndgame(getActivity());
                 break;
             case R.id.cv_deck:
+                if (SharedPreferenceUtil.isToastNewCardBag()) {
+                    OYDialogUtil.dialogNewDeck(getActivity());
+                    SharedPreferenceUtil.setToastNewCardBag(false);
+                    break;
+                }
+
                 switch (SharedPreferenceUtil.getDeckEditType()) {
                     case SharedPreferenceUtil.DECK_EDIT_TYPE_LOCAL:
-                        IntentUtil.startYGODeck(getActivity(), "");
+                        IntentUtil.startYGODeck(getActivity());
                         break;
                     case SharedPreferenceUtil.DECK_EDIT_TYPE_DECK_MANAGEMENT:
                         startActivity(new Intent(getActivity(), DeckManagementActivity.class));
@@ -159,6 +166,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 //                IntentUtil.startYGOGame(getActivity());
                 break;
             case R.id.cv_join_room:
+            case R.id.fab_join:
                 OYDialogUtil.dialogJoinRoom(getActivity(), null);
                 break;
             case R.id.cv_replay:
@@ -175,6 +183,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     private void initView(View v, Bundle saveBundle) {
         xb_banner = v.findViewById(R.id.xb_banner);
         iv_add_setting = v.findViewById(R.id.iv_add_setting);
+        iv_list_mode = v.findViewById(R.id.iv_list_mode);
 //        tl_game_option=v.findViewById(R.id.tl_game_option);
 //        vp_game=v.findViewById(R.id.vp_game);
 //        tl_replay=v.findViewById(R.id.tl_replay);
@@ -184,29 +193,80 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         cv_replay = v.findViewById(R.id.cv_replay);
         cv_loacl_duel = v.findViewById(R.id.cv_loacl_duel);
         rv_service_list = v.findViewById(R.id.rv_service_list);
-        cv_join_room = v.findViewById(R.id.cv_join_room);
+
         pb_res_loading = v.findViewById(R.id.pb_res_loading);
         cv_banner = v.findViewById(R.id.cv_banner);
         tv_banner_loading = v.findViewById(R.id.tv_banner_loading);
+        iv_card_bag = v.findViewById(R.id.iv_card_bag);
+
+        if (!isHorizontal)
+            fab_join = v.findViewById(R.id.fab_join);
+        else
+            cv_join_room = v.findViewById(R.id.cv_join_room);
 
         du = DialogUtils.getInstance(getActivity());
-        RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        if (!isHorizontal)
-//            linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
-//        else
-            linearLayoutManager=new GridLayoutManager(getActivity(),2);
-        rv_service_list.setLayoutManager(linearLayoutManager);
+
+        int serverListType = SharedPreferenceUtil.getServerListType();
+        ygoServerListAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
+        ygoServerGridAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_GRID);
+        setServerListType(serverListType);
+
+        long time = SharedPreferenceUtil.getVersionUpdateTime();
+        if (OYUtil.getIsNewVersion()) {
+            SharedPreferenceUtil.setVersionUpdateTime(System.currentTimeMillis());
+            SharedPreferenceUtil.setToastNewCardBag(true);
+            iv_card_bag.setImageResource(R.drawable.ic_new_card_bag);
+            ViewGroup.LayoutParams layoutParams1=iv_card_bag.getLayoutParams();
+        layoutParams1.width=OYUtil.dp2px(56);
+        layoutParams1.height=OYUtil.dp2px(56);
+            iv_card_bag.setLayoutParams(layoutParams1);
+            AlphaAnimation alphaAnimation=new AlphaAnimation(0,1);
+            //设置动画持续时长
+            alphaAnimation.setDuration(1000);
+            //开始动画
+            iv_card_bag.startAnimation(alphaAnimation);
+        } else {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(time);
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            if (System.currentTimeMillis() < calendar.getTimeInMillis()) {
+                iv_card_bag.setImageResource(R.drawable.ic_new_card_bag);
+                ViewGroup.LayoutParams layoutParams=iv_card_bag.getLayoutParams();
+                layoutParams.width=OYUtil.dp2px(56);
+                layoutParams.height=OYUtil.dp2px(56);
+                iv_card_bag.setLayoutParams(layoutParams);
+                AlphaAnimation alphaAnimation=new AlphaAnimation(0,1);
+                alphaAnimation.setDuration(1000);
+                //开始动画
+                iv_card_bag.startAnimation(alphaAnimation);
+            } else {
+                SharedPreferenceUtil.setToastNewCardBag(false);
+            }
+        }
 
         iv_add_setting.setOnClickListener(v1 -> startActivityForResult(new Intent(getActivity(), NewServerActivity.class), REQUEST_NEW_SERVER));
+        iv_list_mode.setOnClickListener(view -> {
+            if (SharedPreferenceUtil.getServerListType() == SharedPreferenceUtil.SERVER_LIST_TYPE_LIST) {
+                SharedPreferenceUtil.setServerListType(SharedPreferenceUtil.SERVER_LIST_TYPE_GRID);
+                setServerListType(SharedPreferenceUtil.SERVER_LIST_TYPE_GRID);
 
+            } else {
+                SharedPreferenceUtil.setServerListType(SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
+                setServerListType(SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
+            }
+        });
 
         cv_deck.setOnClickListener(this);
         cv_replay.setOnClickListener(this);
         cv_loacl_duel.setOnClickListener(this);
         cv_ai.setOnClickListener(this);
-        cv_join_room.setOnClickListener(this);
+
         tv_banner_loading.setOnClickListener(this);
 
+        if (!isHorizontal)
+            fab_join.setOnClickListener(this);
+        else
+            cv_join_room.setOnClickListener(this);
 
         cv_banner.post(() -> {
 //            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
@@ -277,6 +337,38 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 findMcNews();
             handler.sendEmptyMessage(TYPE_RES_LOADING_OK);
         }
+    }
+
+    private void setServerListType(int type) {
+        RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        switch (type) {
+            case SharedPreferenceUtil.SERVER_LIST_TYPE_LIST:
+                if (!isHorizontal) {
+                    linearLayoutManager = new LinearLayoutManager(getActivity());
+                    ygoServerListAdp.setNewInstance(ygoServerGridAdp.getData());
+                    ygoServerAdp = ygoServerListAdp;
+                } else {
+                    linearLayoutManager = new LinearLayoutManager(getActivity());
+                    ygoServerListAdp.setNewInstance(ygoServerGridAdp.getData());
+                    ygoServerAdp = ygoServerListAdp;
+                }
+                iv_list_mode.setImageResource(R.drawable.ic_list);
+                break;
+            case SharedPreferenceUtil.SERVER_LIST_TYPE_GRID:
+                if (!isHorizontal) {
+                    linearLayoutManager = new GridLayoutManager(getActivity(), 2);
+                    ygoServerGridAdp.setNewInstance(ygoServerListAdp.getData());
+                    ygoServerAdp = ygoServerGridAdp;
+                } else {
+                    linearLayoutManager = new LinearLayoutManager(getActivity());
+                    ygoServerListAdp.setNewInstance(ygoServerGridAdp.getData());
+                    ygoServerAdp = ygoServerListAdp;
+                }
+                iv_list_mode.setImageResource(R.drawable.ic_grid);
+                break;
+        }
+        rv_service_list.setLayoutManager(linearLayoutManager);
+        rv_service_list.setAdapter(ygoServerAdp);
     }
 
     private void findMcNews() {
@@ -378,8 +470,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private void initServiceList() {
         YGOUtil.getYGOServerList(serverList -> {
-            ygoServerAdp = new YGOServerBQAdapter(serverList.getServerInfoList(), isHorizontal);
-            rv_service_list.setAdapter(ygoServerAdp);
+            ygoServerAdp.setNewInstance(serverList.getServerInfoList());
             ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
             ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
                 switch (view.getId()) {

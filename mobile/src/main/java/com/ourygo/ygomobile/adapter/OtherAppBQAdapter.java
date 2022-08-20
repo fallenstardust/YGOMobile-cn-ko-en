@@ -31,6 +31,8 @@ public class OtherAppBQAdapter extends BaseQuickAdapter<OtherApp, BaseViewHolder
 
     public int getGroupType(int position) {
         List<OtherApp> data = getData();
+        if (position<0||position>data.size())
+            return ITEM_TYPE_SAME;
         int currentTypeId = data.get(position).getGroupId();
         Integer lastTypeId = null, nextTypeId = null;
         if (position != 0)
@@ -68,7 +70,7 @@ public class OtherAppBQAdapter extends BaseQuickAdapter<OtherApp, BaseViewHolder
     protected void convert(@NonNull BaseViewHolder baseViewHolder, OtherApp otherApp) {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.rl_item).getLayoutParams();
 
-        switch (getGroupType(getItemPosition(otherApp) - getHeaderLayoutCount())) {
+        switch (getGroupType(getItemPosition(otherApp) )) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.rl_item, R.drawable.click_background);
                 baseViewHolder.setGone(R.id.line, false);

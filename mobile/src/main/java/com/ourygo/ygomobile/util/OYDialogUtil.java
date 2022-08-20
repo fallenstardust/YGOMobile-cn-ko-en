@@ -3,6 +3,7 @@ package com.ourygo.ygomobile.util;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.Editable;
@@ -15,7 +16,6 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -33,7 +33,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.RoomSpinnerAdapter;
 import com.ourygo.ygomobile.base.listener.OnSetBgListener;
+import com.ourygo.ygomobile.bean.CardBag;
 import com.ourygo.ygomobile.bean.YGOServer;
+import com.ourygo.ygomobile.ui.activity.DeckManagementActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -125,7 +127,7 @@ public class OYDialogUtil {
                     Deck deckInfo = new Deck(OYUtil.s(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
                     Log.e("OYDialogUtil", "数量" + deckInfo.getMainCount() + " " + deckInfo.getExtraCount() + " " + deckInfo.getSideCount());
                     File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    if (!deckInfo.isCompleteDeck()){
+                    if (!deckInfo.isCompleteDeck()) {
                         cn.garymb.ygomobile.utils.YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                     }
 //                    try {
@@ -403,7 +405,7 @@ public class OYDialogUtil {
 
 //        ImageUtil.(context, imagePath, iv_bg, System.currentTimeMillis() + "");
 
-        List<String> nameList=new ArrayList<>();
+        List<String> nameList = new ArrayList<>();
 
         for (int bg : bgList) {
             switch (bg) {
@@ -422,30 +424,30 @@ public class OYDialogUtil {
             }
         }
         cb_duel.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked){
+            if (isChecked) {
                 cb_duel.setChecked(true);
                 nameList.add(Constants.CORE_SKIN_BG);
-            }else {
+            } else {
                 cb_duel.setChecked(false);
                 nameList.remove(Constants.CORE_SKIN_BG);
             }
         });
 
         cb_menu.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked){
+            if (isChecked) {
                 cb_menu.setChecked(true);
                 nameList.add(Constants.CORE_SKIN_BG_MENU);
-            }else {
+            } else {
                 cb_menu.setChecked(false);
                 nameList.remove(Constants.CORE_SKIN_BG_MENU);
             }
         });
 
         cb_deck.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked){
+            if (isChecked) {
                 cb_deck.setChecked(true);
                 nameList.add(Constants.CORE_SKIN_BG_DECK);
-            }else {
+            } else {
                 cb_deck.setChecked(false);
                 nameList.remove(Constants.CORE_SKIN_BG_DECK);
             }
@@ -463,11 +465,11 @@ public class OYDialogUtil {
 
         tv_set.setOnClickListener(v -> {
             dialogUtils.dis();
-            dialogUtils.dialogj1(null,"设置中，请稍等");
+            dialogUtils.dialogj1(null, "设置中，请稍等");
             if (sc_blur.isChecked()) {
                 ImageUtil.getBlurImage(context, imagePath, (imagePath1, exception) -> {
                     try {
-                        for (String name:nameList) {
+                        for (String name : nameList) {
                             FileUtils.copyFile(imagePath1, new File(AppsSettings.get().getCoreSkinPath(), name).getAbsolutePath());
                         }
                         dialogUtils.dis();
@@ -479,7 +481,7 @@ public class OYDialogUtil {
                 });
             } else {
                 try {
-                    for (String name:nameList) {
+                    for (String name : nameList) {
                         FileUtils.copyFile(imagePath, new File(AppsSettings.get().getCoreSkinPath(), name).getAbsolutePath());
                     }
                     dialogUtils.dis();
@@ -491,6 +493,53 @@ public class OYDialogUtil {
             }
         });
 
+
+    }
+
+    public static void dialogNewDeck(Context context) {
+        DialogUtils dialogUtils = DialogUtils.getInstance(context);
+        View view = dialogUtils.dialogBottomSheet(R.layout.new_deck_dialog);
+        Dialog dialog = dialogUtils.getDialog();
+        TextView tv_edit, tv_open_new_deck, tv_title, tv_message;
+        ImageView iv_close;
+        ImageView iv_image;
+
+        CardBag cardBag = OYUtil.getNewCardBag();
+
+        tv_edit = view.findViewById(R.id.tv_edit);
+        iv_close = view.findViewById(R.id.iv_close);
+        tv_open_new_deck = view.findViewById(R.id.tv_open_new_deck);
+        tv_title = view.findViewById(R.id.tv_title);
+        tv_message = view.findViewById(R.id.tv_message);
+        iv_image = view.findViewById(R.id.iv_image);
+
+        tv_title.setText(cardBag.getTitle());
+        tv_message.setText(cardBag.getMessage());
+
+        iv_close.setOnClickListener(view1 -> dialog.dismiss());
+
+        tv_edit.setOnClickListener(view12 -> {
+            dialog.dismiss();
+            switch (SharedPreferenceUtil.getDeckEditType()) {
+                case SharedPreferenceUtil.DECK_EDIT_TYPE_LOCAL:
+                    IntentUtil.startYGODeck((Activity) context);
+                    break;
+                case SharedPreferenceUtil.DECK_EDIT_TYPE_DECK_MANAGEMENT:
+                    context.startActivity(new Intent(context, DeckManagementActivity.class));
+                    break;
+                case SharedPreferenceUtil.DECK_EDIT_TYPE_OURYGO_EZ:
+                    if (OYUtil.isApp(Record.PACKAGE_NAME_EZ))
+                        context.startActivity(IntentUtil.getAppIntent(context, Record.PACKAGE_NAME_EZ));
+                    else
+                        context.startActivity(IntentUtil.getWebIntent(context, "http://ez.ourygo.top/"));
+                    break;
+            }
+        });
+
+        tv_open_new_deck.setOnClickListener(v -> {
+            dialog.dismiss();
+            IntentUtil.startYGODeck((Activity) context, OYUtil.s(R.string.category_pack), cardBag.getDeckName());
+        });
 
     }
 

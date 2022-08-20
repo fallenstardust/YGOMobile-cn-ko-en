@@ -46,6 +46,7 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
     }
 
     private void initView(View view, Bundle saveBundle) {
+        isStat=false;
         fragmentManager = getChildFragmentManager();
         if (saveBundle != null) {
             myCardFragment = (MyCardFragment) fragmentManager.getFragment(saveBundle, ARG_MC);

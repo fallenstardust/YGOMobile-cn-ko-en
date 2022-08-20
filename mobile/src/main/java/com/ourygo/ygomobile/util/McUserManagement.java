@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 
 /**
@@ -104,6 +105,7 @@ public class McUserManagement {
         lastModified.edit().putString("user_name", null).apply();
         UserManagement.setUserName(null);
         UserManagement.setUserPassword(null);
+        ServiceManagement.getDx().disSerVice();
         for (int i = 0; i < userListenerList.size(); i++) {
             OnMcUserListener ul = userListenerList.get(i);
             if (ul != null && ul.isListenerEffective()) {

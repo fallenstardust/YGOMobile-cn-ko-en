@@ -40,7 +40,10 @@ public class DeckUtil {
 
             int id = ydk1.getTypeName().compareTo(ydk2.getTypeName());
             if (id == 0)
-                return ydk1.getName().compareTo(ydk2.getName());
+                if (ydk1.getTypeName().equals(YGOUtil.s(R.string.category_pack)))
+                    return ydk2.getDate().compareTo(ydk1.getDate());
+                else
+                    return ydk1.getName().compareTo(ydk2.getName());
             else
                 return id;
         }
@@ -80,16 +83,19 @@ public class DeckUtil {
                 }
             }
         }
-        if (path.equals(AppsSettings.get().getPackDeckDir())) {
-            Collections.sort(deckList, dateCom);
-        } else {
+//        if (path.equals(AppsSettings.get().getPackDeckDir())) {
+//            Collections.sort(deckList, dateCom);
+//        } else {
             Collections.sort(deckList, nameCom);
-        }
+//        }
         return deckList;
     }
 
     public static List<DeckFile> getDeckAllList() {
-        return getDeckAllList(AppsSettings.get().getDeckDir());
+        List<DeckFile> deckFileList = getDeckAllList(AppsSettings.get().getDeckDir());
+        deckFileList.addAll(getDeckAllList(AppsSettings.get().getPackDeckDir()));
+        Collections.sort(deckFileList, nameCom);
+        return deckFileList;
     }
 
     public static List<DeckFile> getDeckAllList(String path) {
@@ -103,20 +109,19 @@ public class DeckUtil {
             for (File file : files) {
                 if (file.isDirectory()) {
                     deckList.addAll(getDeckAllList(file.getAbsolutePath(), true));
-                }
-                if (file.isFile() && file.getName().endsWith(".ydk")) {
+                } else if (file.isFile() && file.getName().endsWith(".ydk")) {
                     deckList.add(new DeckFile(file));
                 }
             }
         }
         if (!isDir) {
-            Log.e("DeckUtil", "路径 " + path);
-            Log.e("DeckUtil", "路径1 " + AppsSettings.get().getPackDeckDir());
-            if (path.equals(AppsSettings.get().getPackDeckDir())) {
-                Collections.sort(deckList, dateCom);
-            } else {
+//            Log.e("DeckUtil", "路径 " + path);
+//            Log.e("DeckUtil", "路径1 " + AppsSettings.get().getPackDeckDir());
+//            if (path.equals(AppsSettings.get().getPackDeckDir())) {
+//                Collections.sort(deckList, dateCom);
+//            } else {
                 Collections.sort(deckList, nameCom);
-            }
+//            }
         }
         return deckList;
     }

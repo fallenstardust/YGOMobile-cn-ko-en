@@ -1,36 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-   android:layout_marginRight="10dp"
-    android:padding="10dp"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="center"
-    android:id="@+id/ll_layout"
-    android:background="@drawable/edittext_message_gray"
+    android:layout_marginRight="10dp"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:minWidth="60dp"
     android:orientation="vertical">
 
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:textStyle="bold"
-        android:textSize="12sp"
-        android:id="@+id/tv_title"
-        android:textColor="@color/black"
+    <LinearLayout
+        android:padding="10dp"
+        android:gravity="center"
+        android:id="@+id/ll_layout"
+        android:background="@drawable/edittext_message_gray"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:minWidth="60dp"
+        android:orientation="vertical">
 
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:layout_marginTop="20dp"
-        android:textColor="@color/blackLight"
-        android:textSize="10sp"
-        android:maxWidth="160dp"
-        android:id="@+id/tv_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:id="@+id/tv_title"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_marginTop="20dp"
+            android:textColor="@color/blackLight"
+            android:textSize="10sp"
+            android:maxWidth="160dp"
+            android:id="@+id/tv_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_marginTop="3dp"
+        android:id="@+id/iv_arrow"
+        android:scaleType="fitXY"
+        android:src="@drawable/top_1"
+        android:layout_width="20dp"
+        android:layout_height="10dp"/>
 
 </LinearLayout>

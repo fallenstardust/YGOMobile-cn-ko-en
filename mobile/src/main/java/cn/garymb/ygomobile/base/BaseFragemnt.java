@@ -33,7 +33,13 @@ public abstract class BaseFragemnt extends Fragment {
      */
     private boolean isFirstVisible = true;
     private boolean isFirstInvisible = true;
-    private boolean isTakeFirst=false;
+    private boolean isTakeFirst = false;
+    protected boolean isStat = true;
+    private boolean isLastVisible = false;
+    private boolean hidden = false;
+    private boolean isFirst = true;
+    private boolean isResuming = false;
+    private boolean isViewDestroyed = false;
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
@@ -88,7 +94,7 @@ public abstract class BaseFragemnt extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         initPrepare();
-        Log.e("BaseFragment","创建");
+        Log.e("BaseFragment", "创建");
         if (savedInstanceState != null) {
             //竖屏
             if (ScaleUtils.ScreenOrient(getActivity()) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
@@ -111,7 +117,6 @@ public abstract class BaseFragemnt extends Fragment {
         }
     }
 
-
     @Override
     public void onResume() {
         super.onResume();
@@ -119,8 +124,8 @@ public abstract class BaseFragemnt extends Fragment {
 //        Log.e("BaseFragment",isTakeFirst+" "+isVisible()+" "+getUserVisibleHint()+" 显示"+getClass().getName());
         if (isFirstResume) {
             isFirstResume = false;
-            if (!isTakeFirst&&getUserVisibleHint()) {
-                isTakeFirst=true;
+            if (!isTakeFirst && getUserVisibleHint()) {
+                isTakeFirst = true;
                 onFirstUserVisible();
             }
             return;
@@ -147,7 +152,7 @@ public abstract class BaseFragemnt extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
 //        Log.e("BaseFragment",getClass().getName()+"显示情况1"+isVisibleToUser+" "+getUserVisibleHint());
-        isTakeFirst=true;
+        isTakeFirst = true;
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
             if (isFirstVisible) {
@@ -177,45 +182,42 @@ public abstract class BaseFragemnt extends Fragment {
     /**
      * 第一次fragment可见（进行初始化工作）
      */
-    public void onFirstUserVisible(){
-        isLastVisible=true;
-        isFirst=false;
-        Log.e("BaseFragment","第一次可见"+getClass().getName());
-        StatUtil.onResume(getClass().getName());
+    public void onFirstUserVisible() {
+        isLastVisible = true;
+        isFirst = false;
+        Log.e("BaseFragment", "第一次可见" + getClass().getName());
+        if (isStat)
+            StatUtil.onResume(getClass().getName());
+
 
     }
 
     /**
      * fragment可见（切换回来或者onResume）
      */
-    public void onUserVisible(){
-        isLastVisible=true;
-        isFirst=false;
-        Log.e("BaseFragment","可见"+getClass().getName());
-        StatUtil.onResume(getClass().getName());
+    public void onUserVisible() {
+        isLastVisible = true;
+        isFirst = false;
+        Log.e("BaseFragment", "可见" + getClass().getName());
+        if (isStat)
+            StatUtil.onResume(getClass().getName());
     }
 
     /**
      * 第一次fragment不可见（不建议在此处理事件）
      */
-    public void onFirstUserInvisible(){
+    public void onFirstUserInvisible() {
 
     }
 
     /**
      * fragment不可见（切换掉或者onPause）
      */
-    public void onUserInvisible(){
-        isLastVisible=false;
-        Log.e("BaseFragment","暂停"+getClass().getName());
+    public void onUserInvisible() {
+        isLastVisible = false;
+        Log.e("BaseFragment", "暂停" + getClass().getName());
         StatUtil.onPause(getClass().getName());
     }
-
-    private boolean isLastVisible = false;
-    private boolean hidden = false;
-    private boolean isFirst = true;
-    private boolean isResuming = false;
-    private boolean isViewDestroyed = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -243,7 +245,7 @@ public abstract class BaseFragemnt extends Fragment {
             List<Fragment> fragments = getChildFragmentManager().getFragments();
             if (fragments != null) {
                 for (Fragment fragment : fragments) {
-                    if (fragment!=null&&fragment instanceof BaseFragemnt) {
+                    if (fragment != null && fragment instanceof BaseFragemnt) {
                         ((BaseFragemnt) fragment).onHiddenChangedClient(hidden);
                     }
                 }

@@ -42,6 +42,7 @@ public class FunRecordFragment extends BaseFragemnt implements BaseDuelInfoFragm
     }
 
     private void initView(View view) {
+        isStat=false;
         cpv_rank = view.findViewById(R.id.cpv_rank);
         tv_rank = view.findViewById(R.id.tv_rank);
         tv_win = view.findViewById(R.id.tv_win);

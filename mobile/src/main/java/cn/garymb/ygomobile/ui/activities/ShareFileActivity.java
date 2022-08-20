@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -46,6 +47,8 @@ public class ShareFileActivity extends Activity {
             shareIntent.setType("*/*");
         } else if (ext.equals("ydk")) {
             sharePath = AppsSettings.get().getDeckDir() + "/" + title;
+            if (!new File(sharePath).exists())
+                sharePath=AppsSettings.get().getResourcePath()+"/"+title;
             shareIntent.setType("*/*");
         } else if (ext.equals(("jpg"))) {
             sharePath = AppsSettings.get().getCardImagePath() + "/" + title;

@@ -1,124 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/cv_banner"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:clickable="true"
-        android:foreground="?android:attr/selectableItemBackground"
-        android:orientation="vertical"
-        app:cardBackgroundColor="@color/white"
-        app:cardCornerRadius="@dimen/corner_radius"
-        app:elevation="0dp"
-        app:cardElevation="0dp"
-        app:cardUseCompatPadding="false">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-
-            <com.stx.xhb.androidx.XBanner
-                android:id="@+id/xb_banner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:AutoPlayTime="3500"
-                app:pageChangeDuration="800"
-                app:pointsVisibility="true"
-                app:pointsPosition="RIGHT"
-                app:tipTextSize="12sp"
-                app:clipChildrenTopBottomMargin="5dp"
-                app:isHandLoop="true" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_banner_loading"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="加载失败，点击重试"
-                android:textSize="15sp" />
-
-
-        </RelativeLayout>
-
-    </androidx.cardview.widget.CardView>
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:orientation="horizontal"
+        android:id="@+id/ll_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cv_join_room"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="@dimen/main_card_height"
-            app:cardCornerRadius="@dimen/dialog_corner_radius"
-            app:elevation="0dp"
-            app:cardElevation="0dp"
+        <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/cv_banner"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
             android:clickable="true"
             android:foreground="?android:attr/selectableItemBackground"
-            app:cardUseCompatPadding="false"
-            app:cardBackgroundColor="@color/colorDialogBackground">
+            android:orientation="vertical"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="@dimen/corner_radius"
+            app:elevation="0dp"
+            app:cardElevation="0dp"
+            app:cardUseCompatPadding="false">
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_marginRight="-20dp"
+
+                <com.stx.xhb.androidx.XBanner
+                    android:id="@+id/xb_banner"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginLeft="50dp"
-                    android:scaleType="fitEnd"
-                    android:src="@drawable/ic_lizi" />
+                    app:AutoPlayTime="3500"
+                    app:pageChangeDuration="800"
+                    app:pointsVisibility="true"
+                    app:pointsPosition="RIGHT"
+                    app:tipTextSize="12sp"
+                    app:clipChildrenTopBottomMargin="5dp"
+                    app:isHandLoop="true" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_banner_loading"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@color/mainCardShader"
-                    android:paddingLeft="13dp"
-                    android:paddingTop="13dp"
-                    android:text="加入房间"
-                    android:textColor="@color/blackLight2"
-                    android:textSize="@dimen/main_card_key_text_size"
-                    android:textStyle="bold" />
+                    android:gravity="center"
+                    android:text="加载失败，点击重试"
+                    android:textSize="15sp" />
+
+
             </RelativeLayout>
 
         </androidx.cardview.widget.CardView>
 
         <LinearLayout
-            android:orientation="vertical"
-            android:layout_weight="2.2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent">
+            android:layout_marginTop="20dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.cardview.widget.CardView
+                android:visibility="gone"
+                android:id="@+id/cv_join_room"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/main_card_height"
+                app:cardCornerRadius="@dimen/dialog_corner_radius"
+                app:elevation="0dp"
+                app:cardElevation="0dp"
+                android:clickable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                app:cardUseCompatPadding="false"
+                app:cardBackgroundColor="@color/colorDialogBackground">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_marginRight="-20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginLeft="50dp"
+                        android:scaleType="fitEnd"
+                        android:src="@drawable/ic_lizi" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/mainCardShader"
+                        android:paddingLeft="13dp"
+                        android:paddingTop="13dp"
+                        android:text="加入房间"
+                        android:textColor="@color/blackLight2"
+                        android:textSize="@dimen/main_card_key_text_size"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!--        <LinearLayout-->
+            <!--            android:orientation="vertical"-->
+            <!--            android:layout_weight="2.2"-->
+            <!--            android:layout_width="0dp"-->
+            <!--            android:layout_height="match_parent">-->
 
             <LinearLayout
-                android:layout_marginBottom="10dp"
                 android:orientation="horizontal"
-                android:layout_width="wrap_content"
-                android:layout_weight="1"
-                android:layout_height="0dp">
+                android:layout_width="0dp"
+                android:layout_weight="0.6"
+                android:layout_height="wrap_content">
 
                 <androidx.cardview.widget.CardView
                     android:clickable="true"
                     android:foreground="?android:attr/selectableItemBackground"
-                    android:layout_marginLeft="10dp"
                     android:id="@+id/cv_deck"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="match_parent"
+                    android:layout_height="@dimen/main_card_height"
                     app:cardCornerRadius="@dimen/dialog_corner_radius"
                     app:elevation="0dp"
                     app:cardElevation="0dp"
@@ -130,11 +134,16 @@
                         android:layout_height="match_parent">
 
                         <androidx.appcompat.widget.AppCompatImageView
-                            android:src="@drawable/ic_image2"
-                            android:scaleType="fitEnd"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
-
+                            android:id="@+id/iv_card_bag"
+                            android:layout_alignParentRight="true"
+                            android:layout_alignParentBottom="true"
+                            android:layout_marginRight="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:src="@drawable/ic_deck_main"
+                            android:scaleType="fitCenter"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp" />
+<!--48dp-->
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
@@ -150,22 +159,20 @@
                 </androidx.cardview.widget.CardView>
 
 
-
-
             </LinearLayout>
 
             <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="0dp">
+                android:layout_height="match_parent">
 
                 <androidx.cardview.widget.CardView
                     android:layout_marginLeft="10dp"
                     android:id="@+id/cv_ai"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_weight="1"
-                    android:layout_height="match_parent"
+                    android:layout_height="0dp"
                     app:cardCornerRadius="@dimen/dialog_corner_radius"
                     app:elevation="0dp"
                     app:cardElevation="0dp"
@@ -179,11 +186,14 @@
                         android:layout_height="match_parent">
 
                         <androidx.appcompat.widget.AppCompatImageView
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp"
+                            android:paddingRight="20dp"
                             android:layout_alignParentRight="true"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/ic_image1" />
+                            android:src="@drawable/ic_ai" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="match_parent"
@@ -238,11 +248,12 @@
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
+                    android:layout_marginTop="10dp"
                     android:layout_marginLeft="10dp"
                     android:id="@+id/cv_replay"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_weight="1"
-                    android:layout_height="match_parent"
+                    android:layout_height="0dp"
                     app:cardCornerRadius="@dimen/dialog_corner_radius"
                     app:elevation="0dp"
                     app:cardElevation="0dp"
@@ -278,62 +289,94 @@
 
             </LinearLayout>
 
+            <!--        </LinearLayout>-->
+
+
         </LinearLayout>
 
 
-    </LinearLayout>
-
-
-    <RelativeLayout
-        android:layout_marginTop="15dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/main_margin"
-        android:layout_marginRight="@dimen/main_margin">
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_start_s"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_marginTop="15dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="5dp"
-            android:gravity="center"
-            android:text="服务器列表"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_marginLeft="@dimen/main_margin"
+            android:layout_marginRight="@dimen/main_margin">
 
-        <ProgressBar
-            android:id="@+id/pb_res_loading"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="10dp"
-            android:layout_toRightOf="@id/tv_start_s" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_start_s"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="5dp"
+                android:gravity="center"
+                android:text="服务器列表"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
+            <ProgressBar
+                android:id="@+id/pb_res_loading"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/tv_start_s" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_add_setting"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/click_window_background_radius"
-            android:gravity="right"
-            android:padding="5dp"
-            app:srcCompat="@drawable/ic_edit_setting" />
-    </RelativeLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_marginTop="5dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:id="@+id/rv_service_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_list_mode"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="5dp"
+                android:layout_toLeftOf="@id/iv_add_setting"
+                android:background="@drawable/click_window_background_radius"
+                android:gravity="right"
+                android:padding="5dp"
+                app:srcCompat="@drawable/ic_list" />
 
 
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_add_setting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/click_window_background_radius"
+                android:gravity="right"
+                android:padding="5dp"
+                app:srcCompat="@drawable/ic_edit_setting" />
+        </RelativeLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:id="@+id/rv_service_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
 
+    </LinearLayout>
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fab_join"-->
+<!--        android:src="@drawable/ic_join_white"-->
+<!--        android:layout_alignParentRight="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_marginRight="30dp"-->
+<!--        android:layout_marginBottom="30dp"-->
+<!--        android:layout_width="90dp"-->
+<!--        android:layout_height="90dp"/>-->
 
-</LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:backgroundTint="@color/colorAccent"
+        app:backgroundTint="@color/colorAccent"
+        app:tint="@null"
+        android:id="@+id/fab_join"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="30dp"
+        android:src="@drawable/ic_join_white"
+        app:layout_anchor="@id/ll_layout"
+        app:layout_anchorGravity="bottom|end" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

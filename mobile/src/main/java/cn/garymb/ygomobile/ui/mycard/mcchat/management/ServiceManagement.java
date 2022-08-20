@@ -48,6 +48,7 @@ public class ServiceManagement {
     public static final int CHAT_LOGIN_LOADING = 6;
     public static final int CHAT_JOIN_ROOM_LOADING = 7;
     public static final int CHAT_USER_NULL = 8;
+    public static final int CHAT_NO_INACTIVE_EMAIL = 9;
 
     private static ServiceManagement su = new ServiceManagement();
     private XMPPTCPConnection con;
@@ -127,10 +128,16 @@ public class ServiceManagement {
                     }
                     break;
                 case CHAT_LOGIN_EXCEPTION:
+                    String loginException=msg.obj+"";
+                    //邮箱未验证
+                    if (loginException.contains("not-authorized")) {
+                        han.sendEmptyMessage(CHAT_NO_INACTIVE_EMAIL);
+                        break;
+                    }
                     while (i < joinChatListenerList.size()) {
                         OnJoinChatListener ou = joinChatListenerList.get(i);
                         if (ou.isListenerEffective()) {
-                            ou.onChatLogin(msg.obj + "");
+                            ou.onChatLogin(loginException);
                             i++;
                         } else {
                             joinChatListenerList.remove(i);
@@ -164,6 +171,17 @@ public class ServiceManagement {
                         OnJoinChatListener ou = joinChatListenerList.get(i);
                         if (ou.isListenerEffective()) {
                             ou.onChatUserNull();
+                            i++;
+                        } else {
+                            joinChatListenerList.remove(i);
+                        }
+                    }
+                    break;
+                case CHAT_NO_INACTIVE_EMAIL:
+                    while (i < joinChatListenerList.size()) {
+                        OnJoinChatListener ou = joinChatListenerList.get(i);
+                        if (ou.isListenerEffective()) {
+                            ou.onLoginNoInactiveEmail();
                             i++;
                         } else {
                             joinChatListenerList.remove(i);

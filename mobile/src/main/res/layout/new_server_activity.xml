@@ -30,7 +30,7 @@
 
         <androidx.core.widget.NestedScrollView
             android:background="@drawable/top_radius_background"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:elevation="10dp"
             android:translationZ="10dp"
             android:layout_width="match_parent"
@@ -45,7 +45,7 @@
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_marginTop="18dp"
-                    style="@style/TitleTextStytle"
+                    style="@style/TitleText2Stytle"
                     android:text="@string/server_info" />
 
                 <RelativeLayout
@@ -182,7 +182,7 @@
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_marginTop="28dp"
-                    style="@style/TitleTextStytle"
+                    style="@style/TitleText2Stytle"
                     android:text="@string/opponent_setting" />
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -194,7 +194,7 @@
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_mode_s"
                     android:layout_marginTop="28dp"
-                    style="@style/TitleTextStytle"
+                    style="@style/TitleText2Stytle"
                     android:text="@string/duel_mode" />
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -214,7 +214,7 @@
 
                     <androidx.appcompat.widget.AppCompatTextView
 
-                        style="@style/TitleTextStytle"
+                        style="@style/TitleText2Stytle"
                         android:text="@string/lflist" />
 
                     <ProgressBar

@@ -12,7 +12,11 @@ public class Record {
 
     public static final String MYCARD_NEWS_URL="https://api.mycard.moe/apps.json";
     public static final String MYCARD_POST_URL="https://ygobbs.com/t/";
+    public static final String URL_MYCARD_INACTIVE_EMAIL="https://accounts.moecube.com/signin";
     public static final String YGO_LFLIST_URL="https://raw.githubusercontent.com/moecube/ygopro/server/lflist.conf";
+    public static final String YGO_CARD_QUERY_URL="https://ygocdb.com/";
+
+    public static final String YGO_ARG_DECK_CATEGORY="--deck-category";
 
     public static final String ARG_TOPIC_LIST="topic_list";
     public static final String ARG_TOPICS="topics";
@@ -57,6 +61,10 @@ public class Record {
 
     public static String getMycardPostUrl(String id){
         return MYCARD_POST_URL+id;
+    }
+
+    public static String getMycardInactiveEmailUrl(){
+        return URL_MYCARD_INACTIVE_EMAIL;
     }
 
     public static String getImagePath(Context context) {

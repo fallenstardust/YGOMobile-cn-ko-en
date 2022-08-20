@@ -141,10 +141,14 @@
                             android:layout_height="match_parent">
 
                             <androidx.appcompat.widget.AppCompatImageView
-                                android:src="@drawable/ic_image2"
-                                android:scaleType="fitEnd"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent" />
+                                android:id="@+id/iv_card_bag"
+                                android:layout_alignParentRight="true"
+                                android:layout_alignParentBottom="true"
+                                android:layout_marginRight="10dp"
+                                android:src="@drawable/ic_deck_main"
+                                android:scaleType="fitCenter"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="match_parent"
@@ -328,6 +332,20 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
                 android:layout_toRightOf="@id/tv_start_s" />
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:visibility="gone"
+                android:id="@+id/iv_list_mode"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="5dp"
+                android:layout_toLeftOf="@id/iv_add_setting"
+                android:background="@drawable/click_window_background_radius"
+                android:gravity="right"
+                android:padding="5dp"
+                app:srcCompat="@drawable/ic_list" />
 
 
             <androidx.appcompat.widget.AppCompatImageView

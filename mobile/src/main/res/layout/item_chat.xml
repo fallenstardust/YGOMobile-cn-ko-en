@@ -42,6 +42,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:clickable="false"
             android:autoLink="email|web"
             android:id="@+id/ic_message"
             android:layout_width="wrap_content"

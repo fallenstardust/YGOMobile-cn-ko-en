@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -34,9 +35,11 @@ import com.ourygo.ygomobile.ui.fragment.McLayoutFragment;
 import com.ourygo.ygomobile.ui.fragment.MyCardFragment;
 import com.ourygo.ygomobile.ui.fragment.MyCardWebFragment;
 import com.ourygo.ygomobile.ui.fragment.OtherFunctionFragment;
+import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.OYDialogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 import com.ourygo.ygomobile.util.StatUtil;
@@ -54,6 +57,7 @@ import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 
@@ -68,6 +72,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //    private VerticalTabLayout vtab;
     private RecyclerView rv_tab;
     private ViewPager vp_pager;
+    private ImageView iv_card_query;
 
     private List<FragmentData> fragmentList;
 
@@ -216,6 +221,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             rv_tab.setLayoutManager(new LinearLayoutManager(this));
         }else {
             tl_tab = findViewById(R.id.tl_tab);
+            iv_card_query = findViewById(R.id.iv_card_query);
         }
 
         vp_pager = findViewById(R.id.vp_pager);
@@ -301,6 +307,12 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         } else {
             tl_tab.setViewPager(vp_pager);
             tl_tab.setCurrentTab(0);
+            iv_card_query.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    startActivity(IntentUtil.getWebIntent(OYMainActivity.this,Record.YGO_CARD_QUERY_URL));
+                }
+            });
         }
 
 
@@ -329,7 +341,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 
             dialog.setOnDismissListener(dialog12 -> {
                 Button b3 = dialogUtils.dialogt1("卡组导入提示", "YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
-                        "，可以打开原版软件，点击主页右下角的功能菜单——卡组编辑——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
+                        "，可以打开原版软件，点击下边栏的卡组选项——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
                 Dialog dialog1 = dialogUtils.getDialog();
                 b3.setOnClickListener(v -> dialog1.dismiss());
                 TextView tv_message1 = dialogUtils.getMessageTextView();
@@ -473,5 +485,9 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         OYDialogUtil.dialogDASaveDeck(this, deckMessage, isUrl ? OYDialogUtil.DECK_TYPE_URL : OYDialogUtil.DECK_TYPE_MESSAGE);
     }
 
-
+    @Override
+    protected void onDestroy() {
+        ServiceManagement.getDx().disClass();
+        super.onDestroy();
+    }
 }

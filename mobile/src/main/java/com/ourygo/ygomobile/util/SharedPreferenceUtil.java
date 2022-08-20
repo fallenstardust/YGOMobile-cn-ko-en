@@ -19,6 +19,9 @@ public class SharedPreferenceUtil {
     public static final int DECK_EDIT_TYPE_DECK_MANAGEMENT = 1;
     public static final int DECK_EDIT_TYPE_OURYGO_EZ = 2;
 
+    public static final int SERVER_LIST_TYPE_LIST=0;
+    public static final int SERVER_LIST_TYPE_GRID=1;
+
 
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
@@ -177,11 +180,35 @@ public class SharedPreferenceUtil {
     }
 
     public static int getDeckEditType() {
-        return getShareType().getInt("deckEditType", DECK_EDIT_TYPE_LOCAL);
+        return getShareType().getInt("deckEditType", DECK_EDIT_TYPE_DECK_MANAGEMENT);
     }
 
     public static void setDeckEditType(int type) {
         getShareType().edit().putInt("deckEditType", type).apply();
+    }
+
+    public static int getServerListType() {
+        return getShareType().getInt("serverListMode", SERVER_LIST_TYPE_LIST);
+    }
+
+    public static void setServerListType(int type) {
+        getShareType().edit().putInt("serverListMode", type).apply();
+    }
+
+    public static long getVersionUpdateTime() {
+        return getShareRecord().getLong("versionUpdateTime", 0);
+    }
+
+    public static void setVersionUpdateTime(long versionUpdateTime) {
+        getShareRecord().edit().putLong("versionUpdateTime", versionUpdateTime).apply();
+    }
+
+    public static boolean isToastNewCardBag() {
+        return getShareRecord().getBoolean("isToastNewCardBag", true);
+    }
+
+    public static void setToastNewCardBag(boolean toastNewCardBag) {
+        getShareRecord().edit().putBoolean("isToastNewCardBag", toastNewCardBag).apply();
     }
 
 }

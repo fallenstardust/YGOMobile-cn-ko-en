@@ -1,7 +1,6 @@
 package com.ourygo.ygomobile.adapter;
 
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +36,7 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
     private boolean isMessageBold;
     private OnOYSelectListener onOYselectListener;
     private OnItemClickListener currentOnItemClickListener;
+    private boolean isShowArrow;
 
     public OYSelectBQAdapter(@Nullable List<OYSelect> data) {
         super(R.layout.oy_select_item, data);
@@ -46,7 +46,12 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
         selectBackgroundColor = R.drawable.click_gray_dark_radius;
         messageColor = OYUtil.c(R.color.blackLight);
         selectPosition = -1;
+        isShowArrow = false;
         setItemClickListener();
+    }
+
+    public void setShowArrow(boolean showArrow) {
+        isShowArrow = showArrow;
     }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
@@ -77,11 +82,19 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
         LinearLayout cv_card = helper.getView(R.id.ll_layout);
         if (selectPosition == -1) {
             cv_card.setBackgroundResource(backgroundColor);
+            helper.setGone(R.id.iv_arrow, true);
         } else {
             if (helper.getAdapterPosition() == selectPosition) {
                 cv_card.setBackgroundResource(selectBackgroundColor);
+                tv_title.setTypeface(Typeface.DEFAULT_BOLD);
+                if (isShowArrow)
+                    helper.setVisible(R.id.iv_arrow, true);
+                else
+                    helper.setGone(R.id.iv_arrow, true);
             } else {
                 cv_card.setBackgroundResource(backgroundColor);
+                tv_title.setTypeface(Typeface.DEFAULT);
+                helper.setGone(R.id.iv_arrow, true);
             }
         }
 
@@ -138,10 +151,10 @@ public class OYSelectBQAdapter extends BaseQuickAdapter<OYSelect, BaseViewHolder
 
     public void setSelectPosition(int selectPosition) {
         int lastPosition = this.selectPosition;
-        setSelectPosition(lastPosition,selectPosition);
+        setSelectPosition(lastPosition, selectPosition);
     }
 
-    public void setSelectPosition(int lastPosition,int selectPosition) {
+    public void setSelectPosition(int lastPosition, int selectPosition) {
         this.selectPosition = selectPosition;
         notifyDataSetChanged();
         if (onOYselectListener != null)

@@ -513,6 +513,14 @@ public class AppsSettings {
         return new File(getResourcePath(), Constants.CORE_SINGLE_PATH).getAbsolutePath();
     }
 
+    public String getScriptZipPath(){
+        return new File(getResourcePath(),Constants.CORE_SCRIPTS_ZIP).getAbsolutePath();
+    }
+
+    public String getPicsZipPath(){
+        return new File(getResourcePath(),Constants.CORE_PICS_ZIP).getAbsolutePath();
+    }
+
     /**
      * 隐藏底部导航栏
      */

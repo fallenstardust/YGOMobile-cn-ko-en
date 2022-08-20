@@ -163,13 +163,15 @@ int main(int argc, char* argv[]) {
 			++i;
 			if(i < argc) {
 				deckCategorySpecified = true;
+				BufferIO::DecodeUTF8(argv[i].c_str(), wargv[i]);
 				wcscpy(ygo::mainGame->gameConf.lastcategory, wargv[i]);
+				ALOGD("open deck file:selct lastcategory=%ls", wargv[i]);
 			}
 		}else if(!strcmp(arg, "-d")) { // Deck
 			ALOGD("open deck file:index=%d size=%d", i,wargc);
 
 			if(!deckCategorySpecified)
-				ygo::mainGame->gameConf.lastcategory[0] = 0;
+				ygo::mainGame->gameConf.lastcategory[0] = 1;
 			if(i + 1 < wargc) { // select deck
                 BufferIO::DecodeUTF8(argv[i+1].c_str(), wargv[i+1]);
 				wcscpy(ygo::mainGame->gameConf.lastdeck, wargv[i+1]);

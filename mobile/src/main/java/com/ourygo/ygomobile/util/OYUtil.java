@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.OYApplication;
+import com.ourygo.ygomobile.bean.CardBag;
 import com.tencent.bugly.beta.Beta;
 
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 
 public class OYUtil {
@@ -457,6 +459,14 @@ public class OYUtil {
         renderScript.destroy();
 
         return inputBmp;
+    }
+
+    public static CardBag getNewCardBag(){
+        CardBag cardBag=new CardBag();
+        cardBag.setTitle("SR13 恶魔之门，暗黑界回归！");
+        cardBag.setMessage("暗黑界的龙神王，珠泪新打手");
+        cardBag.setDeckName("SR13+T1109");
+        return cardBag;
     }
 
 }

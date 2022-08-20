@@ -75,7 +75,7 @@ public class DeckListBQAdapter extends BaseQuickAdapter<DeckFile, BaseViewHolder
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, DeckFile deck) {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
-        switch (getGroupType(baseViewHolder.getAdapterPosition() - getHeaderLayoutCount())) {
+        switch (getGroupType(getItemPosition(deck))) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.click_background);
                 baseViewHolder.setGone(R.id.tv_type_name, true);
@@ -122,7 +122,7 @@ public class DeckListBQAdapter extends BaseQuickAdapter<DeckFile, BaseViewHolder
 
                 break;
             default:
-                Log.e("SettingAdp", "其他情况" + (baseViewHolder.getAdapterPosition() - getHeaderLayoutCount()));
+//                Log.e("SettingAdp", "其他情况" + (baseViewHolder.getAdapterPosition() - getHeaderLayoutCount()));
                 break;
         }
 

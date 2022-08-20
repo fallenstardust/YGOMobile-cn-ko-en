@@ -263,20 +263,23 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
                         mSettings.getCoreSkinPath(), needsUpdate);
             }
-            //复制字体
-            setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
-                    mSettings.getFontDirPath(), needsUpdate);
+            if(new File(AppsSettings.get().getFontPath()).length()<4625768 ||needsUpdate) {
+                //复制字体
+                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
+                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
+                        mSettings.getFontDirPath(), needsUpdate);
+            }
             //复制脚本压缩包
-            if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+            if ((new File(AppsSettings.get().getScriptZipPath()).length()<26839396||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
                         resPath, needsUpdate);
             }
-            //复制数据库
+                //复制数据库
             copyCdbFile(needsUpdate);
+
             //复制卡图压缩包
-            if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
+            if ((new File(AppsSettings.get().getPicsZipPath()).length()<174267723||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
@@ -287,7 +290,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             LogUtil.time(TAG, "2");
             han.sendEmptyMessage(0);
 
-            loadData();
+//            loadData();
         } catch (
                 Exception e) {
             if (Constants.DEBUG)

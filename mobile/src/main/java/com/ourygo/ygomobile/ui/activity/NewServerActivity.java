@@ -265,6 +265,7 @@ public class NewServerActivity extends BaseActivity implements OnItemClickListen
             serverAdp = new OYSelectBQAdapter(oySelectList);
             //隐藏内容
             serverAdp.hideMessage();
+            serverAdp.setShowArrow(true);
             //设置高宽
             serverAdp.setLayoutSize(OYUtil.dp2px(75), OYUtil.dp2px(86));
             serverAdp.setFooterView(server_add_layout);

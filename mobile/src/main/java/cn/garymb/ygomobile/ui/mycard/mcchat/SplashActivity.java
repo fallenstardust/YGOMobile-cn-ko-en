@@ -8,11 +8,15 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.Record;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
@@ -34,6 +38,8 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
     ProgressBar sp_jz;
     TextView sp_tv;
     LinearLayout sp_li;
+    private DialogUtils dialogUtils;
+    private boolean isStartInactiveEmail=false;
 
 
     @Override
@@ -66,8 +72,12 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
         sp_tv = findViewById(R.id.sp_tv);
         sp_li = findViewById(R.id.sp_li);
 
+        dialogUtils=DialogUtils.getInstance(this);
         sp_li.setOnClickListener(p1 -> {
-            su.start();
+            if (isStartInactiveEmail)
+                dialogInactiveEmail();
+            else
+                su.start();
             // TODO: Implement this method
         });
 
@@ -81,6 +91,23 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
 //        sp_tv.setText(getString(R.string.logining_failed));
 //        YGOUtil.show(getString(R.string.failed_reason) + msg.obj);
 //    }
+
+    public void dialogInactiveEmail(){
+        View[] views=dialogUtils.dialogt("邮箱验证提示","需要验证邮箱才能加入聊天室，点击进行验证");
+        Button b1 = (Button) views[0];
+        Button b2 = (Button) views[1];
+        b1.setText("退出");
+        b2.setText("验证邮箱");
+        b1.setOnClickListener(view -> {
+            dialogUtils.dis();
+            finish();
+        });
+        b2.setOnClickListener(view -> {
+            dialogUtils.dis();
+            startActivity(IntentUtil.getWebIntent(this, Record.getMycardInactiveEmailUrl()));
+            finish();
+        });
+    }
 
     @Override
     public void onChatLogin(String exception) {
@@ -115,6 +142,15 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
     public void onChatUserNull() {
         Log.e("SplashActivity", "用户为空");
         finish();
+    }
+
+    @Override
+    public void onLoginNoInactiveEmail() {
+        su.setIsListener(false);
+        sp_jz.setVisibility(View.GONE);
+        isStartInactiveEmail=true;
+        sp_tv.setText("邮箱未验证，点击进行邮箱验证");
+        dialogInactiveEmail();
     }
 
     @Override

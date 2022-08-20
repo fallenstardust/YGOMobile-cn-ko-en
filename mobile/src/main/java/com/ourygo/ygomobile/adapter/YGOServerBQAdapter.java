@@ -7,6 +7,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.util.OYUtil;
+import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 
 import java.util.List;
 
@@ -15,14 +16,18 @@ import cn.garymb.ygomobile.lite.R;
 public class YGOServerBQAdapter extends BaseQuickAdapter<YGOServer, BaseViewHolder> {
 
     private boolean isHorizontal;
+    private int serverListType;
 
     public YGOServerBQAdapter(@Nullable List<YGOServer> data) {
-        this(data, false);
+        this(data, false, SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
     }
 
-    public YGOServerBQAdapter(@Nullable List<YGOServer> data, boolean isHorizontal) {
-        super(isHorizontal ? R.layout.ygo_server_horizontal_item : R.layout.ygo_server_item, data);
+    public YGOServerBQAdapter(@Nullable List<YGOServer> data, boolean isHorizontal, int serverListType) {
+        super(isHorizontal ? R.layout.ygo_server_horizontal_item :
+                (serverListType == SharedPreferenceUtil.SERVER_LIST_TYPE_LIST ? R.layout.ygo_server_item : R.layout.ygo_server_grid_item)
+                , data);
         this.isHorizontal = isHorizontal;
+        this.serverListType = serverListType;
     }
 
     @Override
