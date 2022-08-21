@@ -35,6 +35,7 @@ import com.ourygo.ygomobile.ui.fragment.McLayoutFragment;
 import com.ourygo.ygomobile.ui.fragment.MyCardFragment;
 import com.ourygo.ygomobile.ui.fragment.MyCardWebFragment;
 import com.ourygo.ygomobile.ui.fragment.OtherFunctionFragment;
+import com.ourygo.ygomobile.util.AppInfoManagement;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.OYDialogUtil;
@@ -46,6 +47,7 @@ import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
 import com.tencent.bugly.Bugly;
+import com.tencent.bugly.crashreport.common.info.AppInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -488,6 +490,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     @Override
     protected void onDestroy() {
         ServiceManagement.getDx().disClass();
+        AppInfoManagement.getInstance().close();
         super.onDestroy();
     }
 }

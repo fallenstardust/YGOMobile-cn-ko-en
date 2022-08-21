@@ -53,6 +53,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.SystemUtils;
 
 public class OYUtil {
 
@@ -174,17 +175,18 @@ public class OYUtil {
     }
 
     //是否是新版本
-    public static boolean getIsNewVersion() {
-        String versionName = App.get().getResources().getString(R.string.app_version_name);
-        SharedPreferences sh = App.get().getSharedPreferences("AppVersion", App.get().MODE_PRIVATE);
-        String vn = sh.getString("versionName", "0");
-        if (versionName.equals(vn)) {
-            return false;
-        } else {
-            sh.edit().putString("versionName", versionName).commit();
-            return true;
-        }
-    }
+//    public static boolean getIsNewVersion() {
+//        String versionName = App.get().getResources().getString(R.string.app_version_name);
+//        SharedPreferences sh = App.get().getSharedPreferences("AppVersion", App.get().MODE_PRIVATE);
+//        int vercode = SystemUtils.getVersion(OYApplication.get());
+//        int vn = sh.getInt("versionCode", 0);
+//        if (vn<vercode) {
+//            sh.edit().putString("versionName", versionName).commit();
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
 
     public static void snackExceptionToast(final Context context, View view, final String toast, final String exception) {
         SnackbarUtil.ShortSnackbar(view, toast, SnackbarUtil.white, SnackbarUtil.red)

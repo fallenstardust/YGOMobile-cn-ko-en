@@ -137,7 +137,7 @@ public class AboutActivity extends BaseActivity {
        updateList.add(UpdateLog.toUpdateLog("1.2.0","更新ygo内核\n" +
                "更新卡包SR13+T1109\n" +
                "服务器列表可选择表格布局\n" +
-               "修复部分机型对话框关闭时输入法未关闭的问题\n" +
+               "修复部分机型对话框关闭时输入法未关闭的问题\n"+
                "MC萌卡邮箱未验证时支持跳转验证邮箱\n" +
                "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.1.4","更新ygo内核\n" +

@@ -22,6 +22,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.util.AppInfoManagement;
 import com.ourygo.ygomobile.util.LogUtil;
 
 import java.io.File;
@@ -160,12 +161,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 //        dialog = DialogUtils.getInstance(mContext);
 //        dialog.dialogj1( null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
-        if (mSettings.getAppVersion() < vercode) {
-            mSettings.setAppVersion(vercode);
-            isNewVersion = true;
-        } else {
-            isNewVersion = false;
-        }
+        isNewVersion = AppInfoManagement.getInstance().isNewVersion();
+
+        Log.e("feihua","版本号"+isNewVersion);
+
     }
 
     @Override

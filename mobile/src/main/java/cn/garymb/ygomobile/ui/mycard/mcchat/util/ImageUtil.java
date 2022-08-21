@@ -69,6 +69,7 @@ public class ImageUtil {
             Glide.with(context)
                     .asBitmap()
                     .load(url)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .transition(BitmapTransitionOptions.withCrossFade(3000))
 
                     .transform(new GlideRoundTransform(context))
@@ -80,6 +81,7 @@ public class ImageUtil {
                             Glide.with(context)
                                     .asBitmap()
                                     .load(url)
+                                    .diskCacheStrategy(DiskCacheStrategy.DATA)
                                     .transform(new GlideBannerTransform(),new BlurTransformation(50))
 //                                    .apply(RequestOptions.bitmapTransform(new BlurTransformation(50)))
                                     .into(new SimpleTarget<Bitmap>() {

@@ -32,6 +32,7 @@ import com.ourygo.ygomobile.bean.McNews;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.activity.DeckManagementActivity;
 import com.ourygo.ygomobile.ui.activity.NewServerActivity;
+import com.ourygo.ygomobile.util.AppInfoManagement;
 import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.MyCardUtil;
@@ -212,7 +213,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         setServerListType(serverListType);
 
         long time = SharedPreferenceUtil.getVersionUpdateTime();
-        if (OYUtil.getIsNewVersion()) {
+        if (AppInfoManagement.getInstance().isNewVersion()) {
             SharedPreferenceUtil.setVersionUpdateTime(System.currentTimeMillis());
             SharedPreferenceUtil.setToastNewCardBag(true);
             iv_card_bag.setImageResource(R.drawable.ic_new_card_bag);
