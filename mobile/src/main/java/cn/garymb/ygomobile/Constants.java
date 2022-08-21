@@ -232,7 +232,7 @@ public interface Constants {
 
     //额外的cdb
     boolean NETWORK_IMAGE = false;
-    boolean SHOW_MYCARD = !"core".equals(BuildConfig.FLAVOR);
+//    boolean SHOW_MYCARD = !"core".equals(BuildConfig.FLAVOR);
 
     //打开ydk，是否复制到文件夹
     boolean COPY_YDK_FILE = false;

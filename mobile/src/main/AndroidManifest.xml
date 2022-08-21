@@ -56,10 +56,6 @@
         android:theme="@style/AppTheme"
         tools:replace="android:allowBackup,android:supportsRtl"
         tools:targetApi="m">
-        <activity
-            android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
-            android:excludeFromRecents="false"
-            android:theme="@style/TranslucentTheme"></activity>
 
 <!--        <activity-->
 <!--            android:name="com.tencent.bugly.beta.ui.BetaActivity"-->
@@ -72,34 +68,6 @@
             android:configChanges="keyboardHidden|orientation|screenSize|locale"
             android:theme="@android:style/Theme.Translucent" />
 
-        <activity
-            android:name="cn.garymb.ygomobile.ui.home.MainActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:excludeFromRecents="false"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
-            <intent-filter>
-                <action android:name="ygomobile.intent.action.DECK" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <!--            <intent-filter>-->
-            <!--                <action android:name="android.intent.action.VIEW"/>-->
-
-            <!--                <category android:name="android.intent.category.DEFAULT"/>-->
-            <!--                <category android:name="android.intent.category.BROWSABLE"/>-->
-
-            <!--                &lt;!&ndash;android:pathPrefix="/deck"&ndash;&gt;-->
-
-            <!--            </intent-filter>-->
-
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.ShareFileActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
@@ -116,14 +84,6 @@
             android:name="cn.garymb.ygomobile.YGOMobileActivity"
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
-        <activity
-            android:name="cn.garymb.ygomobile.ui.preference.SettingsActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:label="@string/settings"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
 
         <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
@@ -181,8 +141,8 @@
 
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
-            android:name="cn.garymb.ygomobile.ui.preference.OYYGOPreferencesProvider"
-            android:authorities="cn.garymb.ygomobile.ui.preference.OYYGOPreferencesProvider"
+            android:name="cn.garymb.ygomobile.ui.settings.OYYGOPreferencesProvider"
+            android:authorities="cn.garymb.ygomobile.ui.settings.OYYGOPreferencesProvider"
             android:exported="false"
             android:grantUriPermissions="true" />
         <provider
