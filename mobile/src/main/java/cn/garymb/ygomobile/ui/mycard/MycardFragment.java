@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -309,6 +310,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.ll_head_login:
+                if (homeActivity.fragment_mycard_chatting_room.isVisible())
+                    getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
                 mWebViewPlus.loadUrl(mMyCard.URL_MC_LOGOUT);
                 break;
             case R.id.tv_back_mc:
@@ -346,6 +349,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         //重登、切换用户即时更新用户和id信息
         if (mWebViewPlus.getUrl() != null) {
             String url = mWebViewPlus.getUrl();
+            Log.i("3.10.1看看",url);
             if (url.startsWith(mMyCard.MC_MAIN_URL)) {
 
                 String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
