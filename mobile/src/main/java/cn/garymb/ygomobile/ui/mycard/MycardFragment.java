@@ -30,6 +30,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.app.hubert.guide.util.LogUtil;
 import com.ourygo.assistant.util.Util;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -46,6 +47,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
@@ -58,7 +60,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_LOGIN = 0;
     private static final int TYPE_MC_LOGIN_FAILED = 1;
     private HomeActivity homeActivity;
-    private SharedPreferences lastModified;
     long exitLasttime = 0;
     //头像昵称账号
     private LinearLayout ll_head_login;
@@ -81,12 +82,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == TYPE_MC_LOGIN) {
-                String[] ss = (String[]) msg.obj;
-                if (!TextUtils.isEmpty(ss[1])) {
-                    GlideCompat.with(getActivity()).load(Uri.parse(ss[1])).into(mHeadView);//刷新头像图片
+           McUser mcUser= (McUser) msg.obj;
+                if (!TextUtils.isEmpty(mcUser.getAvatar_url())) {
+                    GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
                 }
-                mNameView.setText(ss[0]);//刷新用户名
-                mStatusView.setText(ss[2]);//刷新账号信息
+                mNameView.setText(mcUser.getUsername());//刷新用户名
+                mStatusView.setText(mcUser.getEmail());//刷新账号信息
                 serviceManagement.start();
             }
             if (msg.what == TYPE_MC_LOGIN_FAILED) {
@@ -103,7 +104,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         homeActivity = (HomeActivity) getActivity();
-        lastModified = App.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         View view;
         view = inflater.inflate(R.layout.fragment_mycard, container, false);
         initView(view);
@@ -312,7 +312,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.ll_head_login:
                 if (homeActivity.fragment_mycard_chatting_room.isVisible())
                     getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
-                mWebViewPlus.loadUrl(mMyCard.URL_MC_LOGOUT);
+                mWebViewPlus.loadUrl(MyCard.getMCLogoutUrl());
                 break;
             case R.id.tv_back_mc:
                 onHome();
@@ -345,28 +345,37 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     }
 
     @Override
-    public void onLogin(String name, String icon, String statu) {
-        //重登、切换用户即时更新用户和id信息
-        if (mWebViewPlus.getUrl() != null) {
-            String url = mWebViewPlus.getUrl();
-            Log.i("3.10.1看看",url);
-            if (url.startsWith(mMyCard.MC_MAIN_URL)) {
-
-                String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
-                Uri info = new Uri.Builder().encodedQuery(data).build();
-                mMyCard.mUser.username =info.getQueryParameter("username");
-                mMyCard.mUser.external_id = Integer.parseInt(info.getQueryParameter("id"));
-
-                lastModified.edit().putString("user_name", mMyCard.mUser.username).apply();
-                lastModified.edit().putString("user_external_id", String.valueOf(mMyCard.mUser.external_id)).apply();
-                serviceManagement.disSerVice();//先退出当前账号，待TYPE_MC_LOGIN处重新执行start（）
-            }
+    public void onLogin(McUser mcUser, String exception) {
+        if (!TextUtils.isEmpty(exception)){
+            return;
         }
+        serviceManagement.disSerVice();//先退出当前账号，待TYPE_MC_LOGIN处重新执行start（）
+
         //登录成功发送message
         Message message = new Message();
-        message.obj = new String[]{name, icon, statu};
+        message.obj = mcUser;
         message.what = TYPE_MC_LOGIN;
         handler.sendMessage(message);
+    }
+
+    @Override
+    public void onUpdate(String name, String icon, String statu) {
+        McUser mcUser=new McUser();
+        mcUser.setUsername(name);
+        mcUser.setAvatar_url(icon);
+        mcUser.setEmail(statu);
+        //登录成功发送message
+        Message message = new Message();
+        message.obj = mcUser;
+        message.what = TYPE_MC_LOGIN;
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void onLogout(String message) {
+        if (!TextUtils.isEmpty(message))
+            YGOUtil.show(message);
+        serviceManagement.disSerVice();
     }
 
     @Override
@@ -404,6 +413,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             else
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
+            Log.e("MyCardFragment","登录失败"+exception);
             tv_message.setText(R.string.logining_failed);
             HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, exception);
             serviceManagement.setIsListener(false);

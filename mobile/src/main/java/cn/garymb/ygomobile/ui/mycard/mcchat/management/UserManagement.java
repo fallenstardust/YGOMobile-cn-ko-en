@@ -1,29 +1,26 @@
 package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+
 public class UserManagement {
     private static UserManagement userManagement = new UserManagement();
-    private static String userName, userPassword;
-
+    private McUser mcUser;
     private UserManagement() {
     }
 
-    public static String getUserName() {
-        return userName;
+    public McUser getMcUser() {
+        return mcUser;
     }
 
-    public static void setUserName(String name) {
-        userName = name;
-    }
-
-    public static String getUserPassword() {
-        return userPassword;
-    }
-
-    public static void setUserPassword(String password) {
-        userPassword = password;
+    public void setMcUser(McUser mcUser) {
+        this.mcUser = mcUser;
     }
 
     public static UserManagement getDx() {
         return userManagement;
+    }
+
+    public void logout() {
+        mcUser=null;
     }
 }

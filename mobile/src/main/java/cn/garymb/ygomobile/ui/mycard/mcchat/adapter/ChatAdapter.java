@@ -53,7 +53,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        if (data.get(position).getName().equals(UserManagement.getUserName())) {
+        if (data.get(position).getName().equals(UserManagement.getDx().getMcUser().getUsername())) {
             return CHAT_ME;
         } else {
             return CHAT;
