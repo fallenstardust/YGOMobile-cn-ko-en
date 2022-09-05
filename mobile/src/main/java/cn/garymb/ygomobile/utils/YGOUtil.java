@@ -135,7 +135,6 @@ public class YGOUtil {
 
         final int offset = recyclerView.computeVerticalScrollOffset();
         final int range = recyclerView.computeVerticalScrollRange() - recyclerView.computeVerticalScrollExtent();
-        Log.e("MycardFragment",(visibleItemCount > 0 )+"  "+( lastVisibleItemPosition >= (totalItemCount - 3 ))+"  "+( state == recyclerView.SCROLL_STATE_IDLE)+"高度"+(totalItemCount-3)+"  "+lastVisibleItemPosition+"  "+(range-offset));
         if(visibleItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 3 && state == recyclerView.SCROLL_STATE_IDLE){
             return true;
         } else {

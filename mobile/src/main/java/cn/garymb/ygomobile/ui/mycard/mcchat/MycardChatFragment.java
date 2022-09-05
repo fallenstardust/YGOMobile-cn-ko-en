@@ -94,7 +94,7 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
 
     @Override
     public void addChatMessage(ChatMessage message) {
-        boolean isSmooth = YGOUtil.isVisBottom(main_rec) || message.getName().equals(UserManagement.getUserName());
+        boolean isSmooth = YGOUtil.isVisBottom(main_rec) || message.getName().equals(UserManagement.getDx().getMcUser().getUsername());
         cadp.sx();
         //如果在底部新消息来了或者消息是自己发送才滑到最下面，最后一个item有显示才算在底部
         if (isSmooth)

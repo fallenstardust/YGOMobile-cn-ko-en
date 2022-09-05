@@ -2,6 +2,9 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import static junit.framework.Assert.assertEquals;
 
+import static cn.garymb.ygomobile.Constants.ARG_DECK;
+import static cn.garymb.ygomobile.Constants.QUERY_YGO_TYPE;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -13,6 +16,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
+import com.app.hubert.guide.util.LogUtil;
+import com.google.gson.Gson;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
@@ -23,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +36,12 @@ import java.util.List;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
@@ -95,8 +104,35 @@ public class MyCard {
     public static final String ARG_PORT = "port";
     public static final String PACKAGE_NAME_EZ = "com.ourygo.ez";
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private final DefWebViewClient mDefWebViewClient;
-    public final User mUser = new User();
+    private final DefWebViewClient mDefWebViewClient = new DefWebViewClient() {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                if (url.startsWith(return_sso_url)) {
+//
+//
+//                    String sso = Uri.parse(url).getQueryParameter("sso");
+//                    String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
+//                    Uri info = new Uri.Builder().encodedQuery(data).build();
+//                    mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
+//                    mUser.username = info.getQueryParameter("username");
+//                    mUser.name = info.getQueryParameter("name");
+//                    mUser.email = info.getQueryParameter("email");
+//                    mUser.avatar_url = info.getQueryParameter("avatar_url");
+//                    mUser.admin = info.getBooleanQueryParameter("admin", false);
+//                    mUser.moderator = info.getBooleanQueryParameter("moderator", false);
+//                    lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
+//                    lastModified.edit().putString("user_name", mUser.username).apply();
+//                    //UserManagement.setUserName(mUser.username);
+//                    //UserManagement.setUserPassword(mUser.external_id+"");
+//                    mUser.login = true;
+//                    if (getMyCardListener() != null) {
+//                        getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
+//                    }
+//                    return false;
+//                }
+            return super.shouldOverrideUrlLoading(view, url);
+        }
+    };
     private final SharedPreferences lastModified;
     private MyCardListener mMyCardListener;
     private Activity mContext;
@@ -104,33 +140,15 @@ public class MyCard {
     public MyCard(Activity context) {
         mContext = context;
         lastModified = context.getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        mDefWebViewClient = new DefWebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith(return_sso_url)) {
-                    String sso = Uri.parse(url).getQueryParameter("sso");
-                    String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
-                    Uri info = new Uri.Builder().encodedQuery(data).build();
-                    mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
-                    mUser.username = info.getQueryParameter("username");
-                    mUser.name = info.getQueryParameter("name");
-                    mUser.email = info.getQueryParameter("email");
-                    mUser.avatar_url = info.getQueryParameter("avatar_url");
-                    mUser.admin = info.getBooleanQueryParameter("admin", false);
-                    mUser.moderator = info.getBooleanQueryParameter("moderator", false);
-                    lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
-                    lastModified.edit().putString("user_name", mUser.username).apply();
-                    //UserManagement.setUserName(mUser.username);
-                    //UserManagement.setUserPassword(mUser.external_id+"");
-                    mUser.login = true;
-                    if (getMyCardListener() != null) {
-                        getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
-                    }
-                    return false;
-                }
-                return super.shouldOverrideUrlLoading(view, url);
-            }
-        };
+    }
+
+    public static String getMCLogoutUrl(){
+        String home="return_sso_url="+Uri.encode(mHomeUrl);
+        String base64=Base64.encodeToString(home.getBytes(), Base64.NO_WRAP);
+        Uri.Builder uri = Uri.parse(URL_MC_LOGOUT)
+                .buildUpon();
+        uri.appendQueryParameter("sso",base64);
+        return uri.build().toString();
     }
 
     //获取mc新闻列表
@@ -201,17 +219,12 @@ public class MyCard {
         mMyCardListener = myCardListener;
         webView.setWebViewClient(getWebViewClient());
         webView.addJavascriptInterface(new MyCard.Ygopro(mContext, myCardListener), "ygopro");
-        String name = lastModified.getString("user_name", null);
-        String headurl = lastModified.getString("user_avatar_url", null);
-        if (mMyCardListener != null) {
-            if (!TextUtils.isEmpty(name)) {
-                mMyCardListener.onLogin(name, headurl, null);
-            }
-        }
     }
 
     public interface MyCardListener {
-        void onLogin(String name, String icon, String statu);
+        void onLogin(McUser mcUser,String exception);
+
+        void onUpdate(String name, String icon, String statu);
 
         void backHome();
 
@@ -219,33 +232,12 @@ public class MyCard {
 
         void onHome();
 
-    }
+        /**
+         *
+         * @param message 退出登录的提示，web端传
+         */
+        void onLogout(String message);
 
-    public static class User {
-        int external_id;
-        String username;
-        String name;
-        String email;
-        String avatar_url;
-        boolean admin;
-        boolean moderator;
-        boolean login;
-
-        public User() {
-
-        }
-
-        public String getJID() {
-            return username + "@mycard.moe";
-        }
-
-        public String getPassword() {
-            return String.valueOf(external_id);
-        }
-
-        public String getConference() {
-            return "ygopro_china_north@conference.mycard.moe";
-        }
     }
 
     public class Ygopro {
@@ -376,16 +368,35 @@ public class MyCard {
         }
 
         @JavascriptInterface
+        public void loginUser(String userInfo,String exception){
+            McUser mcUser = null;
+            if (TextUtils.isEmpty(exception)) {
+                mcUser = new Gson().fromJson(userInfo, McUser.class);
+                UserManagement.getDx().setMcUser(mcUser);
+            }
+            if (mListener!=null)
+                mListener.onLogin(mcUser,exception);
+        }
+
+        @JavascriptInterface
         public void updateUser(String name, String headurl, String status) {
+            McUser mcUser=UserManagement.getDx().getMcUser();
+            if (mcUser==null)
+                mcUser=new McUser();
+            mcUser.setUsername(name);
+            mcUser.setAvatar_url(headurl);
+            mcUser.setEmail(status);
+            UserManagement.getDx().setMcUser(mcUser);
             if (mListener != null) {
-                mUser.name = name;
-                mUser.avatar_url = headurl;
-                mUser.login = true;
-                lastModified.edit()
-                        .putString("user_name", name)
-                        .putString("user_avatar_url", headurl)
-                        .apply();
-                mListener.onLogin(name, headurl, status);
+                mListener.onUpdate(name, headurl, status);
+            }
+        }
+
+        @JavascriptInterface
+        public void logoutUser(String message){
+            UserManagement.getDx().logout();
+            if (mListener!=null) {
+                mListener.onLogout(message);
             }
         }
 
