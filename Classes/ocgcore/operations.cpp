@@ -18,7 +18,7 @@ int32 field::negate_chain(uint8 chaincount) {
 	if(chaincount > core.current_chain.size() || chaincount < 1)
 		chaincount = (uint8)core.current_chain.size();
 	chain& pchain = core.current_chain[chaincount - 1];
-	card* phandler = pchain.triggering_effect->handler;
+	card* phandler = pchain.triggering_effect->get_handler();
 	if(!(pchain.flag & CHAIN_DISABLE_ACTIVATE) && is_chain_negatable(pchain.chain_count)
 		&& (!phandler->is_has_relation(pchain) || phandler->is_affect_by_effect(core.reason_effect))) {
 		pchain.flag |= CHAIN_DISABLE_ACTIVATE;
@@ -43,7 +43,7 @@ int32 field::disable_chain(uint8 chaincount, uint8 forced) {
 	if(chaincount > core.current_chain.size() || chaincount < 1)
 		chaincount = (uint8)core.current_chain.size();
 	chain& pchain = core.current_chain[chaincount - 1];
-	card* phandler = pchain.triggering_effect->handler;
+	card* phandler = pchain.triggering_effect->get_handler();
 	if(!(pchain.flag & CHAIN_DISABLE_EFFECT) && is_chain_disablable(pchain.chain_count)
 		&& (!phandler->is_has_relation(pchain) || phandler->is_affect_by_effect(core.reason_effect))
 		&& !(phandler->is_has_relation(pchain) && phandler->is_status(STATUS_DISABLED) && !forced)) {
@@ -3865,12 +3865,12 @@ int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint3
 					pcard->previous.attack = pcard->data.attack;
 					pcard->previous.defense = pcard->data.defense;
 				}
+				pcard->previous.setcode.clear();
 				effect_set eset;
 				pcard->filter_effect(EFFECT_ADD_SETCODE, &eset);
-				if(eset.size())
-					pcard->previous.setcode = eset.get_last()->get_value(pcard);
-				else
-					pcard->previous.setcode = 0;
+				for(int32 i = 0; i < eset.size(); ++i) {
+					pcard->previous.setcode.push_back((uint32)eset[i]->get_value(pcard));
+				}
 			}
 		}
 		if(leave_p.size())
