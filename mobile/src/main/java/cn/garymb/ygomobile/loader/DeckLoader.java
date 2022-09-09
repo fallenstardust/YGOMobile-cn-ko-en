@@ -13,11 +13,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
+import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
@@ -26,17 +29,17 @@ import ocgcore.data.LimitList;
 public class DeckLoader {
     public static DeckInfo readDeck(CardLoader cardLoader, File file, LimitList limitList) {
         DeckInfo deckInfo = null;
-        FileInputStream inputStream = null;
+        FileInputStream fileinputStream = null;
         try {
-            inputStream = new FileInputStream(file);
-            deckInfo = readDeck(cardLoader, inputStream, limitList);
+            fileinputStream = new FileInputStream(file);
+            deckInfo = readDeck(cardLoader, fileinputStream, limitList);
             if (deckInfo != null) {
                 deckInfo.source = file;
             }
         } catch (Exception e) {
             Log.e("deckreader", "read 1", e);
         } finally {
-            IOUtils.close(inputStream);
+            IOUtils.close(fileinputStream);
         }
         return deckInfo;
     }
@@ -76,10 +79,6 @@ public class DeckLoader {
                 if (type == DeckItemType.MainCard && deck.getMainCount() < Constants.DECK_MAIN_MAX) {
                     Integer i = mIds.get(id);
                     if (i == null) {
-                        if (ArrayUtil.contains(oldIDsArray, id)) {
-                            id = ArrayUtil.get(newIDsArray,id);
-                            Log.i("3.10.1","看看id="+id);
-                        }
                         mIds.put(id, 1);
                         deck.addMain(id);
                     } else if (i < Constants.CARD_MAX_COUNT) {
@@ -113,17 +112,40 @@ public class DeckLoader {
         }
         DeckInfo deckInfo = new DeckInfo();
         SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), true);
+        int code;
+        boolean isChanged = false;
         for (Integer id : deck.getMainlist()) {
+            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
+                tmp.remove(id);
+                tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                isChanged = true;
+            }
             deckInfo.addMainCards(tmp.get(id));
         }
         tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {
+            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
+                tmp.remove(id);
+                tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                isChanged = true;
+            }
             deckInfo.addExtraCards(tmp.get(id));
         }
         tmp = cardLoader.readCards(deck.getSideList(), true);
 //        Log.i("kk", "desk:" + tmp.size()+"/"+side.size());
         for (Integer id : deck.getSideList()) {
+            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
+                tmp.remove(id);
+                tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                isChanged = true;
+            }
             deckInfo.addSideCards(tmp.get(id));
+        }
+        if (isChanged) {
+            //DeckUtils.save(deckInfo,inputStream.read());
         }
         return deckInfo;
     }

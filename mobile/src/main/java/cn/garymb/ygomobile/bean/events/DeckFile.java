@@ -25,8 +25,8 @@ public class DeckFile extends TextSelect {
         if(index > 0) {
             name = name.substring(0, index);
         }
-        typeName= DeckUtil.getDeckTypeName(path.getAbsolutePath());
-        firstCode=DeckUtil.getFirstCardCode(path.getAbsolutePath());
+        typeName = DeckUtil.getDeckTypeName(path.getAbsolutePath());
+        firstCode = DeckUtil.getFirstCardCode(path.getAbsolutePath());
         super.setName(name);
         setObject(this);
     }
