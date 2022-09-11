@@ -475,7 +475,7 @@ public class OYUtil {
         cardBag =new CardBag();
         cardBag.setTitle("DBAD 消防栓带妖精");
         cardBag.setMessage("效果强力，令人绝望！");
-        cardBag.setDeckName("SR13+T1109");
+        cardBag.setDeckName("DBAD+VJ+YCSW");
         cardBagList.add(cardBag);
 
         cardBag=new CardBag();
