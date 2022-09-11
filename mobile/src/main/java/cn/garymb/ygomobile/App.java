@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 //import com.tencent.bugly.Bugly;
 //import com.tencent.bugly.beta.Beta;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.export.external.TbsCoreSettings;
@@ -30,6 +31,7 @@ public class App extends GameApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+        LogUtil.time("Application","App准备初始化");
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         AppsSettings.init(this);
         //初始化异常工具类

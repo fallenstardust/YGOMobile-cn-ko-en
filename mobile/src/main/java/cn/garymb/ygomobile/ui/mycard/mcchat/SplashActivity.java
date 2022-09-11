@@ -21,7 +21,6 @@ import com.ourygo.ygomobile.util.Record;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class SplashActivity extends Activity implements OnJoinChatListener {
@@ -49,16 +48,6 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
         setContentView(R.layout.activity_splash);
 
         initView();
-		/*String name=getIntent().getStringExtra("name");
-		String password=getIntent().getStringExtra("password");
-		UserManagement.setUserName(name);
-		UserManagement.setUserPassword(password);*/
-        //UserManagement.setUserName("废话多");
-        //UserManagement.setUserPassword("19709");
-
-        SharedPreferences lastModified = getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        UserManagement.setUserName(lastModified.getString("user_name", null));
-        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
 
         su = ServiceManagement.getDx();
         su.addJoinRoomListener(this);

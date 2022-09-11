@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -19,10 +20,8 @@ import androidx.annotation.Nullable;
 
 import com.ourygo.ygomobile.base.listener.BaseMcFragment;
 import com.ourygo.ygomobile.base.listener.OnMcUserListener;
-import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.StatUtil;
 import com.tencent.smtt.sdk.QbSdk;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -38,6 +37,7 @@ import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebView;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.SplashActivity;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardListener, BaseMcFragment, OnMcUserListener {
 
@@ -57,11 +57,11 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_LOGIN:
+
+                    Log.e("MyCardWeb","登录用户"+(mcLayoutFragment==null));
                     if (mcLayoutFragment != null)
                         mcLayoutFragment.setCurrentFragment(1);
-//                    ((OYMainActivity)getActivity()).refreshMyCardUser(((MyCard.User) msg.obj).getUsername());
-                    Object[] objects= (Object[]) msg.obj;
-                    McUserManagement.getInstance().login((McUser) objects[0],(boolean)objects[1]);
+
                     break;
             }
         }
@@ -198,9 +198,9 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
                 return true;
             }
         });
+        McUserManagement.getInstance().addListener(this);
         mMyCard.attachWeb(mWebViewPlus, this);
         mWebViewPlus.loadUrl(mMyCard.getHomeUrl());
-        McUserManagement.getInstance().addListener(this);
         Log.e("MyCardWeb", "登录完毕");
     }
 
@@ -265,14 +265,46 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
     }
 
     @Override
-    public void onLogin(McUser mcUser,boolean isUpdate, String statu) {
-        Log.e("MyCardWeb", "登录回调"+true);
+    public void onLogin(McUser mcUser, String exception) {
 
+        Log.e("MyCardWeb","登录回调"+exception);
+        if (!TextUtils.isEmpty(exception)){
+            return;
+        }
+        Log.e("MyCardWeb","登录用户");
+        //登录成功发送message
         Message message = new Message();
         message.what = TYPE_LOGIN;
-        message.obj = new Object[]{mcUser,isUpdate};
+        message.obj = new Object[]{mcUser,false};
         handler.sendMessage(message);
     }
+
+    @Override
+    public void onUpdate(McUser mcUser) {
+
+        Log.e("MyCardWeb","更新用户");
+    }
+
+    //    @Override
+//    public void onUpdate(String name, String icon, String statu) {
+//        McUser mcUser=new McUser();
+//        mcUser.setUsername(name);
+//        mcUser.setAvatar_url(icon);
+//        mcUser.setEmail(statu);
+//        //登录成功发送message
+//        Message message = new Message();
+//        message.what = TYPE_LOGIN;
+//        message.obj = new Object[]{mcUser,true};
+//        handler.sendMessage(message);
+//    }
+//
+//    @Override
+//    public void onLogout(String message) {
+//        if (!TextUtils.isEmpty(message))
+//            YGOUtil.show(message);
+//        McUserManagement.getInstance().logout();
+//    }
+
 
     @Override
     public void onHome() {
@@ -321,14 +353,8 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
     }
 
     @Override
-    public void onLogin(McUser user, String exception) {
-
-
-    }
-
-    @Override
-    public void onLogout() {
-        Log.e("CookUtil", "退出用户监听");
+    public void onLogout(String message) {
+        Log.e("MyCardWeb", "退出用户监听");
 //        mWebViewPlus.removeAllCookie("mycard.moe");
 //        mWebViewPlus.removeAllCookie("ygobbs.com");
 //        CookieUtil.remove(false);
@@ -348,7 +374,11 @@ public class MyCardWebFragment extends BaseFragemnt implements MyCard.MyCardList
 //        WebViewDatabase.getInstance(getActivity()).clearHttpAuthUsernamePassword();
 //清除表单数据
 //        WebViewDatabase.getInstance(getActivity()).clearFormData();
+        mWebViewPlus.loadDataWithBaseURL(null, "","text/html", "utf-8",null);
         mWebViewPlus.loadUrl(MyCard.mHomeUrl);
+        if (!TextUtils.isEmpty(message)){
+            YGOUtil.show(message);
+        }
     }
 
     @Override

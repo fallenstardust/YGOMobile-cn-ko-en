@@ -32,7 +32,7 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
     private MyCardWebFragment myCardWebFragment;
     private MyCardFragment myCardFragment;
     private FragmentManager fragmentManager;
-    private int currentPosition;
+    private int currentPosition=-1;
     private Fragment currentFragment;
     private Bundle currentSaveBundle;
 
@@ -49,13 +49,16 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
         isStat=false;
         fragmentManager = getChildFragmentManager();
         if (saveBundle != null) {
+            Log.e("feihua","保存初始化");
             myCardFragment = (MyCardFragment) fragmentManager.getFragment(saveBundle, ARG_MC);
             myCardWebFragment = (MyCardWebFragment) fragmentManager.getFragment(saveBundle, ARG_MC_WEB);
             currentFragment=fragmentManager.getFragment(saveBundle,ARG_CURRENT_FRAGMENT);
         }
 
-        if (myCardFragment == null)
+        if (myCardFragment == null) {
             myCardFragment = new MyCardFragment();
+            Log.e("feihua","正常初始化");
+        }
         if (myCardWebFragment == null)
             myCardWebFragment = new MyCardWebFragment();
 
@@ -91,6 +94,8 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
 
     public void setCurrentFragment(int position) {
         Log.e("MCLayoutFragment","设置fragment"+position);
+        if (position==currentPosition)
+            return;
         if (position > 1)
             position = 1;
         currentPosition = position;
@@ -104,6 +109,7 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
                 f3 = myCardFragment;
                 break;
         }
+        Log.e("MCLayoutFragment","切换前判断"+(f3!=null));
         if (!f3.isAdded()) {
             if (currentFragment == null)
                 initFragment();
@@ -134,8 +140,13 @@ public class McLayoutFragment extends BaseFragemnt implements OnMcUserListener {
     }
 
     @Override
-    public void onLogout() {
+    public void onLogout(String message) {
         setCurrentFragment(0);
+    }
+
+    @Override
+    public void onUpdate(McUser mcUser) {
+
     }
 
     @Override

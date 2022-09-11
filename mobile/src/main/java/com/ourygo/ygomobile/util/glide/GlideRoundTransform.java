@@ -39,7 +39,6 @@ public class GlideRoundTransform extends BitmapTransformation
          int height=600;
          int width=(int)(height*(((double)outWidth)/outHeight));
          Bitmap bitmap = TransformationUtils.centerCrop(pool, toTransform,width,height);
-         Log.e("GlideRound","剪除大小"+width+"  "+outWidth);
          return roundCrop(pool, bitmap);
      }
 
@@ -57,7 +56,6 @@ public class GlideRoundTransform extends BitmapTransformation
          paint.setAntiAlias(true);
          RectF rectF = new RectF(0f, 0f, source.getWidth(), source.getHeight());
          canvas.drawRoundRect(rectF, radius, radius, paint);
-         Log.e("GlideRound","大小"+source.getWidth()+"  "+source.getHeight());
          return result;
      }
 

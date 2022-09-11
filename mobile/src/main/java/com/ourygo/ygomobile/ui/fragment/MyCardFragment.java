@@ -32,6 +32,7 @@ import com.ourygo.ygomobile.bean.McDuelInfo;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.activity.WatchDuelActivity;
 import com.ourygo.ygomobile.util.HandlerUtil;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.MyCardUtil;
 import com.ourygo.ygomobile.util.OYUtil;
@@ -99,6 +100,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
                     iv_refresh.setVisibility(View.VISIBLE);
                     break;
                 case QUERY_DUEL_INFO_EXCEPTION:
+                    Log.e("MycardFragment", "当前加载失败情况" + (currentBundle != null));
                     matchRecordFragment.onBaseDuelInfo(null, msg.obj.toString());
                     funRecordFragment.onBaseDuelInfo(null, msg.obj.toString());
                     pb_loading.setVisibility(View.GONE);
@@ -140,6 +142,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+        Log.e("MyCardFragment","创建"+(savedInstanceState!=null));
         View view;
         if (isHorizontal)
             view = inflater.inflate(R.layout.mycard_horizontal_fragment, container, false);
@@ -164,7 +167,7 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     @Override
     public void onClick(View v) {
         if (!McUserManagement.getInstance().isLogin()){
-            McUserManagement.getInstance().logout();
+            McUserManagement.getInstance().logout(null);
             return;
         }
         switch (v.getId()) {
@@ -284,19 +287,24 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
     }
 
     private void initData(Bundle saveBundle, int position) {
-        Log.e("MycardFragment", position + "情况" + (saveBundle != null) + "  " + (currentBundle != null));
+        Log.e("MyCardFragment",
+                position + "情况" + (saveBundle != null) + "  " + (currentBundle != null)+"  "+McUserManagement.getInstance().isLogin());
         if (McUserManagement.getInstance().isLogin()) {
+            Log.e("MyCardFragment",
+                    "设置情况"+(pb_loading!=null)+"  "+(iv_refresh!=null)+"  "+(saveBundle==null));
             pb_loading.setVisibility(View.VISIBLE);
+            Log.e("MyCardFragment","执行1");
             iv_refresh.setVisibility(View.GONE);
-
+            Log.e("MyCardFragment","执行2");
             if (saveBundle == null) {
+                Log.e("MyCardFragment","查询信息");
                 MyCardUtil.findUserDuelInfo(McUserManagement.getInstance().getUser().getUsername(), (mcDuelInfo, exception) -> {
                     HandlerUtil.sendMessage(handler, exception, QUERY_DUEL_INFO_OK, mcDuelInfo, QUERY_DUEL_INFO_EXCEPTION);
                 });
                 serviceManagement.start();
             } else {
                 currentMcDuelInfo = (McDuelInfo) saveBundle.getSerializable(ARG_MC_DUEL_INFO);
-                Log.e("MycardFragment", "决斗信息" + (currentMcDuelInfo != null));
+                Log.e("MyCardFragment", "决斗信息" + (currentMcDuelInfo != null));
                 if (currentMcDuelInfo != null) {
                     HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, currentMcDuelInfo);
                 } else {
@@ -413,14 +421,20 @@ public class MyCardFragment extends BaseFragemnt implements BaseMcFragment, OnMc
 
     @Override
     public void onLogin(McUser user, String exception) {
+        LogUtil.e("MyCardFragment","登录成功"+exception+"  "+isLoadData);
         if (TextUtils.isEmpty(exception) && !isLoadData)
             initData(currentBundle, 2);
     }
 
     @Override
-    public void onLogout() {
+    public void onLogout(String message) {
         isLoadData=false;
 //        HandlerUtil.sendMessage(handler, QUERY_DUEL_INFO_OK, null);
+    }
+
+    @Override
+    public void onUpdate(McUser mcUser) {
+
     }
 
     @Override

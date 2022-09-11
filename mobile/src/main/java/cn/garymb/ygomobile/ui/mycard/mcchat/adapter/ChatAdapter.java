@@ -14,9 +14,10 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import com.ourygo.ygomobile.util.McUserManagement;
+
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -52,7 +53,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        if (data.get(position).getName().equals(UserManagement.getUserName())) {
+        if (data.get(position).getName().equals(McUserManagement.getInstance().getUser().getUsername())) {
             return CHAT_ME;
         } else {
             return CHAT;

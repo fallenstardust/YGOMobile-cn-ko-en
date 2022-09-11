@@ -211,7 +211,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         ygoServerListAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
         ygoServerGridAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_GRID);
         setServerListType(serverListType);
-
+        LogUtil.time(TAG,"2.1");
         long time = SharedPreferenceUtil.getVersionUpdateTime();
         if (AppInfoManagement.getInstance().isNewVersion()) {
             SharedPreferenceUtil.setVersionUpdateTime(System.currentTimeMillis());
@@ -245,6 +245,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             }
         }
 
+        LogUtil.time(TAG,"2.2");
         iv_add_setting.setOnClickListener(v1 -> startActivityForResult(new Intent(getActivity(), NewServerActivity.class), REQUEST_NEW_SERVER));
         iv_list_mode.setOnClickListener(view -> {
             if (SharedPreferenceUtil.getServerListType() == SharedPreferenceUtil.SERVER_LIST_TYPE_LIST) {
@@ -269,25 +270,25 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         else
             cv_join_room.setOnClickListener(this);
 
-        cv_banner.post(() -> {
-//            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
-//                Log.e("MainFragment","宽"+xb_banner.getWidth());
-//                Log.e("MainFragment","算数"+OYUtil.px2dp(xb_banner.getHeight())*2);
-//            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
-
-//                xb_banner.setClipChildrenLeftRightMargin(75);
-            ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
-//            if (isHorizontal)
-//                layoutParams.width = (cv_banner.getWidth() - ScaleUtils.dp2px(80)) / 2;
-//            else
-            layoutParams.width = cv_banner.getWidth();
-            layoutParams.height = layoutParams.width / 3;
-            cv_banner.setLayoutParams(layoutParams);
-
-//                xb_banner.setClipChildrenLeftRightMargin(50);
-//                xb_banner.setma
-
-        });
+//        cv_banner.post(() -> {
+////            xb_banner.setViewPagerMargin(OYUtil.px2dp(300));
+////                Log.e("MainFragment","宽"+xb_banner.getWidth());
+////                Log.e("MainFragment","算数"+OYUtil.px2dp(xb_banner.getHeight())*2);
+////            xb_banner.setClipChildrenLeftRightMargin((OYUtil.px2dp(xb_banner.getWidth())-OYUtil.px2dp(xb_banner.getHeight()-OYUtil.px2dp(10))*2)/2);
+//
+////                xb_banner.setClipChildrenLeftRightMargin(75);
+//            ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
+////            if (isHorizontal)
+////                layoutParams.width = (cv_banner.getWidth() - ScaleUtils.dp2px(80)) / 2;
+////            else
+//            layoutParams.width = cv_banner.getWidth();
+//            layoutParams.height = layoutParams.width / 3;
+//            cv_banner.setLayoutParams(layoutParams);
+//
+////                xb_banner.setClipChildrenLeftRightMargin(50);
+////                xb_banner.setma
+//
+//        });
         xb_banner.setOnItemClickListener((banner, model, view, position) -> startActivity(IntentUtil.getWebIntent(getActivity(), mcNewsList.get(position).getNews_url())));
         xb_banner.loadImage((banner, model, view, position) -> {
             TextView tv_time, tv_title, tv_type;
@@ -326,9 +327,12 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
         });
 
+        LogUtil.time(TAG,"2.3");
         if (saveBundle == null) {
             findMcNews();
+            LogUtil.time(TAG,"2.4");
             checkRes();
+            LogUtil.time(TAG,"2.5");
         } else {
 //            Log.e(TAG,"列表"+mcNewsList.size());
             MainFragment.this.mcNewsList = (ArrayList<McNews>) saveBundle.getSerializable(ARG_MC_NEWS_LIST);
@@ -436,7 +440,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
 
         mResCheckTask = new ResCheckTask(getActivity(), listener);
+        LogUtil.time(TAG,"2.6");
         mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        LogUtil.time(TAG,"2.7");
 //        if (Build.VERSION.SDK_INT >= 11) {
 //            mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 //        } else {

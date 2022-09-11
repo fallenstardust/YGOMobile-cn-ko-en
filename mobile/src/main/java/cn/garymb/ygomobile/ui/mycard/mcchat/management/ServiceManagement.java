@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.util.HandlerUtil;
+import com.ourygo.ygomobile.util.McUserManagement;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.TaxiConnectionListener;
@@ -269,7 +271,7 @@ public class ServiceManagement {
         if (!isListener) {
             MultiUserChatManager multiUserChatManager = MultiUserChatManager.getInstanceFor(getCon());
             muc = multiUserChatManager.getMultiUserChat(JidCreate.entityBareFrom(GROUP_ADDRESS));
-            muc.createOrJoin(Resourcepart.from(UserManagement.getUserName()));
+            muc.createOrJoin(Resourcepart.from(McUserManagement.getInstance().getUser().getUsername()));
             chatMessageList.clear();
             muc.addMessageListener(message -> {
 
@@ -326,12 +328,9 @@ public class ServiceManagement {
             return;
         isStartLoading=true;
         String name, password;
-        SharedPreferences lastModified = OYApplication.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        UserManagement.setUserName(lastModified.getString("user_name", null));
-        UserManagement.setUserPassword(lastModified.getString("user_external_id", null));
-
-        name = UserManagement.getUserName();
-        password = UserManagement.getUserPassword();
+        McUser mcUser= McUserManagement.getInstance().getUser();
+        name=mcUser.getUsername();
+        password=mcUser.getPassword();
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
             isStartLoading=false;
             han.sendEmptyMessage(CHAT_USER_NULL);

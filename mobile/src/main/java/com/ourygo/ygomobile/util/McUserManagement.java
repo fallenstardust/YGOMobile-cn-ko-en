@@ -2,6 +2,8 @@ package com.ourygo.ygomobile.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -13,9 +15,9 @@ import org.litepal.LitePal;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 
 /**
  * Create By feihua  On 2021/10/21
@@ -24,6 +26,10 @@ public class McUserManagement {
     private static final McUserManagement ourInstance = new McUserManagement();
     private McUser user;
     private List<OnMcUserListener> userListenerList;
+
+    private static final int HANDLE_USER_LOGIN=0;
+    private static final int HANDLE_USER_UPDATE=1;
+    private static final int HANDLE_USER_LOGOUT=2;
 
     private McUserManagement() {
         userListenerList = new ArrayList<>();
@@ -44,9 +50,6 @@ public class McUserManagement {
     }
 
     public void login(McUser mUser, boolean isUpdate) {
-        if (this.user != null)
-            Log.e("McUserManagement", "登录1  " + this.user.getExternal_id());
-        Log.e("McUserManagement", isUpdate + "登录  " + mUser.getExternal_id());
         if (isUpdate && this.user != null) {
             if (!TextUtils.isEmpty(mUser.getName()))
                 this.user.setName(mUser.getName());
@@ -60,10 +63,8 @@ public class McUserManagement {
                 this.user.setEmail(mUser.getEmail());
             if (!TextUtils.isEmpty(mUser.getAvatar_url()))
                 this.user.setAvatar_url(mUser.getAvatar_url());
-            Log.e("McUserManagement","1保存前"+user.getId());
             boolean isSave=this.user.save();
-            Log.e("McUserManagement", (LitePal.findFirst(McUser.class)!=null)+"1保存情况  " + isSave);
-            Log.e("McUserManagement","1保存后"+user.getId());
+            isUpdate=true;
         } else {
             this.user = mUser;
 
@@ -72,20 +73,52 @@ public class McUserManagement {
             boolean isSave=this.user.save();
             Log.e("McUserManagement", (LitePal.findFirst(McUser.class)!=null)+"保存情况  " + isSave);
             Log.e("McUserManagement","保存后"+user.getId());
+            isUpdate=false;
         }
+        HandlerUtil.sendMessage(handler,HANDLE_USER_LOGIN,isUpdate);
 
 
-        SharedPreferenceUtil.setMyCardUserName(user.getUsername());
-        for (int i = 0; i < userListenerList.size(); i++) {
-            OnMcUserListener ul = userListenerList.get(i);
-            if (ul != null && ul.isListenerEffective()) {
-                ul.onLogin(user, null);
-            } else {
-                userListenerList.remove(i);
-                i--;
+    }
+
+    Handler handler=new Handler(){
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case HANDLE_USER_LOGIN:
+                    SharedPreferenceUtil.setMyCardUserName(user.getUsername());
+                    for (int i = 0; i < userListenerList.size(); i++) {
+                        OnMcUserListener ul = userListenerList.get(i);
+                        if (ul != null && ul.isListenerEffective()) {
+                            if((boolean)msg.obj) {
+                                //                    Log.e("McUserManagement","回调更新"+ul.getClass().getName());
+                                ul.onUpdate(user);
+                            }else {
+                                ul.onLogin(user, null);
+                            }
+                        } else {
+                            userListenerList.remove(i);
+                            i--;
+                        }
+                    }
+                    break;
+                case HANDLE_USER_LOGOUT:
+                    for (int i = 0; i < userListenerList.size(); i++) {
+                        OnMcUserListener ul = userListenerList.get(i);
+                        if (ul != null && ul.isListenerEffective()) {
+                            ul.onLogout((String) msg.obj);
+                        } else {
+                            userListenerList.remove(i);
+                            i--;
+                        }
+                    }
+                    break;
+                case HANDLE_USER_UPDATE:
+
+                    break;
             }
         }
-    }
+    };
 
     public McUser getUser() {
         return user;
@@ -95,26 +128,14 @@ public class McUserManagement {
         return user != null;
     }
 
-    public void logout() {
+    public void logout(String message) {
         this.user = null;
         LitePal.deleteAll(McUser.class);
         Log.e("McUserManagement", "退出登录");
 
-        SharedPreferences lastModified = OYApplication.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
-        lastModified.edit().putString("user_external_id", null).apply();
-        lastModified.edit().putString("user_name", null).apply();
-        UserManagement.setUserName(null);
-        UserManagement.setUserPassword(null);
+//        SharedPreferences lastModified = OYApplication.get().getSharedPreferences("lastModified", Context.MODE_PRIVATE);
         ServiceManagement.getDx().disSerVice();
-        for (int i = 0; i < userListenerList.size(); i++) {
-            OnMcUserListener ul = userListenerList.get(i);
-            if (ul != null && ul.isListenerEffective()) {
-                ul.onLogout();
-            } else {
-                userListenerList.remove(i);
-                i--;
-            }
-        }
+        HandlerUtil.sendMessage(handler,HANDLE_USER_LOGOUT,message);
     }
 
 }

@@ -12,8 +12,9 @@ import org.jivesoftware.smack.XMPPConnection;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.ourygo.ygomobile.util.McUserManagement;
+
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 
 
 public class TaxiConnectionListener implements ConnectionListener {
@@ -62,8 +63,8 @@ public class TaxiConnectionListener implements ConnectionListener {
     class timetask extends TimerTask {
         @Override
         public void run() {
-            username = UserManagement.getUserName();
-            password = UserManagement.getUserPassword();
+            username = McUserManagement.getInstance().getUser().getUsername();
+            password = McUserManagement.getInstance().getUser().getPassword();
             if (username != null && password != null) {
                 sm.setReJoin(false);
                 Log.e("TaxiConnectionListener", "尝试登录");

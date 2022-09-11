@@ -80,7 +80,8 @@ public class CardLoader implements ICardSearcher {
 
     @Override
     public boolean isOpen() {
-        return mCardManager.getCount() > 0;
+        return true;
+//        return mCardManager.getCount() > 0;
     }
 
     public void setCallBack(CallBack callBack) {

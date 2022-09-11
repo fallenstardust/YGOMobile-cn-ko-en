@@ -32,7 +32,6 @@ public class GlideBannerTransform extends BitmapTransformation
          int height=outHeight;
          int width=height*3;
          Bitmap bitmap = TransformationUtils.centerCrop(pool, toTransform,width,height);
-         Log.e("GlideRound1","banner剪除大小"+height+"  "+width+"  "+outWidth);
          return bitmap;
      }
 

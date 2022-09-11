@@ -8,7 +8,8 @@ import cn.garymb.ygomobile.ui.mycard.bean.McUser;
  */
 public interface OnMcUserListener {
     void onLogin(McUser user, String exception);
-    void onLogout();
+    void onLogout(String message);
+    void onUpdate(McUser mcUser);
 
 
     //是否有效

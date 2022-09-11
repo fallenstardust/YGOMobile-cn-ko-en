@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/ll_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    <androidx.cardview.widget.CardView
+            app:layout_constraintDimensionRatio="H,3:1"
+            app:layout_constraintTop_toTopOf="parent"
             android:id="@+id/cv_banner"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="0dp"
             android:clickable="true"
             android:foreground="?android:attr/selectableItemBackground"
             android:orientation="vertical"
@@ -23,14 +20,15 @@
             app:cardCornerRadius="@dimen/corner_radius"
             app:elevation="0dp"
             app:cardElevation="0dp"
-            app:cardUseCompatPadding="false">
+            app:cardUseCompatPadding="false"
+            tools:ignore="MissingConstraints">
 
-            <RelativeLayout
+        <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
 
-                <com.stx.xhb.androidx.XBanner
+            <com.stx.xhb.androidx.XBanner
                     android:id="@+id/xb_banner"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -42,7 +40,7 @@
                     app:clipChildrenTopBottomMargin="5dp"
                     app:isHandLoop="true" />
 
-                <androidx.appcompat.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_banner_loading"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -51,9 +49,22 @@
                     android:textSize="15sp" />
 
 
-            </RelativeLayout>
+        </RelativeLayout>
 
-        </androidx.cardview.widget.CardView>
+    </androidx.cardview.widget.CardView>
+
+<!--            app:layout_constraintCircle="@+id/cv_banner"
+    app:layout_constraintCircleRadius="100dp"
+    app:layout_constraintCircleAngle="45"-->
+    <LinearLayout
+
+            app:layout_constraintTop_toBottomOf="@id/cv_banner"
+            app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/ll_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical">
+
 
         <LinearLayout
             android:layout_marginTop="20dp"
@@ -377,6 +388,7 @@
         android:layout_marginRight="16dp"
         android:layout_marginBottom="30dp"
         android:src="@drawable/ic_join_white"
-        app:layout_anchor="@id/ll_layout"
-        app:layout_anchorGravity="bottom|end" />
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:ignore="MissingConstraints" />
+</androidx.constraintlayout.widget.ConstraintLayout>

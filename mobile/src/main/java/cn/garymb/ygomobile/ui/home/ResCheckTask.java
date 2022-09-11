@@ -73,11 +73,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         mContext = context;
         mListener = listener;
         handler = new Handler(context.getMainLooper());
-        LogUtil.time(TAG, "0");
+        LogUtil.time(TAG, "2.7");
         mSettings = AppsSettings.get();
-        LogUtil.time(TAG, "0.1");
-        checkWindbot();
-        LogUtil.time(TAG, "0.2");
+        LogUtil.time(TAG, "2.8");
+//        checkWindbot();
+        LogUtil.time(TAG, "2.9");
     }
 
     public static String getDatapath(String path) {
@@ -191,7 +191,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        LogUtil.time(TAG, "1");
+//        LogUtil.time(TAG, "1");
         if (Constants.DEBUG)
             Log.d(TAG, "check start");
         boolean needsUpdate = isNewVersion;
@@ -286,7 +286,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
-            LogUtil.time(TAG, "2");
+//            LogUtil.time(TAG, "2");
             han.sendEmptyMessage(0);
 
 //            loadData();
@@ -296,7 +296,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 Log.e(TAG, "check", e);
             return ERROR_COPY;
         }
-        LogUtil.time(TAG, "3");
+//        LogUtil.time(TAG, "3");
         return ERROR_NONE;
     }
 
@@ -416,9 +416,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+        LogUtil.time(TAG,"2.9.1");
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
         mContext.registerReceiver(mReceiver, filter);
+        LogUtil.time(TAG,"2.9.2");
     }
 
     public interface ResCheckListener {

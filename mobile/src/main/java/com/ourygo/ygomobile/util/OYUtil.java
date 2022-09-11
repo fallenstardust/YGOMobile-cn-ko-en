@@ -47,6 +47,7 @@ import com.tencent.bugly.beta.Beta;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -464,11 +465,26 @@ public class OYUtil {
     }
 
     public static CardBag getNewCardBag(){
-        CardBag cardBag=new CardBag();
+        return getNewCardBagList().get(0);
+    }
+
+    public static List<CardBag> getNewCardBagList(){
+        List<CardBag> cardBagList=new ArrayList<>();
+        CardBag cardBag;
+
+        cardBag =new CardBag();
+        cardBag.setTitle("DBAD 消防栓带妖精");
+        cardBag.setMessage("效果强力，令人绝望！");
+        cardBag.setDeckName("SR13+T1109");
+        cardBagList.add(cardBag);
+
+        cardBag=new CardBag();
         cardBag.setTitle("SR13 恶魔之门，暗黑界回归！");
         cardBag.setMessage("暗黑界的龙神王，珠泪新打手");
         cardBag.setDeckName("SR13+T1109");
-        return cardBag;
+        cardBagList.add(cardBag);
+
+        return cardBagList;
     }
 
 }

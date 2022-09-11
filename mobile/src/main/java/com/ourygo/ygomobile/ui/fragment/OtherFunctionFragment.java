@@ -112,7 +112,7 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
                     dialogUtils.dis();
                 });
                 b2.setOnClickListener(v2 -> {
-                    userManagement.logout();
+                    userManagement.logout(null);
                     dialogUtils.dis();
                     OYUtil.snackShow(rv_list,"退出登录成功");
                     ((OYMainActivity)getActivity()).selectMycard();
@@ -257,9 +257,15 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
     }
 
     @Override
-    public void onLogout() {
+    public void onLogout(String message) {
         tv_name.setText("登录MyCard");
         iv_avatar.setImageResource(R.drawable.avatar);
+    }
+
+    @Override
+    public void onUpdate(McUser mcUser) {
+        tv_name.setText(mcUser.getUsername());
+        ImageUtil.setImage(getActivity(), mcUser.getAvatar_url(), iv_avatar);
     }
 
     @Override

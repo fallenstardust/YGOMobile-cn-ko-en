@@ -56,6 +56,11 @@ public class McUser extends LitePalSupport {
         this.username = username;
     }
 
+    /**
+     * 不要用这个，用getUserName
+     * @return
+     */
+    @Deprecated
     public String getName() {
         return name;
     }

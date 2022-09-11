@@ -153,6 +153,7 @@ public class WebActivity extends BaseActivity implements Toolbar.OnMenuItemClick
         currentToolbar=findViewById(R.id.toolbar);
 
         OYUtil.initToolbar(this, currentToolbar, "", true);
+        currentToolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_clear_material);
         wv_web.loadUrl(homeUrl);
         setWebView();
         currentToolbar.setOnMenuItemClickListener(this);

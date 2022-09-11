@@ -20,12 +20,14 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.ourygo.ygomobile.adapter.DeckListBQAdapter;
 import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.IntentUtil;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.ShareUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -45,6 +47,7 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
 
     private static final int SHARE_DECK_URI_OK = 0;
     private static final int SHARE_DECK_FILE_OK = 1;
+    private static final int DECK_LIST_LOAD_OK = 2;
 
     private DeckListBQAdapter deckListAdp;
     private ImageLoader imageLoader;
@@ -61,6 +64,14 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
                 case SHARE_DECK_FILE_OK:
 
                     break;
+                case DECK_LIST_LOAD_OK:
+
+                    LogUtil.time("DeckManagement","刷新完毕");
+                    deckListAdp.removeAllHeaderView();
+                    initHeadView();
+                    deckListAdp.setList((List<DeckFile>) msg.obj);
+                    srl_update.setRefreshing(false);
+                    break;
             }
         }
     };
@@ -75,7 +86,11 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
     }
 
     private void initView() {
+        LogUtil.setLastTime();
+        LogUtil.time("DeckManagement","组件初始化");
         imageLoader = new ImageLoader();
+
+        LogUtil.time("DeckManagement","图片初始化");
         deckListAdp = new DeckListBQAdapter(imageLoader, new ArrayList<>());
         dialogUtils = DialogUtils.getInstance(this);
 
@@ -99,6 +114,13 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             }
         });
 
+        initToolbar("卡组管理");
+
+        LogUtil.time("DeckManagement","其他初始化");
+        onRefresh();
+    }
+
+    public void initHeadView(){
         if (SharedPreferenceUtil.isShowEz() && !OYUtil.isApp(Record.PACKAGE_NAME_EZ)) {
             headerView = LayoutInflater.from(this).inflate(R.layout.deck_management_header, null);
 
@@ -129,15 +151,13 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
             });
             deckListAdp.addHeaderView(visitView);
         }
-
-        initToolbar("卡组管理");
-        onRefresh();
     }
 
     private void shareDeck(DeckFile deckFile) {
         dialogUtils.dialogl("分享方式", new String[]{"卡组码分享", "文件分享"}).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                dialogUtils.dis();
                 switch (position) {
                     case 0:
                         shareDeck2Uri(deckFile);
@@ -178,7 +198,7 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
         new Thread(() -> {
             Deck deck = DeckLoader.readDeck(new CardLoader(DeckManagementActivity.this), deckFile.getPathFile(), null).toDeck();
             String message = deck.toAppUri().toString();
-            message = "点击或复制打开YGO查看卡组：" + message;
+            message = "点击或复制打开YGO查看卡组《"+deckFile.getName()+"》：\n" + message;
             HandlerUtil.sendMessage(handler, SHARE_DECK_URI_OK, message);
         }).start();
     }
@@ -186,7 +206,11 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
     @Override
     public void onRefresh() {
         super.onRefresh();
-        deckListAdp.setNewInstance(DeckUtil.getDeckAllList());
-        srl_update.setRefreshing(false);
+
+        LogUtil.time("DeckManagement","开始刷新");
+        new Thread(()->{
+            HandlerUtil.sendMessage(handler,DECK_LIST_LOAD_OK,DeckUtil.getDeckAllList());
+        }).start();
+
     }
 }

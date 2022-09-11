@@ -39,7 +39,7 @@ public class OtherFunctionActivity extends ListAndUpdateActivity {
         otherApp=new OtherApp();
         otherApp.setName("YGOMOBILE");
         otherApp.setMessage("YGOMobile原版软件");
-        otherApp.setAppUrl("https://www.pgyer.com/ygomobilecn");
+        otherApp.setAppUrl("https://ygo233.com/download/ygomobile");
         otherApp.setIcon(R.drawable.ic_mobile);
         otherAppList.add(otherApp);
 

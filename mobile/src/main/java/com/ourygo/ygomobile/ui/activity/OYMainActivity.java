@@ -97,7 +97,10 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             setContentView(R.layout.oy_main_activity);
         isFragmentActivity=true;
         LogUtil.time(TAG, "0");
-        new Thread(() -> SdkInitUtil.getInstance().initX5WebView()).start();
+        new Thread(() -> {
+            SdkInitUtil.getInstance().initX5WebView();
+            initBugly();
+        }).start();
         LogUtil.time(TAG, "1");
         initView();
         initData();
@@ -105,7 +108,6 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         checkNotch();
         LogUtil.time(TAG, "3");
 //        checkRes();
-        initBugly();
         LogUtil.time(TAG, "4");
         LogUtil.printSumTime(TAG);
 
@@ -227,7 +229,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         }
 
         vp_pager = findViewById(R.id.vp_pager);
-
+        LogUtil.time(TAG,"1.2");
 //        String mcName = SharedPreferenceUtil.getMyCardUserName();
 //        refreshMyCardUser(mcName);
         mainFragment = new MainFragment();
@@ -235,7 +237,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //        myCardFragment = new MyCardFragment();
         mcLayoutFragment = new McLayoutFragment();
         otherFunctionFragment = new OtherFunctionFragment();
-
+        LogUtil.time(TAG,"1.3");
         dialogUtils = DialogUtils.getInstance(this);
         fragmentList = new ArrayList<>();
 
@@ -250,6 +252,8 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //        tl_tab.setTabMode(TabLayout.MODE_FIXED);
         //缓存两个页面
         vp_pager.setOffscreenPageLimit(3);
+
+        LogUtil.time(TAG,"1.4");
         //TabLayout加载viewpager
         if (isHorizontal) {
             VerTabBQAdapter verTabBQAdapter=new VerTabBQAdapter(fragmentList);
@@ -307,16 +311,14 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //            });
 //            vtab.setTabSelected(0);
         } else {
+            LogUtil.time(TAG,"1.4.1");
             tl_tab.setViewPager(vp_pager);
+            LogUtil.time(TAG,"1.4.2");
             tl_tab.setCurrentTab(0);
-            iv_card_query.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    startActivity(IntentUtil.getWebIntent(OYMainActivity.this,Record.YGO_CARD_QUERY_URL));
-                }
-            });
+            LogUtil.time(TAG,"1.5");
+            iv_card_query.setOnClickListener(
+                    view -> startActivity(IntentUtil.getWebIntent(OYMainActivity.this,Record.YGO_CARD_QUERY_URL)));
         }
-
 
         initDuelAssistant();
         checkIntent();

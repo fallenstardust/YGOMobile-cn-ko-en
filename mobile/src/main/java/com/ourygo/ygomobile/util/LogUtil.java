@@ -15,7 +15,7 @@ public class LogUtil {
         long time = System.currentTimeMillis();
         if (lastTime == 0)
             lastTime = time;
-        Log.e(tag, message + "  " + (time - lastTime));
+        Log.e("【time】"+tag, message + "  " + (time - lastTime));
         sumTime+=time-lastTime;
         lastTime = time;
     }
@@ -29,7 +29,7 @@ public class LogUtil {
     }
 
     public static void printSumTime(String tag) {
-        Log.e(tag,   "SumTime：  " + getSumTime());
+        Log.e("【time】"+tag,   "SumTime：  " + getSumTime());
     }
 
     public static void printSumTimeAndClear(String tag) {

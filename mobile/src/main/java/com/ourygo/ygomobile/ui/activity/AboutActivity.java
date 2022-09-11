@@ -134,6 +134,10 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.2.1","更新ygo内核\n"
+               + "更新卡包DBAD+VJ+YCSW\n"
+               + "修复分享卡组码崩溃的问题\n"
+               + "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.2.0","更新ygo内核\n" +
                "更新卡包SR13+T1109\n" +
                "服务器列表可选择表格布局\n" +
