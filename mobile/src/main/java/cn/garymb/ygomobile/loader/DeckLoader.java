@@ -13,8 +13,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
@@ -27,6 +25,8 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
 public class DeckLoader {
+    private static Boolean isChanged;
+
     public static DeckInfo readDeck(CardLoader cardLoader, File file, LimitList limitList) {
         DeckInfo deckInfo = null;
         FileInputStream fileinputStream = null;
@@ -35,6 +35,10 @@ public class DeckLoader {
             deckInfo = readDeck(cardLoader, fileinputStream, limitList);
             if (deckInfo != null) {
                 deckInfo.source = file;
+                if (isChanged) {
+                    DeckUtils.save(deckInfo, deckInfo.source);
+                    isChanged = false;
+                }
             }
         } catch (Exception e) {
             Log.e("deckreader", "read 1", e);
@@ -113,7 +117,7 @@ public class DeckLoader {
         DeckInfo deckInfo = new DeckInfo();
         SparseArray<Card> tmp = cardLoader.readCards(deck.getMainlist(), true);
         int code;
-        boolean isChanged = false;
+        isChanged = false;
         for (Integer id : deck.getMainlist()) {
             if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
                 code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
@@ -143,9 +147,6 @@ public class DeckLoader {
                 isChanged = true;
             }
             deckInfo.addSideCards(tmp.get(id));
-        }
-        if (isChanged) {
-            //DeckUtils.save(deckInfo,inputStream.read());
         }
         return deckInfo;
     }
