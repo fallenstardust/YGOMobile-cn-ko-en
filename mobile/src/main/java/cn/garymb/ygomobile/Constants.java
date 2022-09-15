@@ -155,6 +155,7 @@ public interface Constants {
     String URL_YGO233_ADVANCE = "https://ygo233.com/pre";
     String URL_YGO233_DATAVER = "https://ygo233.com/pre/dataver";
     String URL_YGO233_FILE = "https://ygo233.com/pre/download-ygomobile";
+    String URL_YGO233_FILE_ALT = "https://ygo233.com/pre/download-ygomobile/alt";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";

@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.activities;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 
 import android.annotation.SuppressLint;
@@ -33,8 +34,6 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.home.HomeFragment;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -42,6 +41,7 @@ import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.UnzipUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
@@ -50,6 +50,7 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
+    public static String dataVer = "";
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
@@ -57,6 +58,7 @@ public class WebActivity extends BaseActivity {
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
     private File xmlFile;
+    private int FailedCount;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -68,6 +70,11 @@ public class WebActivity extends BaseActivity {
                     btn_download.setText(msg.arg1 + "%");
                     break;
                 case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
+                        downloadfromWeb(URL_YGO233_FILE_ALT);
+                    }
                     YGOUtil.show("error" + msg.obj);
                     break;
                 case UnzipUtils.ZIP_READY:
@@ -92,6 +99,7 @@ public class WebActivity extends BaseActivity {
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     btn_download.setVisibility(View.GONE);
+                    SharedPreferenceUtil.setExpansionDataVer(WebActivity.dataVer);
                     break;
                 case UnzipUtils.ZIP_UNZIP_EXCEPTION:
                     Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
@@ -221,7 +229,7 @@ public class WebActivity extends BaseActivity {
         btn_download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                downloadfromWeb();
+                downloadfromWeb(URL_YGO233_FILE);
             }
         });
     }
@@ -277,12 +285,12 @@ public class WebActivity extends BaseActivity {
         }
     }
 
-    private void downloadfromWeb() {
-        File file = new File(AppsSettings.get().getResourcePath() + ".zip");
+    private void downloadfromWeb(String fileUrl) {
+        File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");
         if (file.exists()) {
             FileUtils.deleteFile(file);
         }
-        DownloadUtil.get().download(URL_YGO233_FILE, file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().download(fileUrl, file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
@@ -291,7 +299,7 @@ public class WebActivity extends BaseActivity {
                     File ydks = new File(AppsSettings.get().getDeckDir());
                     File[] subYdks = ydks.listFiles();
                     for (File files : subYdks) {
-                        if(files.getName().contains("-") && files.getName().contains(" new cards"))
+                        if (files.getName().contains("-") && files.getName().contains(" new cards"))
                             files.delete();
                     }
                     UnzipUtils.upZipFile(file, AppsSettings.get().getResourcePath());
@@ -316,7 +324,6 @@ public class WebActivity extends BaseActivity {
             public void onDownloadFailed(Exception e) {
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(file);
-//                downloadCardImage(code, file);
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_EXCEPTION;
                 message.obj = e.toString();
