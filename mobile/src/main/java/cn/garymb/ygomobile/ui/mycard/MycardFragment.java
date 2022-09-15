@@ -63,6 +63,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     //萌卡webview
     public MyCardWebView mWebViewPlus;
     private MyCard mMyCard;
+    private McUser mMcUser;
     //聊天室
     public RelativeLayout rl_chat;
     private TextView tv_message;
@@ -107,6 +108,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void initView(View view) {
         YGOStarter.onCreated(getActivity());
         mMyCard = new MyCard(getActivity());
+        mMcUser = new McUser();
         mWebViewPlus = view.findViewById(R.id.webbrowser);
         mProgressBar = view.findViewById(R.id.progressBar);
         mProgressBar.setMax(100);
@@ -307,6 +309,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
                     getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
                     mWebViewPlus.setVisibility(View.VISIBLE);
+                    rl_chat.setVisibility(View.VISIBLE);
                 }
                 mWebViewPlus.loadUrl(MyCard.getMCLogoutUrl());
                 break;
@@ -333,8 +336,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                     }
                 } else {
-                    //点击重新登录
-                    serviceManagement.start();
+                    if (mMcUser.getUsername() != null && mMcUser.getPassword() != null) {
+                        serviceManagement.start();
+                    } else {
+                        Toast.makeText(getActivity(), R.string.login_mycard, Toast.LENGTH_SHORT).show();
+                    }
                 }
                 break;
         }
