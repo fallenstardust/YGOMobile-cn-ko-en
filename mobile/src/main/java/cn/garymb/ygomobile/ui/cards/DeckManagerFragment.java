@@ -1154,6 +1154,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private void doBackUpDeck() {
         try {
             FileUtils.copyDir(mSettings.getDeckDir(), ORI_DECK, true);
+            File ydks = new File(ORI_DECK);
+            File[] subYdks = ydks.listFiles();
+            for (File files : subYdks) {
+                if(files.getName().contains("-") && files.getName().contains(" new cards"))
+                    files.delete();
+            }
         } catch (Throwable e) {
             Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
         }
