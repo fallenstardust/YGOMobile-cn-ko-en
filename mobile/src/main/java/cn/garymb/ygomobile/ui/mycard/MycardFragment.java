@@ -1,21 +1,17 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import static android.app.Activity.RESULT_OK;
-import static okhttp3.internal.Util.UTF_8;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +26,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.app.hubert.guide.util.LogUtil;
 import com.ourygo.assistant.util.Util;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -40,7 +35,6 @@ import com.tencent.smtt.sdk.WebView;
 import java.text.MessageFormat;
 import java.util.List;
 
-import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -310,8 +304,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.ll_head_login:
-                if (homeActivity.fragment_mycard_chatting_room.isVisible())
+                if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
                     getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                    mWebViewPlus.setVisibility(View.VISIBLE);
+                }
                 mWebViewPlus.loadUrl(MyCard.getMCLogoutUrl());
                 break;
             case R.id.tv_back_mc:
