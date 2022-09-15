@@ -1,14 +1,10 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +20,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -33,17 +28,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.app.hubert.guide.NewbieGuide;
-import com.app.hubert.guide.core.Controller;
-import com.app.hubert.guide.listener.OnHighlightDrewListener;
-import com.app.hubert.guide.listener.OnLayoutInflatedListener;
-import com.app.hubert.guide.model.GuidePage;
-import com.app.hubert.guide.model.HighLight;
-import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.Util;
@@ -86,10 +75,15 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 
 public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListener, View.OnClickListener {
@@ -104,6 +98,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     private RelativeLayout ll_back;
     ShimmerTextView tv;
+    ShimmerTextView tv2;
     Shimmer shimmer;
     private SwipeMenuRecyclerView mServerList;
     private ServerListAdapter mServerListAdapter;
@@ -123,6 +118,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private CardView cv_watch_replay;
     //辅助功能
     private CardView cv_download_ex;
+    private LinearLayoutCompat ll_new_notice;
     //外连
     private CardView cv_donation;
     private CardView cv_help;
@@ -145,6 +141,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
+        findExPansionsDataVer();
         //showNewbieGuide("homePage");
         return layoutView;
     }
@@ -181,6 +178,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         cv_watch_replay.setOnClickListener(this);
         cv_download_ex = view.findViewById(R.id.action_download_ex);
         cv_download_ex.setOnClickListener(this);
+        ll_new_notice = view.findViewById(R.id.ll_new_notice);
         /*
         cv_download_ex.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -197,7 +195,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         ll_back = view.findViewById(R.id.return_to_duel);
         ll_back.setOnClickListener(this);
         tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
+        tv2 = (ShimmerTextView) view.findViewById(R.id.shimmer_tv2);
         toggleAnimation(tv);
+        toggleAnimation(tv2);
 
         mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
@@ -264,6 +264,26 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
         }
     };
+
+    private void findExPansionsDataVer() {
+        if (AppsSettings.get().isReadExpansions()) {
+            String oldVer = SharedPreferenceUtil.getExpansionDataVer();
+            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    findExPansionsDataVer();
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    WebActivity.dataVer = response.body().string();
+                }
+            });
+            if (!WebActivity.dataVer.equals(oldVer)) {
+                ll_new_notice.setVisibility(View.VISIBLE);
+            }
+        }
+    }
 
     private void findMcNews() {
         isMcNewsLoadException = false;
@@ -445,12 +465,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         }
     }
 
-    public void toggleAnimation(View target) {
+    public void toggleAnimation(ShimmerTextView target) {
         if (shimmer != null && shimmer.isAnimating()) {
             shimmer.cancel();
         } else {
             shimmer = new Shimmer();
-            shimmer.start(tv);
+            shimmer.start(target);
         }
     }
 
@@ -662,6 +682,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;
             case R.id.action_download_ex:
                 WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
+                ll_new_notice.setVisibility(View.GONE);
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());

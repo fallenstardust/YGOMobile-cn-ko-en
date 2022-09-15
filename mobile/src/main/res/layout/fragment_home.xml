@@ -119,6 +119,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_alignParentLeft="true"
+                        android:layout_marginStart="-263dp"
+                        android:layout_marginLeft="1dp"
                         android:layout_toEndOf="@id/logo_small"
                         android:gravity="center"
                         android:text="@string/return_to_duel"
@@ -432,6 +434,30 @@
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/ll_new_notice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right|bottom"
+                        android:orientation="horizontal"
+                        android:visibility="visible">
+
+                        <cn.garymb.ygomobile.ui.widget.ShimmerTextView
+                            android:id="@+id/shimmer_tv2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="NEW!"
+                            android:textColor="@color/holo_orange_bright"
+                            android:textSize="15sp"
+                            android:textStyle="bold|italic" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_expansions" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
         </LinearLayout>
