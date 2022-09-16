@@ -78,6 +78,7 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.widget.overlay.OverlayView;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -90,6 +91,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     public static final int ID_HOMEFRAGMENT = 0;
     private DuelAssistantManagement duelAssistantManagement;
     private HomeActivity activity;
+    private WebActivity webActivity;
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
@@ -141,7 +143,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        findExPansionsDataVer();
+        showExNew();
         //showNewbieGuide("homePage");
         return layoutView;
     }
@@ -265,24 +267,32 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         }
     };
 
-    private void findExPansionsDataVer() {
+    private void showExNew() {
         if (AppsSettings.get().isReadExpansions()) {
             String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    findExPansionsDataVer();
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    WebActivity.dataVer = response.body().string();
-                }
-            });
-            if (!WebActivity.dataVer.equals(oldVer)) {
-                ll_new_notice.setVisibility(View.VISIBLE);
+            findExPansionsDataVer();
+            Log.i(BuildConfig.VERSION_NAME, WebActivity.dataVer);
+            if (!TextUtils.isEmpty(WebActivity.dataVer) && !WebActivity.dataVer.equals(oldVer)) {
+                    ll_new_notice.setVisibility(View.VISIBLE);
+            } else {
+                ll_new_notice.setVisibility(View.GONE);
             }
         }
+    }
+
+    private static void findExPansionsDataVer() {
+        OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                findExPansionsDataVer();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                WebActivity.dataVer = response.body().string();
+            }
+        });
+
     }
 
     private void findMcNews() {
