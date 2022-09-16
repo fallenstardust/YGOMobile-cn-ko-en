@@ -78,7 +78,6 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import cn.garymb.ygomobile.widget.overlay.OverlayView;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -132,7 +131,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        layoutView = inflater.inflate(R.layout.fragment_home, container, false);
+        if (isHorizontal)
+            layoutView = inflater.inflate(R.layout.fragment_home_horizontal, container, false);
+        else
+            layoutView = inflater.inflate(R.layout.fragment_home, container, false);
         initView(layoutView);
         initBanner(layoutView, savedInstanceState);
         //初始化决斗助手
