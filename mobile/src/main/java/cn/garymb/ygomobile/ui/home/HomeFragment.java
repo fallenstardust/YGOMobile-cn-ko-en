@@ -214,8 +214,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         cv_banner = view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
             ViewGroup.LayoutParams layoutParams = cv_banner.getLayoutParams();
-            layoutParams.width = cv_banner.getWidth();
-            layoutParams.height = layoutParams.width / 3;
+            if (isHorizontal) {
+                layoutParams.width = cv_banner.getWidth();
+                layoutParams.height = layoutParams.width / 5;
+            } else {
+                layoutParams.width = cv_banner.getWidth();
+                layoutParams.height = layoutParams.width / 3;
+            }
             cv_banner.setLayoutParams(layoutParams);
         });
         tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
