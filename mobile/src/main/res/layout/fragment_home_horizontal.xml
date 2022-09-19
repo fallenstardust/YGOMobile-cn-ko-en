@@ -36,10 +36,11 @@
                 android:layout_height="wrap_content"
                 android:scrollbars="none" />
 
-            <RelativeLayout
+            <LinearLayout
                 android:id="@+id/return_to_duel"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
                 android:background="@drawable/window3"
                 android:orientation="vertical">
 
@@ -47,21 +48,17 @@
                     android:id="@+id/logo_small"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
+                    android:layout_gravity="center"
                     android:src="@drawable/ic_launcher3" />
 
                 <cn.garymb.ygomobile.ui.widget.ShimmerTextView
                     android:id="@+id/shimmer_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_alignParentLeft="true"
-                    android:layout_marginStart="-263dp"
-                    android:layout_marginLeft="1dp"
-                    android:layout_toEndOf="@id/logo_small"
                     android:gravity="center"
                     android:text="@string/return_to_duel"
                     android:textColor="@color/item_title" />
-            </RelativeLayout>
+            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 
@@ -183,24 +180,21 @@
                             android:layout_height="wrap_content">
 
                             <ImageView
-                                android:layout_width="300dp"
-                                android:layout_height="300dp"
-                                android:layout_marginLeft="30dp"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginRight="-30dp"
-                                android:layout_marginBottom="-30dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/start" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="match_parent"
                                 android:background="@drawable/dialogcube"
                                 android:paddingLeft="13dp"
                                 android:paddingTop="13dp"
                                 android:text="YGOPro"
                                 android:textColor="@color/brightgreen"
-                                android:textSize="@dimen/dp_40"
                                 android:textStyle="bold" />
                         </RelativeLayout>
                     </androidx.cardview.widget.CardView>
@@ -224,24 +218,21 @@
                             android:layout_height="wrap_content">
 
                             <ImageView
-                                android:layout_width="300dp"
-                                android:layout_height="300dp"
-                                android:layout_marginLeft="30dp"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginRight="-30dp"
-                                android:layout_marginBottom="-30dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/bot" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="match_parent"
                                 android:background="@drawable/dialogcube"
                                 android:paddingLeft="13dp"
                                 android:paddingTop="13dp"
                                 android:text="@string/bot_mode"
                                 android:textColor="@color/brightgreen"
-                                android:textSize="30dp"
                                 android:textStyle="bold" />
                         </RelativeLayout>
                     </androidx.cardview.widget.CardView>
@@ -273,24 +264,21 @@
                             android:layout_height="wrap_content">
 
                             <ImageView
-                                android:layout_width="300dp"
-                                android:layout_height="300dp"
-                                android:layout_marginLeft="30dp"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginRight="-30dp"
-                                android:layout_marginBottom="-30dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/replay" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="match_parent"
                                 android:background="@drawable/dialogcube"
                                 android:paddingLeft="13dp"
                                 android:paddingTop="13dp"
                                 android:text="@string/replay"
                                 android:textColor="@color/brightgreen"
-                                android:textSize="30dp"
                                 android:textStyle="bold" />
                         </RelativeLayout>
                     </androidx.cardview.widget.CardView>
@@ -314,24 +302,21 @@
                             android:layout_height="wrap_content">
 
                             <ImageView
-                                android:layout_width="300dp"
-                                android:layout_height="300dp"
-                                android:layout_marginLeft="30dp"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginRight="-30dp"
-                                android:layout_marginBottom="-30dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/downloadimages" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="match_parent"
                                 android:background="@drawable/dialogcube"
                                 android:paddingLeft="13dp"
                                 android:paddingTop="13dp"
                                 android:text="@string/action_download_expansions"
                                 android:textColor="@color/brightgreen"
-                                android:textSize="30dp"
                                 android:textStyle="bold" />
                         </RelativeLayout>
 
@@ -402,23 +387,20 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="300dp"
-                            android:layout_height="300dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="30dp"
-                            android:layout_marginRight="-30dp"
-                            android:layout_marginBottom="-30dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/help" />
 
                         <TextView
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/help"
-                            android:textSize="30dp"
                             android:textColor="@color/holo_blue_bright"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -443,24 +425,21 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="300dp"
-                            android:layout_height="300dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="30dp"
-                            android:layout_marginRight="-30dp"
-                            android:layout_marginBottom="-30dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/about" />
 
                         <TextView
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="@drawable/dialogcube"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
                             android:text="@string/donation"
                             android:textColor="@color/holo_blue_bright"
-                            android:textSize="30dp"
                             android:textStyle="bold" />
                     </RelativeLayout>
                 </androidx.cardview.widget.CardView>

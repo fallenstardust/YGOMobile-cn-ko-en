@@ -21,8 +21,8 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -97,7 +97,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
-    private RelativeLayout ll_back;
+    private LinearLayout ll_back;
     ShimmerTextView tv;
     ShimmerTextView tv2;
     Shimmer shimmer;
@@ -275,7 +275,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             findExPansionsDataVer();
             Log.i(BuildConfig.VERSION_NAME, WebActivity.dataVer);
             if (!TextUtils.isEmpty(WebActivity.dataVer) && !WebActivity.dataVer.equals(oldVer)) {
-                    ll_new_notice.setVisibility(View.VISIBLE);
+                findExPansionsDataVer();
+                ll_new_notice.setVisibility(View.VISIBLE);
             } else {
                 ll_new_notice.setVisibility(View.GONE);
             }
