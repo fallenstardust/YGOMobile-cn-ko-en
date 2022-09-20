@@ -94,6 +94,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
+    private static final int TYPE_GET_DATA_VER_OK = 3;
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
@@ -209,7 +210,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     //轮播图
     public void initBanner(View view, Bundle saveBundle) {
-        Log.i("3.10.0看看saveBundle", saveBundle + "");
         xb_banner = view.findViewById(R.id.xb_banner);
         cv_banner = view.findViewById(R.id.cv_banner);
         cv_banner.post(() -> {
@@ -269,6 +269,15 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     tv_banner_loading.setText(R.string.loading_failed);
                     isMcNewsLoadException = true;
                     break;
+                case TYPE_GET_DATA_VER_OK:
+                    WebActivity.dataVer = msg.obj.toString();
+                    String oldVer = SharedPreferenceUtil.getExpansionDataVer();
+                    if (!TextUtils.isEmpty(WebActivity.dataVer) && !WebActivity.dataVer.equals(oldVer)) {
+                        ll_new_notice.setVisibility(View.VISIBLE);
+                    } else {
+                        showExNew();
+                        ll_new_notice.setVisibility(View.GONE);
+                    }
             }
 
         }
@@ -276,31 +285,23 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     private void showExNew() {
         if (AppsSettings.get().isReadExpansions()) {
-            String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-            findExPansionsDataVer();
-            Log.i(BuildConfig.VERSION_NAME, WebActivity.dataVer);
-            if (!TextUtils.isEmpty(WebActivity.dataVer) && !WebActivity.dataVer.equals(oldVer)) {
-                findExPansionsDataVer();
-                ll_new_notice.setVisibility(View.VISIBLE);
-            } else {
-                ll_new_notice.setVisibility(View.GONE);
-            }
+            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    showExNew();
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String json = response.body().string();
+                    Message message = new Message();
+                    message.what = TYPE_GET_DATA_VER_OK;
+                    message.obj = json;
+                    handler.sendMessage(message);
+                    Log.i(BuildConfig.VERSION_NAME, WebActivity.dataVer + "dataver内");
+                }
+            });
         }
-    }
-
-    private static void findExPansionsDataVer() {
-        OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                findExPansionsDataVer();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                WebActivity.dataVer = response.body().string();
-            }
-        });
-
     }
 
     private void findMcNews() {

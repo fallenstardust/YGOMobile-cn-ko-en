@@ -50,7 +50,7 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
-    public static String dataVer = "";
+    public static String dataVer;
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
