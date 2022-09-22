@@ -250,7 +250,7 @@
     <string name="Cancel">Cancel</string>
     <string name="Checking_Update">Now Checking Update</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
-    <string name="Ask_to_Change_Other_Way">\, would you like to change other way</string>
+    <string name="Ask_to_Change_Other_Way">trying other way...</string>
     <string name="DuelAssistant">DuelAssiatant is On</string>
     <string name="masterrule">Master Rule</string>
     <string name="tutorial">Soft Tutorial</string>
@@ -333,7 +333,7 @@
     <string name="label_ot_SC_OCG">SChinese OCG</string>
     <string name="settings_screen_padding">Reserved height of curved screen</string>
     <string name="tip_load_cdb_error">Load database error</string>
-    <string name="action_download_expansions">download\\nexpansions</string>
+    <string name="action_download_expansions">download\nexpansions</string>
     <string name="replay">Watch replay</string>
     <string name="bot_mode">Bot game</string>
     <string name="personal">My</string>

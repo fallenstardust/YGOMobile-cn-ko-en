@@ -252,7 +252,7 @@
     <string name="Cancel">취소</string>
     <string name="Checking_Update">업데이트를 확인하는 중입니다. 잠시 기다려 주십시오.</string>
     <string name="Checking_Update_Failed">업데이트 확인 실패</string>
-    <string name="Ask_to_Change_Other_Way">, 다른 방법으로 다운로드하겠습니까?</string>
+    <string name="Ask_to_Change_Other_Way">다른 방식을 시도해 봐...</string>
     <string name="DuelAssistant">듀얼 어시스턴트가 활성화되었습니다</string>
     <string name="masterrule">마스터 룰 알아보기</string>
     <string name="tutorial">튜토리얼 보기</string>

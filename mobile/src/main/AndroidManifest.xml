@@ -41,9 +41,9 @@
 
         <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:configChanges="keyboardHidden|navigation"
             android:exported="true"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
@@ -136,9 +136,9 @@
             tools:replace="android:theme" />
         <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:configChanges="orientation|keyboardHidden|navigation"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <activity

@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.utils;
 
+import static cn.garymb.ygomobile.Constants.newIDsArray;
+import static cn.garymb.ygomobile.Constants.oldIDsArray;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,6 +27,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
+import cn.hutool.core.util.ArrayUtil;
 
 public class DeckUtil {
 
@@ -212,6 +216,9 @@ public class DeckUtil {
                     continue;
                 }
                 Integer id = Integer.parseInt(line);
+                if (ArrayUtil.contains(oldIDsArray, id)) {
+                    id = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id));
+                }
                 return id;
             }
         } catch (IOException e) {
