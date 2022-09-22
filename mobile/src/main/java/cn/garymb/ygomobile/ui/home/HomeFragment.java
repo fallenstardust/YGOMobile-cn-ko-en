@@ -272,8 +272,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 case TYPE_GET_DATA_VER_OK:
                     WebActivity.dataVer = msg.obj.toString();
                     String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-                    if (!TextUtils.isEmpty(WebActivity.dataVer) && !WebActivity.dataVer.equals(oldVer)) {
-                        ll_new_notice.setVisibility(View.VISIBLE);
+                    if (!TextUtils.isEmpty(WebActivity.dataVer)) {
+                        if(!WebActivity.dataVer.equals(oldVer)) {
+                            ll_new_notice.setVisibility(View.VISIBLE);
+                        } else {
+                            ll_new_notice.setVisibility(View.GONE);
+                        }
                     } else {
                         showExNew();
                         ll_new_notice.setVisibility(View.GONE);
@@ -298,7 +302,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     message.what = TYPE_GET_DATA_VER_OK;
                     message.obj = json;
                     handler.sendMessage(message);
-                    Log.i(BuildConfig.VERSION_NAME, WebActivity.dataVer + "dataver内");
                 }
             });
         }
