@@ -147,7 +147,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
                 }
             }
         } else {
-            holder.deck_info.setVisibility(View.INVISIBLE);
+            holder.deck_info.setVisibility(View.GONE);
         }
         //多选
         if (isManySelect) {

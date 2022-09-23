@@ -277,7 +277,7 @@
     <string name="delete_confirm">will delete all deck of this Category</string>
     <string name="no_deck_is_selected">no_deck_is_selected</string>
     <string name="done">done\！</string>
-    <string name="donot_editor_bot_Deck">Pls Donot edit/remove AI Deck, if you do\nAI mode wont work properly</string>
+    <string name="donot_edit_Deck">Do not change decks of this category</string>
     <string name="code_share">Code Share</string>
     <string name="screenshoot">Share Art</string>
     <string name="ydk_share">File sahre</string>

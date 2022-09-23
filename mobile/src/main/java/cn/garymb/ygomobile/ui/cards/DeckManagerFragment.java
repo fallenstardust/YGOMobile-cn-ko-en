@@ -747,8 +747,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     if (mDeckAdapater.getYdkFile() == null) {
                         inputDeckName(null, null, true);
                     } else {
-                        if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                            Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                        if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
+                                TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                            Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
                         } else {
                             save(mDeckAdapater.getYdkFile());
                         }
@@ -760,8 +761,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
                 }
-                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
+                        TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
                 }
@@ -787,8 +789,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
                     return true;
                 }
-                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_editor_bot_Deck, Toast.LENGTH_SHORT).show();
+                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
+                        TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
                 } else {
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.question_delete_deck);
