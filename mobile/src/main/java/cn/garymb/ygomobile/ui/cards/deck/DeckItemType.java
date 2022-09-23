@@ -8,4 +8,5 @@ public enum DeckItemType {
     SideLabel,
     SideCard,
     Space,
+    Pack
 }

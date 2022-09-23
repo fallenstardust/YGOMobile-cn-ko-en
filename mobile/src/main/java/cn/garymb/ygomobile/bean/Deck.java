@@ -520,6 +520,10 @@ public class Deck implements Parcelable {
         return allList;
     }
 
+    public void addPack(Integer id) {
+        mainlist.add(id);
+    }
+
     public void addMain(Integer id) {
         if (mainlist.size() >= Constants.DECK_MAIN_MAX) {
             return;

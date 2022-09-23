@@ -52,11 +52,11 @@ public class DeckLoader {
         Deck deck = new Deck();
         SparseArray<Integer> mIds = new SparseArray<>();
         InputStreamReader in = null;
+        DeckItemType type = DeckItemType.Space;
         try {
             in = new InputStreamReader(inputStream, "utf-8");
             BufferedReader reader = new BufferedReader(in);
             String line = null;
-            DeckItemType type = DeckItemType.Space;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("!side")) {
                     type = DeckItemType.SideCard;
@@ -67,6 +67,8 @@ public class DeckLoader {
                         type = DeckItemType.MainCard;
                     } else if (line.startsWith("#extra")) {
                         type = DeckItemType.ExtraCard;
+                    } else {
+                        type = DeckItemType.Pack;
                     }
                     continue;
                 }
@@ -76,7 +78,7 @@ public class DeckLoader {
                         Log.w("kk", "read not number " + line);
                     continue;
                 }
-                if (line.length() > 9) {//密码如果大于9位直接过滤
+                if (line.equals("0") || line.length() > 9) {//密码为0或者长度大于9位直接过滤
                     continue;
                 }
                 Integer id = Integer.parseInt(line);
@@ -107,6 +109,15 @@ public class DeckLoader {
                         mIds.put(id, i + 1);
                         deck.addSide(id);
                     }
+                } else if (type == DeckItemType.Pack) {
+                    Integer i = mIds.get(id);
+                    if (i == null) {
+                        mIds.put(id, 1);
+                        deck.addPack(id);
+                    } else if (i < Constants.CARD_MAX_COUNT) {
+                        mIds.put(id, i + 1);
+                        deck.addPack(id);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -125,7 +136,11 @@ public class DeckLoader {
                 tmp.put(id, cardLoader.readAllCardCodes().get(code));
                 isChanged = true;
             }
-            deckInfo.addMainCards(tmp.get(id));
+            if (type == DeckItemType.Pack) {
+                deckInfo.addMainCards(id, tmp.get(id), true);
+            } else {
+                deckInfo.addMainCards(id, tmp.get(id), false);
+            }
         }
         tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {
