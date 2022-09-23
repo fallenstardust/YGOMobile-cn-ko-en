@@ -396,10 +396,10 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return null;
     }
 
-    public void setDeck(DeckInfo deck) {
-        mDeckInfo = deck;
-        if (deck != null) {
-            loadData(deck);
+    public void setDeck(DeckInfo deckinfo) {
+        mDeckInfo = deckinfo;
+        if (deckinfo != null) {
+            loadData(deckinfo);
         }
         mDeckMd5 = DeckItemUtils.makeMd5(mItems);
     }

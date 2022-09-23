@@ -50,6 +50,13 @@ public class DeckUtil {
         }
     };
 
+    private final static Comparator<DeckFile> dateInNameCom = new Comparator<DeckFile>() {
+        @Override
+        public int compare(DeckFile ydk1, DeckFile ydk2) {
+            return ydk2.getName().compareTo(ydk1.getName());
+        }
+    };
+
     private final static Comparator<DeckFile> dateCom = new Comparator<DeckFile>() {
         @Override
         public int compare(DeckFile ydk1, DeckFile ydk2) {
@@ -85,7 +92,7 @@ public class DeckUtil {
             }
         }
         if (path.equals(AppsSettings.get().getPackDeckDir())) {
-            Collections.sort(deckList, dateCom);
+            Collections.sort(deckList, dateInNameCom);
         } else {
             Collections.sort(deckList, nameCom);
         }
