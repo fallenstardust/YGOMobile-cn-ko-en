@@ -103,18 +103,30 @@ public class DeckInfo {
     }
 
     public boolean addMainCards(Card card) {
-        return addMainCards(-1, card);
+        return addMainCards(-1, card, false);
     }
 
-    public boolean addMainCards(int index, Card card) {
-        if (card != null && mainCount < Constants.DECK_MAIN_MAX) {
-            if (index >= 0 && index <= mainCards.size()) {
-                this.mainCards.add(index, card);
-            } else {
-                this.mainCards.add(card);
+    public boolean addMainCards(int index, Card card, boolean isPack) {
+        if (!isPack) {
+            if (card != null && mainCount < Constants.DECK_MAIN_MAX) {
+                if (index >= 0 && index <= mainCards.size()) {
+                    this.mainCards.add(index, card);
+                } else {
+                    this.mainCards.add(card);
+                }
+                mainCount++;
+                return true;
             }
-            mainCount++;
-            return true;
+        } else {
+            if (card != null) {
+                if (index >= 0 && index <= mainCards.size()) {
+                    this.mainCards.add(index, card);
+                } else {
+                    this.mainCards.add(card);
+                }
+                mainCount++;
+                return true;
+            }
         }
         return false;
     }
