@@ -41,9 +41,9 @@
 
         <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
-            android:configChanges="keyboardHidden|navigation"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
-            android:screenOrientation="unspecified"
+            android:screenOrientation="portrait"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
