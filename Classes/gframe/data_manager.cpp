@@ -11,13 +11,8 @@ DataManager dataManager;
 
 bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
-	wchar_t strBuffer[4096];
 	BufferIO::EncodeUTF8(wfile, file);
-#ifdef _WIN32
-	IReadFile* reader = FileSystem->createAndOpenFile(wfile);
-#else
 	IReadFile* reader = FileSystem->createAndOpenFile(file);
-#endif
 	if(reader == NULL)
 		return false;
 	spmemvfs_db_t db;
@@ -42,6 +37,7 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 	}
 	CardDataC cd;
 	CardString cs;
+	wchar_t strBuffer[4096];
 	int step = 0;
 	do {
 		step = sqlite3_step(pStmt);
@@ -99,7 +95,7 @@ bool DataManager::LoadStrings(const char* file) {
 		ReadStringConfLine(linebuf);
 	}
 	fclose(fp);
-	for(int i = 0; i < 255; ++i)
+	for(int i = 0; i < 301; ++i)
 		myswprintf(numStrings[i], L"%d", i);
 	return true;
 }
@@ -191,10 +187,10 @@ const wchar_t* DataManager::GetText(int code) {
 		return csit->second.text.c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetDesc(int strCode) {
-	if((unsigned int)strCode < 10000u)
+const wchar_t* DataManager::GetDesc(unsigned int strCode) {
+	if(strCode < 10000u)
 		return GetSysString(strCode);
-	unsigned int code = strCode >> 4;
+	unsigned int code = (strCode >> 4) & 0x0fffffff;
 	unsigned int offset = strCode & 0xf;
 	auto csit = _strings.find(code);
 	if(csit == _strings.end())

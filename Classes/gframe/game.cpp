@@ -906,6 +906,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnDMOK = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_OK, dataManager.GetSysString(1211));
 	    ChangeToIGUIImageButton(btnDMOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnDMCancel = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 270 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_CANCEL, dataManager.GetSysString(1212));
+	scrPackCards = env->addScrollBar(false, recti(775 * xScale, 161 * yScale, 795 * xScale, 629 * yScale), 0, SCROLL_FILTER);
+	scrPackCards->setLargeStep(1);
+	scrPackCards->setSmallStep(1);
+	scrPackCards->setVisible(false);
         ChangeToIGUIImageButton(btnDMCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
 	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBCATEGORY);
@@ -1635,19 +1639,29 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	}
 }
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
+	if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
+		// can't use pack list in duel
+		cbDeck->clear();
+		return;
+	}
 	wchar_t catepath[256];
 	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
-	RefreshDeck(catepath, cbDeck);
-}
-void Game::RefreshDeck(const wchar_t* deckpath, irr::gui::IGUIComboBox* cbDeck) {
 	cbDeck->clear();
-	FileSystem::TraversalDir(deckpath, [cbDeck](const wchar_t* name, bool isdir) {
+	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
+}
+void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
+	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
+		for(auto pack : deckBuilder.expansionPacks) {
+			additem(pack.substr(5, pack.size() - 9).c_str());
+		}
+	}
+	FileSystem::TraversalDir(deckpath, [additem](const wchar_t* name, bool isdir) {
 		if(!isdir && wcsrchr(name, '.') && !wcsncasecmp(wcsrchr(name, '.'), L".ydk", 4)) {
 			size_t len = wcslen(name);
 			wchar_t deckname[256];
 			wcsncpy(deckname, name, len - 4);
 			deckname[len - 4] = 0;
-			cbDeck->addItem(deckname);
+			additem(deckname);
 		}
 	});
 }
