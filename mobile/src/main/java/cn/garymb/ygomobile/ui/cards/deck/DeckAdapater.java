@@ -190,7 +190,8 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     @Override
-    public @Nullable Card getCard(int posotion) {
+    public @Nullable
+    Card getCard(int posotion) {
         int count = mMainCount;
         int index = 0;
         if (posotion < count) {
@@ -389,23 +390,24 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return mLimitList;
     }
 
-    public @Nullable File getYdkFile(){
-        if(mDeckInfo != null){
+    public @Nullable
+    File getYdkFile() {
+        if (mDeckInfo != null) {
             return mDeckInfo.source;
         }
         return null;
     }
 
-    public void setDeck(DeckInfo deckinfo) {
+    public void setDeck(DeckInfo deckinfo, boolean isPack) {
         mDeckInfo = deckinfo;
         if (deckinfo != null) {
-            loadData(deckinfo);
+            loadData(deckinfo, isPack);
         }
-        mDeckMd5 = DeckItemUtils.makeMd5(mItems);
+        if (!isPack) mDeckMd5 = DeckItemUtils.makeMd5(mItems);
     }
 
     public DeckInfo read(CardLoader cardLoader, File file, LimitList limitList) {
-        if(limitList != null) {
+        if (limitList != null) {
             setLimitList(limitList);
         }
         return DeckLoader.readDeck(cardLoader, file, limitList);
@@ -425,7 +427,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return list == null ? 0 : list.size();
     }
 
-    private void loadData(DeckInfo deck) {
+    private void loadData(DeckInfo deckInfo, boolean isPack) {
         mCount.clear();
         mMainCount = 0;
         mExtraCount = 0;
@@ -441,7 +443,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         mSideSpellCount = 0;
         mSideTrapCount = 0;
         mItems.clear();
-        DeckItemUtils.makeItems(deck, this);
+        DeckItemUtils.makeItems(deckInfo, isPack, this);
     }
 
     public boolean isChanged() {
@@ -478,7 +480,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         mItems.add(deckItem);
     }
 
-    public void notifyItemChanged(Card card){
+    public void notifyItemChanged(Card card) {
         for (int i = 0; i < getItemCount(); i++) {
             DeckItem item = getItem(i);
             Card c = item.getCardInfo();

@@ -13,6 +13,13 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
 class DeckViewHolder extends RecyclerView.ViewHolder {
+    private final View view;
+    private final View headView;
+    private final View textlayout;
+    private final TextView labelText;
+    public final ImageView cardImage;
+    private final ImageView rightImage;
+
     private long mCardType;
     private DeckItemType mItemType;
 
@@ -112,11 +119,4 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         if (headView != null)
             headView.setVisibility(visibility);
     }
-
-    private final View view;
-    private final View headView;
-    private final View textlayout;
-    private final TextView labelText;
-    public final ImageView cardImage;
-    private final ImageView rightImage;
 }

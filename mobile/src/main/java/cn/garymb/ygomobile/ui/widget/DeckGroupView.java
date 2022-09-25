@@ -392,7 +392,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
     }
 
     public enum Type {
-        Main, Extra, Side
+        Main, Extra, Side, Pack
     }
 
     private boolean mLimitChanged = false;

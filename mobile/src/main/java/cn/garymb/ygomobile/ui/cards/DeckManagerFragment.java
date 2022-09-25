@@ -367,7 +367,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     //region load deck
     private void loadDeckFromFile(File file) {
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
-            setCurDeck(new DeckInfo());
+            setCurDeck(new DeckInfo(), file.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
             return;
         }
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
@@ -379,7 +379,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurDeck(rs);
+            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
         });
     }
 
@@ -416,7 +416,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mCardSelector.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
-            setCurDeck(rs);
+            setCurDeck(rs, ydk.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
             //设置收藏夹
             mCardSelector.showFavorites(false);
         });
@@ -425,7 +425,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     /**
      * 设置当前卡组
      */
-    private void setCurDeck(DeckInfo deckInfo) {
+    private void setCurDeck(DeckInfo deckInfo, boolean isPack) {
         if (deckInfo == null) {
             deckInfo = new DeckInfo();
         }
@@ -435,7 +435,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mSettings.setLastDeckPath(file.getAbsolutePath());
             tv_deck.setText(name);
         }
-        mDeckAdapater.setDeck(deckInfo);
+        mDeckAdapater.setDeck(deckInfo, isPack);
         mDeckAdapater.notifyDataSetChanged();
     }
 
@@ -777,7 +777,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 builder.setMessage(R.string.question_clear_deck);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                 builder.setLeftButtonListener((dlg, rs) -> {
-                    mDeckAdapater.setDeck(new DeckInfo());
+                    mDeckAdapater.setDeck(new DeckInfo(), false);
                     mDeckAdapater.notifyDataSetChanged();
                     dlg.dismiss();
                 });
@@ -835,12 +835,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         });
         builder.setRightButtonListener((dlg, rs) -> {
             dlg.dismiss();
-            setCurDeck(null);
+            setCurDeck(null, false);
             inputDeckName(null, savePath, true);
         });
         builder.setOnCloseLinster((dlg) -> {
             dlg.dismiss();
-            setCurDeck(null);
+            setCurDeck(null, false);
             inputDeckName(null, savePath, true);
         });
         builder.show();
@@ -1160,7 +1160,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             File ydks = new File(ORI_DECK);
             File[] subYdks = ydks.listFiles();
             for (File files : subYdks) {
-                if(files.getName().contains("-") && files.getName().contains(" new cards"))
+                if (files.getName().contains("-") && files.getName().contains(" new cards"))
                     files.delete();
             }
         } catch (Throwable e) {
@@ -1199,7 +1199,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 if (file != null) {
                     loadDeckFromFile(file);
                 } else {
-                    setCurDeck(new DeckInfo());
+                    setCurDeck(new DeckInfo(), false);
                 }
                 return;
             }

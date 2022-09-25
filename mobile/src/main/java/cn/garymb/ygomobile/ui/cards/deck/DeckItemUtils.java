@@ -167,48 +167,54 @@ class DeckItemUtils {
         return true;
     }
 
-    public static void makeItems(DeckInfo mDeck, DeckAdapater adapater) {
-        if (mDeck != null) {
+    public static void makeItems(DeckInfo deckInfo, boolean isPack, DeckAdapater adapater) {
+        if (deckInfo != null) {
             adapater.addItem(new DeckItem(DeckItemType.MainLabel));
-            List<Card> main = mDeck.getMainCards();
+            List<Card> main = deckInfo.getMainCards();
             if (main == null) {
-                for (int i = 0; i < Constants.DECK_MAIN_MAX; i++) {
+                for (int i = 0; i < deckInfo.getMainCount(); i++) {
                     adapater.addItem(new DeckItem());
                 }
             } else {
                 for (Card card : main) {
                     adapater.addItem(new DeckItem(card, DeckItemType.MainCard));
                 }
-                for (int i = main.size(); i < Constants.DECK_MAIN_MAX; i++) {
-                    adapater.addItem(new DeckItem());
+                if (main.size() < Constants.DECK_MAIN_MAX) {
+                    for (int i = main.size(); i < Constants.DECK_MAIN_MAX; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
                 }
             }
-            List<Card> extra = mDeck.getExtraCards();
-            adapater.addItem(new DeckItem(DeckItemType.ExtraLabel));
-            if (extra == null) {
-                for (int i = 0; i < Constants.DECK_EXTRA_COUNT; i++) {
-                    adapater.addItem(new DeckItem());
+            List<Card> extra = deckInfo.getExtraCards();
+            List<Card> side = deckInfo.getSideCards();
+            if (!isPack) {
+                //extra
+                adapater.addItem(new DeckItem(DeckItemType.ExtraLabel));
+                if (extra == null) {
+                    for (int i = 0; i < Constants.DECK_EXTRA_COUNT; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
+                } else {
+                    for (Card card : extra) {
+                        adapater.addItem(new DeckItem(card, DeckItemType.ExtraCard));
+                    }
+                    for (int i = extra.size(); i < Constants.DECK_EXTRA_COUNT; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
                 }
-            } else {
-                for (Card card : extra) {
-                    adapater.addItem(new DeckItem(card, DeckItemType.ExtraCard));
-                }
-                for (int i = extra.size(); i < Constants.DECK_EXTRA_COUNT; i++) {
-                    adapater.addItem(new DeckItem());
-                }
-            }
-            List<Card> side = mDeck.getSideCards();
-            adapater.addItem(new DeckItem(DeckItemType.SideLabel));
-            if (side == null) {
-                for (int i = 0; i < Constants.DECK_SIDE_COUNT; i++) {
-                    adapater.addItem(new DeckItem());
-                }
-            } else {
-                for (Card card : side) {
-                    adapater.addItem(new DeckItem(card, DeckItemType.SideCard));
-                }
-                for (int i = side.size(); i < Constants.DECK_SIDE_COUNT; i++) {
-                    adapater.addItem(new DeckItem());
+                //side
+                adapater.addItem(new DeckItem(DeckItemType.SideLabel));
+                if (side == null) {
+                    for (int i = 0; i < Constants.DECK_SIDE_COUNT; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
+                } else {
+                    for (Card card : side) {
+                        adapater.addItem(new DeckItem(card, DeckItemType.SideCard));
+                    }
+                    for (int i = side.size(); i < Constants.DECK_SIDE_COUNT; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
                 }
             }
         }
