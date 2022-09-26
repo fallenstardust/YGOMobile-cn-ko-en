@@ -279,7 +279,7 @@
     <string name="delete_confirm">카테고리를 삭제하겠습니까? 카테고리에 있는 덱들도 삭제됩니다.</string>
     <string name="no_deck_is_selected">덱이 선택되지 않았습니다.</string>
     <string name="done">완료！</string>
-    <string name="donot_edit_Deck">이 분류의 카드 그룹을 변경하지 마십시오.</string>
+    <string name="donot_edit_Deck">이 카테고리의 덱을 변경하지 마십시오.</string>
     <string name="unable_to_edit_empty_deck">비어있는 덱을 사용할 수 없습니다.</string>
     <string name="create_new_failed">생성 실패</string>
     <string name="about_pref_settings_keep_scale">원래 해상도 표시</string>
