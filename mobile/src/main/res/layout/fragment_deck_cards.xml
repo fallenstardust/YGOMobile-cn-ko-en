@@ -42,6 +42,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/deck_name"
+                        android:textStyle="bold"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
                         android:textColor="@color/holo_blue_light" />
 
                     <androidx.appcompat.widget.AppCompatTextView
@@ -54,6 +59,10 @@
                         android:text="@string/select_deck"
                         android:textColor="@color/white"
                         android:textSize="18sp"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -83,7 +92,13 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/searchresult" />
+                        android:text="@string/searchresult"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -104,7 +119,13 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/card_search" />
+                        android:text="@string/card_search"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -139,7 +160,13 @@
                         android:layout_width="60dp"
                         android:layout_height="20dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/Function_Menu" />
+                        android:text="@string/Function_Menu"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>

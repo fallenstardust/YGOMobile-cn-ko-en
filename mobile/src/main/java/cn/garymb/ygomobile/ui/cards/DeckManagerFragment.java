@@ -181,12 +181,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), 0, mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
         mRecyclerView.setAdapter((mDeckAdapater = new DeckAdapater(getContext(), mRecyclerView, getImageLoader())));
         mRecyclerView.setLayoutManager(new DeckLayoutManager(getContext(), Constants.DECK_WIDTH_COUNT));
+
         mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater);
         ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(getContext(), mDeckItemTouchHelper);
         touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
+
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
+
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));

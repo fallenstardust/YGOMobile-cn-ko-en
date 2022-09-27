@@ -169,6 +169,7 @@ class DeckItemUtils {
 
     public static void makeItems(DeckInfo deckInfo, boolean isPack, DeckAdapater adapater) {
         if (deckInfo != null) {
+            DeckItem.resetLabel(deckInfo, isPack);
             adapater.addItem(new DeckItem(DeckItemType.MainLabel));
             List<Card> main = deckInfo.getMainCards();
             if (main == null) {
@@ -181,6 +182,12 @@ class DeckItemUtils {
                 }
                 if (main.size() < Constants.DECK_MAIN_MAX) {
                     for (int i = main.size(); i < Constants.DECK_MAIN_MAX; i++) {
+                        adapater.addItem(new DeckItem());
+                    }
+                } else {
+                    //填充空舍的位置便于滚动到底部时不和底部功能按钮重叠
+                    int emty = Constants.DECK_WIDTH_COUNT - deckInfo.getMainCount() % Constants.DECK_WIDTH_COUNT;
+                    for (int i = main.size(); i < emty + deckInfo.getMainCount(); i++) {
                         adapater.addItem(new DeckItem());
                     }
                 }
@@ -216,6 +223,7 @@ class DeckItemUtils {
                         adapater.addItem(new DeckItem());
                     }
                 }
+                adapater.addItem(new DeckItem(deckInfo.getMainCard(1),DeckItemType.Space));
             }
         }
     }
@@ -233,7 +241,7 @@ class DeckItemUtils {
     }
 
     public static boolean isLabel(int position) {
-        if (position == DeckItem.MainLabel || position == DeckItem.SideLabel || position == DeckItem.ExtraLabel) {
+        if (position == DeckItem.MainLabel || position == DeckItem.ExtraLabel || position == DeckItem.SideLabel) {
             return true;
         }
         return false;
