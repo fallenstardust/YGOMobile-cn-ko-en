@@ -585,12 +585,14 @@ void Game::DrawMisc() {
 	//lp bar
 	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
-	if(dInfo.lp[0] >= 8000)
+	if(dInfo.start_lp) {
+		if(dInfo.lp[0] >= dInfo.start_lp)
 		driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * dInfo.lp[0] / 8000) * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	if(dInfo.lp[1] >= 8000)
+	else driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * dInfo.lp[0] / dInfo.start_lp) * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+		if(dInfo.lp[1] >= dInfo.start_lp)
 		driver->draw2DImage(imageManager.tLPBar, recti(695 * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti((930 - 235 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+	else driver->draw2DImage(imageManager.tLPBar, recti((930 - 235 * dInfo.lp[1] / dInfo.start_lp) * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+	}
 	if(lpframe) {
 		dInfo.lp[lpplayer] -= lpd;
 		myswprintf(dInfo.strLP[lpplayer], L"%d", dInfo.lp[lpplayer]);
