@@ -81,6 +81,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             //预读卡组信息
             this.deckInfo = mDeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
             //加载卡组第一张卡的图
+            holder.cardImage.setVisibility(View.VISIBLE);
             imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.small);
             //填入内容
             holder.main.setText(String.valueOf(deckInfo.getMainCount()));
@@ -146,6 +147,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             }
         } else {
             holder.deck_info.setVisibility(View.GONE);
+            holder.cardImage.setVisibility(View.GONE);
         }
         //多选
         if (isManySelect) {
