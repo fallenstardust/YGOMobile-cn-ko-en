@@ -307,6 +307,9 @@ class DeckDrager {
         if (right >= sidecount) {
             right = sidecount - 1;
         }
+        if (sidecount >= Constants.DECK_SIDE_MAX + 5) {
+            return false;
+        }
         //交换
         DeckItem space = deckAdapater.removeItem(DeckItem.SideEnd);
         DeckItem deckItem = deckAdapater.removeItem(DeckItem.MainStart + left);
