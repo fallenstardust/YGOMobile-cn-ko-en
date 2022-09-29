@@ -19,19 +19,25 @@ public class DeckItem {
     public static void resetLabel(DeckInfo deckInfo, boolean isPack) {
         if (!isPack) {
             MainEnd = MainStart + Constants.DECK_MAIN_MAX - 1;
+            ExtraLabel = MainEnd + 1;
+            ExtraStart = ExtraLabel + 1;
+            ExtraEnd = ExtraStart + Constants.DECK_EXTRA_COUNT - 1;
+            SideLabel = ExtraEnd + 1;
+            SideStart = SideLabel + 1;
+            SideEnd = SideStart + Constants.DECK_SIDE_COUNT - 1;
         } else {
             if(deckInfo.getMainCount() <= Constants.DECK_MAIN_MAX) {
                 MainEnd = MainStart + Constants.DECK_MAIN_MAX - 1;
             } else {
                 MainEnd = MainStart + deckInfo.getMainCount() - 1;
             }
+            ExtraLabel = 0;
+            ExtraStart = 0;
+            ExtraEnd = 0;
+            SideLabel = 0;
+            SideStart = 0;
+            SideEnd = 0;
         }
-        ExtraLabel = MainEnd + 1;
-        ExtraStart = ExtraLabel + 1;
-        ExtraEnd = ExtraStart + Constants.DECK_EXTRA_COUNT - 1;
-        SideLabel = ExtraEnd + 1;
-        SideStart = SideLabel + 1;
-        SideEnd = SideStart + Constants.DECK_SIDE_COUNT - 1;
     }
 
     private DeckItemType mType;

@@ -403,7 +403,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         if (deckinfo != null) {
             loadData(deckinfo, isPack);
         }
-        if (!isPack) mDeckMd5 = DeckItemUtils.makeMd5(mItems);
+        mDeckMd5 = DeckItemUtils.makeMd5(mItems);
     }
 
     public DeckInfo read(CardLoader cardLoader, File file, LimitList limitList) {

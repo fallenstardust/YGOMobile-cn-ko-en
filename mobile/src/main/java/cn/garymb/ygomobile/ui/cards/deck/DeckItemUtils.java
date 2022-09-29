@@ -18,7 +18,7 @@ class DeckItemUtils {
     public static String makeMd5(List<DeckItem> items) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("#main");
-        for (int i = DeckItem.MainStart; i < DeckItem.MainStart + Constants.DECK_MAIN_MAX; i++) {
+        for (int i = DeckItem.MainStart; i < DeckItem.MainStart + items.size(); i++) {
             DeckItem deckItem = items.get(i);
             if (deckItem.getType() == DeckItemType.Space) {
                 break;
