@@ -187,14 +187,15 @@ class DeckItemUtils {
                 } else {
                     //填充空舍的位置便于滚动到底部时不和底部功能按钮重叠
                     int emty = Constants.DECK_WIDTH_COUNT - deckInfo.getMainCount() % Constants.DECK_WIDTH_COUNT;
-                    for (int i = main.size(); i < emty + deckInfo.getMainCount(); i++) {
+                    for (int i = main.size(); i < (isPack ? emty : 0) + deckInfo.getMainCount(); i++) {
                         adapater.addItem(new DeckItem());
                     }
                 }
             }
-            List<Card> extra = deckInfo.getExtraCards();
-            List<Card> side = deckInfo.getSideCards();
+
             if (!isPack) {
+                List<Card> extra = deckInfo.getExtraCards();
+                List<Card> side = deckInfo.getSideCards();
                 //extra
                 adapater.addItem(new DeckItem(DeckItemType.ExtraLabel));
                 if (extra == null) {
