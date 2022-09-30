@@ -228,6 +228,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                             mSettings.getDeckDir(), needsUpdate);
                 }
                 //复制卡包
+                File pack = new File(mSettings.get().getPackDeckDir());
+                File[] subYdks = pack.listFiles();
+                for (File packs : subYdks) {
+                        packs.delete();
+                }
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
                         mSettings.get().getPackDeckDir(), needsUpdate);
                 //复制残局
