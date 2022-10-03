@@ -370,7 +370,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     //region load deck
     private void loadDeckFromFile(File file) {
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
-            setCurDeck(new DeckInfo(), file.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+            setCurDeck(new DeckInfo(), false);
             return;
         }
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
