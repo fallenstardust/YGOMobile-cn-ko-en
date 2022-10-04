@@ -173,7 +173,7 @@ class DeckItemUtils {
             adapater.addItem(new DeckItem(DeckItemType.MainLabel));
             List<Card> main = deckInfo.getMainCards();
             if (main == null) {
-                for (int i = 0; i < deckInfo.getMainCount(); i++) {
+                for (int i = 0; i < Constants.DECK_MAIN_MAX; i++) {
                     adapater.addItem(new DeckItem());
                 }
             } else {
@@ -224,7 +224,7 @@ class DeckItemUtils {
                         adapater.addItem(new DeckItem());
                     }
                 }
-                adapater.addItem(new DeckItem(deckInfo.getMainCard(1),DeckItemType.Space));
+                adapater.addItem(new DeckItem(DeckItemType.Space));
             }
         }
     }
