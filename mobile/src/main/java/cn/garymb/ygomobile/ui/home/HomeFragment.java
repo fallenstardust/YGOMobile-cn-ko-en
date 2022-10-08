@@ -292,7 +292,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    showExNew();
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
