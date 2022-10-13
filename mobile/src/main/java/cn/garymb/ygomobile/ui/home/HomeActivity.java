@@ -17,7 +17,6 @@ import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.ashokvarma.bottomnavigation.ShapeBadgeItem;
 import com.ashokvarma.bottomnavigation.TextBadgeItem;
-import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -228,7 +227,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         if (!BuildConfig.BUILD_TYPE.equals("debug")) {
             //release才检查版本
             if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
-                Beta.checkUpgrade(false, false);
+                //Beta.checkUpgrade(false, false);
             }
         }
     }

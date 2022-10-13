@@ -151,7 +151,7 @@ public interface Constants {
     String URL_HELP = "https://www.wolai.com/hgRyrSXQuq4rzMwzXhHBqA";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
-    String URL_YGO233_ComparisionTable = "https://ygocdb.com/api/v0/idChangelog.jsonp";
+    String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
     String URL_YGO233_ADVANCE = "https://ygo233.com/pre";
     String URL_YGO233_DATAVER = "https://ygo233.com/pre/dataver";
     String URL_YGO233_FILE = "https://ygo233.com/pre/download-ygomobile";

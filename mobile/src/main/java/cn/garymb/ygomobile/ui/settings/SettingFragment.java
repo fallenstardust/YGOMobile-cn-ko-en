@@ -33,16 +33,15 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -60,9 +59,9 @@ import android.widget.Toast;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.MediaStoreSignature;
-import com.tencent.bugly.beta.Beta;
 
-import java.io.DataOutputStream;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -70,23 +69,28 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.home.HomeFragment;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class SettingFragment extends PreferenceFragmentPlus {
     private AppsSettings mSettings;
+    private HomeFragment mHomeFragment;
     private boolean isInit = true;
 
     public SettingFragment() {
@@ -103,6 +107,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
         mSettings = AppsSettings.get();
+        mHomeFragment = new HomeFragment();
 
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
@@ -213,7 +218,19 @@ public class SettingFragment extends PreferenceFragmentPlus {
             joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            Beta.checkUpgrade();
+            OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String json = response.body().string();
+                    Log.i(BuildConfig.VERSION_NAME, StringUtils.substringBetween(json,"https://netdisk.link/", "/links"));
+                }
+            });
+            //Beta.checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
             File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();

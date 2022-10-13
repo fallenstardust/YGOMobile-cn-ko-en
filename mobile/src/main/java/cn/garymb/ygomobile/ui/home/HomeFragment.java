@@ -287,7 +287,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         }
     };
 
-    private void showExNew() {
+    public void showExNew() {
         if (AppsSettings.get().isReadExpansions()) {
             OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
                 @Override

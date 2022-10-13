@@ -4,14 +4,10 @@ package cn.garymb.ygomobile;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
-import com.tencent.bugly.Bugly;
-import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 import com.yuyh.library.imgsel.ISNav;
@@ -19,9 +15,6 @@ import com.yuyh.library.imgsel.common.ImageLoader;
 
 import java.util.HashMap;
 
-import cn.garymb.ygomobile.lite.BuildConfig;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ProcessUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -37,7 +30,7 @@ public class App extends GameApplication {
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
         //初始化bugly
-        initBugly();
+        //initBugly();
         if(!ProcessUtils.getCurrentProcessName(this).endsWith(":game")){
             //初始化图片选择器
             initImgsel();
@@ -166,7 +159,7 @@ public class App extends GameApplication {
             }
         });
     }
-
+/*
     public void initBugly() {
         Beta.initDelay = 0;
         Beta.showInterruptedStrategy = true;
@@ -189,5 +182,5 @@ public class App extends GameApplication {
         }
         String msg = appInfo.metaData.getString("BUGLY_APPID");
         Bugly.init(this, msg, BuildConfig.DEBUG_MODE);
-    }
+    }*/
 }
