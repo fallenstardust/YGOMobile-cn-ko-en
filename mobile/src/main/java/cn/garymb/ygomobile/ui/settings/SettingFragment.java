@@ -36,12 +36,14 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -74,7 +76,6 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.ui.home.HomeFragment;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -89,13 +90,48 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class SettingFragment extends PreferenceFragmentPlus {
+    private static final int TYPE_GET_VERSION_OK = 0;
+    private static final int TYPE_GET_VERSION_FAILED = 1;
     private AppsSettings mSettings;
-    private HomeFragment mHomeFragment;
+    public static String Version;
     private boolean isInit = true;
 
     public SettingFragment() {
 
     }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_GET_VERSION_OK:
+                    Version = msg.obj.toString();
+                    Log.i(BuildConfig.VERSION_NAME, Version);
+                    if (!Version.equals(BuildConfig.VERSION_NAME)) {
+                        DialogPlus dialog = new DialogPlus(getContext());
+                        dialog.setMessage(R.string.Found_Update);
+                        dialog.setLeftButtonText(R.string.download_home);
+                        dialog.setLeftButtonListener((dlg, s) -> {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(Uri.parse("https://netdisk.link/YGOMobile_" + Version + ".apk/links"));
+                            startActivity(intent);
+                            dialog.dismiss();
+                        });
+                        dialog.show();
+                    } else {
+                        Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case TYPE_GET_VERSION_FAILED:
+                    String error = msg.obj.toString();
+                    Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + error, Toast.LENGTH_SHORT).show();
+                    break;
+            }
+
+        }
+    };
 
     @Override
     protected SharedPreferences getSharedPreferences() {
@@ -107,7 +143,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
         mSettings = AppsSettings.get();
-        mHomeFragment = new HomeFragment();
 
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
@@ -218,19 +253,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String json = response.body().string();
-                    Log.i(BuildConfig.VERSION_NAME, StringUtils.substringBetween(json,"https://netdisk.link/", "/links"));
-                }
-            });
-            //Beta.checkUpgrade();
+            checkUpgrade();
         }
         if (PREF_DEL_EX.equals(key)) {
             File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
@@ -562,6 +585,28 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }).done((rs) -> {
             Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
+        });
+    }
+
+    public void checkUpgrade(){
+        OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Message message = new Message();
+                message.what = TYPE_GET_VERSION_FAILED;
+                message.obj = e;
+                handler.sendMessage(message);
+                Log.i(BuildConfig.VERSION_NAME, "error" + e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                Message message = new Message();
+                message.what = TYPE_GET_VERSION_OK;
+                message.obj = StringUtils.substringBetween(json, "https://netdisk.link/YGOMobile_", ".apk/links");
+                handler.sendMessage(message);
+            }
         });
     }
 
