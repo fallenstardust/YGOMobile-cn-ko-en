@@ -7,7 +7,7 @@
 
 namespace ygo {
 
-long ReplayMode::pduel = 0;
+intptr_t ReplayMode::pduel = 0;
 Replay ReplayMode::cur_replay;
 bool ReplayMode::is_continuing = true;
 bool ReplayMode::is_closing = false;
@@ -175,6 +175,7 @@ bool ReplayMode::StartDuel() {
 	set_player_info(pduel, 1, start_lp, start_hand, draw_count);
 	mainGame->dInfo.lp[0] = start_lp;
 	mainGame->dInfo.lp[1] = start_lp;
+	mainGame->dInfo.start_lp = start_lp;
 	myswprintf(mainGame->dInfo.strLP[0], L"%d", mainGame->dInfo.lp[0]);
 	myswprintf(mainGame->dInfo.strLP[1], L"%d", mainGame->dInfo.lp[1]);
 	mainGame->dInfo.turn = 0;
@@ -943,7 +944,7 @@ void ReplayMode::ReplayReload() {
 	/*len = */query_field_card(pduel, 1, LOCATION_REMOVED, flag, queryBuffer, 0);
 	mainGame->dField.UpdateFieldCard(mainGame->LocalPlayer(1), LOCATION_REMOVED, (char*)queryBuffer);
 }
-int ReplayMode::MessageHandler(long fduel, int type) {
+int ReplayMode::MessageHandler(intptr_t fduel, int type) {
 	if(!enable_log)
 		return 0;
 	char msgbuf[1024];

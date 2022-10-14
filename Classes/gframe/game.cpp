@@ -21,7 +21,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1353;
+const unsigned short PRO_VERSION = 0x1354;
 
 namespace ygo {
 
@@ -559,6 +559,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	chkWaitChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1277));
 	chkWaitChain->setChecked(gameConf.chkWaitChain != 0);
     posY += 40 * yScale;
+	chkDefaultShowChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1354));
+	chkDefaultShowChain->setChecked(gameConf.chkDefaultShowChain != 0);
+	posY += 40 * yScale;
     chkQuickAnimation = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
     posY += 40 * yScale;
@@ -566,8 +569,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     chkDrawFieldSpell->setChecked(gameConf.draw_field_spell != 0);
     posY += 40 * yScale;
     chkDrawSingleChain = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
-    chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
-    posY += 40 * yScale;
+	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
+	posX = 250 * xScale;//another Column
+	posY = 40 * yScale;
     chkLFlist = env->addCheckBox(false, rect<s32>(posX, posY, posX + 100 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
     chkLFlist->setChecked(gameConf.use_lflist);
     cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(posX + 110 * xScale, posY, posX + 230 * xScale, posY + 30 * yScale), wSettings, COMBOBOX_LFLIST);
@@ -576,8 +580,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
     cbLFlist->setEnabled(gameConf.use_lflist);
     cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
-	posX = 250 * xScale;//another Column
-	posY = 40 * yScale;
+	posY += 40 * yScale;
 	chkIgnore1 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 40 * yScale;
@@ -906,6 +909,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnDMOK = env->addButton(rect<s32>(70 * xScale, 100 * yScale, 160 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_OK, dataManager.GetSysString(1211));
 	    ChangeToIGUIImageButton(btnDMOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnDMCancel = env->addButton(rect<s32>(180 * xScale, 100 * yScale, 270 * xScale, 150 * yScale), wDMQuery, BUTTON_DM_CANCEL, dataManager.GetSysString(1212));
+	scrPackCards = env->addScrollBar(false, recti(775 * xScale, 161 * yScale, 795 * xScale, 629 * yScale), 0, SCROLL_FILTER);
+	scrPackCards->setLargeStep(1);
+	scrPackCards->setSmallStep(1);
+	scrPackCards->setVisible(false);
         ChangeToIGUIImageButton(btnDMCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
 	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBCATEGORY);
@@ -1637,19 +1644,29 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	}
 }
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
+	if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
+		// can't use pack list in duel
+		cbDeck->clear();
+		return;
+	}
 	wchar_t catepath[256];
 	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
-	RefreshDeck(catepath, cbDeck);
-}
-void Game::RefreshDeck(const wchar_t* deckpath, irr::gui::IGUIComboBox* cbDeck) {
 	cbDeck->clear();
-	FileSystem::TraversalDir(deckpath, [cbDeck](const wchar_t* name, bool isdir) {
+	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
+}
+void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
+	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
+		for(auto pack : deckBuilder.expansionPacks) {
+			additem(pack.substr(5, pack.size() - 9).c_str());
+		}
+	}
+	FileSystem::TraversalDir(deckpath, [additem](const wchar_t* name, bool isdir) {
 		if(!isdir && wcsrchr(name, '.') && !wcsncasecmp(wcsrchr(name, '.'), L".ydk", 4)) {
 			size_t len = wcslen(name);
 			wchar_t deckname[256];
 			wcsncpy(deckname, name, len - 4);
 			deckname[len - 4] = 0;
-			cbDeck->addItem(deckname);
+			additem(deckname);
 		}
 	});
 }
@@ -1760,6 +1777,7 @@ void Game::LoadConfig() {
 	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 50);
 	gameConf.music_mode = android::getIntSetting(appMain, "music_mode", 1);
 	gameConf.use_lflist = android::getIntSetting(appMain, "use_lflist", 1);
+	gameConf.chkDefaultShowChain = android::getIntSetting(appMain, "chkDefaultShowChain", 0);
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
@@ -1810,13 +1828,14 @@ void Game::SaveConfig() {
 	    android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
 	gameConf.music_mode = chkMusicMode->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "music_mode", gameConf.music_mode);
-
 	gameConf.sound_volume = (double)scrSoundVolume->getPos();
 	    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
 	    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
 	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
+	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
+	    android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }

@@ -26,7 +26,7 @@ public:
 	bool GetString(int code, CardString* pStr);
 	const wchar_t* GetName(int code);
 	const wchar_t* GetText(int code);
-	const wchar_t* GetDesc(int strCode);
+	const wchar_t* GetDesc(unsigned int strCode);
 	const wchar_t* GetSysString(int code);
 	const wchar_t* GetVictoryString(int code);
 	const wchar_t* GetCounterName(int code);
@@ -47,7 +47,7 @@ public:
 	std::unordered_map<unsigned int, std::wstring> _setnameStrings;
 	std::unordered_map<unsigned int, std::wstring> _sysStrings;
 
-	wchar_t numStrings[256][4];
+	wchar_t numStrings[301][4];
 	wchar_t numBuffer[6];
 	wchar_t attBuffer[128];
 	wchar_t racBuffer[128];

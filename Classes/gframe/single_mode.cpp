@@ -6,7 +6,7 @@
 
 namespace ygo {
 
-long SingleMode::pduel = 0;
+intptr_t SingleMode::pduel = 0;
 bool SingleMode::is_closing = false;
 bool SingleMode::is_continuing = false;
 Replay SingleMode::last_replay;
@@ -44,6 +44,7 @@ int SingleMode::SinglePlayThread() {
 	set_player_info(pduel, 1, start_lp, start_hand, draw_count);
 	mainGame->dInfo.lp[0] = start_lp;
 	mainGame->dInfo.lp[1] = start_lp;
+	mainGame->dInfo.start_lp = start_lp;
 	myswprintf(mainGame->dInfo.strLP[0], L"%d", mainGame->dInfo.lp[0]);
 	myswprintf(mainGame->dInfo.strLP[1], L"%d", mainGame->dInfo.lp[1]);
 	BufferIO::CopyWStr(mainGame->ebNickName->getText(), mainGame->dInfo.hostname, 20);
@@ -833,7 +834,7 @@ void SingleMode::SinglePlayReload() {
 	/*len = */query_field_card(pduel, 1, LOCATION_REMOVED, flag, queryBuffer, 0);
 	mainGame->dField.UpdateFieldCard(mainGame->LocalPlayer(1), LOCATION_REMOVED, (char*)queryBuffer);
 }
-int SingleMode::MessageHandler(long fduel, int type) {
+int SingleMode::MessageHandler(intptr_t fduel, int type) {
 	if(!enable_log)
 		return 0;
 	char msgbuf[1024];
