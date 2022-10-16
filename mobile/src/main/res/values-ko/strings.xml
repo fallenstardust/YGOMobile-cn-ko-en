@@ -251,7 +251,7 @@
     <string name="OK">확인</string>
     <string name="Cancel">취소</string>
     <string name="Checking_Update">업데이트를 확인하는 중입니다. 잠시 기다려 주십시오.</string>
-    <string name="Found_Update">새 업그레이드 버전을 찾아 다운로드하시겠습니까?</string>
+    <string name="Found_Update">업그레이드할 새 버전을 찾았습니다. 다운로드하시겠습니까?</string>
     <string name="Checking_Update_Failed">업데이트 확인 실패</string>
     <string name="Ask_to_Change_Other_Way">다른 방식을 시도해 봐...</string>
     <string name="DuelAssistant">듀얼 어시스턴트가 활성화되었습니다</string>
