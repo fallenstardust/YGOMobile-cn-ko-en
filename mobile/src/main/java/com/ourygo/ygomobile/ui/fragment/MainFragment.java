@@ -425,9 +425,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             Message message = new Message();
             if (TextUtils.isEmpty(exception)) {
                 //如果新获取的数据和老数据都对应相等，则视为没有新的新闻，不刷新
-                if (mcNewsList!=null) {
+                if (mcNewsList!=null&&mcNewsList.size()!=0) {
                     int num = Math.min(mcNewsList.size(), myCardNewsList.size());
-                    boolean isRefresh = true;
+                    boolean isRefresh = false;
                     for (int i = 0; i < num; i++) {
                         String id = mcNewsList.get(i).getNewId();
                         if (id!=null&&!id.equals(myCardNewsList.get(i).getNewId())) {
