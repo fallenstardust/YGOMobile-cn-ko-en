@@ -33,20 +33,20 @@
         android:textSize="13sp" />
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tv_open_new_deck"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
-        android:layout_toLeftOf="@id/tv_edit"
-        android:background="@drawable/click_background_radius"
-        android:gravity="center"
-        android:paddingLeft="10dp"
-        android:paddingTop="5dp"
-        android:paddingRight="10dp"
-        android:paddingBottom="5dp"
-        android:text="查看新卡"
-        android:textColor="@color/colorAccent"
-        android:textSize="13sp" />
+            android:id="@+id/tv_open_new_deck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@id/tv_edit"
+            android:background="@drawable/click_background_radius"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="5dp"
+            android:text="查看新卡"
+            android:textColor="@color/colorAccent"
+            android:textSize="13sp" />
 
 
     <androidx.appcompat.widget.AppCompatImageView

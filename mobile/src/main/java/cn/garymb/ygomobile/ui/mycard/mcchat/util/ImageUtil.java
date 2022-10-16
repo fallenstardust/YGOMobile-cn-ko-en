@@ -76,8 +76,9 @@ public class ImageUtil {
 
                     .into(new CustomTarget<Bitmap>() {
                         @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            im.setImageBitmap(resource);
+                        public void onResourceReady(@NonNull Bitmap imageResource,
+                                                    @Nullable Transition<? super Bitmap> transition) {
+
                             Glide.with(context)
                                     .asBitmap()
                                     .load(url)
@@ -87,7 +88,8 @@ public class ImageUtil {
                                     .into(new SimpleTarget<Bitmap>() {
                                         @Override
                                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                            im.setBackground(new BitmapDrawable(resource));
+                                            im.setBackground(new BitmapDrawable(context.getResources(),resource));
+                                            im.setImageBitmap(imageResource);
 //                                            String path = new File(Record.getImageCachePath(), System.currentTimeMillis() + ".jpg").getAbsolutePath();
 //                                            if (BitmapUtil.saveBitmap(resource, path, 100))
 //                                                onBlurImageListener.onBlurImage(path, null);

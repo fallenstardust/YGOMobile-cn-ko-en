@@ -17,7 +17,7 @@ import com.ourygo.ygomobile.util.IntentUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.StatUtil;
-
+import com.ourygo.ygomobile.util.UpdateUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -134,6 +134,10 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.2.2","更新ygo内核\n"
+               + "更新卡包WPP3+VJ\n"
+               + "修复服务器列表切换显示模式后点击无反应的问题\n"
+               + "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.2.1","更新ygo内核\n"
                + "更新卡包DBAD+VJ+YCSW\n"
                + "OCG禁卡表更新至2022.10.1\n"
@@ -218,7 +222,7 @@ public class AboutActivity extends BaseActivity {
 //    }
 
     private void checkUpdate() {
-        OYUtil.checkUpdate(true,true);
+        OYUtil.checkUpdate(this,true);
 //		QueryUtil.checkUpdate(new OnCheckUpdateListener(){
 //
 //				@Override

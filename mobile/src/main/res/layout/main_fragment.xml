@@ -41,6 +41,7 @@
                     app:isHandLoop="true" />
 
             <androidx.appcompat.widget.AppCompatTextView
+                    android:visibility="gone"
                     android:id="@+id/tv_banner_loading"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

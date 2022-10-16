@@ -15,6 +15,9 @@ public class Record {
     public static final String URL_MYCARD_INACTIVE_EMAIL="https://accounts.moecube.com/signin";
     public static final String YGO_LFLIST_URL="https://raw.githubusercontent.com/moecube/ygopro/server/lflist.conf";
     public static final String YGO_CARD_QUERY_URL="https://ygocdb.com/";
+    public static final String URL_OURYGO_API_HOME="http://api.ourygo.top/";
+
+    public static final String URL_UPDATE_APP=URL_OURYGO_API_HOME+"/index.php/home/Update/checkUpdate";
 
     public static final String YGO_ARG_DECK_CATEGORY="--deck-category";
 
@@ -58,6 +61,11 @@ public class Record {
     public static final String ARG_ADDRESS = "address";
     public static final String ARG_PORT = "port";
     public static final String PACKAGE_NAME_EZ = "com.ourygo.ez";
+    public static final String ARG_UPDATE = "update";
+    public static final String ARG_CODE = "code";
+    public static final String ARG_MESSAGE = "message";
+    public static final String ARG_NAME = "name";
+    public static final String ARG_VERSION = "version";
 
     public static String getMycardPostUrl(String id){
         return MYCARD_POST_URL+id;
@@ -66,7 +74,6 @@ public class Record {
     public static String getMycardInactiveEmailUrl(){
         return URL_MYCARD_INACTIVE_EMAIL;
     }
-
     public static String getImagePath(Context context) {
 //        return context.getExternalFilesDir("image").getAbsolutePath();
         return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),"YGOMobile OY").getAbsolutePath();

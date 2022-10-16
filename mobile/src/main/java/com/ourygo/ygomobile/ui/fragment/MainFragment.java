@@ -1,28 +1,9 @@
 package com.ourygo.ygomobile.ui.fragment;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.Calendar;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import org.litepal.LitePal;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -43,9 +24,28 @@ import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
@@ -77,6 +77,8 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
     private ProgressBar pb_res_loading;
     private TextView tv_banner_loading;
     private boolean isMcNewsLoadException = false;
+    private boolean isFirstLoadBanner=true;
+
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
@@ -86,13 +88,20 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 case TYPE_BANNER_QUERY_OK:
                     tv_banner_loading.setVisibility(View.GONE);
                     xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
-                    AlphaAnimation animation = new AlphaAnimation(0F, 1F);
-                    animation.setDuration(1000);
-                    xb_banner.startAnimation(animation);
+                    if (isFirstLoadBanner) {
+                        isFirstLoadBanner=false;
+                        xb_banner.setAlpha(0);
+                        ViewPropertyAnimator viewPropertyAnimator=
+                                xb_banner.animate().alpha(1).setDuration(1000);
+                        OYUtil.onStartBefore(viewPropertyAnimator,xb_banner);
+                        viewPropertyAnimator.start();
+                    }
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
-                    tv_banner_loading.setText("加载失败，点击重试");
-                    isMcNewsLoadException = true;
+                    if (mcNewsList==null||mcNewsList.size()==0) {
+                        tv_banner_loading.setText("加载失败，点击重试");
+                        isMcNewsLoadException = true;
+                    }
 //                    OYUtil.snackExceptionToast(getActivity(), xb_banner, getString(R.string.query_exception), msg.obj.toString());
                     break;
                 case TYPE_RES_LOADING_OK:
@@ -218,14 +227,14 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             SharedPreferenceUtil.setToastNewCardBag(true);
             iv_card_bag.setImageResource(R.drawable.ic_new_card_bag);
             ViewGroup.LayoutParams layoutParams1=iv_card_bag.getLayoutParams();
-        layoutParams1.width=OYUtil.dp2px(56);
-        layoutParams1.height=OYUtil.dp2px(56);
+            layoutParams1.width=OYUtil.dp2px(56);
+            layoutParams1.height=OYUtil.dp2px(56);
             iv_card_bag.setLayoutParams(layoutParams1);
-            AlphaAnimation alphaAnimation=new AlphaAnimation(0,1);
-            //设置动画持续时长
-            alphaAnimation.setDuration(1000);
-            //开始动画
-            iv_card_bag.startAnimation(alphaAnimation);
+            iv_card_bag.setAlpha(0f);
+            ViewPropertyAnimator viewPropertyAnimator= iv_card_bag
+                    .animate().alpha(1f).setDuration(1000);
+            OYUtil.onStartBefore(viewPropertyAnimator,iv_card_bag);
+            viewPropertyAnimator.start();
         } else {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(time);
@@ -236,10 +245,11 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 layoutParams.width=OYUtil.dp2px(56);
                 layoutParams.height=OYUtil.dp2px(56);
                 iv_card_bag.setLayoutParams(layoutParams);
-                AlphaAnimation alphaAnimation=new AlphaAnimation(0,1);
-                alphaAnimation.setDuration(1000);
-                //开始动画
-                iv_card_bag.startAnimation(alphaAnimation);
+                iv_card_bag.setAlpha(0f);
+                ViewPropertyAnimator viewPropertyAnimator= iv_card_bag
+                        .animate().alpha(1f).setDuration(1000);
+                OYUtil.onStartBefore(viewPropertyAnimator,iv_card_bag);
+                viewPropertyAnimator.start();
             } else {
                 SharedPreferenceUtil.setToastNewCardBag(false);
             }
@@ -372,17 +382,65 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 iv_list_mode.setImageResource(R.drawable.ic_grid);
                 break;
         }
+
+        ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
+        ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
+            switch (view.getId()) {
+                case R.id.tv_create_and_share:
+                    joinRoom((YGOServer) adapter.getItem(position), true);
+                    break;
+            }
+        });
+        ygoServerAdp.setOnItemClickListener((adapter, view, position) -> {
+            YGOServer serverInfo = (YGOServer) adapter.getItem(position);
+            switch (serverInfo.getOpponentType()) {
+                case YGOServer.OPPONENT_TYPE_AI:
+                    OYDialogUtil.dialogAiList(getActivity(), serverInfo);
+                    break;
+                default:
+                    joinRoom(serverInfo, false);
+                    break;
+            }
+        });
+
         rv_service_list.setLayoutManager(linearLayoutManager);
         rv_service_list.setAdapter(ygoServerAdp);
     }
 
     private void findMcNews() {
         isMcNewsLoadException = false;
-        tv_banner_loading.setVisibility(View.VISIBLE);
-        tv_banner_loading.setText("加载中");
+        mcNewsList= (ArrayList<McNews>) LitePal.findAll(McNews.class);
+        if (mcNewsList!=null&&mcNewsList.size()!=0){
+            Message message = new Message();
+            while (mcNewsList.size() > 5) {
+                mcNewsList.remove(mcNewsList.size() - 1);
+            }
+            message.what = TYPE_BANNER_QUERY_OK;
+            handler.sendMessage(message);
+        }else {
+            tv_banner_loading.setVisibility(View.VISIBLE);
+            tv_banner_loading.setText("加载中");
+        }
         MyCardUtil.findMyCardNews((myCardNewsList, exception) -> {
             Message message = new Message();
             if (TextUtils.isEmpty(exception)) {
+                //如果新获取的数据和老数据都对应相等，则视为没有新的新闻，不刷新
+                if (mcNewsList!=null) {
+                    int num = Math.min(mcNewsList.size(), myCardNewsList.size());
+                    boolean isRefresh = true;
+                    for (int i = 0; i < num; i++) {
+                        String id = mcNewsList.get(i).getNewId();
+                        if (id!=null&&!id.equals(myCardNewsList.get(i).getNewId())) {
+                            isRefresh = true;
+                            break;
+                        }
+                    }
+
+                    Log.e("MainFragemnt", "刷新取消" + !isRefresh);
+                    if (!isRefresh)
+                        return;
+                }
+
                 while (myCardNewsList.size() > 5) {
                     myCardNewsList.remove(myCardNewsList.size() - 1);
                 }
@@ -477,26 +535,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
 
     private void initServiceList() {
         YGOUtil.getYGOServerList(serverList -> {
-            ygoServerAdp.setNewInstance(serverList.getServerInfoList());
-            ygoServerAdp.addChildClickViewIds(R.id.tv_create_and_share);
-            ygoServerAdp.setOnItemChildClickListener((adapter, view, position) -> {
-                switch (view.getId()) {
-                    case R.id.tv_create_and_share:
-                        joinRoom((YGOServer) adapter.getItem(position), true);
-                        break;
-                }
-            });
-            ygoServerAdp.setOnItemClickListener((adapter, view, position) -> {
-                YGOServer serverInfo = (YGOServer) adapter.getItem(position);
-                switch (serverInfo.getOpponentType()) {
-                    case YGOServer.OPPONENT_TYPE_AI:
-                        OYDialogUtil.dialogAiList(getActivity(), serverInfo);
-                        break;
-                    default:
-                        joinRoom(serverInfo, false);
-                        break;
-                }
-            });
+            ygoServerAdp.setList(serverList.getServerInfoList());
         });
 
     }

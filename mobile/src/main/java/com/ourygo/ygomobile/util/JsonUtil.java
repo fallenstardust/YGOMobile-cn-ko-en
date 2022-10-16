@@ -7,6 +7,8 @@ import com.google.gson.Gson;
 import com.ourygo.ygomobile.bean.DuelRoom;
 import com.ourygo.ygomobile.bean.McDuelInfo;
 import com.ourygo.ygomobile.bean.McNews;
+import com.ourygo.ygomobile.bean.OYResult;
+import com.ourygo.ygomobile.bean.UpdateInfo;
 import com.ourygo.ygomobile.bean.YGOServer;
 
 import org.json.JSONArray;
@@ -18,6 +20,7 @@ import java.util.List;
 
 public class JsonUtil {
 
+    public static final int CODE_OK = 200;
 
     //解析mc新闻列表
     public static List<McNews> getMyCardNewsList(String json) throws JSONException {
@@ -88,4 +91,5 @@ public class JsonUtil {
         ygoServer.setPassword(jsonObject.getString(Record.ARG_MC_PASSWORD));
         return ygoServer;
     }
+
 }

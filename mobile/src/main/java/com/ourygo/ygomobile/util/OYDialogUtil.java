@@ -34,6 +34,7 @@ import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.RoomSpinnerAdapter;
 import com.ourygo.ygomobile.base.listener.OnSetBgListener;
 import com.ourygo.ygomobile.bean.CardBag;
+import com.ourygo.ygomobile.bean.UpdateInfo;
 import com.ourygo.ygomobile.bean.YGOServer;
 import com.ourygo.ygomobile.ui.activity.DeckManagementActivity;
 
@@ -539,6 +540,59 @@ public class OYDialogUtil {
         tv_open_new_deck.setOnClickListener(v -> {
             dialog.dismiss();
             IntentUtil.startYGODeck((Activity) context, OYUtil.s(R.string.category_pack), cardBag.getDeckName());
+        });
+
+    }
+
+    //自动更新对话框
+    public static void dialogUpdate(Context context,UpdateInfo updateInfo){
+        if (updateInfo==null)
+            return;
+        DialogUtils dialogUtils=DialogUtils.getInstance(context);
+        View dialogView=dialogUtils.dialogBottomSheet(R.layout.update_dialog);
+        ImageView iv_close;
+        TextView tv_title,tv_update,tv_code,tv_version,tv_size,tv_message;
+
+        iv_close = dialogView.findViewById(R.id.iv_close);
+        tv_title = dialogView.findViewById(R.id.tv_title);
+        tv_update = dialogView.findViewById(R.id.tv_update);
+        tv_code = dialogView.findViewById(R.id.tv_code);
+        tv_version = dialogView.findViewById(R.id.tv_version);
+        tv_size = dialogView.findViewById(R.id.tv_size);
+        tv_message = dialogView.findViewById(R.id.tv_message);
+        String code=updateInfo.getCode();
+
+        tv_title.setText(updateInfo.getTitle());
+        tv_message.setText(updateInfo.getMessage());
+        tv_version.setText(updateInfo.getVersionName());
+        tv_size.setText(OYUtil.getFileSizeText(updateInfo.getSize()));
+
+        if (TextUtils.isEmpty(code)){
+            tv_code.setVisibility(View.GONE);
+        }else {
+            tv_code.setVisibility(View.VISIBLE);
+            tv_code.setText("验证码："+code);
+        }
+
+        tv_code.setOnClickListener(view -> {
+            OYUtil.copyMessage(code);
+            OYUtil.show("已复制验证码到剪贴板");
+        });
+
+        iv_close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialogUtils.dis();
+            }
+        });
+
+        tv_update.setOnClickListener(view->{
+            dialogUtils.dis();
+            context.startActivity(IntentUtil.getUrlIntent(updateInfo.getUrl()));
+            if (!TextUtils.isEmpty(code)){
+                OYUtil.copyMessage(code);
+                OYUtil.show("已复制验证码到剪贴板");
+            }
         });
 
     }

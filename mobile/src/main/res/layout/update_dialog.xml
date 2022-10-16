@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical"
+        android:background="@drawable/top_radius_background"
+        android:padding="@dimen/main_margin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+    <androidx.appcompat.widget.AppCompatImageView
+            android:background="@drawable/click_background"
+            android:id="@+id/iv_close"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginBottom="14dp"
+            app:srcCompat="@drawable/ic_close_black_24dp" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/button_background"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="5dp"
+            android:text="下载更新"
+            android:textColor="@color/white"
+            android:textSize="13sp" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@id/tv_update"
+            android:background="@drawable/click_background_radius"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="5dp"
+            android:text="验证码：2453"
+            android:textColor="@color/colorAccent"
+            android:textSize="13sp" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_below="@id/iv_close"
+            android:text="新版本来了，1111卡包更新！"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+            android:textStyle="bold"
+            android:textColor="@color/blackLight2"
+            android:layout_marginLeft="3dp"
+            android:textSize="10sp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/red_light_background_radius"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:id="@+id/tv_version"
+            android:layout_below="@id/tv_title"
+            android:text="1.2.1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+            android:textColor="@color/blackLight2"
+            android:layout_toRightOf="@+id/tv_version"
+            android:layout_marginLeft="10dp"
+            android:textSize="10sp"
+            android:layout_alignTop="@id/tv_version"
+            android:background="@drawable/gray_light_background_radius"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:id="@+id/tv_size"
+            android:layout_below="@id/tv_title"
+            android:text="181.2M"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    <androidx.core.widget.NestedScrollView
+            android:layout_marginTop="15dp"
+            android:layout_below="@id/tv_version"
+            android:layout_alignLeft="@id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+                android:lineSpacingExtra="5dp"
+                android:textSize="13sp"
+                android:textColor="@color/blackLight2"
+                android:text="更新ygo内核\n更新卡包DBAD+VJ+YCSW\nOCG禁卡表更新至2022.10.1\n修复分享卡组码崩溃的问题\n其他优化"
+                android:id="@+id/tv_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+    </androidx.core.widget.NestedScrollView>
+
+
+</RelativeLayout>

@@ -1,13 +1,17 @@
 package com.ourygo.ygomobile.bean;
 
+import com.google.gson.annotations.SerializedName;
 import com.ourygo.ygomobile.util.Record;
 import com.stx.xhb.androidx.entity.BaseBannerInfo;
 
 import java.io.Serializable;
 
-public class McNews implements BaseBannerInfo, Serializable {
+import org.litepal.crud.LitePalSupport;
 
-    private String id;
+public class McNews extends LitePalSupport implements BaseBannerInfo, Serializable {
+
+    @SerializedName("id")
+    private String newsId;
     private String title;
     private String message;
     private String news_url;
@@ -15,12 +19,12 @@ public class McNews implements BaseBannerInfo, Serializable {
     private int type;
     private String create_time;
 
-    public String getId() {
-        return id;
+    public String getNewId() {
+        return newsId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setNewId(String id) {
+        this.newsId = id;
         setNews_url(Record.getMycardPostUrl(id));
     }
 

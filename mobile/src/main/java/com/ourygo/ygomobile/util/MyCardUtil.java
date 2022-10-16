@@ -1,25 +1,25 @@
 package com.ourygo.ygomobile.util;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
+import org.json.JSONException;
+import org.litepal.LitePal;
 
 import com.ourygo.ygomobile.base.listener.OnMcMatchListener;
 import com.ourygo.ygomobile.base.listener.OnMyCardNewsQueryListener;
 import com.ourygo.ygomobile.base.listener.OnUserDuelInfoQueryListener;
+import com.ourygo.ygomobile.bean.McNews;
 import com.ourygo.ygomobile.bean.OYHeader;
 import com.ourygo.ygomobile.bean.YGOServer;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import mono.embeddinator.Obj;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -41,7 +41,10 @@ public class MyCardUtil {
             public void onResponse(Call call, Response response) throws IOException {
                 String json = response.body().string();
                 try {
-                    onMyCardNewsQueryListener.onMyCardNewsQuery(JsonUtil.getMyCardNewsList(json), null);
+                    List<McNews> mcNewsList=JsonUtil.getMyCardNewsList(json);
+                    LitePal.deleteAll(McNews.class);
+                    LitePal.saveAll(mcNewsList);
+                    onMyCardNewsQueryListener.onMyCardNewsQuery(mcNewsList, null);
                 } catch (JSONException e) {
                     onMyCardNewsQueryListener.onMyCardNewsQuery(null, e.toString());
                 }

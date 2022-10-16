@@ -1,5 +1,17 @@
 package com.ourygo.ygomobile.util;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONObject;
+
+import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.OYApplication;
+import com.ourygo.ygomobile.bean.CardBag;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -9,7 +21,6 @@ import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,6 +30,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -29,32 +41,17 @@ import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.feihua.dialogutils.util.DialogUtils;
-import com.ourygo.ygomobile.OYApplication;
-import com.ourygo.ygomobile.bean.CardBag;
-import com.tencent.bugly.beta.Beta;
-
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import cn.garymb.ygomobile.App;
-import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.SystemUtils;
 
 public class OYUtil {
 
@@ -348,8 +345,30 @@ public class OYUtil {
         context.startActivity(IntentUtil.getUrlIntent(OYUtil.URL_AIFAFIAN));
     }
 
-    public static void checkUpdate(boolean isManual, final boolean b) {
-        Beta.checkUpgrade(isManual, !b);
+    public static void checkUpdate(Activity activity, final boolean b) {
+        UpdateUtil.checkUpdate(activity,b);
+//        Beta.checkUpgrade(isManual, !b);
+    }
+
+    public static String getFileSizeText(long fileSize) {
+        String dx;
+        long ddx1 = fileSize / 1024 / 1024;
+        if (ddx1 < 1) {
+            dx = fileSize / 1024 % 1024 + "K";
+        } else {
+            String iii = fileSize / 1024 % 1024 + "";
+            switch (iii.length()) {
+                case 1:
+                    iii = "00" + iii;
+                    break;
+                case 2:
+                    iii = "0" + iii;
+                    break;
+            }
+            iii = iii.substring(0, 2);
+            dx = ddx1 + "." + iii + "M";
+        }
+        return dx;
     }
 
     public static class MyItemDecoration extends RecyclerView.ItemDecoration {
@@ -473,6 +492,12 @@ public class OYUtil {
         CardBag cardBag;
 
         cardBag =new CardBag();
+        cardBag.setTitle("WPP3 三幻神加强！");
+        cardBag.setMessage("幻神专属卡片助你再魂一把");
+        cardBag.setDeckName("WPP3+VJ");
+        cardBagList.add(cardBag);
+
+        cardBag =new CardBag();
         cardBag.setTitle("DBAD 消防栓带妖精");
         cardBag.setMessage("效果强力，令人绝望！");
         cardBag.setDeckName("DBAD+VJ+YCSW");
@@ -485,6 +510,36 @@ public class OYUtil {
         cardBagList.add(cardBag);
 
         return cardBagList;
+    }
+
+    private static Object createViewPropertyAnimatorRT(View view) {
+        try {
+            final Class<?> animRtCalzz = Class.forName("android.view.ViewPropertyAnimatorRT");
+            final Constructor<?> animRtConstructor = animRtCalzz.getDeclaredConstructor(View.class);
+            animRtConstructor.setAccessible(true);
+            return animRtConstructor.newInstance(view);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static void setViewPropertyAnimatorRT(ViewPropertyAnimator animator, Object rt) {
+        try {
+            final Class<?> animClazz = Class.forName("android.view.ViewPropertyAnimator");
+            final Field animRtField = animClazz.getDeclaredField("mRTBackend");
+            animRtField.setAccessible(true);
+            animRtField.set(animator, rt);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void onStartBefore(ViewPropertyAnimator viewPropertyAnimator, View view) {
+        Object object = createViewPropertyAnimatorRT(view);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && object != null) {
+            setViewPropertyAnimatorRT(viewPropertyAnimator, object);
+        }
     }
 
 }

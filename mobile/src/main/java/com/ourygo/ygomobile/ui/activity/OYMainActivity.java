@@ -114,10 +114,10 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     }
 
     public void initBugly() {
-        Bugly.init(this, OYApplication.BUGLY_ID, false);
+//        Bugly.init(this, OYApplication.BUGLY_ID, false);
 
         //检测是否有更新,不提示
-//        OYUtil.checkUpdate(false, true);
+        OYUtil.checkUpdate(this, false);
     }
 
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {
@@ -360,16 +360,16 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 
         }
         if (SharedPreferenceUtil.getNextAifadianNum() == SharedPreferenceUtil.getAppStartTimes()) {
-            View[] views = dialogUtils.dialogt(null, "如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");
-            Dialog dialog = dialogUtils.getDialog();
-            Button b1, b2;
-            b1 = (Button) views[0];
-            b2 = (Button) views[1];
-            b1.setText("取消");
-            b2.setText("支持我们");
-            b1.setOnClickListener(v -> dialogUtils.dis());
-            b2.setOnClickListener(v -> {
-                dialog.dismiss();
+            View[] views1 = dialogUtils.dialogt(null, "如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");
+            Dialog dialog1 = dialogUtils.getDialog();
+            Button b11, b21;
+            b11 = (Button) views1[0];
+            b21 = (Button) views1[1];
+            b11.setText("取消");
+            b21.setText("支持我们");
+            b11.setOnClickListener(v -> dialogUtils.dis());
+            b21.setOnClickListener(v -> {
+                dialog1.dismiss();
                 OYUtil.startAifadian(OYMainActivity.this);
             });
         }

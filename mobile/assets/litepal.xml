@@ -2,10 +2,10 @@
 <litepal>
     <dbname value="local" />
 
-    <version value="2" />
+    <version value="3" />
 
     <list>
-        <!--课表-->
         <mapping class="cn.garymb.ygomobile.ui.mycard.bean.McUser" />
+        <mapping class="com.ourygo.ygomobile.bean.McNews" />
     </list>
 </litepal>
