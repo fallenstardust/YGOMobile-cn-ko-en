@@ -137,6 +137,7 @@ public class AboutActivity extends BaseActivity {
        updateList.add(UpdateLog.toUpdateLog("1.2.2","更新ygo内核\n"
                + "更新卡包WPP3+VJ\n"
                + "修复服务器列表切换显示模式后点击无反应的问题\n"
+               + "暂时去除本地AI\n"
                + "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.2.1","更新ygo内核\n"
                + "更新卡包DBAD+VJ+YCSW\n"

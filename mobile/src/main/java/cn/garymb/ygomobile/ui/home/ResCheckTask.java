@@ -290,7 +290,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
 //            LogUtil.time(TAG, "2");
-            han.sendEmptyMessage(0);
+//            han.sendEmptyMessage(0);
 
 //            loadData();
         } catch (

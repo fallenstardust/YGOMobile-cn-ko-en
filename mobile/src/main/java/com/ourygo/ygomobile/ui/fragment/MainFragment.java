@@ -92,9 +92,8 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                         isFirstLoadBanner=false;
                         xb_banner.setAlpha(0);
                         ViewPropertyAnimator viewPropertyAnimator=
-                                xb_banner.animate().alpha(1).setDuration(1000);
+                                xb_banner.animate().alpha(1).setDuration(1000).withLayer();
                         OYUtil.onStartBefore(viewPropertyAnimator,xb_banner);
-                        viewPropertyAnimator.start();
                     }
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
@@ -232,9 +231,8 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             iv_card_bag.setLayoutParams(layoutParams1);
             iv_card_bag.setAlpha(0f);
             ViewPropertyAnimator viewPropertyAnimator= iv_card_bag
-                    .animate().alpha(1f).setDuration(1000);
+                    .animate().alpha(1f).setDuration(1000).withLayer();
             OYUtil.onStartBefore(viewPropertyAnimator,iv_card_bag);
-            viewPropertyAnimator.start();
         } else {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(time);
@@ -247,9 +245,8 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
                 iv_card_bag.setLayoutParams(layoutParams);
                 iv_card_bag.setAlpha(0f);
                 ViewPropertyAnimator viewPropertyAnimator= iv_card_bag
-                        .animate().alpha(1f).setDuration(1000);
+                        .animate().alpha(1f).setDuration(1000).withLayer();
                 OYUtil.onStartBefore(viewPropertyAnimator,iv_card_bag);
-                viewPropertyAnimator.start();
             } else {
                 SharedPreferenceUtil.setToastNewCardBag(false);
             }
