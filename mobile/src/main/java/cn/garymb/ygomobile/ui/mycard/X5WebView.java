@@ -1,4 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard;
+import cn.garymb.ygomobile.lite.BuildConfig;
+
+import java.text.MessageFormat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -69,6 +72,13 @@ public class X5WebView extends WebView {
         setHorizontalScrollBarEnabled(false);
         webSetting.setAllowContentAccess(true);
         webSetting.setMixedContentMode(WebSettings.LOAD_NORMAL);
+
+        webSetting.setUserAgentString(webSetting.getUserAgentString() + MessageFormat.format(
+                " YGOMobile/{0} ({1} {2,number,#})",
+                BuildConfig.VERSION_NAME,
+                BuildConfig.APPLICATION_ID,
+                BuildConfig.VERSION_CODE
+        ));
     }
 
     @Override
