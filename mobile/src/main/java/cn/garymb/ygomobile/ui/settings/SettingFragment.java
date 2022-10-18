@@ -90,8 +90,8 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class SettingFragment extends PreferenceFragmentPlus {
-    private static final int TYPE_GET_VERSION_OK = 0;
-    private static final int TYPE_GET_VERSION_FAILED = 1;
+    private static final int TYPE_SETTING_GET_VERSION_OK = 0;
+    private static final int TYPE_SETTING_GET_VERSION_FAILED = 1;
     private AppsSettings mSettings;
     public static String Version;
     private boolean isInit = true;
@@ -106,7 +106,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case TYPE_GET_VERSION_OK:
+                case TYPE_SETTING_GET_VERSION_OK:
                     Version = msg.obj.toString();
                     Log.i(BuildConfig.VERSION_NAME, Version);
                     if (!Version.equals(BuildConfig.VERSION_NAME)) {
@@ -124,7 +124,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
                     }
                     break;
-                case TYPE_GET_VERSION_FAILED:
+                case TYPE_SETTING_GET_VERSION_FAILED:
                     String error = msg.obj.toString();
                     Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + error, Toast.LENGTH_SHORT).show();
                     break;
@@ -253,7 +253,25 @@ public class SettingFragment extends PreferenceFragmentPlus {
             joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            checkUpgrade();
+            OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Message message = new Message();
+                    message.what = TYPE_SETTING_GET_VERSION_FAILED;
+                    message.obj = e;
+                    handler.sendMessage(message);
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String json = response.body().string();
+                    Message message = new Message();
+                    message.what = TYPE_SETTING_GET_VERSION_OK;
+                    message.obj = StringUtils.substringBetween(json, "https://netdisk.link/YGOMobile_", ".apk/links");
+                    handler.sendMessage(message);
+                }
+            });
         }
         if (PREF_DEL_EX.equals(key)) {
             File[] ypks = new File(AppsSettings.get().getExpansionsPath().getAbsolutePath()).listFiles();
@@ -585,28 +603,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }).done((rs) -> {
             Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
-        });
-    }
-
-    public void checkUpgrade(){
-        OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Message message = new Message();
-                message.what = TYPE_GET_VERSION_FAILED;
-                message.obj = e;
-                handler.sendMessage(message);
-                Log.i(BuildConfig.VERSION_NAME, "error" + e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String json = response.body().string();
-                Message message = new Message();
-                message.what = TYPE_GET_VERSION_OK;
-                message.obj = StringUtils.substringBetween(json, "https://netdisk.link/YGOMobile_", ".apk/links");
-                handler.sendMessage(message);
-            }
         });
     }
 
