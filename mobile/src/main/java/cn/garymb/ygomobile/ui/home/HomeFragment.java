@@ -703,7 +703,11 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
-                WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
+                String aurl = Constants.URL_YGO233_ADVANCE;
+                if (ll_new_notice.getVisibility() == View.VISIBLE) {
+                    aurl = aurl + "#pre_update_title";
+                }
+                WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
                 ll_new_notice.setVisibility(View.GONE);
                 break;
             case R.id.action_help: {
