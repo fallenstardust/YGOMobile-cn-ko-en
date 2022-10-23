@@ -33,6 +33,7 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
+import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
@@ -253,7 +254,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            OkhttpUtil.get(URL_YGO233_DOWNLOAD_LINK, new Callback() {
+            OkhttpUtil.get(URL_HOME_VERSION, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
                     Message message = new Message();
@@ -268,7 +269,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     String json = response.body().string();
                     Message message = new Message();
                     message.what = TYPE_SETTING_GET_VERSION_OK;
-                    message.obj = StringUtils.substringBetween(json, "https://netdisk.link/YGOMobile_", ".apk/links");
+                    message.obj = json;
                     handler.sendMessage(message);
                 }
             });
