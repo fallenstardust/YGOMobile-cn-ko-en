@@ -110,7 +110,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 case TYPE_SETTING_GET_VERSION_OK:
                     Version = msg.obj.toString();
                     Log.i(BuildConfig.VERSION_NAME, Version);
-                    if (!Version.equals(BuildConfig.VERSION_NAME)) {
+                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getContext());
                         dialog.setMessage(R.string.Found_Update);
                         dialog.setLeftButtonText(R.string.download_home);

@@ -151,7 +151,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        checkUpgrade();
+        //checkUpgrade();
         showExNew();
         //showNewbieGuide("homePage");
         return layoutView;
@@ -291,7 +291,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 case TYPE_GET_VERSION_OK:
                     Version = msg.obj.toString();
                     Log.i(BuildConfig.VERSION_NAME, Version);
-                    if (!Version.equals(BuildConfig.VERSION_NAME)) {
+                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
                         dialog.setLeftButtonText(R.string.download_home);
