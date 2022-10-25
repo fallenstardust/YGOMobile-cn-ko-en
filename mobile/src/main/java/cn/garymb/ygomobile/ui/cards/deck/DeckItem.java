@@ -29,7 +29,7 @@ public class DeckItem {
             if(deckInfo.getMainCount() <= Constants.DECK_MAIN_MAX) {
                 MainEnd = MainStart + Constants.DECK_MAIN_MAX - 1;
             } else {
-                MainEnd = MainStart + deckInfo.getMainCount() - 1;
+                MainEnd = MainStart + deckInfo.getMainCount();
             }
             ExtraLabel = 0;
             ExtraStart = 0;
