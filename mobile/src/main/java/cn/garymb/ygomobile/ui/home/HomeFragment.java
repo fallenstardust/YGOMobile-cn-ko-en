@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 
 import android.annotation.SuppressLint;
@@ -40,7 +39,6 @@ import com.ourygo.assistant.util.Util;
 import com.stx.xhb.androidx.XBanner;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
-import org.apache.commons.lang3.StringUtils;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -92,14 +90,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     public static final int ID_HOMEFRAGMENT = 0;
     private DuelAssistantManagement duelAssistantManagement;
     private HomeActivity activity;
-    private WebActivity webActivity;
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
     private static final int TYPE_GET_DATA_VER_OK = 3;
-    private static final int TYPE_GET_VERSION_OK = 4;
-    private static final int TYPE_GET_VERSION_FAILED = 5;
-    public static String Version;
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
@@ -151,7 +145,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        //checkUpgrade();
         showExNew();
         //showNewbieGuide("homePage");
         return layoutView;
@@ -288,26 +281,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                         showExNew();
                         ll_new_notice.setVisibility(View.GONE);
                     }
-                case TYPE_GET_VERSION_OK:
-                    Version = msg.obj.toString();
-                    Log.i(BuildConfig.VERSION_NAME, Version);
-                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty()) {
-                        DialogPlus dialog = new DialogPlus(getActivity());
-                        dialog.setMessage(R.string.Found_Update);
-                        dialog.setLeftButtonText(R.string.download_home);
-                        dialog.setLeftButtonListener((dlg, s) -> {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse("https://netdisk.link/YGOMobile_" + Version + ".apk/links"));
-                            startActivity(intent);
-                            dialog.dismiss();
-                        });
-                        dialog.show();
-                    }
-                    break;
-                case TYPE_GET_VERSION_FAILED:
-                    String error = msg.obj.toString();
-                    Log.e(BuildConfig.VERSION_NAME, error);
-                    break;
             }
 
         }
@@ -331,28 +304,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 }
             });
         }
-    }
-
-    public void checkUpgrade() {
-        OkhttpUtil.get(URL_HOME_VERSION, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Message message = new Message();
-                message.what = TYPE_GET_VERSION_FAILED;
-                message.obj = e;
-                handler.sendMessage(message);
-                Log.i(BuildConfig.VERSION_NAME, "error" + e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String json = response.body().string();
-                Message message = new Message();
-                message.what = TYPE_GET_VERSION_OK;
-                message.obj = json;
-                handler.sendMessage(message);
-            }
-        });
     }
 
     private void findMcNews() {
