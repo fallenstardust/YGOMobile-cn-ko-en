@@ -46,6 +46,9 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.Fade;
+import androidx.transition.TransitionManager;
+
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
@@ -87,13 +90,14 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
             switch (msg.what) {
                 case TYPE_BANNER_QUERY_OK:
                     tv_banner_loading.setVisibility(View.GONE);
+                    TransitionManager.beginDelayedTransition(xb_banner,new Fade().setDuration(1000));
                     xb_banner.setBannerData(R.layout.banner_main_item, mcNewsList);
                     if (isFirstLoadBanner) {
                         isFirstLoadBanner=false;
-                        xb_banner.setAlpha(0);
-                        ViewPropertyAnimator viewPropertyAnimator=
-                                xb_banner.animate().alpha(1).setDuration(1000).withLayer();
-                        OYUtil.onStartBefore(viewPropertyAnimator,xb_banner);
+//                        xb_banner.setAlpha(0);
+//                        ViewPropertyAnimator viewPropertyAnimator=
+//                                xb_banner.animate().alpha(1).setDuration(1000).withLayer();
+//                        OYUtil.onStartBefore(viewPropertyAnimator,xb_banner);
                     }
                     break;
                 case TYPE_BANNER_QUERY_EXCEPTION:
@@ -218,6 +222,9 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         int serverListType = SharedPreferenceUtil.getServerListType();
         ygoServerListAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_LIST);
         ygoServerGridAdp = new YGOServerBQAdapter(new ArrayList<>(), isHorizontal, SharedPreferenceUtil.SERVER_LIST_TYPE_GRID);
+        ygoServerListAdp.setAnimationEnable(true);
+        ygoServerGridAdp.setAnimationEnable(true);
+
         setServerListType(serverListType);
         LogUtil.time(TAG,"2.1");
         long time = SharedPreferenceUtil.getVersionUpdateTime();
@@ -512,7 +519,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         if (resultCode == Activity.RESULT_OK)
             switch (requestCode) {
                 case REQUEST_NEW_SERVER:
-                    YGOUtil.getYGOServerList(serverList -> ygoServerAdp.setNewData(serverList.getServerInfoList()));
+                    YGOUtil.getYGOServerList(serverList -> ygoServerAdp.setList(serverList.getServerInfoList()));
 
                     break;
             }

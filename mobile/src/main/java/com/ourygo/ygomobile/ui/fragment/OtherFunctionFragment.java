@@ -27,6 +27,7 @@ import com.ourygo.ygomobile.ui.activity.OYMainActivity;
 import com.ourygo.ygomobile.ui.activity.OtherFunctionActivity;
 import com.ourygo.ygomobile.ui.activity.UiSettingActivity;
 import com.ourygo.ygomobile.util.IntentUtil;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
@@ -93,6 +94,7 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
         appsSettings = AppsSettings.get();
         userManagement = McUserManagement.getInstance();
         settingAdp = new SettingRecyclerViewAdapter1(getActivity(), new ArrayList<>());
+        settingAdp.setAnimationEnable(true);
         rv_list.setAdapter(settingAdp);
 
         headerView.setOnClickListener(v1 -> {
@@ -168,7 +170,7 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
         settingItem.setIcon(R.drawable.ic_about);
         settingItemList.add(settingItem);
 
-        settingAdp.setNewInstance(settingItemList);
+        settingAdp.setList(settingItemList);
 
         if (userManagement.isLogin())
             onLogin(userManagement.getUser(), null);
@@ -245,7 +247,9 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
     @Override
     public void onFirstUserVisible() {
         super.onFirstUserVisible();
+        LogUtil.time("OtherFunctionFragment","执行前");
         initData();
+        LogUtil.time("OtherFunctionFragment","执行后");
     }
 
     @Override

@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 
 import java.util.List;
@@ -74,6 +75,7 @@ public class DeckListBQAdapter extends BaseQuickAdapter<DeckFile, BaseViewHolder
 
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, DeckFile deck) {
+        LogUtil.time("DeckAdapter","开始");
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
         switch (getGroupType(getItemPosition(deck))) {
             case ITEM_TYPE_SAME:
@@ -129,6 +131,6 @@ public class DeckListBQAdapter extends BaseQuickAdapter<DeckFile, BaseViewHolder
         baseViewHolder.getView(R.id.ll_item).setLayoutParams(lp);
         imageLoader.bindImage(baseViewHolder.getView(R.id.iv_card),deck.getFirstCode(),ImageLoader.Type.small);
         baseViewHolder.setText(R.id.tv_name,deck.getName());
-
+        LogUtil.time("DeckAdapter","完成");
     }
 }

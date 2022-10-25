@@ -1,17 +1,5 @@
 package com.ourygo.ygomobile.util;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.json.JSONObject;
-
-import com.feihua.dialogutils.util.DialogUtils;
-import com.ourygo.ygomobile.OYApplication;
-import com.ourygo.ygomobile.bean.CardBag;
-
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -46,10 +34,25 @@ import android.view.ViewPropertyAnimator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.ygomobile.OYApplication;
+import com.ourygo.ygomobile.bean.CardBag;
+
+import org.json.JSONObject;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
 
@@ -540,6 +543,24 @@ public class OYUtil {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && object != null) {
             setViewPropertyAnimatorRT(viewPropertyAnimator, object);
         }
+    }
+
+    /**
+     * 是否是今天第一次打开软件
+     */
+    public static boolean isTodayFirstStart() {
+        long todayStartTime = SharedPreferenceUtil.getTodayStartTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(todayStartTime);
+
+        Calendar calendar1 = Calendar.getInstance();
+        if (calendar.get(Calendar.YEAR) == calendar1.get(Calendar.YEAR)
+                && calendar.get(Calendar.MONTH) == calendar1.get(Calendar.MONTH)
+                && calendar.get(Calendar.DAY_OF_MONTH) == calendar1.get(Calendar.DAY_OF_MONTH)) {
+            SharedPreferenceUtil.setTodayStartTime(System.currentTimeMillis());
+            return true;
+        }
+        return false;
     }
 
 }

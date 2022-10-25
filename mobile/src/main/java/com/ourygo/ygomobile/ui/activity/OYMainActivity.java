@@ -25,7 +25,6 @@ import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
 import com.ourygo.assistant.util.ClipManagement;
 import com.ourygo.assistant.util.DuelAssistantManagement;
 import com.ourygo.assistant.util.YGODAUtil;
-import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.FmPagerAdapter;
 import com.ourygo.ygomobile.adapter.VerTabBQAdapter;
 import com.ourygo.ygomobile.bean.FragmentData;
@@ -43,11 +42,8 @@ import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.SdkInitUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
-import com.ourygo.ygomobile.util.StatUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.ourygo.ygomobile.view.OYTabLayout;
-import com.tencent.bugly.Bugly;
-import com.tencent.bugly.crashreport.common.info.AppInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -116,8 +112,9 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     public void initBugly() {
 //        Bugly.init(this, OYApplication.BUGLY_ID, false);
 
-        //检测是否有更新,不提示
-        OYUtil.checkUpdate(this, false);
+        if (OYUtil.isTodayFirstStart())
+            //检测是否有更新,不提示
+            OYUtil.checkUpdate(this, false);
     }
 
     protected void checkResourceDownload(ResCheckTask.ResCheckListener listener) {

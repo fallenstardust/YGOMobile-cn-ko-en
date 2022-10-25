@@ -8,8 +8,8 @@ android {
         applicationId "com.ourygo.ygomobile"
         minSdkVersion 21
         targetSdkVersion 22
-        versionCode 33
-        versionName "1.2.2"
+        versionCode 35
+        versionName "1.2.3"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
@@ -60,7 +60,7 @@ android {
     }
     android.applicationVariants.all { variant ->
         variant.outputs.all {
-            def fileName = "YGOMobile_OY_${versionName}.apk"
+            def fileName = "YGO_OY_${versionName}.apk"
             outputFileName = fileName
         }
     }

@@ -19,6 +19,7 @@ import com.ourygo.ygomobile.base.listener.OnSettingSelectListener;
 import com.ourygo.ygomobile.bean.ImageSelectItem;
 import com.ourygo.ygomobile.bean.OYSelect;
 import com.ourygo.ygomobile.bean.SettingItem;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.OYUtil;
 
 import java.util.List;
@@ -106,8 +107,9 @@ public class SettingRecyclerViewAdapter1 extends BaseMultiItemQuickAdapter<Setti
 
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, SettingItem settingItem) {
+        LogUtil.time("SettingAdapter","开始");
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
-        switch (getGroupType(baseViewHolder.getAdapterPosition() - getHeaderLayoutCount())) {
+        switch (getGroupType(getItemPosition(settingItem))) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.click_background);
                 baseViewHolder.setGone(R.id.tv_type_name, true);
@@ -154,13 +156,13 @@ public class SettingRecyclerViewAdapter1 extends BaseMultiItemQuickAdapter<Setti
 
                 break;
             default:
-                Log.e("SettingAdp", "其他情况" + (baseViewHolder.getAdapterPosition() - getHeaderLayoutCount()));
+                Log.e("SettingAdp", "其他情况" + (getItemPosition(settingItem) - getHeaderLayoutCount()));
                 break;
         }
 
         baseViewHolder.getView(R.id.ll_item).setLayoutParams(lp);
 
-        switch (baseViewHolder.getItemViewType()) {
+        switch (getDefItemViewType(getItemPosition(settingItem))) {
             case SettingItem.ITEM_SAME:
                 baseViewHolder.setText(R.id.tv_name, settingItem.getName());
                 baseViewHolder.setTextColor(R.id.tv_name, settingItem.getNameColor());
@@ -248,5 +250,6 @@ public class SettingRecyclerViewAdapter1 extends BaseMultiItemQuickAdapter<Setti
                 });
                 break;
         }
+        LogUtil.time("SettingAdapter","结束");
     }
 }

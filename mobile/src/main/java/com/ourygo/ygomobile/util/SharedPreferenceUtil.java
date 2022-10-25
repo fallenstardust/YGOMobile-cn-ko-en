@@ -211,4 +211,20 @@ public class SharedPreferenceUtil {
         getShareRecord().edit().putBoolean("isToastNewCardBag", toastNewCardBag).apply();
     }
 
+    public static boolean isTodayFirstStart(){
+        return getShareRecord().getBoolean("isTodayFirstStart", true);
+    }
+
+    public static void setTodayFirstStart(boolean isTodayFirstStart){
+        getShareRecord().edit().putBoolean("isTodayFirstStart", isTodayFirstStart).apply();
+    }
+
+    public static void setTodayStartTime(long versionUpdateTime) {
+        getShareRecord().edit().putLong("todayStartTime", versionUpdateTime).apply();
+    }
+
+    public static long getTodayStartTime() {
+        return getShareRecord().getLong("todayStartTime", 0);
+    }
+
 }
