@@ -497,7 +497,7 @@ public class OYUtil {
         cardBag =new CardBag();
         cardBag.setTitle("1111 哥布林版舞台旋转来临");
         cardBag.setMessage("K语言甚至让你读不懂他的效果");
-        cardBag.setDeckName("1101");
+        cardBag.setDeckName("1111");
         cardBagList.add(cardBag);
 
         cardBag =new CardBag();
