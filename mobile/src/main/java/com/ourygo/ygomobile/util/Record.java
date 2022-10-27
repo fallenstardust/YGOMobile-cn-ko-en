@@ -76,7 +76,7 @@ public class Record {
     }
     public static String getImagePath(Context context) {
 //        return context.getExternalFilesDir("image").getAbsolutePath();
-        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),"YGOMobile OY").getAbsolutePath();
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),"YGO-OY").getAbsolutePath();
     }
 
     public static String getImageCachePath() {

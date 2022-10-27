@@ -495,6 +495,12 @@ public class OYUtil {
         CardBag cardBag;
 
         cardBag =new CardBag();
+        cardBag.setTitle("1111 哥布林版舞台旋转来临");
+        cardBag.setMessage("K语言甚至让你读不懂他的效果");
+        cardBag.setDeckName("1101");
+        cardBagList.add(cardBag);
+
+        cardBag =new CardBag();
         cardBag.setTitle("WPP3 三幻神加强！");
         cardBag.setMessage("幻神专属卡片助你再魂一把");
         cardBag.setDeckName("WPP3+VJ");

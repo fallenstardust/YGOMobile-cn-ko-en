@@ -270,7 +270,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         mSettings.getFontDirPath(), needsUpdate);
             }
             //复制脚本压缩包
-            if ((new File(AppsSettings.get().getScriptZipPath()).length()<26968384||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+            if ((new File(AppsSettings.get().getScriptZipPath()).length()<27254784||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
                 LogUtil.e("ResCheckTask","复制脚本");
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
@@ -280,7 +280,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             copyCdbFile(needsUpdate);
 
             //复制卡图压缩包
-            if ((new File(AppsSettings.get().getPicsZipPath()).length()<93693000||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
+            if ((new File(AppsSettings.get().getPicsZipPath()).length()<94457856||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 LogUtil.e("ResCheckTask","复制卡图");
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),

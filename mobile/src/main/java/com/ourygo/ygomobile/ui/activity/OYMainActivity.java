@@ -321,7 +321,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
         checkIntent();
 
         if (SharedPreferenceUtil.isFristStart()) {
-            View[] views = dialogUtils.dialogt(null, "欢迎使用YGOMobile OY,本软件为YGOMobile原版的简约探索版，" +
+            View[] views = dialogUtils.dialogt(null, "欢迎使用YGO-OY,本软件为YGOMobile原版的简约探索版，" +
                     "这里有正在探索的功能，但相对没有原版稳定，你可以选择下载原版使用，下载地址：https://www.pgyer.com/ygomobilecn\n\n" +
                     "如果你觉得好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台");
             Dialog dialog = dialogUtils.getDialog();
@@ -341,7 +341,7 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
             SharedPreferenceUtil.setNextAifadianNum(SharedPreferenceUtil.getAppStartTimes() + (10 + (int) (Math.random() * 20)));
 
             dialog.setOnDismissListener(dialog12 -> {
-                Button b3 = dialogUtils.dialogt1("卡组导入提示", "YGOMobile OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
+                Button b3 = dialogUtils.dialogt1("卡组导入提示", "YGO-OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
                         "，可以打开原版软件，点击下边栏的卡组选项——功能菜单——备份/还原来导入或导出原版ygo中的卡组");
                 Dialog dialog1 = dialogUtils.getDialog();
                 b3.setOnClickListener(v -> dialog1.dismiss());

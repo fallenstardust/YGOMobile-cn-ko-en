@@ -134,6 +134,10 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+       updateList.add(UpdateLog.toUpdateLog("1.2.3","更新ygo内核\n" +
+               "更新卡包1111+T1110+VJ\n" +
+               "软件名简化为YGO-OY" +
+               "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.2.2","更新ygo内核\n"
                + "更新卡包WPP3+VJ\n"
                + "修复服务器列表切换显示模式后点击无反应的问题\n"
