@@ -9,8 +9,8 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 310040930
-        versionName "3.10.4"
+        versionCode 310040929
+        versionName "3_10_5"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
@@ -26,19 +26,6 @@ android {
             resValue 'string', 'app_name', 'YGOMobile'
             applicationIdSuffix ".CN"
             buildConfigField 'String', 'URL_DONATE', '"https://afdian.net/@ygomobile"'
-            manifestPlaceholders = [APP_ID: "0b6f110306"]
-        }
-        en {
-            resValue 'string', 'app_name', 'YGOMobile.En'
-            applicationIdSuffix ".EN"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
-            manifestPlaceholders = [APP_ID: "9c66525dfa"]
-        }
-        ko {
-            resValue 'string', 'app_name', 'YGOMobile.Kor'
-            applicationIdSuffix ".KO"
-            buildConfigField 'String', 'URL_DONATE', '"https://www.patreon.com/ygomobile"'
-            manifestPlaceholders = [APP_ID: "0488398d8a"]
         }
     }
     buildTypes {
@@ -55,20 +42,16 @@ android {
     }
     android.applicationVariants.all { variant ->
         variant.outputs.all {
-            def fileName = "YGOMobile-${variant.name}${versionName}.apk"
+            def fileName = "YGOMobile_${variant.name}${versionName}.apk"
             outputFileName = fileName
         }
     }
     sourceSets {
         main {
             assets.srcDirs = ['assets']
-            jniLibs.srcDirs = ['libs']
-        }
-        en {
             assets.srcDirs = ['assets_en']
-        }
-        ko {
             assets.srcDirs = ['assets_ko']
+            jniLibs.srcDirs = ['libs']
         }
     }
     lintOptions {
