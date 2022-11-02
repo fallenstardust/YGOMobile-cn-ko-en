@@ -67,7 +67,7 @@ public class PermissionsActivity extends AppCompatActivity {
             dialog.setLeftButtonListener((dlg, i) -> {
                 isRequireCheck = true;
                 doPermission();
-                jumpToRequestInstallPackage();
+                //jumpToRequestInstallPackage();
                 dialog.dismiss();
             });
             dialog.show();

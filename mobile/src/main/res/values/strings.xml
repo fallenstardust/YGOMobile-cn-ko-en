@@ -303,7 +303,6 @@
     <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
     <string name="explain_permission">
         Very necessary permissions will be applied\:
-        \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
     <string name="guide_menu">Menu\:\nincluding most of functions, for Example</string>
     <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
