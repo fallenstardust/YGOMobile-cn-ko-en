@@ -738,7 +738,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;*/
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
+                intent.setData(Uri.parse(Constants.URL_DONATE));
+                Toast.makeText(getActivity(),R.string.donatefor, Toast.LENGTH_LONG).show();
                 startActivity(intent);
             }
             break;

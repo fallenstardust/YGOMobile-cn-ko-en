@@ -149,6 +149,7 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String URL_HELP = "https://www.wolai.com/hgRyrSXQuq4rzMwzXhHBqA";
+    String URL_DONATE = "https://afdian.net/@ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygomobile.top/version.txt";
@@ -196,8 +197,6 @@ public interface Constants {
     String ACTION_RELOAD = "ygomobile.intent.action.RELOAD";
     String IMAGE_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/%s.jpg";
     String IMAGE_FIELD_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/field/%s.jpg";
-    //String IMAGE_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/%s.jpg";
-    //String IMAGE_FIELD_URL = "https://github.com/Ygoproco/Live-images/raw/master/pics/field/%s.png";
     String IMAGE_URL_EX = ".jpg";
     String IMAGE_FIELD_URL_EX = ".png";
     /**
