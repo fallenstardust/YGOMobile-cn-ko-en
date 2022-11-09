@@ -111,7 +111,7 @@ dependencies {
     //跨进程SharedPreferencesPlus工具
     implementation 'com.github.zhangliangming:PreferencesProvider:v1.3'
     implementation 'org.apache.commons:commons-lang3:3.7'
-    api 'com.tencent.tbs:tbssdk:44085'
+    api 'com.tencent.tbs:tbssdk:44226'
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'com.bm.photoview:library:1.4.1'

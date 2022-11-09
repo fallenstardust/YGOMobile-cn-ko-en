@@ -368,21 +368,20 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     private int copyCoreConfig(String toPath, boolean needsUpdate) {
+        File systemfile, stringfile, botfile;
+        systemfile = new File(AppsSettings.get().getResourcePath(), CORE_SYSTEM_PATH);
+        stringfile = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH);
+        botfile = new File(AppsSettings.get().getResourcePath(), BOT_CONF);
         try {
-          /*  String path = getDatapath("conf");
-            int count = IOUtils.copyFilesFromAssets(mContext, path, toPath, needsUpdate);
-            if (count < 3) {
-                return ERROR_CORE_CONFIG_LOST;
-            }*/
-            File systemfile = new File(AppsSettings.get().getResourcePath(), CORE_SYSTEM_PATH);
-            File stringfile = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH);
-            File botfile = new File(AppsSettings.get().getResourcePath(), BOT_CONF);
             if (!systemfile.exists()) {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
             }
             IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_LIMIT_PATH, toPath, needsUpdate);
-            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_STRING_PATH, toPath, needsUpdate);
-            IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_BOT_CONF_PATH, toPath, needsUpdate);
+
+            if (!stringfile.exists() || stringfile.length() < new File(getDatapath("conf") + "/" + CORE_STRING_PATH).length()) {
+                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_STRING_PATH, toPath, needsUpdate);
+            }
+                IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_BOT_CONF_PATH, toPath, needsUpdate);
             //替换换行符
             fixString(stringfile.getAbsolutePath());
             fixString(botfile.getAbsolutePath());
