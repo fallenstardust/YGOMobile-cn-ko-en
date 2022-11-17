@@ -210,8 +210,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.createNoMedia(resPath);
             //检查文件夹
             checkDirs();
-            //复制游戏配置文件
-            copyCoreConfig(resPath, needsUpdate);
             if (AppsSettings.get().isUseExtraCards()) {
                 //自定义数据库无效，则用默认的
                 if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
@@ -231,15 +229,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 File pack = new File(mSettings.get().getPackDeckDir());
                 File[] subYdks = pack.listFiles();
                 for (File packs : subYdks) {
-                        packs.delete();
+                    packs.delete();
                 }
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
                         mSettings.get().getPackDeckDir(), needsUpdate);
-                //复制残局
-                setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
-                File single = new File(mSettings.getSingleDir());
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
-                        mSettings.getSingleDir(), needsUpdate);
             }
             String[] sound1 = mContext.getAssets().list(getDatapath(Constants.CORE_SOUND_PATH));
             String[] sound2 = new File(mSettings.getSoundPath()).list();
@@ -270,17 +263,13 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
                         resPath, needsUpdate);
             }
-            //复制数据库
-            copyCdbFile(needsUpdate);
+
             //复制卡图压缩包
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
-            //复制人机资源
-            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
-                    resPath, needsUpdate);
 
             han.sendEmptyMessage(0);
 
@@ -294,12 +283,51 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         return ERROR_NONE;
     }
 
+    private int copyCnData(Boolean needsUpdate) throws IOException {
+        //复制数据库
+        copyCdbFile(getDatapath(DATABASE_NAME), needsUpdate);
+        //复制残局
+        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
+        File single = new File(mSettings.getSingleDir());
+        IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SINGLE_PATH),
+                mSettings.getSingleDir(), needsUpdate);
+        //复制人机资源
+        IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
+                mSettings.getResourcePath(), needsUpdate);
+        //复制游戏配置文件
+        copyCoreConfig(mSettings.getResourcePath(), needsUpdate);
+        return ERROR_NONE;
+    }
+
+    private int copyEnData(File stringfile, File botfile) {
+        String enStringConf = ASSETS_PATH + "en/conf/" + CORE_STRING_PATH;
+        String enBotConf = ASSETS_PATH + "en/conf/" + CORE_BOT_CONF_PATH;
+        String enCdb = ASSETS_PATH + "en/" + DATABASE_NAME;
+        try {
+            IOUtils.copyFilesFromAssets(mContext, enStringConf, stringfile.getPath(), true);
+            IOUtils.copyFilesFromAssets(mContext, enBotConf, botfile.getPath(), true);
+            copyCdbFile(enCdb, true);
+            //替换换行符
+            fixString(stringfile.getAbsolutePath());
+            fixString(botfile.getAbsolutePath());
+            return ERROR_NONE;
+        } catch (IOException e) {
+            mError = ERROR_COPY;
+            return ERROR_COPY;
+        }
+    }
+
+    private int copyKorData(File systemfile, File stringfile, File botfile) {
+
+        return ERROR_NONE;
+    }
+
     private void loadData() {
         setMessage(mContext.getString(R.string.loading));
         DataManager.get().load(false);
     }
 
-    void copyCdbFile(boolean needsUpdate) throws IOException {
+    void copyCdbFile(String assetPath, boolean needsUpdate) throws IOException {
         File dbFile = new File(mSettings.getDataBasePath(), DATABASE_NAME);
         //如果数据库存在
         if (dbFile.exists()) {
@@ -310,7 +338,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 return;
         }
         setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.cards_cdb)));
-        IOUtils.copyFilesFromAssets(mContext, getDatapath(DATABASE_NAME), mSettings.getDataBasePath(), needsUpdate);
+        IOUtils.copyFilesFromAssets(mContext, assetPath, mSettings.getDataBasePath(), needsUpdate);
     }
 
     private void checkDirs() {
