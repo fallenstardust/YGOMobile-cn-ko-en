@@ -570,14 +570,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP),
                             AppsSettings.get().getResourcePath(), true);
                 }
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.DATABASE_NAME),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_STRING_PATH),
-                        AppsSettings.get().getResourcePath(), true);
-
-                IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.WINDBOT_PATH),
-                        AppsSettings.get().getResourcePath(), true);
 
                 IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PATH),
                         AppsSettings.get().getCoreSkinPath(), false);
