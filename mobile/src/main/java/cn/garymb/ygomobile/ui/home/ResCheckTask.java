@@ -274,12 +274,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
-            String language = mContext.getResources().getConfiguration().locale.getDisplayLanguage();
+            String language = mContext.getResources().getConfiguration().locale.getLanguage();
             Log.i(BuildConfig.VERSION_NAME,language);
             if(!language.isEmpty()){
-                if(language.equals("中文")) {
+                if(language.equals("zh")) {
                     copyCnData(needsUpdate);
-                }else if (language.equals("Korean")){
+                }else if (language.equals("ko")){
                     copyKorData(needsUpdate);
                 } else {
                     copyEnData(needsUpdate);
