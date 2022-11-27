@@ -218,16 +218,6 @@ public interface Constants {
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
-    String QUERY_MAIN = "m";
-    String QUERY_DECK = "d";
-    String QUERY_EXTRA = "e";
-    String QUERY_SIDE = "s";
-    String QUERY_VERSION = "v";
-    String QUERY_MAIN_ALL = "main";
-    String QUERY_EXTRA_ALL = "extra";
-    String QUERY_SIDE_ALL = "side";
-    String QUERY_YGO_TYPE = "ygotype";
-    String ARG_DECK = "deck";
     String PATH_ROOM = "/room";
     String QUERY_HOST = "host";
     String QUERY_PORT = "port";
@@ -245,48 +235,7 @@ public interface Constants {
 
     String DEF_ENCODING = "utf-8";
 
-    String[] NUM_40_LIST = {
-            "0"
-            , "1"
-            , "2"
-            , "3"
-            , "4"
-            , "5"
-            , "6"
-            , "7"
-            , "8"
-            , "9"
-            , "a"
-            , "b"
-            , "c"
-            , "d"
-            , "e"
-            , "f"
-            , "g"
-            , "h"
-            , "i"
-            , "j"
-            , "k"
-            , "l"
-            , "m"
-            , "n"
-            , "o"
-            , "p"
-            , "q"
-            , "r"
-            , "s"
-            , "t"
-            , "u"
-            , "v"
-            , "w"
-            , "x"
-            , "y"
-            , "z"
-            , "A"
-            , "B"
-            , "C"
-            , "D"
-    };
+
     /*23333先行密码与正式密码对照数组
      *来源网站：https://ygocdb.com/api/v0/idChangelogArray.jsonp
      */

@@ -18,7 +18,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.signature.ObjectKey;
-import com.ourygo.assistant.util.Util;
+import com.ourygo.lib.duelassistant.util.Util;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.PaletteUtil;

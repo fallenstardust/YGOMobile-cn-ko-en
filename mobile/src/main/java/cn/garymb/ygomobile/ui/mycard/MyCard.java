@@ -2,9 +2,6 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import static junit.framework.Assert.assertEquals;
 
-import static cn.garymb.ygomobile.Constants.ARG_DECK;
-import static cn.garymb.ygomobile.Constants.QUERY_YGO_TYPE;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;

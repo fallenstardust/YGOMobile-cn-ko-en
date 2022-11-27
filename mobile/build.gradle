@@ -129,4 +129,6 @@ dependencies {
     implementation 'com.ashokvarma.android:bottom-navigation-bar:2.2.0'
     //圆形头像
     implementation 'de.hdodenhof:circleimageview:2.2.0'
+    //决斗助手
+    implementation 'com.github.feihuaduo:YGODuelAssistantLib:1.0'
 }

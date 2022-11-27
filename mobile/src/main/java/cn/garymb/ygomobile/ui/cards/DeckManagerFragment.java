@@ -55,7 +55,7 @@ import com.feihua.dialogutils.util.DialogUtils;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -920,7 +920,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         Button bt_image_share = viewDialog.findViewById(R.id.bt_image_share);
         Button bt_code_share = viewDialog.findViewById(R.id.bt_code_share);
         TextView tv_code = viewDialog.findViewById(R.id.et_code);
-        tv_code.setText(deck.toAppUri().toString());
+        tv_code.setText(deck.toUri().toString());
         ImageUtil.show(getContext(), savePath, iv_image, System.currentTimeMillis() + "");
 
         bt_code_share.setOnClickListener(v -> {

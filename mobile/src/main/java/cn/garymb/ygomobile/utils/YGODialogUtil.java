@@ -96,7 +96,7 @@ public class YGODialogUtil {
 
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
             DialogUtils du = DialogUtils.getdx(context);
-            View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, false);
+            View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, true);
             RecyclerView rv_type, rv_deck;
 
             rv_deck = viewDialog.findViewById(R.id.rv_deck);
@@ -380,7 +380,7 @@ public class YGODialogUtil {
                     deckAdp.notifyDataSetChanged();
                 }
             }));
-            itemTouchHelper.attachToRecyclerView(rv_type);
+//            itemTouchHelper.attachToRecyclerView(rv_type);
         }
 
         private String[] getStringType(List<DeckType> deckTypeList) {

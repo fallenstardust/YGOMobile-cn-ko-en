@@ -33,9 +33,10 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-import com.ourygo.assistant.util.DuelAssistantManagement;
-import com.ourygo.assistant.util.Util;
+
+import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.Util;
 import com.stx.xhb.androidx.XBanner;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
@@ -66,7 +67,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
@@ -511,7 +511,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     @Override
-    public void onCardSearch(String key, int id) {
+    public void onCardQuery(String key, int id) {
         /*
         if (id == ID_HOMEFRAGMENT) {
             Intent intent = new Intent(this, CardSearchFragment.class);
@@ -521,11 +521,15 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     @Override
-    public void onSaveDeck(String message, boolean isUrl, int id) {
-        saveDeck(message, isUrl);
+    public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
+        saveDeck(uri,mainList,exList,sideList,isCompleteDeck,exception);
     }
 
-    public void saveDeck(String deckMessage, boolean isUrl) {
+    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
+        if (!TextUtils.isEmpty(exception)){
+            YGOUtil.show("卡组解析失败，原因为："+exception);
+            return;
+        }
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(R.string.question);
         dialog.setMessage(R.string.find_deck_text);
@@ -538,33 +542,23 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         });
         dialog.setRightButtonListener((dlg, s) -> {
             dialog.dismiss();
+            Deck deckInfo;
             //如果是卡组url
-            if (isUrl) {
-                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
-                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                if (!deckInfo.isCompleteDeck()) {
-                    YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
-                }
-                if (!file.getAbsolutePath().isEmpty()) {
-                    mBundle.putString("setDeck", file.getAbsolutePath());
-                    activity.fragment_deck_cards.setArguments(mBundle);
-                }
-                activity.switchFragment(activity.fragment_deck_cards, 2, true);
+            if (uri != null) {
+                deckInfo = new Deck(uri, mainList, exList, sideList);
             } else {
-                //如果是卡组文本
-                try {
-                    //以当前时间戳作为卡组名保存卡组
-                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    if (!file.getAbsolutePath().isEmpty()) {
-                        mBundle.putString("setDeck", file.getAbsolutePath());
-                        activity.fragment_deck_cards.setArguments(mBundle);
-                    }
-                    activity.switchFragment(activity.fragment_deck_cards, 2, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
-                }
+                deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
             }
+            deckInfo.setCompleteDeck(isCompleteDeck);
+            File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+            if (!deckInfo.isCompleteDeck()) {
+                YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+            }
+            if (!file.getAbsolutePath().isEmpty()) {
+                mBundle.putString("setDeck", file.getAbsolutePath());
+                activity.fragment_deck_cards.setArguments(mBundle);
+            }
+            activity.switchFragment(activity.fragment_deck_cards, 2, true);
         });
     }
 
