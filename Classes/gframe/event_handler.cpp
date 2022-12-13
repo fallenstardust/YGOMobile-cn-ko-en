@@ -1606,9 +1606,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size())
 						mcard = deck[hovered_controler].back();
 				} else {
-					if(irr::core::recti(327, 8, 630, 51).isPointInside(pos))
+					if(irr::core::recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 0;
-					else if(irr::core::recti(689, 8, 991, 51).isPointInside(pos))
+					else if(irr::core::recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 1;
 				}
 			}

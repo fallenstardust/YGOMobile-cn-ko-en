@@ -1107,7 +1107,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		btnBotCancel = env->addButton(rect<s32>(420 * xScale, 290 * yScale, 530 * xScale, 330 * yScale), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
             ChangeToIGUIImageButton(btnBotCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 		env->addStaticText(dataManager.GetSysString(1382), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabBot);
-		stBotInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 80 * yScale), false, true, tabBot);
+		stBotInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 160 * yScale), false, true, tabBot);
 		cbBotDeckCategory =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 90 * yScale, 530 * xScale, 120 * yScale), tabBot, COMBOBOX_BOT_DECKCATEGORY);
 		cbBotDeckCategory->setVisible(false);
 		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
