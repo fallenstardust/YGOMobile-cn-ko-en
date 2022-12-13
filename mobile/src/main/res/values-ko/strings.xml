@@ -297,12 +297,12 @@
     <string name="deck_back_up">백업</string>
     <string name="deck_restore">복원</string>
     <string name="deck_backup_n_restore">백업/복원</string>
-    <string name="deck_explain">백업: 내장 메모리의 모든 덱을 백업합니다.
-        \n복원\: 백업된 덱을 모두 복원합니다.</string>
-    <string name="restore_deck">기기에서 백업된 덱을 발견했습니다. 백업 하시겠습니까?</string>
+    <string name="deck_explain">백업: 내장 메모리에 저장된 덱을 전부 백업합니다.
+        \n복원\: 백업된 덱을 전부 복원합니다.</string>
+    <string name="restore_deck">기기에서 백업된 덱을 발견했습니다. 복원하시겠습니까?</string>
     <string name="explain_permission">
-		이 앱의 기능을 사욜하려면 다음과 같은 필수 권한이 적용됩니다：
-        \n 저장소 권한：백업, 복원 덱, 사용자 지정 배경, 아바타, 카드 커버 필요</string>
+		이 앱의 기능을 사용하려면 다음과 같은 필수 권한이 적용됩니다：
+        \n 저장소 권한：백업, 덱 복원, 사용자 지정 배경, 아바타, 카드 커버 필요</string>
     <string name="guide_menu">기능 메뉴：\n앱의 주요 기능은 다음 과 같습니다</string>
     <string name="guide_mycard">MyCard：\n랭킹, 듀얼 관전, 채팅 및 포럼 등 \n 다양한 듀얼 서비스를 제공합니다</string>
     <string name="guide_serverlist">직접 연결된 서버 목록\n원하는 서버를 터치하여 해당 게임에 참여하십시오</string>
