@@ -449,13 +449,13 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					exit(0);
 				} else {
 					if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
-						soundManager.PlaySoundEffect(SOUND_INFO);
+						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
 						break;
 					}
 					if(!DuelClient::StartClient(0x7f000001, mainGame->gameConf.serverport)) {
 						NetServer::StopServer();
-						soundManager.PlaySoundEffect(SOUND_INFO);
+						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
 						break;
 					}
@@ -663,7 +663,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 						mainGame->gMutex.lock();
 						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
-						soundManager.PlaySoundEffect(SOUND_INFO);
+						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1406));
 						mainGame->gMutex.unlock();
 						break;
