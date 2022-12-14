@@ -116,7 +116,7 @@ public class WebActivity extends BaseActivity {
         final Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
         enableBackHome();
-        mWebViewPlus = $(R.id.webbrowser);//TODO review the usage
+        mWebViewPlus = $(R.id.webbrowser);
         serverInfos = new ArrayList<>();
         xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);
         initButton();
