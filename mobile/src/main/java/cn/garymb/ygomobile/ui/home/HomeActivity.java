@@ -268,7 +268,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             public void onCoreInitFinished() {
             }
         };
-        //x5内核初始化接口
+        //x5内核初始化接口//TODO error:getPackageContext stack is android.content.pm.PackageManager$NameNotFoundException: Application package com.tencent.mm not found
         QbSdk.initX5Environment(this, cb);
         if (!BuildConfig.BUILD_TYPE.equals("debug")) {
             //release才检查版本

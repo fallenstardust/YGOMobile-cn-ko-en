@@ -1,7 +1,6 @@
-package cn.garymb.ygomobile.ui.activities;
+package cn.garymb.ygomobile.ex_card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
@@ -12,7 +11,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -20,6 +18,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,10 +34,11 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -47,18 +48,19 @@ import cn.garymb.ygomobile.utils.UnzipUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
-import ocgcore.data.Card;
 
-public class WebActivity extends BaseActivity {
+public class ExCardActivity extends BaseActivity {
+
+    private View layoutView;
+
     public static String dataVer;
-    private WebViewPlus mWebViewPlus;
-    private String mUrl;
     private String mTitle;
     private Button btn_download;
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
     private File xmlFile;
     private int FailedCount;
+
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -112,117 +114,26 @@ public class WebActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_webbrowser);
+        setContentView(R.layout.activity_ex_card);
+
+        /* show the recyclerView */
+        //get ex card data from intent
+        List<ExCard> exCards = this.getIntent()
+                .getParcelableArrayListExtra("exCards");
+        ExCardListAdapter exCardListAdapter = new ExCardListAdapter(R.layout.item_ex_card, exCards);
+        RecyclerView exCardListView = (RecyclerView) findViewById(R.id.list_ex_cards);
+        exCardListView.setLayoutManager(new LinearLayoutManager(this));
+        exCardListView.setAdapter(exCardListAdapter);
+
+
         final Toolbar toolbar = $(R.id.toolbar);
         setSupportActionBar(toolbar);
         enableBackHome();
-        mWebViewPlus = $(R.id.webbrowser);//TODO review the usage
         serverInfos = new ArrayList<>();
         xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);
         initButton();
-        /*mWebViewPlus.enableHtml5();
-        mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
-            @Override
-            public void onReceivedTitle(WebView view, String title) {
-                super.onReceivedTitle(view, title);
-                if (toolbar != null) {
-                    toolbar.setSubtitle(title);
-                } else {
-                    setTitle(title);
-                }
-            }
-        });*/
-        if (doIntent(getIntent())) {
-            mWebViewPlus.loadUrl(mUrl);
-            if (mUrl.startsWith(URL_YGO233_ADVANCE)) {
-                btn_download.setVisibility(View.VISIBLE);
-            } else {
-                btn_download.setVisibility(View.GONE);
-            }
-        }
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        if (doIntent(intent)) {
-            mWebViewPlus.loadUrl(mUrl);
-        }
-    }
-
-    private boolean doIntent(Intent intent) {
-        if (intent.hasExtra(Intent.EXTRA_TEXT)) {
-            mTitle = intent.getStringExtra(Intent.EXTRA_TEXT);
-            setTitle(mTitle);
-        }
-        if (intent.hasExtra(Intent.EXTRA_STREAM)) {
-            mUrl = intent.getStringExtra(Intent.EXTRA_STREAM);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackHome();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onBackHome() {
-        if (mWebViewPlus.canGoBack()) {
-            mWebViewPlus.goBack();
-        } else {
-            finish();
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mWebViewPlus.canGoBack()) {
-            mWebViewPlus.goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        mWebViewPlus.resumeTimers();
-        //mWebViewPlus.onShow();
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        mWebViewPlus.pauseTimers();
-        //mWebViewPlus.onHide();
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        mWebViewPlus.stopLoading();
-        mWebViewPlus.setWebChromeClient(null);
-        mWebViewPlus.setWebViewClient(null);
-        //mWebViewPlus.onDestroy();
-        super.onDestroy();
-    }
-
-    public static void open(Context context, String title, String url) {
-        Intent intent = new Intent(context, WebActivity.class);
-        intent.putExtra(Intent.EXTRA_STREAM, url);
-        intent.putExtra(Intent.EXTRA_TEXT, title);
-        context.startActivity(intent);
-    }
-
-    public static void openFAQ(Context context, Card cardInfo) {
-        String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
-        WebActivity.open(context, cardInfo.Name, uri);
-    }
 
     public void initButton() {
         btn_download = $(R.id.web_btn_download_prerelease);
@@ -234,12 +145,12 @@ public class WebActivity extends BaseActivity {
         });
     }
 
-    public void AddServer(String name, String Addr, int port, String playername) {
+    public void AddServer(String name, String Addr, int port, String playerName) {
         mServerInfo = new ServerInfo();
         mServerInfo.setName(name);
         mServerInfo.setServerAddr(Addr);
         mServerInfo.setPort(port);
-        mServerInfo.setPlayerName(playername);
+        mServerInfo.setPlayerName(playerName);
         VUiKit.defer().when(() -> {
             ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));
             ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
@@ -332,4 +243,5 @@ public class WebActivity extends BaseActivity {
         });
 
     }
+
 }

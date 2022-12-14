@@ -29,7 +29,7 @@ android {
     }
     buildTypes {
         debug {
-            debuggable false
+            debuggable true
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {
@@ -131,4 +131,6 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     //决斗助手
     implementation 'com.github.feihuaduo:YGODuelAssistantLib:1.0'
+    // jsoup HTML parser library @ https://jsoup.org/
+    implementation 'org.jsoup:jsoup:1.15.3'
 }

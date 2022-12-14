@@ -19,6 +19,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 /*
  * 圆形ImageView
  */
+//TODO Change class name to CircleImage
 public class YuanImage extends AppCompatImageView {
 
     private Context mContext;

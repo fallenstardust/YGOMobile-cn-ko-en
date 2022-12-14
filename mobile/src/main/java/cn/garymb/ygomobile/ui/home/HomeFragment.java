@@ -43,6 +43,10 @@ import com.tubb.smrv.SwipeMenuRecyclerView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,6 +64,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
+import cn.garymb.ygomobile.ex_card.ExCardActivity;
+import cn.garymb.ygomobile.ex_card.ExCard;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -522,12 +528,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Override
     public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
-        saveDeck(uri,mainList,exList,sideList,isCompleteDeck,exception);
+        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception);
     }
 
     public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
-        if (!TextUtils.isEmpty(exception)){
-            YGOUtil.show("卡组解析失败，原因为："+exception);
+        if (!TextUtils.isEmpty(exception)) {
+            YGOUtil.show("卡组解析失败，原因为：" + exception);
             return;
         }
         DialogPlus dialog = new DialogPlus(getContext());
@@ -696,12 +702,67 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
-                String aurl = Constants.URL_YGO233_ADVANCE;
-                if (ll_new_notice.getVisibility() == View.VISIBLE) {
-                    aurl = aurl + "#pre_update_title";
-                }
-                WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                ll_new_notice.setVisibility(View.GONE);
+                //TODO zhuhognbo modified here, using Web crawler to extract the information of pre card
+                //new WebCrawlerTask().execute();
+                VUiKit.defer().when(() -> {
+                    String aurl = Constants.URL_YGO233_ADVANCE;
+                    //Connect to the website
+                    Document document = Jsoup.connect(aurl).get();
+                    Element pre_card_content = document.getElementById("pre_release_cards");
+                    Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
+                    Elements cards = tbody.getElementsByTag("tr");
+                    if (cards.size() > 10000) {//If the size of pre cards list is to large, return null directly.
+                        return null;
+                    }
+                    ArrayList<ExCard> exCards = new ArrayList<>();
+                    for (Element card : cards) {
+                        Elements card_attributes = card.getElementsByTag("td");
+                        String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
+                        String name = card_attributes.get(1).text();
+                        String description = card_attributes.get(2).text();
+                        ExCard exCard = new ExCard(name, imageUrl, description);
+                        exCards.add(exCard);
+
+                    }
+                    Log.i("webCrawler", exCards.toString());
+                    if (exCards.isEmpty()) {
+                        return null;
+                    } else {
+                        return exCards;
+                    }
+
+                }).fail((e) -> {
+                    //If the crawler process failed, open webActivity
+                    String aurl = Constants.URL_YGO233_ADVANCE;
+
+                    if (ll_new_notice.getVisibility() == View.VISIBLE) {
+                        aurl = aurl + "#pre_update_title";
+                    }
+                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
+                    ll_new_notice.setVisibility(View.GONE);
+                    Log.i("webCrawler", "webCrawler fail");
+                }).done((tmp) -> {
+                    if (tmp != null) {
+                        Log.i("webCrawler", "webCrawler done");
+                        Intent intent = new Intent(getActivity(), ExCardActivity.class);
+                        //intent.putExtra("exCards", tmp);
+                        intent.putParcelableArrayListExtra("exCards", tmp);
+                        startActivity(intent);
+                    } else {
+                        //If the crawler process cannot return right ex-card data,
+                        //open webActivity
+                        String aurl = Constants.URL_YGO233_ADVANCE;
+
+                        if (ll_new_notice.getVisibility() == View.VISIBLE) {
+                            aurl = aurl + "#pre_update_title";
+                        }
+                        WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
+                        ll_new_notice.setVisibility(View.GONE);
+                        Log.i("webCrawler", "webCrawler cannot return ex-card data");
+                    }
+
+                });
+
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());
@@ -733,7 +794,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(Constants.URL_DONATE));
-                Toast.makeText(getActivity(),R.string.donatefor, Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), R.string.donatefor, Toast.LENGTH_LONG).show();
                 startActivity(intent);
             }
             break;

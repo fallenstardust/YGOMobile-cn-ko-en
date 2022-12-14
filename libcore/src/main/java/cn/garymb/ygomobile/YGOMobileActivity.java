@@ -49,7 +49,7 @@ public class YGOMobileActivity extends GameActivity implements
         TextView.OnEditorActionListener,
         OverlayOvalView.OnDuelOptionsSelectListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;//TODO get this DEBUG tag from build configuration of build.gradle
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
     private static final int CHAIN_CONTROL_PANEL_Y_REVERT_POSITION = 100;
     private static final int MAX_REFRESH = 30 * 1000;
