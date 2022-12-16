@@ -116,9 +116,9 @@ public class YGOGameOptions implements Parcelable {
         StringBuilder builder = new StringBuilder("YGOGameOptions: ");
         builder.append("serverAddr: ").append(mServerAddr == null ? "(unspecified)" : mServerAddr).
                 append(", port: ").append(mPort).
-                append(", roomName: ").append(mRoomName == null ? "(unspecified)" : mRoomName).
-                append(", roomPassword: ").append(mRoomPasswd == null ? "(unspecified)" : mRoomPasswd).
-                append(", userName: ").append(mUserName == null ? "(unspecified)" : mUserName).
+                append(", roomName: ").append(mRoomName == null ? "(unspecified)" : mRoomName.toString()).
+                append(", roomPassword: ").append(mRoomPasswd == null ? "(unspecified)" : mRoomPasswd.toString()).
+                append(", userName: ").append(mUserName == null ? "(unspecified)" : mUserName.toString()).
                 append(", mode: ").append(mMode).
                 append(", isCompleteRequest").append(isCompleteOptions).
                 append(", rule: ").append(mRule).
