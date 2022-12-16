@@ -38,6 +38,7 @@
     <string name="quit_tip">앱을 종료하겠습니까?</string>
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다</string>
     <string name="string_help_text">현재 앱에 필요한 권한이 없습니다. \n설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
+    <string name="fetch_ex_card">선행카드 읽기</string>
     <!-- settings -->
     <string name="settings_about">정보</string>
     <string name="settings_about_sub_about">정보</string>

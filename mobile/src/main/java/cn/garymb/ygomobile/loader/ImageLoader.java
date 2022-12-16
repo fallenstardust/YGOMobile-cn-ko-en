@@ -125,7 +125,7 @@ public class ImageLoader implements Closeable {
         }
         bindT(data, name, imageview, pre, type);
     }
-    //TODO ZHB use this function to load image
+
     private void bind(final Uri uri, String name, ImageView imageview, Drawable pre,@NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
             Log.v(TAG, "bind uri:" + name + ", type=" + type);

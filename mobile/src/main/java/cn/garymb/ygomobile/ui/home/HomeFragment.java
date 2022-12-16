@@ -702,8 +702,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
-                //TODO zhuhognbo modified here, using Web crawler to extract the information of pre card
-                //new WebCrawlerTask().execute();
+                //using Web crawler to extract the information of pre card
+                final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
                 VUiKit.defer().when(() -> {
                     String aurl = Constants.URL_YGO233_ADVANCE;
                     //Connect to the website
@@ -711,7 +711,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     Element pre_card_content = document.getElementById("pre_release_cards");
                     Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
                     Elements cards = tbody.getElementsByTag("tr");
-                    if (cards.size() > 10000) {//If the size of pre cards list is to large, return null directly.
+                    if (cards.size() > 300) {//Considering the efficiency of html parse, if the size of
+                        // pre cards list is to large, return null directly.
                         return null;
                     }
                     ArrayList<ExCard> exCards = new ArrayList<>();
@@ -732,6 +733,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     }
 
                 }).fail((e) -> {
+                    //关闭异常
+                    if (dialog_read_ex.isShowing()) {
+                        try {
+                            dialog_read_ex.dismiss();
+                        } catch (Exception ex) {
+                        }
+                    }
                     //If the crawler process failed, open webActivity
                     String aurl = Constants.URL_YGO233_ADVANCE;
 
@@ -742,6 +750,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     ll_new_notice.setVisibility(View.GONE);
                     Log.i("webCrawler", "webCrawler fail");
                 }).done((tmp) -> {
+
                     if (tmp != null) {
                         Log.i("webCrawler", "webCrawler done");
                         Intent intent = new Intent(getActivity(), ExCardActivity.class);
@@ -760,7 +769,14 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                         ll_new_notice.setVisibility(View.GONE);
                         Log.i("webCrawler", "webCrawler cannot return ex-card data");
                     }
-
+                    //关闭异常
+                    if (dialog_read_ex.isShowing()) {
+                        try {
+                            dialog_read_ex.dismiss();
+                            Log.i("webCrawler", "dialog close");
+                        } catch (Exception ex) {
+                        }
+                    }
                 });
 
                 break;
