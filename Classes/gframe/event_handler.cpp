@@ -1757,11 +1757,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_PRESSED_DOWN: {
 			if(!mainGame->dInfo.isStarted)
 				break;
-			if(mainGame->wCardSelect->isVisible())
-			    break;
+			//if(mainGame->wCardSelect->isVisible())
+			    //break;
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
-				|| mainGame->wCardSelect->isVisible()
+				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
 				||mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;
