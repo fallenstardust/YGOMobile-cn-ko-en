@@ -33,7 +33,6 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-
 import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 import com.ourygo.lib.duelassistant.util.Util;
@@ -64,8 +63,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
-import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.ex_card.ExCard;
+import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
