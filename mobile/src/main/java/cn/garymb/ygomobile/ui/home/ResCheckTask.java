@@ -274,6 +274,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
+            //复制人机资源
+            IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
+            //根据系统语言复制特定资料文件
             String language = mContext.getResources().getConfiguration().locale.getLanguage();
             Log.i(BuildConfig.VERSION_NAME,language);
             if(!language.isEmpty()){
@@ -297,22 +300,21 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         return ERROR_NONE;
     }
 
-    private int copyCnData(Boolean needsUpdate) throws IOException {
+    public int copyCnData(Boolean needsUpdate) throws IOException {
         //复制数据库
         copyCdbFile(getDatapath(DATABASE_NAME), needsUpdate);
         //复制残局
         setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
         IOUtils.copyFilesFromAssets(mContext, getDatapath(CORE_SINGLE_PATH), mSettings.getSingleDir(), needsUpdate);
-        //复制人机资源
-        IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(getDatapath("conf") + "/" + CORE_STRING_PATH,
                 getDatapath("conf") + "/" + BOT_CONF,
                 mSettings.getResourcePath(), needsUpdate);
+        AppsSettings.get().setDataLanguage(0);
         return ERROR_NONE;
     }
 
-    private int copyEnData(Boolean needsUpdate) throws IOException {
+    public int copyEnData(Boolean needsUpdate) throws IOException {
         String enStringConf = ASSETS_EN + getDatapath("conf") + "/" + CORE_STRING_PATH;
         String enBotConf = ASSETS_EN + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
         String enCdb = ASSETS_EN + getDatapath(DATABASE_NAME);
@@ -322,29 +324,25 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         //复制残局
         setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
         IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
-        //复制人机资源
-        IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(enStringConf, enBotConf, mSettings.getResourcePath(), needsUpdate);
-
+        AppsSettings.get().setDataLanguage(1);
         return ERROR_NONE;
     }
 
-    private int copyKorData(Boolean needsUpdate) throws IOException {
+    public int copyKorData(Boolean needsUpdate) throws IOException {
         String korStringConf = ASSETS_KOR + getDatapath("conf") + "/" + CORE_STRING_PATH;
         String korBotConf = ASSETS_KOR + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
         String korCdb = ASSETS_KOR + getDatapath(DATABASE_NAME);
-        String korWindbotPath = ASSETS_KOR + getDatapath(WINDBOT_PATH);
         String korSingle = ASSETS_EN + getDatapath(CORE_SINGLE_PATH);
         //复制数据库
         copyCdbFile(korCdb, true);
         //复制残局
         setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
         IOUtils.copyFilesFromAssets(mContext, korSingle, mSettings.getSingleDir(), needsUpdate);
-        //复制人机资源
-        IOUtils.copyFilesFromAssets(mContext, korWindbotPath, mSettings.getResourcePath(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(korStringConf, korBotConf, mSettings.getResourcePath(), needsUpdate);
+        AppsSettings.get().setDataLanguage(2);
         return ERROR_NONE;
     }
 

@@ -10,6 +10,7 @@ import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
+import static cn.garymb.ygomobile.Constants.PREF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
@@ -39,6 +40,7 @@ import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -78,6 +80,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.home.MainActivity;
+import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -165,6 +168,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
+        bind(PREF_DATA_LANGUAGE, "" + mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -229,6 +233,31 @@ public class SettingFragment extends PreferenceFragmentPlus {
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
                 mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
+                if (preference.getKey().equals(PREF_DATA_LANGUAGE)) {
+                    Log.i(BuildConfig.VERSION_NAME, mSettings.getDataLanguage()+"xxxx");
+                    if (mSettings.getDataLanguage() == 0) {
+                        try {
+                            mSettings.copyCnData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (mSettings.getDataLanguage() == 1) {
+                        try {
+                            mSettings.copyKorData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (mSettings.getDataLanguage() == 2) {
+                        try {
+                            mSettings.copyEnData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    DataManager.get().load(true);
+                }
             } else {
                 mSharedPreferences.edit().putString(preference.getKey(), "" + value).apply();
             }

@@ -75,6 +75,11 @@
         <item>低</item>
         <item>高</item>
     </string-array>
+    <string-array name="data_language" translatable="false">
+        <item>简体中文</item>
+        <item>조선말</item>
+        <item>English</item>
+    </string-array>
     <!-- settings -->
     <string name="server_list">直连决斗</string>
     <string name="server_name">名称:</string>
@@ -334,4 +339,5 @@
     <string name="edit_your_message">输入聊天内容</string>
     <string name="login_succeed">登录成功</string>
     <string name="reChatJoining">连接断开,重新登陆中……</string>
+    <string name="settings_data_language">资料语言</string>
 </resources>

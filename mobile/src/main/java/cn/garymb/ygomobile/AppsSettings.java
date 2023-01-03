@@ -1,10 +1,18 @@
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.Constants.ASSETS_EN;
+import static cn.garymb.ygomobile.Constants.ASSETS_KOR;
+import static cn.garymb.ygomobile.Constants.BOT_CONF;
+import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
+import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
+import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
@@ -24,6 +32,7 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.WINDBOT_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -37,6 +46,7 @@ import androidx.annotation.Nullable;
 import org.json.JSONArray;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +57,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DensityUtils;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 
 public class AppsSettings {
@@ -224,10 +235,10 @@ public class AppsSettings {
     }
 
 
-    public File[] getExpansionFiles(){
+    public File[] getExpansionFiles() {
         return new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS)
                 .listFiles((file) -> {
-                    if(!file.isFile()){
+                    if (!file.isFile()) {
                         return false;
                     }
                     String s_name = file.getName().toLowerCase();
@@ -355,6 +366,23 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_IMAGE_QUALITY, "" + quality);
     }
 
+    /***
+     * 资料语言
+     */
+    public void setDataLanguage(int language) {
+        mSharedPreferences.putString(Constants.PREF_DATA_LANGUAGE, "" + language);
+    }
+
+    /***
+     * 资料语言
+     */
+    public int getDataLanguage() {
+        try {
+            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + Constants.PREF_DEF_DATA_LANGUAGE));
+        } catch (Exception e) {
+            return Constants.PREF_DEF_DATA_LANGUAGE;
+        }
+    }
 
     /**
      * 根据卡密获取卡图的路径
@@ -686,5 +714,69 @@ public class AppsSettings {
         }
 //        Log.i("kk", "saveTemp:" + array);
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
+    }
+
+    public void copyCnData() throws IOException {
+        //复制数据库
+        copyCdbFile(getDatapath(DATABASE_NAME));
+        //复制游戏配置文件
+        IOUtils.copyFilesFromAssets(context, getDatapath("conf") + "/" + CORE_STRING_PATH, getResourcePath(), true);
+        IOUtils.copyFilesFromAssets(context, getDatapath("conf") + "/" + BOT_CONF, getResourcePath(), true);
+        //替换换行符
+        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        fixString(stringConfPath);
+        fixString(botConfPath);
+        //设置语言为0=中文
+        AppsSettings.get().setDataLanguage(0);
+    }
+
+    public void copyKorData() throws IOException {
+        String korStringConf = ASSETS_KOR + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String korBotConf = ASSETS_KOR + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String korCdb = ASSETS_KOR + getDatapath(DATABASE_NAME);
+        //复制数据库
+        copyCdbFile(korCdb);
+        //复制游戏配置文件
+        IOUtils.copyFilesFromAssets(context, korStringConf, getResourcePath(), true);
+        IOUtils.copyFilesFromAssets(context, korBotConf, getResourcePath(), true);
+        //替换换行符
+        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        fixString(stringConfPath);
+        fixString(botConfPath);
+        //设置语言为1=조선말
+        AppsSettings.get().setDataLanguage(1);
+    }
+
+    public void copyEnData() throws IOException {
+        String enStringConf = ASSETS_EN + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String enBotConf = ASSETS_EN + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String enCdb = ASSETS_EN + getDatapath(DATABASE_NAME);
+        //复制数据库
+        copyCdbFile(enCdb);
+        //复制人机资源
+        IOUtils.copyFilesFromAssets(context, getDatapath(Constants.WINDBOT_PATH), getResourcePath(), true);
+        //复制游戏配置文件
+        IOUtils.copyFilesFromAssets(context, enStringConf, getResourcePath(), true);
+        IOUtils.copyFilesFromAssets(context, enBotConf, getResourcePath(), true);
+        //替换换行符
+        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        fixString(stringConfPath);
+        fixString(botConfPath);
+        //设置语言为2=English
+        AppsSettings.get().setDataLanguage(2);
+    }
+
+    private void fixString(String stringPath) {
+        List<String> lines = FileUtils.readLines(stringPath, Constants.DEF_ENCODING);
+        FileUtils.writeLines(stringPath, lines, Constants.DEF_ENCODING, "\n");
+    }
+
+    private void copyCdbFile(String cdbPath) throws IOException {
+        File dbFile = new File(getDataBasePath(), DATABASE_NAME);
+        if (dbFile.exists()) dbFile.delete();//如果数据库存在先删除
+        IOUtils.copyFilesFromAssets(context, cdbPath, getDataBasePath(), true);
     }
 }

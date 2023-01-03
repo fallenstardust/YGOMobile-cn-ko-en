@@ -380,7 +380,7 @@ public class YGODialogUtil {
                     deckAdp.notifyDataSetChanged();
                 }
             }));
-//            itemTouchHelper.attachToRecyclerView(rv_type);
+            itemTouchHelper.attachToRecyclerView(rv_type);
         }
 
         private String[] getStringType(List<DeckType> deckTypeList) {

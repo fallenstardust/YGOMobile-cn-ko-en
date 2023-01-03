@@ -20,6 +20,8 @@ public interface Constants {
 
     String PREF_IMAGE_QUALITY = "pref_key_game_image_quality";
     int PREF_DEF_IMAGE_QUALITY = 1;
+    String PREF_DATA_LANGUAGE = "pref_key_game_data_language";
+    int PREF_DEF_DATA_LANGUAGE = 0;
     String PREF_GAME_FONT = "pref_key_game_font_name";
     String PREF_USE_EXTRA_CARD_CARDS = "settings_game_diy_card_db";
     boolean PREF_DEF_USE_EXTRA_CARD_CARDS = true;
