@@ -18,6 +18,7 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.PREF_DEF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
@@ -378,9 +380,10 @@ public class AppsSettings {
      */
     public int getDataLanguage() {
         try {
-            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + Constants.PREF_DEF_DATA_LANGUAGE));
+            Log.i(BuildConfig.VERSION_NAME, mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + PREF_DEF_DATA_LANGUAGE));
+            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + PREF_DEF_DATA_LANGUAGE));
         } catch (Exception e) {
-            return Constants.PREF_DEF_DATA_LANGUAGE;
+            return PREF_DEF_DATA_LANGUAGE;
         }
     }
 
@@ -728,7 +731,7 @@ public class AppsSettings {
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为0=中文
-        AppsSettings.get().setDataLanguage(0);
+        setDataLanguage(0);
     }
 
     public void copyKorData() throws IOException {
@@ -746,7 +749,7 @@ public class AppsSettings {
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为1=조선말
-        AppsSettings.get().setDataLanguage(1);
+        setDataLanguage(1);
     }
 
     public void copyEnData() throws IOException {
@@ -766,7 +769,7 @@ public class AppsSettings {
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为2=English
-        AppsSettings.get().setDataLanguage(2);
+        setDataLanguage(2);
     }
 
     private void fixString(String stringPath) {

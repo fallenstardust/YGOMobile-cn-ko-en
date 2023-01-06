@@ -339,5 +339,6 @@
     <string name="edit_your_message">输入聊天内容</string>
     <string name="login_succeed">登录成功</string>
     <string name="reChatJoining">连接断开,重新登陆中……</string>
-    <string name="settings_data_language">资料语言</string>
+    <string name="settings_data_language">切换资料语言</string>
+    <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
 </resources>

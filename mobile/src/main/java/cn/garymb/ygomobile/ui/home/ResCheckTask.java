@@ -201,8 +201,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 return name.endsWith(".tmp");
             }
         });
-        if(files != null){
-            for(File file : files){
+        if (files != null) {
+            for (File file : files) {
                 FileUtils.deleteFile(file);
             }
         }
@@ -278,14 +278,20 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
             //根据系统语言复制特定资料文件
             String language = mContext.getResources().getConfiguration().locale.getLanguage();
-            Log.i(BuildConfig.VERSION_NAME,language);
-            if(!language.isEmpty()){
-                if(language.equals("zh")) {
-                    copyCnData(needsUpdate);
-                }else if (language.equals("ko")){
-                    copyKorData(needsUpdate);
+            Log.i(BuildConfig.VERSION_NAME, language);
+            if (!language.isEmpty()) {
+                if (mSettings.getDataLanguage() == -1) {
+                    if (language.equals("zh"))
+                        copyCnData(needsUpdate);
+                    if (language.equals("ko")) {
+                        copyKorData(needsUpdate);
+                    } else {
+                        copyEnData(needsUpdate);
+                    }
                 } else {
-                    copyEnData(needsUpdate);
+                    if (mSettings.getDataLanguage() == 0) copyCnData(needsUpdate);
+                    if (mSettings.getDataLanguage() == 1) copyKorData(needsUpdate);
+                    if (mSettings.getDataLanguage() == 2) copyEnData(needsUpdate);
                 }
             }
             han.sendEmptyMessage(0);
@@ -326,7 +332,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(enStringConf, enBotConf, mSettings.getResourcePath(), needsUpdate);
-        AppsSettings.get().setDataLanguage(1);
+        AppsSettings.get().setDataLanguage(2);
         return ERROR_NONE;
     }
 
@@ -342,7 +348,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, korSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(korStringConf, korBotConf, mSettings.getResourcePath(), needsUpdate);
-        AppsSettings.get().setDataLanguage(2);
+        //AppsSettings.get().setDataLanguage(1);
         return ERROR_NONE;
     }
 

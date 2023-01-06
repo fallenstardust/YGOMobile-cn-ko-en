@@ -340,4 +340,5 @@
     <string name="login_succeed">채팅 방에 로그인되었습니다</string>
     <string name="reChatJoining">다시 로그인 중\.\.\.</string>
     <string name="settings_data_language">언어</string>
+    <string name="settings_data_language_about">change the game data language</string>
 </resources>

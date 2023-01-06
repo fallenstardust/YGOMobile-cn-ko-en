@@ -86,8 +86,10 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import kotlin.collections.IndexedValue;
 import ocgcore.DataManager;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -232,32 +234,34 @@ public class SettingFragment extends PreferenceFragmentPlus {
             boolean rs = super.onPreferenceChange(preference, value);
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
-                mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
                 if (preference.getKey().equals(PREF_DATA_LANGUAGE)) {
-                    Log.i(BuildConfig.VERSION_NAME, mSettings.getDataLanguage()+"xxxx");
-                    if (mSettings.getDataLanguage() == 0) {
+                    if (listPreference.getValue().equals("0")) {
                         try {
                             mSettings.copyCnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (mSettings.getDataLanguage() == 1) {
+                    if (listPreference.getValue().equals("1")) {
                         try {
                             mSettings.copyKorData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (mSettings.getDataLanguage() == 2) {
+                    if (listPreference.getValue().equals("2")) {
                         try {
                             mSettings.copyEnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
+                    mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
+                    Log.i(BuildConfig.VERSION_NAME, mSettings.getDataLanguage() + preference.getKey() + listPreference.getValue());
+                    Toast.makeText(getContext(), R.string.restart_app, Toast.LENGTH_LONG).show();
                     DataManager.get().load(true);
                 }
+                mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
             } else {
                 mSharedPreferences.edit().putString(preference.getKey(), "" + value).apply();
             }

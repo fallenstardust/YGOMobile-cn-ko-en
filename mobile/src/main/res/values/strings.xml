@@ -350,4 +350,5 @@
     <string name="login_succeed">Chatroom logined</string>
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
+    <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
 </resources>
