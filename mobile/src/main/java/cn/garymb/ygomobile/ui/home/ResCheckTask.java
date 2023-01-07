@@ -10,7 +10,6 @@ import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
-import static cn.garymb.ygomobile.Constants.WINDBOT_PATH;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -194,7 +193,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             Log.d(TAG, "check start");
         boolean needsUpdate = isNewVersion;
         //清空下载缓存
-        File imgDir = new File(AppsSettings.get().getCardImagePath());
+        File imgDir = new File(mSettings.getCardImagePath());
         File[] files = imgDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -215,10 +214,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.createNoMedia(resPath);
             //检查文件夹
             checkDirs();
-            if (AppsSettings.get().isUseExtraCards()) {
+            if (mSettings.isUseExtraCards()) {
                 //自定义数据库无效，则用默认的
-                if (!CardManager.checkDataBase(AppsSettings.get().getDataBaseFile())) {
-                    AppsSettings.get().setUseExtraCards(false);
+                if (!CardManager.checkDataBase(mSettings.getDataBaseFile())) {
+                    mSettings.setUseExtraCards(false);
                 }
             }
             //如果是新版本
@@ -316,7 +315,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         copyCoreConfig(getDatapath("conf") + "/" + CORE_STRING_PATH,
                 getDatapath("conf") + "/" + BOT_CONF,
                 mSettings.getResourcePath(), needsUpdate);
-        AppsSettings.get().setDataLanguage(0);
+        mSettings.setDataLanguage(0);
         return ERROR_NONE;
     }
 
@@ -332,7 +331,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(enStringConf, enBotConf, mSettings.getResourcePath(), needsUpdate);
-        AppsSettings.get().setDataLanguage(2);
+        mSettings.setDataLanguage(2);
         return ERROR_NONE;
     }
 
@@ -348,7 +347,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, korSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(korStringConf, korBotConf, mSettings.getResourcePath(), needsUpdate);
-        //AppsSettings.get().setDataLanguage(1);
+        mSettings.setDataLanguage(1);
         return ERROR_NONE;
     }
 
@@ -426,9 +425,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     private int copyCoreConfig(String assetStringPath, String assetBotPath, String toPath, boolean needsUpdate) throws IOException {
-        File systemfile = new File(AppsSettings.get().getResourcePath(), CORE_SYSTEM_PATH);
-        File stringfile = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH);
-        File botfile = new File(AppsSettings.get().getResourcePath(), BOT_CONF);
+        File systemfile = new File(mSettings.getResourcePath(), CORE_SYSTEM_PATH);
+        File stringfile = new File(mSettings.getResourcePath(), CORE_STRING_PATH);
+        File botfile = new File(mSettings.getResourcePath(), BOT_CONF);
         if (!systemfile.exists()) {
             IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
         }

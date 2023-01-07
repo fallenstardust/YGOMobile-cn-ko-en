@@ -6,10 +6,8 @@ import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
-import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_PACK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
-import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
@@ -238,7 +236,7 @@ public class AppsSettings {
 
 
     public File[] getExpansionFiles() {
-        return new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS)
+        return new File(getResourcePath(), Constants.CORE_EXPANSIONS)
                 .listFiles((file) -> {
                     if (!file.isFile()) {
                         return false;
@@ -726,8 +724,8 @@ public class AppsSettings {
         IOUtils.copyFilesFromAssets(context, getDatapath("conf") + "/" + CORE_STRING_PATH, getResourcePath(), true);
         IOUtils.copyFilesFromAssets(context, getDatapath("conf") + "/" + BOT_CONF, getResourcePath(), true);
         //替换换行符
-        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
-        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为0=中文
@@ -744,8 +742,8 @@ public class AppsSettings {
         IOUtils.copyFilesFromAssets(context, korStringConf, getResourcePath(), true);
         IOUtils.copyFilesFromAssets(context, korBotConf, getResourcePath(), true);
         //替换换行符
-        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
-        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为1=조선말
@@ -764,20 +762,20 @@ public class AppsSettings {
         IOUtils.copyFilesFromAssets(context, enStringConf, getResourcePath(), true);
         IOUtils.copyFilesFromAssets(context, enBotConf, getResourcePath(), true);
         //替换换行符
-        String stringConfPath = new File(AppsSettings.get().getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
-        String botConfPath = new File(AppsSettings.get().getResourcePath(), BOT_CONF).getAbsolutePath();
+        String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
+        String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为2=English
         setDataLanguage(2);
     }
 
-    private void fixString(String stringPath) {
+    public void fixString(String stringPath) {
         List<String> lines = FileUtils.readLines(stringPath, Constants.DEF_ENCODING);
         FileUtils.writeLines(stringPath, lines, Constants.DEF_ENCODING, "\n");
     }
 
-    private void copyCdbFile(String cdbPath) throws IOException {
+    public void copyCdbFile(String cdbPath) throws IOException {
         File dbFile = new File(getDataBasePath(), DATABASE_NAME);
         if (dbFile.exists()) dbFile.delete();//如果数据库存在先删除
         IOUtils.copyFilesFromAssets(context, cdbPath, getDataBasePath(), true);
