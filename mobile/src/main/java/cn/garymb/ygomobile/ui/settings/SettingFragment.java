@@ -134,7 +134,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
     @Override
     protected SharedPreferences getSharedPreferences() {
-        return mSettings.getSharedPreferences();
+        return AppsSettings.get().getSharedPreferences();
     }
 
     @Override
