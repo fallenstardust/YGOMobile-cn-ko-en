@@ -94,11 +94,11 @@ public class ExCardActivity extends BaseActivity {
                         Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();
                     }
                     String servername = "";
-                    if (getPackageName().equals(BuildConfig.APPLICATION_ID))
+                    if (AppsSettings.get().getDataLanguage() == 0)
                         servername = "23333先行服务器";
-                    if (getPackageName().equals((BuildConfig.APPLICATION_ID) + ".KO"))
+                    if (AppsSettings.get().getDataLanguage() == 1)
                         servername = "YGOPRO 사전 게시 중국서버";
-                    if (getPackageName().equals((BuildConfig.APPLICATION_ID) + ".EN"))
+                    if (AppsSettings.get().getDataLanguage() == 2)
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     btn_download.setVisibility(View.GONE);

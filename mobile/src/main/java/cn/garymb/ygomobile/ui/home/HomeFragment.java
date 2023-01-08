@@ -749,7 +749,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     ll_new_notice.setVisibility(View.GONE);
                     Log.i("webCrawler", "webCrawler fail");
                 }).done((tmp) -> {
-
                     if (tmp != null) {
                         Log.i("webCrawler", "webCrawler done");
                         Intent intent = new Intent(getActivity(), ExCardActivity.class);
@@ -765,7 +764,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                             aurl = aurl + "#pre_update_title";
                         }
                         WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                        ll_new_notice.setVisibility(View.GONE);
                         Log.i("webCrawler", "webCrawler cannot return ex-card data");
                     }
                     //关闭异常
@@ -776,6 +774,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                         } catch (Exception ex) {
                         }
                     }
+                    ll_new_notice.setVisibility(View.GONE);
                 });
 
                 break;
