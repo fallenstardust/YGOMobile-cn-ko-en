@@ -93,6 +93,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     private static final int TYPE_SETTING_GET_VERSION_FAILED = 1;
     private AppsSettings mSettings;
     public static String Version;
+    public static String Cache_link;
     private boolean isInit = true;
 
     public SettingFragment() {
@@ -106,15 +107,16 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_SETTING_GET_VERSION_OK:
-                    Version = msg.obj.toString();
-                    Log.i(BuildConfig.VERSION_NAME, Version);
-                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty()) {
-                        DialogPlus dialog = new DialogPlus(getContext());
+                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
+                    Log.i(BuildConfig.VERSION_NAME, Version + "和" + Cache_link);
+                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
+                        DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
                         dialog.setLeftButtonText(R.string.download_home);
                         dialog.setLeftButtonListener((dlg, s) -> {
                             Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse("https://netdisk.link/YGOMobile_" + Version + ".apk/links"));
+                            intent.setData(Uri.parse(Cache_link));
                             startActivity(intent);
                             dialog.dismiss();
                         });
@@ -250,7 +252,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         }
                     }
                     mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
-                    Log.i(BuildConfig.VERSION_NAME, mSettings.getDataLanguage() + preference.getKey() + listPreference.getValue());
                     Toast.makeText(getContext(), R.string.restart_app, Toast.LENGTH_LONG).show();
                     DataManager.get().load(true);
                 }
@@ -287,12 +288,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     message.what = TYPE_SETTING_GET_VERSION_FAILED;
                     message.obj = e;
                     handler.sendMessage(message);
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String json = response.body().string();
+                    Log.i(BuildConfig.VERSION_NAME, json);
                     Message message = new Message();
                     message.what = TYPE_SETTING_GET_VERSION_OK;
                     message.obj = json;
