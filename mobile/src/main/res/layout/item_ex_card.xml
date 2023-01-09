@@ -35,7 +35,7 @@
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
             android:textColor="@color/item_title"
-            android:textSize="18sp"
+            android:textSize="15sp"
             tools:text="Card Name" />
 
         <TextView
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="20dp"
-            android:textSize="15sp" />
+            android:textSize="12sp" />
 
         <View
             android:id="@+id/view_bar"
