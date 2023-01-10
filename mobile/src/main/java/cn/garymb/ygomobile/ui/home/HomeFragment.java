@@ -55,6 +55,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
@@ -68,6 +69,8 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.ex_card.ExCard;
+import cn.garymb.ygomobile.ex_card.ExCardEvent;
+import cn.garymb.ygomobile.ex_card.ExCardLogItem;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -616,7 +619,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             if(event.position != 4) {//TODO暂时通过position判断先行卡服务器
                 joinRoom(event.position);
             }else{
-                Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                //如果是先行卡服务器，并且未开启先行卡设置
+                if (!AppsSettings.get().isReadExpansions()) {
+                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                }else{
+                    joinRoom(event.position);
+                }
             }
             //showNewbieGuide("joinRoom");
         } else {
@@ -812,9 +820,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
                     if (intent != null) {
                         Log.i("webCrawler", "webCrawler done");
-                        Intent intent = new Intent(getActivity(), ExCardActivity.class);
-                        //intent.putExtra("exCards", tmp);
-                        intent.putParcelableArrayListExtra("exCards", tmp);
                         startActivity(intent);
                     } else {
                         //If the crawler process cannot return right ex-card data,
