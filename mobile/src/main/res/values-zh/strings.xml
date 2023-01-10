@@ -39,6 +39,7 @@
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
     <string name="fetch_ex_card">读取先行卡</string>
+    <string name="ex_card_log">更新日志</string>
     <!-- settings -->
     <string name="settings_about">关于</string>
     <string name="settings_about_sub_about">关于</string>

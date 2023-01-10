@@ -46,6 +46,7 @@
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
     <string name="fetch_ex_card">Fetching ex-cards</string>
+    <string name="ex_card_log">update log</string>
     <!-- settings -->
     <string name="settings_about">About</string>
     <string name="settings_about_sub_about">About</string>
