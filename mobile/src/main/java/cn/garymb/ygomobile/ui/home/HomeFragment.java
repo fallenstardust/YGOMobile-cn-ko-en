@@ -2,9 +2,11 @@ package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
+import static cn.garymb.ygomobile.utils.BitmapUtil.getPaint;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,6 +34,7 @@ import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
 
 import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
@@ -63,8 +66,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
-import cn.garymb.ygomobile.ex_card.ExCard;
 import cn.garymb.ygomobile.ex_card.ExCardActivity;
+import cn.garymb.ygomobile.ex_card.ExCard;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -98,7 +101,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
-    private static final int TYPE_GET_DATA_VER_OK = 3;
+    public static final int TYPE_GET_DATA_VER_OK = 3;
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
@@ -151,6 +154,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             EventBus.getDefault().register(this);
         }
         showExNew();
+        changeColor();
         //showNewbieGuide("homePage");
         return layoutView;
     }
@@ -274,10 +278,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     isMcNewsLoadException = true;
                     break;
                 case TYPE_GET_DATA_VER_OK:
-                    WebActivity.dataVer = msg.obj.toString();
+                    WebActivity.exCardVer = msg.obj.toString();
                     String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-                    if (!TextUtils.isEmpty(WebActivity.dataVer)) {
-                        if (!WebActivity.dataVer.equals(oldVer)) {
+                    if (!TextUtils.isEmpty(WebActivity.exCardVer)) {
+                        if (!WebActivity.exCardVer.equals(oldVer)) {//如果oldVer为null，也会触发
                             ll_new_notice.setVisibility(View.VISIBLE);
                         } else {
                             ll_new_notice.setVisibility(View.GONE);
@@ -291,24 +295,44 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         }
     };
 
-    public void showExNew() {
-        if (AppsSettings.get().isReadExpansions()) {
-            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String json = response.body().string();
-                    Message message = new Message();
-                    message.what = TYPE_GET_DATA_VER_OK;
-                    message.obj = json;
-                    handler.sendMessage(message);
-                }
-            });
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageReceived(ExCardEvent event) {
+        Log.i("webCrawler", "event" + event.getType());
+        if (event.getType() == ExCardEvent.EventType.exCardPackageChange) {
+            showExNew();
+        } else if (event.getType() == ExCardEvent.EventType.exCardPrefChange) {
+            changeColor();
         }
+    }
+
+    private void changeColor() {
+        mServerListManager.syncLoadData();
+        if (AppsSettings.get().isReadExpansions()) {
+            Paint paint = getPaint(1);
+            cv_download_ex.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+        } else {
+            Paint paint = getPaint(0);
+            cv_download_ex.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+        }
+    }
+
+    public void showExNew() {
+        OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i(BuildConfig.VERSION_NAME, "error" + e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                Message message = new Message();
+                message.what = TYPE_GET_DATA_VER_OK;
+                message.obj = json;
+                handler.sendMessage(message);
+            }
+        });
+
     }
 
     private void findMcNews() {
@@ -574,6 +598,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
+        Log.i("webCrawler", "dialog");
         if (event.delete) {
             DialogPlus dialogPlus = new DialogPlus(getContext());
             dialogPlus.setTitle(R.string.question);
@@ -588,7 +613,11 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             dialogPlus.setOnCloseLinster(null);
             dialogPlus.show();
         } else if (event.join) {
-            joinRoom(event.position);
+            if(event.position != 4) {//TODO暂时通过position判断先行卡服务器
+                joinRoom(event.position);
+            }else{
+                Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+            }
             //showNewbieGuide("joinRoom");
         } else {
             mServerListManager.showEditDialog(event.position);
@@ -701,6 +730,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
+                if (!AppsSettings.get().isReadExpansions()) {//如果未开启扩展卡设置，直接跳过
+                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                    break;
+                }
                 //using Web crawler to extract the information of pre card
                 final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
                 VUiKit.defer().when(() -> {
@@ -708,27 +741,54 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     //Connect to the website
                     Document document = Jsoup.connect(aurl).get();
                     Element pre_card_content = document.getElementById("pre_release_cards");
+                    Element pre_update_log = document.getElementById("pre_update_log");
                     Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
                     Elements cards = tbody.getElementsByTag("tr");
-                    if (cards.size() > 300) {//Considering the efficiency of html parse, if the size of
+                    if (cards.size() > 1000) {//Considering the efficiency of html parse, if the size of
                         // pre cards list is to large, return null directly.
                         return null;
                     }
-                    ArrayList<ExCard> exCards = new ArrayList<>();
+                    ArrayList<ExCard> exCardList = new ArrayList<>();
                     for (Element card : cards) {
                         Elements card_attributes = card.getElementsByTag("td");
                         String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
                         String name = card_attributes.get(1).text();
                         String description = card_attributes.get(2).text();
-                        ExCard exCard = new ExCard(name, imageUrl, description);
-                        exCards.add(exCard);
+                        ExCard exCard = new ExCard(name, imageUrl, description, 0);
+                        exCardList.add(exCard);
 
                     }
-                    Log.i("webCrawler", exCards.toString());
-                    if (exCards.isEmpty()) {
+
+                    ArrayList<ExCardLogItem> exCardLogList = new ArrayList<>();
+                    exCardLogList.add(new ExCardLogItem(0, getString(R.string.ex_card_log), new ArrayList<>()));
+                    Elements cardLogElements = pre_update_log.select("ul[class=auto-generated]").get(0).getElementsByTag("li");
+                    pre_update_log.getElementsByTag("ul");
+                    for (Element cardLog : cardLogElements) {
+                        String judgeData = cardLog.toString();
+                        Pattern p = Pattern.compile("<li>\\d{4}");
+                        boolean result = p.matcher(judgeData).find();
+                        if (result) {
+                            Elements logItems = cardLog.getElementsByTag("li");
+                            List<String> logs = new ArrayList<>();
+                            logItems.get(0).select("ul").remove();
+                            String dateTime = logItems.get(0).text();
+                            for (int i = 1; i < logItems.size(); i++) {
+                                logs.add(logItems.get(i).text());
+
+                            }
+                            exCardLogList.add(new ExCardLogItem(logs.size(), dateTime, logs));
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    Intent intent = new Intent(getActivity(), ExCardActivity.class);
+                    intent.putParcelableArrayListExtra("exCardLogList", exCardLogList);
+                    intent.putParcelableArrayListExtra("exCardList", exCardList);
+                    if (exCardList.isEmpty() && exCardLogList.isEmpty()) {
                         return null;
                     } else {
-                        return exCards;
+                        return intent;
                     }
 
                 }).fail((e) -> {
@@ -748,8 +808,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
                     ll_new_notice.setVisibility(View.GONE);
                     Log.i("webCrawler", "webCrawler fail");
-                }).done((tmp) -> {
-                    if (tmp != null) {
+                }).done(intent -> {
+
+                    if (intent != null) {
                         Log.i("webCrawler", "webCrawler done");
                         Intent intent = new Intent(getActivity(), ExCardActivity.class);
                         //intent.putExtra("exCards", tmp);
@@ -764,6 +825,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                             aurl = aurl + "#pre_update_title";
                         }
                         WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
+                        ll_new_notice.setVisibility(View.GONE);
                         Log.i("webCrawler", "webCrawler cannot return ex-card data");
                     }
                     //关闭异常
@@ -774,7 +836,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                         } catch (Exception ex) {
                         }
                     }
-                    ll_new_notice.setVisibility(View.GONE);
                 });
 
                 break;

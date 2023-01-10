@@ -1,7 +1,10 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import static cn.garymb.ygomobile.utils.BitmapUtil.getPaint;
+
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -15,6 +18,7 @@ import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
 import org.greenrobot.eventbus.EventBus;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
@@ -68,7 +72,7 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
                 case R.id.smContentView:
                     ServerInfoEvent event = new ServerInfoEvent(position, false);
                     event.join = true;
-                    EventBus.getDefault().post(event);
+                    EventBus.getDefault().post(event);//TODO 没有监听啊。。
                     SwipeHorizontalMenuLayout menuLayout = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
                     if (menuLayout.isMenuOpen()) {
                         menuLayout.smoothCloseMenu();
@@ -121,6 +125,17 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
             baseViewHolder.findView(R.id.iv_fond).setVisibility(View.VISIBLE);
         } else {
             baseViewHolder.findView(R.id.iv_fond).setVisibility(View.GONE);
+        }
+
+        if (position == 4) {//假设第五个是先行卡服务器
+            if (AppsSettings.get().isReadExpansions()) {
+                Paint paint = getPaint(1);
+                baseViewHolder.getView(R.id.swipe_layout).setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+            } else {
+                Paint paint = getPaint(0);
+                baseViewHolder.getView(R.id.swipe_layout).setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+            }
+
         }
     }
 }

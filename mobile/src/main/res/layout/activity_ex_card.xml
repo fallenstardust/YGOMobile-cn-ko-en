@@ -1,44 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg3">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#aa000000" />
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
+        <ExpandableListView
+            android:id="@+id/expandableListView"
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_weight="3"
+            android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
+            android:divider="@android:color/darker_gray"
+            android:dividerHeight="0.5dp" />
 
         <com.tubb.smrv.SwipeMenuRecyclerView
             android:id="@+id/list_ex_cards"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="13"
             android:divider="@android:color/transparent"
             android:dividerHeight="4dp"
             android:padding="5dp"
             android:scrollbars="vertical" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/web_btn_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="horizontal">
 
         <Button
             android:id="@+id/web_btn_download_prerelease"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="@drawable/button_bg"
             android:text="@string/Download" />
-
     </LinearLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

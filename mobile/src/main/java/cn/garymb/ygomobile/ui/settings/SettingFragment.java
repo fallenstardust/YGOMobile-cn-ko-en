@@ -63,6 +63,7 @@ import android.widget.Toast;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.MediaStoreSignature;
 
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -165,7 +166,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
-        bind(PREF_DATA_LANGUAGE, "" + mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -288,6 +288,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     message.what = TYPE_SETTING_GET_VERSION_FAILED;
                     message.obj = e;
                     handler.sendMessage(message);
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
@@ -317,6 +318,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ListView listView = dialog.bind(R.id.room_list);
             listView.setAdapter(simpleListAdapter);
             listView.setOnItemLongClickListener((a, v, i, index) -> {
+                /* 删除先行卡 */
                 String name = simpleListAdapter.getItemById(index);
                 int pos = simpleListAdapter.findItem(name);
                 if (pos >= 0) {
@@ -324,7 +326,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     simpleListAdapter.notifyDataSetChanged();
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
                     DataManager.get().load(true);
+                    SharedPreferenceUtil.setExpansionDataVer(null);
                     Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));
                 }
                 return true;
             });

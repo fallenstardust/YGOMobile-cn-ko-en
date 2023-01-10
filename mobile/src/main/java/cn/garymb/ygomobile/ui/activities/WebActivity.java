@@ -50,7 +50,7 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity {
-    public static String dataVer;
+    public static String exCardVer;
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
@@ -99,7 +99,7 @@ public class WebActivity extends BaseActivity {
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     btn_download.setVisibility(View.GONE);
-                    SharedPreferenceUtil.setExpansionDataVer(WebActivity.dataVer);
+                    SharedPreferenceUtil.setExpansionDataVer(WebActivity.exCardVer);
                     break;
                 case UnzipUtils.ZIP_UNZIP_EXCEPTION:
                     Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
