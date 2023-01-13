@@ -354,4 +354,6 @@
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

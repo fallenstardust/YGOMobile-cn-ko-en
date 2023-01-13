@@ -153,6 +153,11 @@
             android:theme="@style/AppTheme.Mycard"
             android:launchMode="singleTop"
             />
+        <activity
+            android:name="cn.garymb.ygomobile.ex_card.ExCardActivity2"
+            android:theme="@style/AppTheme.Mycard"
+            android:launchMode="singleTop"
+            />
         <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
         <!--android:priority="1000"-->
         <service

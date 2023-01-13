@@ -66,6 +66,7 @@ import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.ex_card.ExCard;
 import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
+import cn.garymb.ygomobile.ex_card.ExCardActivity2;
 import cn.garymb.ygomobile.ex_card.ExCardLogItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -778,7 +779,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                         }
                     }
 
-                    Intent intent = new Intent(getActivity(), ExCardActivity.class);
+                    Intent intent = new Intent(getActivity(), ExCardActivity2.class);
                     intent.putParcelableArrayListExtra("exCardLogList", exCardLogList);
                     intent.putParcelableArrayListExtra("exCardList", exCardList);
                     if (exCardList.isEmpty() && exCardLogList.isEmpty()) {

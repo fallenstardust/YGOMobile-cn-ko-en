@@ -7,25 +7,33 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <ExpandableListView
-            android:id="@+id/expandableListView"
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="3"
-            android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
-            android:divider="@android:color/darker_gray"
-            android:dividerHeight="0.5dp" />
 
-        <com.tubb.smrv.SwipeMenuRecyclerView
-            android:id="@+id/list_ex_cards"
+        <androidx.viewpager.widget.ViewPager
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="13"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="4dp"
-            android:padding="5dp"
-            android:scrollbars="vertical" />
+            android:layout_height="match_parent">
 
+            <com.google.android.material.tabs.TabLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <ExpandableListView
+                android:id="@+id/expandableListView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@android:color/darker_gray"
+                android:dividerHeight="0.5dp"
+                android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft" />
+
+            <com.tubb.smrv.SwipeMenuRecyclerView
+                android:id="@+id/list_ex_cards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="4dp"
+                android:padding="5dp"
+                android:scrollbars="vertical" />
+
+
+        </androidx.viewpager.widget.ViewPager>
         <Button
             android:id="@+id/web_btn_download_prerelease"
             android:layout_width="match_parent"
