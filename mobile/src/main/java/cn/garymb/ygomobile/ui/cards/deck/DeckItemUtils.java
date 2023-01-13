@@ -18,7 +18,7 @@ class DeckItemUtils {
     public static String makeMd5(List<DeckItem> items) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("#main");
-        for (int i = DeckItem.MainStart; i < DeckItem.MainStart + Constants.DECK_MAIN_MAX; i++) {
+        for (int i = DeckItem.MainStart; i < DeckItem.MainStart + items.size(); i++) {
             DeckItem deckItem = items.get(i);
             if (deckItem.getType() == DeckItemType.Space) {
                 break;
@@ -173,7 +173,7 @@ class DeckItemUtils {
             adapater.addItem(new DeckItem(DeckItemType.MainLabel));
             List<Card> main = deckInfo.getMainCards();
             if (main == null) {
-                for (int i = 0; i < deckInfo.getMainCount(); i++) {
+                for (int i = 0; i < Constants.DECK_MAIN_MAX; i++) {
                     adapater.addItem(new DeckItem());
                 }
             } else {
@@ -187,14 +187,15 @@ class DeckItemUtils {
                 } else {
                     //填充空舍的位置便于滚动到底部时不和底部功能按钮重叠
                     int emty = Constants.DECK_WIDTH_COUNT - deckInfo.getMainCount() % Constants.DECK_WIDTH_COUNT;
-                    for (int i = main.size(); i < emty + deckInfo.getMainCount(); i++) {
+                    for (int i = main.size(); i < (isPack ? emty : 0) + deckInfo.getMainCount(); i++) {
                         adapater.addItem(new DeckItem());
                     }
                 }
             }
-            List<Card> extra = deckInfo.getExtraCards();
-            List<Card> side = deckInfo.getSideCards();
+
             if (!isPack) {
+                List<Card> extra = deckInfo.getExtraCards();
+                List<Card> side = deckInfo.getSideCards();
                 //extra
                 adapater.addItem(new DeckItem(DeckItemType.ExtraLabel));
                 if (extra == null) {
@@ -223,7 +224,7 @@ class DeckItemUtils {
                         adapater.addItem(new DeckItem());
                     }
                 }
-                adapater.addItem(new DeckItem(deckInfo.getMainCard(1),DeckItemType.Space));
+                adapater.addItem(new DeckItem(DeckItemType.Space));
             }
         }
     }

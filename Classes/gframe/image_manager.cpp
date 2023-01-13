@@ -27,7 +27,7 @@ bool ImageManager::Initial(const path dir) {
 	tSelFieldLinkArrows[8] = driver->getTexture((dir + path("/textures/link_marker_on_8.png")).c_str());
 	tSelFieldLinkArrows[9] = driver->getTexture((dir + path("/textures/link_marker_on_9.png")).c_str());
 	tNumber = driver->getTexture((dir + path("/textures/number.png")).c_str());
-	tLPBar = driver->getTexture((dir + path("/textures/lp2.png")).c_str());
+	tLPBar = driver->getTexture((dir + path("/textures/lp3.png")).c_str());
 	tLPFrame = driver->getTexture((dir + path("/textures/lpf.png")).c_str());
 	tMask = driver->getTexture((dir + path("/textures/mask.png")).c_str());
 	tEquip = driver->getTexture((dir + path("/textures/equip.png")).c_str());

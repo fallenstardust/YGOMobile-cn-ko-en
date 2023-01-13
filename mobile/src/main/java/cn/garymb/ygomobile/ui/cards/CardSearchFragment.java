@@ -28,7 +28,7 @@ import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
 import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
-import com.ourygo.assistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 
 import java.util.List;
 

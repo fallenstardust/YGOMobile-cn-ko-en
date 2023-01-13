@@ -33,15 +33,19 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-import com.ourygo.assistant.util.DuelAssistantManagement;
-import com.ourygo.assistant.util.Util;
+import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.Util;
 import com.stx.xhb.androidx.XBanner;
 import com.tubb.smrv.SwipeMenuRecyclerView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,6 +63,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
+import cn.garymb.ygomobile.ex_card.ExCard;
+import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -66,7 +72,6 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
-import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
@@ -90,7 +95,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     public static final int ID_HOMEFRAGMENT = 0;
     private DuelAssistantManagement duelAssistantManagement;
     private HomeActivity activity;
-    private WebActivity webActivity;
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
@@ -273,7 +277,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     WebActivity.dataVer = msg.obj.toString();
                     String oldVer = SharedPreferenceUtil.getExpansionDataVer();
                     if (!TextUtils.isEmpty(WebActivity.dataVer)) {
-                        if(!WebActivity.dataVer.equals(oldVer)) {
+                        if (!WebActivity.dataVer.equals(oldVer)) {
                             ll_new_notice.setVisibility(View.VISIBLE);
                         } else {
                             ll_new_notice.setVisibility(View.GONE);
@@ -287,12 +291,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         }
     };
 
-    private void showExNew() {
+    public void showExNew() {
         if (AppsSettings.get().isReadExpansions()) {
             OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    showExNew();
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
@@ -512,7 +516,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     @Override
-    public void onCardSearch(String key, int id) {
+    public void onCardQuery(String key, int id) {
         /*
         if (id == ID_HOMEFRAGMENT) {
             Intent intent = new Intent(this, CardSearchFragment.class);
@@ -522,11 +526,15 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     @Override
-    public void onSaveDeck(String message, boolean isUrl, int id) {
-        saveDeck(message, isUrl);
+    public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
+        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception);
     }
 
-    public void saveDeck(String deckMessage, boolean isUrl) {
+    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
+        if (!TextUtils.isEmpty(exception)) {
+            YGOUtil.show("卡组解析失败，原因为：" + exception);
+            return;
+        }
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(R.string.question);
         dialog.setMessage(R.string.find_deck_text);
@@ -539,33 +547,23 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         });
         dialog.setRightButtonListener((dlg, s) -> {
             dialog.dismiss();
+            Deck deckInfo;
             //如果是卡组url
-            if (isUrl) {
-                Deck deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
-                File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                if (!deckInfo.isCompleteDeck()) {
-                    YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
-                }
-                if (!file.getAbsolutePath().isEmpty()) {
-                    mBundle.putString("setDeck", file.getAbsolutePath());
-                    activity.fragment_deck_cards.setArguments(mBundle);
-                }
-                activity.switchFragment(activity.fragment_deck_cards, 2, true);
+            if (uri != null) {
+                deckInfo = new Deck(uri, mainList, exList, sideList);
             } else {
-                //如果是卡组文本
-                try {
-                    //以当前时间戳作为卡组名保存卡组
-                    File file = DeckUtils.save(getString(R.string.rename_deck) + System.currentTimeMillis(), deckMessage);
-                    if (!file.getAbsolutePath().isEmpty()) {
-                        mBundle.putString("setDeck", file.getAbsolutePath());
-                        activity.fragment_deck_cards.setArguments(mBundle);
-                    }
-                    activity.switchFragment(activity.fragment_deck_cards, 2, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), getString(R.string.save_failed_bcos) + e, Toast.LENGTH_SHORT).show();
-                }
+                deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
             }
+            deckInfo.setCompleteDeck(isCompleteDeck);
+            File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+            if (!deckInfo.isCompleteDeck()) {
+                YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+            }
+            if (!file.getAbsolutePath().isEmpty()) {
+                mBundle.putString("setDeck", file.getAbsolutePath());
+                activity.fragment_deck_cards.setArguments(mBundle);
+            }
+            activity.switchFragment(activity.fragment_deck_cards, 2, true);
         });
     }
 
@@ -703,8 +701,82 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
-                WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
-                ll_new_notice.setVisibility(View.GONE);
+                //using Web crawler to extract the information of pre card
+                final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
+                VUiKit.defer().when(() -> {
+                    String aurl = Constants.URL_YGO233_ADVANCE;
+                    //Connect to the website
+                    Document document = Jsoup.connect(aurl).get();
+                    Element pre_card_content = document.getElementById("pre_release_cards");
+                    Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
+                    Elements cards = tbody.getElementsByTag("tr");
+                    if (cards.size() > 300) {//Considering the efficiency of html parse, if the size of
+                        // pre cards list is to large, return null directly.
+                        return null;
+                    }
+                    ArrayList<ExCard> exCards = new ArrayList<>();
+                    for (Element card : cards) {
+                        Elements card_attributes = card.getElementsByTag("td");
+                        String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
+                        String name = card_attributes.get(1).text();
+                        String description = card_attributes.get(2).text();
+                        ExCard exCard = new ExCard(name, imageUrl, description);
+                        exCards.add(exCard);
+
+                    }
+                    Log.i("webCrawler", exCards.toString());
+                    if (exCards.isEmpty()) {
+                        return null;
+                    } else {
+                        return exCards;
+                    }
+
+                }).fail((e) -> {
+                    //关闭异常
+                    if (dialog_read_ex.isShowing()) {
+                        try {
+                            dialog_read_ex.dismiss();
+                        } catch (Exception ex) {
+                        }
+                    }
+                    //If the crawler process failed, open webActivity
+                    String aurl = Constants.URL_YGO233_ADVANCE;
+
+                    if (ll_new_notice.getVisibility() == View.VISIBLE) {
+                        aurl = aurl + "#pre_update_title";
+                    }
+                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
+                    ll_new_notice.setVisibility(View.GONE);
+                    Log.i("webCrawler", "webCrawler fail");
+                }).done((tmp) -> {
+                    if (tmp != null) {
+                        Log.i("webCrawler", "webCrawler done");
+                        Intent intent = new Intent(getActivity(), ExCardActivity.class);
+                        //intent.putExtra("exCards", tmp);
+                        intent.putParcelableArrayListExtra("exCards", tmp);
+                        startActivity(intent);
+                    } else {
+                        //If the crawler process cannot return right ex-card data,
+                        //open webActivity
+                        String aurl = Constants.URL_YGO233_ADVANCE;
+
+                        if (ll_new_notice.getVisibility() == View.VISIBLE) {
+                            aurl = aurl + "#pre_update_title";
+                        }
+                        WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
+                        Log.i("webCrawler", "webCrawler cannot return ex-card data");
+                    }
+                    //关闭异常
+                    if (dialog_read_ex.isShowing()) {
+                        try {
+                            dialog_read_ex.dismiss();
+                            Log.i("webCrawler", "dialog close");
+                        } catch (Exception ex) {
+                        }
+                    }
+                    ll_new_notice.setVisibility(View.GONE);
+                });
+
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());
@@ -735,7 +807,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;*/
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(BuildConfig.URL_DONATE));
+                intent.setData(Uri.parse(Constants.URL_DONATE));
+                Toast.makeText(getActivity(), R.string.donatefor, Toast.LENGTH_LONG).show();
                 startActivity(intent);
             }
             break;

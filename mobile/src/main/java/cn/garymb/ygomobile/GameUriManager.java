@@ -19,10 +19,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 
-import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
@@ -246,13 +247,19 @@ public class GameUriManager {
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
                 } else {
-                    Deck deckInfo = new Deck(uri);
-                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    if (!deckInfo.isCompleteDeck()) {
-                        YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
-                    }
-                    startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
-                    activity.startActivity(startSetting);
+                    YGODAUtil.deDeckListener(uri, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
+                        if (!TextUtils.isEmpty(exception)){
+                            YGOUtil.show("卡组解析失败，原因为："+exception);
+                            return;
+                        }
+                        Deck deckInfo = new Deck(uri,mainList,exList,sideList);
+                        File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
+                        if (!deckInfo.isCompleteDeck()) {
+                            YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                        }
+                        startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
+                        activity.startActivity(startSetting);
+                    });
                 }
             } else if (Constants.URI_ROOM.equals(host)) {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {

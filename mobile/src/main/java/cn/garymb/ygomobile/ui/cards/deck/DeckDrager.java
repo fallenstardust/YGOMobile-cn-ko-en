@@ -244,11 +244,13 @@ class DeckDrager {
     public boolean moveExtraToSide(int src, int to) {
         int left = src - DeckItem.ExtraStart;
         int right = to - DeckItem.SideStart;
-        int count = deckAdapater.getSideCount();
-        if (right >= count) {
-            right = count - 1;
+        int sidecount = deckAdapater.getSideCount();
+        if (right >= sidecount) {
+            right = sidecount - 1;
         }
-
+        if (sidecount >= Constants.DECK_SIDE_MAX + 5) {
+            return false;
+        }
         //交换
         DeckItem space = deckAdapater.removeItem(DeckItem.SideEnd);
         DeckItem deckItem = deckAdapater.removeItem(DeckItem.ExtraStart + left);
@@ -306,6 +308,9 @@ class DeckDrager {
         int maincount = deckAdapater.getMainCount();
         if (right >= sidecount) {
             right = sidecount - 1;
+        }
+        if (sidecount >= Constants.DECK_SIDE_MAX + 5) {
+            return false;
         }
         //交换
         DeckItem space = deckAdapater.removeItem(DeckItem.SideEnd);

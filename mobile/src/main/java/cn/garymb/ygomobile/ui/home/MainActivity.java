@@ -36,8 +36,6 @@ import cn.garymb.ygomobile.utils.NetUtils;
 
 public class MainActivity extends HomeActivity implements BottomNavigationBar.OnTabSelectedListener {
     private final String[] PERMISSIONS = {
-//            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -115,19 +113,6 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                             }
                         }
                     });
-                    /*DialogPlus dialog = new DialogPlus(this)
-                            .setTitleText(getString(R.string.settings_about_change_log))
-                            .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
-                            .hideButton()
-                            .setOnCloseLinster((dlg) -> {
-                                dlg.dismiss();
-                                //mImageUpdater
-                                if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
-                                    if (!mImageUpdater.isRunning()) {
-                                        mImageUpdater.start();
-                                    }
-                                }
-                            });*/
                     dialog.setOnDismissListener(dialogInterface -> {
 //                        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
 //                            YGOUtil.isServicePermission(MainActivity.this, true);
@@ -251,8 +236,4 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     public void onTabReselected(int position) {
 
     }
-
-    /*        checkResourceDownload((result, isNewVersion) -> {
-                Toast.makeText(this, R.string.tip_reset_game_res, Toast.LENGTH_SHORT).show();
-            });*/
 }

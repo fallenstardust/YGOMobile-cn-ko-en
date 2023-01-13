@@ -15,8 +15,8 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ourygo.assistant.util.PermissionUtil;
-import com.ourygo.assistant.util.Util;
+import com.ourygo.lib.duelassistant.util.PermissionUtil;
+import com.ourygo.lib.duelassistant.util.Util;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
@@ -37,51 +37,6 @@ public class YGOUtil {
         return App.get().getResources().getString(stringId);
     }
 
-    public static byte[] toBytes(String bits) {
-
-        int y = bits.length() % 8;
-        Log.e("Deck",bits.length()+"之前余数"+y);
-        if (y != 0)
-            bits = toNumLengthLast(bits, bits.length()+8 - y);
-        Log.e("Deck",bits.length()+"余数"+y);
-        byte[] bytes=new byte[bits.length()/8];
-        for (int i=0;i<bits.length()/8;i++) {
-            bytes[i] = (byte) Integer.valueOf(bits.substring(i * 8, i * 8 + 8), 2).intValue();
-            if (i<8){
-                Log.e("Deck",bits.substring(i*8,i*8+8)+" 字节 "+bytes[i] );
-
-            }
-        }
-        Log.e("Deck","二进制"+bits );
-        return bytes;
-    }
-
-    public static String toNumLength(String message, int num) {
-        while (message.length() < num) {
-            message = "0" + message;
-        }
-        return message;
-    }
-    public static String toNumLengthLast(String message, int num) {
-        while (message.length() < num) {
-            message +="0";
-        }
-        return message;
-    }
-
-    public static String[] toNumLength(String[] nums, int num) {
-        if (nums.length < num) {
-            String[] bms = nums;
-            nums = new String[num];
-            for (int i = 0; i < num - bms.length; i++)
-                nums[i] = "0";
-            for (int i = 0; i < bms.length; i++)
-                nums[i + num - bms.length] = bms[i];
-        }
-        return nums;
-    }
-
-
     /**
      * 根据卡密获取高清图下载地址
      *
@@ -89,17 +44,8 @@ public class YGOUtil {
      * @return 高清图url
      */
     public static String getCardImageDetailUrl(int code) {
-        return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".png";
+        return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".jpg";
     }
-
-    public static String getArrayString(String[] bytes, int start, int end) {
-        String message = "";
-        for (int i = start; i < end; i++) {
-            message += bytes[i];
-        }
-        return message;
-    }
-
 
     //关闭输入法
     public static void closeKeyboard(Activity activity) {

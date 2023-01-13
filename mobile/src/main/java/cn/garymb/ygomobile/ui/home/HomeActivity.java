@@ -1,9 +1,14 @@
 package cn.garymb.ygomobile.ui.home;
 
-import static com.ashokvarma.bottomnavigation.ShapeBadgeItem.SHAPE_STAR_4_VERTICES;
+import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -17,8 +22,9 @@ import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.ashokvarma.bottomnavigation.ShapeBadgeItem;
 import com.ashokvarma.bottomnavigation.TextBadgeItem;
-import com.tencent.bugly.beta.Beta;
 import com.tencent.smtt.sdk.QbSdk;
+
+import java.io.IOException;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -29,12 +35,21 @@ import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
 
     long exitLasttime = 0;
+    public static String Version;
+    public static String Cache_link;
+    private static final int TYPE_GET_VERSION_OK = 0;
+    private static final int TYPE_GET_VERSION_FAILED = 1;
 
     private BottomNavigationBar bottomNavigationBar;
     private ShapeBadgeItem mShapeBadgeItem;
@@ -50,6 +65,37 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public MycardChatFragment fragment_mycard_chatting_room;
     private Bundle mBundle;
 
+    @SuppressLint("HandlerLeak")
+    Handler handlerHome = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_GET_VERSION_OK:
+                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
+                    Log.i(BuildConfig.VERSION_NAME, Version + "和" + Cache_link);
+                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
+                        DialogPlus dialog = new DialogPlus(getActivity());
+                        dialog.setMessage(R.string.Found_Update);
+                        dialog.setLeftButtonText(R.string.download_home);
+                        dialog.setLeftButtonListener((dlg, s) -> {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(Uri.parse(Cache_link));
+                            startActivity(intent);
+                            dialog.dismiss();
+                        });
+                        dialog.show();
+                    }
+                    break;
+                case TYPE_GET_VERSION_FAILED:
+                    String error = msg.obj.toString();
+                    Log.e(BuildConfig.VERSION_NAME, error);
+                    break;
+            }
+
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,6 +110,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         initQbSdk();
         //
         checkNotch();
+        checkUpgrade();
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
@@ -129,7 +176,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     private void showNewsCounts() {
         mTextBadgeItem = new TextBadgeItem()
                 .setBorderWidth(4)//文本大小
-                .setGravity(Gravity.LEFT )//位置 默认右上
+                .setGravity(Gravity.LEFT)//位置 默认右上
                 .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
                 .setAnimationDuration(200)//动画时间
                 .setText("3")
@@ -228,7 +275,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         if (!BuildConfig.BUILD_TYPE.equals("debug")) {
             //release才检查版本
             if (!Constants.ACTION_OPEN_GAME.equals(getIntent().getAction())) {
-                Beta.checkUpgrade(false, false);
+                //Beta.checkUpgrade(false, false);
             }
         }
     }
@@ -302,5 +349,27 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     protected abstract void checkResourceDownload(ResCheckTask.ResCheckListener listener);
 
     protected abstract void openGame();
+
+    public void checkUpgrade() {
+        OkhttpUtil.get(URL_HOME_VERSION, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Message message = new Message();
+                message.what = TYPE_GET_VERSION_FAILED;
+                message.obj = e;
+                handlerHome.sendMessage(message);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                Log.i(BuildConfig.VERSION_NAME, json);
+                Message message = new Message();
+                message.what = TYPE_GET_VERSION_OK;
+                message.obj = json;
+                handlerHome.sendMessage(message);
+            }
+        });
+    }
 
 }

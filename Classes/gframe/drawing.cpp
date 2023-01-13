@@ -585,12 +585,31 @@ void Game::DrawMisc() {
 	//lp bar
 	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
-	if(dInfo.lp[0] >= 8000)
-		driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * dInfo.lp[0] / 8000) * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	if(dInfo.lp[1] >= 8000)
-		driver->draw2DImage(imageManager.tLPBar, recti(695 * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
-	else driver->draw2DImage(imageManager.tLPBar, recti((930 - 235 * dInfo.lp[1] / 8000) * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+	if(dInfo.start_lp) {
+		auto maxLP = dInfo.isTag ? dInfo.start_lp / 2 : dInfo.start_lp;
+		if(dInfo.lp[0] >= maxLP) {
+			auto layerCount = dInfo.lp[0] / maxLP;
+			auto partialLP = dInfo.lp[0] % maxLP;
+			auto bgColorPos = (layerCount - 1) % 5;
+			auto fgColorPos = layerCount % 5; 
+		driver->draw2DImage(imageManager.tLPBar, recti((390 + 235 * partialLP / maxLP) * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 74 * mainGame->yScale), recti(0, bgColorPos * 60, 60, (bgColorPos + 1) * 60), 0, 0, true);
+			if(partialLP > 0) {
+				driver->draw2DImage(imageManager.tLPBar, recti(390* mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * partialLP / maxLP) * mainGame->xScale, 74 * mainGame->yScale), recti(0, fgColorPos * 60, 60, (fgColorPos + 1) * 60), 0, 0, true);
+			}
+	}
+	else driver->draw2DImage(imageManager.tLPBar, recti(390 * mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * dInfo.lp[0] / maxLP) * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+		if(dInfo.lp[1] >= maxLP) {
+			auto layerCount = dInfo.lp[1] / maxLP;
+			auto partialLP = dInfo.lp[1] % maxLP;
+			auto bgColorPos = (layerCount - 1) % 5;
+			auto fgColorPos = layerCount % 5;
+			driver->draw2DImage(imageManager.tLPBar, recti(695 * mainGame->xScale, 12 * mainGame->yScale, (930 - 235 * partialLP / maxLP) * mainGame->xScale, 74 * mainGame->yScale), recti(0, bgColorPos * 60, 60, (bgColorPos + 1) * 60), 0, 0, true);
+			if(partialLP > 0) {
+				driver->draw2DImage(imageManager.tLPBar, recti((930 - 235 * partialLP / maxLP) * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, fgColorPos * 60, 60, (fgColorPos + 1) * 60), 0, 0, true);
+			}
+		}
+		else driver->draw2DImage(imageManager.tLPBar, recti((930 - 235 * dInfo.lp[1] / maxLP) * mainGame->xScale, 12 * mainGame->yScale, 930 * mainGame->xScale, 74 * mainGame->yScale), recti(0, 0, 60, 60), 0, 0, true);
+	}
 	if(lpframe) {
 		dInfo.lp[lpplayer] -= lpd;
 		myswprintf(dInfo.strLP[lpplayer], L"%d", dInfo.lp[lpplayer]);
@@ -820,10 +839,10 @@ void Game::DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2) {
 	}
 }
 void Game::DrawGUI() {
-	if(imageLoading.size()) {
-		for(auto mit = imageLoading.begin(); mit != imageLoading.end(); ++mit)
-			mit->first->setImage(imageManager.GetTexture(mit->second));
-		imageLoading.clear();
+	while (imageLoading.size()) {
+		auto mit = imageLoading.cbegin();
+		mit->first->setImage(imageManager.GetTexture(mit->second));
+		imageLoading.erase(mit);
 	}
 	for(auto fit = fadingList.begin(); fit != fadingList.end();) {
 		auto fthis = fit++;

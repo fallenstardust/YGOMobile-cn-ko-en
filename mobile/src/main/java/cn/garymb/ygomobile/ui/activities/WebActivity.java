@@ -134,7 +134,7 @@ public class WebActivity extends BaseActivity {
         });*/
         if (doIntent(getIntent())) {
             mWebViewPlus.loadUrl(mUrl);
-            if (mUrl.equals(URL_YGO233_ADVANCE)) {
+            if (mUrl.startsWith(URL_YGO233_ADVANCE)) {
                 btn_download.setVisibility(View.VISIBLE);
             } else {
                 btn_download.setVisibility(View.GONE);

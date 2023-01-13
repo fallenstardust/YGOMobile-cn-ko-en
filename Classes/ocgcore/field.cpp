@@ -819,7 +819,8 @@ uint32 field::get_linked_zone(int32 playerid) {
 }
 uint32 field::get_rule_zone_fromex(int32 playerid, card* pcard) {
 	if(core.duel_rule >= 4) {
-		if(core.duel_rule >= 5 && pcard && pcard->is_position(POS_FACEDOWN) && (pcard->data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ)))
+		if(core.duel_rule >= 5 && pcard && (pcard->data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ))
+			&& (pcard->is_position(POS_FACEDOWN) || !(pcard->data.type & TYPE_PENDULUM)))
 			return 0x7f;
 		else
 			return get_linked_zone(playerid) | (1u << 5) | (1u << 6);
@@ -2968,14 +2969,19 @@ int32 field::is_player_can_discard_deck_as_cost(uint8 playerid, int32 count) {
 	card* topcard = player[playerid].list_main.back();
 	if((count == 1) && topcard->is_position(POS_FACEUP))
 		return topcard->is_capable_cost_to_grave(playerid);
-	bool cant_remove = !is_player_can_action(playerid, EFFECT_CANNOT_REMOVE);
+	bool cant_remove_s = !is_player_can_action(playerid, EFFECT_CANNOT_REMOVE);
+	bool cant_remove_o = !is_player_can_action(1 - playerid, EFFECT_CANNOT_REMOVE);
 	effect_set eset;
 	filter_field_effect(EFFECT_TO_GRAVE_REDIRECT, &eset);
 	for(int32 i = 0; i < eset.size(); ++i) {
 		uint32 redirect = eset[i]->get_value();
-		if((redirect & LOCATION_REMOVED) && (cant_remove || topcard->is_affected_by_effect(EFFECT_CANNOT_REMOVE)))
-			continue;
 		uint8 p = eset[i]->get_handler_player();
+		if(redirect & LOCATION_REMOVED) {
+			if(topcard->is_affected_by_effect(EFFECT_CANNOT_REMOVE))
+				continue;
+			if(cant_remove_s && (p == playerid) || cant_remove_o && (p != playerid))
+				continue;
+		}
 		if((p == playerid && eset[i]->s_range & LOCATION_DECK) || (p != playerid && eset[i]->o_range & LOCATION_DECK))
 			return FALSE;
 	}
@@ -3349,7 +3355,7 @@ int32 field::check_chain_target(uint8 chaincount, card * pcard) {
 	pduel->lua->add_param(pchain->evt.reason_effect , PARAM_TYPE_EFFECT);
 	pduel->lua->add_param(pchain->evt.reason, PARAM_TYPE_INT);
 	pduel->lua->add_param(pchain->evt.reason_player, PARAM_TYPE_INT);
-	pduel->lua->add_param((ptr)0, PARAM_TYPE_INT);
+	pduel->lua->add_param(0, PARAM_TYPE_INT);
 	pduel->lua->add_param(pcard, PARAM_TYPE_CARD);
 	return pduel->lua->check_condition(peffect->target, 10);
 }

@@ -38,6 +38,7 @@
     <string name="quit_tip">退出游戏?</string>
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
+    <string name="fetch_ex_card">读取先行卡</string>
     <!-- settings -->
     <string name="settings_about">关于</string>
     <string name="settings_about_sub_about">关于</string>
@@ -73,6 +74,11 @@
     <string-array name="card_quality">
         <item>低</item>
         <item>高</item>
+    </string-array>
+    <string-array name="data_language" translatable="false">
+        <item>简体中文</item>
+        <item>조선말</item>
+        <item>English</item>
     </string-array>
     <!-- settings -->
     <string name="server_list">直连决斗</string>
@@ -251,6 +257,7 @@
     <string name="OK">确定</string>
     <string name="Cancel">取消</string>
     <string name="Checking_Update">检查更新中，请稍候</string>
+    <string name="Found_Update">发现新版本，前往下载？</string>
     <string name="Checking_Update_Failed">检查更新失败</string>
     <string name="Ask_to_Change_Other_Way">主线下载失败，尝试备选线路中...</string>
     <string name="DuelAssistant">决斗助手启用中</string>
@@ -301,7 +308,6 @@
     <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
     <string name="explain_permission">
         使用本软件此类功能将申请以下必要权限：
-        \n安装未知应用权限：安装更新包，备份、还原卡组必需
         \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
     <string name="guide_menu">功能菜单：\n主要功能如"</string>
     <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
@@ -333,4 +339,6 @@
     <string name="edit_your_message">输入聊天内容</string>
     <string name="login_succeed">登录成功</string>
     <string name="reChatJoining">连接断开,重新登陆中……</string>
+    <string name="settings_data_language">切换资料语言</string>
+    <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
 </resources>

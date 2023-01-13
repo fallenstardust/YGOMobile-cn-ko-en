@@ -34,12 +34,6 @@
         </activity>
 
         <activity
-            android:name="com.tencent.bugly.beta.ui.BetaActivity"
-            android:launchMode="singleTop"
-            android:configChanges="keyboardHidden|orientation|screenSize|locale"
-            android:excludeFromRecents="true" />
-
-        <activity
             android:name="cn.garymb.ygomobile.ui.home.MainActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:exported="true"
@@ -152,12 +146,13 @@
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
             android:theme="@style/TranslucentTheme" />
 
-        <meta-data
-            android:name="BUGLY_APPID"
-            android:value="${APP_ID}" />
-        <meta-data
-            android:name="BUGLY_ENABLE_DEBUG"
-            android:value="true" />
+
+        <!--   android:screenOrientation="landscape"-->
+        <activity
+            android:name="cn.garymb.ygomobile.ex_card.ExCardActivity"
+            android:theme="@style/AppTheme.Mycard"
+            android:launchMode="singleTop"
+            />
         <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
         <!--android:priority="1000"-->
         <service
@@ -199,15 +194,10 @@
     <uses-permission
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.GET_TASKS" />
-    <!--uses-permission android:name="android.permission.READ_PHONE_STATE" /-->
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-sdk tools:overrideLibrary="com.toptoche.searchablespinnerlibrary" />
 </manifest>

@@ -8,13 +8,12 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-typedef unsigned long uptr;
+#include <stdint.h>
 typedef unsigned long long uint64;
 typedef unsigned int uint32;
 typedef unsigned short uint16;
 typedef unsigned char uint8;
 typedef unsigned char byte;
-typedef long ptr;
 typedef long long int64;
 typedef int int32;
 typedef short int16;
@@ -98,6 +97,7 @@ struct card_sort {
 #define TYPE_LINK			0x4000000	//
 
 //Attributes
+#define ATTRIBUTE_ALL		0x7f		//
 #define ATTRIBUTE_EARTH		0x01		//
 #define ATTRIBUTE_WATER		0x02		//
 #define ATTRIBUTE_FIRE		0x04		//

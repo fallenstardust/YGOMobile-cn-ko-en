@@ -1606,9 +1606,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size())
 						mcard = deck[hovered_controler].back();
 				} else {
-					if(irr::core::recti(327, 8, 630, 51).isPointInside(pos))
+					if(irr::core::recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 0;
-					else if(irr::core::recti(689, 8, 991, 51).isPointInside(pos))
+					else if(irr::core::recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 1;
 				}
 			}
@@ -1734,6 +1734,13 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						myswprintf(formatBuffer, L"\n*%ls", dataManager.GetDesc(iter->first));
 						str.append(formatBuffer);
 					}
+					if(mainGame->dInfo.turn == 1) {
+						if(mplayer == 0 && mainGame->dInfo.isFirst || mplayer != 0 && !mainGame->dInfo.isFirst)
+							myswprintf(formatBuffer, L"\n*%ls", dataManager.GetSysString(100));
+						else
+							myswprintf(formatBuffer, L"\n*%ls", dataManager.GetSysString(101));
+						str.append(formatBuffer);
+					}
 					should_show_tip = true;
 					irr::core::dimension2d<unsigned int> dtip = mainGame->textFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 					mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y + 10 * mainGame->yScale, x - 10 * mainGame->xScale, y + 10 * mainGame->yScale + dtip.Height));
@@ -1750,11 +1757,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_PRESSED_DOWN: {
 			if(!mainGame->dInfo.isStarted)
 				break;
-			if(mainGame->wCardSelect->isVisible())
-			    break;
+			//if(mainGame->wCardSelect->isVisible())
+			    //break;
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
-				|| mainGame->wCardSelect->isVisible()
+				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
 				||mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;

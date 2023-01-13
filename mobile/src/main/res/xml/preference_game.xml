@@ -129,6 +129,13 @@
             android:persistent="true"
             android:title="@string/settings_game_font_name" />
 
+        <ListPreference
+            android:entries="@array/data_language"
+            android:entryValues="@array/data_language_value"
+            android:key="pref_key_game_data_language"
+            android:persistent="true"
+            android:title="@string/settings_data_language" />
+
         <!--<CheckBoxPreference
             android:key="settings_game_diy_card_db"
             android:persistent="true"

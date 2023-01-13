@@ -45,6 +45,7 @@
     <string name="back_tip">Press back key again to exit.</string>
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
+    <string name="fetch_ex_card">Fetching ex-cards</string>
     <!-- settings -->
     <string name="settings_about">About</string>
     <string name="settings_about_sub_about">About</string>
@@ -83,7 +84,12 @@
         <item>Speed</item>
         <item>Quality</item>
     </string-array>
-    <string-array name="screen_top_bottom_desc"  translatable="false">
+    <string-array name="data_language" translatable="false">
+        <item>简体中文</item>
+        <item>조선말</item>
+        <item>English</item>
+    </string-array>
+    <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Disable</item>
         <item>5</item>
         <item>8</item>
@@ -249,6 +255,7 @@
     <string name="OK">OK</string>
     <string name="Cancel">Cancel</string>
     <string name="Checking_Update">Now Checking Update</string>
+    <string name="Found_Update">New upGrade is Founded, Download?</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
     <string name="Ask_to_Change_Other_Way">trying other way...</string>
     <string name="DuelAssistant">DuelAssiatant is On</string>
@@ -302,7 +309,6 @@
     <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
     <string name="explain_permission">
         Very necessary permissions will be applied\:
-        \nInstall unknow apps\: Install upgrade and Change Settings
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
     <string name="guide_menu">Menu\:\nincluding most of functions, for Example</string>
     <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
@@ -343,4 +349,6 @@
     <string name="edit_your_message">Input your message</string>
     <string name="login_succeed">Chatroom logined</string>
     <string name="reChatJoining">relogining\.\.\.</string>
+    <string name="settings_data_language">Language</string>
+    <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
 </resources>
