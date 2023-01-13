@@ -209,8 +209,8 @@
     <string name="noting_to_send">noting to send</string>
     <string name="sending_failed">sending failed</string>
     <string name="logining_in">Logining in</string>
-    <string name="logining_failed">Logining failed,please try again</string>
-    <string name="failed_reason">Logining failed because of</string>
+    <string name="logining_failed">Logining failed, click to try again</string>
+    <string name="failed_reason">ChatRoom logining failed because of</string>
     <string name="send">Send</string>
     <string name="bbs">Community</string>
     <string name="McNews">News</string>

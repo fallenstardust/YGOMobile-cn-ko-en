@@ -211,8 +211,8 @@
     <string name="login_mycard">登录萌卡</string>
     <string name="logout_mycard">退出萌卡账号？</string>
     <string name="logining_in">登录中，请稍候...</string>
-    <string name="logining_failed">登陆失败，请点击重试</string>
-    <string name="failed_reason">登录失败，原因是</string>
+    <string name="logining_failed">登录失败，请点击重试</string>
+    <string name="failed_reason">聊天室登录失败，原因是</string>
     <string name="send">发送</string>
     <string name="mc_home">大厅</string>
     <string name="bbs">社区</string>
