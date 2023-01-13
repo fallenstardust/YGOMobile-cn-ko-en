@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,7 @@ public abstract class GameApplication extends Application implements IrrlichtBri
     public void onCreate() {
         super.onCreate();
 //        Reflection.unseal(this);
+        Log.i("webCrwaler", "application");
     }
 
     public static GameApplication get() {
