@@ -1,24 +1,25 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import static cn.garymb.ygomobile.utils.BitmapUtil.getPaint;
+
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.provider.Settings;
+import android.graphics.Paint;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.transition.Visibility;
 
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
 import org.greenrobot.eventbus.EventBus;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.ServerUtil;
 
 public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseViewHolder> {
     public ServerListAdapter(Context context) {
@@ -64,25 +65,26 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
     public void bindMenu() {
         addChildClickViewIds(R.id.smContentView, R.id.btn_edit_delete, R.id.btn_delete, R.id.iv_fond);
         setOnItemChildClickListener((adapter, view, position) -> {
+            ServerInfo serverInfo = (ServerInfo) adapter.getData().get(position);
             switch (view.getId()) {
                 case R.id.smContentView:
-                    ServerInfoEvent event = new ServerInfoEvent(position, false);
-                    event.join = true;
-                    EventBus.getDefault().post(event);
+                    ServerInfoEvent serverInfoEvent = new ServerInfoEvent(position, false, serverInfo);
+                    serverInfoEvent.join = true;
+                    EventBus.getDefault().post(serverInfoEvent);//在cn.garymb.ygomobile.ui.home.HomeFragment.onServerInfoEvent监听
                     SwipeHorizontalMenuLayout menuLayout = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
                     if (menuLayout.isMenuOpen()) {
                         menuLayout.smoothCloseMenu();
                     }
                     break;
                 case R.id.btn_edit_delete:
-                    EventBus.getDefault().post(new ServerInfoEvent(position, false));
+                    EventBus.getDefault().post(new ServerInfoEvent(position, false, serverInfo));
                     SwipeHorizontalMenuLayout menuLayout1 = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
                     if (menuLayout1.isMenuOpen()) {
                         menuLayout1.smoothCloseMenu();
                     }
                     break;
                 case R.id.btn_delete:
-                    EventBus.getDefault().post(new ServerInfoEvent(position, true));
+                    EventBus.getDefault().post(new ServerInfoEvent(position, true, serverInfo));
                     SwipeHorizontalMenuLayout menuLayout2 = (SwipeHorizontalMenuLayout) adapter.getViewByPosition(position, R.id.swipe_layout);
 
                     if (menuLayout2.isMenuOpen()) {
@@ -121,6 +123,19 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
             baseViewHolder.findView(R.id.iv_fond).setVisibility(View.VISIBLE);
         } else {
             baseViewHolder.findView(R.id.iv_fond).setVisibility(View.GONE);
+        }
+
+        if (ServerUtil.isPreServer(serverInfo.getPort(), serverInfo.getServerAddr())) {
+            if (!AppsSettings.get().isReadExpansions() || ServerUtil.exCardState != ServerUtil.ExCardState.UPDATED) {
+                Paint paint = getPaint(0);
+                baseViewHolder.getView(R.id.swipe_layout).setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+            } else {
+                Paint paint = getPaint(1);
+                baseViewHolder.getView(R.id.swipe_layout).setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+            }
+        } else {//假设先行卡item在某个postion，将其设为灰色后，如果移动先行卡item，填充该位置的其他item仍是灰色，因此需要显式设置
+            Paint paint = getPaint(1);
+            baseViewHolder.getView(R.id.swipe_layout).setLayerType(View.LAYER_TYPE_HARDWARE, paint);
         }
     }
 }

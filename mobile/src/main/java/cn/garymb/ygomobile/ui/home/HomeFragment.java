@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -42,10 +41,6 @@ import com.tubb.smrv.SwipeMenuRecyclerView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -63,9 +58,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
-import cn.garymb.ygomobile.ex_card.ExCard;
-import cn.garymb.ygomobile.ex_card.ExCardActivity;
-import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.bean.events.ExCardEvent;
+import cn.garymb.ygomobile.ex_card.ExCardActivity2;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -80,15 +74,11 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
-import cn.garymb.ygomobile.utils.OkhttpUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
 
 
 public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListener, View.OnClickListener {
@@ -98,7 +88,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final int TYPE_BANNER_QUERY_OK = 0;
     private static final int TYPE_BANNER_QUERY_EXCEPTION = 1;
     private static final int TYPE_RES_LOADING_OK = 2;
-    private static final int TYPE_GET_DATA_VER_OK = 3;
+    public static final int TYPE_GET_DATA_VER_OK = 3;
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
@@ -150,7 +140,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        showExNew();
+        changeColor();
         //showNewbieGuide("homePage");
         return layoutView;
     }
@@ -273,43 +263,46 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     tv_banner_loading.setText(R.string.loading_failed);
                     isMcNewsLoadException = true;
                     break;
-                case TYPE_GET_DATA_VER_OK:
-                    WebActivity.dataVer = msg.obj.toString();
-                    String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-                    if (!TextUtils.isEmpty(WebActivity.dataVer)) {
-                        if (!WebActivity.dataVer.equals(oldVer)) {
-                            ll_new_notice.setVisibility(View.VISIBLE);
-                        } else {
-                            ll_new_notice.setVisibility(View.GONE);
-                        }
-                    } else {
-                        showExNew();
-                        ll_new_notice.setVisibility(View.GONE);
-                    }
+
             }
 
         }
     };
 
-    public void showExNew() {
-        if (AppsSettings.get().isReadExpansions()) {
-            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
-                }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String json = response.body().string();
-                    Message message = new Message();
-                    message.what = TYPE_GET_DATA_VER_OK;
-                    message.obj = json;
-                    handler.sendMessage(message);
-                }
-            });
+    /**
+     * 通过http访问web读取先行卡版本号。
+     * 读取结果通过handler发到ui线程
+     * 注意在ExCardActivity中包含一个相同实现
+     * ServerUtil获取到版本状态后会通过eventmessage通知调用本函数，不需要在主函数显式调用
+     */
+    public void changeExCardNewMark() {
+        Log.i("webCrawler", "check excard new mark, version:" + ServerUtil.exCardState);
+        if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
+            ll_new_notice.setVisibility(View.GONE);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
+            ll_new_notice.setVisibility(View.VISIBLE);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
+            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_SHORT).show();
+            ll_new_notice.setVisibility(View.GONE);
         }
+
     }
+
+    private void changeColor() {
+        /* 同步设置服务器列表的状态，在syncLoadData()里更新recyclerview的数据，在更新数据时convert()方法自动更改item的颜色 */
+        mServerListManager.syncLoadData();
+
+        /* 改变“扩展卡下载”按钮的颜色 */
+//        if (AppsSettings.get().isReadExpansions()) {
+//            Paint paint = getPaint(1);
+//            cv_download_ex.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+//        } else {
+//            Paint paint = getPaint(0);
+//            cv_download_ex.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+//        }
+    }
+
 
     private void findMcNews() {
         isMcNewsLoadException = false;
@@ -572,6 +565,18 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         return Util.isContextExisted(getActivity());
     }
 
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageReceived(ExCardEvent event) {
+        if (event.getType() == ExCardEvent.EventType.exCardPackageChange) {
+            changeExCardNewMark();
+            changeColor();
+        } else if (event.getType() == ExCardEvent.EventType.exCardPrefChange) {
+            /* 可以设置在不开启扩展卡的情况下“扩展卡下载”图标是否显示为灰色 */
+            changeColor();
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
         if (event.delete) {
@@ -588,11 +593,22 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             dialogPlus.setOnCloseLinster(null);
             dialogPlus.show();
         } else if (event.join) {
-            joinRoom(event.position);
+            if (ServerUtil.isPreServer(event.serverInfo.getPort(), event.serverInfo.getServerAddr())) {
+                joinRoom(event.position);
+                //如果是先行卡服务器，并且未开启先行卡设置，则通过toast提示
+                if (!AppsSettings.get().isReadExpansions()) {
+                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                } else if (ServerUtil.exCardState != ServerUtil.ExCardState.UPDATED) {
+                    //如果是先行卡服务器，并且未开启下载先行卡，则通过toast提示
+                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message, Toast.LENGTH_LONG).show();
+                }
+            }
+
             //showNewbieGuide("joinRoom");
         } else {
             mServerListManager.showEditDialog(event.position);
         }
+
     }
 
     public void setRandomCardDetail() {
@@ -701,82 +717,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
                 break;
             case R.id.action_download_ex:
-                //using Web crawler to extract the information of pre card
-                final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
-                VUiKit.defer().when(() -> {
-                    String aurl = Constants.URL_YGO233_ADVANCE;
-                    //Connect to the website
-                    Document document = Jsoup.connect(aurl).get();
-                    Element pre_card_content = document.getElementById("pre_release_cards");
-                    Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
-                    Elements cards = tbody.getElementsByTag("tr");
-                    if (cards.size() > 300) {//Considering the efficiency of html parse, if the size of
-                        // pre cards list is to large, return null directly.
-                        return null;
-                    }
-                    ArrayList<ExCard> exCards = new ArrayList<>();
-                    for (Element card : cards) {
-                        Elements card_attributes = card.getElementsByTag("td");
-                        String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
-                        String name = card_attributes.get(1).text();
-                        String description = card_attributes.get(2).text();
-                        ExCard exCard = new ExCard(name, imageUrl, description);
-                        exCards.add(exCard);
-
-                    }
-                    Log.i("webCrawler", exCards.toString());
-                    if (exCards.isEmpty()) {
-                        return null;
-                    } else {
-                        return exCards;
-                    }
-
-                }).fail((e) -> {
-                    //关闭异常
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                        } catch (Exception ex) {
-                        }
-                    }
-                    //If the crawler process failed, open webActivity
-                    String aurl = Constants.URL_YGO233_ADVANCE;
-
-                    if (ll_new_notice.getVisibility() == View.VISIBLE) {
-                        aurl = aurl + "#pre_update_title";
-                    }
-                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                    ll_new_notice.setVisibility(View.GONE);
-                    Log.i("webCrawler", "webCrawler fail");
-                }).done((tmp) -> {
-                    if (tmp != null) {
-                        Log.i("webCrawler", "webCrawler done");
-                        Intent intent = new Intent(getActivity(), ExCardActivity.class);
-                        //intent.putExtra("exCards", tmp);
-                        intent.putParcelableArrayListExtra("exCards", tmp);
-                        startActivity(intent);
-                    } else {
-                        //If the crawler process cannot return right ex-card data,
-                        //open webActivity
-                        String aurl = Constants.URL_YGO233_ADVANCE;
-
-                        if (ll_new_notice.getVisibility() == View.VISIBLE) {
-                            aurl = aurl + "#pre_update_title";
-                        }
-                        WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                        Log.i("webCrawler", "webCrawler cannot return ex-card data");
-                    }
-                    //关闭异常
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                            Log.i("webCrawler", "dialog close");
-                        } catch (Exception ex) {
-                        }
-                    }
-                    ll_new_notice.setVisibility(View.GONE);
-                });
-
+//                if (!AppsSettings.get().isReadExpansions()) {//如果未开启扩展卡设置，直接跳过
+//                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+//                    break;
+//                }
+                /* using Web crawler to extract the information of pre card */
+                Intent exCardIntent = new Intent(getActivity(), ExCardActivity2.class);
+                startActivity(exCardIntent);
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());

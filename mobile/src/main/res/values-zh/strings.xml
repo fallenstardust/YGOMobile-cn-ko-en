@@ -38,7 +38,10 @@
     <string name="quit_tip">退出游戏?</string>
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
-    <string name="fetch_ex_card">读取先行卡</string>
+    <string name="fetch_ex_card">通过网络获取先行卡</string>
+    <string name="ex_card_log_title">更新日志</string>
+    <string name="ex_card_check_toast_message">检测到未下载扩展卡，如果未通过其他途径安装扩展卡，建议在扩展卡页面下载</string>
+
     <!-- settings -->
     <string name="settings_about">关于</string>
     <string name="settings_about_sub_about">关于</string>
@@ -297,7 +300,7 @@
     <string name="tip_return_to_duel">已回到当前游戏</string>
     <string name="my_favorites">我的收藏★</string>
     <string name="ypk_installed">拓展卡包文件已安装</string>
-    <string name="ypk_go_setting">这是拓展卡包文件,要使用须启用扩展卡包</string>
+    <string name="ypk_go_setting">检测到未启用拓展卡包，如果未通过其他途径安装扩展卡，建议开启</string>
     <string name="ypk_delete">长按相应名称以删除</string>
     <string name="install_failed_bcos">安装失败，原因：</string>
     <string name="deck_back_up">备份</string>

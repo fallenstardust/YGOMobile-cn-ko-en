@@ -44,8 +44,8 @@ public class ServerListManager {
 
     public void syncLoadData() {
         VUiKit.defer().when(() -> {
-            ServerList assetList = readList(getContext().getAssets().open(ASSET_SERVER_LIST));
-            ServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
+            ServerList assetList = readList(getContext().getAssets().open(ASSET_SERVER_LIST));//程序asset文件夹下的serverlist.xml
+            ServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;//文件系统中的server-list.xml
             if (fileList == null) {
                 return assetList;
             }

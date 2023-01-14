@@ -63,6 +63,8 @@ import android.widget.Toast;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.MediaStoreSignature;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -72,6 +74,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -81,6 +84,8 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.ServerUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
@@ -165,7 +170,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
-        bind(PREF_DATA_LANGUAGE, "" + mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -215,6 +219,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 if (preference.getKey().equals(PREF_READ_EX)) {
                     //设置使用额外卡库后重新加载卡片数据
                     DataManager.get().load(true);
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPrefChange));
+                    //ServerUtil.initExCardState();
                 }
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
@@ -288,6 +294,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     message.what = TYPE_SETTING_GET_VERSION_FAILED;
                     message.obj = e;
                     handler.sendMessage(message);
+                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
@@ -317,6 +324,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ListView listView = dialog.bind(R.id.room_list);
             listView.setAdapter(simpleListAdapter);
             listView.setOnItemLongClickListener((a, v, i, index) -> {
+                /* 删除先行卡 */
                 String name = simpleListAdapter.getItemById(index);
                 int pos = simpleListAdapter.findItem(name);
                 if (pos >= 0) {
@@ -325,6 +333,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
                     DataManager.get().load(true);
                     Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                    SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
+                    ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
                 }
                 return true;
             });
