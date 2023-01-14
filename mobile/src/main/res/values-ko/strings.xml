@@ -38,7 +38,7 @@
     <string name="quit_tip">앱을 종료하겠습니까?</string>
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다</string>
     <string name="string_help_text">현재 앱에 필요한 권한이 없습니다. \n설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
-    <string name="fetch_ex_card">확장 카드 불러오는 중</string>
+    <string name="fetch_ex_card">Fetching pre-cards via web</string>
     <string name="ex_card_log_title">update log</string>
     <string name="ex_card_check_toast_message">To use it, We recommend you to download the pre-card setting in the pre-card download page unless you have installed pre-card in another way.</string>
 

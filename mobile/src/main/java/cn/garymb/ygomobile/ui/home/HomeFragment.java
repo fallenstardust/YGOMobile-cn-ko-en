@@ -41,17 +41,12 @@ import com.tubb.smrv.SwipeMenuRecyclerView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
@@ -63,11 +58,8 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
-import cn.garymb.ygomobile.ex_card.ExCard;
-import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.ex_card.ExCardActivity2;
-import cn.garymb.ygomobile.ex_card.ExCardLogItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -148,7 +140,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        changeExCardNewMark();
         changeColor();
         //showNewbieGuide("homePage");
         return layoutView;
@@ -283,15 +274,16 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
      * 通过http访问web读取先行卡版本号。
      * 读取结果通过handler发到ui线程
      * 注意在ExCardActivity中包含一个相同实现
+     * ServerUtil获取到版本状态后会通过eventmessage通知调用本函数，不需要在主函数显式调用
      */
     public void changeExCardNewMark() {
-        Log.i("webCrawler", "excard version " + ServerUtil.exCardState);
+        Log.i("webCrawler", "check excard new mark, version:" + ServerUtil.exCardState);
         if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
             ll_new_notice.setVisibility(View.GONE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             ll_new_notice.setVisibility(View.VISIBLE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_SHORT).show();
             ll_new_notice.setVisibility(View.GONE);
         }
 
@@ -576,7 +568,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageReceived(ExCardEvent event) {
-        Log.i("webCrawler", "event received " + event.getType());
         if (event.getType() == ExCardEvent.EventType.exCardPackageChange) {
             changeExCardNewMark();
             changeColor();
@@ -588,7 +579,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerInfoEvent(ServerInfoEvent event) {
-        Log.i("webCrawler", "dialog");
         if (event.delete) {
             DialogPlus dialogPlus = new DialogPlus(getContext());
             dialogPlus.setTitle(R.string.question);
@@ -731,107 +721,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 //                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
 //                    break;
 //                }
-                //using Web crawler to extract the information of pre card
-                final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
-                VUiKit.defer().when(() -> {
-                    String aurl = Constants.URL_YGO233_ADVANCE;
-                    //Connect to the website
-                    Document document = Jsoup.connect(aurl).get();
-                    Element pre_card_content = document.getElementById("pre_release_cards");
-                    Element pre_update_log = document.getElementById("pre_update_log");
-                    Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
-                    Elements cards = tbody.getElementsByTag("tr");
-                    if (cards.size() > 1000) {//Considering the efficiency of html parse, if the size of
-                        // pre cards list is to large, return null directly.
-                        return null;
-                    }
-                    ArrayList<ExCard> exCardList = new ArrayList<>();
-                    for (Element card : cards) {
-                        Elements card_attributes = card.getElementsByTag("td");
-                        String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
-                        String name = card_attributes.get(1).text();
-                        String description = card_attributes.get(2).text();
-                        ExCard exCard = new ExCard(name, imageUrl, description, 0);
-                        exCardList.add(exCard);
-
-                    }
-
-                    ArrayList<ExCardLogItem> exCardLogList = new ArrayList<>();
-                    exCardLogList.add(new ExCardLogItem(0, getString(R.string.ex_card_log_title), new ArrayList<>()));
-                    Elements cardLogElements = pre_update_log.select("ul[class=auto-generated]").get(0).getElementsByTag("li");
-                    pre_update_log.getElementsByTag("ul");
-                    for (Element cardLog : cardLogElements) {
-                        String judgeData = cardLog.toString();
-                        Pattern p = Pattern.compile("<li>\\d{4}");
-                        boolean result = p.matcher(judgeData).find();
-                        if (result) {
-                            Elements logItems = cardLog.getElementsByTag("li");
-                            List<String> logs = new ArrayList<>();
-                            logItems.get(0).select("ul").remove();
-                            String dateTime = logItems.get(0).text();
-                            for (int i = 1; i < logItems.size(); i++) {
-                                logs.add(logItems.get(i).text());
-
-                            }
-                            exCardLogList.add(new ExCardLogItem(logs.size(), dateTime, logs));
-                        } else {
-                            continue;
-                        }
-                    }
-
-                    Intent intent = new Intent(getActivity(), ExCardActivity2.class);
-                    intent.putParcelableArrayListExtra("exCardLogList", exCardLogList);
-                    intent.putParcelableArrayListExtra("exCardList", exCardList);
-                    if (exCardList.isEmpty() && exCardLogList.isEmpty()) {
-                        return null;
-                    } else {
-                        return intent;
-                    }
-
-                }).fail((e) -> {
-                    //关闭异常
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                        } catch (Exception ex) {
-                        }
-                    }
-                    //If the crawler process failed, open webActivity
-                    String aurl = Constants.URL_YGO233_ADVANCE;
-
-                    if (ll_new_notice.getVisibility() == View.VISIBLE) {
-                        aurl = aurl + "#pre_update_title";
-                    }
-                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                    ll_new_notice.setVisibility(View.GONE);
-                    Log.i("webCrawler", "webCrawler fail");
-                }).done(intent -> {
-
-                    if (intent != null) {
-                        Log.i("webCrawler", "webCrawler done");
-                        startActivity(intent);
-                    } else {
-                        //If the crawler process cannot return right ex-card data,
-                        //open webActivity
-                        String aurl = Constants.URL_YGO233_ADVANCE;
-
-                        if (ll_new_notice.getVisibility() == View.VISIBLE) {
-                            aurl = aurl + "#pre_update_title";
-                        }
-                        WebActivity.open(getContext(), getString(R.string.action_download_expansions), aurl);
-                        ll_new_notice.setVisibility(View.GONE);
-                        Log.i("webCrawler", "webCrawler cannot return ex-card data");
-                    }
-                    //关闭异常
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                            Log.i("webCrawler", "dialog close");
-                        } catch (Exception ex) {
-                        }
-                    }
-                });
-
+                /* using Web crawler to extract the information of pre card */
+                Intent exCardIntent = new Intent(getActivity(), ExCardActivity2.class);
+                startActivity(exCardIntent);
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());

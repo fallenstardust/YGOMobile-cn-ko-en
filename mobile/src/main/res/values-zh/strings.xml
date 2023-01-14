@@ -38,7 +38,7 @@
     <string name="quit_tip">退出游戏?</string>
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
-    <string name="fetch_ex_card">读取先行卡</string>
+    <string name="fetch_ex_card">通过网络获取先行卡</string>
     <string name="ex_card_log_title">更新日志</string>
     <string name="ex_card_check_toast_message">检测到未下载扩展卡，如果未通过其他途径安装扩展卡，建议在扩展卡页面下载</string>
 

@@ -6,23 +6,30 @@ import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ExpandableListView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +44,6 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -52,19 +58,19 @@ import cn.garymb.ygomobile.utils.XmlUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 
-public class ExCardActivity extends BaseActivity {
 
+public class ExCardListFragment extends Fragment {
+
+    private Context context;
     private View layoutView;
-
-    public static String dataVer;
-    private String mTitle;
-    private Button btn_download;
+    private ExCardListAdapter mExCardListAdapter;
+    private RecyclerView mExCardListView;
+    private LinearLayout btnDownload;
+    private TextView textDownload;
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
     private File xmlFile;
     private int FailedCount;
-    private static final int DOWNLOAD_ING = 0;
-    public static final int DOWNLOAD_COMPLETE = 1;
 
     /**
      * 用于标志当前下载状态，用于防止用户多次重复点击“下载按钮”
@@ -73,10 +79,73 @@ public class ExCardActivity extends BaseActivity {
      */
     enum DownloadState {
         DOWNLOAD_ING,
-        DOWNLOAD_COMPLETE;
+        NO_DOWNLOAD;
     }
 
     private DownloadState downloadState;
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        layoutView = inflater.inflate(R.layout.fragment_ex_card_list, container, false);
+        serverInfos = new ArrayList<>();
+        this.context = getContext();
+        xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
+
+        initView(layoutView);
+        if (!EventBus.getDefault().isRegistered(this)) {//加上判断
+            EventBus.getDefault().register(this);
+        }
+        return layoutView;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.i("webCrawler", "excard fragmetn on stop");
+        if (EventBus.getDefault().isRegistered(this))//加上判断
+            EventBus.getDefault().unregister(this);
+    }
+    public void initView(View layoutView) {
+        mExCardListView = layoutView.findViewById(R.id.list_ex_card);
+        mExCardListAdapter = new ExCardListAdapter(R.layout.item_ex_card);
+        //RecyclerView: No layout manager attached; skipping layout
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
+        mExCardListView.setLayoutManager(linearLayoutManager);
+        mExCardListView.setAdapter(mExCardListAdapter);
+        mExCardListAdapter.loadData();
+
+        textDownload = layoutView.findViewById(R.id.text_download_prerelease);
+        btnDownload = layoutView.findViewById(R.id.btn_download_prerelease);
+        //TODO
+        btnDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (downloadState != DownloadState.DOWNLOAD_ING) {
+                    downloadState = DownloadState.DOWNLOAD_ING;
+                    downloadfromWeb(URL_YGO233_FILE);
+                }
+            }
+        });
+        changeDownloadText();
+    }
+
+    /**
+     * 根据先行卡包状态改变按钮样式
+     */
+    public void changeDownloadText() {
+        if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
+            //btn_download展示默认视图
+            textDownload.setText(R.string.tip_redownload);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
+            textDownload.setText(R.string.action_download_expansions);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
+            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_LONG).show();
+        }
+    }
+    //TODO eventbus receive event
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -86,7 +155,7 @@ public class ExCardActivity extends BaseActivity {
             super.handleMessage(msg);
             switch (msg.what) {
                 case DownloadUtil.TYPE_DOWNLOAD_ING:
-                    btn_download.setText(msg.arg1 + "%");
+                    textDownload.setText(msg.arg1 + "%");
                     break;
                 case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
                     ++FailedCount;
@@ -97,41 +166,44 @@ public class ExCardActivity extends BaseActivity {
                     YGOUtil.show("error" + msg.obj);
                     break;
                 case UnzipUtils.ZIP_READY:
-                    btn_download.setText(R.string.title_use_ex);
+                    textDownload.setText(R.string.title_use_ex);
                     break;
                 case UnzipUtils.ZIP_UNZIP_OK:
-                    if (!AppsSettings.get().isReadExpansions()) {
+
+                    /* 将先行服务器信息添加到服务器列表中 */
+                    String servername = "";
+                    if (AppsSettings.get().getDataLanguage() == 0)
+                        servername = "23333先行服务器";
+                    if (AppsSettings.get().getDataLanguage() == 1)
+                        servername = "YGOPRO 사전 게시 중국서버";
+                    if (AppsSettings.get().getDataLanguage() == 2)
+                        servername = "Mercury23333 OCG/TCG Pre-release";
+                    AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
+                    //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
+
+                    /* 注意，要先更新版本号 */
+                    SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
+                    ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//安装后，通知UI做更新
+                    DataManager.get().load(true);
+
+
+                    Toast.makeText(context, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+
+                    Log.i("webCrawler", "Ex-card package is installed");
+
+                    /* 如果未开启先行卡设置，则跳转到设置页面 */
+                    if (!AppsSettings.get().isReadExpansions()) {//解压完毕，但此时
                         Log.i("webCrawler", "Ex-card setting is not opened");
-                        Intent startSetting = new Intent(getContext(), MainActivity.class);
+                        Intent startSetting = new Intent(context, MainActivity.class);
                         startSetting.putExtra("flag", 4);
                         startActivity(startSetting);
-                        Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
-                        Log.i("webCrawler", "After start new activity");
-                    } else {
-
-                        /* 将先行服务器信息添加到服务器列表中 */
-                        String servername = "";
-                        if (AppsSettings.get().getDataLanguage() == 0)
-                            servername = "23333先行服务器";
-                        if (AppsSettings.get().getDataLanguage() == 1)
-                            servername = "YGOPRO 사전 게시 중국서버";
-                        if (AppsSettings.get().getDataLanguage() == 2)
-                            servername = "Mercury23333 OCG/TCG Pre-release";
-                        AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
-                        btn_download.setText(R.string.tip_redownload);
-
-                        /* 注意，要先更新版本号 */
-                        SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
-                        ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
-                        EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//安装后，通知UI做更新
-                        DataManager.get().load(true);
-                        Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();
-                        Log.i("webCrawler", "Ex-card package is installed");
+                        Toast.makeText(context, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                     }
 
                     break;
                 case UnzipUtils.ZIP_UNZIP_EXCEPTION:
-                    Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
                     break;
 //                case HomeFragment.TYPE_GET_DATA_VER_OK:
 //                    WebActivity.exCardVer = msg.obj.toString();
@@ -140,7 +212,7 @@ public class ExCardActivity extends BaseActivity {
 //                        if (!WebActivity.exCardVer.equals(oldVer)) {
 //                            //btn_download展示默认视图
 //                        } else {
-//                            btn_download.setText(R.string.tip_redownload);
+//                            btnDownload.setText(R.string.tip_redownload);
 //                        }
 //                    } else {
 //                        showExNew();
@@ -149,86 +221,14 @@ public class ExCardActivity extends BaseActivity {
         }
     };
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.i("webCrawler", "ExCardActivity onCreate");
-        setContentView(R.layout.activity_ex_card);
-
-        /* show the recyclerView */
-        //get ex card data from intent
-        List<ExCard> exCardList = this.getIntent()
-                .getParcelableArrayListExtra("exCardList");
-        List<ExCardLogItem> exCardLogItemList = this.getIntent()
-                .getParcelableArrayListExtra("exCardLogList");
-        ExCardListAdapter exCardListAdapter = new ExCardListAdapter(R.layout.item_ex_card, exCardList);
-        ExCardLogAdapter exCardLogAdapter = new ExCardLogAdapter(this, exCardLogItemList);
-
-        RecyclerView exCardListView = (RecyclerView) findViewById(R.id.list_ex_cards);
-        ExpandableListView expandableListView = findViewById(R.id.expandableListView);
-        exCardListView.setLayoutManager(new LinearLayoutManager(this));
-        exCardListView.setAdapter(exCardListAdapter);
-        expandableListView.setAdapter(exCardLogAdapter);
-        expandableListView.setGroupIndicator(null);
-        expandableListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
-
-            @Override
-            public void onGroupExpand(int groupPosition) {
-                Log.i("webCrawler",
-                        exCardLogItemList.get(groupPosition) + " List Expanded.");
-            }
-        });
-
-        expandableListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
-
-            @Override
-            public void onGroupCollapse(int groupPosition) {
-                Log.i("webCrawler", exCardLogItemList.get(groupPosition) + " List Collapsed.");
-            }
-        });
-
-        expandableListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-            @Override
-            public boolean onChildClick(ExpandableListView parent, View v,
-                                        int groupPosition, int childPosition, long id) {
-                ExCardLogItem exCardLogItem = exCardLogItemList.get(groupPosition);
-                String log = exCardLogItem.getLogs().get(childPosition);
-                Log.i("webCrawler", "log is:" + log);
-
-                return false;
-            }
-        });
-
-
-        final Toolbar toolbar = $(R.id.toolbar);
-
-        setSupportActionBar(toolbar);
-
-        enableBackHome();
-
-        serverInfos = new ArrayList<>();
-        xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
-
-        initButton();
-
-    }
-
-
-    public void initButton() {
-        //检测是否下载过
-        btn_download = $(R.id.web_btn_download_prerelease);
-        btn_download.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (downloadState != DownloadState.DOWNLOAD_ING) {
-                    Log.i("webCrawler", "start downloading");
-                    downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(URL_YGO233_FILE);
-                }
-            }
-        });
-
-        changeDownloadButton();
+    /**
+     * @param event
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageReceived(ExCardEvent event) {
+        if (event.getType() == ExCardEvent.EventType.exCardPackageChange) {
+            changeDownloadText();
+        }
     }
 
     /**
@@ -247,7 +247,7 @@ public class ExCardActivity extends BaseActivity {
         mServerInfo.setPlayerName(playerName);
         VUiKit.defer().when(() -> {
             /* 读取本地文件server_list.xml和资源文件（assets）下的serverlist.xml，返回其中版本最新的 */
-            ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));//读取serverlist.xml文件
+            ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));//读取serverlist.xml文件
             ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
             if (fileList == null) {
                 return assetList;
@@ -286,7 +286,7 @@ public class ExCardActivity extends BaseActivity {
         OutputStream outputStream = null;
         try {
             outputStream = new FileOutputStream(xmlFile);
-            XmlUtils.get().saveXml(new ServerList(SystemUtils.getVersion(getContext()), serverInfos), outputStream);
+            XmlUtils.get().saveXml(new ServerList(SystemUtils.getVersion(context), serverInfos), outputStream);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -295,6 +295,7 @@ public class ExCardActivity extends BaseActivity {
     }
 
     private void downloadfromWeb(String fileUrl) {
+        textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉
         File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");
         if (file.exists()) {
             FileUtils.deleteFile(file);
@@ -302,7 +303,7 @@ public class ExCardActivity extends BaseActivity {
         DownloadUtil.get().download(fileUrl, file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-                downloadState = DownloadState.DOWNLOAD_COMPLETE;
+                downloadState = DownloadState.NO_DOWNLOAD;
                 Message message = new Message();
                 message.what = UnzipUtils.ZIP_READY;
                 try {
@@ -343,39 +344,5 @@ public class ExCardActivity extends BaseActivity {
 
     }
 
-    public void changeDownloadButton() {
-        if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
-            //btn_download展示默认视图
-            btn_download.setText(R.string.tip_redownload);
-        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
-            btn_download.setText(R.string.action_download_expansions);
-        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_LONG).show();
-        }
-    }
 
-    /**
-     * 通过http访问web读取先行卡版本号。
-     * 读取结果通过handler发到ui线程
-     * 注意在ExCardActivity中包含一个相同实现
-     */
-/*    public void showExNew() {
-        if (AppsSettings.get().isReadExpansions()) {
-            OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String json = response.body().string();
-                    Message message = new Message();
-                    message.what = HomeFragment.TYPE_GET_DATA_VER_OK;
-                    message.obj = json;
-                    handler.sendMessage(message);
-                }
-            });
-        }
-    }*/
 }

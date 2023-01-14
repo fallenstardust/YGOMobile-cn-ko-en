@@ -149,11 +149,6 @@
 
         <!--   android:screenOrientation="landscape"-->
         <activity
-            android:name="cn.garymb.ygomobile.ex_card.ExCardActivity"
-            android:theme="@style/AppTheme.Mycard"
-            android:launchMode="singleTop"
-            />
-        <activity
             android:name="cn.garymb.ygomobile.ex_card.ExCardActivity2"
             android:theme="@style/AppTheme.Mycard"
             android:launchMode="singleTop"

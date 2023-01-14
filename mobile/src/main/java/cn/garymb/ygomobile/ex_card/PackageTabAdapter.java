@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.ex_card;
 
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -20,11 +18,10 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
     }
     @Override
     public Fragment getItem(int position) {
-        Log.i("webCrawler", "getItem");
         Fragment fragment = null;
         if (position == 0)
         {
-            fragment = new ExCardFragment();//TODO
+            fragment = new ExCardListFragment();//TODO
         }
         else if (position == 1)
         {
@@ -41,11 +38,11 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
         String title = null;
         if (position == 0)
         {
-            title = "Domestic";
+            title = "先行卡";//TODO
         }
         else if (position == 1)
         {
-            title = "International";
+            title = "更新日志";
         }
         return title;
     }

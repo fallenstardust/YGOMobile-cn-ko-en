@@ -220,10 +220,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     //设置使用额外卡库后重新加载卡片数据
                     DataManager.get().load(true);
                     EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPrefChange));
-                    /* TODO 考虑以下特殊情况，用户在未开启先行卡的情况下，下载了先行卡包，之后跳转到设置页面，勾选开启先行卡后，DataManager自动安装，但此时本地的先行卡版本号尚未更新。
-                    先行卡，此时应更新先行卡状态
-                     */
-                    ServerUtil.initExCardState();
+                    //ServerUtil.initExCardState();
                 }
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {

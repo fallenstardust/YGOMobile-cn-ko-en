@@ -32,7 +32,8 @@
             android:shadowRadius="2"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
-            android:textColor="@color/item_title"
+            android:textColor="@color/brightgreen"
+            android:padding="20dp"
             android:textSize="15sp"
             tools:text="Card Name" />
 

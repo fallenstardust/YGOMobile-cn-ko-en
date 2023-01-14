@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ex_card;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
@@ -25,24 +26,20 @@ public class ExCardActivity2 extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ex_card2);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        if (getSupportActionBar() == null) {
-            setSupportActionBar(toolbar);
-        } else {
-            toolbar.setVisibility(View.GONE);
-        }
-        getSupportActionBar().setTitle("Packages");
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         viewPager.setOffscreenPageLimit(2);
         tabLayout = (TabLayout) findViewById(R.id.packagetablayout);
         createTabFragment();
-        List<ExCard> exCardList = this.getIntent()
-                .getParcelableArrayListExtra("exCardList");
-        List<ExCardLogItem> exCardLogItemList = this.getIntent()
-                .getParcelableArrayListExtra("exCardLogList");
+
     }
 
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+        Log.i("webCrawler", "excard activity destroy");
+    }
     private void createTabFragment() {
         adapter = new PackageTabAdapter(getSupportFragmentManager(), tabLayout);
         viewPager.setAdapter(adapter);

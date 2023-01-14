@@ -11,6 +11,8 @@
         android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
-        android:textColor="@color/item_title"/>
+        android:textSize="15sp"
+        android:textColor="@color/brightgreen"
+        />
 
 </LinearLayout>
