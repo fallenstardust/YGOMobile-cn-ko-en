@@ -419,7 +419,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             tv_message.setText(R.string.logining_failed);
             HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, exception);
             serviceManagement.setIsListener(false);
-            YGOUtil.show(getString(R.string.failed_reason) + exception);
+            if(exception.endsWith("not-authorized")) {//如果弹这个exception基本上是账号没验证邮箱
+                YGOUtil.show(getString(R.string.notice_verify_email));
+            } else {
+                YGOUtil.show(getString(R.string.failed_reason) + exception);
+            }
         }
     }
 

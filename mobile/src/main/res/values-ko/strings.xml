@@ -216,6 +216,7 @@
     <string name="logining_in">로그인 중입니다. 잠시 기다려주십시오...</string>
     <string name="logining_failed">로그인 실패했습니다. 다시 시도하십시오.</string>
     <string name="failed_reason">해당 이유로 로그인 실패했습니다.</string>
+    <string name="notice_verify_email">only email verified account can login in Chatroom</string>
     <string name="send">보내기</string>
     <string name="mc_home">홈</string>
     <string name="bbs">커뮤니티</string>
