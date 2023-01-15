@@ -91,7 +91,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                     break;
                 case TYPE_GET_VERSION_FAILED:
                     String error = msg.obj.toString();
-                    Log.e(BuildConfig.VERSION_NAME, error);
                     break;
             }
 
@@ -365,7 +364,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String json = response.body().string();
-                Log.i(BuildConfig.VERSION_NAME, json);
                 Message message = new Message();
                 message.what = TYPE_GET_VERSION_OK;
                 message.obj = json;

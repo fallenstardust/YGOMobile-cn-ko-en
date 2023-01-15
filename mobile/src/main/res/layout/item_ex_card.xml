@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:paddingBottom="10dp"
+    android:background="@drawable/list_item_bg"
     android:orientation="horizontal">
     <!--    set the layout_height in the linear layout to “wrap_content”
     so it doesn’t only show one TextView per page.-->
@@ -12,13 +14,15 @@
         android:id="@+id/ex_card_image"
         android:layout_width="@dimen/card_width_middle"
         android:layout_height="@dimen/card_height_middle"
-        android:paddingTop="5dp"
+        android:padding="10dp"
+        android:layout_gravity="center_vertical"
         android:scaleType="fitXY"
         tools:src="@drawable/unknown" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="10dp"
         android:orientation="vertical">
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
@@ -32,8 +36,7 @@
             android:shadowRadius="2"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
-            android:textColor="@color/brightgreen"
-            android:padding="20dp"
+            android:textColor="@color/gold"
             android:textSize="15sp"
             tools:text="Card Name" />
 
@@ -41,15 +44,8 @@
             android:id="@+id/ex_card_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="20dp"
+            android:textColor="@color/white"
             android:textSize="12sp" />
-
-        <View
-            android:id="@+id/view_bar"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="3dp"
-            android:background="@color/colorPrimaryDark" />
     </LinearLayout>
 
 </LinearLayout>

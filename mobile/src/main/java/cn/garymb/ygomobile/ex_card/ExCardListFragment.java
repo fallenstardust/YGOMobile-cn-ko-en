@@ -140,7 +140,7 @@ public class ExCardListFragment extends Fragment {
             //btn_download展示默认视图
             textDownload.setText(R.string.tip_redownload);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
-            textDownload.setText(R.string.action_download_expansions);
+            textDownload.setText(R.string.Download);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
             Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_LONG).show();
         }

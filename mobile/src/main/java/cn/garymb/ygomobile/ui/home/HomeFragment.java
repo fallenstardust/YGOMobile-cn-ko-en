@@ -59,7 +59,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
-import cn.garymb.ygomobile.ex_card.ExCardActivity2;
+import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -722,7 +722,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 //                    break;
 //                }
                 /* using Web crawler to extract the information of pre card */
-                Intent exCardIntent = new Intent(getActivity(), ExCardActivity2.class);
+                Intent exCardIntent = new Intent(getActivity(), ExCardActivity.class);
                 startActivity(exCardIntent);
                 break;
             case R.id.action_help: {
