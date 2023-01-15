@@ -39,6 +39,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
+import cn.garymb.ygomobile.utils.ServerUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -114,6 +115,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
+        ServerUtil.initExCardState();//检查扩展卡版本
     }
 
     @Override

@@ -1,5 +1,7 @@
 package ocgcore;
 
+import android.util.Log;
+
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.loader.CardLoader;
 
@@ -45,6 +47,8 @@ public class DataManager {
     private boolean mInit;
 
     public void load(boolean force) {
+
+        //Log.i("webCrawler", "DataManager load data");
         boolean needLoad = false;
         synchronized (this) {
             if (!mInit || force) {

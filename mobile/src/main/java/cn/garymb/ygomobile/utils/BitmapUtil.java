@@ -6,6 +6,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -222,6 +224,14 @@ public class BitmapUtil {
         canvas.drawRect(0, 0, orginBitmap.getWidth(), orginBitmap.getHeight(), paint);
         canvas.drawBitmap(orginBitmap, 0, 0, paint);
         return bitmap;
+    }
+
+    public static Paint getPaint(int saturation){
+         Paint mPaint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(saturation);
+        mPaint.setColorFilter(new ColorMatrixColorFilter(cm));
+        return mPaint;
     }
 
 }
