@@ -597,10 +597,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
                 //如果是先行卡服务器，并且未开启先行卡设置，则通过toast提示
                 if (!AppsSettings.get().isReadExpansions()) {
-                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message, Toast.LENGTH_LONG).show();
                 } else if (ServerUtil.exCardState != ServerUtil.ExCardState.UPDATED) {
                     //如果是先行卡服务器，并且未开启下载先行卡，则通过toast提示
-                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_ii, Toast.LENGTH_LONG).show();
                 }
             }
             joinRoom(event.position);

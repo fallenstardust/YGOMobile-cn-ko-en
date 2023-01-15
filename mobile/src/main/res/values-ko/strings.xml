@@ -40,7 +40,8 @@
     <string name="string_help_text">현재 앱에 필요한 권한이 없습니다. \n설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
     <string name="fetch_ex_card">웹에서 프리릴리즈 카드 가져오기</string>
     <string name="ex_card_log_title">업데이트 기록</string>
-    <string name="ex_card_check_toast_message">프리릴리즈 카드를 설치하지 않은 경우에 프리릴리즈 카드 다운로드 페이지에서 프리릴리즈 카드 팩을 다운로드할 때 이 기능을 사용하시길 바랍니다.</string>
+    <string name="ex_card_check_toast_message">before join in this server, please first click "used Expansions" in settings</string>
+    <string name="ex_card_check_toast_message_ii">before join in this server, please download expansions first</string>
 
     <!-- settings -->
     <string name="settings_about">정보</string>
