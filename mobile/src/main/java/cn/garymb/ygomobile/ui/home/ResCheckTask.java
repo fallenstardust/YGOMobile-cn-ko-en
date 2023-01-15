@@ -11,6 +11,7 @@ import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -277,12 +278,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
             //根据系统语言复制特定资料文件
             String language = mContext.getResources().getConfiguration().locale.getLanguage();
-            Log.i(BuildConfig.VERSION_NAME, language);
             if (!language.isEmpty()) {
                 if (mSettings.getDataLanguage() == -1) {
-                    if (language.equals("zh"))
+                    if (language.equals("zh")) {
                         copyCnData(needsUpdate);
-                    if (language.equals("ko")) {
+                    } else if (language.equals("ko")) {
                         copyKorData(needsUpdate);
                     } else {
                         copyEnData(needsUpdate);

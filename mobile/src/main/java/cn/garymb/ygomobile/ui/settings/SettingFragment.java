@@ -114,7 +114,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 case TYPE_SETTING_GET_VERSION_OK:
                     Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
                     Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
-                    Log.i(BuildConfig.VERSION_NAME, Version + "和" + Cache_link);
                     if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
@@ -148,6 +147,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
+
         mSettings = AppsSettings.get();
 
         addPreferencesFromResource(R.xml.preference_game);
@@ -170,6 +170,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
+        bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
             preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
@@ -294,13 +295,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     message.what = TYPE_SETTING_GET_VERSION_FAILED;
                     message.obj = e;
                     handler.sendMessage(message);
-                    Log.i(BuildConfig.VERSION_NAME, "error" + e);
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String json = response.body().string();
-                    Log.i(BuildConfig.VERSION_NAME, json);
                     Message message = new Message();
                     message.what = TYPE_SETTING_GET_VERSION_OK;
                     message.obj = json;
