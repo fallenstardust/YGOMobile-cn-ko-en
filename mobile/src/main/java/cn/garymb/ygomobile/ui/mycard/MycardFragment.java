@@ -77,7 +77,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == TYPE_MC_LOGIN) {
-           McUser mcUser= (McUser) msg.obj;
+                McUser mcUser = (McUser) msg.obj;
                 if (!TextUtils.isEmpty(mcUser.getAvatar_url())) {
                     GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
                 }
@@ -348,7 +348,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onLogin(McUser mcUser, String exception) {
-        if (!TextUtils.isEmpty(exception)){
+        if (!TextUtils.isEmpty(exception)) {
             return;
         }
         serviceManagement.disSerVice();//先退出当前账号，待TYPE_MC_LOGIN处重新执行start（）
@@ -362,7 +362,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onUpdate(String name, String icon, String statu) {
-        McUser mcUser=new McUser();
+        McUser mcUser = new McUser();
         mcUser.setUsername(name);
         mcUser.setAvatar_url(icon);
         mcUser.setEmail(statu);
@@ -415,14 +415,16 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             else
                 tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
-            Log.e("MyCardFragment","登录失败"+exception);
+            Log.e("MyCardFragment", "登录失败" + exception);
             tv_message.setText(R.string.logining_failed);
             HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, exception);
             serviceManagement.setIsListener(false);
-            if(exception.endsWith("not-authorized")) {//如果弹这个exception基本上是账号没验证邮箱
+            if (exception.endsWith("not-authorized")) {//如果弹这个exception基本上是账号没验证邮箱
                 YGOUtil.show(getString(R.string.notice_verify_email));
+            } else if (exception.endsWith("No address associated with hostname")) {//如果弹这个exception有可能是未授权连接网络或者没有连接网络
+                YGOUtil.show(getString(R.string.tip_no_netwrok));
             } else {
-                YGOUtil.show(getString(R.string.failed_reason) + exception);
+                YGOUtil.show(getString(R.string.mc_chat) + getString(R.string.failed_reason) + exception);
             }
         }
     }
