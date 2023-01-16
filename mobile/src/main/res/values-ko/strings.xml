@@ -28,7 +28,7 @@
     <string name="bg_menu">메뉴 배경</string>
     <string name="bg_deck">덱 배경</string>
     <string name="action_add_server">서버 추가</string>
-    <string name="action_download_expansions">프리릴리즈 카드 다운로드</string>
+    <string name="action_download_expansions">프리릴리즈 카드 팩 다운로드</string>
     <string name="no_find_file_selectotr">파일 선택기를 찾을 수 없습니다</string>
     <string name="no_find_image_selector">이미지 선택기를 찾을 수 없습니다</string>
     <string name="no_find_image_cutor">이미지 자르기를 찾을 수 없습니다</string>
@@ -38,10 +38,10 @@
     <string name="quit_tip">앱을 종료하겠습니까?</string>
     <string name="back_tip">뒤로가기 키를 한번 더 누르시면 앱이 종료됩니다</string>
     <string name="string_help_text">현재 앱에 필요한 권한이 없습니다. \n설정 - 권한 - 필요한 권한 얻기를 터치하십시오.</string>
-    <string name="fetch_ex_card">웹에서 프리릴리즈 카드 가져오기</string>
+    <string name="fetch_ex_card">웹에서 프리릴리즈 카드 팩 가져오기</string>
     <string name="ex_card_log_title">업데이트 기록</string>
-    <string name="ex_card_check_toast_message">before join in this server, please first click "used Expansions" in settings</string>
-    <string name="ex_card_check_toast_message_ii">before join in this server, please download expansions first</string>
+    <string name="ex_card_check_toast_message">이 서버에 들어가기 전에 먼저 설정에서 "프리릴리즈 카드 팩 활성화"를 클릭하십시오.</string>
+    <string name="ex_card_check_toast_message_ii">이 서버에 들어가기 전에 먼저 프리릴리즈 카드 팩을 다운로드하십시오.</string>
 
     <!-- settings -->
     <string name="settings_about">정보</string>
