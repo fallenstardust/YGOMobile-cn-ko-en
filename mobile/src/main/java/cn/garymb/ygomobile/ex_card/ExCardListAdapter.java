@@ -48,7 +48,7 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCard, BaseViewHolder> 
             ArrayList<ExCard> exCardList = new ArrayList<>();
             for (Element card : cards) {
                 Elements card_attributes = card.getElementsByTag("td");
-                String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href");
+                String imageUrl = card_attributes.get(0).getElementsByTag("a").attr("href") + "!half";
                 String name = card_attributes.get(1).text();
                 String description = card_attributes.get(2).text();
                 ExCard exCard = new ExCard(name, imageUrl, description, 0);
