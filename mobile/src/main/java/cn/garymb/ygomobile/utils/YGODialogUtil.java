@@ -17,6 +17,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -113,8 +114,8 @@ public class YGODialogUtil {
             tv_del = viewDialog.findViewById(R.id.tv_del);
 
             hideAllDeckUtil();
-            rv_deck.setLayoutManager(new LinearLayoutManager(context));
-            rv_type.setLayoutManager(new LinearLayoutManager(context));
+            rv_deck.setLayoutManager(new FastScrollLinearLayoutManager(context));
+            rv_type.setLayoutManager(new FastScrollLinearLayoutManager(context));
 
             List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
 
