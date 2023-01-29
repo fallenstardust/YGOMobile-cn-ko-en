@@ -82,6 +82,7 @@ import ocgcore.data.Card;
 
 
 public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListener, View.OnClickListener {
+    private static final String TAG = "HomeFragment";
     public static final int ID_HOMEFRAGMENT = 0;
     private DuelAssistantManagement duelAssistantManagement;
     private HomeActivity activity;
@@ -277,7 +278,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
      * ServerUtil获取到版本状态后会通过eventmessage通知调用本函数，不需要在主函数显式调用
      */
     public void changeExCardNewMark() {
-        Log.i("webCrawler", "check excard new mark, version:" + ServerUtil.exCardState);
+        Log.i(TAG, "check excard new mark, version:" + ServerUtil.exCardState);
         if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
             ll_new_notice.setVisibility(View.GONE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {

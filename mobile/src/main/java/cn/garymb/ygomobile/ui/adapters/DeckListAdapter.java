@@ -77,7 +77,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         //item是deckFile类型
         this.deckFile = (DeckFile) item;
         holder.deckName.setText(item.getName());
-        if (!deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack))) {
+        //if (!deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack))) {
             //预读卡组信息
             this.deckInfo = mDeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
             //加载卡组第一张卡的图
@@ -145,10 +145,10 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
                     }
                 }
             }
-        } else {
-            holder.deck_info.setVisibility(View.GONE);
-            holder.cardImage.setVisibility(View.GONE);
-        }
+        //} else {
+        //    holder.deck_info.setVisibility(View.GONE);
+        //    holder.cardImage.setVisibility(View.GONE);
+        //}
         //多选
         if (isManySelect) {
             if (selectList.contains(item))

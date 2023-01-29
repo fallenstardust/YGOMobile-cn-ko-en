@@ -190,8 +190,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        if (Constants.DEBUG)
-            Log.d(TAG, "check start");
+        Log.d(TAG, "check start");
         boolean needsUpdate = isNewVersion;
         //清空下载缓存
         File imgDir = new File(mSettings.getCardImagePath());
@@ -296,10 +295,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             han.sendEmptyMessage(0);
 
             loadData();
-        } catch (
-                Exception e) {
-            if (Constants.DEBUG)
-                Log.e(TAG, "check", e);
+        } catch (Exception e) {
+                Log.e(TAG, "ERROR COPY", e);
             return ERROR_COPY;
         }
         return ERROR_NONE;
