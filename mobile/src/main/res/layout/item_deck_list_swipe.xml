@@ -71,6 +71,11 @@
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="10sp"
                 tools:text="40" />
+            <LinearLayout
+                android:id="@+id/ll_extra_n_side"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/TextExtra"
@@ -105,7 +110,7 @@
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="10sp"
                 tools:text="15" />
-
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

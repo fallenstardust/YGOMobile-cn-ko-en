@@ -51,10 +51,9 @@ public class YGODialogUtil {
 
     public static ListView dialogl(Context context, String title, String[] list) {
         DialogUtils dialogUtils = DialogUtils.getInstance(context);
-        ListView listView = dialogUtils.dialogl1(title
-                , new TextBaseAdapter(context, list, YGOUtil.c(R.color.white)
-                        , 16, 16, 16, 16));
-        dialogUtils.setDialogBackgroundResource(R.drawable.radius);
+        ListView listView = dialogUtils.dialogl1(title, new TextBaseAdapter(context, list,
+                YGOUtil.c(R.color.white), 10, 20, 10, 20));
+        dialogUtils.setDialogBackgroundResource(R.drawable.window2s);
         dialogUtils.setTitleColor(YGOUtil.c(R.color.holo_blue_light));
         return listView;
     }
@@ -85,6 +84,7 @@ public class YGODialogUtil {
         private final LinearLayout ll_move;
         private final LinearLayout ll_copy;
         private final LinearLayout ll_del;
+        private final LinearLayout ll_add;
         private final ImageView iv_move;
         private final ImageView iv_copy;
         private final ImageView iv_del;
@@ -106,7 +106,7 @@ public class YGODialogUtil {
             ll_move = ygoDialog.findViewById(R.id.ll_move);
             ll_copy = ygoDialog.findViewById(R.id.ll_copy);
             ll_del = ygoDialog.findViewById(R.id.ll_del);
-            LinearLayout ll_add = ygoDialog.findViewById(R.id.ll_add);
+            ll_add = ygoDialog.findViewById(R.id.ll_add);
             iv_copy = ygoDialog.findViewById(R.id.iv_copy);
             iv_move = ygoDialog.findViewById(R.id.iv_move);
             iv_del = ygoDialog.findViewById(R.id.iv_del);
