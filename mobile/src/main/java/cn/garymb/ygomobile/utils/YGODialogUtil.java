@@ -93,25 +93,26 @@ public class YGODialogUtil {
         private final TextView tv_del;
         private final TextSelectAdapter<DeckType> typeAdp;
         private final DeckListAdapter<DeckFile> deckAdp;
-        private final Dialog ygoDialog;
+        private final DialogPlus ygoDialog;
 
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
-            DialogUtils du = DialogUtils.getdx(context);
-            View viewDialog = du.dialogBottomSheet(R.layout.dialog_deck_select, true);
+            ygoDialog = new DialogPlus(context);
+            ygoDialog.setContentView(R.layout.dialog_deck_select);
+            ygoDialog.setTitle(R.string.category_manager);
             RecyclerView rv_type, rv_deck;
 
-            rv_deck = viewDialog.findViewById(R.id.rv_deck);
-            rv_type = viewDialog.findViewById(R.id.rv_type);
-            ll_move = viewDialog.findViewById(R.id.ll_move);
-            ll_copy = viewDialog.findViewById(R.id.ll_copy);
-            ll_del = viewDialog.findViewById(R.id.ll_del);
-            LinearLayout ll_add = viewDialog.findViewById(R.id.ll_add);
-            iv_copy = viewDialog.findViewById(R.id.iv_copy);
-            iv_move = viewDialog.findViewById(R.id.iv_move);
-            iv_del = viewDialog.findViewById(R.id.iv_del);
-            tv_move = viewDialog.findViewById(R.id.tv_move);
-            tv_copy = viewDialog.findViewById(R.id.tv_copy);
-            tv_del = viewDialog.findViewById(R.id.tv_del);
+            rv_deck = ygoDialog.findViewById(R.id.rv_deck);
+            rv_type = ygoDialog.findViewById(R.id.rv_type);
+            ll_move = ygoDialog.findViewById(R.id.ll_move);
+            ll_copy = ygoDialog.findViewById(R.id.ll_copy);
+            ll_del = ygoDialog.findViewById(R.id.ll_del);
+            LinearLayout ll_add = ygoDialog.findViewById(R.id.ll_add);
+            iv_copy = ygoDialog.findViewById(R.id.iv_copy);
+            iv_move = ygoDialog.findViewById(R.id.iv_move);
+            iv_del = ygoDialog.findViewById(R.id.iv_del);
+            tv_move = ygoDialog.findViewById(R.id.tv_move);
+            tv_copy = ygoDialog.findViewById(R.id.tv_copy);
+            tv_del = ygoDialog.findViewById(R.id.tv_del);
 
             hideAllDeckUtil();
             rv_deck.setLayoutManager(new FastScrollLinearLayoutManager(context));
@@ -215,7 +216,7 @@ public class YGODialogUtil {
                     dialogl(context, context.getString(R.string.new_deck),
                             new String[]{context.getString(R.string.category_name),
                                     context.getString(R.string.deck_name)}).setOnItemClickListener((parent, view, position, id) -> {
-                        du.dis();
+                        ygoDialog.dismiss();
                         switch (position) {
                             case 0:
                                 //if (deckList.size()>=8){
@@ -261,7 +262,7 @@ public class YGODialogUtil {
 
                 dialogl(context, context.getString(please_select_target_category),
                         getStringType(otherType)).setOnItemClickListener((parent, view, position, id) -> {
-                    du.dis();
+                    ygoDialog.dismiss();
                     DeckType toType = otherType.get(position);
                     IOUtils.createFolder(new File(toType.getPath()));
                     List<DeckFile> deckFileList = deckAdp.getSelectList();
@@ -284,7 +285,7 @@ public class YGODialogUtil {
 
                 dialogl(context, context.getString(please_select_target_category),
                         getStringType(otherType)).setOnItemClickListener((parent, view, position, id) -> {
-                    du.dis();
+                    ygoDialog.dismiss();
                     DeckType toType = otherType.get(position);
                     IOUtils.createFolder(new File(toType.getPath()));
                     List<DeckFile> deckFileList = deckAdp.getSelectList();
@@ -335,8 +336,6 @@ public class YGODialogUtil {
                     dialogPlus.show();
                 }
             });
-
-            ygoDialog = du.getDialog();
             ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
