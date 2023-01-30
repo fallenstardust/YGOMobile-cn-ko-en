@@ -135,6 +135,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                         }
 
                     });
+                    dialog.setCancelable(false);
                     dialog.show();
                 }
             } else {
