@@ -334,7 +334,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         //进入房间
         DialogPlus builder = new DialogPlus(getContext());
         builder.setTitle(R.string.intput_room_name);
-        builder.setContentView(R.layout.dialog_room_name);
+        builder.setContentView(R.layout.dialog_edit_and_list);
         EditText editText = builder.bind(R.id.room_name);
         ListView listView = builder.bind(R.id.room_list);
         TextView text_abt_roomlist = builder.bind(R.id.abt_room_list);

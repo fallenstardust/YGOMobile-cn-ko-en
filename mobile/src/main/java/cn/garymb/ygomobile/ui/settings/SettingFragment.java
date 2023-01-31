@@ -317,7 +317,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             simpleListAdapter.set(list);
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setTitle(R.string.ypk_delete);
-            dialog.setContentView(R.layout.dialog_room_name);
+            dialog.setContentView(R.layout.dialog_edit_and_list);
             EditText editText = dialog.bind(R.id.room_name);
             editText.setVisibility(View.GONE);//不显示输入框
             ListView listView = dialog.bind(R.id.room_list);

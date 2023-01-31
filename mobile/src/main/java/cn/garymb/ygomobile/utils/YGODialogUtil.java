@@ -2,9 +2,9 @@ package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.lite.R.string.please_select_target_category;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -19,7 +19,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -38,6 +37,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -212,13 +212,26 @@ public class YGODialogUtil {
 
             ll_add.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View v) {
-                    dialogl(context, context.getString(R.string.new_deck),
-                            new String[]{context.getString(R.string.category_name),
-                                    context.getString(R.string.deck_name)}).setOnItemClickListener((parent, view, position, id) -> {
-                        ygoDialog.dismiss();
-                        switch (position) {
+                public void onClick(View view) {
+                    List list = new ArrayList();
+                    list.add(context.getString(R.string.category_name));
+                    list.add(context.getString(R.string.deck_name));
+                    SimpleListAdapter catelistadapter = new SimpleListAdapter(context);
+                    catelistadapter.set(list);
+                    DialogPlus dialog = new DialogPlus(context);
+                    dialog.setTitle(R.string.new_deck);
+                    dialog.setContentView(R.layout.dialog_edit_and_list);
+                    EditText edit = dialog.bind(R.id.room_name);
+                    edit.setVisibility(View.GONE);//不显示输入框
+                    ListView listView = dialog.bind(R.id.room_list);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        listView.setForegroundGravity(View.TEXT_ALIGNMENT_CENTER);
+                    }
+                    listView.setAdapter(catelistadapter);
+                    listView.setOnItemClickListener((a, v, pos, index) -> {
+                        switch ((int) index) {
                             case 0:
+                                dialog.dismiss();
                                 //if (deckList.size()>=8){
                                 //    YGOUtil.show("最多只能有5个自定义分类");
                                 //}
@@ -231,38 +244,51 @@ public class YGODialogUtil {
                                 builder.setContentView(editText);
                                 builder.setOnCloseLinster(DialogInterface::dismiss);
                                 builder.setLeftButtonListener((dlg, s) -> {
-                                    String name = editText.getText().toString().trim();
-                                    if (TextUtils.isEmpty(name)) {
+                                    CharSequence catename = editText.getText();
+                                    if (TextUtils.isEmpty(catename)) {
                                         YGOUtil.show(context.getString(R.string.invalid_category_name));
                                         return;
                                     }
-                                    File file = new File(AppsSettings.get().getDeckDir(), name);
+                                    File file = new File(AppsSettings.get().getDeckDir(), catename.toString());
                                     if (IOUtils.createFolder(file)) {
-                                        typeList.add(new DeckType(name, file.getAbsolutePath()));
+                                        typeList.add(new DeckType(catename.toString(), file.getAbsolutePath()));
                                         typeAdp.notifyItemInserted(typeList.size() - 1);
                                         dlg.dismiss();
                                     } else {
                                         YGOUtil.show(context.getString(R.string.create_new_failed));
                                     }
-
                                 });
                                 builder.show();
                                 break;
                             case 1:
+                                dialog.dismiss();
                                 onDeckMenuListener.onDeckNew(typeList.get(typeAdp.getSelectPosition()));
-                                dismiss();
                                 break;
                         }
                     });
+                    dialog.show();
                 }
             });
 
-            ll_move.setOnClickListener(v -> {
+            ll_move.setOnClickListener(view -> {
                 List<DeckType> otherType = getOtherTypeList();
+                List<String> cateNameList = getStringTypeList(otherType);
+                SimpleListAdapter simpleListAdapter = new SimpleListAdapter(context);
+                simpleListAdapter.set(cateNameList);
 
-                dialogl(context, context.getString(please_select_target_category),
-                        getStringType(otherType)).setOnItemClickListener((parent, view, position, id) -> {
-                    ygoDialog.dismiss();
+                DialogPlus dialog = new DialogPlus(context);
+                dialog.setTitle(R.string.please_select_target_category);
+                dialog.setContentView(R.layout.dialog_edit_and_list);
+                EditText edit = dialog.bind(R.id.room_name);
+                edit.setVisibility(View.GONE);//不显示输入框
+                ListView listView = dialog.bind(R.id.room_list);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    listView.setForegroundGravity(View.TEXT_ALIGNMENT_CENTER);
+                }
+                listView.setAdapter(simpleListAdapter);
+                listView.setOnItemClickListener((a, v, pos, index) -> {
+                    String name = simpleListAdapter.getItemById(index);
+                    int position = simpleListAdapter.findItem(name);
                     DeckType toType = otherType.get(position);
                     IOUtils.createFolder(new File(toType.getPath()));
                     List<DeckFile> deckFileList = deckAdp.getSelectList();
@@ -277,16 +303,29 @@ public class YGODialogUtil {
                     YGOUtil.show(context.getString(R.string.done));
                     onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
                     clearDeckSelect();
+                    dialog.dismiss();
                 });
+                dialog.show();
             });
 
-            ll_copy.setOnClickListener(v -> {
+            ll_copy.setOnClickListener(view -> {
                 List<DeckType> otherType = getOtherTypeList();
+                List<String> cateNameList = getStringTypeList(otherType);
+                SimpleListAdapter simpleListAdapter = new SimpleListAdapter(context);
+                simpleListAdapter.set(cateNameList);
 
-                dialogl(context, context.getString(please_select_target_category),
-                        getStringType(otherType)).setOnItemClickListener((parent, view, position, id) -> {
-                    ygoDialog.dismiss();
-                    DeckType toType = otherType.get(position);
+                DialogPlus dialog = new DialogPlus(context);
+                dialog.setTitle(R.string.please_select_target_category);
+                dialog.setContentView(R.layout.dialog_edit_and_list);
+                EditText edit = dialog.bind(R.id.room_name);
+                edit.setVisibility(View.GONE);//不显示输入框
+                ListView listView = dialog.bind(R.id.room_list);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    listView.setForegroundGravity(View.TEXT_ALIGNMENT_CENTER);
+                }
+                listView.setAdapter(simpleListAdapter);
+                listView.setOnItemClickListener((a, v, pos, index) -> {
+                    DeckType toType = otherType.get(pos);
                     IOUtils.createFolder(new File(toType.getPath()));
                     List<DeckFile> deckFileList = deckAdp.getSelectList();
                     for (DeckFile deckFile : deckFileList) {
@@ -299,7 +338,9 @@ public class YGODialogUtil {
                     YGOUtil.show(context.getString(R.string.done));
                     onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
                     clearDeckSelect();
+                    dialog.dismiss();
                 });
+                dialog.show();
             });
 
             ll_del.setOnClickListener(new View.OnClickListener() {
@@ -389,6 +430,14 @@ public class YGODialogUtil {
                 types[i] = deckTypeList.get(i).getName();
             }
             return types;
+        }
+
+        private List<String> getStringTypeList(List<DeckType> deckTypeList) {
+            List<String> typeList = new ArrayList<>();
+            for (int i = 0; i < deckTypeList.size(); i++) {
+                typeList.add(deckTypeList.get(i).getName());
+            }
+            return typeList;
         }
 
         //获取可以移动的分类
