@@ -271,7 +271,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
-                        resPath, needsUpdate);
+                        resPath, true);
             }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
@@ -280,16 +280,16 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (!language.isEmpty()) {
                 if (mSettings.getDataLanguage() == -1) {
                     if (language.equals("zh")) {
-                        copyCnData(needsUpdate);
+                        copyCnData(true);
                     } else if (language.equals("ko")) {
-                        copyKorData(needsUpdate);
+                        copyKorData(true);
                     } else {
-                        copyEnData(needsUpdate);
+                        copyEnData(true);
                     }
                 } else {
-                    if (mSettings.getDataLanguage() == 0) copyCnData(needsUpdate);
-                    if (mSettings.getDataLanguage() == 1) copyKorData(needsUpdate);
-                    if (mSettings.getDataLanguage() == 2) copyEnData(needsUpdate);
+                    if (mSettings.getDataLanguage() == 0) copyCnData(true);
+                    if (mSettings.getDataLanguage() == 1) copyKorData(true);
+                    if (mSettings.getDataLanguage() == 2) copyEnData(true);
                 }
             }
             han.sendEmptyMessage(0);
