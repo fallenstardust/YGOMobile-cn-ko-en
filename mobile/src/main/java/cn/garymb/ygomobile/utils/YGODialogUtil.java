@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.utils;
 
-import static cn.garymb.ygomobile.lite.R.string.please_select_target_category;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -23,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemLongClickListener;
-import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +29,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.adapter.TextBaseAdapter;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
@@ -47,15 +43,6 @@ public class YGODialogUtil {
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);
         viewHolder.show();
-    }
-
-    public static ListView dialogl(Context context, String title, String[] list) {
-        DialogUtils dialogUtils = DialogUtils.getInstance(context);
-        ListView listView = dialogUtils.dialogl1(title, new TextBaseAdapter(context, list,
-                YGOUtil.c(R.color.white), 10, 20, 10, 20));
-        dialogUtils.setDialogBackgroundResource(R.drawable.window2s);
-        dialogUtils.setTitleColor(YGOUtil.c(R.color.holo_blue_light));
-        return listView;
     }
 
     public interface OnDeckMenuListener {
