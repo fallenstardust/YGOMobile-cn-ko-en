@@ -172,6 +172,9 @@ public class YGODialogUtil {
                 public void onItemSelect(int position, DeckFile item) {
                     if (deckAdp.isManySelect()) {
                         deckAdp.addManySelect(item);
+                        if(deckAdp.getSelectList().size() == 0) {
+                            clearDeckSelect();
+                        }
                         deckAdp.notifyItemChanged(position);
                     } else {
                         dismiss();
@@ -192,6 +195,9 @@ public class YGODialogUtil {
                         showAllDeckUtil();
                     }
                     deckAdp.addManySelect((DeckFile) adapter.getItem(position));
+                    if(deckAdp.getSelectList().size() == 0) {
+                        clearDeckSelect();
+                    }
                     deckAdp.notifyItemChanged(position);
                     return true;
                 }
@@ -211,9 +217,6 @@ public class YGODialogUtil {
                     EditText edit = dialog.bind(R.id.room_name);
                     edit.setVisibility(View.GONE);//不显示输入框
                     ListView listView = dialog.bind(R.id.room_list);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        listView.setForegroundGravity(View.TEXT_ALIGNMENT_CENTER);
-                    }
                     listView.setAdapter(catelistadapter);
                     listView.setOnItemClickListener((a, v, pos, index) -> {
                         switch ((int) index) {
