@@ -131,7 +131,7 @@
 
     <string name="last_path">上一级目录</string>
     <string name="create_folder">新建文件夹</string>
-    <string name="intpu_name">输入文件名</string>
+    <string name="intpu_name">输入卡组名</string>
     <string name="the_name_is_folder">当前文件名是个文件夹</string>
     <string name="tab_search">搜索</string>
     <string name="tab_result">列表</string>
