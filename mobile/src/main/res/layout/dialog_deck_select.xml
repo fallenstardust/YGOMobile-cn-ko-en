@@ -12,13 +12,12 @@
         android:layout_marginBottom="5dp"
         android:orientation="vertical">
 
-        <androidx.appcompat.widget.AppCompatEditText
+        <EditText
             android:id="@+id/input_deck_name"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:gravity="center"
             android:hint="@string/intpu_name"
-            android:imeOptions="actionDone"
             android:inputType="textNoSuggestions"
             android:singleLine="true"
             android:textColor="@color/holo_blue_bright"
@@ -26,151 +25,157 @@
 
         <com.tubb.smrv.SwipeMenuRecyclerView
             android:id="@+id/rv_result_list"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
             android:divider="@android:color/transparent"
             android:dividerHeight="4dp"
             android:scrollbars="vertical"
-            android:visibility="gone"/>
+            android:visibility="gone" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/ll_main_ui"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/ll_add"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_add"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                app:srcCompat="@drawable/ic_add" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_add"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/ll_add"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="@string/new_deck"
-                android:textColor="@color/holo_blue_bright"
-                android:textSize="12sp" />
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_add"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    app:srcCompat="@drawable/ic_add" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_add"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/new_deck"
+                    android:textColor="@color/holo_blue_bright"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_move"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_move"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    app:srcCompat="@drawable/ic_move" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_move"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/move_deck"
+                    android:textColor="@color/holo_blue_bright"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_copy"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_copy"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    app:srcCompat="@drawable/ic_copy" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_copy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/copy_deck"
+                    android:textColor="@color/holo_blue_bright"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_del"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_del"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    app:srcCompat="@drawable/ic_del" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_del"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/delete_deck"
+                    android:textColor="@color/holo_blue_bright"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/ll_move"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:weightSum="3">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_move"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                app:srcCompat="@drawable/ic_move" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_move"
-                android:layout_width="wrap_content"
+            <com.tubb.smrv.SwipeMenuRecyclerView
+                android:id="@+id/rv_type"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="@string/move_deck"
-                android:textColor="@color/holo_blue_bright"
-                android:textSize="12sp" />
-        </LinearLayout>
+                android:layout_weight="1"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="4dp"
+                android:scrollbars="vertical" />
 
-        <LinearLayout
-            android:id="@+id/ll_copy"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:gravity="center"
-            android:orientation="vertical">
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/holo_blue_light" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_copy"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                app:srcCompat="@drawable/ic_copy" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_copy"
-                android:layout_width="wrap_content"
+            <com.tubb.smrv.SwipeMenuRecyclerView
+                android:id="@+id/rv_deck"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="@string/copy_deck"
-                android:textColor="@color/holo_blue_bright"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/ll_del"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_del"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                app:srcCompat="@drawable/ic_del" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_del"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="@string/delete_deck"
-                android:textColor="@color/holo_blue_bright"
-                android:textSize="12sp" />
+                android:layout_weight="2"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="4dp"
+                android:scrollbars="vertical" />
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="3">
-
-        <com.tubb.smrv.SwipeMenuRecyclerView
-            android:id="@+id/rv_type"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="4dp"
-            android:scrollbars="vertical" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="@color/holo_blue_light" />
-
-        <com.tubb.smrv.SwipeMenuRecyclerView
-            android:id="@+id/rv_deck"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="4dp"
-            android:scrollbars="vertical" />
-    </LinearLayout>
 </LinearLayout>

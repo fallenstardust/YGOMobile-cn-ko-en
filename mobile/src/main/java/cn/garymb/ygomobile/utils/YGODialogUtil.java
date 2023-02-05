@@ -3,8 +3,11 @@ package cn.garymb.ygomobile.utils;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
+import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -40,10 +43,13 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
 public class YGODialogUtil {
+    private static String TAG = "YGODialogUtil";
+
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);
         viewHolder.show();
     }
+
 
     public interface OnDeckMenuListener {
         void onDeckSelect(DeckFile deckFile);
@@ -67,7 +73,8 @@ public class YGODialogUtil {
         private final int IMAGE_MOVE = 0;
         private final int IMAGE_COPY = 1;
         private final int IMAGE_DEL = 2;
-
+        private final EditText et_input_deck_name;
+        private final LinearLayout ll_main_ui;
         private final LinearLayout ll_move;
         private final LinearLayout ll_copy;
         private final LinearLayout ll_del;
@@ -86,10 +93,14 @@ public class YGODialogUtil {
             ygoDialog = new DialogPlus(context);
             ygoDialog.setContentView(R.layout.dialog_deck_select);
             ygoDialog.setTitle(R.string.category_manager);
-            RecyclerView rv_type, rv_deck;
 
+            et_input_deck_name = ygoDialog.findViewById(R.id.input_deck_name);
+
+            RecyclerView rv_type, rv_deck, rv_result_list;
+            ll_main_ui = ygoDialog.findViewById(R.id.ll_main_ui);
             rv_deck = ygoDialog.findViewById(R.id.rv_deck);
             rv_type = ygoDialog.findViewById(R.id.rv_type);
+            rv_result_list = ygoDialog.findViewById(R.id.rv_result_list);
             ll_move = ygoDialog.findViewById(R.id.ll_move);
             ll_copy = ygoDialog.findViewById(R.id.ll_copy);
             ll_del = ygoDialog.findViewById(R.id.ll_del);
@@ -104,6 +115,7 @@ public class YGODialogUtil {
             hideAllDeckUtil();
             rv_deck.setLayoutManager(new FastScrollLinearLayoutManager(context));
             rv_type.setLayoutManager(new FastScrollLinearLayoutManager(context));
+            rv_result_list.setLayoutManager(new FastScrollLinearLayoutManager(context));
 
             List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
 
@@ -136,10 +148,15 @@ public class YGODialogUtil {
                 }
             }
             deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
+            List<DeckFile> allDeckList = new ArrayList<>();
+            for (int i = 0; i < typeList.size(); i++) {
+                allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));
+                Log.i(TAG, allDeckList.size() + "");
+            }
             if (typeSelectPosition == 0) {
                 if (AppsSettings.get().isReadExpansions()) {
                     try {
-                        deckList.addAll(DeckUtil.getExpansionsDeckList());
+                        deckList.addAll(0, DeckUtil.getExpansionsDeckList());
                     } catch (IOException e) {
                         YGOUtil.show("额外卡库加载失败,原因为" + e);
                     }
@@ -158,7 +175,7 @@ public class YGODialogUtil {
                     if (position == 0) {
                         if (AppsSettings.get().isReadExpansions()) {
                             try {
-                                deckList.addAll(DeckUtil.getExpansionsDeckList());
+                                deckList.addAll(0, DeckUtil.getExpansionsDeckList());
                             } catch (IOException e) {
                                 YGOUtil.show("额外卡库加载失败,原因为" + e);
                             }
@@ -172,7 +189,7 @@ public class YGODialogUtil {
                 public void onItemSelect(int position, DeckFile item) {
                     if (deckAdp.isManySelect()) {
                         deckAdp.addManySelect(item);
-                        if(deckAdp.getSelectList().size() == 0) {
+                        if (deckAdp.getSelectList().size() == 0) {
                             clearDeckSelect();
                         }
                         deckAdp.notifyItemChanged(position);
@@ -195,11 +212,53 @@ public class YGODialogUtil {
                         showAllDeckUtil();
                     }
                     deckAdp.addManySelect((DeckFile) adapter.getItem(position));
-                    if(deckAdp.getSelectList().size() == 0) {
+                    if (deckAdp.getSelectList().size() == 0) {
                         clearDeckSelect();
                     }
                     deckAdp.notifyItemChanged(position);
                     return true;
+                }
+            });
+            List<DeckFile> resultList = new ArrayList<>();
+            DeckListAdapter<DeckFile> resultListAdapter = new DeckListAdapter<DeckFile>(context, resultList, -1);
+            rv_result_list.setAdapter(resultListAdapter);
+            resultListAdapter.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
+                @Override
+                public void onItemSelect(int position, DeckFile item) {
+                    rv_result_list.setVisibility(View.GONE);
+                    ll_main_ui.setVisibility(View.VISIBLE);
+                    et_input_deck_name.getEditableText().clear();
+                    dismiss();
+                    onDeckMenuListener.onDeckSelect(item);
+                }
+            });
+            et_input_deck_name.addTextChangedListener(new TextWatcher() {
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    // 输入中监听
+                }
+
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    // 输入前的监听
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    // 输入后的监听
+                    resultList.clear();
+                    String keyword = et_input_deck_name.getText().toString();
+                    if (keyword.isEmpty()) {
+                        ll_main_ui.setVisibility(View.VISIBLE);
+                        rv_result_list.setVisibility(View.GONE);
+                    } else {
+                        resultList.addAll(getResultList(keyword, allDeckList));
+                        rv_result_list.setVisibility(View.VISIBLE);
+                        ll_main_ui.setVisibility(View.GONE);
+                        Log.i(TAG, et_input_deck_name.getText().toString() + "和" + resultList.size());
+                        resultListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
 
@@ -420,6 +479,15 @@ public class YGODialogUtil {
                 types[i] = deckTypeList.get(i).getName();
             }
             return types;
+        }
+
+        private List<DeckFile> getResultList(String keyword, List<DeckFile> deckList) {
+            List<DeckFile> resultList = new ArrayList<>();
+            for (int i = 0; i < deckList.size(); i++) {
+                if (deckList.get(i).getFileName().toLowerCase().contains(keyword.toLowerCase()))
+                    resultList.add(deckList.get(i));
+            }
+            return resultList;
         }
 
         private List<String> getStringTypeList(List<DeckType> deckTypeList) {
