@@ -313,7 +313,7 @@ public class ExCardListFragment extends Fragment {
                         if (files.getName().contains("-") && files.getName().contains(" new cards"))
                             files.delete();
                     }
-                    UnzipUtils.upZipFile(file, AppsSettings.get().getResourcePath());
+                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(),".ypk");
                 } catch (Exception e) {
                     message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
                 } finally {
