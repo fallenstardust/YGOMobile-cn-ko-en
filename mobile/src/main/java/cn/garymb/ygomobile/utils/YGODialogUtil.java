@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -74,6 +76,7 @@ public class YGODialogUtil {
         private final int IMAGE_COPY = 1;
         private final int IMAGE_DEL = 2;
         private final EditText et_input_deck_name;
+        private final ImageView iv_search_deck_name;
         private final LinearLayout ll_main_ui;
         private final LinearLayout ll_move;
         private final LinearLayout ll_copy;
@@ -87,6 +90,11 @@ public class YGODialogUtil {
         private final TextView tv_del;
         private final TextSelectAdapter<DeckType> typeAdp;
         private final DeckListAdapter<DeckFile> deckAdp;
+        private final DeckListAdapter<DeckFile> resultListAdapter;
+        private final List<DeckFile> allDeckList;
+        private final RecyclerView rv_type, rv_deck, rv_result_list;
+
+        private final List<DeckFile> resultList;
         private final DialogPlus ygoDialog;
 
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
@@ -94,9 +102,12 @@ public class YGODialogUtil {
             ygoDialog.setContentView(R.layout.dialog_deck_select);
             ygoDialog.setTitle(R.string.category_manager);
 
+            allDeckList = new ArrayList<>();
+            resultList = new ArrayList<>();
+            resultListAdapter = new DeckListAdapter<DeckFile>(context, resultList, -1);
             et_input_deck_name = ygoDialog.findViewById(R.id.input_deck_name);
+            iv_search_deck_name = ygoDialog.findViewById(R.id.iv_search_deck_name);
 
-            RecyclerView rv_type, rv_deck, rv_result_list;
             ll_main_ui = ygoDialog.findViewById(R.id.ll_main_ui);
             rv_deck = ygoDialog.findViewById(R.id.rv_deck);
             rv_type = ygoDialog.findViewById(R.id.rv_type);
@@ -148,7 +159,6 @@ public class YGODialogUtil {
                 }
             }
             deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
-            List<DeckFile> allDeckList = new ArrayList<>();
             for (int i = 0; i < typeList.size(); i++) {
                 allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));
                 Log.i(TAG, allDeckList.size() + "");
@@ -219,8 +229,7 @@ public class YGODialogUtil {
                     return true;
                 }
             });
-            List<DeckFile> resultList = new ArrayList<>();
-            DeckListAdapter<DeckFile> resultListAdapter = new DeckListAdapter<DeckFile>(context, resultList, -1);
+
             rv_result_list.setAdapter(resultListAdapter);
             resultListAdapter.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
                 @Override
@@ -232,33 +241,44 @@ public class YGODialogUtil {
                     onDeckMenuListener.onDeckSelect(item);
                 }
             });
+            iv_search_deck_name.setOnClickListener(v -> {
+                searchDeck();
+            });
+
+            et_input_deck_name.setOnEditorActionListener ((v, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    searchDeck();
+                    return true;
+                }
+                return false;
+            });
+
             et_input_deck_name.addTextChangedListener(new TextWatcher() {
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     // 输入中监听
+                    if (s.toString().isEmpty()) {
+                        ll_main_ui.setVisibility(View.VISIBLE);
+                        rv_result_list.setVisibility(View.GONE);
+                        iv_search_deck_name.setVisibility(View.GONE);
+                    } else {
+                        iv_search_deck_name.setVisibility(View.VISIBLE);
+                    }
+
                 }
 
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    // 输入前的监听
+                    //输入前监听
                 }
 
                 @Override
                 public void afterTextChanged(Editable s) {
                     // 输入后的监听
-                    resultList.clear();
-                    String keyword = et_input_deck_name.getText().toString();
-                    if (keyword.isEmpty()) {
-                        ll_main_ui.setVisibility(View.VISIBLE);
-                        rv_result_list.setVisibility(View.GONE);
-                    } else {
-                        resultList.addAll(getResultList(keyword, allDeckList));
-                        rv_result_list.setVisibility(View.VISIBLE);
-                        ll_main_ui.setVisibility(View.GONE);
-                        Log.i(TAG, et_input_deck_name.getText().toString() + "和" + resultList.size());
-                        resultListAdapter.notifyDataSetChanged();
-                    }
+
                 }
             });
 
@@ -471,6 +491,21 @@ public class YGODialogUtil {
                 }
             }));
             itemTouchHelper.attachToRecyclerView(rv_type);
+        }
+
+        private void searchDeck(){
+            resultList.clear();
+            et_input_deck_name.clearFocus();
+            String keyword = et_input_deck_name.getText().toString();
+            if (keyword.isEmpty()) {
+                ll_main_ui.setVisibility(View.VISIBLE);
+                rv_result_list.setVisibility(View.GONE);
+            } else {
+                resultList.addAll(getResultList(keyword, allDeckList));
+                rv_result_list.setVisibility(View.VISIBLE);
+                ll_main_ui.setVisibility(View.GONE);
+                resultListAdapter.notifyDataSetChanged();
+            }
         }
 
         private String[] getStringType(List<DeckType> deckTypeList) {

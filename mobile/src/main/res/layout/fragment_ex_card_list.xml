@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_ex_card"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -17,36 +16,35 @@
 
     <LinearLayout
         android:id="@+id/btn_download_prerelease"
-        android:focusableInTouchMode="true"
-        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         android:layout_marginRight="20dp"
         android:layout_marginBottom="70dp"
+        android:clickable="true"
+        android:focusableInTouchMode="true"
         android:orientation="vertical"
         android:padding="20dp">
 
 
         <Button
-            android:clickable="false"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
             android:layout_marginBottom="10dp"
             android:background="@drawable/downloadimages"
-          />
+            android:clickable="false" />
+
         <TextView
-            android:clickable="false"
             android:id="@+id/text_download_prerelease"
             android:layout_width="60dp"
             android:layout_height="30dp"
-            android:background="@drawable/radius"
+            android:background="@drawable/ic_radius_bg"
+            android:clickable="false"
             android:gravity="center"
             android:textAlignment="center"
-            android:textSize="10sp"
             android:textColor="@color/gold"
-             />
+            android:textSize="10sp" />
     </LinearLayout>
 
 

@@ -12,16 +12,39 @@
         android:layout_marginBottom="5dp"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/input_deck_name"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:hint="@string/intpu_name"
-            android:inputType="textNoSuggestions"
-            android:singleLine="true"
-            android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="30dp"
+            android:weightSum="10">
+
+            <EditText
+                android:id="@+id/input_deck_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="9"
+                android:gravity="center"
+                android:hint="@string/intpu_name"
+                android:imeOptions="actionSearch"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:textSize="15sp"
+                android:textColor="@color/holo_blue_bright"
+                android:textColorHint="@color/gray" />
+
+            <ImageView
+                android:id="@+id/iv_search_deck_name"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:padding="3dp"
+                android:gravity="center"
+                android:text="@string/search"
+                android:src="@drawable/ic_search"
+                android:visibility="gone"
+                android:background="@drawable/ic_radius_bg"/>
+        </LinearLayout>
 
         <com.tubb.smrv.SwipeMenuRecyclerView
             android:id="@+id/rv_result_list"
