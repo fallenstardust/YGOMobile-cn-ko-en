@@ -42,8 +42,7 @@
                 android:gravity="center"
                 android:text="@string/search"
                 android:src="@drawable/ic_search"
-                android:visibility="gone"
-                android:background="@drawable/ic_radius_bg"/>
+                android:visibility="gone" />
         </LinearLayout>
 
         <com.tubb.smrv.SwipeMenuRecyclerView
