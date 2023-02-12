@@ -89,7 +89,6 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
@@ -419,7 +418,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mCardSelector.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
-            setCurDeck(rs, ydk.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+            setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
             //设置收藏夹
             mCardSelector.showFavorites(false);
         });
