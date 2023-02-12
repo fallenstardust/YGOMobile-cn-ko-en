@@ -1605,6 +1605,9 @@ void Game::LoadExpansions() {
 #endif
 				dataManager.LoadStrings(reader);
 			}
+			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".ydk", 4)) {
+				deckBuilder.expansionPacks.push_back(fname);
+			}
 		}
 	}
 }
