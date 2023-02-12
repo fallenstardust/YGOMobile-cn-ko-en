@@ -429,9 +429,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
         }
         IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_LIMIT_PATH, toPath, needsUpdate);
-        if (!stringfile.exists() || stringfile.length() < new File(getDatapath("conf") + "/" + CORE_STRING_PATH).length()) {
-            IOUtils.copyFilesFromAssets(mContext, assetStringPath, toPath, needsUpdate);
-        }
+        IOUtils.copyFilesFromAssets(mContext, assetStringPath, toPath, needsUpdate);
         IOUtils.copyFilesFromAssets(mContext, assetBotPath, toPath, needsUpdate);
         //替换换行符
         fixString(stringfile.getAbsolutePath());
