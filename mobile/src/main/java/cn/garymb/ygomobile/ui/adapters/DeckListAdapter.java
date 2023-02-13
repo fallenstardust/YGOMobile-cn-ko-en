@@ -4,10 +4,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
@@ -103,13 +105,13 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.extra.setText("-");
             holder.extra.setTextColor(Color.RED);
         }
-        if (String.valueOf(deckInfo.getExtraCount()) != null) {
+        if (String.valueOf(deckInfo.getSideCount()) != null) {
             holder.side.setText(String.valueOf(deckInfo.getSideCount()));
         } else {
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack))) {//卡包展示时不显示额外和副卡组数量文本
+        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) && !deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
