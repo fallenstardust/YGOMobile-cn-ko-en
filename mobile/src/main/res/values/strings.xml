@@ -21,7 +21,7 @@
     <string name="coping_pendulum_image">Coping pendulum image</string>
     <string name="dialog_select_font">Select a font file</string>
     <string name="dialog_select_image">Select a iamge</string>
-    <string name="dialog_select_database">Select a databse file</string>
+    <string name="dialog_select_database">Select a database file</string>
     <string name="copy_databse">copying databse</string>
     <string name="card_cover">Card Cover</string>
     <string name="game_bg">Game Background</string>
@@ -291,7 +291,7 @@
     <string name="donot_edit_Deck">Do not change decks of this category</string>
     <string name="code_share">Code Share</string>
     <string name="screenshoot">Share Art</string>
-    <string name="ydk_share">File sahre</string>
+    <string name="ydk_share">File share</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>
     <string name="create_new_failed">Create Failed</string>
     <string name="about_pref_settings_keep_scale">Original Resolution Scale Display</string>
