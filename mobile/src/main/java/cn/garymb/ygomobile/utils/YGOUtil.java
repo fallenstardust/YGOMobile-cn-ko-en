@@ -44,7 +44,7 @@ public class YGOUtil {
      * @return 高清图url
      */
     public static String getCardImageDetailUrl(int code) {
-        return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".jpg";
+        return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".jpg?version=3.0.0";
     }
 
     //关闭输入法
