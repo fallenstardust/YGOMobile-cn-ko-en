@@ -33,6 +33,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 
 public class YGOStarter {
+    private static String TAG = "YGOStarter";
     private static Bitmap mLogo;
 
     private static void setFullScreen(Activity activity, ActivityShowInfo activityShowInfo) {
@@ -166,10 +167,10 @@ public class YGOStarter {
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
-            Log.e("YGOStarter", "设置背景前" + System.currentTimeMillis());
+            Log.e(TAG, "设置背景前" + System.currentTimeMillis());
             //显示加载背景
             showLoadingBg(activity);
-            Log.e("YGOStarter", "设置背景后" + System.currentTimeMillis());
+            Log.e(TAG, "设置背景后" + System.currentTimeMillis());
         }
         Intent intent = new Intent(activity, YGOMobileActivity.class);
         if (options != null) {
@@ -178,9 +179,9 @@ public class YGOStarter {
         }
         IrrlichtBridge.setArgs(intent, args);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Log.e("YGOStarter", "跳转前" + System.currentTimeMillis());
+        Log.e(TAG, "跳转前" + System.currentTimeMillis());
         activity.startActivity(intent);
-        Log.e("YGOStarter", "跳转后" + System.currentTimeMillis());
+        Log.e(TAG, "跳转后" + System.currentTimeMillis());
     }
 
     private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();

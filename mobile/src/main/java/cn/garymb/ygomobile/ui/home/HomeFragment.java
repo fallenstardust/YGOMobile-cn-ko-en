@@ -66,6 +66,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
@@ -626,6 +627,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     protected void openGame() {
         YGOStarter.startGame(getActivity(), null);
+        getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
     }
 
     private void duelAssistantCheck() {
@@ -713,9 +715,11 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;
             case R.id.action_replay:
                 YGOStarter.startGame(getActivity(), null, "-k", "-r");
+                getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
                 break;
             case R.id.action_bot:
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
+                getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
                 break;
             case R.id.action_download_ex:
 //                if (!AppsSettings.get().isReadExpansions()) {//如果未开启扩展卡设置，直接跳过
@@ -745,14 +749,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 });
 
             }
-            break;/*
-            case R.id.action_join_qq_group:
-                String key = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
-                joinQQGroup(key);
-                break;
-            case R.id.action_reset_game_res:
-                updateImages();
-                break;*/
+            break;
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(Constants.URL_DONATE));
