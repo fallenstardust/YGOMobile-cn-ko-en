@@ -7,7 +7,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 
-
 import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
 import java.io.File;

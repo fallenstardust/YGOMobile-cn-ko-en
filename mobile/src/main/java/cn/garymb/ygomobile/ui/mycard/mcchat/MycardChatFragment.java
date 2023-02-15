@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import com.ourygo.lib.duelassistant.util.Util;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;

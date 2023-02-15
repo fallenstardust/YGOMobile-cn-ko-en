@@ -1,11 +1,9 @@
 package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 

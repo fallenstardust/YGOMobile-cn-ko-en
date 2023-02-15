@@ -13,7 +13,6 @@ import android.util.Base64;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
-import com.app.hubert.guide.util.LogUtil;
 import com.google.gson.Gson;
 import com.tencent.smtt.sdk.WebView;
 
@@ -25,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +31,8 @@ import java.util.List;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;

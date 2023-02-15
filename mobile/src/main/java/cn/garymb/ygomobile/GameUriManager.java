@@ -18,12 +18,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-
 import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;

@@ -1,7 +1,4 @@
 package cn.garymb.ygomobile.ui.mycard;
-import cn.garymb.ygomobile.lite.BuildConfig;
-
-import java.text.MessageFormat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -14,6 +11,10 @@ import com.tencent.smtt.sdk.CookieSyncManager;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 import com.tencent.smtt.sdk.WebViewClient;
+
+import java.text.MessageFormat;
+
+import cn.garymb.ygomobile.lite.BuildConfig;
 
 public class X5WebView extends WebView {
     private WebViewClient client = new WebViewClient() {

@@ -4,7 +4,6 @@ import static cn.garymb.ygomobile.utils.BitmapUtil.getPaint;
 
 import android.content.Context;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -15,7 +14,6 @@ import com.tubb.smrv.SwipeHorizontalMenuLayout;
 import org.greenrobot.eventbus.EventBus;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.lite.R;
