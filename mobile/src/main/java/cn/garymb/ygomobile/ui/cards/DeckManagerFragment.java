@@ -418,7 +418,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mCardSelector.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
-            setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+            if (rs.source != null) {
+                setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+            } else {
+                setCurDeck(rs, false);
+            }
             //设置收藏夹
             mCardSelector.showFavorites(false);
         });
