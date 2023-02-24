@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "cn.garymb.ygomobile.CN",
+  "variantName": "cnRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 310080942,
+      "versionName": "3.10.8",
+      "outputFile": "YGOMobile_3.10.8.apk"
+    }
+  ],
+  "elementType": "File"
+}
