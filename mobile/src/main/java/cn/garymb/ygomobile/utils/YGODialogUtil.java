@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -136,21 +138,21 @@ public class YGODialogUtil {
             if (!TextUtils.isEmpty(selectDeckPath)) {
                 File file = new File(selectDeckPath);
                 if (file.exists()) {
-                    String name = file.getParentFile().getName();
-                    String lastName = file.getParentFile().getParentFile().getName();
-                    if (name.equals("pack") || name.equals("cacheDeck")) {
+                    String cateName = file.getParentFile().getName();
+                    String parentName = file.getParentFile().getParentFile().getName();
+                    if (cateName.equals("pack") || cateName.equals("cacheDeck")) {
                         //卡包
                         typeSelectPosition = 0;
-                    } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
+                    } else if (cateName.equals("Decks") && parentName.equals(Constants.WINDBOT_PATH)) {
                         //ai卡组
                         typeSelectPosition = 1;
-                    } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
+                    } else if (cateName.equals("deck") && parentName.equals(Constants.PREF_DEF_GAME_DIR)) {
                         //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
                     } else {
                         //其他卡包
                         for (int i = 3; i < typeList.size(); i++) {
                             DeckType deckType = typeList.get(i);
-                            if (deckType.getName().equals(name)) {
+                            if (deckType.getName().equals(cateName)) {
                                 typeSelectPosition = i;
                                 break;
                             }
@@ -160,13 +162,12 @@ public class YGODialogUtil {
             }
             deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
             for (int i = 0; i < typeList.size(); i++) {
-                allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));
-                Log.i(TAG, allDeckList.size() + "");
+                allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));//把所有分类里的卡组全部纳入，用于关键词查询目标
             }
             if (typeSelectPosition == 0) {
                 if (AppsSettings.get().isReadExpansions()) {
                     try {
-                        deckList.addAll(0, DeckUtil.getExpansionsDeckList());
+                        deckList.addAll(0, DeckUtil.getExpansionsDeckList());//置顶ypk缓存的cacheDeck下的先行卡ydk
                     } catch (IOException e) {
                         YGOUtil.show("额外卡库加载失败,原因为" + e);
                     }
@@ -245,7 +246,7 @@ public class YGODialogUtil {
                 searchDeck();
             });
 
-            et_input_deck_name.setOnEditorActionListener ((v, actionId, event) -> {
+            et_input_deck_name.setOnEditorActionListener((v, actionId, event) -> {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
@@ -491,9 +492,18 @@ public class YGODialogUtil {
                 }
             }));
             itemTouchHelper.attachToRecyclerView(rv_type);
+            if (!TextUtils.isEmpty(selectDeckPath)) {
+                for (int i = 0; i < deckList.size(); i++) {
+                    if (selectDeckPath.endsWith(deckList.get(i).getName() + YDK_FILE_EX)) {
+                        rv_deck.scrollToPosition(i);
+                        rv_deck.set
+                        break;
+                    }
+                }
+            }
         }
 
-        private void searchDeck(){
+        private void searchDeck() {
             resultList.clear();
             et_input_deck_name.clearFocus();
             String keyword = et_input_deck_name.getText().toString();
