@@ -303,7 +303,7 @@
     <string name="my_favorites">즐겨 찾기★</string>
     <string name="ypk_installed">프리릴리즈 카드 팩 파일이 설치되었습니다</string>
     <!--<string name="ypk_go_setting">프리릴리즈 카드 팩을 사용하려면 프리릴리즈 카드 팩이 활성화되어 있어야합니다</string>-->
-    <string name="ypk_go_setting">프리릴리즈 카드 팩을 \"프리릴리즈 카드 팩 활성화\" unless you have installed pre-card in another way</string>
+    <string name="ypk_go_setting">프리릴리즈 카드 팩을 사용하려면 \"프리릴리즈 카드 팩 활성화\"를 체크하시길 바랍니다.</string>
     <string name="ypk_delete">해당 이름을 길게 눌러 삭제합니다e</string>
     <string name="install_failed_bcos">설치에 실패했습니다. 이유:</string>
     <string name="deck_back_up">백업</string>
