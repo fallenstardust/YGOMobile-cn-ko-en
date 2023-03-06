@@ -496,7 +496,6 @@ public class YGODialogUtil {
                 for (int i = 0; i < deckList.size(); i++) {
                     if (selectDeckPath.endsWith(deckList.get(i).getName() + YDK_FILE_EX)) {
                         rv_deck.scrollToPosition(i);
-                        rv_deck.set
                         break;
                     }
                 }
