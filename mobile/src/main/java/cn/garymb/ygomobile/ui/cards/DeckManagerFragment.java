@@ -110,6 +110,7 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
+    private static String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -303,7 +304,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public void onDragLongPress(int pos) {
         if (pos < 0) return;
         if (Constants.DEBUG)
-            Log.d("kk", "delete " + pos);
+            Log.d(TAG, "delete " + pos);
         if (mSettings.isDialogDelete()) {
             DeckItem deckItem = mDeckAdapater.getItem(pos);
             if (deckItem == null || deckItem.getCardInfo() == null) {
@@ -406,7 +407,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (file == null) {
                 return new DeckInfo();
             }
-            Log.i("kk", "load ydk " + file);
+            Log.i(TAG, "load ydk " + file);
             if (mCardLoader.isOpen() && file.exists()) {
                 return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
             } else {

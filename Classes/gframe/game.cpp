@@ -36,8 +36,6 @@ void Game::process(irr::SEvent &event) {
 	}
 }
 
-#ifdef _IRR_ANDROID_PLATFORM_
-
 void Game::stopBGM() {
     ALOGD("stop bgm");
 	gMutex.lock();
@@ -97,12 +95,10 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
 }
 bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
-#endif
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
 
 #ifdef _IRR_ANDROID_PLATFORM_
-	
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -119,6 +115,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	device = irr::createDeviceEx(params);
 	if(!device)
 		return false;
+
 #ifdef _IRR_ANDROID_PLATFORM_
 	if (!android::perfromTrick(app)) {
 		return false;
@@ -239,12 +236,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	LoadExpansions();
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
-	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, (int)16 * yScale, isAntialias, false);
-	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, (int)12 * yScale, isAntialias, false);
-	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, (int)48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
-    titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)32 * yScale, isAntialias, true);
-	textFont = guiFont;
+	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 16 * yScale, isAntialias, false);
+	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 12 * yScale, isAntialias, false);
+	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48 * yScale, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 16 * yScale, isAntialias, true);
+    titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
+	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	if(!numFont || !textFont) {
 	  ALOGW("add font fail ");
 	}
