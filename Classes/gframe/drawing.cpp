@@ -757,7 +757,7 @@ void Game::DrawMisc() {
 		}
 	}
 	if(dField.extra[0].size()) {
-		int offset = (dField.extra[0].size() >= 10) ? 0 : mainGame->textFont->getDimension(dataManager.GetNumString(1)).Width;
+		int offset = (dField.extra[0].size() >= 10) ? 0 : mainGame->numFont->getDimension(dataManager.GetNumString(1)).Width;
 		numFont->draw(dataManager.GetNumString(dField.extra[0].size()), recti((320 + offset)* mainGame->xScale, 562 * mainGame->yScale, 371 * mainGame->xScale, 552 * mainGame->yScale), 0xff000000, true, false, 0);
 		numFont->draw(dataManager.GetNumString(dField.extra[0].size()), recti((320 + offset)* mainGame->xScale, 563 * mainGame->yScale, 373 * mainGame->xScale, 553 * mainGame->yScale), 0xffffff00, true, false, 0);
 		numFont->draw(dataManager.GetNumString(dField.extra_p_count[0], true), recti(340 * mainGame->xScale, 562 * mainGame->yScale, 391 * mainGame->xScale, 552 * mainGame->yScale), 0xff000000, true, false, 0);
@@ -787,7 +787,7 @@ void Game::DrawMisc() {
 		}
 	}
 	if(dField.extra[1].size()) {
-		int offset = (dField.extra[1].size() >= 10) ? 0 : mainGame->textFont->getDimension(dataManager.GetNumString(1)).Width;
+		int offset = (dField.extra[1].size() >= 10) ? 0 : mainGame->numFont->getDimension(dataManager.GetNumString(1)).Width;
 		numFont->draw(dataManager.GetNumString(dField.extra[1].size()), recti((808 + offset) * mainGame->xScale, 207 * mainGame->yScale, 898 * mainGame->xScale, 232 * mainGame->yScale), 0xff000000, true, false, 0);
 		numFont->draw(dataManager.GetNumString(dField.extra[1].size()), recti((808 + offset) * mainGame->xScale, 208 * mainGame->yScale, 900 * mainGame->xScale, 233 * mainGame->yScale), 0xffffff00, true, false, 0);
 		numFont->draw(dataManager.GetNumString(dField.extra_p_count[1], true), recti(828 * mainGame->xScale, 207 * mainGame->yScale, 918 * mainGame->xScale, 232 * mainGame->yScale), 0xff000000, true, false, 0);
@@ -1114,10 +1114,10 @@ void Game::DrawSpec() {
 				continue;
 			if(!showChat && i > 2)
 				continue;
-			int w = textFont->getDimension(chatMsg[i].c_str()).Width;
+			int w = guiFont->getDimension(chatMsg[i].c_str()).Width;
 			driver->draw2DRectangle(recti(305 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 307 * mainGame->xScale + w, (616 - 20 * i) * mainGame->yScale), 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-			textFont->draw(chatMsg[i].c_str(), rect<s32>(305 * mainGame->xScale, (595 - 20 * i) * mainGame->yScale, 1020 * mainGame->xScale, (615 - 20 * i) * mainGame->yScale), 0xff000000, false, false);
-			textFont->draw(chatMsg[i].c_str(), rect<s32>(306 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 1021 * mainGame->xScale, (616 - 20 * i) * mainGame->yScale), chatColor[chatType[i]], false, false);
+			guiFont->draw(chatMsg[i].c_str(), rect<s32>(305 * mainGame->xScale, (595 - 20 * i) * mainGame->yScale, 1020 * mainGame->xScale, (615 - 20 * i) * mainGame->yScale), 0xff000000, false, false);
+			guiFont->draw(chatMsg[i].c_str(), rect<s32>(306 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 1021 * mainGame->xScale, (616 - 20 * i) * mainGame->yScale), chatColor[chatType[i]], false, false);
 		}
 	}
 }
@@ -1409,7 +1409,7 @@ void Game::DrawDeckBd() {
 				else myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
 			} else {
 				myswprintf(textBuffer, L"%ls/%ls LINK-%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), ptr->second.level);
-				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 955 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 				if(ptr->second.attack < 0)
 					myswprintf(textBuffer, L"?/-");
 				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
@@ -1425,6 +1425,7 @@ void Game::DrawDeckBd() {
 				wcscat(textBuffer, L" [TCG]");
 			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
 				wcscat(textBuffer, L" [Custom]");
+			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 		} else {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
 			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);

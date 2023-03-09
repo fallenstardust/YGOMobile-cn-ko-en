@@ -2254,6 +2254,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wLanWindow) {
                     mainGame->gMutex.lock();
                     mainGame->textFont->setTransparency(true);
+					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
                     mainGame->gMutex.unlock();
                     break;
