@@ -249,7 +249,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	device->setWindowCaption(L"[---]");
 	device->setResizable(false);
 	gui::IGUISkin* newskin = CAndroidGUISkin::createAndroidSkin(gui::EGST_BURNING_SKIN, driver, env, xScale, yScale);
-	newskin->setFont(textFont);
+	newskin->setFont(guiFont);
 	env->setSkin(newskin);
 	newskin->drop();
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -322,8 +322,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnJoinCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnCreateHost = env->addButton(rect<s32>(430 * xScale, 25 * yScale, 540 * xScale, 65 * yScale), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224));
 		ChangeToIGUIImageButton(btnCreateHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	#endif
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//create host
 	wCreateHost = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1224));
 	wCreateHost->getCloseButton()->setVisible(false);
@@ -401,8 +400,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostConfirm, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostCancel = env->addButton(rect<s32>(430 * xScale, 350 * yScale, 540 * xScale, 390 * yScale), wCreateHost, BUTTON_HOST_CANCEL, dataManager.GetSysString(1212));
 		ChangeToIGUIImageButton(btnHostCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-#endif
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//host(single)
 	wHostPrepare = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1250));
 	wHostPrepare->setDraggable(false);
@@ -448,7 +446,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostPrepStart, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepCancel = env->addButton(rect<s32>(440 * xScale, 350 * yScale, 550 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 		ChangeToIGUIImageButton(btnHostPrepCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-#endif
+
 	//img always use *yScale to keep proportion
 	wCardImg = env->addImage(rect<s32>(1 * yScale, 1 * yScale, ( 1 + CARD_IMG_WIDTH + 20) * yScale, (1 + CARD_IMG_HEIGHT + 18) * yScale), 0, -1, 0, true);
 	wCardImg->setImage(imageManager.tDialog_S);
@@ -458,7 +456,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	imgCard->setImage(imageManager.tCover[0]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//phase
 	wPhase = env->addStaticText(L"", rect<s32>(480 * xScale, 305 * yScale, 895 * xScale, 335 * yScale));
 	wPhase->setVisible(false);
@@ -476,7 +474,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnEP = env->addButton(rect<s32>(320 * xScale, 0 * yScale, 370 * xScale, 30 * yScale), wPhase, BUTTON_EP, L"\xff25\xff30");
         ChangeToIGUIImageButton(btnEP, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnEP->setVisible(false);
-#endif
+
     //tab（changed）
 	wInfos = env->addWindow(rect<s32>(1 * xScale, 275 * yScale, 260 * xScale, 639 * yScale), false, L"");
 	wInfos->getCloseButton()->setVisible(false);
@@ -493,8 +491,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stSetName = env->addStaticText(L"", rect<s32>(10 * xScale, 83 * yScale, 260 * xScale, 106 * yScale), false, true, wInfos, -1, false);
 	stSetName->setOverrideColor(SColor(255, 255, 152, 42));//255, 0, 0, 255
 	stText = env->addStaticText(L"", rect<s32>(10 * xScale, 106 * yScale, 260 * xScale, 345 * yScale), false, true, wInfos, -1, false);
-#ifdef _IRR_ANDROID_PLATFORM_
-	scrCardText = env->addScrollBar(false, rect<s32>(238 * xScale, 106 * yScale, 258 * xScale, 639 * yScale), wInfos, SCROLL_CARDTEXT);
+	scrCardText = env->addScrollBar(false, rect<s32>(248 * xScale, 106 * yScale, 258 * xScale, 639 * yScale), wInfos, SCROLL_CARDTEXT);
 #endif
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
@@ -1735,7 +1732,7 @@ void Game::LoadConfig() {
 	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
-	gameConf.textfontsize = 16;
+	gameConf.textfontsize = 25;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
     BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;

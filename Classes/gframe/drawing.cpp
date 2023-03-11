@@ -17,56 +17,18 @@ inline void SetS3DVertex(S3DVertex* v, f32 x1, f32 y1, f32 x2, f32 y2, f32 z, f3
 void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv) {
 #ifdef _IRR_ANDROID_PLATFORM_
 	glLineWidth(width+2);
-	driver->setMaterial(matManager.mOutLine);
-	if(strip) {
-		if(linePatternD3D < 15) {
-			driver->draw3DLine(vec[0].Pos, vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D + 1) / 15.0);
-			driver->draw3DLine(vec[1].Pos, vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D + 1) / 15.0);
-			driver->draw3DLine(vec[3].Pos, vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D + 1) / 15.0);
-			driver->draw3DLine(vec[2].Pos, vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D + 1) / 15.0);
-		} else {
-			driver->draw3DLine(vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D - 14) / 15.0, vec[1].Pos);
-			driver->draw3DLine(vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D - 14) / 15.0, vec[3].Pos);
-			driver->draw3DLine(vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D - 14) / 15.0, vec[2].Pos);
-			driver->draw3DLine(vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D - 14) / 15.0, vec[0].Pos);
-		}
-	} else {
-		driver->draw3DLine(vec[0].Pos, vec[1].Pos);
-		driver->draw3DLine(vec[1].Pos, vec[3].Pos);
-		driver->draw3DLine(vec[3].Pos, vec[2].Pos);
-		driver->draw3DLine(vec[2].Pos, vec[0].Pos);
-	}
-#else
-	if(!gameConf.use_d3d) {
-		float origin[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-		glLineWidth(width);
-		glLineStipple(1, linePattern);
-		if(strip)
-			glEnable(GL_LINE_STIPPLE);
-		glDisable(GL_TEXTURE_2D);
-		glMaterialfv(GL_FRONT, GL_AMBIENT, cv);
-		glBegin(GL_LINE_LOOP);
-		glVertex3fv((float*)&vec[0].Pos);
-		glVertex3fv((float*)&vec[1].Pos);
-		glVertex3fv((float*)&vec[3].Pos);
-		glVertex3fv((float*)&vec[2].Pos);
-		glEnd();
-		glMaterialfv(GL_FRONT, GL_AMBIENT, origin);
-		glDisable(GL_LINE_STIPPLE);
-		glEnable(GL_TEXTURE_2D);
-	} else {
 		driver->setMaterial(matManager.mOutLine);
 		if(strip) {
-			if(linePattern < 15) {
-				driver->draw3DLine(vec[0].Pos, vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePattern + 1) / 15.0);
-				driver->draw3DLine(vec[1].Pos, vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePattern + 1) / 15.0);
-				driver->draw3DLine(vec[3].Pos, vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePattern + 1) / 15.0);
-				driver->draw3DLine(vec[2].Pos, vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePattern + 1) / 15.0);
+			if(linePatternD3D < 15) {
+				driver->draw3DLine(vec[0].Pos, vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D + 1) / 15.0);
+				driver->draw3DLine(vec[1].Pos, vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D + 1) / 15.0);
+				driver->draw3DLine(vec[3].Pos, vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D + 1) / 15.0);
+				driver->draw3DLine(vec[2].Pos, vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D + 1) / 15.0);
 			} else {
-				driver->draw3DLine(vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePattern - 14) / 15.0, vec[1].Pos);
-				driver->draw3DLine(vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePattern - 14) / 15.0, vec[3].Pos);
-				driver->draw3DLine(vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePattern - 14) / 15.0, vec[2].Pos);
-				driver->draw3DLine(vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePattern - 14) / 15.0, vec[0].Pos);
+				driver->draw3DLine(vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D - 14) / 15.0, vec[1].Pos);
+				driver->draw3DLine(vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D - 14) / 15.0, vec[3].Pos);
+				driver->draw3DLine(vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D - 14) / 15.0, vec[2].Pos);
+				driver->draw3DLine(vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D - 14) / 15.0, vec[0].Pos);
 			}
 		} else {
 			driver->draw3DLine(vec[0].Pos, vec[1].Pos);
@@ -74,10 +36,8 @@ void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, 
 			driver->draw3DLine(vec[3].Pos, vec[2].Pos);
 			driver->draw3DLine(vec[2].Pos, vec[0].Pos);
 		}
-	}
 #endif
 }
-
 void Game::DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color) {
 	recti pos = element->getAbsolutePosition();
 	float x1 = pos.UpperLeftCorner.X;
@@ -200,10 +160,10 @@ void Game::DrawBackGround() {
 	    } else {
 			driver->drawVertexPrimitiveList(matManager.vTotalAtkopT, 4, matManager.iRectangle, 2);
 		    DrawShadowText(numFont, dInfo.str_total_attack[1], recti(740 * mainGame->xScale, 295 * mainGame->yScale, 760 * mainGame->xScale, 315 * mainGame->yScale), recti(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
-		
+
 	    }
 	}
-	
+
 	//disabled field
 	{
 		/*float cv[4] = {0.0f, 0.0f, 1.0f, 1.0f};*/
@@ -248,39 +208,6 @@ void Game::DrawBackGround() {
 			}
 		}
 		DrawSelField(dField.hovered_controler, dField.hovered_location, dField.hovered_sequence, imageManager.tSelField, false);
-#else
-		S3DVertex *vertex = 0;
-		if (dField.hovered_location == LOCATION_DECK)
-			vertex = matManager.vFieldDeck[dField.hovered_controler];
-		else if (dField.hovered_location == LOCATION_MZONE) {
-			vertex = matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence];
-			ClientCard* pcard = mainGame->dField.mzone[dField.hovered_controler][dField.hovered_sequence];
-			if(pcard && pcard->type & TYPE_LINK) {
-				DrawLinkedZones(pcard);
-			}
-		} else if (dField.hovered_location == LOCATION_SZONE)
-			vertex = matManager.vFieldSzone[dField.hovered_controler][dField.hovered_sequence][rule];
-		else if (dField.hovered_location == LOCATION_GRAVE)
-			vertex = matManager.vFieldGrave[dField.hovered_controler][rule];
-		else if (dField.hovered_location == LOCATION_REMOVED)
-			vertex = matManager.vFieldRemove[dField.hovered_controler][rule];
-		else if (dField.hovered_location == LOCATION_EXTRA)
-			vertex = matManager.vFieldExtra[dField.hovered_controler];
-		selFieldAlpha += selFieldDAlpha;
-		if (selFieldAlpha <= 5) {
-			selFieldAlpha = 5;
-			selFieldDAlpha = 10;
-		}
-		if (selFieldAlpha >= 205) {
-			selFieldAlpha = 205;
-			selFieldDAlpha = -10;
-		}
-		S3DVertex v2[4];//fix the highlight grid
-		SetS3DVertex(v2, vertex[0].Pos.X, vertex[1].Pos.Y, vertex[3].Pos.X, vertex[2].Pos.Y, 0.001f, 1, 0, 0, 0, 0);//z(0.001f)
-		matManager.mSelField.AmbientColor = 0xffffffff;
-		matManager.mSelField.DiffuseColor = selFieldAlpha << 24;
-		driver->setMaterial(matManager.mSelField);
-		driver->drawVertexPrimitiveList(v2, 4, matManager.iRectangle, 2);
 #endif
 	}
 }
@@ -475,7 +402,7 @@ void Game::DrawCard(ClientCard* pcard) {
 }
 void Game::DrawShadowText(CGUITTFont * font, const core::stringw & text, const core::rect<s32>& position, const core::rect<s32>& padding,
 						  video::SColor color, video::SColor shadowcolor, bool hcenter, bool vcenter, const core::rect<s32>* clip) {
-	core::rect<s32> shadowposition = recti(position.UpperLeftCorner.X - padding.UpperLeftCorner.X, position.UpperLeftCorner.Y - padding.UpperLeftCorner.Y, 
+	core::rect<s32> shadowposition = recti(position.UpperLeftCorner.X - padding.UpperLeftCorner.X, position.UpperLeftCorner.Y - padding.UpperLeftCorner.Y,
 										   position.LowerRightCorner.X - padding.LowerRightCorner.X, position.LowerRightCorner.Y - padding.LowerRightCorner.Y);
 	font->draw(text, shadowposition, shadowcolor, hcenter, vcenter, clip);
 	font->draw(text, position, color, hcenter, vcenter, clip);
@@ -591,7 +518,7 @@ void Game::DrawMisc() {
 			auto layerCount = dInfo.lp[0] / maxLP;
 			auto partialLP = dInfo.lp[0] % maxLP;
 			auto bgColorPos = (layerCount - 1) % 5;
-			auto fgColorPos = layerCount % 5; 
+			auto fgColorPos = layerCount % 5;
 		driver->draw2DImage(imageManager.tLPBar, recti((390 + 235 * partialLP / maxLP) * mainGame->xScale, 12 * mainGame->yScale, 625 * mainGame->xScale, 74 * mainGame->yScale), recti(0, bgColorPos * 60, 60, (bgColorPos + 1) * 60), 0, 0, true);
 			if(partialLP > 0) {
 				driver->draw2DImage(imageManager.tLPBar, recti(390* mainGame->xScale, 12 * mainGame->yScale, (390 + 235 * partialLP / maxLP) * mainGame->xScale, 74 * mainGame->yScale), recti(0, fgColorPos * 60, 60, (fgColorPos + 1) * 60), 0, 0, true);
@@ -668,11 +595,8 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_card_count[0], recti(600 * mainGame->xScale, 51 * mainGame->yScale, 625 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
 		DrawShadowText(numFont, dInfo.str_card_count[1], recti(710 * mainGame->xScale, 51 * mainGame->yScale, 735 * mainGame->xScale, 70 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 	}
-
-	numFont->draw(dInfo.strLP[0], recti(305 * mainGame->xScale, 49 * mainGame->yScale, 614 * mainGame->xScale, 68 * mainGame->yScale), 0xff000000, true, false, 0);
-	numFont->draw(dInfo.strLP[0], recti(305 * mainGame->xScale, 50 * mainGame->yScale, 616 * mainGame->xScale, 69 * mainGame->yScale), 0xffffff00, true, false, 0);
-	numFont->draw(dInfo.strLP[1], recti(711 * mainGame->xScale, 49 * mainGame->yScale, 1010 * mainGame->xScale, 68 * mainGame->yScale), 0xff000000, true, false, 0);
-	numFont->draw(dInfo.strLP[1], recti(711 * mainGame->xScale, 50 * mainGame->yScale, 1012 * mainGame->xScale, 69 * mainGame->yScale), 0xffffff00, true, false, 0);
+    DrawShadowText(numFont,dInfo.strLP[0],recti(305 * mainGame->xScale, 49 * mainGame->yScale, 614 * mainGame->xScale, 68 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+    DrawShadowText(numFont,dInfo.strLP[1],recti(711 * mainGame->xScale, 50 * mainGame->yScale, 1012 * mainGame->xScale, 69 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	recti p1size = recti(400 * mainGame->xScale, 18 * mainGame->yScale, 629 * mainGame->xScale, 37 * mainGame->yScale);
 	recti p2size = recti(920 * mainGame->xScale, 18 * mainGame->yScale, 986 * mainGame->xScale, 37 * mainGame->yScale);
 	if(!dInfo.isTag || !dInfo.tag_player[0])
@@ -680,18 +604,17 @@ void Game::DrawMisc() {
 	else
 		guiFont->draw(dInfo.hostname_tag, p1size, 0xffffffff, false, false, 0);
 	if(!dInfo.isTag || !dInfo.tag_player[1]) {
-		auto cld = textFont->getDimension(dInfo.clientname);
+		auto cld = guiFont->getDimension(dInfo.clientname);
 		p2size.UpperLeftCorner.X -= cld.Width;
 		guiFont->draw(dInfo.clientname, p2size, 0xffffffff, false, false, 0);
 	} else {
-		auto cld = textFont->getDimension(dInfo.clientname_tag);
+		auto cld = guiFont->getDimension(dInfo.clientname_tag);
 		p2size.UpperLeftCorner.X -= cld.Width;
 		guiFont->draw(dInfo.clientname_tag, p2size, 0xffffffff, false, false, 0);
 	}
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 10 * mainGame->yScale, 688 * mainGame->xScale, 30 * mainGame->yScale), 0x00000000, 0x00000000, 0xffffffff, 0xffffffff);
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 30 * mainGame->yScale, 688 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, 0xffffffff, 0x00000000, 0x00000000);
-	lpcFont->draw(dataManager.GetNumString(dInfo.turn), recti(635 * mainGame->xScale, 5 * mainGame->yScale, 685 * mainGame->xScale, 40 * mainGame->yScale), 0x80000000, true, false, 0);
-	lpcFont->draw(dataManager.GetNumString(dInfo.turn), recti(635 * mainGame->xScale, 5 * mainGame->yScale, 687 * mainGame->xScale, 40 * mainGame->yScale), 0x8000ffff, true, false, 0);
+    DrawShadowText(lpcFont, dataManager.GetNumString(dInfo.turn), recti(635 * mainGame->xScale, 5 * mainGame->yScale, 685 * mainGame->xScale, 40 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0),0x80000000, 0x8000ffff, true, false);
 	ClientCard* pcard;
 	for(int i = 0; i < 5; ++i) {
 		pcard = dField.mzone[0][i];
@@ -718,106 +641,84 @@ void Game::DrawMisc() {
 	if(dInfo.duel_rule < 4) {
 	pcard = dField.szone[0][6];
 	if(pcard) {
-		adFont->draw(pcard->lscstring, recti(426 * mainGame->xScale, 394 * mainGame->yScale, 438 * mainGame->xScale, 414 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->lscstring, recti(427 * mainGame->xScale, 395 * mainGame->yScale, 439 * mainGame->xScale, 415 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(426 * mainGame->xScale, 394 * mainGame->yScale, 438 * mainGame->xScale, 414 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[0][7];
 	if(pcard) {
-		adFont->draw(pcard->rscstring, recti(880 * mainGame->xScale, 394 * mainGame->yScale, 912 * mainGame->xScale, 414 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->rscstring, recti(881 * mainGame->xScale, 395 * mainGame->yScale, 913 * mainGame->xScale, 415 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(880 * mainGame->xScale, 394 * mainGame->yScale, 912 * mainGame->xScale, 414 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[1][6];
 	if(pcard) {
-		adFont->draw(pcard->lscstring, recti(839 * mainGame->xScale, 245 * mainGame->yScale, 871 * mainGame->xScale, 265 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->lscstring, recti(840 * mainGame->xScale, 246 * mainGame->yScale, 872 * mainGame->xScale, 266 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(839 * mainGame->xScale, 245 * mainGame->yScale, 871 * mainGame->xScale, 265 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[1][7];
 	if(pcard) {
-		adFont->draw(pcard->rscstring, recti(463 * mainGame->xScale, 245 * mainGame->yScale, 495 * mainGame->xScale, 265 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->rscstring, recti(464 * mainGame->xScale, 246 * mainGame->yScale, 496 * mainGame->xScale, 266 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(463 * mainGame->xScale, 245 * mainGame->yScale, 495 * mainGame->xScale, 265 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	} else {
 	pcard = dField.szone[0][0];
 	if(pcard && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget) {
-		adFont->draw(pcard->lscstring, recti(454 * mainGame->xScale, 430 * mainGame->yScale, 466 * mainGame->xScale, 450 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->lscstring, recti(455 * mainGame->xScale, 431 * mainGame->yScale, 467 * mainGame->xScale, 451 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(454 * mainGame->xScale, 430 * mainGame->yScale, 466 * mainGame->xScale, 450 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[0][4];
 	if(pcard && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget) {
-		adFont->draw(pcard->rscstring, recti(850 * mainGame->xScale, 430 * mainGame->yScale, 882 * mainGame->xScale, 450 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->rscstring, recti(851 * mainGame->xScale, 431 * mainGame->yScale, 883 * mainGame->xScale, 451 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(850 * mainGame->xScale, 430 * mainGame->yScale, 882 * mainGame->xScale, 450 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[1][0];
 	if(pcard && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget) {
-		adFont->draw(pcard->lscstring, recti(806 * mainGame->xScale, 222 * mainGame->yScale, 838 * mainGame->xScale, 242 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->lscstring, recti(807 * mainGame->xScale, 223 * mainGame->yScale, 839 * mainGame->xScale, 243 * mainGame->yScale), 0xffffffff, true, false, 0);
+        DrawShadowText(adFont, pcard->lscstring, recti(806 * mainGame->xScale, 222 * mainGame->yScale, 838 * mainGame->xScale, 242 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
 	}
 	pcard = dField.szone[1][4];
 	if(pcard && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget) {
-		adFont->draw(pcard->rscstring, recti(498 * mainGame->xScale, 222 * mainGame->yScale, 530 * mainGame->xScale, 242 * mainGame->yScale), 0xff000000, true, false, 0);
-		adFont->draw(pcard->rscstring, recti(499 * mainGame->xScale, 223 * mainGame->yScale, 531 * mainGame->xScale, 243 * mainGame->yScale), 0xffffffff, true, false, 0);
-		}
-	}
+        DrawShadowText(adFont, pcard->lscstring, recti(498 * mainGame->xScale, 222 * mainGame->yScale, 530 * mainGame->xScale, 242 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffffff, 0xff000000, true, false);
+    }
 	if(dField.extra[0].size()) {
 		int offset = (dField.extra[0].size() >= 10) ? 0 : mainGame->numFont->getDimension(dataManager.GetNumString(1)).Width;
-		numFont->draw(dataManager.GetNumString(dField.extra[0].size()), recti((320 + offset)* mainGame->xScale, 562 * mainGame->yScale, 371 * mainGame->xScale, 552 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra[0].size()), recti((320 + offset)* mainGame->xScale, 563 * mainGame->yScale, 373 * mainGame->xScale, 553 * mainGame->yScale), 0xffffff00, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra_p_count[0], true), recti(340 * mainGame->xScale, 562 * mainGame->yScale, 391 * mainGame->xScale, 552 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra_p_count[0], true), recti(340 * mainGame->xScale, 563 * mainGame->yScale, 393 * mainGame->xScale, 553 * mainGame->yScale), 0xffffff00, true, false, 0);
-	}
+        DrawShadowText(numFont, dataManager.GetNumString(dField.extra[0].size()), recti((320 + offset)* mainGame->xScale, 562 * mainGame->yScale, 371 * mainGame->xScale, 552 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+        DrawShadowText(numFont, dataManager.GetNumString(dField.extra_p_count[0], true), recti(340 * mainGame->xScale, 562 * mainGame->yScale, 391 * mainGame->xScale, 552 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+    }
 	if(dField.deck[0].size()) {
-		numFont->draw(dataManager.GetNumString(dField.deck[0].size()), recti(907 * mainGame->xScale, 562 * mainGame->yScale, 1021 * mainGame->xScale, 552 * mainGame->yScale) , 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.deck[0].size()), recti(908 * mainGame->xScale, 563 * mainGame->yScale, 1023 * mainGame->xScale, 553 * mainGame->yScale), 0xffffff00, true, false, 0);
+        DrawShadowText(numFont, dataManager.GetNumString(dField.deck[0].size()), recti(907 * mainGame->xScale, 562 * mainGame->yScale, 1021 * mainGame->xScale, 552 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 	}
 	if (rule == 0) {
 		if (dField.grave[0].size()) {
-		numFont->draw(dataManager.GetNumString(dField.grave[0].size()), recti(837 * mainGame->xScale, 375 * mainGame->yScale, 984 * mainGame->xScale, 380 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.grave[0].size()), recti(837 * mainGame->xScale, 376 * mainGame->yScale, 986 * mainGame->xScale, 381 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.grave[0].size()), recti(837 * mainGame->xScale, 375 * mainGame->yScale, 984 * mainGame->xScale, 380 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 		if (dField.remove[0].size()) {
-		numFont->draw(dataManager.GetNumString(dField.remove[0].size()), recti(1015 * mainGame->xScale, 375 * mainGame->yScale, 957 * mainGame->xScale, 380 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.remove[0].size()), recti(1015 * mainGame->xScale, 376 * mainGame->yScale, 959 * mainGame->xScale, 381 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.remove[0].size()), recti(1015 * mainGame->xScale, 375 * mainGame->yScale, 957 * mainGame->xScale, 380 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 	} else {
 		if (dField.grave[0].size()) {
-			numFont->draw(dataManager.GetNumString(dField.grave[0].size()), recti(870 * mainGame->xScale, 456 * mainGame->yScale, 1002 * mainGame->xScale, 461 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.grave[0].size()), recti(870 * mainGame->xScale, 457 * mainGame->yScale, 1004 * mainGame->xScale, 462 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.grave[0].size()), recti(870 * mainGame->xScale, 456 * mainGame->yScale, 1002 * mainGame->xScale, 461 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 		if (dField.remove[0].size()) {
-			numFont->draw(dataManager.GetNumString(dField.remove[0].size()), recti(837 * mainGame->xScale, 375 * mainGame->yScale, 984 * mainGame->xScale, 380 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.remove[0].size()), recti(837 * mainGame->xScale, 376 * mainGame->yScale, 986 * mainGame->xScale, 381 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.remove[0].size()), recti(837 * mainGame->xScale, 375 * mainGame->yScale, 984 * mainGame->xScale, 380 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 	}
 	if(dField.extra[1].size()) {
 		int offset = (dField.extra[1].size() >= 10) ? 0 : mainGame->numFont->getDimension(dataManager.GetNumString(1)).Width;
-		numFont->draw(dataManager.GetNumString(dField.extra[1].size()), recti((808 + offset) * mainGame->xScale, 207 * mainGame->yScale, 898 * mainGame->xScale, 232 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra[1].size()), recti((808 + offset) * mainGame->xScale, 208 * mainGame->yScale, 900 * mainGame->xScale, 233 * mainGame->yScale), 0xffffff00, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra_p_count[1], true), recti(828 * mainGame->xScale, 207 * mainGame->yScale, 918 * mainGame->xScale, 232 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.extra_p_count[1], true), recti(828 * mainGame->xScale, 208 * mainGame->yScale, 920 * mainGame->xScale, 233 * mainGame->yScale), 0xffffff00, true, false, 0);
+        DrawShadowText(numFont, dataManager.GetNumString(dField.extra[1].size()), recti((808 + offset) * mainGame->xScale, 207 * mainGame->yScale, 898 * mainGame->xScale, 232 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+        DrawShadowText(numFont, dataManager.GetNumString(dField.extra_p_count[1], true), recti(828 * mainGame->xScale, 207 * mainGame->yScale, 918 * mainGame->xScale, 232 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale, 1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 	}
 	if(dField.deck[1].size()) {
-		numFont->draw(dataManager.GetNumString(dField.deck[1].size()), recti(465 * mainGame->xScale, 207 * mainGame->yScale, 481 * mainGame->xScale, 232 * mainGame->yScale), 0xff000000, true, false, 0);
-		numFont->draw(dataManager.GetNumString(dField.deck[1].size()), recti(465 * mainGame->xScale, 208 * mainGame->yScale, 483 * mainGame->xScale, 233 * mainGame->yScale), 0xffffff00, true, false, 0);
-	}
+        DrawShadowText(numFont, dataManager.GetNumString(dField.deck[1].size()), recti(465 * mainGame->xScale, 207 * mainGame->yScale, 481 * mainGame->xScale,232 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale,1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+    }
 	if (rule == 0) {
 		if (dField.grave[1].size()) {
-			numFont->draw(dataManager.GetNumString(dField.grave[1].size()), recti(420 * mainGame->xScale, 310 * mainGame->yScale, 462 * mainGame->xScale, 281 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.grave[1].size()), recti(420 * mainGame->xScale, 311 * mainGame->yScale, 464 * mainGame->xScale, 282 * mainGame->yScale), 0xffffff00, true, false, 0);
-		}
+            DrawShadowText(numFont, dataManager.GetNumString(dField.grave[1].size()), recti(420 * mainGame->xScale, 310 * mainGame->yScale, 462 * mainGame->xScale, 281 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale,1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+        }
 		if (dField.remove[1].size()) {
-			numFont->draw(dataManager.GetNumString(dField.remove[1].size()), recti(300 * mainGame->xScale, 310 * mainGame->yScale, 443 * mainGame->xScale, 340 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.remove[1].size()), recti(300 * mainGame->xScale, 311 * mainGame->yScale, 445 * mainGame->xScale, 341 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.remove[1].size()), recti(300 * mainGame->xScale, 310 * mainGame->yScale, 443 * mainGame->xScale, 340 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale,1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 	} else {
 		if (dField.grave[1].size()) {
-			numFont->draw(dataManager.GetNumString(dField.grave[1].size()), recti(455 * mainGame->xScale, 249 * mainGame->yScale, 462 * mainGame->xScale, 299 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.grave[1].size()), recti(455 * mainGame->xScale, 250 * mainGame->yScale, 464 * mainGame->xScale, 300 * mainGame->yScale), 0xffffff00, true, false, 0);
+            DrawShadowText(numFont, dataManager.GetNumString(dField.grave[1].size()), recti(455 * mainGame->xScale, 249 * mainGame->yScale, 462 * mainGame->xScale, 299 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale,1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
 		}
 		if (dField.remove[1].size()) {
-			numFont->draw(dataManager.GetNumString(dField.remove[1].size()), recti(420 * mainGame->xScale, 310 * mainGame->yScale, 462 * mainGame->xScale, 281 * mainGame->yScale), 0xff000000, true, false, 0);
-			numFont->draw(dataManager.GetNumString(dField.remove[1].size()), recti(420 * mainGame->xScale, 311 * mainGame->yScale, 464 * mainGame->xScale, 282 * mainGame->yScale), 0xffffff00, true, false, 0);
-		}
+            DrawShadowText(numFont, dataManager.GetNumString(dField.remove[1].size()), recti(420 * mainGame->xScale, 310 * mainGame->yScale, 462 * mainGame->xScale, 281 * mainGame->yScale), recti(1 * mainGame->xScale, 1 * mainGame->yScale, 1 * mainGame->xScale,1 * mainGame->yScale), 0xffffff00, 0xff000000, true, false);
+        }
 	}
+    }
 }
 void Game::DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2) {
 	adFont->draw(L"/", recti(x1 - 4, y1, x1 + 4, y1 + 20), 0xff000000, true, false, 0);
@@ -1280,7 +1181,7 @@ void Game::DrawDeckBd() {
 	int mainsize = deckManager.current_deck.main.size();
 	driver->draw2DRectangle(recti(310 * mainGame->xScale, 137 * mainGame->yScale, 410 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 136 * mainGame->yScale, 410 * mainGame->xScale, 157 * mainGame->yScale));
-	DrawShadowText(textFont, dataManager.GetSysString(deckBuilder.showing_pack ? 1477 : 1330), recti(300 * mainGame->xScale, 136 * mainGame->yScale, 395 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	DrawShadowText(guiFont, dataManager.GetSysString(deckBuilder.showing_pack ? 1477 : 1330), recti(300 * mainGame->xScale, 136 * mainGame->yScale, 395 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	DrawShadowText(numFont, dataManager.numStrings[mainsize], recti(360 * mainGame->xScale, 137 * mainGame->yScale, 420 * mainGame->xScale, 157 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
     driver->draw2DRectangle(recti(310 * mainGame->xScale, 160 * mainGame->yScale, 797 * mainGame->xScale, (deckBuilder.showing_pack ? 630 : 436) * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 159 * mainGame->yScale, 797 * mainGame->xScale, (deckBuilder.showing_pack ? 630 : 436) * mainGame->yScale));
@@ -1326,7 +1227,7 @@ void Game::DrawDeckBd() {
 		//extra deck
 		driver->draw2DRectangle(recti(310 * mainGame->xScale, 440 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 439 * mainGame->yScale, 410 * mainGame->xScale, 460 * mainGame->yScale));
-		DrawShadowText(textFont, dataManager.GetSysString(1331), recti(300 * mainGame->xScale, 439 * mainGame->yScale, 395 * mainGame->xScale, 459 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+		DrawShadowText(guiFont, dataManager.GetSysString(1331), recti(300 * mainGame->xScale, 439 * mainGame->yScale, 395 * mainGame->xScale, 459 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 		DrawShadowText(numFont, dataManager.numStrings[deckManager.current_deck.extra.size()], recti(360 * mainGame->xScale, 440 * mainGame->yScale, 420 * mainGame->xScale, 460 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 		driver->draw2DRectangle(recti(310 * mainGame->xScale, 463 * mainGame->yScale, 797 * mainGame->xScale, 533 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 462 * mainGame->yScale, 797 * mainGame->xScale, 533 * mainGame->yScale));
@@ -1356,7 +1257,7 @@ void Game::DrawDeckBd() {
 		//side deck
 		driver->draw2DRectangle(recti(310 * mainGame->xScale, 537 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 536 * mainGame->yScale, 410 * mainGame->xScale, 557 * mainGame->yScale));
-		DrawShadowText(textFont, dataManager.GetSysString(1332), recti(300 * mainGame->xScale, 536 * mainGame->yScale, 395 * mainGame->xScale, 556 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+		DrawShadowText(guiFont, dataManager.GetSysString(1332), recti(300 * mainGame->xScale, 536 * mainGame->yScale, 395 * mainGame->xScale, 556 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 		DrawShadowText(numFont, dataManager.numStrings[deckManager.current_deck.side.size()], recti(360 * mainGame->xScale, 537 * mainGame->yScale, 420 * mainGame->xScale, 557 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 		driver->draw2DRectangle(recti(310 * mainGame->xScale, 560 * mainGame->yScale, 797 * mainGame->xScale, 630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(recti(309 * mainGame->xScale, 559 * mainGame->yScale, 797 * mainGame->xScale, 630 * mainGame->yScale));
@@ -1384,7 +1285,7 @@ void Game::DrawDeckBd() {
 	//search result
 	driver->draw2DRectangle(recti(805 * mainGame->xScale, 137 * mainGame->yScale, 915 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(804 * mainGame->xScale, 136 * mainGame->yScale, 915 * mainGame->xScale, 157 * mainGame->yScale));
-	DrawShadowText(textFont, dataManager.GetSysString(1333), recti(790 * mainGame->xScale, 136 * mainGame->yScale, 900 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
+	DrawShadowText(guiFont, dataManager.GetSysString(1333), recti(790 * mainGame->xScale, 136 * mainGame->yScale, 900 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	DrawShadowText(numFont, deckBuilder.result_string, recti(865 * mainGame->xScale, 136 * mainGame->yScale, 925 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
 	driver->draw2DRectangle(recti(805 * mainGame->xScale, 160 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(recti(804 * mainGame->xScale, 159 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale));
@@ -1396,12 +1297,12 @@ void Game::DrawDeckBd() {
 		DrawThumb(ptr, position2di(805 * mainGame->xScale, (165 + i * 66) * mainGame->yScale), deckBuilder.filterList);
 		if(ptr->second.type & TYPE_MONSTER) {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			if(!(ptr->second.type & TYPE_LINK)) {
 				const wchar_t* form = L"\u2605";
 				if(ptr->second.type & TYPE_XYZ) form = L"\u2606";
 				myswprintf(textBuffer, L"%ls/%ls %ls%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), form, ptr->second.level);
-				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+				DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 				if(ptr->second.attack < 0 && ptr->second.defense < 0)
 					myswprintf(textBuffer, L"?/?");
 				else if(ptr->second.attack < 0)
@@ -1411,7 +1312,7 @@ void Game::DrawDeckBd() {
 				else myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
 			} else {
 				myswprintf(textBuffer, L"%ls/%ls LINK-%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), ptr->second.level);
-				DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+				DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 				if(ptr->second.attack < 0)
 					myswprintf(textBuffer, L"?/-");
 				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
@@ -1427,12 +1328,12 @@ void Game::DrawDeckBd() {
 				wcscat(textBuffer, L" [TCG]");
 			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
 				wcscat(textBuffer, L" [Custom]");
-			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 		} else {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(textFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			const wchar_t* ptype = dataManager.FormatType(ptr->second.type);
-			DrawShadowText(textFont, ptype, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
+			DrawShadowText(guiFont, ptype, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
 			textBuffer[0] = 0;
 			if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
 				wcscat(textBuffer, L"[OCG]");
