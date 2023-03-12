@@ -225,6 +225,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->ClearChatMsg();
 			    break;
 			}
+            case BUTTON_REDUCE_CARD_TEXT: {
+				mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize - 2;
+                break;
+            }
+            case BUTTON_ENLARGE_CARD_TEXT: {
+				mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize + 2;
+                break;
+            }
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();

@@ -496,6 +496,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
+    btnReduceCardText = env->addButton(rect<s32>(140 * yScale, 345 * yScale, 165 * yScale, 370 * yScale), wInfos, BUTTON_REDUCE_CARD_TEXT, L"A-");
+    btnEnlargeCardText = env->addButton(rect<s32>(175 * yScale, 345 * yScale, 200 * yScale, 370 * yScale), wInfos, BUTTON_ENLARGE_CARD_TEXT, L"A+");
 	//imageButtons pallet
     wPallet = env->addWindow(rect<s32>(262 * xScale, 275 * yScale, 307 * xScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
@@ -667,7 +669,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wQuery->getCloseButton()->setVisible(false);
 	wQuery->setVisible(false);
         ChangeToIGUIImageWindow(wQuery, &bgQuery, imageManager.tDialog_L);
-	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wQuery, -1, false);
+	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 110 * yScale), false, true, wQuery, -1, false);
 	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnYes = env->addButton(rect<s32>(60 * xScale, 120 * yScale, 170 * xScale, 170 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
         ChangeToIGUIImageButton(btnYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1582,21 +1584,13 @@ void Game::LoadExpansions() {
 	for(u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
 		const IFileList* archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
 		for(u32 j = 0; j < archive->getFileCount(); ++j) {
-#ifdef _WIN32
-			const wchar_t* fname = archive->getFullFileName(j).c_str();
-#else
-			wchar_t fname[1024];
+            wchar_t fname[1024];
 			const char* uname = archive->getFullFileName(j).c_str();
 			BufferIO::DecodeUTF8(uname, fname);
-#endif
 			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".cdb", 4))
 				dataManager.LoadDB(fname);
 			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".conf", 5)) {
-#ifdef _WIN32
-				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(fname);
-#else
 				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(uname);
-#endif
 				dataManager.LoadStrings(reader);
 			}
 			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".ydk", 4)) {
@@ -1841,8 +1835,8 @@ void Game::ShowCardInfo(int code) {
 	imgCard->setImage(imageManager.GetTexture(code));
 	imgCard->setScaleImage(true);
 	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+		myswprintf(formatBuffer, L"%ls", dataManager.GetName(cd.alias));
+	else myswprintf(formatBuffer, L"%ls", dataManager.GetName(code));
 	stName->setText(formatBuffer);
 	int offset = 0;
 	if(!gameConf.hide_setname) {
