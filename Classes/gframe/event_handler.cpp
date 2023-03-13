@@ -226,11 +226,29 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			    break;
 			}
             case BUTTON_REDUCE_CARD_TEXT: {
-				mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize - 2;
+                if (mainGame->gameConf.textfontsize < 24) {
+					mainGame->btnEnlargeCardText->setEnabled(true);
+					if (mainGame->gameConf.textfontsize = 16)
+                    	mainGame->btnReduceCardText->setEnabled(false);
+                } else {
+					mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize - 2;
+					mainGame->textFont->setFontSize(mainGame->gameConf.textfontsize * mainGame->yScale);
+					const auto& tsize = mainGame->stText->getRelativePosition();
+					mainGame->InitStaticText(mainGame->stText, tsize.getWidth(), tsize.getHeight(), mainGame->textFont, mainGame->showingtext);
+				}
                 break;
             }
             case BUTTON_ENLARGE_CARD_TEXT: {
-				mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize + 2;
+                if(mainGame->gameConf.textfontsize = 24) {
+                    mainGame->btnEnlargeCardText->setEnabled(false);
+					if (mainGame->gameConf.textfontsize > 16)
+                    	mainGame->btnReduceCardText->setEnabled(true);
+                } else {
+					mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize + 2;
+					mainGame->textFont->setFontSize(mainGame->gameConf.textfontsize * mainGame->yScale);
+					const auto& tsize = mainGame->stText->getRelativePosition();
+					mainGame->InitStaticText(mainGame->stText, tsize.getWidth(), tsize.getHeight(), mainGame->textFont, mainGame->showingtext);
+				}
                 break;
             }
 			case BUTTON_CHAIN_IGNORE: {
