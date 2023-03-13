@@ -1471,7 +1471,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		int desc = BufferIO::ReadInt32(pbuf);
 		mainGame->dField.highlighting_card = 0;
 		mainGame->gMutex.lock();
-		mainGame->SetStaticText(mainGame->stQMessage, 390 * mainGame->xScale, mainGame->textFont, dataManager.GetDesc(desc));
+		mainGame->SetStaticText(mainGame->stQMessage, 390 * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(desc));
 		mainGame->PopupElement(mainGame->wQuery);
 		mainGame->gMutex.unlock();
 		return false;

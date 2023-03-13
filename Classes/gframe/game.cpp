@@ -110,13 +110,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
 	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
-#endif
 
 	device = irr::createDeviceEx(params);
 	if(!device)
 		return false;
-
-#ifdef _IRR_ANDROID_PLATFORM_
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
@@ -496,8 +493,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
-    btnReduceCardText = env->addButton(rect<s32>(140 * yScale, 345 * yScale, 165 * yScale, 370 * yScale), wInfos, BUTTON_REDUCE_CARD_TEXT, L"A-");
-    btnEnlargeCardText = env->addButton(rect<s32>(175 * yScale, 345 * yScale, 200 * yScale, 370 * yScale), wInfos, BUTTON_ENLARGE_CARD_TEXT, L"A+");
+    btnReduceCardText = env->addButton(rect<s32>(140 * yScale, 340 * yScale, 165 * yScale, 365 * yScale), wInfos, BUTTON_REDUCE_CARD_TEXT, L"A-");
+    btnEnlargeCardText = env->addButton(rect<s32>(175 * yScale, 340 * yScale, 200 * yScale, 365 * yScale), wInfos, BUTTON_ENLARGE_CARD_TEXT, L"A+");
 	//imageButtons pallet
     wPallet = env->addWindow(rect<s32>(262 * xScale, 275 * yScale, 307 * xScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
@@ -1406,12 +1403,6 @@ void Game::MainLoop() {
 		DrawGUI();
 		DrawSpec();
 		driver->enableMaterial2D(false);
-#else
-		} else {
-			DrawBackImage(imageManager.tBackGround_menu);
-		}
-		DrawGUI();
-		DrawSpec();
 #endif
 		gMutex.unlock();
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -1447,15 +1438,6 @@ void Game::MainLoop() {
 				str += (s32)device->getVideoDriver()->getFPS();
 				stat->setText ( str.c_str() );
 			}
-#else
-	       if(cur_time < fps * 17 - 20)
-#ifdef _WIN32
-				Sleep(20);
-#else
-				usleep(20000);
-#endif
-			myswprintf(cap, L"FPS: %d", fps);
-			device->setWindowCaption(cap);
 #endif
 			fps = 0;
 			cur_time -= 1000;
@@ -1473,11 +1455,8 @@ void Game::MainLoop() {
 	DuelClient::StopClient(true);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
-#ifdef _WIN32
-	Sleep(500);
-#else
+
 	usleep(500000);
-#endif
 	SaveConfig();
 	usleep(500000);
 //	device->drop();
@@ -1519,7 +1498,7 @@ void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cH
 			env->removeFocus(scrCardText);
 		return;
 	}
-	format_text = SetStaticText(pControl, cWidth - int(25 * xScale), font, text);
+	format_text = SetStaticText(pControl, cWidth - int(15 * xScale), font, text);
 	u32 fontheight = font->getDimension(L"A").Height + font->getKerningHeight();
 	u32 step = (font->getDimension(format_text.c_str()).Height - cHeight) / fontheight + 1;
 	scrCardText->setVisible(true);

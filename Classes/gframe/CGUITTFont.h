@@ -218,7 +218,10 @@ public:
 	virtual void setMaxPageTextureSize(const core::dimension2du& texture_size) {
 		max_page_texture_size = texture_size;
 	}
-
+    //! Set the font size.
+    virtual void setFontSize(u32 new_size) {
+        size = new_size;
+    }
 	//! Get the font size.
 	virtual u32 getFontSize() const {
 		return size;
