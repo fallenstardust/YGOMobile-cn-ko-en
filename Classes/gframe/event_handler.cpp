@@ -225,6 +225,32 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->ClearChatMsg();
 			    break;
 			}
+            case BUTTON_REDUCE_CARD_TEXT: {
+                if (mainGame->gameConf.textfontsize < 24) {
+					mainGame->btnEnlargeCardText->setEnabled(true);
+					if (mainGame->gameConf.textfontsize = 16)
+                    	mainGame->btnReduceCardText->setEnabled(false);
+                } else {
+					mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize - 2;
+					mainGame->textFont->setFontSize(mainGame->gameConf.textfontsize * mainGame->yScale);
+					const auto& tsize = mainGame->stText->getRelativePosition();
+					mainGame->InitStaticText(mainGame->stText, tsize.getWidth(), tsize.getHeight(), mainGame->textFont, mainGame->showingtext);
+				}
+                break;
+            }
+            case BUTTON_ENLARGE_CARD_TEXT: {
+                if(mainGame->gameConf.textfontsize = 24) {
+                    mainGame->btnEnlargeCardText->setEnabled(false);
+					if (mainGame->gameConf.textfontsize > 16)
+                    	mainGame->btnReduceCardText->setEnabled(true);
+                } else {
+					mainGame->gameConf.textfontsize = mainGame->gameConf.textfontsize + 2;
+					mainGame->textFont->setFontSize(mainGame->gameConf.textfontsize * mainGame->yScale);
+					const auto& tsize = mainGame->stText->getRelativePosition();
+					mainGame->InitStaticText(mainGame->stText, tsize.getWidth(), tsize.getHeight(), mainGame->textFont, mainGame->showingtext);
+				}
+                break;
+            }
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();
@@ -2098,7 +2124,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					break;
 				}
 				u32 pos = mainGame->scrCardText->getPos();
-				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
+				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 15, mainGame->textFont, mainGame->showingtext, pos);
 				return true;
 				break;
 			}
@@ -2254,6 +2280,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wLanWindow) {
                     mainGame->gMutex.lock();
                     mainGame->textFont->setTransparency(true);
+					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
                     mainGame->gMutex.unlock();
                     break;
@@ -2286,7 +2313,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                if(pos < 0) pos = 0;
 	                if(pos > max) pos = max;
 	                mainGame->scrCardText->setPos(pos);
-	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
+	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 15, mainGame->textFont, mainGame->showingtext, pos);
 	            }
                 if(is_dragging_lstLog) {
                     if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
@@ -2577,28 +2604,28 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnActivate->setVisible(true);
 		mainGame->btnActivate->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnActivate->setVisible(false);
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
 		mainGame->btnSummon->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSummon->setVisible(false);
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
 		mainGame->btnSPSummon->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSPSummon->setVisible(false);
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
 		mainGame->btnMSet->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnMSet->setVisible(false);
 	if(flag & COMMAND_SSET) {
@@ -2609,7 +2636,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnSSet->setVisible(true);
 		mainGame->btnSSet->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSSet->setVisible(false);
 	if(flag & COMMAND_REPOS) {
@@ -2622,40 +2649,40 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnRepos->setVisible(true);
 		mainGame->btnRepos->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnRepos->setVisible(false);
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnAttack->setVisible(false);
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
 		mainGame->btnShowList->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnShowList->setVisible(false);
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
 		mainGame->btnOperation->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnOperation->setVisible(false);
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
 		mainGame->btnReset->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnReset->setVisible(false);
 	panel = mainGame->wCmdMenu;
 	mainGame->wCmdMenu->setVisible(true);
-	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 100 * mainGame->xScale, y - 20 * mainGame->yScale));
+	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 20 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 130 * mainGame->xScale, y - 30 * mainGame->yScale));
 }
 void ClientField::HideMenu() {
 	mainGame->wCmdMenu->setVisible(false);

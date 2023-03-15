@@ -1461,7 +1461,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 			myswprintf(textBuffer, dataManager.GetDesc(desc), dataManager.GetName(code));
 		}
 		mainGame->gMutex.lock();
-		mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
+		mainGame->SetStaticText(mainGame->stQMessage, 390 * mainGame->xScale, mainGame->guiFont, textBuffer);
 		mainGame->PopupElement(mainGame->wQuery);
 		mainGame->gMutex.unlock();
 		return false;
@@ -1471,7 +1471,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 		int desc = BufferIO::ReadInt32(pbuf);
 		mainGame->dField.highlighting_card = 0;
 		mainGame->gMutex.lock();
-		mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, dataManager.GetDesc(desc));
+		mainGame->SetStaticText(mainGame->stQMessage, 390 * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(desc));
 		mainGame->PopupElement(mainGame->wQuery);
 		mainGame->gMutex.unlock();
 		return false;
@@ -1731,7 +1731,7 @@ int DuelClient::ClientAnalyze(char * msg, unsigned int len) {
 					myswprintf(textBuffer, L"%ls\n%ls\n%ls", event_string, dataManager.GetSysString(222), dataManager.GetSysString(223));
 				else
 					myswprintf(textBuffer, L"%ls\n%ls", event_string, dataManager.GetSysString(203));
-				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
+				mainGame->SetStaticText(mainGame->stQMessage, 390 * mainGame->xScale, mainGame->guiFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 			}
 		}
