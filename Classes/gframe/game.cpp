@@ -493,9 +493,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrCardText->setLargeStep(1);
 	scrCardText->setSmallStep(1);
 	scrCardText->setVisible(false);
-    btnReduceCardText = env->addButton(rect<s32>(140 * yScale, 340 * yScale, 165 * yScale, 365 * yScale), wInfos, BUTTON_REDUCE_CARD_TEXT, L"A-");
-    btnEnlargeCardText = env->addButton(rect<s32>(175 * yScale, 340 * yScale, 200 * yScale, 365 * yScale), wInfos, BUTTON_ENLARGE_CARD_TEXT, L"A+");
-	//imageButtons pallet
+    //imageButtons pallet
     wPallet = env->addWindow(rect<s32>(262 * xScale, 275 * yScale, 307 * xScale, 639 * yScale), false, L"");
     wPallet->getCloseButton()->setVisible(false);
     wPallet->setDraggable(false);

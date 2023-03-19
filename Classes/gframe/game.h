@@ -305,8 +305,6 @@ public:
 	irr::gui::IGUIStaticText* stSetName;
 	irr::gui::IGUIStaticText* stText;
 	irr::gui::IGUIScrollBar* scrCardText;
-    irr::gui::IGUIButton* btnReduceCardText;
-    irr::gui::IGUIButton* btnEnlargeCardText;
 	irr::gui::IGUICheckBox* chkMAutoPos;
 	irr::gui::IGUICheckBox* chkSTAutoPos;
 	irr::gui::IGUICheckBox* chkRandomPos;
@@ -913,8 +911,6 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
-#define BUTTON_ENLARGE_CARD_TEXT	384
-#define BUTTON_REDUCE_CARD_TEXT	    385
 
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
