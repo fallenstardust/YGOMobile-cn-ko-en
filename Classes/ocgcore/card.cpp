@@ -629,6 +629,7 @@ std::pair<int32, int32> card::get_atk_def() {
 	effect_set eset;
 	effect_set effects_atk_final, effects_atk_wicked, effects_atk_option;
 	effect_set effects_def_final, effects_def_wicked, effects_def_option;
+	effect_set effects_repeat_update_atk, effects_repeat_update_def;
 	int32 batk = data.attack;
 	if (batk < 0)
 		batk = 0;
@@ -682,7 +683,9 @@ std::pair<int32, int32> card::get_atk_def() {
 	for (int32 i = 0; i < eset.size(); ++i) {
 		switch (eset[i]->code) {
 		case EFFECT_UPDATE_ATTACK:
-			if ((eset[i]->type & EFFECT_TYPE_SINGLE) && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
+			if (eset[i]->is_flag(EFFECT_FLAG2_REPEAT_UPDATE))
+				effects_repeat_update_atk.add_item(eset[i]);
+			else if ((eset[i]->type & EFFECT_TYPE_SINGLE) && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
 				up_atk += eset[i]->get_value(this);
 			else
 				upc_atk += eset[i]->get_value(this);
@@ -713,7 +716,9 @@ std::pair<int32, int32> card::get_atk_def() {
 			break;
 		// def
 		case EFFECT_UPDATE_DEFENSE:
-			if ((eset[i]->type & EFFECT_TYPE_SINGLE) && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
+			if (eset[i]->is_flag(EFFECT_FLAG2_REPEAT_UPDATE))
+				effects_repeat_update_def.add_item(eset[i]);
+			else if ((eset[i]->type & EFFECT_TYPE_SINGLE) && !eset[i]->is_flag(EFFECT_FLAG_SINGLE_RANGE))
 				up_def += eset[i]->get_value(this);
 			else
 				upc_def += eset[i]->get_value(this);
@@ -756,6 +761,16 @@ std::pair<int32, int32> card::get_atk_def() {
 		}
 		if (temp.attack < 0)
 			temp.attack = 0;
+		if (temp.defense < 0)
+			temp.defense = 0;
+	}
+	for (int32 i = 0; i < effects_repeat_update_atk.size(); ++i) {
+		temp.attack += effects_repeat_update_atk[i]->get_value(this);
+		if (temp.attack < 0)
+			temp.attack = 0;
+	}
+	for (int32 i = 0; i < effects_repeat_update_def.size(); ++i) {
+		temp.defense += effects_repeat_update_def[i]->get_value(this);
 		if (temp.defense < 0)
 			temp.defense = 0;
 	}
@@ -3438,8 +3453,10 @@ int32 card::is_affect_by_effect(effect* reason_effect) {
 		return FALSE;
 	return TRUE;
 }
-int32 card::is_can_be_disabled_by_effect(effect* reason_effect) {
-	if (is_status(STATUS_DISABLED))
+int32 card::is_can_be_disabled_by_effect(effect* reason_effect, bool is_monster_effect) {
+	if (is_monster_effect && is_status(STATUS_DISABLED))
+		return FALSE;
+	if(!is_monster_effect && !(get_type() & TYPE_TRAPMONSTER) && is_status(STATUS_DISABLED))
 		return FALSE;
 	if (is_affected_by_effect(EFFECT_CANNOT_DISABLE))
 		return FALSE;
@@ -3878,8 +3895,6 @@ int32 card::is_can_be_synchro_material(card* scard, card* tuner) {
 		return FALSE;
 	if(!(get_synchro_type() & TYPE_MONSTER))
 		return FALSE;
-	if(scard && current.location == LOCATION_MZONE && current.controler != scard->current.controler && !is_affected_by_effect(EFFECT_SYNCHRO_MATERIAL))
-		return FALSE;
 	if(is_status(STATUS_FORBIDDEN))
 		return FALSE;
 	//special fix for scrap chimera, not perfect yet
@@ -3892,6 +3907,19 @@ int32 card::is_can_be_synchro_material(card* scard, card* tuner) {
 	for(int32 i = 0; i < eset.size(); ++i)
 		if(eset[i]->get_value(scard))
 			return FALSE;
+	if(scard && !(current.location == LOCATION_MZONE && current.controler == scard->current.controler)) {
+		eset.clear();
+		filter_effect(EFFECT_EXTRA_SYNCHRO_MATERIAL, &eset);
+		if(eset.size()) {
+			for(int32 i = 0; i < eset.size(); ++i) {
+				if(!eset[i]->check_count_limit(scard->current.controler))
+					continue;
+				if(eset[i]->get_value(scard))
+					return TRUE;
+			}
+			return FALSE;
+		}
+	}
 	return TRUE;
 }
 int32 card::is_can_be_ritual_material(card* scard) {
