@@ -634,25 +634,25 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnSecond = env->addButton(rect<s32>(20 * xScale, 95 * yScale, 370 * xScale, 145 * yScale), wFTSelect, BUTTON_SECOND, dataManager.GetSysString(101));
         ChangeToIGUIImageButton(btnSecond, imageManager.tButton_L, imageManager.tButton_L_pressed, titleFont);
 	//message (370)
-	wMessage = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(1216));
+	wMessage = env->addWindow(rect<s32>(470 * xScale, 160 * yScale, 860 * xScale, 380 * yScale), false, dataManager.GetSysString(1216));
 	wMessage->getCloseButton()->setVisible(false);
 	wMessage->setVisible(false);
 	    ChangeToIGUIImageWindow(wMessage, &bgMessage, imageManager.tDialog_L);
-	stMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wMessage, -1, false);
+	stMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 120 * yScale), false, true, wMessage, -1, false);
 	stMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 120 * yScale, 260 * xScale, 170 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
+	btnMsgOK = env->addButton(rect<s32>(130 * xScale, 150 * yScale, 260 * xScale, 200 * yScale), wMessage, BUTTON_MSG_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//system message (370)
 	wSysMessage = env->addWindow(rect<s32>(315 * xScale, 180 * yScale, 705 * xScale, 360 * yScale), false, dataManager.GetSysString(1216));
 	wSysMessage->getCloseButton()->setVisible(false);
 	wSysMessage->setVisible(false);
-	ChangeToIGUIImageWindow(wSysMessage, &bgSysMessage, imageManager.tDialog_L);
+		ChangeToIGUIImageWindow(wSysMessage, &bgSysMessage, imageManager.tDialog_L);
 	stSysMessage = env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 100 * yScale), false, true, wSysMessage, -1, false);
 	stSysMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
 	btnSysMsgOK = env->addButton(rect<s32>(130 * xScale, 120 * yScale, 260 * xScale, 170 * yScale), wSysMessage, BUTTON_SYS_MSG_OK, dataManager.GetSysString(1211));
-    ChangeToIGUIImageButton(btnSysMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
+    	ChangeToIGUIImageButton(btnSysMsgOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//auto fade message (370)
-	wACMessage = env->addWindow(rect<s32>(490 * xScale, 240 * yScale, 840 * xScale, 300 * yScale), false, L"");
+	wACMessage = env->addWindow(rect<s32>(470 * xScale, 240 * yScale, 860 * xScale, 300 * yScale), false, L"");
 	wACMessage->getCloseButton()->setVisible(false);
 	wACMessage->setVisible(false);
 	wACMessage->setDrawBackground(false);
@@ -660,15 +660,15 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stACMessage->setBackgroundColor(0x6011113d);
 	stACMessage->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	//yes/no (370)
-	wQuery = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
+	wQuery = env->addWindow(rect<s32>(470 * xScale, 160 * yScale, 860 * xScale, 380 * yScale), false, dataManager.GetSysString(560));
 	wQuery->getCloseButton()->setVisible(false);
 	wQuery->setVisible(false);
         ChangeToIGUIImageWindow(wQuery, &bgQuery, imageManager.tDialog_L);
-	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 110 * yScale), false, true, wQuery, -1, false);
+	stQMessage =  env->addStaticText(L"", rect<s32>(20 * xScale, 20 * yScale, 370 * xScale, 140 * yScale), false, true, wQuery, -1, false);
 	stQMessage->setTextAlignment(irr::gui::EGUIA_UPPERLEFT, irr::gui::EGUIA_CENTER);
-	btnYes = env->addButton(rect<s32>(60 * xScale, 120 * yScale, 170 * xScale, 170 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
+	btnYes = env->addButton(rect<s32>(60 * xScale, 150 * yScale, 170 * xScale, 200 * yScale), wQuery, BUTTON_YES, dataManager.GetSysString(1213));
         ChangeToIGUIImageButton(btnYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnNo = env->addButton(rect<s32>(210 * xScale, 120 * yScale, 320 * xScale, 170 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
+	btnNo = env->addButton(rect<s32>(210 * xScale, 150 * yScale, 320 * xScale, 200 * yScale), wQuery, BUTTON_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//surrender yes/no (310)
 	wSurrender = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(560));
@@ -707,7 +707,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrOption->setMin(0);
 #endif
 	//pos
-	wPosSelect = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(561));
+	wPosSelect = env->addWindow(rect<s32>(470 * xScale, 160 * yScale, 860 * xScale, 380 * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
         ChangeToIGUIImageWindow(wPosSelect, &bgPosSelect, imageManager.tDialog_L);
@@ -789,7 +789,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnANCardOK = env->addButton(rect<s32>(95 * xScale, 440 * yScale, 205 * xScale, 490 * yScale), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnANCardOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//announce attribute
-	wANAttribute = env->addWindow(rect<s32>(470 * xScale, 180 * yScale, 860 * xScale, 360 * yScale), false, dataManager.GetSysString(562));
+	wANAttribute = env->addWindow(rect<s32>(470 * xScale, 160 * yScale, 860 * xScale, 380 * yScale), false, dataManager.GetSysString(562));
 	wANAttribute->getCloseButton()->setVisible(false);
 	wANAttribute->setVisible(false);
 	    ChangeToIGUIImageWindow(wANAttribute, &bgANAttribute, imageManager.tDialog_L);
