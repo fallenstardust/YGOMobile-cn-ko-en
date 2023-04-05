@@ -75,6 +75,7 @@ void DeckBuilder::Initialize() {
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
 	mainGame->wPallet->setVisible(true);
 	mainGame->imgChat->setVisible(false);
+	mainGame->imgQuickAnimation->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
@@ -110,6 +111,7 @@ void DeckBuilder::Terminate() {
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
     mainGame->imgChat->setVisible(true);
+    mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);
     mainGame->wLogs->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);

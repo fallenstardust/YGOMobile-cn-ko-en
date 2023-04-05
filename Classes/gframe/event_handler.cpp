@@ -209,6 +209,18 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
 				break;
 			}
+            case BUTTON_QUICK_ANIMIATION: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (mainGame->gameConf.quick_animation) {
+                        mainGame->gameConf.quick_animation = false;
+                        mainGame->imgQuickAnimation->setImage(imageManager.tDoubleX);
+				} else {
+					mainGame->gameConf.quick_animation = true;
+					mainGame->imgQuickAnimation->setImage(imageManager.tOneX);
+				}
+				mainGame->chkQuickAnimation->setChecked(mainGame->gameConf.quick_animation);
+				break;
+            }
 			case BUTTON_CHATTING: {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if (mainGame->gameConf.chkIgnore1) {
@@ -2098,7 +2110,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					break;
 				}
 				u32 pos = mainGame->scrCardText->getPos();
-				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 15, mainGame->textFont, mainGame->showingtext, pos);
+				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth(), mainGame->textFont, mainGame->showingtext, pos);
 				return true;
 				break;
 			}
@@ -2287,7 +2299,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                if(pos < 0) pos = 0;
 	                if(pos > max) pos = max;
 	                mainGame->scrCardText->setPos(pos);
-	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 15, mainGame->textFont, mainGame->showingtext, pos);
+	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth(), mainGame->textFont, mainGame->showingtext, pos);
 	            }
                 if(is_dragging_lstLog) {
                     if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {

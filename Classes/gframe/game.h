@@ -272,7 +272,7 @@ public:
 	irr::gui::CGUITTFont* titleFont;
 	std::map<irr::gui::CGUIImageButton*, int> imageLoading;
 	//card image
-	irr::gui::IGUIImage* wCardImg;
+	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
 	//imageButtons pallet
 	irr::gui::IGUIWindow* wPallet;
@@ -285,6 +285,8 @@ public:
 	irr::gui::IGUIButton* btnCloseLog;//
 	//imageButton BGM
 	irr::gui::CGUIImageButton* imgVol;
+    //imageButton Quick Animation
+    irr::gui::CGUIImageButton* imgQuickAnimation;
 	//imageButton Chatting
     irr::gui::CGUIImageButton* imgChat;
 	//Settings
@@ -700,8 +702,8 @@ extern Game* mainGame;
 
 }
 
-#define CARD_IMG_WIDTH		177
-#define CARD_IMG_HEIGHT		254
+#define CARD_IMG_WIDTH		200
+#define CARD_IMG_HEIGHT		290
 #define CARD_THUMB_WIDTH	44
 #define CARD_THUMB_HEIGHT	64
 
@@ -907,6 +909,7 @@ extern Game* mainGame;
 #define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
+#define BUTTON_QUICK_ANIMIATION	    376
 #define BUTTON_BIG_CARD_CLOSE		380
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382

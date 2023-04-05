@@ -49,6 +49,8 @@ bool ImageManager::Initial(const path dir) {
 	tMute = driver->getTexture((dir + path("/textures/extra/tmute.png")).c_str());
 	tPlay = driver->getTexture((dir + path("/textures/extra/tplay.png")).c_str());
 	tTalk = driver->getTexture((dir + path("/textures/extra/ttalk.png")).c_str());
+	tOneX = driver->getTexture((dir + path("/textures/extra/tonex.png")).c_str());
+	tDoubleX = driver->getTexture((dir + path("/textures/extra/tdoublex.png")).c_str());
 	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
 	tClose = driver->getTexture((dir + path("/textures/extra/tclose.png")).c_str());
     tTitleBar = driver->getTexture((dir + path("/textures/extra/stitlebar.png")).c_str());
