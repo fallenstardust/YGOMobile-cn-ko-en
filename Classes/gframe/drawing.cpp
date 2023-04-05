@@ -836,7 +836,7 @@ void Game::DrawSpec() {
 		case 1: {
 			driver->draw2DImage(imageManager.GetTexture(showcardcode), recti(574 * mainGame->xScale, 150 * mainGame->yScale, (574 + CARD_IMG_WIDTH) * mainGame->xScale, (150 + CARD_IMG_HEIGHT) * mainGame->yScale), recti(0, 0, orisize.Width, orisize.Height), 0, 0, true);
 			driver->draw2DImage(imageManager.tMask, recti(574 * mainGame->xScale, 150 * mainGame->yScale, (574 + (showcarddif > CARD_IMG_WIDTH ? CARD_IMG_WIDTH : showcarddif)) * mainGame->xScale, 404 * mainGame->yScale),
-			                    recti(CARD_IMG_HEIGHT - showcarddif, 0, CARD_IMG_HEIGHT - (showcarddif > CARD_IMG_WIDTH ? showcarddif - CARD_IMG_WIDTH : 0), CARD_IMG_HEIGHT), 0, 0, true);
+			                    recti((CARD_IMG_HEIGHT - showcarddif) * mainGame->xScale, 0, (CARD_IMG_HEIGHT - (showcarddif > CARD_IMG_WIDTH ? showcarddif - CARD_IMG_WIDTH : 0)) * mainGame->xScale, CARD_IMG_HEIGHT * mainGame->yScale), 0, 0, true);
 			showcarddif += 15;
 			if(showcarddif >= CARD_IMG_HEIGHT) {
 				showcard = 2;
@@ -846,7 +846,8 @@ void Game::DrawSpec() {
 		}
 		case 2: {
 			driver->draw2DImage(imageManager.GetTexture(showcardcode), recti(574 * mainGame->xScale, 150 * mainGame->yScale, (574 + CARD_IMG_WIDTH) * mainGame->xScale, (150 + CARD_IMG_HEIGHT) * mainGame->yScale), recti(0, 0, orisize.Width, orisize.Height), 0, 0, true);
-			driver->draw2DImage(imageManager.tMask, recti((574 + showcarddif) * mainGame->xScale, 150 * mainGame->yScale, 751 * mainGame->xScale, 404 * mainGame->yScale), recti(0, 0, (CARD_IMG_WIDTH - showcarddif), CARD_IMG_HEIGHT), 0, 0, true);
+			driver->draw2DImage(imageManager.tMask, recti((574 + showcarddif) * mainGame->xScale, 150 * mainGame->yScale, 751 * mainGame->xScale, 404 * mainGame->yScale),
+                                recti(0, 0, (CARD_IMG_WIDTH - showcarddif), CARD_IMG_HEIGHT), 0, 0, true);
 			showcarddif += 15;
 			if(showcarddif >= CARD_IMG_WIDTH) {
 				showcard = 0;

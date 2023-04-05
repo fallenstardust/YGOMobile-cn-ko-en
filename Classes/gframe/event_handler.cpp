@@ -213,10 +213,10 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
                 if (mainGame->gameConf.quick_animation) {
                         mainGame->gameConf.quick_animation = false;
-                        mainGame->imgQuickAnimation->setImage(imageManager.tDoubleX);
+                        mainGame->imgQuickAnimation->setImage(imageManager.tOneX);
 				} else {
 					mainGame->gameConf.quick_animation = true;
-					mainGame->imgQuickAnimation->setImage(imageManager.tOneX);
+					mainGame->imgQuickAnimation->setImage(imageManager.tDoubleX);
 				}
 				mainGame->chkQuickAnimation->setChecked(mainGame->gameConf.quick_animation);
 				break;
