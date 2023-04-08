@@ -98,14 +98,14 @@ public interface Constants {
     String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
-    int[] CORE_SKIN_BG_SIZE = new int[]{1280, 720};
+    int[] CORE_SKIN_BG_SIZE = new int[]{1920, 1080};
 
     int[] CORE_SKIN_CARD_MINI_SIZE = new int[]{44, 64};
     int[] CORE_SKIN_CARD_SMALL_SIZE = new int[]{177, 254};
     //原图
     int[] CORE_SKIN_CARD_MIDDLE_SIZE = new int[]{397, 578};
 
-    int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{177, 254};
+    int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{200, 290};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};
     boolean SUPPORT_BPG = true;
     String BPG = ".bpg";
