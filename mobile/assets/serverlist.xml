@@ -18,6 +18,13 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>233约战服务器(支持断线重连)</name>
+        <ip>s2.ygo233.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>决斗编年史</name>
         <ip>duels.link</ip>
         <port>2333</port>
