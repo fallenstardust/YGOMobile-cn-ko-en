@@ -18,6 +18,13 @@
     </server>
     <server>
         <player-name>신선한 고기</player-name>
+        <name>YGOPRO 중국 서버 3</name>
+        <ip>s2.ygo233.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>신선한 고기</player-name>
         <name>듀얼 링크</name>
         <ip>duels.link</ip>
         <port>2333</port>
