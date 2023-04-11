@@ -82,7 +82,7 @@ public class CardFavorites {
         lines = FileUtils.readLines(config.getPath(), Constants.DEF_ENCODING);
         for (String line : lines) {
             String tmp = line.trim();
-            if (TextUtils.isDigitsOnly(tmp)) {
+            if (!tmp.isEmpty() && TextUtils.isDigitsOnly(tmp)) {
                 mList.add(Integer.parseInt(tmp));
             }
         }
