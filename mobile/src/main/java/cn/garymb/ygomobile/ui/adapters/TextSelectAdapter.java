@@ -19,17 +19,14 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
 
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
-    private boolean isSelect;
+    private final boolean isSelect;
     private boolean isManySelect;
-    private List<T> selectList;
+    private final List<T> selectList;
 
     public TextSelectAdapter(List<T> data, int select) {
         super(R.layout.text_select_item, data);
         this.selectPosition = select;
-        if (select >= 0)
-            isSelect = true;
-        else
-            isSelect = false;
+        isSelect = select >= 0;
         isManySelect = false;
         selectList = new ArrayList<>();
         setOnItemClickListener(new OnItemClickListener() {

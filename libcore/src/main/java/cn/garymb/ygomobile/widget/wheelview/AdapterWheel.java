@@ -10,7 +10,7 @@ import android.content.Context;
 public class AdapterWheel extends AbstractWheelTextAdapter {
 
 	// Source adapter
-	private WheelAdapter adapter;
+	private final WheelAdapter adapter;
 
 	/**
 	 * Constructor

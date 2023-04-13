@@ -112,7 +112,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
     }
 
     protected <T extends View> T $(int id) {
-        return (T) view.findViewById(id);
+        return view.findViewById(id);
     }
 
     public void setHeadVisibility(int visibility) {

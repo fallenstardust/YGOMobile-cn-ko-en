@@ -32,7 +32,7 @@ public abstract class OverlayView extends RelativeLayout {
 	public static final int MODE_REACT_CHAIN_OPTION = 3;
 	protected WindowManager.LayoutParams layoutParams;
 
-	private int layoutResId;
+	private final int layoutResId;
 	private boolean mIsAdded = false;
 
 	public OverlayView(Context context, int layoutResId) {
@@ -232,9 +232,7 @@ public abstract class OverlayView extends RelativeLayout {
 		if (x >= location[0]) {
 			if (x <= location[0] + view.getWidth()) {
 				if (y >= location[1]) {
-					if (y <= location[1] + view.getHeight()) {
-						return true;
-					}
+					return y <= location[1] + view.getHeight();
 				}
 			}
 		}

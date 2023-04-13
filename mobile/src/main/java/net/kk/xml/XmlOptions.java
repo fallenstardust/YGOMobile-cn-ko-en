@@ -105,7 +105,7 @@ public class XmlOptions {
     }
 
     public static class Builder {
-        private XmlOptions mOptions;
+        private final XmlOptions mOptions;
 
         public Builder() {
             mOptions = new XmlOptions();

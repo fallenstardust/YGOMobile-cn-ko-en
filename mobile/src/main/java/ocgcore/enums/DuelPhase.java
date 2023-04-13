@@ -13,7 +13,7 @@ public enum DuelPhase {
     End(0x200);
     private int value = 0;
 
-    private DuelPhase(int value) {
+    DuelPhase(int value) {
         this.value = value;
     }
 

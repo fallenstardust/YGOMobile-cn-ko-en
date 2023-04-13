@@ -34,9 +34,9 @@ import ocgcore.enums.LimitType;
 
 public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implements CardListProvider {
     private final List<DeckItem> mItems = new ArrayList<>();
-    private SparseArray<Integer> mCount = new SparseArray<>();
-    private Context context;
-    private LayoutInflater mLayoutInflater;
+    private final SparseArray<Integer> mCount = new SparseArray<>();
+    private final Context context;
+    private final LayoutInflater mLayoutInflater;
     private ImageTop mImageTop;
 
     private int mMainCount;
@@ -57,14 +57,14 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private int mFullWidth;
     private int mWidth;
     private int mHeight;
-    private int Padding = 1;
-    private RecyclerView recyclerView;
-    private Random mRandom;
+    private final int Padding = 1;
+    private final RecyclerView recyclerView;
+    private final Random mRandom;
     private DeckViewHolder mHeadHolder;
     private DeckItem mRemoveItem;
     private int mRemoveIndex;
     private LimitList mLimitList;
-    private ImageLoader imageLoader;
+    private final ImageLoader imageLoader;
     private boolean showHead = false;
     private String mDeckMd5;
     private DeckInfo mDeckInfo;

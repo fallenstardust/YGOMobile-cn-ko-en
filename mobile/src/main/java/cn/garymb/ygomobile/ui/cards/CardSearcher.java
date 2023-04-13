@@ -73,7 +73,7 @@ public class CardSearcher implements View.OnClickListener {
     private final Button myFavButton;
     private CallBack mCallBack;
     private boolean mShowFavorite;
-    private ICardSearcher mCardLoader;
+    private final ICardSearcher mCardLoader;
 
     public interface CallBack {
         void onSearchStart();

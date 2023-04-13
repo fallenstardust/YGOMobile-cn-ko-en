@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 class Reflect {
-    private Class<?> mClass;
+    private final Class<?> mClass;
     private XmlOptions options;
     private static final HashMap<String, Reflect> sReflectUtils = new HashMap<>();
 
@@ -157,9 +157,7 @@ class Reflect {
         }
         if (options != null) {
             //是否忽略没有标记的元素？
-            if (options.isUseNoAnnotation()) {
-                return true;
-            }
+            return options.isUseNoAnnotation();
         }
         return false;
     }

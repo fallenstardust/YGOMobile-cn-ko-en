@@ -64,13 +64,9 @@ public abstract class BaseFragemnt extends Fragment {
                 isHorizontal = true;
             }
         } else {
-            if (ScaleUtils.isScreenOriatationPortrait()) {
-//                setContentView(R.layout.ending_activity);
-                isHorizontal = false;
-            } else {
-//                setContentView(R.layout.ending_horizontal_activity);
-                isHorizontal = true;
-            }
+            //                setContentView(R.layout.ending_activity);
+            //                setContentView(R.layout.ending_horizontal_activity);
+            isHorizontal = !ScaleUtils.isScreenOriatationPortrait();
         }
         return super.onCreateView(inflater, container, savedInstanceState);
     }
@@ -92,13 +88,9 @@ public abstract class BaseFragemnt extends Fragment {
                 isHorizontal = true;
             }
         } else {
-            if (ScaleUtils.isScreenOriatationPortrait()) {
-//                setContentView(R.layout.ending_activity);
-                isHorizontal = false;
-            } else {
-//                setContentView(R.layout.ending_horizontal_activity);
-                isHorizontal = true;
-            }
+            //                setContentView(R.layout.ending_activity);
+            //                setContentView(R.layout.ending_horizontal_activity);
+            isHorizontal = !ScaleUtils.isScreenOriatationPortrait();
         }
     }
 

@@ -9,7 +9,7 @@ public class StringUtils {
      * @return 全角字符串.
      */
     public static String toSBC(String input) {
-        char c[] = input.toCharArray();
+        char[] c = input.toCharArray();
         for (int i = 0; i < c.length; i++) {
             if (c[i] == ' ') {
                 c[i] = '\u3000';
@@ -30,7 +30,7 @@ public class StringUtils {
     public static String toDBC(String input) {
 
 
-        char c[] = input.toCharArray();
+        char[] c = input.toCharArray();
         for (int i = 0; i < c.length; i++) {
             if (c[i] == '\u3000') {
                 c[i] = ' ';

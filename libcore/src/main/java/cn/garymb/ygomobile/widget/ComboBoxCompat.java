@@ -26,11 +26,11 @@ public class ComboBoxCompat extends PopupWindow {
 
 	/*change this will affect C++ code, be careful!*/
 	public static final int COMPAT_GUI_MODE_CHECKBOXES_PANEL = 1;
-	private Context mContext;
-	private WheelView mComboBoxContent;
-	private Button mSubmitButton;
-	private Button mCancelButton;
-	private ViewFlipper mFlipper;
+	private final Context mContext;
+	private final WheelView mComboBoxContent;
+	private final Button mSubmitButton;
+	private final Button mCancelButton;
+	private final ViewFlipper mFlipper;
 	private ArrayWheelAdapter<String> mAdapter;
 
 	public ComboBoxCompat(Context context) {
@@ -38,9 +38,9 @@ public class ComboBoxCompat extends PopupWindow {
 		super(context);
 		mContext = context;
 		View menuView = LayoutInflater.from(mContext).inflate(R.layout.combobox_compat_layout, null);
-		mComboBoxContent = (WheelView) menuView.findViewById(R.id.combobox_content);
-		mSubmitButton = (Button) menuView.findViewById(R.id.submit);
-		mCancelButton = (Button) menuView.findViewById(R.id.cancel);
+		mComboBoxContent = menuView.findViewById(R.id.combobox_content);
+		mSubmitButton = menuView.findViewById(R.id.submit);
+		mCancelButton = menuView.findViewById(R.id.cancel);
 
 		mFlipper = new ViewFlipper(context);
 		mFlipper.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,

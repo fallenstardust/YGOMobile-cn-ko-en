@@ -13,7 +13,7 @@ import java.util.List;
 
 public abstract class BaseAdapterPlus<T> extends BaseAdapter implements SpinnerAdapter {
     protected Context context;
-    private LayoutInflater mLayoutInflater;
+    private final LayoutInflater mLayoutInflater;
     protected final List<T> mItems = new ArrayList<T>();
 
     public BaseAdapterPlus(Context context) {
@@ -158,7 +158,7 @@ public abstract class BaseAdapterPlus<T> extends BaseAdapter implements SpinnerA
         }
 
         protected <T extends View> T findViewById(int id) {
-            return (T) view.findViewById(id);
+            return view.findViewById(id);
         }
     }
 }

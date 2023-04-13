@@ -18,8 +18,8 @@ public class ShimmerViewHelper {
 
     private static final int DEFAULT_REFLECTION_COLOR = 0xFFFFFFFF;
 
-    private View view;
-    private Paint paint;
+    private final View view;
+    private final Paint paint;
 
     // center position of the gradient
     private float gradientX;

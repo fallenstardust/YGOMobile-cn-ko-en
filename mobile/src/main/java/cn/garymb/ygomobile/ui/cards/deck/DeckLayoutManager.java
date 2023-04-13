@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class DeckLayoutManager extends GridLayoutManager {
-    private Context context;
+    private final Context context;
 
     public DeckLayoutManager(Context context, final int span) {
         super(context, span);

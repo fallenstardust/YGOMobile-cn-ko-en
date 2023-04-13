@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -120,7 +121,7 @@ class DeckItemUtils {
             }
             file.createNewFile();
             outputStream = new FileOutputStream(file);
-            writer = new OutputStreamWriter(outputStream, "utf-8");
+            writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
             writer.write("#created by ygomobile".toCharArray());
             writer.write("\n#main".toCharArray());
             for (int i = DeckItem.MainStart; i < DeckItem.MainStart + Constants.DECK_MAIN_MAX; i++) {
@@ -242,9 +243,6 @@ class DeckItemUtils {
     }
 
     public static boolean isLabel(int position) {
-        if (position == DeckItem.MainLabel || position == DeckItem.ExtraLabel || position == DeckItem.SideLabel) {
-            return true;
-        }
-        return false;
+        return position == DeckItem.MainLabel || position == DeckItem.ExtraLabel || position == DeckItem.SideLabel;
     }
 }

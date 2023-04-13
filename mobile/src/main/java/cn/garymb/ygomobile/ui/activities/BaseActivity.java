@@ -97,7 +97,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected void setupActionBar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
         }
@@ -125,7 +125,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected <T extends View> T $(int id) {
-        return (T) findViewById(id);
+        return findViewById(id);
     }
 
     public void setEnterAnimEnable(boolean disableEnterAnim) {

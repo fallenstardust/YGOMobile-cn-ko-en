@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +97,7 @@ public class MyCard {
     public static final String ARG_ADDRESS = "address";
     public static final String ARG_PORT = "port";
     public static final String PACKAGE_NAME_EZ = "com.ourygo.ez";
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     private final DefWebViewClient mDefWebViewClient = new DefWebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -128,7 +129,7 @@ public class MyCard {
     };
     private final SharedPreferences lastModified;
     private MyCardListener mMyCardListener;
-    private Activity mContext;
+    private final Activity mContext;
 
     public MyCard(Activity context) {
         mContext = context;
@@ -237,7 +238,7 @@ public class MyCard {
         Activity activity;
         MyCardListener mListener;
 
-        private AppsSettings settings = AppsSettings.get();
+        private final AppsSettings settings = AppsSettings.get();
 
         private Ygopro(Activity activity, MyCardListener listener) {
             this.activity = activity;

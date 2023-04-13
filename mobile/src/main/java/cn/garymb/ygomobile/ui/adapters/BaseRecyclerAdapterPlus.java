@@ -16,7 +16,7 @@ import java.util.List;
 
 public abstract class BaseRecyclerAdapterPlus<T, V extends BaseViewHolder> extends BaseQuickAdapter<T,V> {
     protected Context context;
-    private LayoutInflater mLayoutInflater;
+    private final LayoutInflater mLayoutInflater;
 //    protected final List<T> mItems = new ArrayList<T>();
 
     public BaseRecyclerAdapterPlus(Context context,int layout) {
@@ -125,7 +125,7 @@ public abstract class BaseRecyclerAdapterPlus<T, V extends BaseViewHolder> exten
         }
 
         protected <T extends View> T $(int id) {
-            return (T) itemView.findViewById(id);
+            return itemView.findViewById(id);
         }
     }
 }

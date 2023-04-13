@@ -21,7 +21,7 @@ public class LabelInfo {
     private int mSideMonsterCount = 0;
     private int mSideSpellCount = 0;
     private int mSideTrapCount = 0;
-    private Context mContext;
+    private final Context mContext;
 
     public LabelInfo(Context context) {
         mContext = context;

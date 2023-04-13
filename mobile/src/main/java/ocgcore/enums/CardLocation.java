@@ -12,7 +12,7 @@ public enum CardLocation {
     Onfield(0x0C);
     private int value = 0;
 
-    private CardLocation(int value) {
+    CardLocation(int value) {
         this.value = value;
     }
     public static CardLocation valueOf(int value) {

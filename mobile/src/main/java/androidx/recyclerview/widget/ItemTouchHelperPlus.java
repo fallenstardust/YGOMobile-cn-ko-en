@@ -2606,7 +2606,7 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
             }
         }
 
-        private Runnable enterLongPress = new Runnable() {
+        private final Runnable enterLongPress = new Runnable() {
             @Override
             public void run() {
                 if (System.currentTimeMillis() - longPressTime >= mLongTime) {

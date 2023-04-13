@@ -25,8 +25,8 @@ import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 
 public class DialogPlus extends Dialog {
     public static final int TYPE_KEYGUARD = FIRST_SYSTEM_WINDOW + 4;
-    private Context context;
-    private LayoutInflater mLayoutInflater;
+    private final Context context;
+    private final LayoutInflater mLayoutInflater;
     private View mView;
     //
     private TextView mTitleView;
@@ -35,10 +35,11 @@ public class DialogPlus extends Dialog {
     private Button mLeft;
     private Button mRight;
     private View mContentView;
-    private int mMaxHeight, mMaxWidth;
+    private final int mMaxHeight;
+    private final int mMaxWidth;
     private String mUrl, mHtml;
     private View mCancelLayout, mButtonLayout, mTitleLayout;
-    private View mProgressBar;
+    private final View mProgressBar;
     private WebViewPlus mWebView;
     private final GestureDetector mGestureDetector;
     private GestureDetector.OnGestureListener mOnGestureListener;
@@ -303,11 +304,11 @@ public class DialogPlus extends Dialog {
     }
 
     private <T extends View> T $(int id) {
-        return (T) mView.findViewById(id);
+        return mView.findViewById(id);
     }
 
     public <T extends View> T bind(int id) {
-        return (T) mContentView.findViewById(id);
+        return mContentView.findViewById(id);
     }
 
     public View getContentView() {

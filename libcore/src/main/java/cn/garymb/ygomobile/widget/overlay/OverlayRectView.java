@@ -22,9 +22,9 @@ public class OverlayRectView extends OverlayView implements OnCheckedChangeListe
 	@Override
 	protected void onInflateView() {
 		super.onInflateView();
-		mIgnoreButton= (ToggleButton) findViewById(R.id.overlay_ignore);
+		mIgnoreButton= findViewById(R.id.overlay_ignore);
 		mIgnoreButton.setOnCheckedChangeListener(this);
-		mReactButton = (ToggleButton) findViewById(R.id.overlay_react);
+		mReactButton = findViewById(R.id.overlay_react);
 		mReactButton.setOnCheckedChangeListener(this);
 	}
 	

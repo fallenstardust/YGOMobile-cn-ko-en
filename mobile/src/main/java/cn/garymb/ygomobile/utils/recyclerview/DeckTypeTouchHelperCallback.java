@@ -16,7 +16,7 @@ public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
     private int dragFlags;
     private int swipeFlags;
     private RecyclerView recyclerView;
-    private YGODialogUtil.OnDeckTypeListener onDeckTypeListener;
+    private final YGODialogUtil.OnDeckTypeListener onDeckTypeListener;
 
     public DeckTypeTouchHelperCallback(YGODialogUtil.OnDeckTypeListener onDeckTypeListener) {
         this.onDeckTypeListener = onDeckTypeListener;

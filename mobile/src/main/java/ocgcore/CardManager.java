@@ -34,7 +34,8 @@ import ocgcore.data.Card;
 public class CardManager {
     private static int cdbNum = 0;
     private final SparseArray<Card> cardDataHashMap = new SparseArray<>();
-    private String dbDir, exDbPath;
+    private final String dbDir;
+    private final String exDbPath;
     private static final String TAG = IrrlichtBridge.TAG;
 
     /**

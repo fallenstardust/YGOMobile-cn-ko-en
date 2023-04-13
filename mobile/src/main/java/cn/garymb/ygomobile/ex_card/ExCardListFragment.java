@@ -76,7 +76,7 @@ public class ExCardListFragment extends Fragment {
      */
     enum DownloadState {
         DOWNLOAD_ING,
-        NO_DOWNLOAD;
+        NO_DOWNLOAD
     }
 
     private DownloadState downloadState;

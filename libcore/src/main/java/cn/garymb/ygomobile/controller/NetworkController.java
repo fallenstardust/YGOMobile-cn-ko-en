@@ -11,7 +11,7 @@ import android.net.wifi.WifiManager;
  */
 public final class NetworkController {
 
-    private Context mContext;
+    private final Context mContext;
     private WifiManager mWM;
     private ConnectivityManager mCM;
 
@@ -40,11 +40,8 @@ public final class NetworkController {
         // TODO Auto-generated method stub
         boolean isWifiEnabled = mWM.isWifiEnabled();
         NetworkInfo ni = mCM.getActiveNetworkInfo();
-        if (isWifiEnabled && null != ni && ni.isConnected()
-                && ni.getType() == ConnectivityManager.TYPE_WIFI) {
-            return true;
-        }
-        return false;
+        return isWifiEnabled && null != ni && ni.isConnected()
+                && ni.getType() == ConnectivityManager.TYPE_WIFI;
     }
 
     public int getIPAddress() {

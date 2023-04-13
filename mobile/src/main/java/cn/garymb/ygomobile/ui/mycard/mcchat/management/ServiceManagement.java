@@ -44,16 +44,16 @@ public class ServiceManagement {
     public static final int CHAT_JOIN_ROOM_LOADING = 7;
     public static final int CHAT_USER_NULL = 8;
 
-    private static ServiceManagement su = new ServiceManagement();
+    private static final ServiceManagement su = new ServiceManagement();
     private XMPPTCPConnection con;
     private MultiUserChat muc;
     private boolean isConnected = false;
     private boolean isListener = false;
     private boolean isStartLoading=false;
 
-    private List<ChatMessage> chatMessageList;
-    private List<ChatListener> chatListenerList;
-    private List<OnJoinChatListener> joinChatListenerList;
+    private final List<ChatMessage> chatMessageList;
+    private final List<ChatListener> chatListenerList;
+    private final List<OnJoinChatListener> joinChatListenerList;
 
 
     @SuppressLint("HandlerLeak")

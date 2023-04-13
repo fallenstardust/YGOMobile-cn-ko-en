@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.Deck;
@@ -37,7 +38,7 @@ public class DeckUtils {
     private static boolean save(DeckInfo deck, OutputStream outputStream) {
         OutputStreamWriter writer = null;
         try {
-            writer = new OutputStreamWriter(outputStream, "utf-8");
+            writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
             writer.write("#created by ygomobile".toCharArray());
             writer.write("\n#main".toCharArray());
             for (Card card : deck.getMainCards()) {
@@ -65,7 +66,7 @@ public class DeckUtils {
     private static boolean save(Deck deck, OutputStream outputStream) {
         OutputStreamWriter writer = null;
         try {
-            writer = new OutputStreamWriter(outputStream, "utf-8");
+            writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
             writer.write("#created by ygomobile".toCharArray());
             writer.write("\n#main".toCharArray());
             for (long id : deck.getMainlist()) {

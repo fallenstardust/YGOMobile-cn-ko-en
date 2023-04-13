@@ -110,7 +110,7 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
-    private static String TAG = "DeckManagerFragment";
+    private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardSearcher mCardSelector;
@@ -382,7 +382,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()));
         });
     }
 
@@ -420,7 +420,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
             if (rs.source != null) {
-                setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()) ? true : false);
+                setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()));
             } else {
                 setCurDeck(rs, false);
             }

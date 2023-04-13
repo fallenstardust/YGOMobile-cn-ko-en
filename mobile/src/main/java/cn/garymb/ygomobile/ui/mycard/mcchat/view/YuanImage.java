@@ -21,7 +21,7 @@ import androidx.appcompat.widget.AppCompatImageView;
  */
 public class YuanImage extends AppCompatImageView {
 
-    private Context mContext;
+    private final Context mContext;
     // 控件默认长、宽
     private int defaultWidth = 0;
     private int defaultHeight = 0;

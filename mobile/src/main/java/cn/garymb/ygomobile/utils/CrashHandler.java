@@ -26,8 +26,8 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public static final String TAG = "YGOMobile-Exception";
     public static final CrashHandler INSTANCE = new CrashHandler();
 
-    private Map<String, String> infos = new HashMap<String, String>();
-    private DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
+    private final Map<String, String> infos = new HashMap<String, String>();
+    private final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
     private Context context;
     private Thread.UncaughtExceptionHandler defaultHandler;
 

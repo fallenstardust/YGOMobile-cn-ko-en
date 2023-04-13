@@ -24,17 +24,17 @@ import cn.garymb.ygomobile.lib.R;
  */
 public class EditWindowCompat extends PopupWindow {
 	
-	private Context mContext;
-	private ViewGroup mContentView;
-	private EditText mEditText;
-	private InputMethodManager mIM;
+	private final Context mContext;
+	private final ViewGroup mContentView;
+	private final EditText mEditText;
+	private final InputMethodManager mIM;
 	
 	public EditWindowCompat(Context context) {
 		super(context);
 		mContext = context;
 		mContentView = (ViewGroup) LayoutInflater.from(mContext).inflate(
 				R.layout.text_input_compat_layout, null);
-		mEditText = (EditText) mContentView.findViewById(R.id.global_input);
+		mEditText = mContentView.findViewById(R.id.global_input);
 		mIM = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
 		setContentView(mContentView);
 	}

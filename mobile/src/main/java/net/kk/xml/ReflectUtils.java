@@ -27,7 +27,7 @@ class ReflectUtils {
         if (type == null || type.isEnum()) {
             return true;
         }
-        if (boolean.class == type || Boolean.class == type
+        return boolean.class == type || Boolean.class == type
                 || int.class == type || Integer.class == type
                 || long.class == type || Long.class == type
                 || short.class == type || Short.class == type
@@ -35,10 +35,7 @@ class ReflectUtils {
                 || double.class == type || Double.class == type
                 || float.class == type || Float.class == type
                 || char.class == type || Character.class == type
-                || String.class == type) {
-            return true;
-        }
-        return false;
+                || String.class == type;
     }
 
 
@@ -220,7 +217,7 @@ class ReflectUtils {
                 if (elementType instanceof Class) {
                     return (Collection<T>) EnumSet.noneOf((Class) elementType);
                 } else {
-                    throw new RuntimeException("Invalid EnumSet type: " + type.toString());
+                    throw new RuntimeException("Invalid EnumSet type: " + type);
                 }
             } else {
                 throw new RuntimeException("Invalid EnumSet type: " + type.toString());
@@ -300,7 +297,7 @@ class ReflectUtils {
             return Boolean.parseBoolean(value);
         } else if (int.class == type || Integer.class == type) {
             if (value.trim().length() == 0) {
-                return (int) 0;
+                return 0;
             }
             return (value.startsWith("0x")) ?
                     Integer.parseInt(value.substring(2), 16) : Integer.parseInt(value);
@@ -337,7 +334,7 @@ class ReflectUtils {
             }
             return value.toCharArray()[0];
         } else if (String.class == type) {
-            return object == null ? "" : String.valueOf(object);
+            return object == null ? "" : object;
         } else if (type.isEnum()) {
             if (value.trim().length() == 0) {
                 return null;

@@ -28,8 +28,8 @@ import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
 
 public class ServerListManager {
-    private ServerListAdapter mAdapter;
-    private Context mContext;
+    private final ServerListAdapter mAdapter;
+    private final Context mContext;
     private final File xmlFile;
 
     public ServerListManager(Context context, ServerListAdapter adapter) {

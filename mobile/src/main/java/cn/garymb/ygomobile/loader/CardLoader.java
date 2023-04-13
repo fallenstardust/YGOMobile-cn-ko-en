@@ -168,7 +168,7 @@ public class CardLoader implements ICardSearcher {
     private static final Comparator<Card> ASC = (o1, o2) -> {
         if (o1.getStar() == o2.getStar()) {
             if (o1.Attack == o2.Attack) {
-                return (int) (o2.Code - o1.Code);
+                return o2.Code - o1.Code;
             } else {
                 return o2.Attack - o1.Attack;
             }

@@ -93,7 +93,7 @@ public enum GameMessage {
 
     private int value = 0;
 
-    private GameMessage(int value) {
+    GameMessage(int value) {
         this.value = value;
     }
 

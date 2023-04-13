@@ -19,7 +19,7 @@ import okhttp3.Response;
 public class ServerUtil {
     public enum ExCardState {
         /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
-        UPDATED, NEED_UPDATE, ERROR;
+        UPDATED, NEED_UPDATE, ERROR
     }
 
     /* 存储了当前先行卡是否需要更新的状态，UI逻辑直接读取该变量就能获知是否已安装先行卡 */
@@ -86,11 +86,7 @@ public class ServerUtil {
     }
 
     public static boolean isPreServer(int port, String addr) {
-        if ((port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_1)) ||
-                (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_2))) {
-            return true;
-        } else {
-            return false;
-        }
+        return (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_1)) ||
+                (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_2));
     }
 }

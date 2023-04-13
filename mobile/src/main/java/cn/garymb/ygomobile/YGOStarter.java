@@ -33,7 +33,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 
 public class YGOStarter {
-    private static String TAG = "YGOStarter";
+    private static final String TAG = "YGOStarter";
     private static Bitmap mLogo;
 
     private static void setFullScreen(Activity activity, ActivityShowInfo activityShowInfo) {
@@ -184,7 +184,7 @@ public class YGOStarter {
         Log.e(TAG, "跳转后" + System.currentTimeMillis());
     }
 
-    private static HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
+    private static final HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
 
     private static class ActivityShowInfo {
         //根布局

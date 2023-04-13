@@ -22,8 +22,8 @@ public class TaxiConnectionListener implements ConnectionListener {
     private Timer tExit;
     private String username;
     private String password;
-    private int logintime = 2000;
-    private ServiceManagement sm = ServiceManagement.getDx();
+    private final int logintime = 2000;
+    private final ServiceManagement sm = ServiceManagement.getDx();
 
     @Override
     public void connected(XMPPConnection p1) {

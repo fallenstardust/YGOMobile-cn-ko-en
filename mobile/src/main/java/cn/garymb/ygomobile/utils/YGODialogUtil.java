@@ -47,7 +47,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
 public class YGODialogUtil {
-    private static String TAG = "YGODialogUtil";
+    private static final String TAG = "YGODialogUtil";
 
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);

@@ -70,10 +70,7 @@ public class IOUtils {
         } catch (IOException e) {
 
         }
-        if (files != null && files.length > 0) {
-            return true;
-        }
-        return false;
+        return files != null && files.length > 0;
     }
 
     public static String tirmName(String name, String ex) {

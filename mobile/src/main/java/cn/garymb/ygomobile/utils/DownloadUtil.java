@@ -142,7 +142,7 @@ public class DownloadUtil {
     }
 
 
-    public static interface OnDownloadListener {
+    public interface OnDownloadListener {
 
         /**
          * 下载成功之后的文件

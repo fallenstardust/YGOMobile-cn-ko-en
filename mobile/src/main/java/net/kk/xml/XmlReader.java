@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ public class XmlReader extends XmlCore {
     //region api
     public <T> T fromXml(Class<T> pClass, String xml) throws Exception {
         T t = null;
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes("utf-8"));
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
         try {
             t = fromInputStream(pClass, inputStream, "utf-8");
         } finally {

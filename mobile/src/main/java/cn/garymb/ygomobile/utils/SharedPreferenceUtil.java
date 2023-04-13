@@ -7,6 +7,7 @@ import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import cn.garymb.ygomobile.App;
@@ -23,22 +24,22 @@ public class SharedPreferenceUtil {
 
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
-        return App.get().getSharedPreferences("path", App.get().MODE_PRIVATE);
+        return App.get().getSharedPreferences("path", Context.MODE_PRIVATE);
     }
 
     //获取存放类型的share
     public static SharedPreferences getShareType() {
-        return App.get().getSharedPreferences("type", App.get().MODE_PRIVATE);
+        return App.get().getSharedPreferences("type", Context.MODE_PRIVATE);
     }
 
     //获取存放开关状态的share
     public static SharedPreferences getShareKaiguan() {
-        return App.get().getSharedPreferences("kaiguan", App.get().MODE_PRIVATE);
+        return App.get().getSharedPreferences("kaiguan", Context.MODE_PRIVATE);
     }
 
     //获取各种记录的share
     public static SharedPreferences getShareRecord() {
-        return App.get().getSharedPreferences("record", App.get().MODE_PRIVATE);
+        return App.get().getSharedPreferences("record", Context.MODE_PRIVATE);
     }
 
     public static boolean addAppStartTimes() {
@@ -53,8 +54,6 @@ public class SharedPreferenceUtil {
     public static void setExpansionDataVer(String json) {
         getShareRecord().edit().putString("ExpansionsDataVer", json).commit();
     }
-
-    ;
 
     public static String getExpansionDataVer() {
         return getShareRecord().getString("ExpansionsDataVer", null);

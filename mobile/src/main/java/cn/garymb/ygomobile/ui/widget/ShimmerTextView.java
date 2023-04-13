@@ -10,7 +10,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 public class ShimmerTextView extends AppCompatTextView implements ShimmerViewBase {
 
-    private ShimmerViewHelper shimmerViewHelper;
+    private final ShimmerViewHelper shimmerViewHelper;
 
     public ShimmerTextView(Context context) {
         super(context);

@@ -18,12 +18,12 @@ import cn.garymb.ygomobile.lite.R;
 
 public class TextBaseAdapter extends BaseAdapter {
 
-    private Context context;
-    private String[] data;
-    private int leftPadding;
-    private int rightPadding;
-    private int topPadding;
-    private int bottomPadding;
+    private final Context context;
+    private final String[] data;
+    private final int leftPadding;
+    private final int rightPadding;
+    private final int topPadding;
+    private final int bottomPadding;
     private int textColor = 0;
 
     public TextBaseAdapter(Context context, String[] data, int textColor, int leftPadding, int topPadding, int rightPadding, int bottomPadding) {

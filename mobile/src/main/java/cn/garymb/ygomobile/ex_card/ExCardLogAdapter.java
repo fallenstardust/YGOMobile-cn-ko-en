@@ -18,7 +18,7 @@ public class ExCardLogAdapter extends BaseExpandableListAdapter {
         this.context = context;
     }
 
-    private Context context;
+    private final Context context;
     private List<ExCardLogItem> expandalbeList = new ArrayList<>();
 
 
@@ -50,7 +50,7 @@ public class ExCardLogAdapter extends BaseExpandableListAdapter {
             convertView = layoutInflater.inflate(R.layout.item_log, null);
         }
 
-        TextView expandedListTextView = (TextView) convertView
+        TextView expandedListTextView = convertView
                 .findViewById(R.id.expandedListItem);
         expandedListTextView.setText(expandalbeList.get(groupPosition).getLogs().get(childPosition));
         return convertView;
@@ -79,7 +79,7 @@ public class ExCardLogAdapter extends BaseExpandableListAdapter {
                     getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.item_log_group, null);
         }
-        TextView listTitleTextView = (TextView) convertView
+        TextView listTitleTextView = convertView
                 .findViewById(R.id.listTitle);
 
         listTitleTextView.setText(expandalbeList.get(groupPosition).getDateTime());

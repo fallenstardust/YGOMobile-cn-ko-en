@@ -36,7 +36,7 @@ import ocgcore.DataManager;
 
 
 public class GameUriManager {
-    private Activity activity;
+    private final Activity activity;
     private HomeFragment homeFragment;
     private String fname;
 

@@ -2,7 +2,7 @@ package cn.garymb.ygomobile.bean.events;
 
 public class ExCardEvent {
     public enum EventType {
-        exCardPackageChange,exCardPrefChange;
+        exCardPackageChange,exCardPrefChange
     }
 
     private EventType eventType;

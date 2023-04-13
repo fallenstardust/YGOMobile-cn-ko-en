@@ -14,8 +14,8 @@ public class AttributeObject {
         this.value = value;
     }
 
-    private String name;
-    private String namespace;
+    private final String name;
+    private final String namespace;
     private String value;
 
     public void setValue(String value) {
@@ -45,10 +45,7 @@ public class AttributeObject {
             }
             if (other.getNamespace() != null && !other.getNamespace().equals(name)) {
                 return false;
-            } else if (namespace != null) {
-                return false;
-            }
-            return true;
+            } else return namespace == null;
         }
         return super.equals(o);
     }

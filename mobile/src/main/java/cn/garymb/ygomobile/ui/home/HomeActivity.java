@@ -145,9 +145,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     }
 
     private void initBottomNavigationBar() {
-        frameLayout = (FrameLayout) findViewById(R.id.fragment_content);
+        frameLayout = findViewById(R.id.fragment_content);
         // 获取页面上的底部导航栏控件
-        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
+        bottomNavigationBar = findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.home, R.string.mc_home))
                 .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))

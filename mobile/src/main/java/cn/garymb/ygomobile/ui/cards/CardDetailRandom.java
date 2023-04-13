@@ -18,20 +18,21 @@ import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
 public class CardDetailRandom {
-    private View viewCardDetail;
-    private ImageView cardImage;
-    private TextView name;
-    private TextView desc;
-    private TextView level;
-    private TextView type;
-    private TextView race;
-    private TextView cardAtk;
-    private TextView cardDef;
-    private TextView attrView;
-    private View monsterlayout;
-    private View atkdefView, textdefView;
-    private StringManager mStringManager;
-    private Context mContext;
+    private final View viewCardDetail;
+    private final ImageView cardImage;
+    private final TextView name;
+    private final TextView desc;
+    private final TextView level;
+    private final TextView type;
+    private final TextView race;
+    private final TextView cardAtk;
+    private final TextView cardDef;
+    private final TextView attrView;
+    private final View monsterlayout;
+    private final View atkdefView;
+    private final View textdefView;
+    private final StringManager mStringManager;
+    private final Context mContext;
 
     private static CardDetailRandom sCardDetailRandom = null;
 
@@ -74,7 +75,7 @@ public class CardDetailRandom {
             if (cardInfo.isType(CardType.Link)) {
                 level.setVisibility(View.GONE);
                 textdefView.setVisibility(View.INVISIBLE);
-                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + cardInfo.getStar()));
             } else {
                 level.setVisibility(View.VISIBLE);
                 textdefView.setVisibility(View.VISIBLE);

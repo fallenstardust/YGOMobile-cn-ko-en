@@ -9,7 +9,7 @@ import androidx.core.view.GestureDetectorCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class RecyclerViewItemListener extends RecyclerView.SimpleOnItemTouchListener {
-    private GestureDetectorCompat gestureDetector;
+    private final GestureDetectorCompat gestureDetector;
 
     public interface OnItemListener {
 

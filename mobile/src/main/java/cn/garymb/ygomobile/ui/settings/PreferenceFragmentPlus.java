@@ -216,11 +216,11 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
 
     public static class SharedPreferencesPlus implements SharedPreferences {
 
-        private SharedPreferences mSharedPreferences;
+        private final SharedPreferences mSharedPreferences;
         private boolean autoSave = false;
         private boolean isMultiProess = false;
-        private String spName;
-        private Context context;
+        private final String spName;
+        private final Context context;
 
         private SharedPreferencesPlus(Context context, String name, int mode) {
             spName = name;

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -37,7 +38,7 @@ public class UnzipUtils {
             }
             InputStream is = zf.getInputStream(entry);
             String str = folderPath + File.separator + entry.getName();
-            str = new String(str.getBytes("8859_1"), "UTF-8");
+            str = new String(str.getBytes("8859_1"), StandardCharsets.UTF_8);
             File desFile = new File(str);
             if (!desFile.exists()) {
                 File fileParentDir = desFile.getParentFile();
@@ -47,7 +48,7 @@ public class UnzipUtils {
                 desFile.createNewFile();
             }
             OutputStream os = new FileOutputStream(desFile);
-            byte buffer[] = new byte[BUFFER_SIZE];
+            byte[] buffer = new byte[BUFFER_SIZE];
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
@@ -84,7 +85,7 @@ public class UnzipUtils {
             if (entry.getName().contains(nameContains)) {
                 InputStream is = zf.getInputStream(entry);
                 String str = folderPath + File.separator + entry.getName();
-                str = new String(str.getBytes("8859_1"), "UTF-8");
+                str = new String(str.getBytes("8859_1"), StandardCharsets.UTF_8);
                 File desFile = new File(str);
                 if (!desFile.exists()) {
                     File fileParentDir = desFile.getParentFile();
@@ -94,7 +95,7 @@ public class UnzipUtils {
                     desFile.createNewFile();
                 }
                 OutputStream os = new FileOutputStream(desFile);
-                byte buffer[] = new byte[BUFFER_SIZE];
+                byte[] buffer = new byte[BUFFER_SIZE];
                 int length;
                 while ((length = is.read(buffer)) > 0) {
                     os.write(buffer, 0, length);

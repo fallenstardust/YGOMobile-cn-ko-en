@@ -6,7 +6,7 @@ import cn.garymb.ygomobile.Constants;
 import ocgcore.data.Card;
 
 class DeckDrager {
-    private DeckAdapater deckAdapater;
+    private final DeckAdapater deckAdapater;
 
     public DeckDrager(DeckAdapater deckAdapater) {
         this.deckAdapater = deckAdapater;

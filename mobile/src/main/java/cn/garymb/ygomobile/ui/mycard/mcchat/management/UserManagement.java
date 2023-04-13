@@ -3,7 +3,7 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 
 public class UserManagement {
-    private static UserManagement userManagement = new UserManagement();
+    private static final UserManagement userManagement = new UserManagement();
     private McUser mcUser;
     private UserManagement() {
     }

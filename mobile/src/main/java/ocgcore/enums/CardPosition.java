@@ -12,7 +12,7 @@ public enum CardPosition {
 
     private int value = 0;
 
-    private CardPosition(int value) {
+    CardPosition(int value) {
         this.value = value;
     }
 

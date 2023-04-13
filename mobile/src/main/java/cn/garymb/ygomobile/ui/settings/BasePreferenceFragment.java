@@ -100,7 +100,7 @@ abstract class BasePreferenceFragment extends PreferenceFragment implements Pref
         Object value = null;
         try {
             if (isbool) {
-                boolean def = defValue == null ? false : (Boolean) defValue;
+                boolean def = defValue != null && (Boolean) defValue;
                 value = mSharedPreferences.getBoolean(key, def);
             } else {
                 value = mSharedPreferences.getString(key, "" + defValue);

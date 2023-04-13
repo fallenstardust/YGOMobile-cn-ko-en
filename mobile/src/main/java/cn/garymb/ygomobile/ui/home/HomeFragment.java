@@ -194,8 +194,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
         ll_back = view.findViewById(R.id.return_to_duel);
         ll_back.setOnClickListener(this);
-        tv = (ShimmerTextView) view.findViewById(R.id.shimmer_tv);
-        tv2 = (ShimmerTextView) view.findViewById(R.id.shimmer_tv2);
+        tv = view.findViewById(R.id.shimmer_tv);
+        tv2 = view.findViewById(R.id.shimmer_tv2);
         toggleAnimation(tv);
         toggleAnimation(tv2);
 

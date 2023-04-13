@@ -190,7 +190,7 @@ public class OkhttpUtil {
 
         Request.Builder request = new Request.Builder()
                 .url(httpBuilder.build());
-        Log.e("OkhttpUtil", "为" + httpBuilder.build().toString());
+        Log.e("OkhttpUtil", "为" + httpBuilder.build());
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie);
         }
@@ -210,7 +210,7 @@ public class OkhttpUtil {
         Request.Builder request = new Request.Builder()
                 .delete()
                 .url(httpBuilder.build());
-        Log.e("OkhttpUtil", "删除为" + httpBuilder.build().toString());
+        Log.e("OkhttpUtil", "删除为" + httpBuilder.build());
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie);
         }
@@ -292,7 +292,7 @@ public class OkhttpUtil {
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie);
         }
-        Log.e("OkhttpUtil",json+" 状态 "+request.build().toString());
+        Log.e("OkhttpUtil",json+" 状态 "+ request.build());
         okHttpClient.newCall(request.build()).enqueue(callback);
     }
 

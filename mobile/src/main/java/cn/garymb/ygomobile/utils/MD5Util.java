@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 
 public class MD5Util {
-    private static char[] hexChar = "0123456789abcdef".toCharArray();
+    private static final char[] hexChar = "0123456789abcdef".toCharArray();
 
     public static String toHexString(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length * 2);

@@ -39,7 +39,7 @@ public class XmlUtils {
     public String toXml(Object object) throws Exception {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
         saveXml(object, arrayOutputStream);
-        return new String(arrayOutputStream.toByteArray());
+        return arrayOutputStream.toString();
     }
 
     public <T> T getObject(Class<T> tClass, InputStream inputStream) throws Exception {

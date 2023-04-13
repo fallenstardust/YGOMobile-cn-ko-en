@@ -25,8 +25,8 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private static final int CHAT = 0;
     private static final int CHAT_ME = 1;
-    private List<ChatMessage> data;
-    private Context context;
+    private final List<ChatMessage> data;
+    private final Context context;
 
 
     public ChatAdapter(Context context, List<ChatMessage> data) {

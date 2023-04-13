@@ -147,9 +147,7 @@ class FileAdapter extends BaseAdapterPlus<File> {
                     }
                 }
                 if (!mShowHide) {
-                    if (pathname.getName().startsWith(".")) {
-                        return false;
-                    }
+                    return !pathname.getName().startsWith(".");
                 }
                 return true;
             });

@@ -16,10 +16,10 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 
 public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
-    private DeckDrager mDeckDrager;
+    private final DeckDrager mDeckDrager;
     private static final String TAG = "drag";
     private static final boolean DEBUG = false;
-    private DeckAdapater deckAdapater;
+    private final DeckAdapater deckAdapater;
 
     public DeckItemTouchHelper(DeckAdapater deckAdapater) {
         this.mDeckDrager = new DeckDrager(deckAdapater);
@@ -32,7 +32,7 @@ public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
 //        setDragSize();
     }
 
-    private int Min_Pos = -10;
+    private final int Min_Pos = -10;
 
     @Override
     public boolean canDropOver(RecyclerView recyclerView, RecyclerView.ViewHolder current,

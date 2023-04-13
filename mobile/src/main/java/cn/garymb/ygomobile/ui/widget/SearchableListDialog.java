@@ -34,7 +34,7 @@ public class SearchableListDialog extends DialogPlus implements
         LayoutInflater inflater = LayoutInflater.from(context);
         View rootView = inflater.inflate(R.layout.searchable_list_dialog, null);
         SearchManager searchManager = (SearchManager)context.getSystemService(Context.SEARCH_SERVICE);
-        _searchView = (SearchView) rootView.findViewById(R.id.search);
+        _searchView = rootView.findViewById(R.id.search);
         if(context instanceof Activity) {
             _searchView.setSearchableInfo(searchManager
                     .getSearchableInfo(((Activity)context).getComponentName()));
@@ -44,11 +44,11 @@ public class SearchableListDialog extends DialogPlus implements
         _searchView.setOnCloseListener(this);
         _searchView.clearFocus();
         int id = _searchView.getContext().getResources().getIdentifier("android:id/search_src_text", null, null);
-        TextView textView1 = (TextView) _searchView.findViewById(id);
+        TextView textView1 = _searchView.findViewById(id);
         if(textView1 != null) {
             textView1.setTextColor(getContext().getResources().getColor(R.color.search_text_color));
         }
-        ListView _listViewItems = (ListView) rootView.findViewById(R.id.listItems);
+        ListView _listViewItems = rootView.findViewById(R.id.listItems);
 
         listAdapter = new ArrayAdapter<Object>(context, android.R.layout.simple_list_item_1, items) {
             @Override

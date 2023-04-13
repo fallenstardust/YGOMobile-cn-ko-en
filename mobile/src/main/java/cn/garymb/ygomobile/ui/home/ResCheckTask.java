@@ -48,8 +48,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private static final String TAG = "ResCheckTask";
     protected int mError = ERROR_NONE;
     MessageReceiver mReceiver = new MessageReceiver();
-    private AppsSettings mSettings;
-    private Context mContext;
+    private final AppsSettings mSettings;
+    private final Context mContext;
     Handler han = new Handler() {
 
         @Override
@@ -62,9 +62,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
         }
     };
-    private ResCheckListener mListener;
+    private final ResCheckListener mListener;
     private DialogPlus dialog = null;
-    private Handler handler;
+    private final Handler handler;
     private boolean isNewVersion;
 
     @SuppressWarnings("deprecation")
@@ -228,13 +228,13 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                             mSettings.getDeckDir(), needsUpdate);
                 }
                 //复制卡包
-                File pack = new File(mSettings.get().getPackDeckDir());
+                File pack = new File(AppsSettings.get().getPackDeckDir());
                 File[] subYdks = pack.listFiles();
                 for (File packs : subYdks) {
                     packs.delete();
                 }
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PACK_PATH),
-                        mSettings.get().getPackDeckDir(), needsUpdate);
+                        AppsSettings.get().getPackDeckDir(), needsUpdate);
             }
             String[] sound1 = mContext.getAssets().list(getDatapath(Constants.CORE_SOUND_PATH));
             String[] sound2 = new File(mSettings.getSoundPath()).list();

@@ -28,26 +28,23 @@ import ocgcore.DataManager;
 import ocgcore.data.LimitList;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
-    private ImageLoader imageLoader;
-    private Context mContext;
+    private final ImageLoader imageLoader;
+    private final Context mContext;
     private LimitList mLimitList;
-    private CardLoader mCardLoader;
-    private DeckLoader mDeckLoader;
+    private final CardLoader mCardLoader;
+    private final DeckLoader mDeckLoader;
     private DeckInfo deckInfo;
     private DeckFile deckFile;
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
-    private boolean isSelect;
+    private final boolean isSelect;
     private boolean isManySelect;
-    private List<T> selectList;
+    private final List<T> selectList;
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
         this.selectPosition = select;
-        if (select >= 0)
-            isSelect = true;
-        else
-            isSelect = false;
+        isSelect = select >= 0;
         isManySelect = false;
         selectList = new ArrayList<>();
         setOnItemClickListener(new OnItemClickListener() {
@@ -79,7 +76,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         this.deckFile = (DeckFile) item;
         holder.deckName.setText(item.getName());
         //预读卡组信息
-        this.deckInfo = mDeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
         //加载卡组第一张卡的图
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);

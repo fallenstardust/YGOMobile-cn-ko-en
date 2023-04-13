@@ -26,7 +26,7 @@ public enum Query {
     RScale(0x400000);
     private int value = 0;
 
-    private Query(int value) {
+    Query(int value) {
         this.value = value;
     }
 

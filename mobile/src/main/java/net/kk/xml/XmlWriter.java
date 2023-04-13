@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class XmlWriter extends XmlCore {
     private static final String NEW_LINE = System.getProperty("line.separator", "\n");
-    private XmlSerializer serializer;
+    private final XmlSerializer serializer;
 
     /***
      * @see org.xmlpull.v1.XmlPullParserFactory newInstance().newSerializer()

@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
@@ -54,7 +55,7 @@ public class DeckLoader {
         InputStreamReader in = null;
         DeckItemType type = DeckItemType.Space;
         try {
-            in = new InputStreamReader(inputStream, "utf-8");
+            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
             String line = null;
             while ((line = reader.readLine()) != null) {
@@ -136,11 +137,7 @@ public class DeckLoader {
                 tmp.put(id, cardLoader.readAllCardCodes().get(code));
                 isChanged = true;
             }
-            if (type == DeckItemType.Pack) {
-                deckInfo.addMainCards(id, tmp.get(id), true);
-            } else {
-                deckInfo.addMainCards(id, tmp.get(id), false);
-            }
+            deckInfo.addMainCards(id, tmp.get(id), type == DeckItemType.Pack);
         }
         tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {

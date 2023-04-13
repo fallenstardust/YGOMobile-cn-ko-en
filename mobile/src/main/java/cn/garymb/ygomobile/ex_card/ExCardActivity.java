@@ -24,9 +24,9 @@ public class ExCardActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ex_card);
 
-        viewPager = (ViewPager) findViewById(R.id.viewPager);
+        viewPager = findViewById(R.id.viewPager);
         viewPager.setOffscreenPageLimit(2);
-        tabLayout = (TabLayout) findViewById(R.id.packagetablayout);
+        tabLayout = findViewById(R.id.packagetablayout);
         createTabFragment();
 
     }

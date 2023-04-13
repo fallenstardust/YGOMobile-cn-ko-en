@@ -34,11 +34,11 @@ import ocgcore.enums.CardType;
  */
 
 public class ImageUpdater implements DialogInterface.OnCancelListener {
-    private BaseActivity mContext;
+    private final BaseActivity mContext;
     private final static int SubThreads = 4;
     private int mDownloading = 0;
     private final List<Item> mCardStatus = new ArrayList<>();
-    private ExecutorService mExecutorService = Executors.newFixedThreadPool(SubThreads);
+    private final ExecutorService mExecutorService = Executors.newFixedThreadPool(SubThreads);
     private DialogPlus mDialog;
     private int mIndex;
     private int mCount;

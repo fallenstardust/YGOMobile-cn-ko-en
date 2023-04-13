@@ -25,11 +25,11 @@ import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolder> implements CardListProvider {
-    private StringManager mStringManager;
+    private final StringManager mStringManager;
     private ImageTop mImageTop;
     private LimitList mLimitList;
     private boolean mItemBg;
-    private ImageLoader imageLoader;
+    private final ImageLoader imageLoader;
     private boolean mEnableSwipe = false;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {

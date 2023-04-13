@@ -28,7 +28,7 @@ class XmlCore {
     }
 
     protected TagObject make(Object obj) throws Exception {
-        if (IXmlElement.class.isInstance(obj)) {
+        if (obj instanceof IXmlElement) {
             int pos = on(obj).get(obj, "pos");
             return make(obj.getClass(), pos);
         }
@@ -87,16 +87,11 @@ class XmlCore {
             }
             String alias = xmlElement.alias();
             if (mOptions.isIgnoreTagCase()) {
-                if (name.equalsIgnoreCase(alias)) {
-                    return true;
-                }
+                return name.equalsIgnoreCase(alias);
             } else {
-                if (name.equals(alias)) {
-                    return true;
-                }
+                return name.equals(alias);
             }
         }
-        return false;
     }
 
     protected boolean matchAttribute(Field field, String name, String namespace) {
@@ -133,15 +128,10 @@ class XmlCore {
             }
             String alia = attribute.alias();
             if (mOptions.isIgnoreTagCase()) {
-                if (name.equalsIgnoreCase(alia)) {
-                    return true;
-                }
+                return name.equalsIgnoreCase(alia);
             } else {
-                if (name.equals(alia)) {
-                    return true;
-                }
+                return name.equals(alia);
             }
-            return false;
         }
     }
 

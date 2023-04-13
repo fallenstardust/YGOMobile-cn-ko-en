@@ -38,19 +38,13 @@ public class AOnGestureListener implements GestureDetector.OnGestureListener {
     }
 
     protected boolean isRightFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        if (e2.getX() - e1.getX() > FLING_MIN_DISTANCE
-                && Math.abs(velocityX) > FLING_MIN_VELOCITY) {
-            return true;
-        }
-        return false;
+        return e2.getX() - e1.getX() > FLING_MIN_DISTANCE
+                && Math.abs(velocityX) > FLING_MIN_VELOCITY;
     }
 
     protected boolean isLeftFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        if (e1.getX() - e2.getX() > FLING_MIN_DISTANCE
-                && Math.abs(velocityX) > FLING_MIN_VELOCITY) {
-            // Fling left
-            return true;
-        }
-        return false;
+        // Fling left
+        return e1.getX() - e2.getX() > FLING_MIN_DISTANCE
+                && Math.abs(velocityX) > FLING_MIN_VELOCITY;
     }
 }

@@ -30,7 +30,7 @@ public class ScreenUtil {
     public static final int NOTCH_TYPE_PHONE_ANDROID_P = 4;
     public static final int NOTCH_TYPE_PHONE_OTHER = 5;
 
-    public static interface FindNotchInformation {
+    public interface FindNotchInformation {
         void onNotchInformation(boolean isNotch, int notchHeight, int phoneType);
     }
 
@@ -198,7 +198,7 @@ public class ScreenUtil {
                 Method getInt = SystemProperties.getMethod("getInt", paramTypes);
                 //参数
                 Object[] params = new Object[2];
-                params[0] = new String(key);
+                params[0] = key;
                 params[1] = new Integer(0);
                 result = (Integer) getInt.invoke(SystemProperties, params);
 

@@ -10,6 +10,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,7 @@ public class LimitManager implements Closeable {
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
-            in = new InputStreamReader(inputStream, "utf-8");
+            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
             String line = null;
             String name = null;
@@ -99,7 +100,7 @@ public class LimitManager implements Closeable {
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
                         int id = toNumber(words[0]);
-                        int count = (int) toNumber(words[1]);
+                        int count = toNumber(words[1]);
                         switch (count) {
                             case 0:
                                 tmp.addForbidden(id);

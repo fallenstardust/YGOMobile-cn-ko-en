@@ -340,7 +340,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             if (cardInfo.isType(CardType.Link)) {
                 level.setVisibility(View.GONE);
                 linkArrow.setVisibility(View.VISIBLE);
-                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + String.valueOf(cardInfo.getStar())));
+                cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + cardInfo.getStar()));
                 BaseActivity.showLinkArrows(cardInfo, view);
             } else {
                 level.setVisibility(View.VISIBLE);
@@ -382,9 +382,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         photoView.enable();
 
         photoView.setOnClickListener(View -> {
-            if (ll_btn.getVisibility() == View.VISIBLE) {
+            if (ll_btn.getVisibility() == android.view.View.VISIBLE) {
                 ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
-                ll_btn.setVisibility(View.GONE);
+                ll_btn.setVisibility(android.view.View.GONE);
             } else {
                 dialog.dis();
             }

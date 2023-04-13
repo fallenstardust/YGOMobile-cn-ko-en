@@ -81,11 +81,7 @@ public class YGOUtil {
 
         final int offset = recyclerView.computeVerticalScrollOffset();
         final int range = recyclerView.computeVerticalScrollRange() - recyclerView.computeVerticalScrollExtent();
-        if(visibleItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 3 && state == recyclerView.SCROLL_STATE_IDLE){
-            return true;
-        } else {
-            return false;
-        }
+        return visibleItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 3 && state == RecyclerView.SCROLL_STATE_IDLE;
     }
 
     public static void startDuelService(Context context) {
