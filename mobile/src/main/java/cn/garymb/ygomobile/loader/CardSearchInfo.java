@@ -160,6 +160,24 @@ public class CardSearchInfo implements ICardFilter{
         }
     }
 
+    public String toString(){
+        return "CardSearchInfo{" +
+                "LimitType="+getLimitType() +
+                ", Ot=" + getOt() +
+                ", LimitName=" + getLimitName() +
+                ", KeyWord=" + getKeyWord() +
+                ", Attribute=" + getAttribute() +
+                ", Level=" + getLevel() +
+                ", PScale=" + getPscale() +
+                ", Category=" + getCategory() +
+                ", ATK=" + getAtk() +
+                ", DEF=" + getDef() +
+                ", LINK=" + getLinkKey() +
+                ", Race=" + getTypes() +
+                ", SetCode=" + getSetcode() +
+                '}';
+    }
+
     public static boolean containsIgnoreCase(String src, String what) {
         // https://stackoverflow.com/a/25379180
         final int length = what.length();

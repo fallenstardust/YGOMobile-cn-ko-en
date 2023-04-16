@@ -4,6 +4,7 @@ package cn.garymb.ygomobile.ui.cards;
 import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -40,7 +41,7 @@ import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class CardSearcher implements View.OnClickListener {
-
+    private static final String TAG = "CardSearcher";
     final String[] BtnVals = new String[9];
     protected StringManager mStringManager;
     protected LimitManager mLimitManager;
@@ -585,6 +586,7 @@ public class CardSearcher implements View.OnClickListener {
                     })
                     .linkKey(lineKey)
                     .build();
+            Log.i(TAG,searchInfo.toString());
             dataLoader.search(searchInfo);
             lineKey = 0;
         }
