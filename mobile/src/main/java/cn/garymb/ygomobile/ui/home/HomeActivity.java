@@ -30,6 +30,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
@@ -40,6 +42,9 @@ import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
+import ocgcore.DataManager;
+import ocgcore.LimitManager;
+import ocgcore.StringManager;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -52,6 +57,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     private static final int TYPE_GET_VERSION_OK = 0;
     private static final int TYPE_GET_VERSION_FAILED = 1;
 
+    private CardLoader cardLoader;
+    private ImageLoader imageLoader;
     private BottomNavigationBar bottomNavigationBar;
     private ShapeBadgeItem mShapeBadgeItem;
     private TextBadgeItem mTextBadgeItem;
@@ -103,6 +110,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             savedInstanceState.putParcelable("android:support:fragments", null);
         }
         super.onCreate(savedInstanceState);
+        cardLoader = new CardLoader(getActivity());
+        imageLoader = new ImageLoader();
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
         mBundle = new Bundle();
@@ -296,6 +305,20 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     protected void onStart() {
         super.onStart();
 
+    }
+    public CardLoader getCardLoader() {
+        return cardLoader;
+    }
+    public ImageLoader getImageLoader() {
+        return imageLoader;
+    }
+
+    public StringManager getStringManager() {
+        return DataManager.get().getStringManager();
+    }
+
+    public LimitManager getmLimitManager() {
+        return DataManager.get().getLimitManager();
     }
 
     //检查是否有刘海

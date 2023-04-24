@@ -36,33 +36,28 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
-import ocgcore.LimitManager;
-import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
 public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallBack, CardSearcher.CallBack {
     public static final String SEARCH_MESSAGE = "searchMessage";
     long exitLasttime = 0;
+
+    private HomeActivity activity;
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapter;
-    protected CardLoader mCardLoader;
     protected boolean isLoad = false;
-    protected StringManager mStringManager = DataManager.get().getStringManager();
-    protected LimitManager mLimitManager = DataManager.get().getLimitManager();
     private RecyclerView mListView;
-    private ImageLoader mImageLoader;
-
     private String intentSearchMessage;
     private boolean isInitCdbOk = false;
     private String currentCardSearchMessage = "";
@@ -76,6 +71,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+        activity = (HomeActivity) getActivity();
         layoutView = inflater.inflate(R.layout.fragment_search, container, false);
         initView(layoutView);
         showNewbieGuide();
@@ -88,23 +84,21 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mResult_count = layoutView.findViewById(R.id.search_result_count);
         mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
         mListView = layoutView.findViewById(R.id.list_cards);
-        mImageLoader = new ImageLoader(true);
-        mCardListAdapter = new CardListAdapter(getContext(), mImageLoader);
+        mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
         Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
-        mCardLoader = new CardLoader(getContext());
-        mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        activity.getCardLoader().setCallBack(this);
+        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), activity.getCardLoader());
         mCardSelector.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
-            if (mLimitManager.getCount() > 0) {
-                mCardLoader.setLimitList(mLimitManager.getTopLimit());
+            if (activity.getmLimitManager().getCount() > 0) {
+                activity.getCardLoader().setLimitList(activity.getmLimitManager().getTopLimit());
             }
         }).fail((e) -> {
             Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
@@ -112,7 +106,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         }).done((rs) -> {
             dlg.dismiss();
             isLoad = true;
-            mCardLoader.loadData();
+            activity.getCardLoader().loadData();
             mCardSelector.initItems();
             //数据库初始化完毕后搜索被传入的关键字
             intentSearch(intentSearchMessage);
@@ -200,7 +194,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onDestroy() {
-        mImageLoader.close();
+        //mImageLoader.close();
         super.onDestroy();
     }
 
@@ -285,7 +279,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     protected void showCard(CardListProvider provider, Card cardInfo, final int position) {
         if (cardInfo != null) {
             if (mCardDetail == null) {
-                mCardDetail = new CardDetail((BaseActivity) getActivity(), mImageLoader, mStringManager);
+                mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
                 mCardDetail.setCallBack((card, favorite) -> {
                     if (mCardSelector.isShowFavorite()) {
                         mCardSelector.showFavorites(false);

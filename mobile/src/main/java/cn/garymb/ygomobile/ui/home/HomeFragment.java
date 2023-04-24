@@ -61,7 +61,6 @@ import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.bean.events.ServerInfoEvent;
 import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -102,7 +101,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private ServerListManager mServerListManager;
     private CardManager mCardManager;
     private CardDetailRandom mCardDetailRandom;
-    private ImageLoader mImageLoader;
     //轮播图
     private CardView cv_banner;
     private TextView tv_banner_loading;
@@ -199,7 +197,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         toggleAnimation(tv);
         toggleAnimation(tv2);
 
-        mImageLoader = new ImageLoader(false);
         mCardManager = DataManager.get().getCardManager();
     }
 
@@ -621,12 +618,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         Card cardInfo = cards.valueAt(y);
         if (cardInfo == null)
             return;
-        mCardDetailRandom = CardDetailRandom.genRandomCardDetail(getContext(), mImageLoader, cardInfo);
+        mCardDetailRandom = CardDetailRandom.genRandomCardDetail(getContext(), activity.getImageLoader(), cardInfo);
     }
 
     protected void openGame() {
         YGOStarter.startGame(getActivity(), null);
-        getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
+        getParentFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
     }
 
     private void duelAssistantCheck() {
