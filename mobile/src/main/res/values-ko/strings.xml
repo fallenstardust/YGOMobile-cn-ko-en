@@ -112,7 +112,7 @@
     <string name="label_ot">규칙</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
-    <string name="label_ot_SC_OCG">CCG</string>
+    <string name="label_ot_SC_OCG">SCOCG</string>
     <string name="label_ot_CUSTOM">사용자 정의 카드</string>
     <string name="label_ot_No_Exclusive">따로 없는 카드</string>
     <string name="label_ot_All">모든 카드</string>
@@ -326,7 +326,7 @@
     <string name="guide_join_room">비밀번호를 입력하지 않고 무작위로 싱글 듀얼로 참여할 수 있습니다
                                 \n비밀번호를 입력하여 친구와 사귈 수도 있습니다
                                 \n더 많은 듀얼 모드 비밀번호는 앱 튜토리얼을 참고하십시오</string>
-    <string name="guide_button_search">겁색 기준을 편집하려면 터치하십시오</string>
+    <string name="guide_button_search">검색 기준을 편집하려면 터치하십시오</string>
     <string name="guide_search_result_count">여기에 검색 결과를 표시합니다</string>
     <string name="guide_button_search_result">검색 결과를 보려면 여기를 클릭하세요. 즐겨찾는 카드도 표시됩니다.</string>
     <string name="guide_view_deck_manager">덱 관리에서 덱 카테고리와 덱을 클릭하여 관리할 수 있습니다.</string>
@@ -334,7 +334,7 @@
     <string name="guide_view_banner">MyCard 뉴스 : 클릭해서 볼 수 있으나 중국어만 있습니다. 죄송합니다.</string>
     <string name="title_delete_ex">프리릴리즈 카드 팩 삭제</string>
     <string name="ask_delete_ex">지우려면 확인을 클릭하십시오.</string>
-    <string name="about_delete_ex">만약 프리릴리즈 카드를 사용하면서 문제가 발생했을 경우, 삭제하는 것도 좋은 선택이다</string>
+    <string name="about_delete_ex">만약 프리릴리즈 카드를 사용하면서 문제가 발생했을 경우, 삭제하는 것도 좋은 선택입니다.</string>
     <string name="file_installed">파일을 불러왔습니다</string>
     <string name="settings_screen_padding">화면 스타일</string>
     <string name="tip_load_cdb_error">데이터를 불러오는 중에 오류가 발생했습니다.</string>
