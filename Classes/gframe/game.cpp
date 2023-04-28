@@ -1262,7 +1262,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	}
 #ifdef _IRR_ANDROID_PLATFORM_
 IGUIStaticText *text = env->addStaticText(L"",
-		rect<s32>(15,15,100,60), false, false, 0, GUI_INFO_FPS );
+		rect<s32>(1,1,100,45), false, false, 0, GUI_INFO_FPS );
 #endif
 	hideChat = false;
 	hideChatTimer = 0;
