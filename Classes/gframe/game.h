@@ -510,7 +510,7 @@ public:
 	irr::gui::IGUIWindow* wANRace;
 	irr::gui::IGUIImage* bgANRace;
 	irr::gui::IGUIStaticText* stANRace;
-	irr::gui::IGUICheckBox* chkRace[25];
+	irr::gui::IGUICheckBox* chkRace[RACES_COUNT];
 	//cmd menu
 	irr::gui::IGUIWindow* wCmdMenu;
 	irr::gui::IGUIButton* btnActivate;
