@@ -62,6 +62,7 @@ struct Config {
 	int quick_animation;
 	int auto_save_replay;
 	int draw_single_chain;
+	int hide_player_name;
 	int prefer_expansion_script;
 	//sound
 	bool enable_sound;
@@ -316,6 +317,7 @@ public:
 	irr::gui::IGUICheckBox* chkQuickAnimation;
 	irr::gui::IGUICheckBox* chkAutoSaveReplay;
 	irr::gui::IGUICheckBox* chkDrawSingleChain;
+	irr::gui::IGUICheckBox* chkHidePlayerName;
 	irr::gui::IGUIElement* elmTabSystemLast;
 	irr::gui::IGUIScrollBar* scrTabSystem;
 	irr::gui::IGUICheckBox* chkDrawFieldSpell;
@@ -909,7 +911,8 @@ extern Game* mainGame;
 #define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
-#define BUTTON_QUICK_ANIMIATION	    376
+#define CHECKBOX_HIDE_PLAYER_NAME	376
+#define BUTTON_QUICK_ANIMIATION	    379
 #define BUTTON_BIG_CARD_CLOSE		380
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382

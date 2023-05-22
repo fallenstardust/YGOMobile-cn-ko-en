@@ -597,20 +597,22 @@ void Game::DrawMisc() {
 	}
     DrawShadowText(numFont,dInfo.strLP[0],recti(305 * mainGame->xScale, 49 * mainGame->yScale, 614 * mainGame->xScale, 68 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
     DrawShadowText(numFont,dInfo.strLP[1],recti(711 * mainGame->xScale, 50 * mainGame->yScale, 1012 * mainGame->xScale, 69 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
-	recti p1size = recti(400 * mainGame->xScale, 18 * mainGame->yScale, 629 * mainGame->xScale, 37 * mainGame->yScale);
-	recti p2size = recti(920 * mainGame->xScale, 18 * mainGame->yScale, 986 * mainGame->xScale, 37 * mainGame->yScale);
-	if(!dInfo.isTag || !dInfo.tag_player[0])
-		guiFont->draw(dInfo.hostname, p1size, 0xffffffff, false, false, 0);
-	else
-		guiFont->draw(dInfo.hostname_tag, p1size, 0xffffffff, false, false, 0);
-	if(!dInfo.isTag || !dInfo.tag_player[1]) {
-		auto cld = guiFont->getDimension(dInfo.clientname);
-		p2size.UpperLeftCorner.X -= cld.Width;
-		guiFont->draw(dInfo.clientname, p2size, 0xffffffff, false, false, 0);
-	} else {
-		auto cld = guiFont->getDimension(dInfo.clientname_tag);
-		p2size.UpperLeftCorner.X -= cld.Width;
-		guiFont->draw(dInfo.clientname_tag, p2size, 0xffffffff, false, false, 0);
+	if(!gameConf.hide_player_name) {
+		recti p1size = recti(400 * mainGame->xScale, 18 * mainGame->yScale, 629 * mainGame->xScale, 37 * mainGame->yScale);
+		recti p2size = recti(920 * mainGame->xScale, 18 * mainGame->yScale, 986 * mainGame->xScale, 37 * mainGame->yScale);
+		if(!dInfo.isTag || !dInfo.tag_player[0])
+			guiFont->draw(dInfo.hostname, p1size, 0xffffffff, false, false, 0);
+		else
+			guiFont->draw(dInfo.hostname_tag, p1size, 0xffffffff, false, false, 0);
+		if(!dInfo.isTag || !dInfo.tag_player[1]) {
+			auto cld = guiFont->getDimension(dInfo.clientname);
+			p2size.UpperLeftCorner.X -= cld.Width;
+			guiFont->draw(dInfo.clientname, p2size, 0xffffffff, false, false, 0);
+		} else {
+			auto cld = guiFont->getDimension(dInfo.clientname_tag);
+			p2size.UpperLeftCorner.X -= cld.Width;
+			guiFont->draw(dInfo.clientname_tag, p2size, 0xffffffff, false, false, 0);
+		}
 	}
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 10 * mainGame->yScale, 688 * mainGame->xScale, 30 * mainGame->yScale), 0x00000000, 0x00000000, 0xffffffff, 0xffffffff);
 	driver->draw2DRectangle(recti(632 * mainGame->xScale, 30 * mainGame->yScale, 688 * mainGame->xScale, 50 * mainGame->yScale), 0xffffffff, 0xffffffff, 0x00000000, 0x00000000);

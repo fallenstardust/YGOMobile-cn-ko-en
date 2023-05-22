@@ -535,8 +535,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	imgSettings->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setIsPushButton(true);
-    wSettings = env->addWindow(rect<s32>(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale), false, dataManager.GetSysString(1273));
-    wSettings->setRelativePosition(recti(220 * xScale, 100 * yScale, 800 * xScale, 520 * yScale));
+    wSettings = env->addWindow(rect<s32>(220 * xScale, 80 * yScale, 800 * xScale, 540 * yScale), false, dataManager.GetSysString(1273));
+    wSettings->setRelativePosition(recti(220 * xScale, 80 * yScale, 800 * xScale, 540 * yScale));
     wSettings->getCloseButton()->setVisible(false);
 	wSettings->setVisible(false);
 	    ChangeToIGUIImageWindow(wSettings, &bgSettings, imageManager.tWindow);
@@ -584,6 +584,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	posY += 40 * yScale;
 	chkIgnore2 = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
+	posY += 40 * yScale;
+	chkHidePlayerName = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_HIDE_PLAYER_NAME, dataManager.GetSysString(1289));
+	chkHidePlayerName->setChecked(gameConf.hide_player_name != 0);
 	posY += 40 * yScale;
 	chkIgnoreDeckChanges = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
@@ -1748,6 +1751,7 @@ void Game::LoadConfig() {
 	gameConf.music_mode = android::getIntSetting(appMain, "music_mode", 1);
 	gameConf.use_lflist = android::getIntSetting(appMain, "use_lflist", 1);
 	gameConf.chkDefaultShowChain = android::getIntSetting(appMain, "chkDefaultShowChain", 0);
+	gameConf.hide_player_name = android::getIntSetting(appMain, "chkHidePlayerName", 0);
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
@@ -1807,6 +1811,8 @@ void Game::SaveConfig() {
 	    android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
 	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
+	gameConf.hide_player_name  = chkHidePlayerName->isChecked() ? 1 : 0;
+		android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.chkDefaultShowChain);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
@@ -1819,8 +1825,8 @@ void Game::ShowCardInfo(int code) {
 	imgCard->setImage(imageManager.GetTexture(code));
 	imgCard->setScaleImage(true);
 	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
-		myswprintf(formatBuffer, L"%ls", dataManager.GetName(cd.alias));
-	else myswprintf(formatBuffer, L"%ls", dataManager.GetName(code));
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
+	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	stName->setText(formatBuffer);
 	int offset = 0;
 	if(!gameConf.hide_setname) {
@@ -1831,7 +1837,7 @@ void Game::ShowCardInfo(int code) {
 				sc = aptr->second.setcode;
 		}
 		if(sc) {
-			offset = 23;
+			offset = 23;// *yScale;
 			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(sc));
 			stSetName->setText(formatBuffer);
 		} else
@@ -1912,9 +1918,10 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 	chatMsg[0].clear();
 	chatTiming[0] = 1200;
 	chatType[0] = player;
+	if(gameConf.hide_player_name && player < 4)
+		player = 10;
 	switch(player) {
 	case 0: //from host
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.hostname);
 		chatMsg[0].append(L": ");
 		break;
@@ -1924,6 +1931,7 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		chatMsg[0].append(L": ");
 		break;
 	case 2: //host tag
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.hostname_tag);
 		chatMsg[0].append(L": ");
 		break;
@@ -1942,6 +1950,9 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		break;
 	case 9: //error message
 		chatMsg[0].append(L"[Script Error]: ");
+		break;
+	case 10: //hidden name
+		chatMsg[0].append(L"[********]: ");
 		break;
 	default: //from watcher or unknown
 		if(player < 11 || player > 19)
