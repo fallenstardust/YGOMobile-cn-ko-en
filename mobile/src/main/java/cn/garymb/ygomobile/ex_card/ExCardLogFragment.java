@@ -24,7 +24,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 
 public class ExCardLogFragment extends Fragment {
-
+    private static final String TAG = String.valueOf(ExCardLogFragment.class);
 
     private View layoutView;
     private ExCardLogAdapter mExCardLogAdapter;
@@ -93,7 +93,7 @@ public class ExCardLogFragment extends Fragment {
                 }
             }
 
-            Log.i("webCrawler", "webCrawler fail");
+            Log.i(TAG, "webCrawler fail");
         }).done(exCardLogList -> {
             mExCardLogAdapter.setData(exCardLogList);
             mExCardLogAdapter.notifyDataSetChanged();
@@ -102,7 +102,7 @@ public class ExCardLogFragment extends Fragment {
             mExCardLogView.expandGroup(1);
             mExCardLogView.expandGroup(2);
             if (exCardLogList != null) {
-                Log.i("webCrawler", "webCrawler parse html complete");
+                Log.i(TAG, "webCrawler parse html complete");
             }
             //关闭异常
             if (dialog_read_ex.isShowing()) {

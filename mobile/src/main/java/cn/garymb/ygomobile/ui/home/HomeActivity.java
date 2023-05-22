@@ -123,7 +123,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
-        ServerUtil.initExCardState();//检查扩展卡版本
+        ServerUtil.initExCardState();//检查扩展卡版本 TODO 好像放在这里有问题，有时候改行已经调用结束了，但initBottomNavigationBar()的
     }
 
     @Override

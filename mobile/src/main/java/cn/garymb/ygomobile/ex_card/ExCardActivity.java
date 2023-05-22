@@ -13,6 +13,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 
 public class ExCardActivity extends BaseActivity {
+    private static final String TAG = String.valueOf(ExCardActivity.class);
     private Context context;
     private Toolbar toolbar;
     public static TabLayout tabLayout;
@@ -35,7 +36,7 @@ public class ExCardActivity extends BaseActivity {
     protected void onDestroy() {
 
         super.onDestroy();
-        Log.i("webCrawler", "excard activity destroy");
+        Log.i(TAG, "excard activity destroy");
     }
     private void createTabFragment() {
         adapter = new PackageTabAdapter(getSupportFragmentManager(), tabLayout);
