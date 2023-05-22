@@ -66,6 +66,7 @@ android {
     androidResources {
         noCompress 'dll', 'config'
     }
+    namespace 'cn.garymb.ygomobile.lite'
     //    buildToolsVersion '28.0.3'
 }
 

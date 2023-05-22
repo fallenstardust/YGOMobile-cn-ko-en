@@ -23,6 +23,7 @@ android {
             jniLibs.srcDirs 'libs'
         }
     }
+    namespace 'cn.garymb.ygomobile.lib'
 
 }
 

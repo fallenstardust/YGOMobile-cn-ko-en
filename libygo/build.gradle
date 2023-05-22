@@ -27,6 +27,7 @@ android {
             res.srcDirs = ['../libcore/src/main/res']
         }
     }
+    namespace 'cn.garymb.ygomobile.lib'
 }
 
 dependencies {
