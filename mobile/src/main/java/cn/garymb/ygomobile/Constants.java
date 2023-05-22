@@ -125,7 +125,7 @@ public interface Constants {
     boolean DEF_PREF_ONLY_GAME = false;
 
     String PREF_READ_EX = "pref_settings_read_ex";
-    boolean DEF_PREF_READ_EX = false;
+    boolean DEF_PREF_READ_EX = true;
 
     String PREF_KEEP_SCALE = "pref_settings_keep_scale";
     boolean DEF_PREF_KEEP_SCALE = false;
