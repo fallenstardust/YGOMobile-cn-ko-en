@@ -809,7 +809,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		chkAttribute[i] = env->addCheckBox(false, rect<s32>((50 + (i % 4) * 80) * xScale, (60 + (i / 4) * 55) * yScale, (130 + (i % 4) * 80) * xScale, (90 + (i / 4) * 55) * yScale),
 		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter));
 	//announce race
-	wANRace = env->addWindow(rect<s32>(500 * xScale, 50 * yScale, 800 * xScale, 550 * yScale), false, dataManager.GetSysString(563));
+	wANRace = env->addWindow(rect<s32>(500 * xScale, 40 * yScale, 800 * xScale, 560 * yScale), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
 	wANRace->setVisible(false);
 	    ChangeToIGUIImageWindow(wANRace, &bgANRace, imageManager.tDialog_S);
@@ -1016,15 +1016,16 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		btnClearFilter = env->addButton(rect<s32>(205 * xScale, (80 + 125 / 6) * yScale, 255 * xScale, (100 + 125 / 6) * yScale), wFilter, BUTTON_CLEAR_FILTER, dataManager.GetSysString(1304));
 			ChangeToIGUIImageButton(btnClearFilter, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	}
-	wCategories = env->addWindow(rect<s32>(630 * xScale, 60 * yScale, 1000 * xScale, 270 * yScale), false, L"");
+	wCategories = env->addWindow(rect<s32>(600 * xScale, 60 * yScale, 1000 * xScale, 440 * yScale), false, L"");
 	wCategories->getCloseButton()->setVisible(false);
 	wCategories->setDrawTitlebar(false);
 	wCategories->setDraggable(false);
 	wCategories->setVisible(false);
-	    ChangeToIGUIImageWindow(wCategories, &bgCategories, imageManager.tDialog_L);
-	btnCategoryOK = env->addButton(rect<s32>(135 * xScale, 175 * yScale, 235 * xScale, 200 * yScale), wCategories, BUTTON_CATEGORY_OK, dataManager.GetSysString(1211));
-	for(int i = 0; i < 32; ++i)
-		chkCategory[i] = env->addCheckBox(false, recti((10 + (i % 4) * 90)  * xScale, (10 + (i / 4) * 20) * yScale, (100 + (i % 4) * 90) * xScale, (40 + (i / 4) * 20) * yScale), wCategories, -1, dataManager.GetSysString(1100 + i));
+	    ChangeToIGUIImageWindow(wCategories, &bgCategories, imageManager.tWindow_V);
+	btnCategoryOK = env->addButton(rect<s32>(135 * xScale, 340 * yScale, 235 * xScale, 370 * yScale), wCategories, BUTTON_CATEGORY_OK, dataManager.GetSysString(1211));
+        ChangeToIGUIImageButton(btnCategoryOK, imageManager.tButton_L, imageManager.tButton_L_pressed);
+    for(int i = 0; i < 32; ++i)
+		chkCategory[i] = env->addCheckBox(false, recti((20 + (i % 4) * 90)  * xScale, (10 + (i / 4) * 40) * yScale, (120 + (i % 4) * 90) * xScale, (40 + (i / 4) * 40) * yScale), wCategories, -1, dataManager.GetSysString(1100 + i));
 	scrFilter = env->addScrollBar(false, recti(980 * xScale, 159 * yScale, 1020 * xScale, 629 * yScale), 0, SCROLL_FILTER);
 	scrFilter->setLargeStep(10);
 	scrFilter->setSmallStep(1);
