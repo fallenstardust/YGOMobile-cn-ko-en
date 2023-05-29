@@ -1813,7 +1813,7 @@ void Game::SaveConfig() {
 	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
 	gameConf.hide_player_name  = chkHidePlayerName->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.chkDefaultShowChain);
+		android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.hide_player_name);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
