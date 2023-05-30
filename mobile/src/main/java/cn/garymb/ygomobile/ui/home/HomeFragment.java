@@ -217,9 +217,17 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         });
         tv_banner_loading = view.findViewById(R.id.tv_banner_loading);
         tv_banner_loading.setOnClickListener(this);
-        xb_banner.setOnItemClickListener((banner, model, v, position) ->
-                WebActivity.open(getContext(), getString(R.string.McNews), mcNewsList.get(position).getNews_url())
-        );
+        xb_banner.setOnItemClickListener((banner, model, v, position) -> {
+            String newsUrl = mcNewsList.get(position).getNews_url();
+            if (newsUrl.startsWith(MyCard.MYCARD_POST_URL)) {
+                WebActivity.open(getContext(), getString(R.string.McNews), newsUrl);
+            } else {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(newsUrl));
+                startActivity(intent);
+            }
+
+        });
         xb_banner.loadImage((banner, model, v, position) -> {
             TextView tv_time, tv_title, tv_type;
             ImageView iv_image;
