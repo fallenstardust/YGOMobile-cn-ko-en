@@ -207,6 +207,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	driver->setTextureCreationFlag(irr::video::ETCF_OPTIMIZED_FOR_QUALITY, true);
 
 	imageManager.SetDevice(device);
+	imageManager.ClearTexture();
 	if(!imageManager.Initial(workingDir))
 		return false;
 	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
