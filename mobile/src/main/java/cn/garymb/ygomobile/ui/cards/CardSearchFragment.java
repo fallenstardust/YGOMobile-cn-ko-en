@@ -53,6 +53,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     long exitLasttime = 0;
 
     private HomeActivity activity;
+    protected CardLoader mCardLoader;
     protected DrawerLayout mDrawerlayout;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapter;
@@ -90,15 +91,16 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mListView.setAdapter(mCardListAdapter);
         Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
-        activity.getCardLoader().setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), activity.getCardLoader());
+        mCardLoader = new CardLoader(getContext());
+        mCardLoader.setCallBack(this);
+        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSelector.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
             DataManager.get().load(true);
             if (activity.getmLimitManager().getCount() > 0) {
-                activity.getCardLoader().setLimitList(activity.getmLimitManager().getTopLimit());
+                mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
             }
         }).fail((e) -> {
             Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
@@ -106,7 +108,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         }).done((rs) -> {
             dlg.dismiss();
             isLoad = true;
-            activity.getCardLoader().loadData();
+            mCardLoader.loadData();
             mCardSelector.initItems();
             //数据库初始化完毕后搜索被传入的关键字
             intentSearch(intentSearchMessage);

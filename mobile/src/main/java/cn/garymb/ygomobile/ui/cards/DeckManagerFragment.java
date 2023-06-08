@@ -111,6 +111,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
+    protected CardLoader mCardLoader;
     protected CardSearcher mCardSelector;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
@@ -163,8 +164,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mListView.setAdapter(mCardListAdapter);
         setListeners();
 
-        activity.getCardLoader().setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), activity.getCardLoader());
+        mCardLoader = new CardLoader(getContext());
+        mCardLoader.setCallBack(this);
+        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSelector.setCallBack(this);
 
         tv_deck = layoutView.findViewById(R.id.tv_deck);
@@ -360,14 +362,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     //region load deck
     private void loadDeckFromFile(File file) {
-        if (!activity.getCardLoader().isOpen() || file == null || !file.exists()) {
+        if (!mCardLoader.isOpen() || file == null || !file.exists()) {
             setCurDeck(new DeckInfo(), false);
             return;
         }
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            if (activity.getCardLoader().isOpen() && file.exists()) {
-                return mDeckAdapater.read(activity.getCardLoader(), file, activity.getCardLoader().getLimitList());
+            if (mCardLoader.isOpen() && file.exists()) {
+                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
             }
@@ -384,7 +386,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             DataManager.get().load(true);
             //默认第一个卡表
             if (activity.getmLimitManager().getCount() > 0) {
-                activity.getCardLoader().setLimitList(activity.getmLimitManager().getTopLimit());
+                mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
             }
             File file = ydk;
             if (file == null || !file.exists()) {
@@ -399,8 +401,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 return new DeckInfo();
             }
             Log.i(TAG, "load ydk " + file);
-            if (activity.getCardLoader().isOpen() && file.exists()) {
-                return mDeckAdapater.read(activity.getCardLoader(), file, activity.getCardLoader().getLimitList());
+            if (mCardLoader.isOpen() && file.exists()) {
+                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
             }
@@ -408,7 +410,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             isLoad = true;
             dlg.dismiss();
             mCardSelector.initItems();
-            initLimitListSpinners(mLimitSpinner, activity.getCardLoader().getLimitList());
+            initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
             if (rs.source != null) {
                 setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()));
