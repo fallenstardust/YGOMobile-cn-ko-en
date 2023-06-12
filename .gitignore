@@ -58,7 +58,6 @@ output.json
 
 /libcore/.cxx
 /libygo/.cxx
-/mobile/assets/data/single
 /mobile/assets/data/pack
 /mobile/assets/en/data/*.cdb
 /mobile/assets/kor/data/*.cdb
