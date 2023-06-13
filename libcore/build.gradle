@@ -6,7 +6,7 @@ android {
     defaultConfig {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 26
+        targetSdkVersion 29
         flavorDimensions "versionCode"
        /* ndk {
             moduleName "YGOMobile"
