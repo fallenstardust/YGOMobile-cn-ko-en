@@ -139,6 +139,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
+        ServerUtil.initExCardState();//HomeActivity中会调用一次本函数，此处再次调用是因为有时候HomeFragment的onCreateView()函数执行较慢，导致initExCardState()中eventbus事件发布完毕后仍未注册，因此在此处再调用一次检查，再次发布
         changeColor();
         //showNewbieGuide("homePage");
         return layoutView;

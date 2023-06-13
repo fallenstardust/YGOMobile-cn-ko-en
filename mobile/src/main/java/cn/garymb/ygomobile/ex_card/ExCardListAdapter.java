@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ex_card;
 
 
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.bumptech.glide.RequestBuilder;
@@ -23,7 +24,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class ExCardListAdapter extends BaseQuickAdapter<ExCard, BaseViewHolder> {
-
+    private static final String TAG = String.valueOf(ExCardListAdapter.class);
     private ImageLoader imageLoader;
 
     public ExCardListAdapter(int layoutResId) {
@@ -39,7 +40,7 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCard, BaseViewHolder> 
             Element pre_card_content = document.getElementById("pre_release_cards");
             Element tbody = pre_card_content.getElementsByTag("tbody").get(0);
             Elements cards = tbody.getElementsByTag("tr");
-            if (cards.size() > 1000) {//Considering the efficiency of html parse, if the size of
+            if (cards.size() > 5000) {//Considering the efficiency of html parse, if the size of
                 // pre cards list is to large, return null directly.
                 return null;
             }
@@ -70,11 +71,11 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCard, BaseViewHolder> 
                 }
             }
 
-            //Log.i("webCrawler", "webCrawler fail");
+            Log.i(TAG, "webCrawler fail");
         }).done(exCardList -> {
 
             if (exCardList != null) {
-                //Log.i("webCrawler", "webCrawler done");
+                Log.i(TAG, "webCrawler done");
 
                 getData().clear();
                 addData(exCardList);

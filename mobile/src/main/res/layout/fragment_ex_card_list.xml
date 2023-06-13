@@ -15,7 +15,6 @@
         android:scrollbars="vertical" />
 
     <LinearLayout
-        android:id="@+id/btn_download_prerelease"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
@@ -24,14 +23,15 @@
         android:clickable="true"
         android:focusableInTouchMode="true"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="10dp">
 
 
         <Button
+            android:id="@+id/btn_download_prerelease"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             android:background="@drawable/downloadimages"
             android:clickable="false" />
 

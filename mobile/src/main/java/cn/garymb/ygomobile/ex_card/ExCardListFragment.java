@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,12 +58,12 @@ import ocgcore.DataManager;
 
 
 public class ExCardListFragment extends Fragment {
-
+    private static final String TAG = String.valueOf(ExCardListFragment.class);
     private Context context;
     private View layoutView;
     private ExCardListAdapter mExCardListAdapter;
     private RecyclerView mExCardListView;
-    private LinearLayout btnDownload;
+    private Button btnDownload;
     private TextView textDownload;
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
@@ -101,10 +102,11 @@ public class ExCardListFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        Log.i("webCrawler", "excard fragmetn on stop");
+        Log.i(TAG, "excard fragment on stop");
         if (EventBus.getDefault().isRegistered(this))//加上判断
             EventBus.getDefault().unregister(this);
     }
+
     public void initView(View layoutView) {
         mExCardListView = layoutView.findViewById(R.id.list_ex_card);
         mExCardListAdapter = new ExCardListAdapter(R.layout.item_ex_card);
@@ -116,7 +118,17 @@ public class ExCardListFragment extends Fragment {
 
         textDownload = layoutView.findViewById(R.id.text_download_prerelease);
         btnDownload = layoutView.findViewById(R.id.btn_download_prerelease);
-        //TODO
+        //偷个懒，两个按钮的回调实现相同。For convenience I set two callbacks of a buttons
+        // have same implementation.
+        textDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (downloadState != DownloadState.DOWNLOAD_ING) {
+                    downloadState = DownloadState.DOWNLOAD_ING;
+                    downloadfromWeb(URL_YGO233_FILE);
+                }
+            }
+        });
         btnDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -200,7 +212,8 @@ public class ExCardListFragment extends Fragment {
 
                     break;
                 case UnzipUtils.ZIP_UNZIP_EXCEPTION:
-                    Toast.makeText(context, getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, getString(R.string.install_failed_bcos) + msg.obj,
+                            Toast.LENGTH_SHORT).show();
                     break;
 //                case HomeFragment.TYPE_GET_DATA_VER_OK:
 //                    WebActivity.exCardVer = msg.obj.toString();
@@ -310,7 +323,7 @@ public class ExCardListFragment extends Fragment {
                         if (files.getName().contains("-") && files.getName().contains(" new cards"))
                             files.delete();
                     }
-                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(),".ypk");
+                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(), ".ypk");
                 } catch (Exception e) {
                     message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
                 } finally {

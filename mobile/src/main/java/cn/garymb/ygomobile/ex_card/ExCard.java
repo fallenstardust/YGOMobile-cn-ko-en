@@ -4,9 +4,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /*
-This class contains two information types:ex-card information and updating log, which is marked
+This class contains two types of card information:ex-card information and updating log, which is marked
 by "type 0" and "type 1", respectively.
-本类包括两种信息，先行卡信息和更新日志（分别对应type 0和type 1)。
+本类包括两种卡牌信息，先行卡信息和更新日志（分别由·type 0和type 1表示)。
  */
 public class ExCard implements Parcelable {
     private String name;
