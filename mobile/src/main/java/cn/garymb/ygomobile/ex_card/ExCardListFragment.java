@@ -102,7 +102,7 @@ public class ExCardListFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        Log.i(TAG, "excard fragmetn on stop");
+        Log.i(TAG, "excard fragment on stop");
         if (EventBus.getDefault().isRegistered(this))//加上判断
             EventBus.getDefault().unregister(this);
     }
