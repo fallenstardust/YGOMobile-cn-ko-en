@@ -64,6 +64,8 @@ public:
     irr::video::ITexture* tMute;
     irr::video::ITexture* tPlay;
 	irr::video::ITexture* tTalk;
+	irr::video::ITexture* tOneX;
+	irr::video::ITexture* tDoubleX;
 	irr::video::ITexture* tShut;
 	irr::video::ITexture* tClose;
     irr::video::ITexture* tTitleBar;

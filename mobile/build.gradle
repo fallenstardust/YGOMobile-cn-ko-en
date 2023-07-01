@@ -76,18 +76,19 @@ android {
 //            assets.srcDirs = ['assets_ko']
 //        }
     }
-    lintOptions {
-        ignoreWarnings true
-        checkReleaseBuilds false
-        abortOnError false
-    }
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/rxjava.properties'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/rxjava.properties']
+        }
     }
     androidResources {
         noCompress 'dll', 'config'
+    }
+    namespace 'cn.garymb.ygomobile.lite'
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+        ignoreWarnings true
     }
     //    buildToolsVersion '28.0.3'
 }

@@ -173,7 +173,7 @@ public class YGOMobileActivity extends GameActivity implements
         }
         if (options != null) {
             if (DEBUG)
-                Log.i(TAG, "receive:" + time + ":" + options.toString());
+                Log.i(TAG, "receive:" + time + ":" + options);
             ByteBuffer buffer = options.toByteBuffer();
             IrrlichtBridge.joinGame(buffer, buffer.position());
         } else {

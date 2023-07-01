@@ -1492,6 +1492,7 @@ int32 field::process_point_event(int16 step, int32 skip_trigger, int32 skip_free
 			for(auto& ch_lim_p : core.chain_limit_p)
 				luaL_unref(pduel->lua->lua_state, LUA_REGISTRYINDEX, ch_lim_p.function);
 			core.chain_limit_p.clear();
+			core.effect_count_code_chain.clear();
 			reset_chain();
 			returns.ivalue[0] = FALSE;
 		}
@@ -3304,8 +3305,12 @@ int32 field::process_damage_step(uint16 step, uint32 new_attack) {
 	case 3: {
 		core.attacker = (card*)core.units.begin()->peffect;
 		core.attack_target = (card*)core.units.begin()->ptarget;
-		if(core.attacker)
+		if(core.attacker) {
 			core.attacker->set_status(STATUS_ATTACK_CANCELED, TRUE);
+			core.attacker->announce_count++;
+			core.attacker->announced_cards.addcard(core.attack_target);
+			attack_all_target_check();
+		}
 		if(core.attack_target)
 			core.attack_target->set_status(STATUS_ATTACK_CANCELED, TRUE);
 		core.effect_damage_step = 0;
@@ -4485,6 +4490,7 @@ int32 field::solve_chain(uint16 step, uint32 chainend_arg1, uint32 chainend_arg2
 		for(auto& ch_lim_p : core.chain_limit_p)
 			luaL_unref(pduel->lua->lua_state, LUA_REGISTRYINDEX, ch_lim_p.function);
 		core.chain_limit_p.clear();
+		core.effect_count_code_chain.clear();
 		reset_chain();
 		if(core.summoning_card || core.effect_damage_step == 1)
 			core.subunits.push_back(core.reserved);

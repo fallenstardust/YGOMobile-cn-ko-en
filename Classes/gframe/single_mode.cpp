@@ -435,7 +435,7 @@ bool SingleMode::SinglePlayAnalyze(char* msg, unsigned int len) {
 			/*int cp = pbuf[11];*/
 			pbuf += 16;
 			DuelClient::ClientAnalyze(offset, pbuf - offset);
-			if(cl && !(cl & 0x80) && (pl != cl || pc != cc))
+			if(cl && !(cl & LOCATION_OVERLAY) && (pl != cl || pc != cc))
 				SinglePlayRefreshSingle(cc, cl, cs);
 			break;
 		}
@@ -751,7 +751,7 @@ bool SingleMode::SinglePlayAnalyze(char* msg, unsigned int len) {
 			memcpy(msgbuf, begin, len + 1);
 			BufferIO::DecodeUTF8(msgbuf, msg);
 			mainGame->gMutex.lock();
-			mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->textFont, msg);
+			mainGame->SetStaticText(mainGame->stMessage, 370 * mainGame->xScale, mainGame->guiFont, msg);
 			mainGame->PopupElement(mainGame->wMessage);
 			mainGame->gMutex.unlock();
 			mainGame->actionSignal.Reset();

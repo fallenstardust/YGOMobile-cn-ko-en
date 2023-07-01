@@ -209,6 +209,18 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
                 mainGame->soundManager->EnableMusic(mainGame->chkEnableMusic->isChecked());
 				break;
 			}
+            case BUTTON_QUICK_ANIMIATION: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                if (mainGame->gameConf.quick_animation) {
+                        mainGame->gameConf.quick_animation = false;
+                        mainGame->imgQuickAnimation->setImage(imageManager.tOneX);
+				} else {
+					mainGame->gameConf.quick_animation = true;
+					mainGame->imgQuickAnimation->setImage(imageManager.tDoubleX);
+				}
+				mainGame->chkQuickAnimation->setChecked(mainGame->gameConf.quick_animation);
+				break;
+            }
 			case BUTTON_CHATTING: {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				if (mainGame->gameConf.chkIgnore1) {
@@ -353,7 +365,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->btnOptionn->setVisible(true);
 				if(selected_option == 0)
 					mainGame->btnOptionp->setVisible(false);
-				mainGame->SetStaticText(mainGame->stOptions, 350 * mainGame->xScale, mainGame->textFont, dataManager.GetDesc(select_options[selected_option]));
+				mainGame->SetStaticText(mainGame->stOptions, 350 * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(select_options[selected_option]));
 				break;
 			}
 			case BUTTON_OPTION_NEXT: {
@@ -362,7 +374,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->btnOptionp->setVisible(true);
 				if(selected_option == select_options.size() - 1)
 					mainGame->btnOptionn->setVisible(false);
-				mainGame->SetStaticText(mainGame->stOptions, 350 * mainGame->xScale, mainGame->textFont, dataManager.GetDesc(select_options[selected_option]));
+				mainGame->SetStaticText(mainGame->stOptions, 350 * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(select_options[selected_option]));
 				break;
 			}
 			case BUTTON_OPTION_0:
@@ -908,7 +920,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			case CHECK_RACE: {
 				int rac = 0, filter = 0x1, count = 0;
-				for(int i = 0; i < 25; ++i, filter <<= 1) {
+				for(int i = 0; i < RACES_COUNT; ++i, filter <<= 1) {
 					if(mainGame->chkRace[i]->isChecked()) {
 						rac |= filter;
 						count++;
@@ -1571,7 +1583,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					should_show_tip = true;
 					myswprintf(formatBuffer, dataManager.GetSysString(1700), mainGame->btnCancelOrFinish->getText());
 					mainGame->stTip->setText(formatBuffer);
-					irr::core::dimension2d<unsigned int> dtip = mainGame->textFont->getDimension(formatBuffer) + irr::core::dimension2d<unsigned int>(10, 10);
+					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(formatBuffer) + irr::core::dimension2d<unsigned int>(10, 10);
 					mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 				}
 				mainGame->stTip->setVisible(should_show_tip);
@@ -1603,9 +1615,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size())
 						mcard = deck[hovered_controler].back();
 				} else {
-					if(irr::core::recti(327, 8, 630, 51).isPointInside(pos))
+					if(irr::core::recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 0;
-					else if(irr::core::recti(689, 8, 991, 51).isPointInside(pos))
+					else if(irr::core::recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
 						mplayer = 1;
 				}
 			}
@@ -1700,7 +1712,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 								str.append(formatBuffer);
 							}
 							should_show_tip = true;
-							irr::core::dimension2d<unsigned int> dtip = mainGame->textFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
+							irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 							mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 							mainGame->stTip->setText(str.c_str());
 						}
@@ -1731,8 +1743,15 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						myswprintf(formatBuffer, L"\n*%ls", dataManager.GetDesc(iter->first));
 						str.append(formatBuffer);
 					}
+					if(mainGame->dInfo.turn == 1) {
+						if(mplayer == 0 && mainGame->dInfo.isFirst || mplayer != 0 && !mainGame->dInfo.isFirst)
+							myswprintf(formatBuffer, L"\n*%ls", dataManager.GetSysString(100));
+						else
+							myswprintf(formatBuffer, L"\n*%ls", dataManager.GetSysString(101));
+						str.append(formatBuffer);
+					}
 					should_show_tip = true;
-					irr::core::dimension2d<unsigned int> dtip = mainGame->textFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
+					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 					mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y + 10 * mainGame->yScale, x - 10 * mainGame->xScale, y + 10 * mainGame->yScale + dtip.Height));
 					mainGame->stTip->setText(str.c_str());
 				}
@@ -1747,11 +1766,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_PRESSED_DOWN: {
 			if(!mainGame->dInfo.isStarted)
 				break;
-			if(mainGame->wCardSelect->isVisible())
-			    break;
+			//if(mainGame->wCardSelect->isVisible())
+			    //break;
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
-				|| mainGame->wCardSelect->isVisible()
+				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
 				||mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;
@@ -2005,6 +2024,13 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+			case CHECKBOX_HIDE_PLAYER_NAME: {
+				mainGame->gameConf.hide_player_name = mainGame->chkHidePlayerName->isChecked() ? 1 : 0;
+				if(mainGame->gameConf.hide_player_name)
+					mainGame->ClearChatMsg();
+				return true;
+				break;
+			}
 			case CHECKBOX_PREFER_EXPANSION: {
 				mainGame->gameConf.prefer_expansion_script = mainGame->chkPreferExpansionScript->isChecked() ? 1 : 0;
 				return true;
@@ -2088,7 +2114,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					break;
 				}
 				u32 pos = mainGame->scrCardText->getPos();
-				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->textFont, mainGame->showingtext, pos);
+				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth(), mainGame->textFont, mainGame->showingtext, pos);
 				return true;
 				break;
 			}
@@ -2244,6 +2270,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wLanWindow) {
                     mainGame->gMutex.lock();
                     mainGame->textFont->setTransparency(true);
+					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
                     mainGame->gMutex.unlock();
                     break;
@@ -2276,7 +2303,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                if(pos < 0) pos = 0;
 	                if(pos > max) pos = max;
 	                mainGame->scrCardText->setPos(pos);
-	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
+	                mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth(), mainGame->textFont, mainGame->showingtext, pos);
 	            }
                 if(is_dragging_lstLog) {
                     if(!mainGame->lstLog->getVerticalScrollBar()->isVisible()) {
@@ -2567,28 +2594,28 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnActivate->setVisible(true);
 		mainGame->btnActivate->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnActivate->setVisible(false);
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
 		mainGame->btnSummon->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSummon->setVisible(false);
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
 		mainGame->btnSPSummon->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSPSummon->setVisible(false);
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
 		mainGame->btnMSet->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnMSet->setVisible(false);
 	if(flag & COMMAND_SSET) {
@@ -2599,7 +2626,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnSSet->setVisible(true);
 		mainGame->btnSSet->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSSet->setVisible(false);
 	if(flag & COMMAND_REPOS) {
@@ -2612,40 +2639,40 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		mainGame->btnRepos->setVisible(true);
 		mainGame->btnRepos->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnRepos->setVisible(false);
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnAttack->setVisible(false);
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
 		mainGame->btnShowList->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnShowList->setVisible(false);
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
 		mainGame->btnOperation->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnOperation->setVisible(false);
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
 		mainGame->btnReset->setRelativePosition(position2di(0, height));
 #ifdef _IRR_ANDROID_PLATFORM_
-		height += 50 * mainGame->yScale;
+		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnReset->setVisible(false);
 	panel = mainGame->wCmdMenu;
 	mainGame->wCmdMenu->setVisible(true);
-	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 100 * mainGame->xScale, y - 20 * mainGame->yScale));
+	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 20 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 130 * mainGame->xScale, y - 30 * mainGame->yScale));
 }
 void ClientField::UpdateChainButtons() {
 	if(mainGame->btnChainAlways->isVisible()) {

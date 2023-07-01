@@ -290,7 +290,7 @@ public abstract class AbstractWheelTextAdapter extends AbstractWheelAdapter {
 			if (textResource == NO_RESOURCE && view instanceof TextView) {
 				text = (TextView) view;
 			} else if (textResource != NO_RESOURCE) {
-				text = (TextView) view.findViewById(textResource);
+				text = view.findViewById(textResource);
 			}
 		} catch (ClassCastException e) {
 			Log.e("AbstractWheelAdapter",

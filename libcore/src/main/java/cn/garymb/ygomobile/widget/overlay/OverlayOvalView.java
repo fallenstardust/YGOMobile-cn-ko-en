@@ -41,7 +41,7 @@ public class OverlayOvalView extends OverlayView implements View.OnClickListener
 
 	@Override
 	protected void onInflateView() {
-		mInfo = (TextView) this.findViewById(R.id.textview_info);
+		mInfo = this.findViewById(R.id.textview_info);
 		mInfo.setOnClickListener(this);
 	}
 

@@ -75,6 +75,7 @@ void DeckBuilder::Initialize() {
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
 	mainGame->wPallet->setVisible(true);
 	mainGame->imgChat->setVisible(false);
+	mainGame->imgQuickAnimation->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
@@ -110,6 +111,7 @@ void DeckBuilder::Terminate() {
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
     mainGame->imgChat->setVisible(true);
+    mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);
     mainGame->wLogs->setVisible(false);
 	mainGame->PopupElement(mainGame->wMainMenu);
@@ -172,7 +174,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case BUTTON_CLEAR_DECK: {
 				mainGame->gMutex.lock();
-				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->textFont, dataManager.GetSysString(1339));
+				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->guiFont, dataManager.GetSysString(1339));
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
 				prev_operation = id;
@@ -246,7 +248,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->gMutex.lock();
 				wchar_t textBuffer[256];
 				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337));
-				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->textFont, textBuffer);
+				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
 				prev_operation = id;
@@ -883,7 +885,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->textFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->guiFont, dataManager.GetSysString(1356));
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -1671,7 +1673,7 @@ void DeckBuilder::RefreshPackListScroll() {
 		}
 	} else {
 		mainGame->scrPackCards->setVisible(false);
-        mainGame->scrPackCards->setPos(0);
+		mainGame->scrPackCards->setPos(0);
 	}
 }
 void DeckBuilder::ChangeCategory(int catesel) {

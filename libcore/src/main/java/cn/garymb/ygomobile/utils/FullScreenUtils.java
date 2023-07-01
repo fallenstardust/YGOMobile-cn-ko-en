@@ -6,7 +6,7 @@ import android.view.View;
 
 public class FullScreenUtils {
     private boolean isFullscreen;
-    private Activity activity;
+    private final Activity activity;
     private static final int windowsFlags =
             Build.VERSION.SDK_INT >=Build.VERSION_CODES.KITKAT ? (
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
