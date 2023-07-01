@@ -495,6 +495,12 @@ public class OYUtil {
         CardBag cardBag;
 
         cardBag =new CardBag();
+        cardBag.setTitle("SD46 王者归来");
+        cardBag.setMessage("杰克的塔玛希回来了");
+        cardBag.setDeckName("SD46");
+        cardBagList.add(cardBag);
+
+        cardBag =new CardBag();
         cardBag.setTitle("1111 哥布林版舞台旋转来临");
         cardBag.setMessage("K语言甚至让你读不懂他的效果");
         cardBag.setDeckName("1111");

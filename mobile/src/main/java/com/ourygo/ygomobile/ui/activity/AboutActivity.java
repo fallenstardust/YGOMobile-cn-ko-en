@@ -134,9 +134,13 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+        updateList.add(UpdateLog.toUpdateLog("1.2.4","更新ygo内核\n" +
+                "更新卡包DP28+AC03+SD46+VJ\n"
+                +"OCG禁卡表更新至2023.7\n"
+                +"TCG禁卡表更新至2023.6"));
        updateList.add(UpdateLog.toUpdateLog("1.2.3","更新ygo内核\n" +
                "更新卡包1111+T1110+VJ\n" +
-               "软件名简化为YGO-OY" +
+               "软件名简化为YGO-OY\n" +
                "其他优化"));
        updateList.add(UpdateLog.toUpdateLog("1.2.2","更新ygo内核\n"
                + "更新卡包WPP3+VJ\n"
