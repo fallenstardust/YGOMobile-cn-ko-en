@@ -16,9 +16,9 @@
     </style>
 
     <style name="AppTheme.Mycard" parent="AppBaseTheme">
-        <item name="colorPrimary">@color/mediumPurpleLight</item>
-        <item name="colorPrimaryDark">@color/mediumPurple</item>
-        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorNavy</item>
+        <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>

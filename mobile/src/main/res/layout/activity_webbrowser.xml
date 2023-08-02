@@ -10,11 +10,61 @@
 
         <include layout="@layout/content_toolbar" />
 
+        <LinearLayout
+            android:id="@+id/find_in_page"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:weightSum="10"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/context_keyword"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="7"
+                android:hint="@string/find_in_page"
+                android:imeOptions="actionSearch"
+                android:inputType="textNoSuggestions"
+                android:maxLines="1" />
+
+            <ImageButton
+                android:id="@+id/ib_last"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@color/transparent"
+                android:src="@drawable/baseline_keyboard_arrow_up_24" />
+
+            <ImageButton
+                android:id="@+id/ib_next"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@color/transparent"
+                android:src="@drawable/baseline_keyboard_arrow_down_24" />
+
+            <ImageButton
+                android:id="@+id/web_text_search_close"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@color/transparent"
+                android:src="@drawable/ic_close_black_24dp" />
+
+        </LinearLayout>
+
         <cn.garymb.ygomobile.ui.widget.WebViewPlus
             android:id="@+id/webbrowser"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </LinearLayout>
+
     <LinearLayout
         android:id="@+id/web_btn_bar"
         android:layout_width="match_parent"
@@ -28,7 +78,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/button_bg"
             android:text="@string/Download"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
     </LinearLayout>
 

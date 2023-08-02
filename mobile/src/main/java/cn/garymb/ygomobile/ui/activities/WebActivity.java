@@ -12,14 +12,23 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+
+import com.tencent.smtt.export.external.interfaces.IX5WebViewBase;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,7 +41,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
-import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
@@ -49,12 +57,17 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
-public class WebActivity extends BaseActivity {
+public class WebActivity extends BaseActivity implements View.OnClickListener {
+    private static String TAG = "WebActivity";
     /* 全局存储了扩展卡版本号，会被其他activity使用 */
     private static String exCardVer;
     private WebViewPlus mWebViewPlus;
     private String mUrl;
     private String mTitle;
+    private ImageButton btn_context_search;
+    private LinearLayout find_in_page;
+    private EditText et_context_keyword;
+    private ImageButton btn_context_search_close, btn_context_search_last, btn_context_search_next;
     private Button btn_download;
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
@@ -118,6 +131,8 @@ public class WebActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         enableBackHome();
         mWebViewPlus = $(R.id.webbrowser);
+        find_in_page = $(R.id.find_in_page);
+        et_context_keyword = $(R.id.context_keyword);
         serverInfos = new ArrayList<>();
         xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);
         initButton();
@@ -141,6 +156,16 @@ public class WebActivity extends BaseActivity {
                 btn_download.setVisibility(View.GONE);
             }
         }
+        TextView.OnEditorActionListener searchListener = (v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                mWebViewPlus.findAllAsync(et_context_keyword.getText().toString());
+                return true;
+            }
+            return false;
+        };
+        et_context_keyword.setOnEditorActionListener(searchListener);
     }
 
     @Override
@@ -165,6 +190,7 @@ public class WebActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        find_in_page.setVisibility(View.GONE);
         if (item.getItemId() == android.R.id.home) {
             onBackHome();
             return true;
@@ -213,6 +239,47 @@ public class WebActivity extends BaseActivity {
         super.onDestroy();
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.web_text_search:
+                find_in_page.setVisibility(View.VISIBLE);
+                break;
+            case R.id.ib_last:
+                mWebViewPlus.findNext(false);//为false时表示上一项
+                break;
+            case R.id.ib_next:
+                mWebViewPlus.findNext(true);//为true时表示下一项
+                break;
+            case R.id.web_text_search_close:
+                find_in_page.setVisibility(View.GONE);
+                et_context_keyword.getText().clear();//清除输入内容
+                mWebViewPlus.clearMatches();//清除页面上的高亮项：
+                break;
+            case R.id.web_btn_download_prerelease:
+                downloadfromWeb(URL_YGO233_FILE);
+                break;
+
+        }
+    }
+
+    public void initButton() {
+        btn_context_search = $(R.id.web_text_search);
+        btn_context_search.setOnClickListener(this);
+
+        btn_context_search_last = $(R.id.ib_last);
+        btn_context_search_last.setOnClickListener(this);
+
+        btn_context_search_next = $(R.id.ib_next);
+        btn_context_search_next.setOnClickListener(this);
+
+        btn_context_search_close = $(R.id.web_text_search_close);
+        btn_context_search_close.setOnClickListener(this);
+
+        btn_download = $(R.id.web_btn_download_prerelease);
+        btn_download.setOnClickListener(this);
+    }
+
     public static void open(Context context, String title, String url) {
         Intent intent = new Intent(context, WebActivity.class);
         intent.putExtra(Intent.EXTRA_STREAM, url);
@@ -223,16 +290,6 @@ public class WebActivity extends BaseActivity {
     public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
         WebActivity.open(context, cardInfo.Name, uri);
-    }
-
-    public void initButton() {
-        btn_download = $(R.id.web_btn_download_prerelease);
-        btn_download.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                downloadfromWeb(URL_YGO233_FILE);
-            }
-        });
     }
 
     public void AddServer(String name, String Addr, int port, String playername) {
@@ -303,7 +360,7 @@ public class WebActivity extends BaseActivity {
                         if (files.getName().contains("-") && files.getName().contains(" new cards"))
                             files.delete();
                     }
-                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(),".ypk");
+                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(), ".ypk");
                 } catch (Exception e) {
                     message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
                 } finally {

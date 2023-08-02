@@ -102,6 +102,7 @@
     <string name="deck_manager">卡组</string>
     <string name="category_manager">卡组分类选择</string>
     <string name="search">搜索</string>
+    <string name="find_in_page">输入要查找的词：</string>
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
     <string name="reset">重置</string>

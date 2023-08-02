@@ -347,4 +347,5 @@
     <string name="reChatJoining">다시 로그인 중\.\.\.</string>
     <string name="settings_data_language">언어</string>
     <string name="settings_data_language_about">게임 데이터 언어를 변경합니다.</string>
+    <string name="find_in_page">" 발견:"</string>
 </resources>

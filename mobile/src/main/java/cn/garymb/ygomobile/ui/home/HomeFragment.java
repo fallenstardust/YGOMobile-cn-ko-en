@@ -153,12 +153,8 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         //添加服务器
         View footView = infla.inflate(R.layout.item_ic_add, null);
         TextView add_server = footView.findViewById(R.id.add_server);
-        add_server.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mServerListManager.addServer();
-            }
-        });
+        add_server.setOnClickListener(this);
+
         mServerListAdapter.addFooterView(footView);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         mServerList.setLayoutManager(linearLayoutManager);
@@ -765,6 +761,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             case R.id.return_to_duel: {
                 openGame();
             }
+            break;
+            case R.id.add_server:
+                mServerListManager.addServer();
             break;
             case R.id.tv_banner_loading:
                 if (isMcNewsLoadException)
