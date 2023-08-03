@@ -157,7 +157,11 @@
         <service
             android:name="com.ourygo.assistant.service.DuelAssistantService"
             android:priority="1000" />
-
+        <service
+            android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
+            android:label="dexopt"
+            android:process=":dexopt" >
+        </service>
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
             android:name="cn.garymb.ygomobile.ui.settings.YGOPreferencesProvider"
