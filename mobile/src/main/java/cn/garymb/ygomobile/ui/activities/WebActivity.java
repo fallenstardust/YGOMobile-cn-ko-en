@@ -9,6 +9,7 @@ import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -29,6 +30,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
 import com.tencent.smtt.export.external.interfaces.IX5WebViewBase;
+import com.tencent.smtt.sdk.ValueCallback;
+import com.tencent.smtt.sdk.WebChromeClient;
+import com.tencent.smtt.sdk.WebView;
+import com.tencent.smtt.sdk.WebViewClient;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +49,7 @@ import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
@@ -57,8 +63,10 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
-public class WebActivity extends BaseActivity implements View.OnClickListener {
+public class WebActivity extends BaseActivity implements View.OnClickListener{
     private static String TAG = "WebActivity";
+    private static final int FILE_CHOOSER_REQUEST = 100;
+    private ValueCallback<Uri[]> mFilePathCallback;
     /* 全局存储了扩展卡版本号，会被其他activity使用 */
     private static String exCardVer;
     private WebViewPlus mWebViewPlus;
@@ -136,18 +144,16 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         serverInfos = new ArrayList<>();
         xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);
         initButton();
-        /*mWebViewPlus.enableHtml5();
+        //mWebViewPlus.enableHtml5();
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
             @Override
-            public void onReceivedTitle(WebView view, String title) {
-                super.onReceivedTitle(view, title);
-                if (toolbar != null) {
-                    toolbar.setSubtitle(title);
-                } else {
-                    setTitle(title);
-                }
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+                Log.i(TAG, "openFileChooser: " + fileChooserParams.getMode());
+                mFilePathCallback = filePathCallback;
+                openFileChooseProcess(fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                return true;
             }
-        });*/
+        });
         if (doIntent(getIntent())) {
             mWebViewPlus.loadUrl(mUrl);
             if (mUrl.startsWith(URL_YGO233_ADVANCE)) {
@@ -166,6 +172,35 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
             return false;
         };
         et_context_keyword.setOnEditorActionListener(searchListener);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                if (mFilePathCallback != null) {
+                    if(data != null && data.getClipData() != null) {
+                        //有选择多个文件
+                        int count = data.getClipData().getItemCount();
+                        Log.i(TAG, "url count ：  " + count);
+                        Uri[] uris = new Uri[count];
+                        int currentItem = 0;
+                        while(currentItem < count) {
+                            Uri fileUri = data.getClipData().getItemAt(currentItem).getUri();
+                            uris[currentItem] = fileUri;
+                            currentItem = currentItem + 1;
+                        }
+                        mFilePathCallback.onReceiveValue(uris);
+                    } else {
+                        Uri result = data == null ? null : data.getData();
+                        Log.e(TAG, "" + result);
+                        mFilePathCallback.onReceiveValue(new Uri[]{result});
+                    }
+                    mFilePathCallback = null;
+                }
+            }
+        }
     }
 
     @Override
@@ -285,6 +320,17 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         intent.putExtra(Intent.EXTRA_STREAM, url);
         intent.putExtra(Intent.EXTRA_TEXT, title);
         context.startActivity(intent);
+    }
+
+    private void openFileChooseProcess(boolean isMulti) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setType("*/*");
+        if (isMulti) {
+            Log.e(TAG, "putExtra");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        startActivityForResult(Intent.createChooser(intent, "FileChooser"), FILE_CHOOSER_REQUEST);
     }
 
     public static void openFAQ(Context context, Card cardInfo) {
