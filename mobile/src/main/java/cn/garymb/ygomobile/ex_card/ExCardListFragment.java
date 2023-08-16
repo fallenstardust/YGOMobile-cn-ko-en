@@ -63,7 +63,7 @@ public class ExCardListFragment extends Fragment {
     private View layoutView;
     private ExCardListAdapter mExCardListAdapter;
     private RecyclerView mExCardListView;
-    private Button btnDownload;
+    private LinearLayout ll_Download;
     private TextView textDownload;
     private List<ServerInfo> serverInfos;
     private ServerInfo mServerInfo;
@@ -117,19 +117,8 @@ public class ExCardListFragment extends Fragment {
         mExCardListAdapter.loadData();
 
         textDownload = layoutView.findViewById(R.id.text_download_prerelease);
-        btnDownload = layoutView.findViewById(R.id.btn_download_prerelease);
-        //偷个懒，两个按钮的回调实现相同。For convenience I set two callbacks of a buttons
-        // have same implementation.
-        textDownload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (downloadState != DownloadState.DOWNLOAD_ING) {
-                    downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(URL_YGO233_FILE);
-                }
-            }
-        });
-        btnDownload.setOnClickListener(new View.OnClickListener() {
+        ll_Download = layoutView.findViewById(R.id.btn_download_prerelease);
+        ll_Download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (downloadState != DownloadState.DOWNLOAD_ING) {
