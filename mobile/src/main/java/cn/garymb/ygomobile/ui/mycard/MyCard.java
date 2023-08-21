@@ -48,7 +48,10 @@ public class MyCard {
 
     private static final String mHomeUrl = "https://mycard.moe/mobile/";
     private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
+    public static final String mCommunityIndexUrl = "https://ygobbs.com/";
+    public static final String mCommunityReportUrl = "https://ygobbs.com/t/bug%E5%8F%8D%E9%A6%88/";
     private static final String mCommunityUrl = "https://ygobbs.com/login";
+    public static final String mCompetitionUrl = "https://event.ygobbs.com/";
     private static final String return_sso_url = "https://mycard.moe/mobile/?";
     private static final String HOST_MC = "mycard.moe";
     public static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";

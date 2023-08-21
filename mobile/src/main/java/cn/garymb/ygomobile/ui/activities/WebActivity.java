@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -29,11 +30,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
-import com.tencent.smtt.export.external.interfaces.IX5WebViewBase;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebView;
-import com.tencent.smtt.sdk.WebViewClient;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,8 +46,11 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.file.FileActivity;
+import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
@@ -63,7 +65,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
-public class WebActivity extends BaseActivity implements View.OnClickListener{
+public class WebActivity extends BaseActivity implements View.OnClickListener {
     private static String TAG = "WebActivity";
     private static final int FILE_CHOOSER_REQUEST = 100;
     private ValueCallback<Uri[]> mFilePathCallback;
@@ -180,13 +182,13 @@ public class WebActivity extends BaseActivity implements View.OnClickListener{
         if (requestCode == FILE_CHOOSER_REQUEST) {
             if (resultCode == RESULT_OK) {
                 if (mFilePathCallback != null) {
-                    if(data != null && data.getClipData() != null) {
+                    if (data != null && data.getClipData() != null) {
                         //有选择多个文件
                         int count = data.getClipData().getItemCount();
                         Log.i(TAG, "url count ：  " + count);
                         Uri[] uris = new Uri[count];
                         int currentItem = 0;
-                        while(currentItem < count) {
+                        while (currentItem < count) {
                             Uri fileUri = data.getClipData().getItemAt(currentItem).getUri();
                             uris[currentItem] = fileUri;
                             currentItem = currentItem + 1;
@@ -323,14 +325,23 @@ public class WebActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void openFileChooseProcess(boolean isMulti) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.setType("*/*");
-        if (isMulti) {
-            Log.e(TAG, "putExtra");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        Log.e(TAG,mWebViewPlus.getUrl());
+        if (mWebViewPlus.getUrl().contains(MyCard.mCommunityReportUrl)) {
+            Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getReplayDir(), false, FileOpenType.SelectFile);
+            startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+        } else if (mWebViewPlus.getUrl().equals(MyCard.mCompetitionUrl)) {
+            Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getDeckDir(), false, FileOpenType.SelectFile);
+            startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+        } else {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setType("*/*");
+            if (isMulti) {
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            }
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.dialog_select_file)), FILE_CHOOSER_REQUEST);
         }
-        startActivityForResult(Intent.createChooser(intent, "FileChooser"), FILE_CHOOSER_REQUEST);
+
     }
 
     public static void openFAQ(Context context, Card cardInfo) {

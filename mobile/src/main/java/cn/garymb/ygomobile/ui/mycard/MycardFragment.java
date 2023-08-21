@@ -35,10 +35,13 @@ import com.tencent.smtt.sdk.WebView;
 import java.text.MessageFormat;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.file.FileActivity;
+import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
@@ -160,23 +163,35 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             @Override
             public void openFileChooser(ValueCallback<Uri> valueCallback, String acceptType, String capture) {
                 uploadMessage = valueCallback;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("*/*");
-                startActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
-
+                if (mWebViewPlus.getUrl().contains(MyCard.mCommunityReportUrl)) {
+                    Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getReplayDir(), false, FileOpenType.SelectFile);
+                    startActivityForResult(intent, FILECHOOSER_RESULTCODE);
+                } else if (mWebViewPlus.getUrl().equals(MyCard.mCompetitionUrl)) {
+                    Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getDeckDir(), false, FileOpenType.SelectFile);
+                    startActivityForResult(intent, FILECHOOSER_RESULTCODE);
+                } else {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(Intent.createChooser(i, getString(R.string.dialog_select_file)), FILECHOOSER_RESULTCODE);
+                }
             }
 
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> valueCallback, FileChooserParams fileChooserParams) {
                 mUploadCallbackAboveL = valueCallback;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("*/*");
-                startActivityForResult(
-                        Intent.createChooser(i, "File Browser"),
-                        FILECHOOSER_RESULTCODE);
-
+                if (mWebViewPlus.getUrl().contains(MyCard.mCommunityReportUrl)) {
+                    Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getReplayDir(), false, FileOpenType.SelectFile);
+                    startActivityForResult(intent, FILECHOOSER_RESULTCODE);
+                } else if (mWebViewPlus.getUrl().equals(MyCard.mCompetitionUrl)) {
+                    Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getDeckDir(), false, FileOpenType.SelectFile);
+                    startActivityForResult(intent, FILECHOOSER_RESULTCODE);
+                } else {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(Intent.createChooser(i, getString(R.string.dialog_select_file)), FILECHOOSER_RESULTCODE);
+                }
                 return true;
             }
         });
