@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,6 +41,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -57,7 +57,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 
 
-public class ExCardListFragment extends Fragment {
+public class ExCardListFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = String.valueOf(ExCardListFragment.class);
     private Context context;
     private View layoutView;
@@ -115,19 +115,23 @@ public class ExCardListFragment extends Fragment {
         mExCardListView.setLayoutManager(linearLayoutManager);
         mExCardListView.setAdapter(mExCardListAdapter);
         mExCardListAdapter.loadData();
-
         textDownload = layoutView.findViewById(R.id.text_download_prerelease);
         ll_Download = layoutView.findViewById(R.id.btn_download_prerelease);
-        ll_Download.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        ll_Download.setOnClickListener(this);
+        changeDownloadText();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_download_prerelease:
                 if (downloadState != DownloadState.DOWNLOAD_ING) {
                     downloadState = DownloadState.DOWNLOAD_ING;
                     downloadfromWeb(URL_YGO233_FILE);
                 }
-            }
-        });
-        changeDownloadText();
+                break;
+        }
+
     }
 
     /**

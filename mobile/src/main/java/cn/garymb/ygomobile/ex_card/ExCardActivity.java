@@ -14,8 +14,6 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 
 public class ExCardActivity extends BaseActivity {
     private static final String TAG = String.valueOf(ExCardActivity.class);
-    private Context context;
-    private Toolbar toolbar;
     public static TabLayout tabLayout;
     public static ViewPager viewPager;
     private PackageTabAdapter adapter;
@@ -24,7 +22,6 @@ public class ExCardActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ex_card);
-
         viewPager = findViewById(R.id.viewPager);
         viewPager.setOffscreenPageLimit(2);
         tabLayout = findViewById(R.id.packagetablayout);

@@ -18,7 +18,7 @@
     <string name="game_sound">音效文件</string>
     <string name="game_skins">皮肤文件</string>
     <string name="coping_pendulum_image">复制灵摆数字图片</string>
-    <string name="dialog_select_font">请选择一个字体文件</string>
+    <string name="dialog_select_file">请选择一个文件</string>
     <string name="dialog_select_image">请选择一张图片</string>
     <string name="dialog_select_database">请选择一个数据库文件</string>
     <string name="copy_databse">复制数据库中</string>
@@ -39,7 +39,9 @@
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
     <string name="fetch_ex_card">通过网络获取先行卡</string>
+    <string name="ex_card_list_title">先行卡</string>
     <string name="ex_card_log_title">更新日志</string>
+    <string name="ex_card_report_title">反馈</string>
     <string name="ex_card_check_toast_message">未开启拓展卡包会在该服务器遇到未知卡，推荐开启拓展卡包后再进入</string>
     <string name="ex_card_check_toast_message_ii">未下载拓展卡包会在该服务器遇到未知卡，推荐下载拓展卡包后再进入</string>
 

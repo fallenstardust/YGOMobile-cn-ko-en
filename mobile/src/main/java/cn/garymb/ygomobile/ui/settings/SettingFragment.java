@@ -356,7 +356,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             setPendlumScale(checkBoxPreference.isChecked());
         } else if (PREF_GAME_FONT.equals(key)) {
             //选择ttf字体文件，保存
-            showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_font));
+            showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_file));
         } else if (SETTINGS_AVATAR.equals(key)) {
             final DialogPlus dialog = new DialogPlus(getContext());
             dialog.setContentView(R.layout.dialog_avatar_select);

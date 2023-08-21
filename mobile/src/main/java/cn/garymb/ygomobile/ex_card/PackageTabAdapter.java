@@ -1,10 +1,18 @@
 package cn.garymb.ygomobile.ex_card;
 
+import android.app.Activity;
+import android.content.Context;
+
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.google.android.material.tabs.TabLayout;
+
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 
 /**
  * Tab的适配器，用来实现页面切换
@@ -15,6 +23,7 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
         super(fm);
         this.tabLayout = _tabLayout;
     }
+
     @Override
     public Fragment getItem(int position) {
         Fragment fragment = null;
@@ -28,10 +37,12 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
         }
         return fragment;
     }
+
     @Override
     public int getCount() {
         return 2;
     }
+
     @Override
     public CharSequence getPageTitle(int position) {
         String title = null;
@@ -45,7 +56,4 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
         }
         return title;
     }
-
-
-
 }

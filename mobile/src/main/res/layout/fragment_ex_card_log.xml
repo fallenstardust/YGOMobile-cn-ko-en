@@ -12,6 +12,38 @@
         android:divider="@android:color/darker_gray"
         android:dividerHeight="0.5dp"
         android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft" />
+    <LinearLayout
+        android:id="@+id/btn_report"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="70dp"
+        android:clickable="true"
+        android:focusableInTouchMode="true"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+
+        <Button
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/rename" />
+
+        <TextView
+            android:id="@+id/text_report"
+            android:layout_width="60dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_radius_bg"
+            android:clickable="false"
+            android:text="@string/ex_card_report_title"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textColor="@color/gold"
+            android:textSize="10sp" />
+    </LinearLayout>
 </FrameLayout>
 
 

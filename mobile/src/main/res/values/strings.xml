@@ -19,7 +19,7 @@
     <string name="game_sound">sound files</string>
     <string name="game_skins">skin files</string>
     <string name="coping_pendulum_image">Coping pendulum image</string>
-    <string name="dialog_select_font">Select a font file</string>
+    <string name="dialog_select_file">Select a file</string>
     <string name="dialog_select_image">Select a iamge</string>
     <string name="dialog_select_database">Select a database file</string>
     <string name="copy_databse">copying databse</string>
@@ -46,7 +46,9 @@
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
     <string name="fetch_ex_card">Fetching pre-cards via web</string>
+    <string name="ex_card_list_title">Card List</string>
     <string name="ex_card_log_title">update log</string>
+    <string name="ex_card_report_title">Reoprt</string>
     <string name="ex_card_check_toast_message">before join in this server, please "used Expansions" in settings first</string>
     <string name="ex_card_check_toast_message_ii">before join in this server, please download expansions first</string>
     <!-- settings -->
