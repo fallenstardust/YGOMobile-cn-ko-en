@@ -55,6 +55,7 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
+import cn.garymb.ygomobile.ui.settings.SharedPreferencesPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -67,12 +68,12 @@ public class AppsSettings {
     private final Point mScreenSize = new Point();
     private final Point mRealScreenSize = new Point();
     private final Context context;
-    private final PreferenceFragmentPlus.SharedPreferencesPlus mSharedPreferences;
+    private final SharedPreferencesPlus mSharedPreferences;
     private float mDensity;
 
     private AppsSettings(Context context) {
         this.context = context;
-        mSharedPreferences = PreferenceFragmentPlus.SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
+        mSharedPreferences = SharedPreferencesPlus.create(context, context.getPackageName() + ".settings");
         mSharedPreferences.setAutoSave(true);
         Log.e("YGOMobileLog", "初始化类地址:  " + System.identityHashCode(this));
         update(context);
@@ -109,7 +110,7 @@ public class AppsSettings {
         mSharedPreferences.putInt(PREF_VERSION, ver);
     }
 
-    public PreferenceFragmentPlus.SharedPreferencesPlus getSharedPreferences() {
+    public SharedPreferencesPlus getSharedPreferences() {
         return mSharedPreferences;
     }
 
