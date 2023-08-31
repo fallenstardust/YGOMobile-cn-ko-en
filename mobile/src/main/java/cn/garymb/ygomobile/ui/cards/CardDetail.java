@@ -427,7 +427,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         //先显示普通卡片大图，判断如果没有高清图就下载
         imageLoader.bindImage(photoView, code, null, ImageLoader.Type.middle);
 
-        if (null == ImageLoader.getImageFile(code)) {
+        if (null == imageLoader.getImageFile(code)) {
             downloadCardImage(code, false);
         }
 

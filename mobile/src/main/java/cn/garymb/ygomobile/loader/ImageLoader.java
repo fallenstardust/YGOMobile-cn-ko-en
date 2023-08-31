@@ -30,7 +30,6 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import cn.garymb.ygomobile.utils.glide.StringSignature;
 import ocgcore.data.Card;
@@ -47,7 +46,10 @@ public class ImageLoader implements Closeable {
         //531x762
         middle(3);
         private final int id;
-        Type(int id){this.id = id;}
+
+        Type(int id) {
+            this.id = id;
+        }
 
         public int getId() {
             return id;
@@ -126,7 +128,7 @@ public class ImageLoader implements Closeable {
         bindT(data, name, imageview, pre, type);
     }
 
-    private void bind(final Uri uri, String name, ImageView imageview, Drawable pre,@NonNull Type type) {
+    private void bind(final Uri uri, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
         if (BuildConfig.DEBUG_MODE) {
             Log.v(TAG, "bind uri:" + name + ", type=" + type);
         }
@@ -228,7 +230,7 @@ public class ImageLoader implements Closeable {
     }
 
     public void bindImage(ImageView imageview, Card card, @NonNull Type type) {
-        if(card == null){
+        if (card == null) {
             imageview.setImageResource(R.drawable.unknown);
         } else {
             bindImage(imageview, card.Code, null, type);
@@ -240,14 +242,14 @@ public class ImageLoader implements Closeable {
         bindImage(imageview, code, null, type);
     }
 
-    public static File getImageFile(long code){
+    public File getImageFile(long code) {
         for (String ex : Constants.IMAGE_EX) {
             File file = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH + "/" + code + ex);
-            if(file.exists()){
+            if (file.exists()) {
                 return file;
             }
             File file_ex = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code + ex);
-            if(file_ex.exists()){
+            if (file_ex.exists()) {
                 return file_ex;
             }
         }
@@ -260,18 +262,6 @@ public class ImageLoader implements Closeable {
         }
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
-        //1.图片文件
-        for (String ex : Constants.IMAGE_EX) {
-            File file = new File(AppsSettings.get().getResourcePath(), name + ex);
-            File file_ex = new File(AppsSettings.get().getResourcePath(), name_ex + ex);
-            if (file_ex.exists()) {
-                bind(file_ex, imageview, pre, type);
-                return;
-            } else if (file.exists()) {
-                bind(file, imageview, pre, type);
-                return;
-            }
-        }
         //cache
         if (useCache) {
             Cache cache = zipDataCache.get(code);
@@ -280,23 +270,9 @@ public class ImageLoader implements Closeable {
                 return;
             }
         }
-        //2.zip
-        {
-            ZipFile pics = openPicsZip();
-            if (pics != null) {
-                for (String ex : Constants.IMAGE_EX) {
-                    if (bindInZip(imageview, code, pre, pics, name + ex, type)) {
-                        return;
-                    }
-                }
-            }
-        }
-        //3.
-        //zips
+        //1.zips(包括ypk)
         File[] files = AppsSettings.get().getExpansionFiles();
-
         cleanInValidZips();
-
         if (files != null) {
             for (File file : files) {
                 if (file.isFile()) {
@@ -322,12 +298,28 @@ public class ImageLoader implements Closeable {
                 }
             }
         }
-        //4 http
-        if (Constants.NETWORK_IMAGE && NetUtils.isWifiConnected(imageview.getContext())) {
-            bind(Uri.parse(String.format(Constants.IMAGE_URL, "" + code)), code + ".jpg", imageview, pre, type);
-        } else {
-            imageview.setImageResource(R.drawable.unknown);
+        //2.图片文件pics文件夹
+        for (String ex : Constants.IMAGE_EX) {
+            File file = new File(AppsSettings.get().getResourcePath(), name + ex);
+            File file_ex = new File(AppsSettings.get().getResourcePath(), name_ex + ex);
+            if (file_ex.exists()) {
+                bind(file_ex, imageview, pre, type);
+                return;
+            } else if (file.exists()) {
+                bind(file, imageview, pre, type);
+                return;
+            }
         }
+        //3.pics.zip
+        ZipFile pics = openPicsZip();
+        if (pics != null) {
+            for (String ex : Constants.IMAGE_EX) {
+                if (bindInZip(imageview, code, pre, pics, name + ex, type)) {
+                    return;
+                }
+            }
+        }
+
     }
 
 }
