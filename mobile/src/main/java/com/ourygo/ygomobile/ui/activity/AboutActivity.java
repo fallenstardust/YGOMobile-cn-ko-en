@@ -134,6 +134,9 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void initUpdateLog() {
+        updateList.add(UpdateLog.toUpdateLog("1.2.5", "修复卡组码内容缺失时有几率无法检测的问题"
+                + "\n修复卡包卡组分享卡组码异常的问题"
+                + "\n优化卡组分享交互"));
         updateList.add(UpdateLog.toUpdateLog("1.2.4","更新ygo内核\n" +
                 "更新卡包DP28+AC03+SD46+VJ\n"
                 +"OCG禁卡表更新至2023.7\n"
