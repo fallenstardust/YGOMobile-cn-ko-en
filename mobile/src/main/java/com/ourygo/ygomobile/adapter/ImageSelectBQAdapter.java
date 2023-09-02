@@ -50,12 +50,15 @@ public class ImageSelectBQAdapter extends BaseQuickAdapter<ImageSelectItem, Base
             baseViewHolder.setTextColor(R.id.tv_name,messageColor);
             ((TextView)baseViewHolder.getView(R.id.tv_name)).setTypeface(Typeface.DEFAULT);
         } else {
-            if (baseViewHolder.getAdapterPosition() == selectPosition) {
+
+            if (getItemPosition(imageSelectItem) == selectPosition) {
                 iv_image.setBackgroundResource(selectBackgroundColor);
+                iv_image.setImageAlpha(0xff);
                 baseViewHolder.setTextColor(R.id.tv_name,selectMessageColor);
                 ((TextView)baseViewHolder.getView(R.id.tv_name)).setTypeface(Typeface.DEFAULT_BOLD);
             } else {
                 iv_image.setBackgroundResource(backgroundColor);
+                iv_image.setImageAlpha((int) (0xff * 0.3));
                 baseViewHolder.setTextColor(R.id.tv_name,messageColor);
                 ((TextView)baseViewHolder.getView(R.id.tv_name)).setTypeface(Typeface.DEFAULT);
             }
