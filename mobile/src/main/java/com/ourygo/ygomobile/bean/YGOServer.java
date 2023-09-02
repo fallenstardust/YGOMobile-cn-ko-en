@@ -5,8 +5,10 @@ import static cn.garymb.ygomobile.Constants.QUERY_YGO_TYPE;
 import android.net.Uri;
 import android.text.TextUtils;
 
-import com.ourygo.assistant.util.Record;
-import com.ourygo.assistant.util.UrlUtil;
+
+import com.ourygo.lib.duelassistant.util.DARecord;
+import com.ourygo.lib.duelassistant.util.UrlUtil;
+import com.ourygo.ygomobile.util.Record;
 
 import net.kk.xml.annotations.XmlElement;
 
@@ -87,14 +89,14 @@ public class YGOServer extends ServerInfo {
     }
 
     public String toUri(String password) {
-        Uri.Builder uri = Uri.parse(Record.HTTP_URL_PREFIX)
+        Uri.Builder uri = Uri.parse(DARecord.HTTP_URL_PREFIX)
                 .buildUpon()
                 .authority(Record.URI_ROOM_HOST);
-        uri.appendQueryParameter(QUERY_YGO_TYPE, Record.ARG_ROOM);
+        uri.appendQueryParameter(QUERY_YGO_TYPE, DARecord.ARG_ROOM);
         uri.appendQueryParameter(Constants.QUERY_VERSION, "1");
-        uri.appendQueryParameter(Record.ARG_HOST, UrlUtil.enURL(getServerAddr()));
+        uri.appendQueryParameter(DARecord.ARG_HOST, UrlUtil.enURL(getServerAddr()));
         uri.appendQueryParameter(Record.ARG_PORT, UrlUtil.enURL(getPort() + ""));
-        uri.appendQueryParameter(Record.ARG_PASSWORD, UrlUtil.enURL(password));
+        uri.appendQueryParameter(DARecord.ARG_PASSWORD, UrlUtil.enURL(password));
         return uri.toString();
     }
 

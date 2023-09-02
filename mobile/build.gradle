@@ -182,5 +182,7 @@ dependencies {
     // 友盟统计SDK
     implementation 'com.umeng.umsdk:common:9.5.2'// 必选
     implementation 'com.umeng.umsdk:asms:1.6.3'// 必选
+    //决斗助手
+    implementation 'com.github.feihuaduo:YGODuelAssistantLib:1.0.7'
 
 }

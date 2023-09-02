@@ -15,8 +15,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ourygo.assistant.util.PermissionUtil;
-import com.ourygo.assistant.util.Util;
+
+import com.ourygo.lib.duelassistant.util.PermissionUtil;
+import com.ourygo.lib.duelassistant.util.Util;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;

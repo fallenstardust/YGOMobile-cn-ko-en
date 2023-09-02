@@ -7,6 +7,7 @@ import org.litepal.LitePal;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.bean.McNews;
@@ -50,6 +51,7 @@ import androidx.transition.Fade;
 import androidx.transition.TransitionManager;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;

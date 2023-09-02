@@ -21,10 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.feihua.dialogutils.util.DialogUtils;
-import com.ourygo.assistant.base.listener.OnDuelAssistantListener;
-import com.ourygo.assistant.util.ClipManagement;
-import com.ourygo.assistant.util.DuelAssistantManagement;
-import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
+import com.ourygo.lib.duelassistant.util.ClipManagement;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.adapter.FmPagerAdapter;
 import com.ourygo.ygomobile.adapter.VerTabBQAdapter;
 import com.ourygo.ygomobile.bean.FragmentData;
@@ -52,6 +52,7 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
+import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
@@ -455,25 +456,42 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     }
 
     public void joinDARoom(String host, int port, String password) {
-        YGOUtil.getYGOServerList(serverList -> {
-            YGOServer ygoServer = serverList.getServerInfoList().get(0);
-            if (!TextUtils.isEmpty(host)) {
-                ygoServer.setServerAddr(host);
-                ygoServer.setPort(port);
-            }
-            OYDialogUtil.dialogDAJoinRoom(OYMainActivity.this, ygoServer, password);
-
+        YGODAUtil.deDeckListener(password, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
+            LogUtil.e("feihua","解析结果："+uri1
+                    +" \nmainList: "+mainList.size()
+                    +" \nexList: "+exList.size()
+                    +" \nsideList: "+sideList.size()
+                    +" \nisCompleteDeck: "+isCompleteDeck
+                    +" \nexception: "+exception
+            );
+//            if (!TextUtils.isEmpty(exception)){
+//                cn.garymb.ygomobile.utils.YGOUtil.show("卡组解析失败，原因为："+exception);
+//                return;
+//            }
+//            Deck deckInfo = new Deck(uri,mainList,exList,sideList);
+//            deckInfo.setCompleteDeck(isCompleteDeck);
+//            OYDialogUtil.dialogDASaveDeck(activity,uri.toString(),deckInfo,OYDialogUtil.DECK_TYPE_DECK);
         });
+//        YGOUtil.getYGOServerList(serverList -> {
+//            YGOServer ygoServer = serverList.getServerInfoList().get(0);
+//            if (!TextUtils.isEmpty(host)) {
+//                ygoServer.setServerAddr(host);
+//                ygoServer.setPort(port);
+//            }
+//            OYDialogUtil.dialogDAJoinRoom(OYMainActivity.this, ygoServer, password);
+//
+//        });
     }
 
     @Override
-    public void onCardSearch(String key, int id) {
+    public void onCardQuery(String key, int id) {
 
     }
 
     @Override
-    public void onSaveDeck(String message, boolean isUrl, int id) {
-        saveDeck(message, isUrl);
+    public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
+        Log.e("feihua","主页解析");
+        saveDeck(uri,mainList,exList,sideList,isCompleteDeck,exception);
     }
 
     @Override
@@ -482,8 +500,19 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     }
 
 
-    private void saveDeck(String deckMessage, boolean isUrl) {
-        OYDialogUtil.dialogDASaveDeck(this, deckMessage, isUrl ? OYDialogUtil.DECK_TYPE_URL : OYDialogUtil.DECK_TYPE_MESSAGE);
+    private void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList,boolean isCompleteDeck, String exception) {
+        if (!TextUtils.isEmpty(exception)) {
+            OYUtil.show("卡组解析失败，原因为：" + exception);
+            return;
+        }
+        Deck deckInfo;
+        if (uri != null) {
+            deckInfo = new Deck(uri, mainList, exList, sideList);
+        } else {
+            deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+        }
+        deckInfo.setCompleteDeck(isCompleteDeck);
+        OYDialogUtil.dialogDASaveDeck(this, uri + "", deckInfo, OYDialogUtil.DECK_TYPE_DECK);
     }
 
     @Override

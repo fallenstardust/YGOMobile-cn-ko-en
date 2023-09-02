@@ -59,6 +59,9 @@ public class DeckLoader {
                     }
                     continue;
                 }
+                if (type == DeckItemType.Space) {
+                    type = DeckItemType.MainCard;
+                }
                 line = line.trim();
                 if (line.length() == 0 || !TextUtils.isDigitsOnly(line)) {
                     if (Constants.DEBUG)

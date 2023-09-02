@@ -66,6 +66,7 @@ public class Record {
     public static final String ARG_MESSAGE = "message";
     public static final String ARG_NAME = "name";
     public static final String ARG_VERSION = "version";
+    public static final String URI_ROOM_HOST = "room.ourygo.top";
 
     public static String getMycardPostUrl(String id){
         return MYCARD_POST_URL+id;

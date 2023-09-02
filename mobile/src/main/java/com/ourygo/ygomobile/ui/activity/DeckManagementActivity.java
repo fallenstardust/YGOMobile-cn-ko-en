@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -17,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.feihua.dialogutils.util.DialogUtils;
+import com.ourygo.lib.duelassistant.util.DADeckUtil;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.adapter.DeckListBQAdapter;
 import com.ourygo.ygomobile.util.HandlerUtil;
 import com.ourygo.ygomobile.util.IntentUtil;
@@ -25,6 +28,7 @@ import com.ourygo.ygomobile.util.OYUtil;
 import com.ourygo.ygomobile.util.Record;
 import com.ourygo.ygomobile.util.ShareUtil;
 import com.ourygo.ygomobile.util.SharedPreferenceUtil;
+import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -197,7 +201,9 @@ public class DeckManagementActivity extends ListAndUpdateActivity {
         dialogUtils.dialogj1(null, "卡组码生成中，请稍等");
         new Thread(() -> {
             Deck deck = DeckLoader.readDeck(new CardLoader(DeckManagementActivity.this), deckFile.getPathFile(), null).toDeck();
-            String message = deck.toAppUri().toString();
+            String message = deck.toUri().toString();
+
+            Log.d("feihua","卡组路径："+deckFile.getPathFile()+"  "+deck.getDeckCount()+"  "+deck.getMainCount()+"  "+deck.getExtraCount()+"  "+deck.getSideCount());
             message = "点击或复制打开YGO查看卡组《"+deckFile.getName()+"》：\n" + message;
             HandlerUtil.sendMessage(handler, SHARE_DECK_URI_OK, message);
         }).start();

@@ -18,7 +18,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.ourygo.assistant.util.YGODAUtil;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.ui.activity.ExpansionsSettingActivity;
 import com.ourygo.ygomobile.ui.activity.OYMainActivity;
 import com.ourygo.ygomobile.util.OYDialogUtil;
@@ -255,7 +255,15 @@ public class GameUriManager {
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
                 } else {
-                    OYDialogUtil.dialogDASaveDeck(activity,uri.toString(),OYDialogUtil.DECK_TYPE_URL);
+                    YGODAUtil.deDeckListener(uri, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
+                        if (!TextUtils.isEmpty(exception)){
+                            YGOUtil.show("卡组解析失败，原因为："+exception);
+                            return;
+                        }
+                        Deck deckInfo = new Deck(uri,mainList,exList,sideList);
+                        deckInfo.setCompleteDeck(isCompleteDeck);
+                        OYDialogUtil.dialogDASaveDeck(activity,uri.toString(),deckInfo,OYDialogUtil.DECK_TYPE_DECK);
+                    });
 //                    Deck deckInfo = new Deck(uri);
 //                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
 //                    if (!deckInfo.isCompleteDeck()){

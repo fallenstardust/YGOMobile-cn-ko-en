@@ -30,6 +30,7 @@ import com.feihua.dialogutils.adapter.IconTextRecyclerViewAdapter;
 import com.feihua.dialogutils.bean.ItemData;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.RoomSpinnerAdapter;
 import com.ourygo.ygomobile.base.listener.OnSetBgListener;
@@ -54,7 +55,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 public class OYDialogUtil {
 
     public static final int DECK_TYPE_MESSAGE = 0;
-    public static final int DECK_TYPE_URL = 1;
+    public static final int DECK_TYPE_DECK = 1;
     public static final int DECK_TYPE_PATH = 2;
 
     public static final int BG_TYPE_DUEL = 0;
@@ -101,7 +102,10 @@ public class OYDialogUtil {
         });
     }
 
-    public static void dialogDASaveDeck(Activity activity, String deckMessage, int deckType) {
+    public static void dialogDASaveDeck(Activity activity, String deckMessage,int deckType) {
+        dialogDASaveDeck(activity,deckMessage,null,deckType);
+    }
+    public static void dialogDASaveDeck(Activity activity, String deckMessage,Deck deck, int deckType) {
         DialogUtils du = DialogUtils.getInstance(activity);
         View v = du.dialogBottomSheet(R.layout.da_save_deck_dialog);
         Dialog dialog = du.getDialog();
@@ -124,12 +128,15 @@ public class OYDialogUtil {
                         OYUtil.show(OYUtil.s(R.string.save_failed_bcos) + e);
                     }
                     break;
-                case DECK_TYPE_URL:
-                    Deck deckInfo = new Deck(OYUtil.s(R.string.rename_deck) + System.currentTimeMillis(), Uri.parse(deckMessage));
-                    Log.e("OYDialogUtil", "数量" + deckInfo.getMainCount() + " " + deckInfo.getExtraCount() + " " + deckInfo.getSideCount());
-                    File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-                    if (!deckInfo.isCompleteDeck()) {
-                        cn.garymb.ygomobile.utils.YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                case DECK_TYPE_DECK:
+                    if (deck == null) {
+                        OYUtil.show("卡组信息为空，无法保存");
+                        return;
+                    }
+                    Log.e("OYDialogUtil", "数量" + deck.getMainCount() + " " + deck.getExtraCount() + " " + deck.getSideCount());
+                    File file = deck.saveTemp(AppsSettings.get().getDeckDir());
+                    if (!deck.isCompleteDeck()) {
+                        OYUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
                     }
 //                    try {
 //                        FileUtil.copyFile(file.getAbsolutePath(), AppsSettings.get().getDeckDir(), false);
@@ -286,13 +293,30 @@ public class OYDialogUtil {
             return false;
         });
         tv_join_room.setOnClickListener(v12 -> {
-            if (!OYApplication.isIsInitRes()) {
-                OYUtil.show("请等待资源加载完毕后加入游戏");
-                return;
+
+            try {
+                Log.e("feihua", "开始："+et_password.getText().toString());
+                YGODAUtil.deDeckListener( Uri.parse(et_password.getText().toString().trim()), (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
+                    Log.e("feihua", "解析结果：" + uri1
+                            + " \nmainList: " + mainList.size()
+                            + " \nexList: " + exList.size()
+                            + " \nsideList: " + sideList.size()
+                            + " \nisCompleteDeck: " + isCompleteDeck
+                            + " \nexception: " + exception
+                    );
+                });
+            }catch (Exception e){
+                Log.e("feihua", "异常：" + e);
             }
-            OYUtil.closeKeyboard(dialog);
-            dialog.dismiss();
-            YGOUtil.joinGame(activity, ((RoomSpinnerAdapter) sp_room.getAdapter()).getItem(sp_room.getSelectedItemPosition()), et_password.getText().toString().trim());
+
+
+//            if (!OYApplication.isIsInitRes()) {
+//                OYUtil.show("请等待资源加载完毕后加入游戏");
+//                return;
+//            }
+//            OYUtil.closeKeyboard(dialog);
+//            dialog.dismiss();
+//            YGOUtil.joinGame(activity, ((RoomSpinnerAdapter) sp_room.getAdapter()).getItem(sp_room.getSelectedItemPosition()), et_password.getText().toString().trim());
         });
 
     }
