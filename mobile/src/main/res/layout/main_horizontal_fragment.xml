@@ -7,18 +7,22 @@
     android:orientation="horizontal">
 
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:orientation="vertical"
         android:layout_width="0dp"
         android:layout_weight="2"
         android:layout_height="match_parent">
 
 
-        <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+        <androidx.cardview.widget.CardView
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            app:layout_constraintDimensionRatio="H,3:1"
             android:id="@+id/cv_banner"
             android:layout_marginRight="20dp"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="0dp"
             android:clickable="true"
             android:foreground="?android:attr/selectableItemBackground"
             android:orientation="vertical"
@@ -60,6 +64,7 @@
 
 
         <LinearLayout
+            app:layout_constraintTop_toBottomOf="@id/cv_banner"
             android:layout_marginTop="20dp"
             android:paddingRight="20dp"
             android:orientation="horizontal"
@@ -301,7 +306,7 @@
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:orientation="vertical"
