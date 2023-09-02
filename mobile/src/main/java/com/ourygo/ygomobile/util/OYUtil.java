@@ -572,10 +572,10 @@ public class OYUtil {
         if (calendar.get(Calendar.YEAR) == calendar1.get(Calendar.YEAR)
                 && calendar.get(Calendar.MONTH) == calendar1.get(Calendar.MONTH)
                 && calendar.get(Calendar.DAY_OF_MONTH) == calendar1.get(Calendar.DAY_OF_MONTH)) {
-            SharedPreferenceUtil.setTodayStartTime(System.currentTimeMillis());
-            return true;
+            return false;
         }
-        return false;
+        SharedPreferenceUtil.setTodayStartTime(System.currentTimeMillis());
+        return true;
     }
 
 }
