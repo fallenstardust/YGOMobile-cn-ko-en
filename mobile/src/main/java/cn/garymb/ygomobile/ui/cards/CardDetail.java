@@ -272,7 +272,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             showCardImageDetail(cardInfo.Code);
         });
         name.setText(cardInfo.Name);
-        desc.setText(cardInfo.Desc);
+        if (cardInfo.Name.equals("Unknown")) {
+            desc.setText(R.string.tip_card_info_diff);
+        } else {
+            desc.setText(cardInfo.Desc);
+        }
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
