@@ -357,7 +357,6 @@
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="find_in_page">find:</string>
+    <string name="tip_card_info_diff">Released and Pre-released Cards are different,pls note after patch them</string>
 </resources>

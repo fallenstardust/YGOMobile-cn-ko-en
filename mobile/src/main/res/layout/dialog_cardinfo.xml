@@ -361,7 +361,7 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/white"
                     android:textIsSelectable="true"
-                    tools:text="desc" />
+                    tools:text="@string/tip_card_info_diff" />
             </ScrollView>
 
             <LinearLayout

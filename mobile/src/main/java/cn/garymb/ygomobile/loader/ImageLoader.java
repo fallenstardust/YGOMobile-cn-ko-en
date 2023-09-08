@@ -260,6 +260,7 @@ public class ImageLoader implements Closeable {
         if (BuildConfig.DEBUG_MODE) {
             Log.v(TAG, "bind image:" + code + ", type=" + type);
         }
+        imageview.setImageResource(R.drawable.unknown);
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
         //cache
