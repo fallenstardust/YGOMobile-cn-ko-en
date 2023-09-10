@@ -25,8 +25,17 @@ import com.ashokvarma.bottomnavigation.TextBadgeItem;
 import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -56,6 +65,10 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     long exitLasttime = 0;
     public static String Version;
     public static String Cache_link;
+    public static String Cache_pre_release_code;
+
+    public static List<Integer> pre_code_list = new ArrayList<>();
+    public static List<Integer> released_code_list = new ArrayList<>();
     private static final int TYPE_GET_VERSION_OK = 0;
     private static final int TYPE_GET_VERSION_FAILED = 1;
 
@@ -83,8 +96,10 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             switch (msg.what) {
                 case TYPE_GET_VERSION_OK:
                     Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
-                    Log.i(BuildConfig.VERSION_NAME, Version + "和" + Cache_link);
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));
+                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);
+                    arrangeCodeList(Cache_pre_release_code);
+                    Log.i(Constants.TAG, Cache_pre_release_code);
                     if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
@@ -312,9 +327,11 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         super.onStart();
 
     }
+
     public CardLoader getCardLoader() {
         return cardLoader;
     }
+
     public ImageLoader getImageLoader() {
         return imageLoader;
     }
@@ -401,4 +418,21 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         });
     }
 
+    private void arrangeCodeList(String code) {
+        BufferedReader br = new BufferedReader(new StringReader(code));
+        try {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] words = line.trim().split("[ ]+");
+                pre_code_list.add(Integer.valueOf(words[0]));
+                released_code_list.add(Integer.valueOf(words[1]));
+
+            }
+        } catch (Exception e) {
+            Log.e("读取对照表",e+"");
+        }finally {
+            Log.w("读取对照表",pre_code_list.toString());
+            Log.e("读取对照表",released_code_list.toString());
+        }
+    }
 }
