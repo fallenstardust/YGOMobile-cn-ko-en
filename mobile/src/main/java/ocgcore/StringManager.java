@@ -36,7 +36,7 @@ public class StringManager implements Closeable {
     private final SparseArray<String> mSystem = new SparseArray<>();
     private final List<CardSet> mCardSets = new ArrayList<>();
 
-    StringManager() {
+    public StringManager() {
 
     }
 

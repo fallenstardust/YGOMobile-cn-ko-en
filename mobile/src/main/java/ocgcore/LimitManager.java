@@ -26,7 +26,7 @@ public class LimitManager implements Closeable {
     private final List<String> mLimitNames = new ArrayList<>();
     private int mCount;
 
-    LimitManager() {
+    public LimitManager() {
 
     }
 

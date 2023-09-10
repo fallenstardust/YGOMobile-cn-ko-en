@@ -2,6 +2,8 @@ package cn.garymb.ygomobile;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
+import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
+import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
@@ -27,21 +29,25 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.home.HomeFragment;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
+import ocgcore.LimitManager;
+import ocgcore.StringManager;
 
 
 public class GameUriManager {
     private final Activity activity;
-    private HomeFragment homeFragment;
-    private String fname;
+    private LimitManager limitManager;
+    private StringManager stringManager;
 
     public GameUriManager(Activity activity) {
-        this.activity = activity;
+        this.activity = (HomeActivity) activity;
+        limitManager = new LimitManager();
+        stringManager = new StringManager();
     }
 
     public boolean doIntent(Intent intent) {
@@ -162,6 +168,9 @@ public class GameUriManager {
             local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH, name);
         } else if (name.toLowerCase(Locale.US).endsWith(".lua")) {
             local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_SINGLE_PATH, name);
+        } else if (name.toLowerCase(Locale.US).endsWith(".conf")) {
+            String rename = name.contains("lflist") ? CORE_LIMIT_PATH : name;
+            local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_EXPANSIONS, rename);
         } else {
             local = new File(AppsSettings.get().getResourcePath() + "/temp", name);
         }
@@ -207,6 +216,7 @@ public class GameUriManager {
             boolean isYpk = file.getName().toLowerCase(Locale.US).endsWith(".ypk");
             boolean isYrp = file.getName().toLowerCase(Locale.US).endsWith(".yrp");
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
+            boolean isConf = file.getName().toLowerCase(Locale.US).endsWith(".conf");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());
             if (isYdk) {
                 startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
@@ -234,6 +244,10 @@ public class GameUriManager {
                 } else {
                     Log.w(Constants.TAG, "game is running");
                 }
+            } else if (isConf) {
+                limitManager.load();
+                stringManager.load();
+                Toast.makeText(activity, activity.getString(R.string.restart_app), Toast.LENGTH_LONG).show();
             }
         } else {
             String host = uri.getHost();
@@ -246,11 +260,11 @@ public class GameUriManager {
                     doOpenPath(name);
                 } else {
                     YGODAUtil.deDeckListener(uri, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
-                        if (!TextUtils.isEmpty(exception)){
-                            YGOUtil.show("卡组解析失败，原因为："+exception);
+                        if (!TextUtils.isEmpty(exception)) {
+                            YGOUtil.show("卡组解析失败，原因为：" + exception);
                             return;
                         }
-                        Deck deckInfo = new Deck(uri,mainList,exList,sideList);
+                        Deck deckInfo = new Deck(uri, mainList, exList, sideList);
                         File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                         if (!deckInfo.isCompleteDeck()) {
                             YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
@@ -263,8 +277,7 @@ public class GameUriManager {
                 YGODAUtil.deRoomListener(uri, (host1, port, password, exception) -> {
                     if (TextUtils.isEmpty(exception))
                         if (activity instanceof MainActivity) {
-                            homeFragment = new HomeFragment();
-                            homeFragment.quickjoinRoom(host1, port, password);
+                            ((HomeActivity) activity).fragment_home.quickjoinRoom(host1, port, password);
                         } else {
                             YGOUtil.show(exception);
                         }
