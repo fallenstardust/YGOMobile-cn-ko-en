@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.newIDsArray;
 import static cn.garymb.ygomobile.Constants.oldIDsArray;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -224,6 +226,9 @@ public class DeckUtil {
                     continue;
                 }
                 Integer id = Integer.parseInt(line);
+                if (released_code_list.contains(id)) {//先查看id对应的卡片密码是否在正式数组中存在
+                    id = pre_code_list.get(released_code_list.indexOf(id));//替换成对应先行数组里的code
+                }//执行完后变成先行密码，如果constants对照表里存在该密码，则如下又转换一次，所以发布app后必须及时更新在线对照表
                 if (ArrayUtil.contains(oldIDsArray, id)) {
                     id = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id));
                 }

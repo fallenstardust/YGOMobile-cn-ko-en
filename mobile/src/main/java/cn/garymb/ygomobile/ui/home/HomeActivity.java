@@ -96,10 +96,11 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             switch (msg.what) {
                 case TYPE_GET_VERSION_OK:
                     Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));
-                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);
-                    arrangeCodeList(Cache_pre_release_code);
-                    Log.i(Constants.TAG, Cache_pre_release_code);
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
+                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                    if (!Cache_pre_release_code.isEmpty()) {
+                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                    }
                     if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
@@ -429,10 +430,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
             }
         } catch (Exception e) {
-            Log.e("读取对照表",e+"");
-        }finally {
-            Log.w("读取对照表",pre_code_list.toString());
-            Log.e("读取对照表",released_code_list.toString());
+            Log.e(Constants.TAG, e + "");
+        } finally {
+
         }
     }
 }

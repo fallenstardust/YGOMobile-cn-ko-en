@@ -2,7 +2,10 @@ package cn.garymb.ygomobile.loader;
 
 import static cn.garymb.ygomobile.Constants.newIDsArray;
 import static cn.garymb.ygomobile.Constants.oldIDsArray;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -20,6 +23,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
@@ -131,6 +135,13 @@ public class DeckLoader {
         int code;
         isChanged = false;
         for (Integer id : deck.getMainlist()) {
+            if (released_code_list.contains(tmp.get(id).getCode())) {//先查看id对应的卡片密码是否在正式数组中存在
+                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));//替换成对应先行数组里的code
+                if (cardLoader.readAllCardCodes().get(code) != null) {//万一他还没下载扩展卡包就不执行否则会空指错误
+                    tmp.remove(id);
+                    tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                }
+            }//执行完后变成先行密码，如果constants对照表里存在该密码，则如下又转换一次，确保正式更新后不会出错，最好发布app后必须及时更新在线对照表
             if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
                 code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
                 tmp.remove(id);
@@ -141,6 +152,13 @@ public class DeckLoader {
         }
         tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {
+            if (released_code_list.contains(tmp.get(id).getCode())) {
+                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
+                    if (cardLoader.readAllCardCodes().get(code) != null) {
+                        tmp.remove(id);
+                        tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                    }
+            }
             if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
                 code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
                 tmp.remove(id);
@@ -152,6 +170,13 @@ public class DeckLoader {
         tmp = cardLoader.readCards(deck.getSideList(), true);
 //        Log.i("kk", "desk:" + tmp.size()+"/"+side.size());
         for (Integer id : deck.getSideList()) {
+            if (released_code_list.contains(tmp.get(id).getCode())) {
+                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
+                if (cardLoader.readAllCardCodes().get(code) != null) {
+                    tmp.remove(id);
+                    tmp.put(id, cardLoader.readAllCardCodes().get(code));
+                }
+            }
             if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
                 code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
                 tmp.remove(id);
@@ -160,6 +185,7 @@ public class DeckLoader {
             }
             deckInfo.addSideCards(tmp.get(id));
         }
+        Log.w("deck.source",deckInfo.toLongString());
         return deckInfo;
     }
 }

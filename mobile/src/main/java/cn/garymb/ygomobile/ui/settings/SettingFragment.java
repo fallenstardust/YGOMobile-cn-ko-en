@@ -35,6 +35,9 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
@@ -65,10 +68,12 @@ import com.bumptech.glide.signature.MediaStoreSignature;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,6 +119,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 case TYPE_SETTING_GET_VERSION_OK:
                     Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
                     Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
+                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                    if (!Cache_pre_release_code.isEmpty()) {
+                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                    }
                     if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
                         DialogPlus dialog = new DialogPlus(getActivity());
                         dialog.setMessage(R.string.Found_Update);
@@ -662,6 +672,21 @@ public class SettingFragment extends PreferenceFragmentPlus {
             return false;
         }
     }
+    private void arrangeCodeList(String code) {
+        BufferedReader br = new BufferedReader(new StringReader(code));
+        try {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] words = line.trim().split("[ ]+");
+                pre_code_list.add(Integer.valueOf(words[0]));
+                released_code_list.add(Integer.valueOf(words[1]));
 
+            }
+        } catch (Exception e) {
+            Log.e(Constants.TAG, e + "");
+        } finally {
+
+        }
+    }
 }
 
