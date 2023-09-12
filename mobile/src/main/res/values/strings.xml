@@ -51,6 +51,7 @@
     <string name="ex_card_report_title">Reoprt</string>
     <string name="ex_card_check_toast_message">before join in this server, please "used Expansions" in settings first</string>
     <string name="ex_card_check_toast_message_ii">before join in this server, please download expansions first</string>
+    <string name="ex_card_check_toast_message_iii">obtain expansion cards failed, opening 233 website to download now.</string>
     <!-- settings -->
     <string name="settings_about">About</string>
     <string name="settings_about_sub_about">About</string>

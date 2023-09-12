@@ -44,6 +44,7 @@
     <string name="ex_card_report_title">反馈</string>
     <string name="ex_card_check_toast_message">未开启扩展卡包会在该服务器遇到未知卡，推荐开启扩展卡包后再进入</string>
     <string name="ex_card_check_toast_message_ii">未下载扩展卡包会在该服务器遇到未知卡，推荐下载扩展卡包后再进入</string>
+    <string name="ex_card_check_toast_message_iii">未获取到先行卡信息，将跳转233官网下载</string>
 
     <!-- settings -->
     <string name="settings_about">关于</string>

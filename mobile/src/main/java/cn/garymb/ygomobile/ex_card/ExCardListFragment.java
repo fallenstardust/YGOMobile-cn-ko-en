@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ex_card;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
@@ -144,7 +145,8 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             textDownload.setText(R.string.Download);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_LONG).show();
+            WebActivity.open(getActivity(), getString(R.string.ex_card_list_title), URL_YGO233_ADVANCE);
         }
     }
     //TODO eventbus receive event

@@ -44,6 +44,7 @@
     <string name="ex_card_report_title">보고</string>
     <string name="ex_card_check_toast_message">이 서버에 들어가기 전에 먼저 설정에서 "프리릴리즈 카드 팩 활성화"를 클릭하십시오.</string>
     <string name="ex_card_check_toast_message_ii">이 서버에 들어가기 전에 먼저 프리릴리즈 카드 팩을 다운로드하십시오.</string>
+    <string name="ex_card_check_toast_message_iii">obtain expansion cards failed, opening 233 website to download now.</string>
 
     <!-- settings -->
     <string name="settings_about">정보</string>
