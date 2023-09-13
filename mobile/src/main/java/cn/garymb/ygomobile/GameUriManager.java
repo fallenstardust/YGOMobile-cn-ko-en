@@ -267,7 +267,7 @@ public class GameUriManager {
                         Deck deckInfo = new Deck(uri, mainList, exList, sideList);
                         File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                         if (!deckInfo.isCompleteDeck()) {
-                            YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                            YGOUtil.show(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
                         }
                         startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                         activity.startActivity(startSetting);

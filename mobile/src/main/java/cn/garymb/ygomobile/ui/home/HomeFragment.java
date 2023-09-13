@@ -553,7 +553,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             deckInfo.setCompleteDeck(isCompleteDeck);
             File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
             if (!deckInfo.isCompleteDeck()) {
-                YGOUtil.show("当前卡组缺少完整信息，将只显示已有卡片");
+                YGOUtil.show(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
             }
             if (!file.getAbsolutePath().isEmpty()) {
                 mBundle.putString("setDeck", file.getAbsolutePath());

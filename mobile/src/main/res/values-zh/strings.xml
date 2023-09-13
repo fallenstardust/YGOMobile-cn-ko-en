@@ -350,4 +350,5 @@
     <string name="settings_data_language">切换资料语言</string>
     <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
     <string name="tip_card_info_diff">软件未收录此卡。请尝试更新软件，或查看扩展卡包中是否有此卡。</string>
+    <string name="tip_deckInfo_isNot_completeDeck">当前卡组解析异常，将尽量转换为已有卡片</string>
 </resources>

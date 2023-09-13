@@ -359,4 +359,5 @@
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
     <string name="find_in_page">find:</string>
     <string name="tip_card_info_diff">Released and Pre-released Cards are different,pls note after patch them</string>
+    <string name="tip_deckInfo_isNot_completeDeck">Card info Exception! Tried to become exsisted Card Info</string>
 </resources>
