@@ -286,7 +286,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             ll_new_notice.setVisibility(View.VISIBLE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), "无法获取服务器先行卡信息", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_SHORT).show();
             ll_new_notice.setVisibility(View.GONE);
         }
 
