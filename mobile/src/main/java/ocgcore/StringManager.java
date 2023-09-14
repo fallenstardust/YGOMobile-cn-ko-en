@@ -4,6 +4,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -14,9 +17,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -62,10 +64,16 @@ public class StringManager implements Closeable {
                     if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
                         Log.e("StringManager", "读取压缩包");
                         try {
-                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
-                            ZipEntry entry = zipFile.getEntry(Constants.CORE_CUSTOM_STRING_PATH);
-                            if (entry != null) {
-                                res3 &= loadFile(zipFile.getInputStream(entry));
+                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
+                            Enumeration<ZipEntry> entris = zipFile.getEntries();
+                            ZipEntry entry;
+                            while (entris.hasMoreElements()) {
+                                entry = entris.nextElement();
+                                if (!entry.isDirectory()) {
+                                    if (entry.getName().contains("string") && entry.getName().endsWith(".conf")) {
+                                        res3 &= loadFile(zipFile.getInputStream(entry));
+                                    }
+                                }
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
