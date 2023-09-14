@@ -5,6 +5,8 @@ import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
+import static cn.garymb.ygomobile.utils.DownloadUtil.get;
+import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -121,7 +123,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                         servername = "YGOPRO 사전 게시 중국서버";
                     if (AppsSettings.get().getDataLanguage() == 2)
                         servername = "Mercury23333 OCG/TCG Pre-release";
-                    AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
+                    AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     btn_download.setVisibility(View.GONE);
                     SharedPreferenceUtil.setExpansionDataVer(WebActivity.exCardVer);
                     break;
@@ -347,57 +349,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
         WebActivity.open(context, cardInfo.Name, uri);
-    }
-
-    public void AddServer(String name, String Addr, int port, String playername) {
-        mServerInfo = new ServerInfo();
-        mServerInfo.setName(name);
-        mServerInfo.setServerAddr(Addr);
-        mServerInfo.setPort(port);
-        mServerInfo.setPlayerName(playername);
-        VUiKit.defer().when(() -> {
-            ServerList assetList = ServerListManager.readList(this.getAssets().open(ASSET_SERVER_LIST));
-            ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
-            if (fileList == null) {
-                return assetList;
-            }
-            if (fileList.getVercode() < assetList.getVercode()) {
-                xmlFile.delete();
-                return assetList;
-            }
-            return fileList;
-        }).done((list) -> {
-            if (list != null) {
-                serverInfos.clear();
-                serverInfos.addAll(list.getServerInfoList());
-                boolean hasServer = false;
-                for (int i = 0; i < list.getServerInfoList().size(); i++) {
-                    if (mServerInfo.getPort() != serverInfos.get(i).getPort() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {
-                        continue;
-                    } else {
-                        hasServer = true;
-                        break;
-                    }
-
-                }
-                if (!hasServer && !serverInfos.contains(mServerInfo)) {
-                    serverInfos.add(mServerInfo);
-                }
-                saveItems();
-            }
-        });
-    }
-
-    public void saveItems() {
-        OutputStream outputStream = null;
-        try {
-            outputStream = new FileOutputStream(xmlFile);
-            XmlUtils.get().saveXml(new ServerList(SystemUtils.getVersion(getContext()), serverInfos), outputStream);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            IOUtils.close(outputStream);
-        }
     }
 
     private void downloadfromWeb(String fileUrl) {
