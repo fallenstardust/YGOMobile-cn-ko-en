@@ -1,17 +1,29 @@
 package cn.garymb.ygomobile.utils;
 
+import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.ui.home.ServerListManager;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -84,6 +96,71 @@ public class ServerUtil {
             }
         });
     }
+
+    /**
+     * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
+     *
+     * @param name
+     * @param Addr
+     * @param port
+     * @param playerName
+     */
+    public static void AddServer(Context context, File xmlFile, String name, String Addr, int port, String playerName) {
+        List<ServerInfo> serverInfos = new ArrayList<>();
+        ServerInfo mServerInfo = new ServerInfo();
+        mServerInfo.setName(name);
+        mServerInfo.setServerAddr(Addr);
+        mServerInfo.setPort(port);
+        mServerInfo.setPlayerName(playerName);
+        VUiKit.defer().when(() -> {
+            /* 读取本地文件server_list.xml和资源文件（assets）下的serverlist.xml，返回其中版本最新的 */
+            ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));//读取serverlist.xml文件
+            ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+            if (fileList == null) {
+                return assetList;
+            }
+            if (fileList.getVercode() < assetList.getVercode()) {
+                xmlFile.delete();
+                return assetList;
+            }
+            return fileList;
+        }).done((list) -> {
+            if (list != null) {
+                serverInfos.clear();
+                serverInfos.addAll(list.getServerInfoList());
+                boolean hasServer = false;
+                for (int i = 0; i < list.getServerInfoList().size(); i++) {
+                    if (mServerInfo.getPort() != serverInfos.get(i).getPort() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {
+                        continue;
+                    } else {
+                        hasServer = true;
+                        break;
+                    }
+
+                }
+                if (!hasServer && !serverInfos.contains(mServerInfo)) {
+                    serverInfos.add(mServerInfo);
+                }
+                saveItems(context, xmlFile, serverInfos);
+            }
+        });
+    }
+
+    /**
+     * 将最新的服务器列表存储到本地文件server_list.xml中
+     */
+    public static void saveItems(Context context, File xmlFile,List<ServerInfo> serverInfos) {
+        OutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(xmlFile);
+            XmlUtils.get().saveXml(new ServerList(SystemUtils.getVersion(context), serverInfos), outputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            IOUtils.close(outputStream);
+        }
+    }
+
 
     public static boolean isPreServer(int port, String addr) {
         return (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_1)) ||

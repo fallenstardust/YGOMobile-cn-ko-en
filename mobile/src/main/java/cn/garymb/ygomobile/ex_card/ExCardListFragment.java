@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
+import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -66,8 +67,6 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
     private RecyclerView mExCardListView;
     private LinearLayout ll_Download;
     private TextView textDownload;
-    private List<ServerInfo> serverInfos;
-    private ServerInfo mServerInfo;
     private File xmlFile;
     private int FailedCount;
 
@@ -89,7 +88,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         layoutView = inflater.inflate(R.layout.fragment_ex_card_list, container, false);
-        serverInfos = new ArrayList<>();
+
         this.context = getContext();
         xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
 
@@ -182,7 +181,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
                         servername = "YGOPRO 사전 게시 중국서버";
                     if (AppsSettings.get().getDataLanguage() == 2)
                         servername = "Mercury23333 OCG/TCG Pre-release";
-                    AddServer(servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
+                    AddServer(getActivity(), xmlFile, servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
 
                     /* 注意，要先更新版本号 */
@@ -235,70 +234,6 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
             changeDownloadText();
         }
     }
-
-    /**
-     * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
-     *
-     * @param name
-     * @param Addr
-     * @param port
-     * @param playerName
-     */
-    public void AddServer(String name, String Addr, int port, String playerName) {
-        mServerInfo = new ServerInfo();
-        mServerInfo.setName(name);
-        mServerInfo.setServerAddr(Addr);
-        mServerInfo.setPort(port);
-        mServerInfo.setPlayerName(playerName);
-        VUiKit.defer().when(() -> {
-            /* 读取本地文件server_list.xml和资源文件（assets）下的serverlist.xml，返回其中版本最新的 */
-            ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));//读取serverlist.xml文件
-            ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
-            if (fileList == null) {
-                return assetList;
-            }
-            if (fileList.getVercode() < assetList.getVercode()) {
-                xmlFile.delete();
-                return assetList;
-            }
-            return fileList;
-        }).done((list) -> {
-            if (list != null) {
-                serverInfos.clear();
-                serverInfos.addAll(list.getServerInfoList());
-                boolean hasServer = false;
-                for (int i = 0; i < list.getServerInfoList().size(); i++) {
-                    if (mServerInfo.getPort() != serverInfos.get(i).getPort() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {
-                        continue;
-                    } else {
-                        hasServer = true;
-                        break;
-                    }
-
-                }
-                if (!hasServer && !serverInfos.contains(mServerInfo)) {
-                    serverInfos.add(mServerInfo);
-                }
-                saveItems();
-            }
-        });
-    }
-
-    /**
-     * 将最新的服务器列表存储到本地文件server_list.xml中
-     */
-    public void saveItems() {
-        OutputStream outputStream = null;
-        try {
-            outputStream = new FileOutputStream(xmlFile);
-            XmlUtils.get().saveXml(new ServerList(SystemUtils.getVersion(context), serverInfos), outputStream);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            IOUtils.close(outputStream);
-        }
-    }
-
     private void downloadfromWeb(String fileUrl) {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉
         File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");
