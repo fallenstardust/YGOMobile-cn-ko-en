@@ -105,7 +105,8 @@ public class ServerUtil {
      * @param port
      * @param playerName
      */
-    public static void AddServer(Context context, File xmlFile, String name, String Addr, int port, String playerName) {
+    public static void AddServer(Context context, String name, String Addr, int port, String playerName) {
+        File xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
         List<ServerInfo> serverInfos = new ArrayList<>();
         ServerInfo mServerInfo = new ServerInfo();
         mServerInfo.setName(name);

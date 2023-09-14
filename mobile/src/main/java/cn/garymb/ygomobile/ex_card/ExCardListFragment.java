@@ -67,7 +67,6 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
     private RecyclerView mExCardListView;
     private LinearLayout ll_Download;
     private TextView textDownload;
-    private File xmlFile;
     private int FailedCount;
 
     /**
@@ -90,7 +89,6 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
         layoutView = inflater.inflate(R.layout.fragment_ex_card_list, container, false);
 
         this.context = getContext();
-        xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
 
         initView(layoutView);
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
@@ -181,7 +179,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
                         servername = "YGOPRO 사전 게시 중국서버";
                     if (AppsSettings.get().getDataLanguage() == 2)
                         servername = "Mercury23333 OCG/TCG Pre-release";
-                    AddServer(getActivity(), xmlFile, servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
+                    AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
 
                     /* 注意，要先更新版本号 */
