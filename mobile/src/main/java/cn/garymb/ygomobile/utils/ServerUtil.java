@@ -7,6 +7,9 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
+
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
@@ -15,7 +18,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Scanner;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
@@ -96,6 +101,47 @@ public class ServerUtil {
             }
         });
     }
+    /**
+     * 解析zip或者ypk的file下内置的txt文件里的服务器name、host、prot
+     *
+     * @param context
+     * @param file
+     */
+    public static void loadServerInfoFromZipOrYpk (Context context, File file) {
+        if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
+            Log.e("GameUriManager", "读取压缩包");
+            try {
+                String serverName = null, serverHost = null, serverPort = null;
+                ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
+                Enumeration<ZipEntry> entris = zipFile.getEntries();
+                ZipEntry entry;
+                StringBuilder content = new StringBuilder();
+                while (entris.hasMoreElements()) {
+                    entry = entris.nextElement();
+                    if (!entry.isDirectory()) {
+                        if (entry.getName().endsWith(".txt")) {
+                            Scanner scanner = new Scanner(zipFile.getInputStream(entry));
+                            while (scanner.hasNextLine()) {
+                                content.append(scanner.nextLine() + "|");
+                            }
+                            scanner.close();
+                            serverName = content.substring(0, content.indexOf("|"));
+                            serverHost = content.substring(content.indexOf("|") + 1, content.indexOf(":"));
+                            serverPort = content.substring(content.indexOf(":") + 1,content.lastIndexOf("|"));
+
+                        }
+
+                    }
+                }
+
+                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort),"Knight of Hanoi");
+                Log.w("看看", serverName + "/" + serverHost + "/" + serverPort);
+                zipFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
@@ -131,7 +177,7 @@ public class ServerUtil {
                 serverInfos.addAll(list.getServerInfoList());
                 boolean hasServer = false;
                 for (int i = 0; i < list.getServerInfoList().size(); i++) {
-                    if (mServerInfo.getPort() != serverInfos.get(i).getPort() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {
+                    if (mServerInfo.getName() != serverInfos.get(i).getName() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {//判断服务器名称、域名IP不同则视为不存在
                         continue;
                     } else {
                         hasServer = true;

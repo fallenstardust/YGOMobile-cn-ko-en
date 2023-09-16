@@ -8,6 +8,8 @@ import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 import static cn.garymb.ygomobile.Constants.REQUEST_SETTINGS_CODE;
+import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
+import static cn.garymb.ygomobile.utils.ServerUtil.loadServerInfoFromZipOrYpk;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -20,11 +22,22 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.app.hubert.guide.util.LogUtil;
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
 import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.Locale;
+import java.util.Scanner;
+import java.util.zip.ZipException;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
@@ -33,7 +46,9 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.hutool.core.compress.ZipReader;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -45,7 +60,7 @@ public class GameUriManager {
     private StringManager stringManager;
 
     public GameUriManager(Activity activity) {
-        this.activity = (HomeActivity) activity;
+        this.activity = activity;
         limitManager = new LimitManager();
         stringManager = new StringManager();
     }
@@ -229,6 +244,7 @@ public class GameUriManager {
                 } else {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                    loadServerInfoFromZipOrYpk(getActivity(),file);
                 }
             } else if (isYrp) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
