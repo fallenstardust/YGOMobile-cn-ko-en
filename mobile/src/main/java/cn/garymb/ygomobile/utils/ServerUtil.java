@@ -121,7 +121,7 @@ public class ServerUtil {
                 while (entris.hasMoreElements()) {
                     entry = entris.nextElement();
                     if (!entry.isDirectory()) {
-                        if (entry.getName().endsWith(".txt")) {
+                        if (entry.getName().endsWith(".ini")) {
                             Scanner scanner = new Scanner(zipFile.getInputStream(entry));
                             while (scanner.hasNextLine()) {
                                 content.append(scanner.nextLine() + "|");
