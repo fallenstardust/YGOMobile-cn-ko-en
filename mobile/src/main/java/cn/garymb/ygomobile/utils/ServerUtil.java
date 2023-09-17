@@ -2,6 +2,9 @@ package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
+import static cn.garymb.ygomobile.utils.StringUtils.isHost;
+import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
+import static cn.garymb.ygomobile.utils.StringUtils.isValidIP;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -34,28 +37,10 @@ import okhttp3.Response;
 
 public class ServerUtil {
     private static final String TAG = ServerUtil.class.getSimpleName();
-
-    public enum ExCardState {
-        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
-        UPDATED, NEED_UPDATE, ERROR
-    }
-
     /* 存储了当前先行卡是否需要更新的状态，UI逻辑直接读取该变量就能获知是否已安装先行卡 */
     public volatile static ExCardState exCardState = ExCardState.ERROR;//TODO 可能有并发问题
     public volatile static String serverExCardVersion = "";
-
     private volatile static int failCounter = 0;
-    /**
-     * 在可能更改先行卡状态的操作后调用，
-     * 删除先行卡时入参为null，
-     * 安装先行卡时入参为版本号
-     *
-     */
-//       ++FailedCount;
-//                    if (FailedCount <= 2) {
-//        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
-//        downloadfromWeb(URL_YGO233_FILE_ALT);
-//    }
 
     /**
      * 初始化本地先行卡版本的状态，
@@ -135,9 +120,10 @@ public class ServerUtil {
 
                     }
                 }
-
-                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
-                LogUtil.w("看看", serverName + "/" + serverHost + "/" + serverPort);
+                if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
+                    AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                }
+                LogUtil.w("看看", serverName + isHost(serverHost) + serverHost + isNumeric(serverPort) + serverPort);
                 zipFile.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -210,9 +196,14 @@ public class ServerUtil {
         }
     }
 
-
     public static boolean isPreServer(int port, String addr) {
         return (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_1)) ||
                 (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_2));
+    }
+
+
+    public enum ExCardState {
+        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
+        UPDATED, NEED_UPDATE, ERROR
     }
 }
