@@ -109,13 +109,13 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         main_send.setOnClickListener(p1 -> {
             String message = main_send_message.getText().toString().trim();
             if (message.equals("")) {
-                YGOUtil.show(getString(R.string.noting_to_send));
+                YGOUtil.showTextToast(getString(R.string.noting_to_send));
             } else {
                 try {
                     serviceManagement.sendMessage(message);
                     main_send_message.setText("");
                 } catch (Exception e) {
-                    YGOUtil.show(getString(R.string.sending_failed));
+                    YGOUtil.showTextToast(getString(R.string.sending_failed));
                 }
             }
         });

@@ -391,7 +391,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onLogout(String message) {
         if (!TextUtils.isEmpty(message))
-            YGOUtil.show(message);
+            YGOUtil.showTextToast(message);
         serviceManagement.disSerVice();
     }
 
@@ -435,11 +435,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             HandlerUtil.sendMessage(handler, TYPE_MC_LOGIN_FAILED, exception);
             serviceManagement.setIsListener(false);
             if (exception.endsWith("not-authorized")) {//如果弹这个exception基本上是账号没验证邮箱
-                YGOUtil.show(getString(R.string.notice_verify_email));
+                YGOUtil.showTextToast(getString(R.string.notice_verify_email));
             } else if (exception.endsWith("No address associated with hostname")) {//如果弹这个exception有可能是未授权连接网络或者没有连接网络
-                YGOUtil.show(getString(R.string.tip_no_netwrok));
+                YGOUtil.showTextToast(getString(R.string.tip_no_netwrok));
             } else {
-                YGOUtil.show(getString(R.string.mc_chat) + getString(R.string.failed_reason) + exception);
+                YGOUtil.showTextToast(getString(R.string.mc_chat) + getString(R.string.failed_reason) + exception);
             }
         }
     }

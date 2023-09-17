@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ex_card;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +24,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.LogUtil;
 
 public class ExCardLogFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = String.valueOf(ExCardLogFragment.class);
@@ -92,7 +92,7 @@ public class ExCardLogFragment extends Fragment implements View.OnClickListener 
             }
 
         }).fail((e) -> {
-            //关闭异常
+            //�ر��쳣
             if (dialog_read_ex.isShowing()) {
                 try {
                     dialog_read_ex.dismiss();
@@ -100,7 +100,7 @@ public class ExCardLogFragment extends Fragment implements View.OnClickListener 
                 }
             }
 
-            Log.i(TAG, "webCrawler fail");
+            LogUtil.i(TAG, "webCrawler fail");
         }).done(exCardLogList -> {
             mExCardLogAdapter.setData(exCardLogList);
             mExCardLogAdapter.notifyDataSetChanged();
@@ -109,9 +109,9 @@ public class ExCardLogFragment extends Fragment implements View.OnClickListener 
             mExCardLogView.expandGroup(1);
             mExCardLogView.expandGroup(2);
             if (exCardLogList != null) {
-                Log.i(TAG, "webCrawler parse html complete");
+                LogUtil.i(TAG, "webCrawler parse html complete");
             }
-            //关闭异常
+            //�ر��쳣
             if (dialog_read_ex.isShowing()) {
                 try {
                     dialog_read_ex.dismiss();

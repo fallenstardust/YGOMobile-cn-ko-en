@@ -1,11 +1,16 @@
 package ocgcore;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.ex_card.ExCardListAdapter;
 import cn.garymb.ygomobile.loader.CardLoader;
 
+/**
+ * 单例模式，使用get()方式自动获取单例
+ */
 public class DataManager {
     private static DataManager sLoader = null;
 
+    private static final String TAG = String.valueOf(DataManager.class);
     public static DataManager get() {
         if (sLoader != null) {
             return sLoader;

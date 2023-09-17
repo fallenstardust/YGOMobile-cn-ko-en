@@ -53,7 +53,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION = 1;
     private static final int TYPE_DOWNLOAD_CARD_IMAGE_ING = 2;
 
-    private static final String TAG = "CardDetail";
+    private static final String TAG = String.valueOf(CardDetail.class);
     private final CardManager cardManager;
     private final ImageView cardImage;
     private final TextView name;
@@ -120,7 +120,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     isDownloadCardImage = true;
                     ll_bar.startAnimation(AnimationUtils.loadAnimation(context, R.anim.out_from_bottom));
                     ll_bar.setVisibility(View.GONE);
-                    YGOUtil.show("error" + msg.obj);
+                    YGOUtil.showTextToast("error" + msg.obj);
                     break;
 
             }
@@ -439,7 +439,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void downloadCardImage(int code, boolean force) {
         if (cardManager.getCard(code) == null) {
-            YGOUtil.show(context.getString(R.string.tip_expansions_image));
+            YGOUtil.showTextToast(context.getString(R.string.tip_expansions_image));
             return;
         }
         File imgFile = new File(AppsSettings.get().getCardImagePath(code));

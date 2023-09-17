@@ -26,7 +26,6 @@ import java.util.zip.ZipInputStream;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;
 
@@ -36,7 +35,7 @@ public class CardManager {
     private final SparseArray<Card> cardDataHashMap = new SparseArray<>();
     private final String dbDir;
     private final String exDbPath;
-    private static final String TAG = IrrlichtBridge.TAG;
+    private static final String TAG = String.valueOf(CardManager.class);
 
     /**
      * @see DataManager#getCardManager()
@@ -119,7 +118,7 @@ public class CardManager {
 
     public Card getCard(int code) {
         Card card = cardDataHashMap.get(code);
-        if(card == null){
+        if (card == null) {
             card = new Card(code);
             cardDataHashMap.put(code, new Card(code));
             return card;
@@ -179,7 +178,7 @@ public class CardManager {
         int N = getCount();
         for (int i = 0; i < N; i++) {
             Card c = cardDataHashMap.valueAt(i);
-            if(c.Alias == 0){
+            if (c.Alias == 0) {
                 continue;
             }
             //规则同名，或者多图同名
@@ -188,8 +187,8 @@ public class CardManager {
                 if (c.isSame(alias)) {
                     //多图同名，它们属性必定是一致
                     c.setRealCode(alias.Code);
-                } else if(Math.abs(c.Alias - c.Code) <= 10){
-                    Log.w(TAG, c.Name + ":" + c.Code + " is same card "+c.Alias);
+                } else if (Math.abs(c.Alias - c.Code) <= 10) {
+                    Log.w(TAG, c.Name + ":" + c.Code + " is same card " + c.Alias);
                 }
             }
         }

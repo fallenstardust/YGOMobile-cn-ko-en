@@ -5,7 +5,6 @@ import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.file.zip.ZipEntry;
 import com.file.zip.ZipFile;
@@ -34,6 +33,8 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class ServerUtil {
+    private static final String TAG = ServerUtil.class.getSimpleName();
+
     public enum ExCardState {
         /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
         UPDATED, NEED_UPDATE, ERROR
@@ -63,16 +64,16 @@ public class ServerUtil {
      */
     public static void initExCardState() {
         String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-        Log.i("webCrawler", "server util, old pre-card version:" + oldVer);
+        LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
         OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 exCardState = ExCardState.ERROR;
                 serverExCardVersion = "";
-                Log.i(BuildConfig.VERSION_NAME, "error" + e);
-                Log.i("webCrawler", "network failed, pre-card version:" + exCardState);
-                if (failCounter < 3) {
-                    Log.i("webCrawler", "network failed, retry fetch pre-card version:");
+                LogUtil.e(TAG, BuildConfig.VERSION_NAME);
+                LogUtil.i(TAG, "network failed, pre-card version:" + exCardState);
+                if (failCounter < 10) {
+                    LogUtil.i(TAG, "network failed, retry fetch pre-card version:");
                     failCounter++;
                     initExCardState();
                 }
@@ -84,7 +85,7 @@ public class ServerUtil {
                 String newVer = response.body().string();
                 serverExCardVersion = newVer;
 
-                Log.i("webCrawler", "ServerUtil fetch pre-card version:" + newVer);
+                LogUtil.i(TAG, "ServerUtil fetch pre-card version:" + newVer);
                 if (!TextUtils.isEmpty(newVer)) {
 
                     if (!newVer.equals(oldVer)) {//如果oldVer为null，也会触发
@@ -101,15 +102,16 @@ public class ServerUtil {
             }
         });
     }
+
     /**
      * 解析zip或者ypk的file下内置的txt文件里的服务器name、host、prot
      *
      * @param context
      * @param file
      */
-    public static void loadServerInfoFromZipOrYpk (Context context, File file) {
+    public static void loadServerInfoFromZipOrYpk(Context context, File file) {
         if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
-            Log.e("GameUriManager", "读取压缩包");
+            LogUtil.e("GameUriManager", "读取压缩包");
             try {
                 String serverName = null, serverHost = null, serverPort = null;
                 ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
@@ -127,15 +129,15 @@ public class ServerUtil {
                             scanner.close();
                             serverName = content.substring(0, content.indexOf("|"));
                             serverHost = content.substring(content.indexOf("|") + 1, content.indexOf(":"));
-                            serverPort = content.substring(content.indexOf(":") + 1,content.lastIndexOf("|"));
+                            serverPort = content.substring(content.indexOf(":") + 1, content.lastIndexOf("|"));
 
                         }
 
                     }
                 }
 
-                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort),"Knight of Hanoi");
-                Log.w("看看", serverName + "/" + serverHost + "/" + serverPort);
+                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                LogUtil.w("看看", serverName + "/" + serverHost + "/" + serverPort);
                 zipFile.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -196,7 +198,7 @@ public class ServerUtil {
     /**
      * 将最新的服务器列表存储到本地文件server_list.xml中
      */
-    public static void saveItems(Context context, File xmlFile,List<ServerInfo> serverInfos) {
+    public static void saveItems(Context context, File xmlFile, List<ServerInfo> serverInfos) {
         OutputStream outputStream = null;
         try {
             outputStream = new FileOutputStream(xmlFile);
