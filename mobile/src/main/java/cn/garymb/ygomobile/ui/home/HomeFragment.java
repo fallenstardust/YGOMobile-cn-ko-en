@@ -73,6 +73,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
@@ -139,7 +140,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        ServerUtil.initExCardState();//HomeActivity中会调用一次本函数，此处再次调用是因为有时候HomeFragment的onCreateView()函数执行较慢，导致initExCardState()中eventbus事件发布完毕后仍未注册，因此在此处再调用一次检查，再次发布
+        ServerUtil.initExCardState();//HomeActivity中会调用一次本函数，此处再次调用的原因：有时HomeFragment的onCreateView()函数执行较慢，导致initExCardState()中eventbus事件发布完毕后仍未注册，因此在此处再调用一次检查，再次发布
         changeColor();
         //showNewbieGuide("homePage");
         return layoutView;
@@ -280,7 +281,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
      * ServerUtil获取到版本状态后会通过eventmessage通知调用本函数，不需要在主函数显式调用
      */
     public void changeExCardNewMark() {
-        Log.i(TAG, "check excard new mark, version:" + ServerUtil.exCardState);
+        LogUtil.i(TAG, "check excard new mark, version:" + ServerUtil.exCardState);
         if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
             ll_new_notice.setVisibility(View.GONE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
@@ -528,7 +529,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
         if (!TextUtils.isEmpty(exception)) {
-            YGOUtil.show("卡组解析失败，原因为：" + exception);
+            YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
             return;
         }
         DialogPlus dialog = new DialogPlus(getContext());
@@ -553,7 +554,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             deckInfo.setCompleteDeck(isCompleteDeck);
             File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
             if (!deckInfo.isCompleteDeck()) {
-                YGOUtil.show(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
+
+                YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
+
             }
             if (!file.getAbsolutePath().isEmpty()) {
                 mBundle.putString("setDeck", file.getAbsolutePath());
@@ -723,13 +726,22 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
                 break;
             case R.id.action_download_ex:
+
+                /*不检查先行卡设置，无论是否开启先行卡都要求能够打开先行卡页面，因此注释掉下面代码*/
 //                if (!AppsSettings.get().isReadExpansions()) {//如果未开启扩展卡设置，直接跳过
 //                    Toast.makeText(getActivity(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
 //                    break;
 //                }
-                /* using Web crawler to extract the information of pre card */
-                Intent exCardIntent = new Intent(getActivity(), ExCardActivity.class);
-                startActivity(exCardIntent);
+
+                if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
+                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
+                    LogUtil.i(TAG, "cannot connect to ex card server, open webactivity");
+                } else {
+                    /* using Web crawler to extract the information of pre card */
+                    LogUtil.i(TAG, "connect to ex card http server, open webactivity");
+                    Intent exCardIntent = new Intent(getActivity(), ExCardActivity.class);
+                    startActivity(exCardIntent);
+                }
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());

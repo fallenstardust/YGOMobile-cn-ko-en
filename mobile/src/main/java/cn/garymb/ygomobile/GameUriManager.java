@@ -277,13 +277,13 @@ public class GameUriManager {
                 } else {
                     YGODAUtil.deDeckListener(uri, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
                         if (!TextUtils.isEmpty(exception)) {
-                            YGOUtil.show("卡组解析失败，原因为：" + exception);
+                            YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
                             return;
                         }
                         Deck deckInfo = new Deck(uri, mainList, exList, sideList);
                         File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
                         if (!deckInfo.isCompleteDeck()) {
-                            YGOUtil.show(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
+                            YGOUtil.showTextToast("当前卡组缺少完整信息，将只显示已有卡片");
                         }
                         startSetting.putExtra(Intent.EXTRA_TEXT, file.getAbsolutePath());
                         activity.startActivity(startSetting);
@@ -295,7 +295,7 @@ public class GameUriManager {
                         if (activity instanceof MainActivity) {
                             ((HomeActivity) activity).fragment_home.quickjoinRoom(host1, port, password);
                         } else {
-                            YGOUtil.show(exception);
+                            YGOUtil.showTextToast(exception);
                         }
                 });
             }
