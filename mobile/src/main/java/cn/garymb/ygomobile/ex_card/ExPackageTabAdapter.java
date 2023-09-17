@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ex_card;
 
-import android.app.Activity;
 import android.content.Context;
 
 import androidx.fragment.app.Fragment;
@@ -9,30 +8,28 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.google.android.material.tabs.TabLayout;
 
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.activities.WebActivity;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 
 /**
- * Tabçš„é€‚é…å™¨ï¼Œç”¨æ¥å®ç°é¡µé¢åˆ‡æ¢
+ * ÏÈĞĞ¿¨Ïà¹ØFragmentµÄTabµÄÊÊÅäÆ÷£¬ÓÃÀ´ÊµÏÖÒ³ÃæÇĞ»»
  */
-public class PackageTabAdapter extends FragmentStatePagerAdapter {
+public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
     TabLayout tabLayout;
-    public PackageTabAdapter(FragmentManager fm, TabLayout _tabLayout) {
+    /* ½öÓÃÓÚ»ñÈ¡strings.xmlÖĞµÄ×Ö·û´®¡£It's used just for getting strings from strings.xml */
+    Context context;
+
+    public ExPackageTabAdapter(FragmentManager fm, TabLayout _tabLayout, Context context) {
         super(fm);
         this.tabLayout = _tabLayout;
+        this.context = context;
     }
 
     @Override
     public Fragment getItem(int position) {
         Fragment fragment = null;
-        if (position == 0)
-        {
-            fragment = new ExCardListFragment();//TODO
-        }
-        else if (position == 1)
-        {
+        if (position == 0) {
+            fragment = new ExCardListFragment();
+        } else if (position == 1) {
             fragment = new ExCardLogFragment();
         }
         return fragment;
@@ -46,13 +43,11 @@ public class PackageTabAdapter extends FragmentStatePagerAdapter {
     @Override
     public CharSequence getPageTitle(int position) {
         String title = null;
-        if (position == 0)
-        {
-            title = "å…ˆè¡Œå¡";//TODO
-        }
-        else if (position == 1)
-        {
-            title = "æ›´æ–°æ—¥å¿—";
+        if (position == 0) {
+
+            title = context.getString(R.string.ex_card_list_title);
+        } else if (position == 1) {
+            title = context.getString(R.string.ex_card_log_title);
         }
         return title;
     }

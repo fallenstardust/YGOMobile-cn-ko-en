@@ -25,7 +25,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 public class YGOUtil {
 
     //提示
-    public static void show(String message) {
+    public static void showTextToast(String message) {
         Toast.makeText(App.get(), message, Toast.LENGTH_SHORT).show();
     }
 

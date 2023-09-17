@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.loader;
 import android.app.Dialog;
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
@@ -18,6 +17,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.CardSort;
+import cn.garymb.ygomobile.utils.LogUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -25,6 +25,12 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
+/**
+ * 包括LimitManager、CardManager、LimitList
+ * LimitList负责判断禁止卡等
+ *
+ *
+ */
 public class CardLoader implements ICardSearcher {
     private final LimitManager mLimitManager;
     private final CardManager mCardManager;
@@ -59,6 +65,11 @@ public class CardLoader implements ICardSearcher {
         }
     }
 
+    /**
+     * @param ids
+     * @param isSorted
+     * @return
+     */
     @Override
     public SparseArray<Card> readCards(List<Integer> ids, boolean isSorted) {
         if (!isOpen()) {
@@ -116,7 +127,7 @@ public class CardLoader implements ICardSearcher {
             return;
         }
         if (Constants.DEBUG)
-            Log.i(TAG, "searchInfo=" + searchInfo);
+            LogUtil.i(TAG, "searchInfo=" + searchInfo);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
@@ -147,7 +158,7 @@ public class CardLoader implements ICardSearcher {
                 ArrayList<Card> noting = new ArrayList<Card>();
                 mCallBack.onSearchResult(noting, false);
             }
-            Log.e("kk", "search", e);
+            LogUtil.e("kk", "search", e);
             wait.dismiss();
         }).done((tmp) -> {
             if (mCallBack != null) {

@@ -13,7 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -46,6 +46,7 @@ import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.UnzipUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -84,7 +85,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                         Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
                         downloadfromWeb(URL_YGO233_FILE_ALT);
                     }
-                    YGOUtil.show("error" + msg.obj);
+                    YGOUtil.showTextToast("error" + msg.obj);
                     break;
                 case UnzipUtils.ZIP_READY:
                     btn_download.setText(R.string.title_use_ex);
@@ -134,7 +135,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
-                Log.i(TAG, "openFileChooser: " + fileChooserParams.getMode());
+                LogUtil.i(TAG, "openFileChooser: " + fileChooserParams.getMode());
                 mFilePathCallback = filePathCallback;
                 openFileChooseProcess(fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 return true;
@@ -169,7 +170,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                     if (data != null && data.getClipData() != null) {
                         //有选择多个文件
                         int count = data.getClipData().getItemCount();
-                        Log.i(TAG, "url count ：  " + count);
+                        LogUtil.i(TAG, "url count ：  " + count);
                         Uri[] uris = new Uri[count];
                         int currentItem = 0;
                         while (currentItem < count) {
@@ -180,7 +181,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                         mFilePathCallback.onReceiveValue(uris);
                     } else {
                         Uri result = data == null ? null : data.getData();
-                        Log.e(TAG, "" + result);
+                        LogUtil.e(TAG, "" + result);
                         mFilePathCallback.onReceiveValue(new Uri[]{result});
                     }
                     mFilePathCallback = null;
@@ -309,7 +310,8 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void openFileChooseProcess(boolean isMulti) {
-        Log.e(TAG, mWebViewPlus.getUrl());
+        LogUtil.e(TAG, mWebViewPlus.getUrl());
+
         if (mWebViewPlus.getUrl().contains(MyCard.mCommunityReportUrl)) {
             Intent intent = FileActivity.getIntent(getActivity(), getString(R.string.dialog_select_file), null, AppsSettings.get().getReplayDir(), false, FileOpenType.SelectFile);
             startActivityForResult(intent, FILE_CHOOSER_REQUEST);

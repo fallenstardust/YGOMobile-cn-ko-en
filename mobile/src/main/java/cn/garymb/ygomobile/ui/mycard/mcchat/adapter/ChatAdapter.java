@@ -85,7 +85,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             @Override
             public boolean onLongClick(View p1) {
                 YGOUtil.copyMessage(context, cm.getMessage());
-                YGOUtil.show( "已复制到剪贴板");
+                YGOUtil.showTextToast( "已复制到剪贴板");
                 // TODO: Implement this method
                 return true;
             }

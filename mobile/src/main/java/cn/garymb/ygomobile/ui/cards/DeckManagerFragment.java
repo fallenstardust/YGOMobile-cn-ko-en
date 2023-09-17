@@ -879,7 +879,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         Deck deck = mDeckAdapater.toDeck(mDeckAdapater.getYdkFile());
         if (deck.getDeckCount() == 0) {
             builderShareLoading.dismiss();
-            YGOUtil.show("卡组中没有卡片");
+            YGOUtil.showTextToast("卡组中没有卡片");
             return;
         }
 
