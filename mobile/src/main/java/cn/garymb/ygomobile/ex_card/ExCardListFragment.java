@@ -70,7 +70,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
     private int FailedCount;
 
     /**
-     * ÓÃÓÚ±êÖ¾µ±Ç°ÏÂÔØ×´Ì¬£¬ÓÃÓÚ·ÀÖ¹ÓÃ»§¶à´ÎÖØ¸´µã»÷¡°ÏÂÔØ°´Å¥¡±
+     * ç”¨äºæ ‡å¿—å½“å‰ä¸‹è½½çŠ¶æ€ï¼Œç”¨äºé˜²æ­¢ç”¨æˆ·å¤šæ¬¡é‡å¤ç‚¹å‡»â€œä¸‹è½½æŒ‰é’®â€
      * Mark the download state, which can prevent user from clicking the download button
      * repeatedly.
      */
@@ -91,7 +91,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
         this.context = getContext();
 
         initView(layoutView);
-        if (!EventBus.getDefault().isRegistered(this)) {//¼ÓÉÏÅĞ¶Ï
+        if (!EventBus.getDefault().isRegistered(this)) {//åŠ ä¸Šåˆ¤æ–­
             EventBus.getDefault().register(this);
         }
         return layoutView;
@@ -101,7 +101,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
     public void onStop() {
         super.onStop();
         LogUtil.i(TAG, "excard fragment on stop");
-        if (EventBus.getDefault().isRegistered(this))//¼ÓÉÏÅĞ¶Ï
+        if (EventBus.getDefault().isRegistered(this))//åŠ ä¸Šåˆ¤æ–­
             EventBus.getDefault().unregister(this);
     }
 
@@ -134,11 +134,11 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
     }
 
     /**
-     * ¸ù¾İÏÈĞĞ¿¨°ü×´Ì¬¸Ä±ä°´Å¥ÑùÊ½
+     * æ ¹æ®å…ˆè¡Œå¡åŒ…çŠ¶æ€æ”¹å˜æŒ‰é’®æ ·å¼
      */
     public void changeDownloadText() {
         if (ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
-            //btn_downloadÕ¹Ê¾Ä¬ÈÏÊÓÍ¼
+            //btn_downloadå±•ç¤ºé»˜è®¤è§†å›¾
             textDownload.setText(R.string.tip_redownload);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             textDownload.setText(R.string.Download);
@@ -172,21 +172,21 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
                     break;
                 case UnzipUtils.ZIP_UNZIP_OK:
 
-                    /* ½«ÏÈĞĞ·şÎñÆ÷ĞÅÏ¢Ìí¼Óµ½·şÎñÆ÷ÁĞ±íÖĞ */
+                    /* å°†å…ˆè¡ŒæœåŠ¡å™¨ä¿¡æ¯æ·»åŠ åˆ°æœåŠ¡å™¨åˆ—è¡¨ä¸­ */
                     String servername = "";
                     if (AppsSettings.get().getDataLanguage() == 0)
-                        servername = "23333ÏÈĞĞ·şÎñÆ÷";
+                        servername = "23333å…ˆè¡ŒæœåŠ¡å™¨";
                     if (AppsSettings.get().getDataLanguage() == 1)
                         servername = "YGOPRO ?? ?? ????";
                     if (AppsSettings.get().getDataLanguage() == 2)
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
-                    //changeDownloadButton();ÔÚÏÂÔØÍê³Éºó£¬Í¨¹ıEventBusÍ¨ÖªÏÂÔØÍê³É£¨¼ÓÈëÓÃ»§µã»÷ÏÂÔØºóÁÙÊ±ÇĞ³ö±¾fragment£¬ÓÖÔÚÏÂÔØÍê³ÉºóÇĞ»Ø£¬Í¨¹ıeventbusÄÜ±£Ö¤°´Å¥ÑùÊ½ÕıÈ·¸üĞÂ
+                    //changeDownloadButton();åœ¨ä¸‹è½½å®Œæˆåï¼Œé€šè¿‡EventBusé€šçŸ¥ä¸‹è½½å®Œæˆï¼ˆåŠ å…¥ç”¨æˆ·ç‚¹å‡»ä¸‹è½½åä¸´æ—¶åˆ‡å‡ºæœ¬fragmentï¼Œåˆåœ¨ä¸‹è½½å®Œæˆååˆ‡å›ï¼Œé€šè¿‡eventbusèƒ½ä¿è¯æŒ‰é’®æ ·å¼æ­£ç¡®æ›´æ–°
 
-                    /* ×¢Òâ£¬ÒªÏÈ¸üĞÂ°æ±¾ºÅ */
+                    /* æ³¨æ„ï¼Œè¦å…ˆæ›´æ–°ç‰ˆæœ¬å· */
                     SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
                     ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
-                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//°²×°ºó£¬Í¨ÖªUI×ö¸üĞÂ
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//å®‰è£…åï¼Œé€šçŸ¥UIåšæ›´æ–°
                     DataManager.get().load(true);
 
 
@@ -194,8 +194,8 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
 
                     LogUtil.i("webCrawler", "Ex-card package is installed");
 
-                    /* Èç¹ûÎ´¿ªÆôÏÈĞĞ¿¨ÉèÖÃ£¬ÔòÌø×ªµ½ÉèÖÃÒ³Ãæ */
-                    if (!AppsSettings.get().isReadExpansions()) {//½âÑ¹Íê±Ï£¬µ«´ËÊ±
+                    /* å¦‚æœæœªå¼€å¯å…ˆè¡Œå¡è®¾ç½®ï¼Œåˆ™è·³è½¬åˆ°è®¾ç½®é¡µé¢ */
+                    if (!AppsSettings.get().isReadExpansions()) {//è§£å‹å®Œæ¯•ï¼Œä½†æ­¤æ—¶
                         LogUtil.i("webCrawler", "Ex-card setting is not opened");
                         Intent startSetting = new Intent(context, MainActivity.class);
                         startSetting.putExtra("flag", 4);
@@ -213,7 +213,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
 //                    String oldVer = SharedPreferenceUtil.getExpansionDataVer();
 //                    if (!TextUtils.isEmpty(WebActivity.exCardVer)) {
 //                        if (!WebActivity.exCardVer.equals(oldVer)) {
-//                            //btn_downloadÕ¹Ê¾Ä¬ÈÏÊÓÍ¼
+//                            //btn_downloadå±•ç¤ºé»˜è®¤è§†å›¾
 //                        } else {
 //                            btnDownload.setText(R.string.tip_redownload);
 //                        }
@@ -234,7 +234,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
         }
     }
     private void downloadfromWeb(String fileUrl) {
-        textDownload.setText("0%");//µã»÷ÏÂÔØºó£¬¾àÀëonDownloading´¥·¢ÒªµÈ¼¸Ãë£¬ÕâÒ»ÑÓ³Ù»áÔì³ÉÈí¼şÏìÓ¦ÂıµÄ´í¾õ£¬Òò´ËÔÚÏÂÔØº¯Êı¿ªÊ¼¾ÍÉèÖÃÎÄ±¾
+        textDownload.setText("0%");//ç‚¹å‡»ä¸‹è½½åï¼Œè·ç¦»onDownloadingè§¦å‘è¦ç­‰å‡ ç§’ï¼Œè¿™ä¸€å»¶è¿Ÿä¼šé€ æˆè½¯ä»¶å“åº”æ…¢çš„é”™è§‰ï¼Œå› æ­¤åœ¨ä¸‹è½½å‡½æ•°å¼€å§‹å°±è®¾ç½®æ–‡æœ¬
         File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");
         if (file.exists()) {
             FileUtils.deleteFile(file);
@@ -256,7 +256,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
                 } catch (Exception e) {
                     message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
                 } finally {
-                    message.what = UnzipUtils.ZIP_UNZIP_OK;//TODO ²»¶Ô°É£¬finallyÊÇÒ»¶¨Ö´ĞĞ£¬ÕâÑù¼´Ê¹ÓĞexceptionÒ²»á·¢unzip_ok°¡
+                    message.what = UnzipUtils.ZIP_UNZIP_OK;//TODO ä¸å¯¹å§ï¼Œfinallyæ˜¯ä¸€å®šæ‰§è¡Œï¼Œè¿™æ ·å³ä½¿æœ‰exceptionä¹Ÿä¼šå‘unzip_okå•Š
                 }
                 handler.sendMessage(message);
             }
@@ -272,7 +272,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
 
             @Override
             public void onDownloadFailed(Exception e) {
-                //ÏÂÔØÊ§°ÜºóÉ¾³ıÏÂÔØµÄÎÄ¼ş
+                //ä¸‹è½½å¤±è´¥ååˆ é™¤ä¸‹è½½çš„æ–‡ä»¶
                 FileUtils.deleteFile(file);
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_EXCEPTION;
