@@ -54,13 +54,15 @@ import java.util.Locale;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.settings.PreferenceFragmentPlus;
 import cn.garymb.ygomobile.ui.settings.SharedPreferencesPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 
+/**
+ * 静态类
+ */
 public class AppsSettings {
     private static final String TAG = "AppsSettings";
     private static final String PREF_VERSION = "app_version";
@@ -231,7 +233,7 @@ public class AppsSettings {
         return options;
     }
 
-    public File getDataBaseFile() {
+    public File getDatabaseFile() {
         return new File(getDataBasePath(), Constants.DATABASE_NAME);
     }
 
@@ -269,9 +271,14 @@ public class AppsSettings {
                 }
             }
         }
-        pathList.add(getDataBaseFile().getAbsolutePath());
+        pathList.add(getDatabaseFile().getAbsolutePath());
     }
 
+    /**
+     * 返回扩展卡路径，在app-specific external storage下
+     *
+     * @return 扩展卡路径
+     */
     public File getExpansionsPath() {
         return new File(getResourcePath(), CORE_EXPANSIONS);
     }
@@ -497,10 +504,24 @@ public class AppsSettings {
     }
 
     /***
-     * 游戏根目录
+     * 返回存储游戏资源的根目录，为app-specific external storage
+     * 优先返回sharedPreference中存储的设置值，该值为空时返回context.getExternalFilesDir()
      */
     public String getResourcePath() {
         String defPath;
+        /* 注意，调用的函数context.getExternalFilesDir()获取的是外部存储目录，只是安卓系统会将一部分内部存储模拟
+        外部存储，此时返回的/storage/emulated/0其实是指向内部存储的一部分的链接，但在语义上它是external storage。
+         context.getExternalFilesDir()的部分注释：If a shared storage device is emulated (as determined
+          by Environment.isExternalStorageEmulated(File)),
+          it's contents are backed by a private user data partition, which means there is little benefit
+           to storing data here instead of the private directories returned by getFilesDir(), etc.
+           可以用Environment.isExternalStorageEmulated()验证，nova10实测返回值为true
+        To put it simply, the Android storage/emulated/0 folder is the full name of the root
+        directory that you access all your files from in the file explorer on your Android device.
+        However, as its name suggets, this folder is emulated storage, which means that it is merely
+         a link to the actual internal storage of your device's operating system. This is done for security reasons.
+         */
+
         defPath = new File(String.valueOf(context.getExternalFilesDir(Constants.PREF_DEF_GAME_DIR))).getAbsolutePath();
         return mSharedPreferences.getString(Constants.PREF_GAME_PATH, defPath);
     }
@@ -718,6 +739,21 @@ public class AppsSettings {
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
     }
 
+    public enum languageEnum {
+        //todo 逐步将设置语言的代码都更改为languageEnum
+        Chinese(0, "zh"),
+        Korean(1, "ko"),
+        English(2, "en");
+
+        public Integer code;
+        public String name;
+
+        languageEnum(Integer code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
+
     public void copyCnData() throws IOException {
         //复制数据库
         copyCdbFile(getDatapath(DATABASE_NAME));
@@ -730,7 +766,7 @@ public class AppsSettings {
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为0=中文
-        setDataLanguage(0);
+        setDataLanguage(languageEnum.Chinese.code);
     }
 
     public void copyKorData() throws IOException {
@@ -747,8 +783,8 @@ public class AppsSettings {
         String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
         fixString(stringConfPath);
         fixString(botConfPath);
-        //设置语言为1=조선말
-        setDataLanguage(1);
+        //设置语言为1=???
+        setDataLanguage(languageEnum.Korean.code);
     }
 
     public void copyEnData() throws IOException {
@@ -768,7 +804,7 @@ public class AppsSettings {
         fixString(stringConfPath);
         fixString(botConfPath);
         //设置语言为2=English
-        setDataLanguage(2);
+        setDataLanguage(languageEnum.English.code);
     }
 
     public void fixString(String stringPath) {
