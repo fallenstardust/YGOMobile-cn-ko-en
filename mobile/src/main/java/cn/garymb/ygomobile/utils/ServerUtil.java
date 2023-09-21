@@ -37,8 +37,14 @@ import okhttp3.Response;
 
 public class ServerUtil {
     private static final String TAG = ServerUtil.class.getSimpleName();
+
+    public enum ExCardState {
+        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
+        UNCHECKED, UPDATED, NEED_UPDATE, ERROR
+    }
+
     /* 存储了当前先行卡是否需要更新的状态，UI逻辑直接读取该变量就能获知是否已安装先行卡 */
-    public volatile static ExCardState exCardState = ExCardState.ERROR;//TODO 可能有并发问题
+    public volatile static ExCardState exCardState = ExCardState.UNCHECKED;//TODO 可能有并发问题
     public volatile static String serverExCardVersion = "";
     private volatile static int failCounter = 0;
 
@@ -122,9 +128,12 @@ public class ServerUtil {
                 }
                 if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
                     AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                } else {
+                    YGOUtil.showTextToast("can't parse ex-server properly");
                 }
                 LogUtil.w("看看", serverName + isHost(serverHost) + serverHost + isNumeric(serverPort) + serverPort);
                 zipFile.close();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -202,8 +211,4 @@ public class ServerUtil {
     }
 
 
-    public enum ExCardState {
-        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
-        UPDATED, NEED_UPDATE, ERROR
-    }
 }

@@ -103,6 +103,9 @@ public class IOUtils {
         return new File(path).getName();
     }
 
+    /**
+     * 将文件从工程的assets文件夹拷贝到目录中
+     */
     public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update) throws IOException {
         AssetManager am = context.getAssets();
         String[] files = am.list(assets);
@@ -162,8 +165,15 @@ public class IOUtils {
         createFolder(file.getParentFile());
     }
 
+    /**
+     * 根据file创建目录，如果file指向的目录已存在，则直接返回true。
+     * 创建失败时返回false。
+     * 创建成功时返回true
+     * @param file
+     * @return
+     */
     public static boolean createFolder(@Nullable File file) {
-        if(file == null){
+        if (file == null) {
             return false;
         }
         if (!file.exists()) {

@@ -23,12 +23,15 @@ import android.widget.Toast;
 
 import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
+import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
@@ -51,6 +54,12 @@ public class GameUriManager {
         stringManager = new StringManager();
     }
 
+    /**
+     * 根据intent的getData()和getXXXExtra()执行逻辑，
+     *
+     * @param intent
+     * @return false当传入的intent.getAction()不符合可处理的action时，不做处理，返回false
+     */
     public boolean doIntent(Intent intent) {
         Log.i(Constants.TAG, "doIntent");
         if (ACTION_OPEN_DECK.equals(intent.getAction())) {
@@ -225,12 +234,14 @@ public class GameUriManager {
             } else if (isYpk) {
                 if (!AppsSettings.get().isReadExpansions()) {
                     startSetting.putExtra("flag", 4);
-                    activity.startActivity(startSetting);
+                    activity.startActivity(startSetting);//todo ??再次打开MainActivity?
                     Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                 } else {
                     DataManager.get().load(true);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                     loadServerInfoFromZipOrYpk(getActivity(), file);
+                  //ypk不与excard机制相干涉
+
                 }
             } else if (isYrp) {
                 if (!YGOStarter.isGameRunning(getActivity())) {

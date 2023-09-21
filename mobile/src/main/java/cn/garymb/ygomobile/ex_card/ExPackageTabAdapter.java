@@ -11,11 +11,11 @@ import com.google.android.material.tabs.TabLayout;
 import cn.garymb.ygomobile.lite.R;
 
 /**
- * 先行卡相关Fragment的Tab的适配器，用来实现页面切换
+ * 鍏堣鍗＄浉鍏矲ragment鐨凾ab鐨勯�傞厤鍣紝鐢ㄦ潵瀹炵幇椤甸潰鍒囨崲
  */
 public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
     TabLayout tabLayout;
-    /* 仅用于获取strings.xml中的字符串。It's used just for getting strings from strings.xml */
+    /* 浠呯敤浜庤幏鍙杝trings.xml涓殑瀛楃涓层�侷t's used just for getting strings from strings.xml */
     Context context;
 
     public ExPackageTabAdapter(FragmentManager fm, TabLayout _tabLayout, Context context) {

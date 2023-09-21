@@ -226,8 +226,8 @@ public class BitmapUtil {
         return bitmap;
     }
 
-    public static Paint getPaint(int saturation){
-         Paint mPaint = new Paint();
+    public static Paint getPaint(int saturation) {
+        Paint mPaint = new Paint();
         ColorMatrix cm = new ColorMatrix();
         cm.setSaturation(saturation);
         mPaint.setColorFilter(new ColorMatrixColorFilter(cm));

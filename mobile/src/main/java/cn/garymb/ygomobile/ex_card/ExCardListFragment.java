@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ex_card;
 
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
@@ -30,31 +29,18 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
-import cn.garymb.ygomobile.ui.home.ServerListManager;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
-import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.UnzipUtils;
-import cn.garymb.ygomobile.utils.XmlUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 
@@ -145,6 +131,10 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
             Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_LONG).show();
             WebActivity.open(getActivity(), getString(R.string.ex_card_list_title), URL_YGO233_ADVANCE);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
+            //do nothing
+            //状态UNCHECKED仅在app启动后调用哦你Create()之前短暂存在，所以该情况进行处理
+            //the UNCHECKED state only exists temporarily before the check action, so we need not handle it.
         }
     }
     //TODO eventbus receive event
@@ -233,6 +223,7 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
             changeDownloadText();
         }
     }
+
     private void downloadfromWeb(String fileUrl) {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
         File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");

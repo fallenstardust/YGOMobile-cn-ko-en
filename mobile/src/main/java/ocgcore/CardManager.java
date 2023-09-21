@@ -134,10 +134,14 @@ public class CardManager {
         return cardDataHashMap;
     }
 
+    /**
+     * 清空cardDataHashMap，之后从cdb文件读取卡牌，到cardDataHashMap
+     * 如果开启了先行卡，
+     */
     @WorkerThread
     public void loadCards() {
         cardDataHashMap.clear();
-        int count = readAllCards(AppsSettings.get().getDataBaseFile(), cardDataHashMap);
+        int count = readAllCards(AppsSettings.get().getDatabaseFile(), cardDataHashMap);
         Log.i(TAG, "load defualt cdb:" + count);
         if (!TextUtils.isEmpty(exDbPath)) {
             if (AppsSettings.get().isReadExpansions()) {

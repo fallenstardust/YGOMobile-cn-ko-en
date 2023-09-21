@@ -14,6 +14,9 @@ import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.utils.FileUtils;
 import ocgcore.data.Card;
 
+/**
+ * 静态类，
+ */
 public class CardFavorites {
     private final List<Integer> mList = new ArrayList<>();
     private static final String TAG = "CardFavorites";
@@ -55,6 +58,12 @@ public class CardFavorites {
         return mList;
     }
 
+    /**
+     * 从cardLoader查询收藏的卡片
+     *
+     * @param cardLoader
+     * @return 排序后的列表
+     */
     public List<Card> getCards(ICardSearcher cardLoader) {
         SparseArray<Card> id = cardLoader.readCards(mList, false);
         List<Card> list = new ArrayList<>();
@@ -89,6 +98,9 @@ public class CardFavorites {
         Log.d(TAG, "load favorites success:" + mList.size());
     }
 
+    /**
+     * 将卡片收藏保存到sharedStorage中
+     */
     public void save() {
         List<String> ret = new ArrayList<>();
         if (!mList.isEmpty()) {

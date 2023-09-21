@@ -107,6 +107,12 @@ public class YGOStarter {
         quitFullScreen(activity, activityShowInfo);
     }
 
+    /**
+     * 对添加用于展示的相关信息
+     *
+     * @param activity
+     * @return
+     */
     public static ActivityShowInfo onCreated(Activity activity) {
         ActivityShowInfo activityShowInfo = Infos.get(activity);
         if (activityShowInfo == null) {
@@ -157,11 +163,10 @@ public class YGOStarter {
     private static long lasttime = 0;
 
     /**
-     *
      * @param activity
      * @param options
-     * @param args 例如(播放完退出游戏)：-r 1111.yrp
-     *             或者(播放完不退出游戏)：-k -r 1111.yrp
+     * @param args     例如(播放完退出游戏)：-r 1111.yrp
+     *                 或者(播放完不退出游戏)：-k -r 1111.yrp
      */
     public static void startGame(Activity activity, YGOGameOptions options, String... args) {
         //如果距离上次加入游戏的时间大于1秒才处理
@@ -184,6 +189,7 @@ public class YGOStarter {
         Log.e(TAG, "跳转后" + System.currentTimeMillis());
     }
 
+    /* 维护activity的用于展示的相关信息 */
     private static final HashMap<Activity, ActivityShowInfo> Infos = new HashMap<>();
 
     private static class ActivityShowInfo {

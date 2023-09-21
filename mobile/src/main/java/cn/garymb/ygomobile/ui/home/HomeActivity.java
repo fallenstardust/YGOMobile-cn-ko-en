@@ -26,13 +26,8 @@ import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -141,7 +136,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
-        ServerUtil.initExCardState();//检查扩展卡版本
+        ServerUtil.initExCardState();//检查扩展卡版本 todo 移动到LogoActivity中
     }
 
     @Override

@@ -69,6 +69,9 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
 
     }
 
+    /**
+     * 资源复制
+     */
     private void checkRes() {
         checkResourceDownload((error, isNew) -> {
             //加载收藏夹
@@ -208,7 +211,6 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             VUiKit.show(this, R.string.dont_start_game);
         }
     }
-
 
 
     @Override
