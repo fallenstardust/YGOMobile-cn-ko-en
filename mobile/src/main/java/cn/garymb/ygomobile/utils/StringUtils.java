@@ -1,7 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
 
-import org.apache.commons.lang3.math.NumberUtils;
+import android.text.TextUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,6 +65,10 @@ public class StringUtils {
      * 检查字符串是否是域名
      */
     public static boolean isHost(String hostStr) {
+        if (TextUtils.isEmpty(hostStr)) {
+            return false;
+        }
+
         boolean isurl = false;
         String regex = "(((https|http)?://)?([a-z0-9]+[.])|(www.))"
                 + "\\w+[.|\\/]([a-z0-9]{0,})?[[.]([a-z0-9]{0,})]+((/[\\S&&[^,;\u4E00-\u9FA5]]+)+)?([.][a-z0-9]{0,}+|/?)";//设置正则表达式
@@ -82,7 +86,7 @@ public class StringUtils {
      * 检查字符串是否是IPv4
      */
     public static boolean isValidIP(String s) {
-        if (s == null || s.length() == 0) {
+        if (TextUtils.isEmpty(s)) {
             return false;
         }
         String[] arr = s.split("\\.");
