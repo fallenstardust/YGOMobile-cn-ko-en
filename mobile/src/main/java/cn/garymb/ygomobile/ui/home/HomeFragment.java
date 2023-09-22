@@ -289,6 +289,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
             Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_SHORT).show();
             ll_new_notice.setVisibility(View.GONE);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
+            //do nothing
+            //由于UNCHECKED状态仅在app刚启动时短暂存在，因此不需要对其进行处理
+            //the UNCHECKED state only exists temporarily before the check action, so we need not handle it.
         }
 
     }
@@ -776,7 +780,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             break;
             case R.id.add_server:
                 mServerListManager.addServer();
-            break;
+                break;
             case R.id.tv_banner_loading:
                 if (isMcNewsLoadException)
                     findMcNews();

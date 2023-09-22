@@ -342,9 +342,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
                     DataManager.get().load(true);
                     Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
-                    SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
-                    ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
-                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+                    if (name.equals(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
+                        SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
+                        ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
+                        EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+                    }
                 }
                 return true;
             });
@@ -672,6 +674,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             return false;
         }
     }
+
     private void arrangeCodeList(String code) {
         BufferedReader br = new BufferedReader(new StringReader(code));
         try {

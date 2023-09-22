@@ -28,8 +28,7 @@ import ocgcore.enums.LimitType;
 /**
  * 包括LimitManager、CardManager、LimitList
  * LimitList负责判断禁止卡等
- *
- *
+ * field包括LimitManager、CardManager
  */
 public class CardLoader implements ICardSearcher {
     private final LimitManager mLimitManager;
