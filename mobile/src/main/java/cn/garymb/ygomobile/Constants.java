@@ -157,6 +157,7 @@ public interface Constants {
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygomobile.top/version.txt";
+    String URL_HOME_VERSION_ALT = "https://ygom.top/version.txt";
     String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
     String URL_YGO233_ADVANCE = "https://ygo233.com/pre";
     String URL_YGO233_DATAVER = "https://ygo233.com/pre/dataver";

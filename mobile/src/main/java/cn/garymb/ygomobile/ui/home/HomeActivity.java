@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
+import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -82,6 +84,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public SettingFragment fragment_settings;
     public MycardChatFragment fragment_mycard_chatting_room;
     private Bundle mBundle;
+    private int FailedCount;
 
     @SuppressLint("HandlerLeak")
     Handler handlerHome = new Handler() {
@@ -110,6 +113,11 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                     }
                     break;
                 case TYPE_GET_VERSION_FAILED:
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
+                        checkUpgrade(URL_HOME_VERSION_ALT);
+                    }
                     String error = msg.obj.toString();
                     break;
             }
@@ -132,7 +140,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         initQbSdk();
         //
         checkNotch();
-        checkUpgrade();
+        checkUpgrade(URL_HOME_VERSION);
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
@@ -393,8 +401,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
     protected abstract void openGame();
 
-    public void checkUpgrade() {
-        OkhttpUtil.get(URL_HOME_VERSION, new Callback() {
+    public void checkUpgrade(String url) {
+        OkhttpUtil.get(url, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Message message = new Message();

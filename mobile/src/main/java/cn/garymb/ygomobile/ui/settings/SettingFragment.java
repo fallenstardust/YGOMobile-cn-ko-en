@@ -35,6 +35,7 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
+import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
@@ -101,52 +102,15 @@ import okhttp3.Response;
 public class SettingFragment extends PreferenceFragmentPlus {
     private static final int TYPE_SETTING_GET_VERSION_OK = 0;
     private static final int TYPE_SETTING_GET_VERSION_FAILED = 1;
-    private AppsSettings mSettings;
     public static String Version;
     public static String Cache_link;
+    private AppsSettings mSettings;
     private boolean isInit = true;
+    private int FailedCount;
 
     public SettingFragment() {
 
     }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_SETTING_GET_VERSION_OK:
-                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
-                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
-                    if (!Cache_pre_release_code.isEmpty()) {
-                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                    }
-                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
-                        DialogPlus dialog = new DialogPlus(getActivity());
-                        dialog.setMessage(R.string.Found_Update);
-                        dialog.setLeftButtonText(R.string.download_home);
-                        dialog.setLeftButtonListener((dlg, s) -> {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse(Cache_link));
-                            startActivity(intent);
-                            dialog.dismiss();
-                        });
-                        dialog.show();
-                    } else {
-                        Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case TYPE_SETTING_GET_VERSION_FAILED:
-                    String error = msg.obj.toString();
-                    Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + error, Toast.LENGTH_SHORT).show();
-                    break;
-            }
-
-        }
-    };
 
     @Override
     protected SharedPreferences getSharedPreferences() {
@@ -195,6 +159,50 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
         isInit = false;
     }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_SETTING_GET_VERSION_OK:
+                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
+                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
+                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                    if (!Cache_pre_release_code.isEmpty()) {
+                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                    }
+                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
+                        DialogPlus dialog = new DialogPlus(getActivity());
+                        dialog.setMessage(R.string.Found_Update);
+                        dialog.setLeftButtonText(R.string.download_home);
+                        dialog.setLeftButtonListener((dlg, s) -> {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(Uri.parse(Cache_link));
+                            startActivity(intent);
+                            dialog.dismiss();
+                        });
+                        dialog.show();
+                    } else {
+                        Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case TYPE_SETTING_GET_VERSION_FAILED:
+                    String error = msg.obj.toString();
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
+                        checkUpgrade(URL_YGO233_FILE_ALT);
+                    } else {
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + error, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+
+        }
+    };
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
@@ -298,24 +306,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
             joinQQGroup(groupkey);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
-            OkhttpUtil.get(URL_HOME_VERSION, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Message message = new Message();
-                    message.what = TYPE_SETTING_GET_VERSION_FAILED;
-                    message.obj = e;
-                    handler.sendMessage(message);
-                }
+            checkUpgrade(URL_HOME_VERSION);
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String json = response.body().string();
-                    Message message = new Message();
-                    message.what = TYPE_SETTING_GET_VERSION_OK;
-                    message.obj = json;
-                    handler.sendMessage(message);
-                }
-            });
         }
         if (PREF_DEL_EX.equals(key)) {
             File[] ypks = new File(mSettings.getExpansionsPath().getAbsolutePath()).listFiles();
@@ -673,6 +665,27 @@ public class SettingFragment extends PreferenceFragmentPlus {
             // 未安装手Q或安装的版本不支持
             return false;
         }
+    }
+
+    public void checkUpgrade(String url) {
+        OkhttpUtil.get(url, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Message message = new Message();
+                message.what = TYPE_SETTING_GET_VERSION_FAILED;
+                message.obj = e;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                Message message = new Message();
+                message.what = TYPE_SETTING_GET_VERSION_OK;
+                message.obj = json;
+                handler.sendMessage(message);
+            }
+        });
     }
 
     private void arrangeCodeList(String code) {

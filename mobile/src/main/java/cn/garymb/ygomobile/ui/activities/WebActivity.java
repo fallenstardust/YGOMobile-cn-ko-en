@@ -67,7 +67,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     private EditText et_context_keyword;
     private ImageButton btn_context_search_close, btn_context_search_last, btn_context_search_next;
     private Button btn_download;
-    private File xmlFile;
     private int FailedCount;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -129,7 +128,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         mWebViewPlus = $(R.id.webbrowser);
         find_in_page = $(R.id.find_in_page);
         et_context_keyword = $(R.id.context_keyword);
-        xmlFile = new File(this.getFilesDir(), Constants.SERVER_FILE);
         initButton();
         //mWebViewPlus.enableHtml5();
         mWebViewPlus.setWebChromeClient(new DefWebChromeClient() {
