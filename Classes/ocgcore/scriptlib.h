@@ -111,6 +111,7 @@ public:
 	static int32 card_is_origin_code_rule(lua_State *L);
 	static int32 card_is_code(lua_State *L);
 	static int32 card_is_type(lua_State *L);
+	static int32 card_is_all_types(lua_State *L);
 	static int32 card_is_fusion_type(lua_State *L);
 	static int32 card_is_synchro_type(lua_State *L);
 	static int32 card_is_xyz_type(lua_State *L);
@@ -128,6 +129,7 @@ public:
 	static int32 card_is_non_attribute(lua_State *L);
 	static int32 card_is_extra_deck_monster(lua_State *L);
 	static int32 card_is_reason(lua_State *L);
+	static int32 card_is_all_reasons(lua_State *L);
 	static int32 card_is_summon_type(lua_State *L);
 	static int32 card_is_summon_location(lua_State *L);
 	static int32 card_is_summon_player(lua_State *L);
@@ -246,6 +248,8 @@ public:
 	static int32 card_is_attack_above(lua_State *L);
 	static int32 card_is_defense_below(lua_State *L);
 	static int32 card_is_defense_above(lua_State *L);
+	static int32 card_is_has_level(lua_State *L);
+	static int32 card_is_has_defense(lua_State *L);
 	static int32 card_is_public(lua_State *L);
 	static int32 card_is_forbidden(lua_State *L);
 	static int32 card_is_able_to_change_controler(lua_State *L);
@@ -383,6 +387,7 @@ public:
 	static int32 duel_enable_global_flag(lua_State *L);
 	static int32 duel_get_lp(lua_State *L);
 	static int32 duel_set_lp(lua_State *L);
+	static int32 duel_is_turn_player(lua_State *L);
 	static int32 duel_get_turn_player(lua_State *L);
 	static int32 duel_get_turn_count(lua_State *L);
 	static int32 duel_get_draw_count(lua_State *L);
@@ -483,6 +488,9 @@ public:
 	static int32 duel_get_chain_event(lua_State *L);
 	static int32 duel_get_first_target(lua_State *L);
 	static int32 duel_get_targets_relate_to_chain(lua_State *L);
+	static int32 duel_is_phase(lua_State *L);
+	static int32 duel_is_main_phase(lua_State *L);
+	static int32 duel_is_battle_phase(lua_State *L);
 	static int32 duel_get_current_phase(lua_State *L);
 	static int32 duel_skip_phase(lua_State *L);
 	static int32 duel_is_damage_calculated(lua_State *L);

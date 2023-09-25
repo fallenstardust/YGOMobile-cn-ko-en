@@ -445,7 +445,7 @@ int32 field::draw(uint16 step, effect* reason_effect, uint32 reason, uint8 reaso
 		card_set* drawed_set = (card_set*)core.units.begin()->ptarget;
 		core.operated_set.swap(*drawed_set);
 		delete drawed_set;
-		returns.ivalue[0] = count;
+		returns.ivalue[0] = (int32)core.operated_set.size();
 		return TRUE;
 	}
 	}
@@ -6359,7 +6359,7 @@ int32 field::toss_coin(uint16 step, effect * reason_effect, uint8 reason_player,
 					}
 				}
 				if (!core.coin_count)
-					core.coin_count == MAX_COIN_COUNT;
+					core.coin_count = MAX_COIN_COUNT;
 				pduel->write_buffer8(MSG_TOSS_COIN);
 				pduel->write_buffer8(playerid);
 				pduel->write_buffer8((uint8)core.coin_count);
