@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -96,7 +97,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                     Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
                     Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
                     Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
-                    if (!Cache_pre_release_code.isEmpty()) {
+                    if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                         arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                     }
                     if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
