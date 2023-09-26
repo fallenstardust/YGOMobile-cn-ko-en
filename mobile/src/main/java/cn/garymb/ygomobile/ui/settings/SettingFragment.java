@@ -89,6 +89,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -167,36 +168,38 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_SETTING_GET_VERSION_OK:
-                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1);
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
-                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
-                    if (!Cache_pre_release_code.isEmpty()) {
-                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                    }
-                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
-                        DialogPlus dialog = new DialogPlus(getActivity());
-                        dialog.setMessage(R.string.Found_Update);
-                        dialog.setLeftButtonText(R.string.download_home);
-                        dialog.setLeftButtonListener((dlg, s) -> {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse(Cache_link));
-                            startActivity(intent);
-                            dialog.dismiss();
-                        });
-                        dialog.show();
+                    if (msg.obj.toString().contains("|") && msg.obj.toString().contains("\n")) {
+                        Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
+                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
+                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
+                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                        }
+                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                            DialogPlus dialog = new DialogPlus(getActivity());
+                            dialog.setMessage(R.string.Found_Update);
+                            dialog.setLeftButtonText(R.string.download_home);
+                            dialog.setLeftButtonListener((dlg, s) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(Cache_link));
+                                startActivity(intent);
+                                dialog.dismiss();
+                            });
+                            dialog.show();
+                        } else {
+                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case TYPE_SETTING_GET_VERSION_FAILED:
-                    String error = msg.obj.toString();
                     ++FailedCount;
                     if (FailedCount <= 2) {
                         Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
                         checkUpgrade(URL_YGO233_FILE_ALT);
                     } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + error, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     }
                     break;
             }

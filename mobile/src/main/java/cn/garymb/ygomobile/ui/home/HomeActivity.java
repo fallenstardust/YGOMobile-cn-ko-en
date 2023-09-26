@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -60,16 +59,20 @@ import okhttp3.Response;
 
 public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
 
-    long exitLasttime = 0;
+    private static final int TYPE_GET_VERSION_OK = 0;
+    private static final int TYPE_GET_VERSION_FAILED = 1;
     public static String Version;
     public static String Cache_link;
     public static String Cache_pre_release_code;
-
     public static List<Integer> pre_code_list = new ArrayList<>();
     public static List<Integer> released_code_list = new ArrayList<>();
-    private static final int TYPE_GET_VERSION_OK = 0;
-    private static final int TYPE_GET_VERSION_FAILED = 1;
-
+    public HomeFragment fragment_home;
+    public CardSearchFragment fragment_search;
+    public DeckManagerFragment fragment_deck_cards;
+    public MycardFragment fragment_mycard;
+    public SettingFragment fragment_settings;
+    public MycardChatFragment fragment_mycard_chatting_room;
+    long exitLasttime = 0;
     private CardLoader cardLoader;
     private ImageLoader imageLoader;
     private BottomNavigationBar bottomNavigationBar;
@@ -77,54 +80,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     private TextBadgeItem mTextBadgeItem;
     private FrameLayout frameLayout;
     private Fragment mFragment;
-
-    public HomeFragment fragment_home;
-    public CardSearchFragment fragment_search;
-    public DeckManagerFragment fragment_deck_cards;
-    public MycardFragment fragment_mycard;
-    public SettingFragment fragment_settings;
-    public MycardChatFragment fragment_mycard_chatting_room;
     private Bundle mBundle;
     private int FailedCount;
-
-    @SuppressLint("HandlerLeak")
-    Handler handlerHome = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_GET_VERSION_OK:
-                    Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                    Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
-                    Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
-                    if (!TextUtils.isEmpty(Cache_pre_release_code)) {
-                        arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                    }
-                    if (!Version.equals(BuildConfig.VERSION_NAME) && !Version.isEmpty() && !Cache_link.isEmpty()) {
-                        DialogPlus dialog = new DialogPlus(getActivity());
-                        dialog.setMessage(R.string.Found_Update);
-                        dialog.setLeftButtonText(R.string.download_home);
-                        dialog.setLeftButtonListener((dlg, s) -> {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(Uri.parse(Cache_link));
-                            startActivity(intent);
-                            dialog.dismiss();
-                        });
-                        dialog.show();
-                    }
-                    break;
-                case TYPE_GET_VERSION_FAILED:
-                    ++FailedCount;
-                    if (FailedCount <= 2) {
-                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
-                        checkUpgrade(URL_HOME_VERSION_ALT);
-                    }
-                    String error = msg.obj.toString();
-                    break;
-            }
-
-        }
-    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -203,7 +160,49 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
-    }
+    }    @SuppressLint("HandlerLeak")
+    Handler handlerHome = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_GET_VERSION_OK:
+                    if (msg.obj.toString().contains("|") && msg.obj.toString().contains("\n")) {
+                        Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
+                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
+                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
+                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                        }
+                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                            DialogPlus dialog = new DialogPlus(getActivity());
+                            dialog.setMessage(R.string.Found_Update);
+                            dialog.setLeftButtonText(R.string.download_home);
+                            dialog.setLeftButtonListener((dlg, s) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(Cache_link));
+                                startActivity(intent);
+                                dialog.dismiss();
+                            });
+                            dialog.show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case TYPE_GET_VERSION_FAILED:
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
+                        checkUpgrade(URL_HOME_VERSION_ALT);
+                    } else {
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+
+        }
+    };
 
     private void showNewsCounts() {
         mTextBadgeItem = new TextBadgeItem()
@@ -315,7 +314,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             }
         }
     }
-
 
     @Override
     protected void onResume() {
@@ -439,4 +437,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
         }
     }
+
+
+
+
 }
