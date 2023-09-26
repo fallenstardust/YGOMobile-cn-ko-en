@@ -4,6 +4,9 @@ import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
+import static cn.garymb.ygomobile.Constants.ID1;
+import static cn.garymb.ygomobile.Constants.ID2;
+import static cn.garymb.ygomobile.Constants.ID3;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
@@ -89,7 +92,6 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -160,52 +162,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
         isInit = false;
     }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_SETTING_GET_VERSION_OK:
-                    if (msg.obj.toString().contains("|") && msg.obj.toString().contains("\n")) {
-                        Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
-                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
-                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
-                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                        }
-                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getActivity());
-                            dialog.setMessage(R.string.Found_Update);
-                            dialog.setLeftButtonText(R.string.download_home);
-                            dialog.setLeftButtonListener((dlg, s) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(Cache_link));
-                                startActivity(intent);
-                                dialog.dismiss();
-                            });
-                            dialog.show();
-                        } else {
-                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case TYPE_SETTING_GET_VERSION_FAILED:
-                    ++FailedCount;
-                    if (FailedCount <= 2) {
-                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
-                        checkUpgrade(URL_YGO233_FILE_ALT);
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-            }
-
-        }
-    };
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
@@ -290,7 +246,50 @@ public class SettingFragment extends PreferenceFragmentPlus {
             return rs;
         }
         return true;
-    }
+    }    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_SETTING_GET_VERSION_OK:
+                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
+                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
+                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
+                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
+                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
+                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                        }
+                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                            DialogPlus dialog = new DialogPlus(getActivity());
+                            dialog.setMessage(R.string.Found_Update);
+                            dialog.setLeftButtonText(R.string.download_home);
+                            dialog.setLeftButtonListener((dlg, s) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(Cache_link));
+                                startActivity(intent);
+                                dialog.dismiss();
+                            });
+                            dialog.show();
+                        } else {
+                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case TYPE_SETTING_GET_VERSION_FAILED:
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        checkUpgrade(URL_YGO233_FILE_ALT);
+                    } else {
+                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+
+        }
+    };
 
     @Override
     public boolean onPreferenceClick(Preference preference) {

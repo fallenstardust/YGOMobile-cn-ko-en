@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.home;
 
+import static cn.garymb.ygomobile.Constants.ID1;
+import static cn.garymb.ygomobile.Constants.ID2;
+import static cn.garymb.ygomobile.Constants.ID3;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
 
@@ -160,17 +163,30 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
-    }    @SuppressLint("HandlerLeak")
+    }
+
+    private void showNewsCounts() {
+        mTextBadgeItem = new TextBadgeItem()
+                .setBorderWidth(4)//文本大小
+                .setGravity(Gravity.LEFT)//位置 默认右上
+                .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
+                .setAnimationDuration(200)//动画时间
+                .setText("3")
+                .setHideOnSelect(false)//true当选中状态时消失，非选中状态再次显示
+                .show();
+    }
+
+    @SuppressLint("HandlerLeak")
     Handler handlerHome = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_GET_VERSION_OK:
-                    if (msg.obj.toString().contains("|") && msg.obj.toString().contains("\n")) {
-                        Version = msg.obj.toString().substring(0, msg.obj.toString().indexOf("|"));//截取版本号
-                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf("|") + 1, msg.obj.toString().indexOf("\n"));//截取下载地址
-                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf("\n") + 1);//截取先行-正式对照文本
+                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
+                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
+                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
+                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
                         if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
@@ -186,33 +202,18 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                             });
                             dialog.show();
                         }
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case TYPE_GET_VERSION_FAILED:
                     ++FailedCount;
                     if (FailedCount <= 2) {
                         checkUpgrade(URL_HOME_VERSION_ALT);
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     }
                     break;
             }
 
         }
     };
-
-    private void showNewsCounts() {
-        mTextBadgeItem = new TextBadgeItem()
-                .setBorderWidth(4)//文本大小
-                .setGravity(Gravity.LEFT)//位置 默认右上
-                .setBackgroundColorResource(R.color.holo_orange_bright)//背景颜色
-                .setAnimationDuration(200)//动画时间
-                .setText("3")
-                .setHideOnSelect(false)//true当选中状态时消失，非选中状态再次显示
-                .show();
-    }
 
     @Override
     public void onTabSelected(int position) {
@@ -412,6 +413,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String json = response.body().string();
+                Log.e("seesee", json);
                 Message message = new Message();
                 message.what = TYPE_GET_VERSION_OK;
                 message.obj = json;
@@ -425,7 +427,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         try {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] words = line.trim().split("[ ]+");
+                String[] words = line.trim().split("[\t ]+");
                 pre_code_list.add(Integer.valueOf(words[0]));
                 released_code_list.add(Integer.valueOf(words[1]));
 
@@ -433,7 +435,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         } catch (Exception e) {
             Log.e(Constants.TAG, e + "");
         } finally {
-
         }
     }
 
