@@ -193,7 +193,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                 case TYPE_GET_VERSION_FAILED:
                     ++FailedCount;
                     if (FailedCount <= 2) {
-                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
                         checkUpgrade(URL_HOME_VERSION_ALT);
                     } else {
                         Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
