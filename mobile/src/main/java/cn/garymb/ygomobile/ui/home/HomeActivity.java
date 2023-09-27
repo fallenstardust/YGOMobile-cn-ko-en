@@ -413,7 +413,6 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String json = response.body().string();
-                Log.e("seesee", json);
                 Message message = new Message();
                 message.what = TYPE_GET_VERSION_OK;
                 message.obj = json;

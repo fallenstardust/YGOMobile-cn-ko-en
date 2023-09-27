@@ -162,11 +162,11 @@ public interface Constants {
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";
     String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
-    String URL_YGO233_ADVANCE = "https://ygo233.com/pre";
+    String URL_YGO233_ADVANCE = "https://ygo233.com/pre#pre_release_cards";
     String URL_YGO233_DATAVER = "https://ygo233.com/pre/dataver";
     String URL_YGO233_FILE = "https://ygo233.com/pre/download-ygomobile";
     String URL_YGO233_FILE_ALT = "https://ygo233.com/pre/download-ygomobile/alt";
-    String URL_YGO233_BUG_REPORT = "https://ygo233.com/bugs";
+    String URL_YGO233_BUG_REPORT = "https://ygo233.com/pre#faq";
     int PORT_YGO233 = 23333;
     String URL_YGO233_1 = "s1.ygo233.com";
     String URL_YGO233_2 = "s2.ygo233.com";
