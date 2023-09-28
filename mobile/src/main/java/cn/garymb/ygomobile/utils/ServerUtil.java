@@ -14,15 +14,17 @@ import com.file.zip.ZipFile;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Scanner;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
@@ -113,15 +115,37 @@ public class ServerUtil {
                     entry = entris.nextElement();
                     if (!entry.isDirectory()) {
                         if (entry.getName().endsWith(".ini")) {
-                            Scanner scanner = new Scanner(zipFile.getInputStream(entry));
-                            while (scanner.hasNextLine()) {
-                                content.append(scanner.nextLine() + "|");
+                            InputStreamReader in = new InputStreamReader(zipFile.getInputStream(entry), StandardCharsets.UTF_8);
+                            BufferedReader reader = new BufferedReader(in);
+                            String line = null;
+                            while ((line = reader.readLine()) != null) {
+                                if (line.startsWith("[YGOProExpansionPack]") ||
+                                        line.startsWith("FileName") ||
+                                        line.startsWith("PackName") ||
+                                        line.startsWith("PackAuthor") ||
+                                        line.startsWith("PackHomePage") ||
+                                        line.startsWith("[YGOMobileAddServer]")) {
+                                    continue;
+                                }
+                                if (line.startsWith("ServerName")) {
+                                    String[] words = line.trim().split("[\t| =]+");
+                                    if (words.length >= 2) {
+                                        serverName = words[1];
+                                    }
+                                }
+                                if (line.startsWith("ServerHost")) {
+                                    String[] words = line.trim().split("[\t| =]+");
+                                    if (words.length >= 2) {
+                                        serverHost = words[1];
+                                    }
+                                }
+                                if (line.startsWith("ServerPort")) {
+                                    String[] words = line.trim().split("[\t| =]+");
+                                    if (words.length >= 2) {
+                                        serverPort = words[1];
+                                    }
+                                }
                             }
-                            scanner.close();
-                            serverName = content.substring(0, content.indexOf("|"));
-                            serverHost = content.substring(content.indexOf("|") + 1, content.indexOf(":"));
-                            serverPort = content.substring(content.indexOf(":") + 1, content.lastIndexOf("|"));
-
                         }
 
                     }
@@ -131,7 +155,7 @@ public class ServerUtil {
                 } else {
                     YGOUtil.showTextToast("can't parse ex-server properly");
                 }
-                LogUtil.w("看看", serverName + isHost(serverHost) + serverHost + isNumeric(serverPort) + serverPort);
+                LogUtil.w("seesee", serverName + isHost(serverHost) + serverHost + isNumeric(serverPort) + serverPort);
                 zipFile.close();
 
             } catch (IOException e) {
