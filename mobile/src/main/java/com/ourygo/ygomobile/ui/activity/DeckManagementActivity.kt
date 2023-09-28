@@ -3,12 +3,12 @@ package com.ourygo.ygomobile.ui.activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -22,7 +22,6 @@ import cn.garymb.ygomobile.loader.DeckLoader
 import cn.garymb.ygomobile.loader.ImageLoader
 import cn.garymb.ygomobile.utils.DeckUtil
 import com.chad.library.adapter.base.BaseQuickAdapter
-import com.feihua.dialogutils.bean.ItemData
 import com.feihua.dialogutils.util.DialogUtils
 import com.ourygo.ygomobile.adapter.DeckListBQAdapter
 import com.ourygo.ygomobile.util.HandlerUtil
@@ -32,17 +31,21 @@ import com.ourygo.ygomobile.util.OYUtil
 import com.ourygo.ygomobile.util.Record
 import com.ourygo.ygomobile.util.ShareUtil
 import com.ourygo.ygomobile.util.SharedPreferenceUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * Create By feihua  On 2021/11/10
  */
 class DeckManagementActivity : ListAndUpdateActivity() {
-    private var deckListAdp: DeckListBQAdapter? = null
+    private lateinit var deckListAdp: DeckListBQAdapter
     private var imageLoader: ImageLoader? = null
     private val dialogUtils: DialogUtils by lazy {
         DialogUtils.getInstance(this)
     }
-    var handler: Handler = object : Handler() {
+    var handler: Handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
             when (msg.what) {
@@ -54,9 +57,9 @@ class DeckManagementActivity : ListAndUpdateActivity() {
                 SHARE_DECK_FILE_OK -> {}
                 DECK_LIST_LOAD_OK -> {
                     LogUtil.time("DeckManagement", "刷新完毕")
-                    deckListAdp!!.removeAllHeaderView()
+                    deckListAdp.removeAllHeaderView()
                     initHeadView()
-                    deckListAdp!!.setList(msg.obj as List<DeckFile?>)
+                    deckListAdp.setList(msg.obj as List<DeckFile?>)
                     srl_update.isRefreshing = false
                 }
             }
@@ -72,6 +75,10 @@ class DeckManagementActivity : ListAndUpdateActivity() {
     private var tv_close: TextView? = null
     private var tv_visit: TextView? = null
     private var tv_close_visit: TextView? = null
+    private val scope by lazy {
+        CoroutineScope(Job())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initView()
@@ -84,9 +91,9 @@ class DeckManagementActivity : ListAndUpdateActivity() {
         LogUtil.time("DeckManagement", "图片初始化")
         deckListAdp = DeckListBQAdapter(imageLoader, ArrayList())
         rv_list.adapter = deckListAdp
-        deckListAdp!!.addChildClickViewIds(R.id.iv_edit, R.id.iv_share, R.id.iv_del)
-        deckListAdp!!.setOnItemChildClickListener { adapter: BaseQuickAdapter<*, *>?, view: View, position: Int ->
-            val deckFile = deckListAdp!!.getItem(position)
+        deckListAdp.addChildClickViewIds(R.id.iv_edit, R.id.iv_share, R.id.iv_del)
+        deckListAdp.setOnItemChildClickListener { adapter: BaseQuickAdapter<*, *>?, view: View, position: Int ->
+            val deckFile = deckListAdp.getItem(position)
             when (view.id) {
                 R.id.iv_edit -> IntentUtil.startYGODeck(
                     this@DeckManagementActivity,
@@ -96,9 +103,11 @@ class DeckManagementActivity : ListAndUpdateActivity() {
 
                 R.id.iv_share -> shareDeck(deckFile)
                 R.id.iv_del -> {
-                    deckFile.pathFile.delete()
-                    deckListAdp!!.removeAt(position)
+                    deckListAdp.removeAt(position)
                     OYUtil.snackShow(toolbar, "删除成功")
+                    scope.launch(Dispatchers.IO) {
+                        deckFile.pathFile.delete()
+                    }
                 }
             }
         }
@@ -120,10 +129,10 @@ class DeckManagementActivity : ListAndUpdateActivity() {
             tv_close = headerView.findViewById<TextView?>(R.id.tv_close)?.apply {
                 setOnClickListener {
                     SharedPreferenceUtil.setIsShowEz(false)
-                    deckListAdp!!.removeHeaderView(headerView)
+                    deckListAdp.removeHeaderView(headerView)
                 }
             }
-            deckListAdp!!.addHeaderView(headerView)
+            deckListAdp.addHeaderView(headerView)
         }
         if (SharedPreferenceUtil.isShowVisitDeck()) {
             tv_visit = visitView.findViewById<TextView?>(R.id.tv_visit)?.apply {
@@ -138,9 +147,9 @@ class DeckManagementActivity : ListAndUpdateActivity() {
             }
             tv_close_visit = visitView.findViewById<TextView?>(R.id.tv_close_visit)?.apply {
                 SharedPreferenceUtil.setShowVisitDeck(false)
-                deckListAdp!!.removeHeaderView(visitView)
+                deckListAdp.removeHeaderView(visitView)
             }
-            deckListAdp!!.addHeaderView(visitView)
+            deckListAdp.addHeaderView(visitView)
         }
     }
 

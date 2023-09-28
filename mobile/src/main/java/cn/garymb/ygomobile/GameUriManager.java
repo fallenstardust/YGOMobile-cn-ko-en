@@ -226,6 +226,7 @@ public class GameUriManager {
                     Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
                 } else {
                     DataManager.get().load(true);
+                    com.ourygo.ygomobile.util.YGOUtil.loadServerInfoFromZipOrYpk(file);
                     Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
                 }
             } else if (isYrp) {

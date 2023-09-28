@@ -195,4 +195,9 @@ dependencies {
     //决斗助手
     implementation 'com.github.feihuaduo:YGODuelAssistantLib:1.0.7'
 
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0'
+    //lifecycle
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
+
 }

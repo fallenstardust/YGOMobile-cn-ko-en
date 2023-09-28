@@ -1,195 +1,285 @@
-package com.ourygo.ygomobile.util;
+package com.ourygo.ygomobile.util
 
-import android.app.Activity;
-import android.util.Log;
+import android.app.Activity
+import android.util.Log
+import cn.garymb.ygodata.YGOGameOptions
+import cn.garymb.ygomobile.App
+import cn.garymb.ygomobile.AppsSettings
+import cn.garymb.ygomobile.Constants
+import cn.garymb.ygomobile.YGOStarter
+import cn.garymb.ygomobile.bean.ServerInfo
+import cn.garymb.ygomobile.ui.plus.VUiKit
+import cn.garymb.ygomobile.utils.IOUtils
+import cn.garymb.ygomobile.utils.StringUtils
+import cn.garymb.ygomobile.utils.SystemUtils
+import cn.garymb.ygomobile.utils.XmlUtils
+import com.file.zip.ZipEntry
+import com.file.zip.ZipFile
+import com.ourygo.ygomobile.base.listener.OnLfListQueryListener
+import com.ourygo.ygomobile.base.listener.OnYGOServerListQueryListener
+import com.ourygo.ygomobile.bean.Lflist
+import com.ourygo.ygomobile.bean.Replay
+import com.ourygo.ygomobile.bean.YGOServer
+import com.ourygo.ygomobile.bean.YGOServerList
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.Date
 
-import com.ourygo.ygomobile.base.listener.OnLfListQueryListener;
-import com.ourygo.ygomobile.base.listener.OnYGOServerListQueryListener;
-import com.ourygo.ygomobile.bean.Lflist;
-import com.ourygo.ygomobile.bean.Replay;
-import com.ourygo.ygomobile.bean.YGOServer;
-import com.ourygo.ygomobile.bean.YGOServerList;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import cn.garymb.ygodata.YGOGameOptions;
-import cn.garymb.ygomobile.App;
-import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.YGOStarter;
-import cn.garymb.ygomobile.bean.ServerInfo;
-import cn.garymb.ygomobile.bean.ServerList;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.SystemUtils;
-import cn.garymb.ygomobile.utils.XmlUtils;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
-
-import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-
-public class YGOUtil {
-
-    public static void joinGame(Activity activity){
-        joinGame(activity,null,null,0);
-    }
-
-    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
-    joinGame(activity,serverInfo,password,0);
-    }
-
+object YGOUtil {
     //加入游戏
-    public static void joinGame(Activity activity, ServerInfo serverInfo, String password,int request) {
-        YGOGameOptions options =null;
-        if (serverInfo!=null){
-            options=new YGOGameOptions();
-            options.mServerAddr = serverInfo.getServerAddr();
-            options.mUserName = serverInfo.getPlayerName();
-            options.mPort = serverInfo.getPort();
-            options.mRoomName = password;
+    @JvmStatic
+    @JvmOverloads
+    fun joinGame(
+        activity: Activity?,
+        serverInfo: ServerInfo? = null,
+        password: String? = null,
+        request: Int = 0
+    ) {
+        var options: YGOGameOptions? = null
+        serverInfo?.let {
+            options = YGOGameOptions().apply {
+                mServerAddr = it.serverAddr
+                mUserName = it.playerName
+                mPort = it.port
+                mRoomName = password
+            }
         }
-        YGOStarter.startGame(request,activity, options);
+        YGOStarter.startGame(request, activity, options)
     }
 
     //获取服务器列表
-    public static void getYGOServerList(OnYGOServerListQueryListener onYGOServerListQueryListener){
-        File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
-        Log.e("YGOUtil",xmlFile.exists()+"获取列表"+xmlFile.getAbsolutePath());
-        VUiKit.defer().when(() -> {
-            YGOServerList assetList = readList(App.get().getAssets().open(ASSET_SERVER_LIST));
-            YGOServerList fileList = xmlFile.exists() ? readList(new FileInputStream(xmlFile)) : null;
-            if (fileList == null) {
-                return assetList;
+    @JvmStatic
+    fun getYGOServerList(onYGOServerListQueryListener: OnYGOServerListQueryListener) {
+        val xmlFile = File(App.get().filesDir, Constants.SERVER_FILE)
+        Log.e("YGOUtil", xmlFile.exists().toString() + "获取列表" + xmlFile.absolutePath)
+        VUiKit.defer().`when`<YGOServerList> {
+            val assetList = readList(App.get().assets.open(Constants.ASSET_SERVER_LIST))
+            val fileList = (if (xmlFile.exists()) readList(FileInputStream(xmlFile)) else null)
+                ?: return@`when` assetList
+            if (fileList.vercode < assetList!!.vercode) {
+                xmlFile.delete()
+                return@`when` assetList
             }
-            if (fileList.getVercode() < assetList.getVercode()) {
-                xmlFile.delete();
-                return assetList;
-            }
-            return fileList;
-        }).done((list) -> {
-            if (list != null) {
-
-                onYGOServerListQueryListener.onYGOServerListQuery(list);
-
-            }
-        });
-    }
-
-
-    public static List<Replay> getReplayList(){
-        List<Replay> replayList=new ArrayList<>();
-        File file=new File(AppsSettings.get().getReplayDir());
-
-        for (File file1:file.listFiles()){
-            if (!file1.isDirectory()&&file1.getName().endsWith(".yrp")){
-                Replay replay=new Replay();
-                replay.setName(file1.getName().substring(0,file1.getName().indexOf(".yrp")));
-                replay.setTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(file1.lastModified())));
-                replayList.add(replay);
+            fileList
+        }.done { list: YGOServerList? ->
+            list?.let {
+                onYGOServerListQueryListener.onYGOServerListQuery(it)
             }
         }
-
-        return replayList;
     }
 
-    private static YGOServerList readList(InputStream in) {
-        YGOServerList list = null;
+    val replayList: List<Replay>
+        get() {
+            val replayList: MutableList<Replay> = ArrayList()
+            val file = File(AppsSettings.get().replayDir)
+            for (file1 in file.listFiles()!!) {
+                if (!file1.isDirectory && file1.name.endsWith(".yrp")) {
+                    val replay = Replay()
+                    replay.name = file1.name.substring(0, file1.name.indexOf(".yrp"))
+                    replay.time =
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date(file1.lastModified()))
+                    replayList.add(replay)
+                }
+            }
+            return replayList
+        }
+
+    private fun readList(`in`: InputStream): YGOServerList? {
+        var list: YGOServerList? = null
         try {
-            list = XmlUtils.get().getObject(YGOServerList.class, in);
-        } catch (Exception e) {
-
+            list = XmlUtils.get().getObject(YGOServerList::class.java, `in`)
+        } catch (_: Exception) {
         } finally {
-            IOUtils.close(in);
+            IOUtils.close(`in`)
         }
-        return list;
+        return list
     }
 
-    
-    public static void addYGOServer(YGOServer ygoService){
-        getYGOServerList(new OnYGOServerListQueryListener() {
-            @Override
-            public void onYGOServerListQuery(YGOServerList serverList) {
-                List<YGOServer> ygoServers=serverList.getServerInfoList();
-                ygoServers.add(ygoService);
-                setYGOServer(ygoServers);
-            }
-        });
+    /**
+     * 添加服务器信息
+     * @param ygoService 服务器信息
+     */
+    fun addYGOServer(ygoService: YGOServer) {
+        getYGOServerList { serverList: YGOServerList ->
+            val ygoServers = serverList.serverInfoList
+            ygoServers.add(ygoService)
+            setYGOServer(ygoServers)
+        }
     }
 
-
-    public static void setYGOServer(List<YGOServer> ygoServers){
-        File xmlFile = new File(App.get().getFilesDir(), Constants.SERVER_FILE);
-        Log.e("YGOUtil","路径"+xmlFile.getAbsolutePath());
-        OutputStream outputStream = null;
+    /**
+     * 保存服务器列表
+     * @param ygoServers 服务器列表
+     */
+    @JvmStatic
+    fun setYGOServer(ygoServers: List<YGOServer>?) {
+        val xmlFile = File(App.get().filesDir, Constants.SERVER_FILE)
+        Log.e("YGOUtil", "路径" + xmlFile.absolutePath)
+        var outputStream: OutputStream? = null
         try {
-            outputStream = new FileOutputStream(xmlFile);
-            XmlUtils.get().saveXml(new YGOServerList(SystemUtils.getVersion(App.get()), ygoServers), outputStream);
-            Log.e("YGOUtil","保存成功");
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("YGOUtil","保存失败");
+            outputStream = FileOutputStream(xmlFile)
+            XmlUtils.get()
+                .saveXml(YGOServerList(SystemUtils.getVersion(App.get()), ygoServers), outputStream)
+            Log.e("YGOUtil", "保存成功")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("YGOUtil", "保存失败")
         } finally {
-            IOUtils.close(outputStream);
+            IOUtils.close(outputStream)
         }
     }
 
-
-    public static void findLfListListener(OnLfListQueryListener onLfListQueryListener){
-        OkhttpUtil.get(Record.YGO_LFLIST_URL, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-               onLfListQueryListener.onLflistQuery(null,e.toString());
+    @JvmStatic
+    fun findLfListListener(onLfListQueryListener: OnLfListQueryListener) {
+        OkhttpUtil.get(Record.YGO_LFLIST_URL, object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                onLfListQueryListener.onLflistQuery(null, e.toString())
             }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-               String lflist=response.body().string();
-               String lflistHeader=lflist.substring(1,lflist.indexOf("\n"));
-               int index=0;
-               List<Lflist> lflistNameList=new ArrayList<>();
-               while (index<lflistHeader.length()){
-                   int start,end;
-                   start=lflistHeader.indexOf("[",index);
-                   if (start!=-1){
-                       end=lflistHeader.indexOf("]",start);
-                       if (end!=-1){
-                           String lflistName=lflistHeader.substring(start+1,end);
-                           int type=Lflist.TYPE_OCG;
-                           //获取禁卡表名和禁卡表类型的分割符位置
-                           int typeStart=lflistName.indexOf(" ");
-                           //如果存在并且不在最后一个即分割
-                           if (typeStart!=-1&&typeStart!=lflistName.length()-1){
-                               String typeName=lflistName.substring(typeStart+1);
-                               lflistName=lflistName.substring(0,typeStart);
-                               if (typeName.equals("TCG")){
-                                   type=Lflist.TYPE_TCG;
-                               }else {
-                                   type=Lflist.TYPE_OCG;
-                               }
-                           }
-                           lflistNameList.add(Lflist.toLflist(lflistName,"",type));
-                           index=end;
-                       }else {
-                           break;
-                       }
-                   }else {
-                       break;
-                   }
-               }
-               onLfListQueryListener.onLflistQuery(lflistNameList,null);
+            @Throws(IOException::class)
+            override fun onResponse(call: Call, response: Response) {
+                val lflist = response.body()!!.string()
+                val lflistHeader = lflist.substring(1, lflist.indexOf("\n"))
+                var index = 0
+                val lflistNameList: MutableList<Lflist> = ArrayList()
+                while (index < lflistHeader.length) {
+                    var end: Int
+                    val start: Int = lflistHeader.indexOf("[", index)
+                    if (start != -1) {
+                        end = lflistHeader.indexOf("]", start)
+                        if (end != -1) {
+                            var lflistName = lflistHeader.substring(start + 1, end)
+                            var type = Lflist.TYPE_OCG
+                            //获取禁卡表名和禁卡表类型的分割符位置
+                            val typeStart = lflistName.indexOf(" ")
+                            //如果存在并且不在最后一个即分割
+                            if (typeStart != -1 && typeStart != lflistName.length - 1) {
+                                val typeName = lflistName.substring(typeStart + 1)
+                                lflistName = lflistName.substring(0, typeStart)
+                                type = if (typeName == "TCG") {
+                                    Lflist.TYPE_TCG
+                                } else {
+                                    Lflist.TYPE_OCG
+                                }
+                            }
+                            lflistNameList.add(Lflist.toLflist(lflistName, "", type))
+                            index = end
+                        } else {
+                            break
+                        }
+                    } else {
+                        break
+                    }
+                }
+                onLfListQueryListener.onLflistQuery(lflistNameList, null)
             }
-        });
-
+        })
     }
 
+    /**
+     * 解析zip或者ypk的file下内置的txt文件里的服务器name、host、prot
+     *
+     * @param file
+     */
+    @JvmStatic
+    fun loadServerInfoFromZipOrYpk(file: File) {
+        if (file.name.endsWith(".zip") || file.name.endsWith(".ypk")) {
+            try {
+                var serverName: String? = null
+                var serverHost: String? = null
+                var serverPort: String? = null
+                val zipFile = ZipFile(file.absoluteFile, "GBK")
+                val entris = zipFile.entries
+                var entry: ZipEntry
+                while (entris.hasMoreElements()) {
+                    entry = entris.nextElement()
+                    if (!entry.isDirectory) {
+                        if (entry.name.endsWith(".ini")) {
+                            val `in` = InputStreamReader(
+                                zipFile.getInputStream(entry),
+                                StandardCharsets.UTF_8
+                            )
+                            val reader = BufferedReader(`in`)
+                            var line: String?
+                            while (reader.readLine().also { line = it } != null) {
+                                if (line!!.startsWith("[YGOProExpansionPack]") ||
+                                    line!!.startsWith("FileName") ||
+                                    line!!.startsWith("PackName") ||
+                                    line!!.startsWith("PackAuthor") ||
+                                    line!!.startsWith("PackHomePage") ||
+                                    line!!.startsWith("[YGOMobileAddServer]")
+                                ) {
+                                    continue
+                                }
+                                if (line!!.startsWith("ServerName")) {
+                                    val words =
+                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                            .dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
+                                    if (words.size >= 2) {
+                                        serverName = words[1]
+                                    }
+                                }
+                                if (line!!.startsWith("ServerHost")) {
+                                    val words =
+                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                            .dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
+                                    if (words.size >= 2) {
+                                        serverHost = words[1]
+                                    }
+                                }
+                                if (line!!.startsWith("ServerPort")) {
+                                    val words =
+                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                            .dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
+                                    if (words.size >= 2) {
+                                        serverPort = words[1]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (serverName != null
+                    && (StringUtils.isHost(serverHost) || StringUtils.isValidIP(serverHost))
+                    && StringUtils.isNumeric(serverPort)
+                ) {
+                    getYGOServerList {
+                        for (serviceInfo in it.serverInfoList) {
+                            //如果ip和端口都已经存在，则不再添加该服务器
+                            if (serverHost == serviceInfo.serverAddr
+                                && serverPort == serviceInfo.port.toString()
+                            ) {
+                                return@getYGOServerList
+                            }
+                        }
+                        addYGOServer(YGOServer.toYGOServer(serverName).apply {
+                            serverAddr = serverHost
+                            port = Integer.valueOf(serverPort!!)
+                        })
+                    }
+//                    AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+
+                } else {
+                    OYUtil.show("无法解析当前先行卡服务器信息")
+                }
+                zipFile.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
 }

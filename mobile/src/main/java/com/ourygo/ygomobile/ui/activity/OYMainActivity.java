@@ -456,14 +456,14 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
     }
 
     public void joinDARoom(String host, int port, String password) {
-        YGODAUtil.deDeckListener(password, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
-            LogUtil.e("feihua","解析结果："+uri1
-                    +" \nmainList: "+mainList.size()
-                    +" \nexList: "+exList.size()
-                    +" \nsideList: "+sideList.size()
-                    +" \nisCompleteDeck: "+isCompleteDeck
-                    +" \nexception: "+exception
-            );
+//        YGODAUtil.deDeckListener(password, (uri1, mainList, exList, sideList, isCompleteDeck, exception) -> {
+//            LogUtil.e("feihua","解析结果："+uri1
+//                    +" \nmainList: "+mainList.size()
+//                    +" \nexList: "+exList.size()
+//                    +" \nsideList: "+sideList.size()
+//                    +" \nisCompleteDeck: "+isCompleteDeck
+//                    +" \nexception: "+exception
+//            );
 //            if (!TextUtils.isEmpty(exception)){
 //                cn.garymb.ygomobile.utils.YGOUtil.show("卡组解析失败，原因为："+exception);
 //                return;
@@ -471,16 +471,16 @@ public class OYMainActivity extends BaseActivity implements OnDuelAssistantListe
 //            Deck deckInfo = new Deck(uri,mainList,exList,sideList);
 //            deckInfo.setCompleteDeck(isCompleteDeck);
 //            OYDialogUtil.dialogDASaveDeck(activity,uri.toString(),deckInfo,OYDialogUtil.DECK_TYPE_DECK);
-        });
-//        YGOUtil.getYGOServerList(serverList -> {
-//            YGOServer ygoServer = serverList.getServerInfoList().get(0);
-//            if (!TextUtils.isEmpty(host)) {
-//                ygoServer.setServerAddr(host);
-//                ygoServer.setPort(port);
-//            }
-//            OYDialogUtil.dialogDAJoinRoom(OYMainActivity.this, ygoServer, password);
-//
 //        });
+        YGOUtil.getYGOServerList(serverList -> {
+            YGOServer ygoServer = serverList.getServerInfoList().get(0);
+            if (!TextUtils.isEmpty(host)) {
+                ygoServer.setServerAddr(host);
+                ygoServer.setPort(port);
+            }
+            OYDialogUtil.dialogDAJoinRoom(OYMainActivity.this, ygoServer, password);
+
+        });
     }
 
     @Override
