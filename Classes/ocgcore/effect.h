@@ -470,6 +470,8 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EFFECT_ACTIVATION_COUNT_LIMIT	367
 #define EFFECT_LIMIT_SPECIAL_SUMMON_POSITION	368
 #define EFFECT_TUNER					369
+#define EFFECT_KAISER_COLOSSEUM			370
+#define EFFECT_REPLACE_DAMAGE			371
 
 //#define EVENT_STARTUP		1000
 #define EVENT_FLIP			1001
@@ -549,7 +551,11 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define DOUBLE_DAMAGE				0x80000000
 #define HALF_DAMAGE					0x80000001
 
-// The type of event in code
+// flag effect
+#define EFFECT_FLAG_EFFECT	0x20000000
+#define MAX_CARD_ID			0xfffffff
+
+// The type of effect code
 #define CODE_CUSTOM		1	// header + id (28 bits)
 #define CODE_COUNTER	2	// header + counter_id (16 bits)
 #define CODE_PHASE		3	// header + phase_id (12 bits)
