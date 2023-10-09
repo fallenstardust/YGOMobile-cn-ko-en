@@ -1,158 +1,75 @@
-package cn.garymb.ygomobile.ui.activities;
+package cn.garymb.ygomobile.ui.activities
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.graphics.Rect
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Looper
+import android.provider.Settings
+import android.text.TextUtils
+import android.view.MenuItem
+import android.view.View
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import cn.garymb.ygomobile.lite.R
+import com.ourygo.ygomobile.util.DisplayUtils
+import com.ourygo.ygomobile.util.OYUtil
+import com.ourygo.ygomobile.util.ScaleUtils
+import com.ourygo.ygomobile.util.StatUtil
+import com.ourygo.ygomobile.view.OYToolbar
+import ocgcore.data.Card
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Looper;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Display;
-import android.view.MenuItem;
-import android.view.Surface;
-import android.view.SurfaceControl;
-import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.TextView;
-import android.widget.Toast;
+open class BaseActivity : AppCompatActivity() {
+    @JvmField
+    protected var isFragmentActivity = false
+    protected val permissions = arrayOf( //            Manifest.permission.RECORD_AUDIO,
+        //Manifest.permission.READ_PHONE_STATE,
+        //            Manifest.permission.SYSTEM_ALERT_WINDOW,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    )
+    private var mExitAnim = true
+    private var mEnterAnim = true
+    private var mToast: Toast? = null
+    @JvmField
+    protected var toolbar: OYToolbar? = null
 
-import com.ourygo.ygomobile.util.DisplayUtils;
-import com.ourygo.ygomobile.util.OYUtil;
-import com.ourygo.ygomobile.util.ScaleUtils;
-import com.ourygo.ygomobile.util.StatUtil;
-import com.ourygo.ygomobile.view.OYToolbar;
-
-import java.io.IOException;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
-import java.io.IOException;
-
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.FileLogUtil;
-import ocgcore.data.Card;
-
-public class BaseActivity extends AppCompatActivity {
-
-    protected boolean isFragmentActivity=false;
-
-    protected final static int REQUEST_PERMISSIONS = 0x1000 + 1;
-    public static int[] enImgs = new int[]{
-            R.drawable.right_top_1,
-            R.drawable.top_1,
-            R.drawable.left_top_1,
-            R.drawable.right_1,
-            0,
-            R.drawable.left_1,
-            R.drawable.right_bottom_1,
-            R.drawable.bottom_1,
-            R.drawable.left_bottom_1
-    };
-    public static int[] disImgs = new int[]{
-            R.drawable.right_top_0,
-            R.drawable.top_0,
-            R.drawable.left_top_0,
-            R.drawable.right_0,
-            0,
-            R.drawable.left_0,
-            R.drawable.right_bottom_0,
-            R.drawable.bottom_0,
-            R.drawable.left_bottom_0,
-    };
-    public static int[] ids = new int[]{
-            R.id.iv_9,
-            R.id.iv_8,
-            R.id.iv_7,
-            R.id.iv_6,
-            0,
-            R.id.iv_4,
-            R.id.iv_3,
-            R.id.iv_2,
-            R.id.iv_1
-    };
-    protected final String[] PERMISSIONS = {
-//            Manifest.permission.RECORD_AUDIO,
-            //Manifest.permission.READ_PHONE_STATE,
-//            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-    };
-    private boolean mExitAnim = true;
-    private boolean mEnterAnim = true;
-    private Toast mToast;
-
-    protected OYToolbar toolbar;
-
-    public static void showLinkArrows(Card cardInfo, View view) {
-        String lk = Integer.toBinaryString(cardInfo.Defense);
-        String Linekey = String.format("%09d", Integer.parseInt(lk));
-        for (int i = 0; i < ids.length; i++) {
-            String arrow = Linekey.substring(i, i + 1);
-            if (i != 4) {
-                if ("1".equals(arrow)) {
-                    view.findViewById(ids[i]).setBackgroundResource(enImgs[i]);
-                } else {
-                    view.findViewById(ids[i]).setBackgroundResource(disImgs[i]);
-                }
-            }
-        }
+    //    @Override
+    //    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+    //        super.onConfigurationChanged(newConfig);
+    //
+    //        // 获取到屏幕的方向
+    //        int orientation = newConfig.orientation;
+    //        switch (orientation) {
+    //            // 横屏
+    //            case Configuration.ORIENTATION_LANDSCAPE:
+    //                setContentView(R.layout.ending_horizontal_activity);
+    //                break;
+    //            // 竖屏
+    //            case Configuration.ORIENTATION_PORTRAIT:
+    //                setContentView(R.layout.ending_activity);
+    //                break;
+    //        }
+    //    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
     }
 
-    protected String[] getPermissions() {
-        return PERMISSIONS;
-    }
+    @JvmField
+    protected var isHorizontal = false
+    override fun onCreate(savedInstanceState: Bundle?) {
 
-
-//    @Override
-//    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-//        super.onConfigurationChanged(newConfig);
-//
-//        // 获取到屏幕的方向
-//        int orientation = newConfig.orientation;
-//        switch (orientation) {
-//            // 横屏
-//            case Configuration.ORIENTATION_LANDSCAPE:
-//                setContentView(R.layout.ending_horizontal_activity);
-//                break;
-//            // 竖屏
-//            case Configuration.ORIENTATION_PORTRAIT:
-//                setContentView(R.layout.ending_activity);
-//                break;
-//        }
-//    }
-
-
-
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    protected boolean isHorizontal=false;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-
-         /*
+        /*
         M 是 6.0，6.0修改了新的api，并且就已经支持修改window的刷新率了。
         但是6.0那会儿，也没什么手机支持高刷新率吧，所以也没什么人注意它。
         我更倾向于直接判断 O，也就是 Android 8.0，我觉得这个时候支持高刷新率的手机已经开始了。
@@ -271,125 +188,108 @@ public class BaseActivity extends AppCompatActivity {
 //
 //            }
 //        }
-
-        super.onCreate(savedInstanceState);
-        boolean darkMode = DisplayUtils.isDarkMode(this);
-        DisplayUtils.setSystemBarStyle(this, getWindow(),
-                false, true, false, !darkMode);
-
-        if(savedInstanceState != null){
+        super.onCreate(savedInstanceState)
+        val darkMode = DisplayUtils.isDarkMode(this)
+        DisplayUtils.setSystemBarStyle(
+            this, window,
+            false, true, false, !darkMode
+        )
+        if (savedInstanceState != null) {
             //竖屏
-            if( ScaleUtils.ScreenOrient(this)==ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE  ) {
+            if (ScaleUtils.ScreenOrient(this) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
 //                setContentView(R.layout.ending_activity);
-                isHorizontal=false;
-
-            }else if( ScaleUtils.ScreenOrient(this)==ActivityInfo.SCREEN_ORIENTATION_PORTRAIT  ) {
+                isHorizontal = false
+            } else if (ScaleUtils.ScreenOrient(this) == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
                 //横屏
 //                setContentView(R.layout.ending_horizontal_activity);
-                isHorizontal=true;
+                isHorizontal = true
             }
-        }else{
-            if(ScaleUtils.isScreenOriatationPortrait()) {
+        } else {
+            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait()) {
 //                setContentView(R.layout.ending_activity);
-                isHorizontal=false;
-            }else {
+                false
+            } else {
 //                setContentView(R.layout.ending_horizontal_activity);
-                isHorizontal=true;
+                true
             }
         }
-
     }
 
-        protected void setupActionBar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+    protected fun setupActionBar() {
+        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar?
+        toolbar?.let { setSupportActionBar(it) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        StatUtil.onResume(this, isFragmentActivity)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        StatUtil.onPause(this, isFragmentActivity)
+    }
+
+    override fun getResources(): Resources {
+        val res = super.getResources()
+        val config = Configuration()
+        config.setToDefaults()
+        res.updateConfiguration(config, res.displayMetrics)
+        return res
+    }
+
+    val activity: Activity
+        get() = this
+    val context: Context
+        get() = this
+
+    protected fun <T : View?> `$`(id: Int): T {
+        return findViewById<View>(id) as T
+    }
+
+    fun setEnterAnimEnable(disableEnterAnim: Boolean) {
+        mEnterAnim = disableEnterAnim
+    }
+
+    fun setExitAnimEnable(disableExitAnim: Boolean) {
+        mExitAnim = disableExitAnim
+    }
+
+    protected val activityHeight: Int
+        get() {
+            val rect = Rect()
+            window.decorView.getWindowVisibleDisplayFrame(rect)
+            return rect.height()
+        }
+
+    fun enableBackHome() {
+        val actionBar = supportActionBar
+        actionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    protected open fun onBackHome() {
+        finish()
+    }
+
+    protected val statusBarHeight: Int
+        get() {
+            val rect = Rect()
+            window.decorView.getWindowVisibleDisplayFrame(rect)
+            return rect.top
+        }
+
+    fun initToolbar(title: String?) {
+        if (toolbar == null) toolbar = findViewById(R.id.toolbar)
+        toolbar!!.setTitle(title)
+    }
+
+    fun setTitle(title: String?) {
         if (toolbar != null) {
-            setSupportActionBar(toolbar);
+            toolbar!!.setTitle(title)
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        StatUtil.onResume(this,isFragmentActivity);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        StatUtil.onPause(this,isFragmentActivity);
-    }
-
-    public Resources getResources() {
-        Resources res = super.getResources();
-        Configuration config = new Configuration();
-        config.setToDefaults();
-        res.updateConfiguration(config, res.getDisplayMetrics());
-        return res;
-    }
-
-    public Activity getActivity() {
-        return this;
-    }
-
-    public Context getContext() {
-        return this;
-    }
-
-    protected <T extends View> T $(int id) {
-        return (T) findViewById(id);
-    }
-
-    public void setEnterAnimEnable(boolean disableEnterAnim) {
-        this.mEnterAnim = disableEnterAnim;
-    }
-
-    public void setExitAnimEnable(boolean disableExitAnim) {
-        this.mExitAnim = disableExitAnim;
-    }
-
-    protected int getActivityHeight() {
-        Rect rect = new Rect();
-        getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
-        return rect.height();
-    }
-
-    public void enableBackHome() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-//            View view = $(R.id.btn_back);
-//            if (view != null) {
-//                view.setVisibility(View.VISIBLE);
-//                view.setOnClickListener((v) -> {
-//                    onBackHome();
-//                });
-//            }
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
-
-    protected void onBackHome() {
-        finish();
-    }
-
-    protected int getStatusBarHeight() {
-        Rect rect = new Rect();
-        getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
-        return rect.top;
-    }
-
-    public void initToolbar(String title){
-        if (toolbar==null)
-        toolbar=findViewById(R.id.toolbar);
-        toolbar.setTitle(title);
-    }
-
-    public void setTitle(String title){
-        if (toolbar!=null){
-            toolbar.setTitle(title);
-        }
-    }
-
-    protected void hideSystemNavBar() {
+    protected fun hideSystemNavBar() {
         if (Build.VERSION.SDK_INT >= 19) {
 //            final WindowManager.LayoutParams params = getWindow().getAttributes();
 //            params.systemUiVisibility |=
@@ -401,112 +301,98 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void setActionBarTitle(String title) {
+    fun setActionBarTitle(title: String?) {
         if (TextUtils.isEmpty(title)) {
-            return;
+            return
         }
-        ActionBar actionBar = getSupportActionBar();
+        val actionBar = supportActionBar
         if (actionBar != null) {
-            actionBar.setTitle(title);
+            actionBar.title = title
         }
     }
 
-    public void setActionBarSubTitle(String title) {
+    fun setActionBarSubTitle(title: String?) {
         if (TextUtils.isEmpty(title)) {
-            return;
+            return
         }
-        ActionBar actionBar = getSupportActionBar();
+        val actionBar = supportActionBar
         if (actionBar != null) {
-            actionBar.setSubtitle(title);
+            actionBar.subtitle = title
         }
     }
 
-    @Override
-    public void startActivity(Intent intent) {
-        super.startActivity(intent);
+    override fun startActivity(intent: Intent) {
+        super.startActivity(intent)
         if (mEnterAnim) {
-            setAnim();
+            setAnim()
         }
     }
 
-    @Override
-    public void startActivityForResult(Intent intent, int requestCode) {
-        super.startActivityForResult(intent, requestCode);
+    override fun startActivityForResult(intent: Intent, requestCode: Int) {
+        super.startActivityForResult(intent, requestCode)
         if (mEnterAnim) {
-            setAnim();
+            setAnim()
         }
     }
 
-    @Override
-    public void finish() {
-        super.finish();
+    override fun finish() {
+        super.finish()
         if (mExitAnim) {
-            overridePendingTransition(R.anim.slide_left_in, R.anim.slide_right_out);
+            overridePendingTransition(R.anim.slide_left_in, R.anim.slide_right_out)
         }
     }
 
     @SuppressLint("RestrictedApi")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-    @Override
-    public void startActivityForResult(Intent intent, int requestCode, @Nullable Bundle options) {
-        super.startActivityForResult(intent, requestCode, options);
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        super.startActivityForResult(intent, requestCode, options)
         if (mEnterAnim) {
-            setAnim();
+            setAnim()
         }
     }
 
-    private void setAnim() {
-        overridePendingTransition(R.anim.slide_right_in, R.anim.slide_left_out);
+    private fun setAnim() {
+        overridePendingTransition(R.anim.slide_right_in, R.anim.slide_left_out)
     }
 
-    public void setActionBarTitle(int rid) {
-        setActionBarTitle(getString(rid));
+    fun setActionBarTitle(rid: Int) {
+        setActionBarTitle(getString(rid))
     }
-
-    /**
-     * 权限申请
-     *
-     * @return 是否满足权限申请条件
-     */
-    protected boolean startPermissionsActivity() {
-        return startPermissionsActivity(getPermissions());
-    }
-
     /**
      * 权限申请
      *
      * @param permissions 要申请的权限列表
      * @return 是否满足权限申请条件
      */
-    protected boolean startPermissionsActivity(String[] permissions) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-            return false;
-        if (permissions == null || permissions.length == 0)
-            return false;
-        return PermissionsActivity.startActivityForResult(this, REQUEST_PERMISSIONS, permissions);
+    /**
+     * 权限申请
+     *
+     * @return 是否满足权限申请条件
+     */
+    protected fun startPermissionsActivity(permissions: Array<String>? = this.permissions): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
+        return if (permissions == null || permissions.size == 0) false else PermissionsActivity.startActivityForResult(
+            this,
+            REQUEST_PERMISSIONS,
+            *permissions
+        )
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackHome();
-            return true;
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackHome()
+            return true
         }
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item)
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         // 拒绝时, 关闭页面, 缺少主要权限, 无法运行
         if (requestCode == REQUEST_PERMISSIONS) {
-            switch (resultCode) {
-                case PermissionsActivity.PERMISSIONS_DENIED:
-                    onPermission(false);
-                    break;
-                case PermissionsActivity.PERMISSIONS_GRANTED:
-                    onPermission(true);
-                    break;
+            when (resultCode) {
+                PermissionsActivity.PERMISSIONS_DENIED -> onPermission(false)
+                PermissionsActivity.PERMISSIONS_GRANTED -> onPermission(true)
             }
         }
     }
@@ -516,61 +402,122 @@ public class BaseActivity extends AppCompatActivity {
      *
      * @param isOk 权限申请是否成功
      */
-    protected void onPermission(boolean isOk) {
+    protected fun onPermission(isOk: Boolean) {
         if (isOk) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
-                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
+                context.startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + context.packageName)
+                    ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
             }
         } else {
-            showToast("喵不给我权限让我怎么运行？！");
-            finish();
+            showToast("喵不给我权限让我怎么运行？！")
+            finish()
         }
     }
 
-    public String s(int id){
-        return OYUtil.s(id);
+    fun s(id: Int): String {
+        return OYUtil.s(id)
     }
 
     @SuppressLint("ShowToast")
-    private Toast makeToast() {
+    private fun makeToast(): Toast? {
         if (mToast == null) {
-            mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+            mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT)
         }
-        return mToast;
+        return mToast
     }
 
     /**
      * Set how long to show the view for.
      *
-     * @see android.widget.Toast#LENGTH_SHORT
-     * @see android.widget.Toast#LENGTH_LONG
+     * @see android.widget.Toast.LENGTH_SHORT
+     *
+     * @see android.widget.Toast.LENGTH_LONG
      */
-    public void showToast(int id, int duration) {
-        showToast(getString(id), duration);
+    fun showToast(id: Int, duration: Int) {
+        showToast(getString(id), duration)
     }
 
-    public void showToast(CharSequence text) {
-        showToast(text, Toast.LENGTH_SHORT);
-    }
-
-    public void showToast(int id) {
-        showToast(getString(id));
+    fun showToast(id: Int) {
+        showToast(getString(id))
     }
 
     /**
      * Set how long to show the view for.
      *
-     * @see android.widget.Toast#LENGTH_SHORT
-     * @see android.widget.Toast#LENGTH_LONG
+     * @see android.widget.Toast.LENGTH_SHORT
+     *
+     * @see android.widget.Toast.LENGTH_LONG
      */
-    public void showToast(CharSequence text, int duration) {
+    @JvmOverloads
+    fun showToast(text: CharSequence?, duration: Int = Toast.LENGTH_SHORT) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            runOnUiThread(() -> showToast(text, duration));
-            return;
+            runOnUiThread { showToast(text, duration) }
+            return
         }
-        Toast toast = makeToast();
-        toast.setText(text);
-        toast.setDuration(duration);
-        toast.show();
+        val toast = makeToast()
+        toast!!.setText(text)
+        toast.duration = duration
+        toast.show()
+    }
+
+    companion object {
+        protected const val REQUEST_PERMISSIONS = 0x1000 + 1
+        var enImgs = intArrayOf(
+            R.drawable.right_top_1,
+            R.drawable.top_1,
+            R.drawable.left_top_1,
+            R.drawable.right_1,
+            0,
+            R.drawable.left_1,
+            R.drawable.right_bottom_1,
+            R.drawable.bottom_1,
+            R.drawable.left_bottom_1
+        )
+        var disImgs = intArrayOf(
+            R.drawable.right_top_0,
+            R.drawable.top_0,
+            R.drawable.left_top_0,
+            R.drawable.right_0,
+            0,
+            R.drawable.left_0,
+            R.drawable.right_bottom_0,
+            R.drawable.bottom_0,
+            R.drawable.left_bottom_0
+        )
+        var ids = intArrayOf(
+            R.id.iv_9,
+            R.id.iv_8,
+            R.id.iv_7,
+            R.id.iv_6,
+            0,
+            R.id.iv_4,
+            R.id.iv_3,
+            R.id.iv_2,
+            R.id.iv_1
+        )
+
+        @JvmStatic
+        fun showLinkArrows(cardInfo: Card, view: View) {
+            val lk = Integer.toBinaryString(cardInfo.Defense)
+            val Linekey = String.format("%09d", lk.toInt())
+            for (i in ids.indices) {
+                val arrow = Linekey.substring(i, i + 1)
+                if (i != 4) {
+                    if ("1" == arrow) {
+                        view.findViewById<View>(ids[i]).setBackgroundResource(
+                            enImgs[i]
+                        )
+                    } else {
+                        view.findViewById<View>(ids[i]).setBackgroundResource(
+                            disImgs[i]
+                        )
+                    }
+                }
+            }
+        }
     }
 }
