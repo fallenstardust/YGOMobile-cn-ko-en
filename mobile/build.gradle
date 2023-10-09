@@ -27,6 +27,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    viewBinding{
+        enabled true
+    }
 //    productFlavors {
 //        cn {
 //            resValue 'string', 'app_name', 'YGOMobile-OY'
