@@ -189,8 +189,7 @@ object YGOUtil {
 
     /**
      * 解析zip或者ypk的file下内置的txt文件里的服务器name、host、prot
-     *
-     * @param file
+     * @param file 扩展卡文件
      */
     @JvmStatic
     fun loadServerInfoFromZipOrYpk(file: File) {
@@ -200,53 +199,52 @@ object YGOUtil {
                 var serverHost: String? = null
                 var serverPort: String? = null
                 val zipFile = ZipFile(file.absoluteFile, "GBK")
-                val entris = zipFile.entries
+                val entries = zipFile.entries
                 var entry: ZipEntry
-                while (entris.hasMoreElements()) {
-                    entry = entris.nextElement()
+                while (entries.hasMoreElements()) {
+                    entry = entries.nextElement()
                     if (!entry.isDirectory) {
                         if (entry.name.endsWith(".ini")) {
-                            val `in` = InputStreamReader(
+                            val inputStream = InputStreamReader(
                                 zipFile.getInputStream(entry),
                                 StandardCharsets.UTF_8
                             )
-                            val reader = BufferedReader(`in`)
+                            val reader = BufferedReader(inputStream)
                             var line: String?
                             while (reader.readLine().also { line = it } != null) {
-                                if (line!!.startsWith("[YGOProExpansionPack]") ||
-                                    line!!.startsWith("FileName") ||
-                                    line!!.startsWith("PackName") ||
-                                    line!!.startsWith("PackAuthor") ||
-                                    line!!.startsWith("PackHomePage") ||
-                                    line!!.startsWith("[YGOMobileAddServer]")
-                                ) {
-                                    continue
-                                }
-                                if (line!!.startsWith("ServerName")) {
-                                    val words =
-                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
-                                            .dropLastWhile { it.isEmpty() }
-                                            .toTypedArray()
-                                    if (words.size >= 2) {
-                                        serverName = words[1]
+                                line?.apply {
+                                    if (startsWith("[YGOProExpansionPack]") ||
+                                        startsWith("FileName") ||
+                                        startsWith("PackName") ||
+                                        startsWith("PackAuthor") ||
+                                        startsWith("PackHomePage") ||
+                                        startsWith("[YGOMobileAddServer]")
+                                    ) {
+                                        return@apply
                                     }
-                                }
-                                if (line!!.startsWith("ServerHost")) {
-                                    val words =
-                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
-                                            .dropLastWhile { it.isEmpty() }
-                                            .toTypedArray()
-                                    if (words.size >= 2) {
-                                        serverHost = words[1]
+                                    if (startsWith("ServerName")) {
+                                        val words = trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                                .dropLastWhile { it.isEmpty() }
+                                                .toTypedArray()
+                                        if (words.size >= 2) {
+                                            serverName = words[1]
+                                        }
                                     }
-                                }
-                                if (line!!.startsWith("ServerPort")) {
-                                    val words =
-                                        line!!.trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                    if (startsWith("ServerHost")) {
+                                        val words = trim { it <= ' ' }.split("[\t| =]+".toRegex())
                                             .dropLastWhile { it.isEmpty() }
                                             .toTypedArray()
-                                    if (words.size >= 2) {
-                                        serverPort = words[1]
+                                        if (words.size >= 2) {
+                                            serverHost = words[1]
+                                        }
+                                    }
+                                    if (startsWith("ServerPort")) {
+                                        val words = trim { it <= ' ' }.split("[\t| =]+".toRegex())
+                                            .dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
+                                        if (words.size >= 2) {
+                                            serverPort = words[1]
+                                        }
                                     }
                                 }
                             }

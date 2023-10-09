@@ -1,5 +1,7 @@
 package ocgcore;
 
+import androidx.annotation.WorkerThread;
+
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.loader.CardLoader;
 
@@ -44,6 +46,7 @@ public class DataManager {
 
     private boolean mInit;
 
+    @WorkerThread
     public void load(boolean force) {
         boolean needLoad = false;
         synchronized (this) {

@@ -10,6 +10,7 @@ import androidx.annotation.WorkerThread;
 
 import com.file.zip.ZipEntry;
 import com.file.zip.ZipFile;
+import com.ourygo.ygomobile.util.YGOUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -161,6 +162,7 @@ public class CardManager {
                                     for (File file1 : readZipCdb(file.getAbsolutePath())) {
                                         count = readAllCards(file1, cardDataHashMap);
                                     }
+                                    YGOUtil.loadServerInfoFromZipOrYpk(file);
                                 } catch (IOException e) {
                                     Log.e("CardManager", "读取压缩包错误" + e);
                                 }
