@@ -79,6 +79,7 @@ object YGOUtil {
         }
     }
 
+    private val TAG: String = YGOUtil::class.java.simpleName
     val replayList: List<Replay>
         get() {
             val replayList: MutableList<Replay> = ArrayList()
@@ -272,7 +273,7 @@ object YGOUtil {
 //                    AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
 
                 } else {
-                    OYUtil.show("无法解析当前先行卡服务器信息")
+                    LogUtil.d(TAG, "无法解析先行卡服务器信息: ${file.absolutePath}")
                 }
                 zipFile.close()
             } catch (e: IOException) {

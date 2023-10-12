@@ -83,6 +83,7 @@ class ExpansionsSettingActivity : BaseActivity() {
     }
 
     private fun initView() {
+        rvList = findViewById(R.id.rv_list)
         rvList.layoutManager = LinearLayoutManager(this)
         initToolbar("扩展卡包")
         currentIsEx = AppsSettings.get().isReadExpansions
