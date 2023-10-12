@@ -93,7 +93,7 @@ public class SplashActivity extends Activity implements OnJoinChatListener {
         });
         b2.setOnClickListener(view -> {
             dialogUtils.dis();
-            startActivity(IntentUtil.getWebIntent(this, Record.getMycardInactiveEmailUrl()));
+            startActivity(IntentUtil.getWebIntent(this, Record.mycardInactiveEmailUrl));
             finish();
         });
     }

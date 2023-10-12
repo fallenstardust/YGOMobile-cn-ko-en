@@ -30,6 +30,7 @@ public class YGOUtil {
         Toast.makeText(App.get(), message, Toast.LENGTH_SHORT).show();
     }
 
+
     public static int c(int colorId) {
         return ContextCompat.getColor(App.get(), colorId);
     }

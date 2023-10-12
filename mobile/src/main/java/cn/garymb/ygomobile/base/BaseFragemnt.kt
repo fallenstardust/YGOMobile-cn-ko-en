@@ -62,16 +62,16 @@ abstract class BaseFragemnt : Fragment() {
         isViewDestroyed = false
         if (savedInstanceState != null) {
             //竖屏
-            if (ScaleUtils.ScreenOrient(activity) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            if (ScaleUtils.ScreenOrient(requireActivity()) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
 //                setContentView(R.layout.ending_activity);
                 isHorizontal = false
-            } else if (ScaleUtils.ScreenOrient(activity) == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            } else if (ScaleUtils.ScreenOrient(requireActivity()) == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
                 //横屏
 //                setContentView(R.layout.ending_horizontal_activity);
                 isHorizontal = true
             }
         } else {
-            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait()) {
+            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait) {
 //                setContentView(R.layout.ending_activity);
                 false
             } else {
@@ -88,16 +88,16 @@ abstract class BaseFragemnt : Fragment() {
         Log.e("BaseFragment", "创建")
         if (savedInstanceState != null) {
             //竖屏
-            if (ScaleUtils.ScreenOrient(activity) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            if (ScaleUtils.ScreenOrient(requireActivity()) == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
 //                setContentView(R.layout.ending_activity);
                 isHorizontal = false
-            } else if (ScaleUtils.ScreenOrient(activity) == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            } else if (ScaleUtils.ScreenOrient(requireActivity()) == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
                 //横屏
 //                setContentView(R.layout.ending_horizontal_activity);
                 isHorizontal = true
             }
         } else {
-            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait()) {
+            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait) {
 //                setContentView(R.layout.ending_activity);
                 false
             } else {

@@ -84,7 +84,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         isFragmentActivity = true
         LogUtil.time(TAG, "0")
         lifecycleScope.launch(Dispatchers.IO) {
-            SdkInitUtil.getInstance().initX5WebView()
+            SdkInitUtil.instance.initX5WebView()
             initBugly()
         }
         LogUtil.time(TAG, "1")
@@ -102,7 +102,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 
     fun initBugly() {
 //        Bugly.init(this, OYApplication.BUGLY_ID, false);
-        if (OYUtil.isTodayFirstStart()) //检测是否有更新,不提示
+        if (OYUtil.isTodayFirstStart) //检测是否有更新,不提示
             OYUtil.checkUpdate(this, false)
     }
 
@@ -284,7 +284,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         }
         initDuelAssistant()
         checkIntent()
-        if (SharedPreferenceUtil.isFristStart()) {
+        if (SharedPreferenceUtil.isFristStart) {
             val views = dialogUtils!!.dialogt(
                 null,
                 """欢迎使用YGO-OY,本软件为YGOMobile原版的简约探索版，这里有正在探索的功能，但相对没有原版稳定，你可以选择下载原版使用，下载地址：https://www.pgyer.com/ygomobilecn
@@ -306,7 +306,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
             val tv_message = dialogUtils!!.messageTextView
             tv_message.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
             SharedPreferenceUtil.setFirstStart(false)
-            SharedPreferenceUtil.setNextAifadianNum(SharedPreferenceUtil.getAppStartTimes() + (10 + (Math.random() * 20).toInt()))
+            SharedPreferenceUtil.nextAifadianNum=SharedPreferenceUtil.appStartTimes + (10 + (Math.random() * 20).toInt())
             dialog.setOnDismissListener { dialog12: DialogInterface? ->
                 val b3 = dialogUtils!!.dialogt1(
                     "卡组导入提示", "YGO-OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
@@ -319,7 +319,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
                 dialog1.setOnDismissListener { }
             }
         }
-        if (SharedPreferenceUtil.getNextAifadianNum() == SharedPreferenceUtil.getAppStartTimes()) {
+        if (SharedPreferenceUtil.nextAifadianNum == SharedPreferenceUtil.appStartTimes) {
             val views1 = dialogUtils!!.dialogt(
                 null,
                 "如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台"
@@ -502,7 +502,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 
     override fun onDestroy() {
         ServiceManagement.getDx().disClass()
-        AppInfoManagement.getInstance().close()
+        AppInfoManagement.close()
         super.onDestroy()
     }
 

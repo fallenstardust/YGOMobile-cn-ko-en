@@ -161,7 +161,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 //        dialog = DialogUtils.getInstance(mContext);
 //        dialog.dialogj1( null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
-        isNewVersion = AppInfoManagement.getInstance().isNewVersion();
+        isNewVersion = AppInfoManagement.INSTANCE.isNewVersion();
 
         Log.e("feihua","版本号"+isNewVersion);
 
@@ -290,7 +290,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
 //            LogUtil.time(TAG, "2");
-//            han.sendEmptyMessage(0);
+            han.sendEmptyMessage(0);
 
 //            loadData();
         } catch (

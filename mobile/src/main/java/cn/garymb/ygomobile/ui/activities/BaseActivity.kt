@@ -205,7 +205,7 @@ open class BaseActivity : AppCompatActivity() {
                 isHorizontal = true
             }
         } else {
-            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait()) {
+            isHorizontal = if (ScaleUtils.isScreenOriatationPortrait) {
 //                setContentView(R.layout.ending_activity);
                 false
             } else {

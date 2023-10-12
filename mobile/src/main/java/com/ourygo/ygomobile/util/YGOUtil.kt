@@ -142,7 +142,7 @@ object YGOUtil {
 
     @JvmStatic
     fun findLfListListener(onLfListQueryListener: OnLfListQueryListener) {
-        OkhttpUtil.get(Record.YGO_LFLIST_URL, object : Callback {
+        OkhttpUtil.get(Record.YGO_LFLIST_URL, callback = object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onLfListQueryListener.onLflistQuery(null, e.toString())
             }
@@ -224,8 +224,8 @@ object YGOUtil {
                                     }
                                     if (startsWith("ServerName")) {
                                         val words = trim { it <= ' ' }.split("[\t| =]+".toRegex())
-                                                .dropLastWhile { it.isEmpty() }
-                                                .toTypedArray()
+                                            .dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
                                         if (words.size >= 2) {
                                             serverName = words[1]
                                         }

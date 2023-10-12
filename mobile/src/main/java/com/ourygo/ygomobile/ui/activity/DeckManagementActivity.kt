@@ -117,7 +117,7 @@ class DeckManagementActivity : ListAndUpdateActivity() {
     }
 
     fun initHeadView() {
-        if (SharedPreferenceUtil.isShowEz() && !OYUtil.isApp(Record.PACKAGE_NAME_EZ)) {
+        if (SharedPreferenceUtil.isShowEz && !OYUtil.isApp(Record.PACKAGE_NAME_EZ)) {
             tv_download = headerView.findViewById<TextView?>(R.id.tv_download)?.apply {
                 setOnClickListener {
                     startActivity(
@@ -134,7 +134,7 @@ class DeckManagementActivity : ListAndUpdateActivity() {
             }
             deckListAdp.addHeaderView(headerView)
         }
-        if (SharedPreferenceUtil.isShowVisitDeck()) {
+        if (SharedPreferenceUtil.isShowVisitDeck) {
             tv_visit = visitView.findViewById<TextView?>(R.id.tv_visit)?.apply {
                 setOnClickListener {
                     dialogUtils.dialogt1(

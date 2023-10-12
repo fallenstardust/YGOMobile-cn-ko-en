@@ -230,7 +230,7 @@ public class MainFragment extends BaseFragemnt implements View.OnClickListener {
         setServerListType(serverListType);
         LogUtil.time(TAG,"2.1");
         long time = SharedPreferenceUtil.getVersionUpdateTime();
-        if (AppInfoManagement.getInstance().isNewVersion()) {
+        if (AppInfoManagement.INSTANCE.isNewVersion()) {
             SharedPreferenceUtil.setVersionUpdateTime(System.currentTimeMillis());
             SharedPreferenceUtil.setToastNewCardBag(true);
             iv_card_bag.setImageResource(R.drawable.ic_new_card_bag);

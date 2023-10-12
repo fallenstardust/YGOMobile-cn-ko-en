@@ -5,10 +5,13 @@ import android.os.Looper
 import android.os.Message
 import com.ourygo.ygomobile.base.listener.OnDuelRoomListener
 import com.ourygo.ygomobile.bean.DuelRoom
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import org.java_websocket.enums.ReadyState
 import org.java_websocket.handshake.ServerHandshake
 import org.json.JSONException
 import java.net.URI
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Create By feihua  On 2021/11/3
@@ -147,7 +150,13 @@ class WatchDuelManagement private constructor() {
             }
         }
     }
+sealed class test1{
 
+}
+
+    open class test2:test1(){
+
+    }
     /**
      * 连接WebSocket
      */

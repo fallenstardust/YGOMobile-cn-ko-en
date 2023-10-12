@@ -36,10 +36,10 @@ class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
         duelRoomBQAdapter.setOnItemClickListener { _: BaseQuickAdapter<*, *>?, _: View?, position: Int ->
             val duelRoom = duelRoomBQAdapter.getItem(position)
             Log.e("WatchActivity", "密码" + duelRoom.id)
-            Log.e("WatchActivity", "用户id" + McUserManagement.getInstance().user.external_id)
+            Log.e("WatchActivity", "用户id" + McUserManagement.instance.user!!.external_id)
             val password = OYUtil.getWatchDuelPassword(
                 duelRoom.id,
-                McUserManagement.getInstance().user.external_id
+                McUserManagement.instance.user!!.external_id
             )
             val serverInfo = ServerInfo()
             when (duelRoom.arenaType) {
@@ -58,7 +58,7 @@ class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
                     return@setOnItemClickListener
                 }
             }
-            serverInfo.playerName = McUserManagement.getInstance().user.username
+            serverInfo.playerName = McUserManagement.instance.user!!.username
             joinGame(this@WatchDuelActivity, serverInfo, password)
         }
         initToolbar("观战")

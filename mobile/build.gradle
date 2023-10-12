@@ -101,6 +101,9 @@ android {
         checkReleaseBuilds false
         ignoreWarnings true
     }
+    buildFeatures{
+        aidl=true
+    }
     //    buildToolsVersion '28.0.3'
 }
     repositories {
