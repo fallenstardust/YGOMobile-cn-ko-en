@@ -48,6 +48,7 @@ object LogUtil {
         if (isDebug) Log.e(tag, message!!)
     }
 
+    @JvmStatic
     fun d(tag: String?, message: String?) {
         if (isDebug) Log.d(tag, message!!)
     }
