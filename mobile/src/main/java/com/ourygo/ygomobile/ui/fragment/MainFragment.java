@@ -1,13 +1,33 @@
 package com.ourygo.ygomobile.ui.fragment;
 
-import java.util.ArrayList;
-import java.util.Calendar;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
-import org.litepal.LitePal;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.Fade;
+import androidx.transition.TransitionManager;
 
 import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.ourygo.lib.duelassistant.util.YGODAUtil;
 import com.ourygo.ygomobile.OYApplication;
 import com.ourygo.ygomobile.adapter.YGOServerBQAdapter;
 import com.ourygo.ygomobile.bean.McNews;
@@ -25,33 +45,12 @@ import com.ourygo.ygomobile.util.SharedPreferenceUtil;
 import com.ourygo.ygomobile.util.YGOUtil;
 import com.stx.xhb.androidx.XBanner;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewPropertyAnimator;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.transition.Fade;
-import androidx.transition.TransitionManager;
+import org.litepal.LitePal;
+
+import java.util.ArrayList;
+import java.util.Calendar;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
-import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;

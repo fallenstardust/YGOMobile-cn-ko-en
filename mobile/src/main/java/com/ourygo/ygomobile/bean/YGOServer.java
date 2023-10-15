@@ -95,7 +95,7 @@ public class YGOServer extends ServerInfo {
         uri.appendQueryParameter(QUERY_YGO_TYPE, DARecord.ARG_ROOM);
         uri.appendQueryParameter(Constants.QUERY_VERSION, "1");
         uri.appendQueryParameter(DARecord.ARG_HOST, UrlUtil.enURL(getServerAddr()));
-        uri.appendQueryParameter(Record.ARG_PORT, UrlUtil.enURL(getPort() + ""));
+        uri.appendQueryParameter(DARecord.ARG_PORT, UrlUtil.enURL(getPort() + ""));
         uri.appendQueryParameter(DARecord.ARG_PASSWORD, UrlUtil.enURL(password));
         return uri.toString();
     }
