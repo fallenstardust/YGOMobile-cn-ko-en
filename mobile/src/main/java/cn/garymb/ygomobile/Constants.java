@@ -156,8 +156,8 @@ public interface Constants {
     String URL_DONATE = "https://afdian.net/@ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
-    String URL_HOME_VERSION = "https://ygomobile.top/ver_code.txt";
-    String URL_HOME_VERSION_ALT = "https://ygom.top/ver_code.txt";
+    String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
+    String URL_HOME_VERSION_ALT = "https://ygomobile.top/ver_code.txt";
     String ID1 = "[versionname]";
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";
