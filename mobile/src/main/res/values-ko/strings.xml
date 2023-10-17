@@ -353,4 +353,6 @@
     <string name="find_in_page">" 발견:"</string>
     <string name="tip_card_info_diff">몇몇 특수한 카드들을 제외하고 8자리 코드번호를 초과하는 카드들은 프리릴리즈 카드로, 프리릴리즈카드를 허용하는 서버 에서만 사용이 가능합니다.</string>
     <string name="tip_deckInfo_isNot_completeDeck">Card info Exception! Tried to become exsisted Card Info</string>
+    <string name="tip_ygopro_is_running">ygopro is running now. unable to create a new duel before it is closed. \nthe room password has been recorded in record list.\npls close ygopro and rejoin room through the record of room password</string>
+
 </resources>
