@@ -442,36 +442,40 @@ object OYUtil {
 
     val newCardBag: CardBag
         get() = newCardBagList[0]
-    val newCardBagList: List<CardBag>
+    private val newCardBagList: List<CardBag>
         get() {
-            val cardBagList: MutableList<CardBag> = ArrayList()
-            var cardBag: CardBag
-            cardBag = CardBag()
-            cardBag.title = "SD46 王者归来"
-            cardBag.message = "杰克的塔玛希回来了"
-            cardBag.deckName = "SD46"
-            cardBagList.add(cardBag)
-            cardBag = CardBag()
-            cardBag.title = "1111 哥布林版舞台旋转来临"
-            cardBag.message = "K语言甚至让你读不懂他的效果"
-            cardBag.deckName = "1111"
-            cardBagList.add(cardBag)
-            cardBag = CardBag()
-            cardBag.title = "WPP3 三幻神加强！"
-            cardBag.message = "幻神专属卡片助你再魂一把"
-            cardBag.deckName = "WPP3+VJ"
-            cardBagList.add(cardBag)
-            cardBag = CardBag()
-            cardBag.title = "DBAD 消防栓带妖精"
-            cardBag.message = "效果强力，令人绝望！"
-            cardBag.deckName = "DBAD+VJ+YCSW"
-            cardBagList.add(cardBag)
-            cardBag = CardBag()
-            cardBag.title = "SR13 恶魔之门，暗黑界回归！"
-            cardBag.message = "暗黑界的龙神王，珠泪新打手"
-            cardBag.deckName = "SR13+T1109"
-            cardBagList.add(cardBag)
-            return cardBagList
+           return arrayListOf(
+               CardBag(
+                   "",
+                   "",
+                   "AGOV"
+               ),
+                CardBag(
+                    "SD46 王者归来",
+                    "杰克的塔玛希回来了",
+                    "SD46"
+                ),
+                CardBag(
+                    "1111 哥布林版舞台旋转来临",
+                    "K语言甚至让你读不懂他的效果",
+                    "1111"
+                ),
+                CardBag(
+                    "WPP3 三幻神加强！",
+                    "幻神专属卡片助你再魂一把",
+                    "WPP3+VJ"
+                ),
+                CardBag(
+                    "DBAD 消防栓带妖精",
+                    "效果强力，令人绝望！",
+                    "DBAD+VJ+YCSW"
+                ),
+                CardBag(
+                    "SR13 恶魔之门，暗黑界回归！",
+                    "暗黑界的龙神王，珠泪新打手",
+                    "SR13+T1109"
+                )
+            )
         }
 
     private fun createViewPropertyAnimatorRT(view: View): Any? {

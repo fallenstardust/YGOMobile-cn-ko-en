@@ -76,7 +76,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         LogUtil.time(TAG, "2.7");
         mSettings = AppsSettings.get();
         LogUtil.time(TAG, "2.8");
-//        checkWindbot();
+        checkWindbot();
         LogUtil.time(TAG, "2.9");
     }
 
@@ -290,7 +290,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
 //            LogUtil.time(TAG, "2");
-            han.sendEmptyMessage(0);
+//            han.sendEmptyMessage(0);
 
 //            loadData();
         } catch (
@@ -437,6 +437,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (action.equals("RUN_WINDBOT")) {
                 String args = intent.getStringExtra("args");
                 WindBot.runAndroid(args);
+                LogUtil.d(TAG,"winbot广播: "+args);
             }
         }
     }

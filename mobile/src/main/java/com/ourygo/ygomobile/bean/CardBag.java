@@ -12,6 +12,16 @@ public class CardBag {
     //卡包卡组名
     private String deckName;
 
+    public CardBag() {
+
+    }
+
+    public CardBag(String title, String message, String deckName) {
+        this.title = title;
+        this.message = message;
+        this.deckName = deckName;
+    }
+
     public String getTitle() {
         return title;
     }
