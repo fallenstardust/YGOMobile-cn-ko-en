@@ -93,7 +93,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         LogUtil.time(TAG, "2")
         checkNotch()
         LogUtil.time(TAG, "3")
-        //        checkRes();
+        checkRes();
         LogUtil.time(TAG, "4")
         LogUtil.printSumTime(TAG)
     }
@@ -306,7 +306,8 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
             val tv_message = dialogUtils!!.messageTextView
             tv_message.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
             SharedPreferenceUtil.setFirstStart(false)
-            SharedPreferenceUtil.nextAifadianNum=SharedPreferenceUtil.appStartTimes + (10 + (Math.random() * 20).toInt())
+            SharedPreferenceUtil.nextAifadianNum =
+                SharedPreferenceUtil.appStartTimes + (10 + (Math.random() * 20).toInt())
             dialog.setOnDismissListener { dialog12: DialogInterface? ->
                 val b3 = dialogUtils!!.dialogt1(
                     "卡组导入提示", "YGO-OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +

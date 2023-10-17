@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
@@ -51,7 +52,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     MessageReceiver mReceiver = new MessageReceiver();
     private AppsSettings mSettings;
     private Context mContext;
-    Handler han = new Handler() {
+    Handler han = new Handler(Looper.getMainLooper()) {
 
         @Override
         public void handleMessage(Message msg) {
@@ -76,7 +77,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         LogUtil.time(TAG, "2.7");
         mSettings = AppsSettings.get();
         LogUtil.time(TAG, "2.8");
-        checkWindbot();
+//        checkWindbot();
         LogUtil.time(TAG, "2.9");
     }
 
@@ -163,7 +164,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         int vercode = SystemUtils.getVersion(mContext);
         isNewVersion = AppInfoManagement.INSTANCE.isNewVersion();
 
-        Log.e("feihua","版本号"+isNewVersion);
+        Log.e("feihua", "版本号" + isNewVersion);
 
     }
 
@@ -203,8 +204,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 return name.endsWith(".tmp");
             }
         });
-        if(files != null){
-            for(File file : files){
+        if (files != null) {
+            for (File file : files) {
                 FileUtils.deleteFile(file);
             }
         }
@@ -262,26 +263,26 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SKIN_PATH),
                         mSettings.getCoreSkinPath(), needsUpdate);
             }
-            if(new File(AppsSettings.get().getFontPath()).length()<4625768 ||needsUpdate) {
-                LogUtil.e("ResCheckTask","复制字体");
+            if (new File(AppsSettings.get().getFontPath()).length() < 4625768 || needsUpdate) {
+                LogUtil.e("ResCheckTask", "复制字体");
                 //复制字体
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
                         mSettings.getFontDirPath(), needsUpdate);
             }
             //复制脚本压缩包
-            if ((new File(AppsSettings.get().getScriptZipPath()).length()<27254784||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                LogUtil.e("ResCheckTask","复制脚本");
+            if ((new File(AppsSettings.get().getScriptZipPath()).length() < 27254784 || needsUpdate) && IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
+                LogUtil.e("ResCheckTask", "复制脚本");
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
                         resPath, needsUpdate);
             }
-                //复制数据库
+            //复制数据库
             copyCdbFile(needsUpdate);
 
             //复制卡图压缩包
-            if ((new File(AppsSettings.get().getPicsZipPath()).length()<94457856||needsUpdate)&&IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
-                LogUtil.e("ResCheckTask","复制卡图");
+            if ((new File(AppsSettings.get().getPicsZipPath()).length() < 94457856 || needsUpdate) && IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
+                LogUtil.e("ResCheckTask", "复制卡图");
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
@@ -290,8 +291,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH),
                     resPath, needsUpdate);
 //            LogUtil.time(TAG, "2");
-//            han.sendEmptyMessage(0);
-
+            han.sendEmptyMessage(0);
 //            loadData();
         } catch (
                 Exception e) {
@@ -299,7 +299,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 Log.e(TAG, "check", e);
             return ERROR_COPY;
         }
-//        LogUtil.time(TAG, "3");
+        LogUtil.time(TAG, "3");
         return ERROR_NONE;
     }
 
@@ -419,11 +419,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        LogUtil.time(TAG,"2.9.1");
+        LogUtil.time(TAG, "2.9.1");
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");
         mContext.registerReceiver(mReceiver, filter);
-        LogUtil.time(TAG,"2.9.2");
+        LogUtil.time(TAG, "2.9.2");
     }
 
     public interface ResCheckListener {
@@ -437,7 +437,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             if (action.equals("RUN_WINDBOT")) {
                 String args = intent.getStringExtra("args");
                 WindBot.runAndroid(args);
-                LogUtil.d(TAG,"winbot广播: "+args);
+                LogUtil.d(TAG, "winbot广播: " + args);
             }
         }
     }

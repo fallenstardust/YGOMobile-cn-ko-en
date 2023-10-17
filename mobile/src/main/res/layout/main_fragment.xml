@@ -213,7 +213,7 @@
                             android:background="@color/mainCardShader"
                             android:paddingLeft="13dp"
                             android:paddingTop="13dp"
-                            android:text="残局"
+                            android:text="残局/AI"
                             android:textColor="@color/blackLight"
                             android:textSize="@dimen/main_card_text_size"
                             android:textStyle="bold" />
