@@ -516,7 +516,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             DialogPlus dlg = new DialogPlus(getActivity());
             dlg.setMessage(R.string.tip_ygopro_is_running);
             dlg.setLeftButtonListener((d, s) -> {
-                dlg.dismiss();
                 if (!TextUtils.isEmpty(password)) {
                     SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
                     simpleListAdapter.set(AppsSettings.get().getLastRoomList());
@@ -531,9 +530,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     AppsSettings.get().setLastRoomList(items);
                     simpleListAdapter.notifyDataSetChanged();
                 }
+                dlg.dismiss();
             });
             dlg.show();
-            return;
         }
         if (id == ID_HOMEFRAGMENT) {
             quickjoinRoom(host, port, password);
@@ -582,9 +581,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             deckInfo.setCompleteDeck(isCompleteDeck);
             File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
             if (!deckInfo.isCompleteDeck()) {
-
                 YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
-
             }
             if (!file.getAbsolutePath().isEmpty()) {
                 mBundle.putString("setDeck", file.getAbsolutePath());
