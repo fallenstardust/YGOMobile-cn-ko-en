@@ -453,12 +453,12 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 
     override fun onCardQuery(key: String, id: Int) {}
     override fun onSaveDeck(
-        uri: Uri,
+        uri: Uri?,
         mainList: List<Int>,
         exList: List<Int>,
         sideList: List<Int>,
         isCompleteDeck: Boolean,
-        exception: String,
+        exception: String?,
         id: Int
     ) {
         Log.e("feihua", "主页解析")
@@ -475,7 +475,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         exList: List<Int>,
         sideList: List<Int>,
         isCompleteDeck: Boolean,
-        exception: String
+        exception: String?
     ) {
         if (!TextUtils.isEmpty(exception)) {
             OYUtil.show("卡组解析失败，原因为：$exception")
