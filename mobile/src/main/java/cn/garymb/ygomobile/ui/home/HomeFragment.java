@@ -93,6 +93,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
 
+    long lastClickTime = 0;
     private LinearLayout ll_back;
     ShimmerTextView tv;
     ShimmerTextView tv2;
@@ -511,6 +512,28 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     public void onJoinRoom(String host, int port, String password, int id) {
+        if (YGOStarter.isGameRunning(getActivity())) {
+            DialogPlus dlg = new DialogPlus(getActivity());
+            dlg.setMessage(R.string.tip_ygopro_is_running);
+            dlg.setLeftButtonListener((d, s) -> {
+                if (!TextUtils.isEmpty(password)) {
+                    SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
+                    simpleListAdapter.set(AppsSettings.get().getLastRoomList());
+                    List<String> items = simpleListAdapter.getItems();
+                    int index = items.indexOf(password);
+                    if (index >= 0) {
+                        items.remove(index);
+                        items.add(0, password);
+                    } else {
+                        items.add(0, password);
+                    }
+                    AppsSettings.get().setLastRoomList(items);
+                    simpleListAdapter.notifyDataSetChanged();
+                }
+                dlg.dismiss();
+            });
+            dlg.show();
+        }
         if (id == ID_HOMEFRAGMENT) {
             quickjoinRoom(host, port, password);
         }
@@ -558,9 +581,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             deckInfo.setCompleteDeck(isCompleteDeck);
             File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
             if (!deckInfo.isCompleteDeck()) {
-
                 YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
-
             }
             if (!file.getAbsolutePath().isEmpty()) {
                 mBundle.putString("setDeck", file.getAbsolutePath());

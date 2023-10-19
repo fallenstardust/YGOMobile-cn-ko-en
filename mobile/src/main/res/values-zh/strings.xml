@@ -352,4 +352,5 @@
     <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
     <string name="tip_card_info_diff">软件未收录此卡。请尝试更新软件，或查看扩展卡包中是否有此卡。</string>
     <string name="tip_deckInfo_isNot_completeDeck">当前卡组解析异常，将尽量转换为已有卡片</string>
+    <string name="tip_ygopro_is_running">当前有游戏正在运行，无法开启新的决斗，已将房间密码存入历史记录，请结束当前游戏后再选择该历史记录以加入房间</string>
 </resources>
