@@ -92,8 +92,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     public static final int TYPE_GET_DATA_VER_OK = 3;
     private static final String ARG_MC_NEWS_LIST = "mcNewsList";
     private boolean isMcNewsLoadException = false;
-
-    long lastClickTime = 0;
     private LinearLayout ll_back;
     ShimmerTextView tv;
     ShimmerTextView tv2;
