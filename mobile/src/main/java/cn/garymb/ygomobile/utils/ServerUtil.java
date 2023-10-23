@@ -193,24 +193,23 @@ public class ServerUtil {
             }
             return fileList;
         }).done((list) -> {
+            boolean hasServer = false;
             if (list != null) {
                 serverInfos.clear();
                 serverInfos.addAll(list.getServerInfoList());
-                boolean hasServer = false;
-                for (int i = 0; i < list.getServerInfoList().size(); i++) {
-                    if (mServerInfo.getName() != serverInfos.get(i).getName() && mServerInfo.getServerAddr() != serverInfos.get(i).getServerAddr()) {//判断服务器名称、域名IP不同则视为不存在
-                        continue;
-                    } else {
+                for (int i = 0; i < serverInfos.size(); i++) {
+                    if (mServerInfo.getServerAddr().equals(serverInfos.get(i).getServerAddr()) && mServerInfo.getPort() == serverInfos.get(i).getPort()) {//域名端口相同则视为已存在相同的服务器入口
                         hasServer = true;
                         break;
+                    } else {
+                        hasServer = false;
                     }
-
                 }
                 if (!hasServer && !serverInfos.contains(mServerInfo)) {
                     serverInfos.add(mServerInfo);
                 }
-                saveItems(context, xmlFile, serverInfos);
             }
+            saveItems(context, xmlFile, serverInfos);
         });
     }
 
