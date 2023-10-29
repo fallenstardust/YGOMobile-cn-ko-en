@@ -100,11 +100,13 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                         Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();
                     }
                     String servername = "";
-                    if (AppsSettings.get().getDataLanguage() == 0)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
                         servername = "23333先行服务器";
-                    if (AppsSettings.get().getDataLanguage() == 1)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
                         servername = "YGOPRO 사전 게시 중국서버";
-                    if (AppsSettings.get().getDataLanguage() == 2)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
+                        servername = "Mercury23333 OCG/TCG Pre-release";
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     btn_download.setVisibility(View.GONE);

@@ -58,6 +58,7 @@ public interface Constants {
     String SETTINGS_CARD_BG = "settings_game_diy_card_bg";
     String ASSETS_EN = "en/";
     String ASSETS_KOR = "kor/";
+    String ASSETS_ES = "es/";
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
     String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";

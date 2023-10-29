@@ -164,11 +164,13 @@ public class ExCardListFragment extends Fragment implements View.OnClickListener
 
                     /* 将先行服务器信息添加到服务器列表中 */
                     String servername = "";
-                    if (AppsSettings.get().getDataLanguage() == 0)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
                         servername = "23333先行服务器";
-                    if (AppsSettings.get().getDataLanguage() == 1)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
                         servername = "YGOPRO ?? ?? ????";
-                    if (AppsSettings.get().getDataLanguage() == 2)
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
+                        servername = "Mercury23333 OCG/TCG Pre-release";
+                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
                         servername = "Mercury23333 OCG/TCG Pre-release";
                     AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新

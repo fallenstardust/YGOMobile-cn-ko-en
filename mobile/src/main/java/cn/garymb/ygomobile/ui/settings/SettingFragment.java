@@ -235,6 +235,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             e.printStackTrace();
                         }
                     }
+                    if (listPreference.getValue().equals("3")) {
+                        try {
+                            mSettings.copyEsData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
                     Toast.makeText(getContext(), R.string.restart_app, Toast.LENGTH_LONG).show();
                     DataManager.get().load(true);
@@ -626,13 +633,16 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             mSettings.copyCnData();
                         } else if (language.equals("ko")) {
                             mSettings.copyKorData();
+                        }else if (language.equals("es")) {
+                            mSettings.copyEsData();
                         } else {
                             mSettings.copyEnData();
                         }
                     } else {
-                        if (mSettings.getDataLanguage() == 0) mSettings.copyCnData();
-                        if (mSettings.getDataLanguage() == 1) mSettings.copyKorData();
-                        if (mSettings.getDataLanguage() == 2) mSettings.copyEnData();
+                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Chinese.code) mSettings.copyCnData();
+                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Korean.code) mSettings.copyKorData();
+                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.English.code) mSettings.copyEnData();
+                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Spanish.code) mSettings.copyEsData();
                     }
                 }
                 /*

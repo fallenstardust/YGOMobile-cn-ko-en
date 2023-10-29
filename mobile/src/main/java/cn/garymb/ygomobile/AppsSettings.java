@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_EN;
+import static cn.garymb.ygomobile.Constants.ASSETS_ES;
 import static cn.garymb.ygomobile.Constants.ASSETS_KOR;
 import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
@@ -743,7 +744,8 @@ public class AppsSettings {
         //todo 逐步将设置语言的代码都更改为languageEnum
         Chinese(0, "zh"),
         Korean(1, "ko"),
-        English(2, "en");
+        English(2, "en"),
+        Spanish(3, "es");
 
         public Integer code;
         public String name;
@@ -779,11 +781,8 @@ public class AppsSettings {
         IOUtils.copyFilesFromAssets(context, korStringConf, getResourcePath(), true);
         IOUtils.copyFilesFromAssets(context, korBotConf, getResourcePath(), true);
         //替换换行符
-        String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
-        String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
-        fixString(stringConfPath);
-        fixString(botConfPath);
-        //设置语言为1=???
+        replaceLineFeed();
+        //设置语言为1=Korean
         setDataLanguage(languageEnum.Korean.code);
     }
 
@@ -798,13 +797,34 @@ public class AppsSettings {
         //复制游戏配置文件
         IOUtils.copyFilesFromAssets(context, enStringConf, getResourcePath(), true);
         IOUtils.copyFilesFromAssets(context, enBotConf, getResourcePath(), true);
+        replaceLineFeed();
+        //设置语言为2=English
+        setDataLanguage(languageEnum.English.code);
+    }
+
+    public void copyEsData() throws IOException {
+        String esStringConf = ASSETS_ES + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String esBotConf = ASSETS_ES + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String esCdb = ASSETS_ES + getDatapath(DATABASE_NAME);
+        //复制数据库
+        copyCdbFile(esCdb);
+        //复制人机资源
+        IOUtils.copyFilesFromAssets(context, getDatapath(Constants.WINDBOT_PATH), getResourcePath(), true);
+        //复制游戏配置文件
+        IOUtils.copyFilesFromAssets(context, esStringConf, getResourcePath(), true);
+        IOUtils.copyFilesFromAssets(context, esBotConf, getResourcePath(), true);
+        //替换换行符
+        replaceLineFeed();
+        //设置语言为3=Spanish
+        setDataLanguage(languageEnum.Spanish.code);
+    }
+
+    private void replaceLineFeed(){
         //替换换行符
         String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
         String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();
         fixString(stringConfPath);
         fixString(botConfPath);
-        //设置语言为2=English
-        setDataLanguage(languageEnum.English.code);
     }
 
     public void fixString(String stringPath) {

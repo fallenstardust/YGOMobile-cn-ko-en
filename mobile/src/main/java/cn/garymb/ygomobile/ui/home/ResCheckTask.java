@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_EN;
+import static cn.garymb.ygomobile.Constants.ASSETS_ES;
 import static cn.garymb.ygomobile.Constants.ASSETS_KOR;
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.BOT_CONF;
@@ -48,10 +49,12 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_COPY = -2;
     public static final int ERROR_CORE_CONFIG_LOST = -3;
     private static final String TAG = "ResCheckTask";
-    protected int mError = ERROR_NONE;
-    MessageReceiver mReceiver = new MessageReceiver();
     private final AppsSettings mSettings;
     private final Context mContext;
+    private final ResCheckListener mListener;
+    private final Handler handler;
+    protected int mError = ERROR_NONE;
+    MessageReceiver mReceiver = new MessageReceiver();
     Handler han = new Handler() {
 
         @Override
@@ -64,9 +67,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             }
         }
     };
-    private final ResCheckListener mListener;
     private DialogPlus dialog = null;
-    private final Handler handler;
     private boolean isNewVersion;
 
     @SuppressWarnings("deprecation")
@@ -294,14 +295,16 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         copyCnData(true);
                     } else if (language.equals(languageEnum.Korean.name)) {
                         copyKorData(true);
+                    } else if (language.equals(languageEnum.Spanish.name)) {
+                        copyEsData(true);
                     } else {
                         copyEnData(true);
                     }
                 } else {
-                    if (mSettings.getDataLanguage() == languageEnum.Chinese.code)
-                        copyCnData(true);
+                    if (mSettings.getDataLanguage() == languageEnum.Chinese.code) copyCnData(true);
                     if (mSettings.getDataLanguage() == languageEnum.Korean.code) copyKorData(true);
                     if (mSettings.getDataLanguage() == languageEnum.English.code) copyEnData(true);
+                    if (mSettings.getDataLanguage() == languageEnum.Spanish.code) copyEsData(true);
                 }
             }
             han.sendEmptyMessage(0);
@@ -324,7 +327,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         copyCoreConfig(getDatapath("conf") + "/" + CORE_STRING_PATH,
                 getDatapath("conf") + "/" + BOT_CONF,
                 mSettings.getResourcePath(), needsUpdate);
-        mSettings.setDataLanguage(0);
+        mSettings.setDataLanguage(languageEnum.Chinese.code);
         return ERROR_NONE;
     }
 
@@ -340,7 +343,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(enStringConf, enBotConf, mSettings.getResourcePath(), needsUpdate);
-        mSettings.setDataLanguage(2);
+        mSettings.setDataLanguage(languageEnum.English.code);
         return ERROR_NONE;
     }
 
@@ -356,7 +359,23 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, korSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(korStringConf, korBotConf, mSettings.getResourcePath(), needsUpdate);
-        mSettings.setDataLanguage(1);
+        mSettings.setDataLanguage(languageEnum.Korean.code);
+        return ERROR_NONE;
+    }
+
+    public int copyEsData(Boolean needsUpdate) throws IOException {
+        String esStringConf = ASSETS_ES + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String esBotConf = ASSETS_ES + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String esCdb = ASSETS_ES + getDatapath(DATABASE_NAME);
+        String enSingle = ASSETS_EN + getDatapath(CORE_SINGLE_PATH);
+        //复制数据库
+        copyCdbFile(esCdb, true);
+        //复制残局
+        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
+        IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
+        //复制游戏配置文件
+        copyCoreConfig(esStringConf, esBotConf, mSettings.getResourcePath(), needsUpdate);
+        mSettings.setDataLanguage(languageEnum.Spanish.code);
         return ERROR_NONE;
     }
 
