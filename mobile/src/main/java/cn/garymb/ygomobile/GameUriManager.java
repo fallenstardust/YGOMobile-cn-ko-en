@@ -23,15 +23,12 @@ import android.widget.Toast;
 
 import com.ourygo.lib.duelassistant.util.YGODAUtil;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
-import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
@@ -173,6 +170,13 @@ public class GameUriManager {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
             local = getDeckFile(dir, getPathName(path, true));
         } else if (name.toLowerCase(Locale.US).endsWith(".ypk")) {
+            String[] words = name.trim().split("[()（） ]+");
+            File[] ypkList = AppsSettings.get().getExpansionFiles();
+            for (int i = 0; i < ypkList.length; i++) {
+                if (ypkList[i].getName().contains(words[0])) {
+                    FileUtils.delFile(AppsSettings.get().getExpansionsPath().getAbsolutePath() + "/" + ypkList[i].getName());
+                }
+            }
             local = new File(AppsSettings.get().getExpansionsPath(), name);
         } else if (name.toLowerCase(Locale.US).endsWith(".yrp")) {
             local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH, name);
