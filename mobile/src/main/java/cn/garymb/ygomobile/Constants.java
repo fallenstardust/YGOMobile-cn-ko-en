@@ -153,7 +153,7 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
-    String URL_HELP = "https://www.wolai.com/hgRyrSXQuq4rzMwzXhHBqA";
+    String URL_HELP = "https://ygom.top/tutorial.html";
     String URL_DONATE = "https://afdian.net/@ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
