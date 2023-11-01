@@ -17,6 +17,34 @@
             android:title="@string/Join_QQ" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_category_diy">
+
+        <Preference
+            android:key="settings_game_avatar"
+            android:persistent="true"
+            android:title="@string/settings_game_avatar" />
+
+        <Preference
+            android:key="settings_game_diy_card_cover"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_card_back" />
+
+        <Preference
+            android:key="settings_game_diy_card_bg"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_cover" />
+
+        <Preference
+            android:key="pref_key_game_font_name"
+            android:persistent="true"
+            android:title="@string/settings_game_font_name" />
+
+        <!--<CheckBoxPreference
+            android:key="settings_game_diy_card_db"
+            android:persistent="true"
+            android:title="@string/settings_game_diy_card_db"/>-->
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/settings_game">
         <!--Preference
             android:key="pref_key_game_res_path"
@@ -105,30 +133,6 @@
             android:key="pref_settings_font_size"
             android:persistent="true"
             android:title="@string/set_font_size"/>-->
-
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/settings_category_diy">
-
-        <Preference
-            android:key="settings_game_avatar"
-            android:persistent="true"
-            android:title="@string/settings_game_avatar" />
-
-        <Preference
-            android:key="settings_game_diy_card_cover"
-            android:persistent="true"
-            android:title="@string/settings_game_diy_card_back" />
-
-        <Preference
-            android:key="settings_game_diy_card_bg"
-            android:persistent="true"
-            android:title="@string/settings_game_diy_cover" />
-
-        <Preference
-            android:key="pref_key_game_font_name"
-            android:persistent="true"
-            android:title="@string/settings_game_font_name" />
-
         <ListPreference
             android:entries="@array/data_language"
             android:entryValues="@array/data_language_value"
@@ -136,10 +140,6 @@
             android:persistent="true"
             android:title="@string/settings_data_language" />
 
-        <!--<CheckBoxPreference
-            android:key="settings_game_diy_card_db"
-            android:persistent="true"
-            android:title="@string/settings_game_diy_card_db"/>-->
     </PreferenceCategory>
 
     <!--PreferenceCategory android:title="@string/settings_test_options">
