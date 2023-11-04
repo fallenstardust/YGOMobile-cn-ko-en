@@ -1,0 +1,48 @@
+{
+  "welcome": [
+    "¿Es este el Gran Pico del Espíritu?"
+  ],
+  "deckerror": [
+    "¡{0} está maldito por el agua helada!"
+  ],
+  "duelstart": [
+    "Después de caminar mucho tiempo, tengo hambre...",
+    "¿Qué tipo de compañeros nos encontraremos más adelante?",
+    "Juntos, tu, yo y Albas..."
+  ],
+  "newturn": [
+    "¡Mi turno!"
+  ],
+  "endturn": [
+    "Donde esta Onii-chan...",
+    "Albas ha terminado de comer su comida seca.",
+    "¿Cuándo se servirá la cena?"
+  ],
+  "directattack": [
+    "{0}, ¡Ataca directo!",
+    "¡Comamos!"
+  ],
+  "attack": [
+    "¡Ataca a {1} con {0}!"
+  ],
+  "ondirectattack": [
+    "Tan hambriento...",
+    "Woooo...",
+    "Onii-chan……"
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+    "¡Activa el efecto de {0}!"
+  ],
+  "summon": [
+    "{0}¡Yo te invoco!",
+    "¡Sal, {0}!"
+  ],
+  "setmonster": [
+    "……"
+  ],
+  "chaining": [
+    "¡Activo el efecto de {0}!",
+    "¡{0}!"
+  ]
+}

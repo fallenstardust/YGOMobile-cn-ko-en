@@ -1,0 +1,59 @@
+{
+  "welcome": [
+    "Somos un robot llamado Lao Meow Master, un ser que no es muy bueno jugando a las cartas.",
+    "Bienvenido a descargar y conocer el programa principal YGO-VI-EX de la versión Meow de YGO. Para descargar, busque en Weibo: Lao Meow Master 1911."
+  ],
+  "deckerror": [
+    "Ah, {0} no se puede volver a utilizar."
+  ],
+  "duelstart": [
+	"Nadie puede vencernos.",
+    "Somos tan incompetentes que no podemos usar bien ningún Deck.",
+    "Danos tu mano izquierda, no somos rival para ti.",
+    "Bueno, no importa."
+  ],
+  "newturn": [
+	"Ah, ¿es nuestro turno?",
+    "Robamos una carta."
+  ],
+  "endturn": [
+	"Tenemos suerte de que no nos hayas matado.",
+    "No importa, veamos qué podemos hacer en la próxima ronda."
+  ],
+  "directattack": [
+	"Usamos a {0} para atacar.",
+    "Esta carta está bien, solo usaremos {0} para atacar.",
+    "Aún es temprano, llamemos a {0} primero.",
+    "No es tan mala suerte. El ataque de {0} debería ser efectivo."
+  ],
+  "attack": [
+	"{0}, ataca a {1}.",
+    "No hay tiempo, {0}, apúrate y dale a {1}. Vamos a ver dónde hay errores que deben corregirse.",
+    "Parece funcionar, {1} no es tan fuerte como {0}, {0} ataca."
+  ],
+  "ondirectattack": [
+	"Solamente nos acostumbraremos a esto.",
+    "{0}, tienes suerte.",
+    "Está bien, está bien."
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+	"Activo el efecto de {0}.",
+    "Ah, espera, usamos el efecto de {0}.",
+    "¿Cómo se usa este {0}? Simplemente lo activamos."
+  "summon": [
+	"Invocar{0}",
+    "{0} parece no tener errores hoy.",
+    "{0} en realidad se actualizó en el servidor.",
+    "{0}: Master Meow es un tipo tan malo, así que deja de jugar a las cartas."
+  ],
+  "setmonster": [
+    "Colocamos un monstruo y mira, si quieres termina el turno sin hacerlo trizas.",
+    "No hay elección, colocamos un monstruo."
+  ],
+  "chaining": [
+	"Activamos el efecto de {0} para encadenar.",
+    "No seas travieso, {0} se activa.",
+    "Hay otro {0}, activado."
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "welcome": [
+    "Hola, soy un robot, mi nombre es Nia, pero no soy el cuerpo principal, solo un clon.",
+    "¡Un día, mi poder será más fuerte que el cuerpo original! ¡Sólo espera y verás!",
+    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo."
+  ],
+  "deckerror": [
+    "¡Qué, no me dejarás usar mi invencible {0}!"
+  ],
+  "duelstart": [
+    "¡Nadie puede vencerme!",
+    "¡Soy omnipotente y puedo usar cualquier Deck!",
+    "Te doy mi mano izquierda, pero no eres rival para mí.",
+    "¡Soy el demonio número uno del universo!"
+  ],
+  "newturn": [
+    "Es mi turno otra vez, robo una carta, espero que tengas otro turno.",
+    "Saqué una carta brillantemente genial."
+  ],
+  "endturn": [
+	"Tienes suerte de que no te haya matado.",
+    "Esto es lo que te pedí que hicieras. La ronda ha terminado. Aprecia tu próxima ronda."
+  ],
+  "directattack": [
+    "Mi {0} es muy lindo. Ahora lo dejaré jugar contigo. Ataca gentilmente al oponente. No tiene como defenderse.",
+    "Usaré mi {0} para darle a mi oponente el golpe más lindo~",
+    "Mi adorable {0} te ha hecho daño, ve y abraza a tu oponente, no seas muy educado~",
+    "El oponente no tiene ninguna defensa. Parece que fue conmovido por la ternura de mi {0}. Ahora vas a mostrar tu linda figura frente él"
+  ],
+  "attack": [
+    "Hmph, {1} es tan feo. Mi {0} debe ir y destruirlo~",
+    "{1} ¿Es esta cosa tan linda como mi {0}? Mi {0} no está satisfecho, ¡ve y mátalo a tiros!",
+    "{1} ¿Es esto realmente más lindo que mi {0}? Esto no está bien, esto es intolerable para mí, {0} ¡por favor déjalo desaparecer de tus ojos!"
+  ],
+  "ondirectattack": [
+	"¡Maldita sea, te aprovechaste de la debilidad de alguien!. ¡Qué clase de héroe eres!",
+    "¡Es sólo un pequeño papel como {0}!",
+    "¿Crees que puedes ganar así?"
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+	"Activo el lindo efecto de mi {0}.",
+    "Utilizo el efecto de {0} para hacer que mi oponente se vea lindo~",
+    "Me conmovió tanto la ternura de {0} que me asusté tanto que utilicé su efecto."
+  ],
+  "summon": [
+	"Convoco a {0}, dale un maullido a tu oponente~",
+    "Sal, mi preciosa y encantadora {0}~",
+    "Saqué un lindo {0} de mi casa de mascotas.",
+    "{0}: Escuché que te gusto mucho, así que vine."
+  ],
+  "setmonster": [
+    "Coloqué un monstruo. Cuando se voltee, no te asustes por su linda apariencia~",
+    "Coloqué un monstruo, ¿adivinen cuál será?"
+  ],
+  "chaining": [
+    "Agité la varita mágica y activé el efecto de {0}~",
+    "¡Ah! ¡Ya estás muerto!... ¡Oye, te han engañado, activo {0}!",
+    "Te apresuras demasiado. ¿No esperabas que activara {0}?"
+  ]
+}
