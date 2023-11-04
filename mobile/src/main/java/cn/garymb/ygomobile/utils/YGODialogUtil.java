@@ -185,7 +185,9 @@ public class YGODialogUtil {
                     if (position == 0) {
                         if (AppsSettings.get().isReadExpansions()) {
                             try {
-                                deckList.addAll(0, DeckUtil.getExpansionsDeckList());
+                                if (!DeckUtil.getExpansionsDeckList().isEmpty()) {
+                                    deckList.addAll(0, DeckUtil.getExpansionsDeckList());
+                                }
                             } catch (IOException e) {
                                 YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
                             }
