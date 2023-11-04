@@ -1,0 +1,78 @@
+{
+  "welcome": [
+    "Hola, soy un robot.",
+    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo."
+  ],
+  "deckerror": [
+    "Mi Deck ultraconvencional requiere {0} para jugar."
+  ],
+  "duelstart": [
+    "En la prueba del Deck de las Doce Bestias, es normal tener un mal comportamiento.",
+    "Lo súper convencional es parte de Yu-Gi-Oh!, si no te gusta, no lo juegues.",
+    "Copiar lo convencional es parte de Yu-Gi-Oh! Si no te gusta, no lo juegues.",
+    "¿Qué debo hacer si no puedo usar el Deck copiado?"
+  ],
+  "newturn": [
+    "¡Es mi turno, robo una carta!",
+    "¡Mi turno, robo una carta!",
+    "Saqué una carta."
+  ],
+  "endturn": [
+    "La ronda ha terminado.",
+    "Mi turno ha terminado.",
+    "¿Se considera esto un desarrollo exitoso...?",
+    "Sorpréndeme, te toca"
+  ],
+  "directattack": [
+    "{0}, ¡Ataca directo!",
+    "{0}, ¡Ataca al oponente directamente!",
+    "{0}, donde no hay defensa, ¡Ataca!",
+    "{0}, ¡Ataca los Puntos de Vida del oponente!",
+    "{0}, ¡Ataca directamente los Puntos de Vida del oponente!",
+    "{0}, ¡Derrota al oponente mediante un ataque directo!",
+    "{0}, ¡Usa un ataque directo para derrotar al oponente!",
+    "{0}, ¡Ataca directamente para liberar tu poder!",
+    "¡Mi {0} aplastará tus Puntos de Vida!",
+    "¡Demuestrale a nuestro oponente de lo que estás hecho, {0}!",
+    "Ya no puedes detenerme. {0}, ¡Atacaaa!"
+  ],
+  "attack": [
+    "¡{0}, Ataca a su {1}!",
+    "¡{0}, Destruye su {1}!",
+    "¡{0}, Derrota a {1}!",
+    "{0}, ¡Corre hacia {1} y encárgate de finiquitarlo!",
+    "{0}, ¡Libera tu poder sobre {1} para que lamente su existencia!"
+  ],
+  "ondirectattack": [
+    "Te odio……",
+    "¡Es solo {0}!",
+    "Efectivamente, todavía estoy demasiado débil..."
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+    "Lanzo {0}.",
+    "Utilizo el efecto de {0}.",
+    "Utilizo el poder de {0}."
+  ],
+  "summon": [
+    "Convoco a {0}.",
+    "¡Sal, {0}!",
+    "¡Preséntate, {0}!",
+    "¡Convoqué al poderoso {0}!",
+    "¡Llamo a {0} para unirse a la batalla!",
+    "Llamo a {0}.",
+    "Déjame convocar a {0}."
+  ],
+  "setmonster": [
+    "Coloqué un monstruo.",
+    "He colocado un monstruo en mi lado del campo."
+  ],
+  "chaining": [
+    "¡Esto te sorprenderá! ¡Activo {0}!",
+    "Utilizo el poder de {0}.",
+    "¡Prepárate! ¡Yo uso {0}!",
+    "No estoy de acuerdo. {0}, ¡Activo!",
+    "¡Parece que olvidaste mi {0}!",
+    "¿Has considerado que tengo {0}?"
+  ]
+}

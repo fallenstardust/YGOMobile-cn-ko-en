@@ -1,0 +1,59 @@
+{
+  "welcome": [
+    "Hola a todos soy nuevo aqui",
+    "¿Cómo se juega Yu-Gi-Oh?",
+    "¡Afortunadamente no juego Yu-Gi-Oh!"
+  ],
+  "deckerror": [
+    "Hay {0} palomas en la baraja."
+  ],
+  "duelstart": [
+    "¿Qué debo hacer si no quiero trabajar?",
+    "¿Qué debo hacer si no quiero trabajar porque estoy modo perezoso?"
+  ],
+  "newturn": [
+    "Tantas cartas nuevas y aterradoras",
+    "Este juego es muy difícil de jugar.",
+    "tan perezoso, no puedo moverme"
+  ],
+  "endturn": [
+    "Entonces solo puedo hacer paloma.",
+    "En este momento no, no sé cuando",
+    "Demasiado calor, necesito un helado"
+  ],
+  "directattack": [
+    "Suena paloma",
+    "Paloma vieja, ataca"
+  ],
+  "attack": [
+    "No suenas muy palomero",
+    "Horrible"
+  ],
+  "ondirectattack": [
+    "¡Guau!",
+    "¿Da tanto miedo?",
+    "Suena muy palomero",
+    "No lo puedo soportar"
+  ],
+  "facedownmonstername": "Paloma",
+  "activate": [
+    "Paloma inconsciente",
+    "Es genial, es genial."
+  ],
+  "summon": [
+    "Horrible",
+    "No es de mi incumbencia",
+    "Eso todavía no es de mi incumbencia.",
+    "Es genial, es genial."
+  ],
+  "setmonster": [
+    "Estoy en el proceso de pesca y no quiero actualizar.",
+    "Entonces sigue siendo una posición de paloma, ¿verdad?"
+  ],
+  "chaining": [
+    "¿Qué es eso?",
+    "Pero perdí",
+    "No existe tal servicio",
+    "Horrible"
+  ]
+}

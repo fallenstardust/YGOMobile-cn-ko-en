@@ -1,0 +1,75 @@
+{
+  "welcome": [
+    "Hola, soy un robot.",
+    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo."
+  ],
+  "deckerror": [
+    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck."
+  ],
+  "duelstart": [
+    "Este Deck es tan viejo...",
+	"¿Qué pasó con los niños que usaron este Deck..."
+  ],
+  "newturn": [
+	"¡Es mi turno, robo una carta!",
+    "¡Mi turno, robo una carta!",
+    "Saqué una muy buena carta."
+  ],
+  "endturn": [
+	"La ronda ha terminado.",
+    "Mi turno ha terminado.",
+    "Ahora te toca."
+  ],
+  "directattack": [
+	"{0}, ¡Ataque directo!",
+    "{0}, ¡Ataca al oponente directamente!",
+    "{0}, El oponente está indefenso, ¡Ataca!",
+    "{0}, ¡Ataca los Puntos de Vida del oponente!",
+    "{0}, ¡Ataca directamente los Puntos de Vida del oponente!",
+    "{0}, ¡Derrota al oponente con un ataque directo!",
+    "{0}, ¡Usa un ataque directo para derrotar al oponente!",
+    "{0}, ¡Ataca directamente para liberar tu poder!",
+    "¡Mi {0} aplastará tus Puntos de Vida!",
+    "¡Muestra tu fuerza a tus oponentes, {0}!",
+    "Ya no puedes detenerme. {0}, ¡Atacaaa!"
+  ],
+  "attack": [
+	"¡{0}, Ataca a su {1}!",
+    "¡{0}, Destruye su {1}!",
+    "¡{0}, Derrota a {1}!",
+    "¡{0}, Abalánzate sobre su {1}!",
+    "¡{0}, Libera tu poder sobre {1}!"
+  ],
+  "ondirectattack": [
+	"Odioso……",
+    "¡Es solo {0}!",
+    "Ejem..."
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+   "Activo {0}.",
+   "Yo uso el efecto de {0}.",
+   "Yo uso el poder de {0}."
+  ],
+  "summon": [
+	"Convoco a {0}.",
+    "¡Sal, {0}!",
+    "¡Aparece, {0}!",
+    "¡Convoqué al poderoso {0}!",
+    "¡Llamo a {0} para que se una a la batalla!",
+    "Llamé a {0}.",
+    "Déjame convocar a {0}."
+  ],
+  "setmonster": [
+	"Coloqué un monstruo.",
+    "He colocado un monstruo, atrévete a atacarlo."
+  ],
+  "chaining": [
+	"¡Jajaja! ¡Activo {0}!",
+    "Yo uso el poder de {0}.",
+    "¡Prepárate! ¡Yo uso {0}!",
+    "No estoy de acuerdo. {0}, ¡Activada!",
+    "¡Parece que olvidaste mi {0}!",
+    "¿Has considerado que tengo {0}?"
+  ]
+}
