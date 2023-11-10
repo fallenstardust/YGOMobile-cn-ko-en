@@ -253,7 +253,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
             return rs;
         }
         return true;
-    }    @SuppressLint("HandlerLeak")
+    }
+
+    @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -626,25 +628,30 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     FileUtils.delFile(fonts);
                 IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.FONT_DIRECTORY), mSettings.getFontDirPath(), true);
                 //根据系统语言复制特定资料文件
-                String language = getContext().getResources().getConfiguration().locale.getLanguage();
-                if (!language.isEmpty()) {
-                    if (mSettings.getDataLanguage() == -1) {
-                        if (language.equals("zh")) {
+                if (mSettings.getDataLanguage() == -1) {//如果未在App中指定语言，则查询系统语言并进行设置
+                    String language = getContext().getResources().getConfiguration().locale.getLanguage();
+                    if (!language.isEmpty()) {
+                        if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
                             mSettings.copyCnData();
-                        } else if (language.equals("ko")) {
+                        } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
                             mSettings.copyKorData();
-                        }else if (language.equals("es")) {
+                        } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
                             mSettings.copyEsData();
                         } else {
                             mSettings.copyEnData();
                         }
-                    } else {
-                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Chinese.code) mSettings.copyCnData();
-                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Korean.code) mSettings.copyKorData();
-                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.English.code) mSettings.copyEnData();
-                        if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Spanish.code) mSettings.copyEsData();
                     }
+                } else {
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
+                        mSettings.copyCnData();
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Korean.code)
+                        mSettings.copyKorData();
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.English.code)
+                        mSettings.copyEnData();
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
+                        mSettings.copyEsData();
                 }
+
                 /*
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
                         mSettings.getSoundPath(), false);*/
