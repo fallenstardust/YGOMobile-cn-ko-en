@@ -1,6 +1,10 @@
 package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
+import static cn.garymb.ygomobile.Constants.newIDsArray;
+import static cn.garymb.ygomobile.Constants.oldIDsArray;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
+import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -76,6 +80,7 @@ import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.hutool.core.util.ArrayUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -100,6 +105,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private ServerListAdapter mServerListAdapter;
     private ServerListManager mServerListManager;
     private CardManager mCardManager;
+    private SparseArray<Card> cards;
     private CardDetailRandom mCardDetailRandom;
     //轮播图
     private CardView cv_banner;
@@ -557,6 +563,31 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
             return;
         }
+        for (Integer id : mainList) {
+            if (released_code_list.contains(id)) {//先查看id对应的卡片密码是否在正式数组中存在
+                mainList.set(mainList.indexOf(id), pre_code_list.get(released_code_list.indexOf(id)));//使用set而不是用remove和add为了避免Arraylist的ConcurrentModificationException异常
+            }
+            //执行完后变成先行密码，如果constants对照表里存在该密码，则如下又转换一次，确保正式更新后不会出错，最好发布app后必须及时更新在线对照表
+            if (ArrayUtil.contains(oldIDsArray, id)) {
+                mainList.set(mainList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
+            }
+        }
+        for (Integer id : exList) {
+            if (released_code_list.contains(id)) {
+                exList.set(exList.indexOf(id), pre_code_list.get(released_code_list.indexOf(id)));
+            }
+            if (ArrayUtil.contains(oldIDsArray, id)) {
+                exList.set(exList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
+            }
+        }
+        for (Integer id : sideList) {
+            if (released_code_list.contains(id)) {
+                sideList.set(sideList.indexOf(id), pre_code_list.get(released_code_list.indexOf(id)));
+            }
+            if (ArrayUtil.contains(oldIDsArray, id)) {
+                sideList.add(sideList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
+            }
+        }
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(R.string.question);
         dialog.setMessage(R.string.find_deck_text);
@@ -569,16 +600,16 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         });
         dialog.setRightButtonListener((dlg, s) -> {
             dialog.dismiss();
-            Deck deckInfo;
+            Deck deck;
             //如果是卡组url
             if (uri != null) {
-                deckInfo = new Deck(uri, mainList, exList, sideList);
+                deck = new Deck(uri, mainList, exList, sideList);
             } else {
-                deckInfo = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+                deck = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
             }
-            deckInfo.setCompleteDeck(isCompleteDeck);
-            File file = deckInfo.saveTemp(AppsSettings.get().getDeckDir());
-            if (!deckInfo.isCompleteDeck()) {
+            deck.setCompleteDeck(isCompleteDeck);
+            File file = deck.saveTemp(AppsSettings.get().getDeckDir());
+            if (!deck.isCompleteDeck()) {
                 YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
             }
             if (!file.getAbsolutePath().isEmpty()) {

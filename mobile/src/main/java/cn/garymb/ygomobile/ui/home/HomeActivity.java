@@ -437,7 +437,4 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         }
     }
 
-
-
-
 }
