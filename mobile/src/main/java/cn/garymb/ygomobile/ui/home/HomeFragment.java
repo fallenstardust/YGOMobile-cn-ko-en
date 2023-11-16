@@ -118,6 +118,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private CardView cv_bot_game;
     private CardView cv_watch_replay;
     //辅助功能
+
+    /**
+     * 先行卡下载按钮，点击后跳转到先行卡下载页面
+     */
     private CardView cv_download_ex;
     private LinearLayoutCompat ll_new_notice;
     //外连
@@ -145,7 +149,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-        ServerUtil.initExCardState();//HomeActivity中会调用一次本函数，此处再次调用的原因：有时HomeFragment的onCreateView()函数执行较慢，导致initExCardState()中eventbus事件发布完毕后仍未注册，因此在此处再调用一次检查，再次发布
+        ServerUtil.initExCardState();//LogoActivity中会调用一次本函数，此处再次调用的原因：有时HomeFragment的onCreateView()函数执行较慢，导致initExCardState()中eventbus事件发布完毕后仍未注册，因此在此处再调用一次检查，再次发布
         changeColor();
         //showNewbieGuide("homePage");
         return layoutView;
@@ -302,6 +306,9 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     }
 
+    /**
+     *  根据同服务器状态设置展示列表中每项的颜色（服务器不可用就设置为灰色）
+     */
     private void changeColor() {
         /* 同步设置服务器列表的状态，在syncLoadData()里更新recyclerview的数据，在更新数据时convert()方法自动更改item的颜色 */
         mServerListManager.syncLoadData();
