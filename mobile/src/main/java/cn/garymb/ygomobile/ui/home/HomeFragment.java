@@ -592,7 +592,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 sideList.set(sideList.indexOf(id), pre_code_list.get(released_code_list.indexOf(id)));
             }
             if (ArrayUtil.contains(oldIDsArray, id)) {
-                sideList.add(sideList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
+                sideList.set(sideList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
             }
         }
         DialogPlus dialog = new DialogPlus(getContext());
