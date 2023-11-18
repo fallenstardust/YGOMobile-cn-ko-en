@@ -6,7 +6,7 @@ import android.os.Parcelable;
 /*
 This class contains two types of card information:ex-card information and updating log, which is marked
 by "type 0" and "type 1", respectively.
-±¾Àà°üÀ¨Á½ÖÖ¿¨ÅÆĞÅÏ¢£¬ÏÈĞĞ¿¨ĞÅÏ¢ºÍ¸üĞÂÈÕÖ¾£¨·Ö±ğÓÉ¡¤type 0ºÍtype 1±íÊ¾)¡£
+æœ¬ç±»åŒ…æ‹¬ä¸¤ç§å¡ç‰Œä¿¡æ¯ï¼Œå…ˆè¡Œå¡ä¿¡æ¯å’Œæ›´æ–°æ—¥å¿—ï¼ˆåˆ†åˆ«ç”±Â·type 0å’Œtype 1è¡¨ç¤º)ã€‚
  */
 public class ExCard implements Parcelable {
     private String name;

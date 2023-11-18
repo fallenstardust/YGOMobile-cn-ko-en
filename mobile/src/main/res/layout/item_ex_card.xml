@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:sml="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="10dp"
     android:background="@drawable/list_item_bg"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingBottom="10dp">
     <!--    set the layout_height in the linear layout to “wrap_content”
     so it doesn’t only show one TextView per page.-->
 
@@ -14,16 +13,16 @@
         android:id="@+id/ex_card_image"
         android:layout_width="@dimen/card_width_middle"
         android:layout_height="@dimen/card_height_middle"
-        android:padding="10dp"
         android:layout_gravity="center_vertical"
+        android:paddingRight="2dp"
         android:scaleType="fitXY"
         tools:src="@drawable/unknown" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="10dp">
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
             android:id="@+id/ex_card_name"
@@ -41,11 +40,18 @@
             tools:text="Card Name" />
 
         <TextView
+            android:id="@+id/ex_card_overall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
             android:id="@+id/ex_card_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
             android:textSize="12sp" />
+
     </LinearLayout>
+
 
 </LinearLayout>

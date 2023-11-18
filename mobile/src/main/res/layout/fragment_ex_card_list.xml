@@ -14,18 +14,29 @@
         android:padding="5dp"
         android:scrollbars="vertical" />
 
+    <!--    不知道为啥，android:focusableInTouchMode="true"就导致必须按两次linearylayout才触发点击事件
+    有帖子说：
+    一个View的点击事件在第一次点击时无效，第二次点击之后才会响应。
+最后发现是因为焦点问题，第一次点击实际上是获取焦点，第二次点击才会响应点击事件。
+只要在相关控件属性里面加了两个焦点相关的属性：
+android:focusable="true"
+android:focusableInTouchMode="false"
+版权声明：本文为CSDN博主「qiqiname1989」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qiqiname1989/article/details/82177869-->
     <LinearLayout
-        android:id="@+id/btn_download_prerelease"
+        android:id="@+id/layout_download_precard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        android:layout_marginRight="20dp"
-        android:layout_marginBottom="70dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginBottom="100dp"
         android:clickable="true"
-        android:focusableInTouchMode="true"
+        android:focusableInTouchMode="false"
         android:orientation="vertical"
         android:padding="10dp">
+
         <Button
+            android:id="@+id/btn_download_precard"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
@@ -34,7 +45,7 @@
             android:clickable="false" />
 
         <TextView
-            android:id="@+id/text_download_prerelease"
+            android:id="@+id/text_download_precard"
             android:layout_width="60dp"
             android:layout_height="30dp"
             android:background="@drawable/ic_radius_bg"

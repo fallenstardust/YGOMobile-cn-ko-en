@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.utils;
 
 import android.text.TextUtils;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,28 +83,24 @@ public class StringUtils {
         return isurl;
     }
 
+
     /**
-     * 检查字符串是否是IPv4
+     * 使用分隔符，将List<String>合为一个String
      */
-    public static boolean isValidIP(String s) {
-        if (TextUtils.isEmpty(s)) {
-            return false;
+    public static String mergeListDelimeter(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return "";
         }
-        String[] arr = s.split("\\.");
-        if (arr.length != 4) {
-            return false;
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (int i = 0; i < list.size() - 1; i++) {
+            stringBuilder.append(list.get(i));
+            stringBuilder.append("|");
         }
-        for (String value : arr) {
-            try {
-                int n = Integer.parseInt(value);
-                if (!(n >= 0 && n <= 255)) {
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return true;
+        stringBuilder.append(list.get(list.size() - 1));
+        return stringBuilder.toString();
+
     }
 
 }
