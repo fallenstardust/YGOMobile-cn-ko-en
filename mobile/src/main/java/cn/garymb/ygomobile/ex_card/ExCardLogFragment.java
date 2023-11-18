@@ -26,6 +26,9 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 
+/**
+ * 配合cn.garymb.ygomobile.ex_card.ExCardLogAdapter，实现展示先行卡更新日志的页面，暂不使用。
+ */
 public class ExCardLogFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = String.valueOf(ExCardLogFragment.class);
     private Context mContext;
@@ -92,7 +95,7 @@ public class ExCardLogFragment extends Fragment implements View.OnClickListener 
             }
 
         }).fail((e) -> {
-            //�ر��쳣
+            //关闭异常
             if (dialog_read_ex.isShowing()) {
                 try {
                     dialog_read_ex.dismiss();
@@ -111,7 +114,7 @@ public class ExCardLogFragment extends Fragment implements View.OnClickListener 
             if (exCardLogList != null) {
                 LogUtil.i(TAG, "webCrawler parse html complete");
             }
-            //�ر��쳣
+            //关闭异常
             if (dialog_read_ex.isShowing()) {
                 try {
                     dialog_read_ex.dismiss();

@@ -4,7 +4,7 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
 import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
-import static cn.garymb.ygomobile.utils.StringUtils.isValidIP;
+import static cn.garymb.ygomobile.utils.WebParseUtil.isValidIP;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -76,7 +76,12 @@ public class ServerUtil {
             public void onResponse(Call call, Response response) throws IOException {
                 failCounter = 0;//充值计数器
                 String newVer = response.body().string();
+                /* 服务器有点怪，返回的版本号带个\n，要去掉 */
+                if (newVer.endsWith("\n")) {
+                    newVer = newVer.substring(0, newVer.length() - 2);
+                }
                 serverExCardVersion = newVer;
+
 
                 LogUtil.i(TAG, "ServerUtil fetch pre-card version:" + newVer);
                 if (!TextUtils.isEmpty(newVer)) {
