@@ -1,7 +1,7 @@
 package cn.garymb.ygomobile.bean.events;
 
 /**
- * 用于EventBus发布的时间类型。
+ * 用于EventBus的事件类型。
  */
 public class ExCardEvent {
     public enum EventType {

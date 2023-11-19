@@ -266,7 +266,8 @@
     <string name="Checking_Update">Now Checking Update</string>
     <string name="Found_Update">New upGrade is Founded, Download?</string>
     <string name="Checking_Update_Failed">Checking Update Failed</string>
-    <string name="Download_precard_failed">Download pre-cards failed</string>
+    <string name="Download_Precard_Failed">Download pre-cards failed</string>
+    <string name="Pre_Server_Name">Mycard Super-pre Server</string>
     <string name="Ask_to_Change_Other_Way">trying other way...</string>
     <string name="DuelAssistant">DuelAssiatant is On</string>
     <string name="masterrule">Master Rule</string>

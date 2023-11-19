@@ -162,16 +162,16 @@ public interface Constants {
     String ID1 = "[versionname]";
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";
-    String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
+    //String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
     String URL_YGO233_ADVANCE = "";//"https://ygo233.com/pre#pre_release_cards";//关闭233先行卡服务器，但不要删除该字段，许多未调用的遗留代码使用该contant
     String URL_YGO233_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
     String URL_YGO233_FILE = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_YGO233_FILE_ALT = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_YGO233_BUG_REPORT = "https://ygo233.com/pre#faq";
-    int PORT_YGO233 = 23333;
-    String URL_YGO233_1 = "s1.ygo233.com";
-    String URL_YGO233_2 = "s2.ygo233.com";
+    int PORT_Mycard_Super_Pre_Server = 888;
+    String URL_Mycard_Super_Pre_Server = "mygo.superpre.pro";
+    //String URL_YGO233_2 = "s2.ygo233.com";
 
     String SERVER_FILE = "server_list.xml";
     String SHARE_FILE = ".share_deck.png";

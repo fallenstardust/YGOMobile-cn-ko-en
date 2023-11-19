@@ -269,7 +269,8 @@
     <string name="Checking_Update">检查更新中，请稍候</string>
     <string name="Found_Update">发现新版本，前往下载？</string>
     <string name="Checking_Update_Failed">检查更新失败</string>
-    <string name="Download_precard_failed">先行卡下载失败</string>
+    <string name="Download_Precard_Failed">先行卡下载失败</string>
+    <string name="Pre_Server_Name">萌卡超先行服</string>
     <string name="Ask_to_Change_Other_Way">主线获取失败，尝试备选线路中...</string>
     <string name="DuelAssistant">决斗助手启用中</string>
     <string name="masterrule">学习大师规则</string>

@@ -169,6 +169,32 @@ public class ServerUtil {
         }
     }
 
+
+    /**
+     * 读取xmlFile指定的本地文件server_list.xml和apk资源文件（assets）下的serverlist.xml，返回其中版本最新的
+     *
+     * @param context
+     * @param xmlFile 指定的本地文件server_list.xml
+     * @return
+     * @throws IOException
+     */
+    private static ServerList mergeServerList(Context context, File xmlFile) throws IOException {
+        /* 读取apk中assets文件夹下的serverlist.xml文件 */
+        ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));
+
+
+        ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+        if (fileList == null) {
+            return assetList;
+        }
+        /* 如果apk下assets中的版本号更大，则返回assets下的server列表 */
+        if (fileList.getVercode() < assetList.getVercode()) {
+            xmlFile.delete();
+            return assetList;
+        }
+        return fileList;
+    }
+
     /**
      * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
      *
@@ -178,26 +204,21 @@ public class ServerUtil {
      * @param playerName
      */
     public static void AddServer(Context context, String name, String Addr, int port, String playerName) {
+
+        /* 读取本地文件server_list.xml */
         File xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
-        List<ServerInfo> serverInfos = new ArrayList<>();
-        ServerInfo mServerInfo = new ServerInfo();
-        mServerInfo.setName(name);
-        mServerInfo.setServerAddr(Addr);
-        mServerInfo.setPort(port);
-        mServerInfo.setPlayerName(playerName);
         VUiKit.defer().when(() -> {
-            /* 读取本地文件server_list.xml和资源文件（assets）下的serverlist.xml，返回其中版本最新的 */
-            ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));//读取serverlist.xml文件
-            ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
-            if (fileList == null) {
-                return assetList;
-            }
-            if (fileList.getVercode() < assetList.getVercode()) {
-                xmlFile.delete();
-                return assetList;
-            }
-            return fileList;
+            return mergeServerList(context, xmlFile);
         }).done((list) -> {
+            List<ServerInfo> serverInfos = new ArrayList<>();
+            ServerInfo mServerInfo = new ServerInfo();
+            mServerInfo.setName(name);
+            mServerInfo.setServerAddr(Addr);
+            mServerInfo.setPort(port);
+            mServerInfo.setPlayerName(playerName);
+
+
+
             boolean hasServer = false;
             if (list != null) {
                 serverInfos.clear();
@@ -210,7 +231,7 @@ public class ServerUtil {
                         hasServer = false;
                     }
                 }
-                if (!hasServer && !serverInfos.contains(mServerInfo)) {
+                if (!hasServer && !serverInfos.contains(mServerInfo)) {//todo serverInfos.contains(mServerInfo)好像没必要
                     serverInfos.add(mServerInfo);
                 }
             }
@@ -234,9 +255,7 @@ public class ServerUtil {
     }
 
     public static boolean isPreServer(int port, String addr) {
-        return (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_1)) ||
-                (port == Constants.PORT_YGO233 && addr.equals(Constants.URL_YGO233_2));
+        return (port == Constants.PORT_Mycard_Super_Pre_Server && addr.equals(Constants.URL_Mycard_Super_Pre_Server));
     }
-
 
 }

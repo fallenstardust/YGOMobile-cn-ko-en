@@ -9,6 +9,7 @@ import com.google.android.material.tabs.TabLayout;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class ExCardActivity extends BaseActivity {
     private static final String TAG = String.valueOf(ExCardActivity.class);
@@ -47,18 +48,19 @@ public class ExCardActivity extends BaseActivity {
         return true;
     }
 
+    private int backCounter = 0;
+
     //todo 当未下载完先行卡就退出页面时，会导致软件错误退出。未来通过监听返回事件，判断下载状态，若正在下载则阻拦返回键。
     //若发生错误或已完成，则不阻拦返回。
     @Override
     public void onBackPressed() {
-        // 完全由自己控制返回键逻辑，系统不再控制，但是有个前提是：
-        // 不要在Activity的onKeyDown或者OnKeyUp中拦截掉返回键
-
-        // 拦截：就是在OnKeyDown或者OnKeyUp中自己处理了返回键
-        //（这里处理之后return true.或者return false都会导致onBackPressed不会执行）
-
-        // 不拦截：在OnKeyDown和OnKeyUp中返回super对应的方法
-        //（如果两个方法都被覆写就分别都要返回super.onKeyDown,super.onKeyUp）
+        if (ExCardListFragment.downloadState == ExCardListFragment.DownloadState.DOWNLOAD_ING) {
+            if (backCounter < 1) {
+                backCounter++;
+                YGOUtil.showTextToast("下载中，建议不要退出页面，再次按返回键可以退出页面");
+                return;
+            }
+        }
         super.onBackPressed();
     }
 
