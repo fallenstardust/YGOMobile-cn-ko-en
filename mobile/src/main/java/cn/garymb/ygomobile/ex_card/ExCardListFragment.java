@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -62,7 +61,7 @@ public class ExCardListFragment extends Fragment {
         NO_DOWNLOAD
     }
 
-    private DownloadState downloadState;
+    public static DownloadState downloadState;
 
 
     @Override
@@ -126,7 +125,7 @@ public class ExCardListFragment extends Fragment {
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
             /* 查询不到版本号时，提示toast */
             textDownload.setText(R.string.Download);
-            Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_LONG).show();
+            YGOUtil.showTextToast("error" + getString(R.string.ex_card_check_toast_message_iii));
             //WebActivity.open(getActivity(), getString(R.string.ex_card_list_title), URL_YGO233_ADVANCE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
             //do nothing
@@ -149,10 +148,10 @@ public class ExCardListFragment extends Fragment {
                     downloadState = DownloadState.NO_DOWNLOAD;
                     ++FailedCount;
                     if (FailedCount <= 2) {
-                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(getString(R.string.Ask_to_Change_Other_Way));
                         downloadfromWeb(URL_YGO233_FILE_ALT);
                     }
-                    YGOUtil.showTextToast("error" + getString(R.string.Download_Precard_Failed));
+                    YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
                     break;
 //                case UnzipUtils.ZIP_READY:
 //                    textDownload.setText(R.string.title_use_ex);
@@ -180,8 +179,7 @@ public class ExCardListFragment extends Fragment {
                     DataManager.get().load(true);
 
 
-                    Toast.makeText(context, R.string.ypk_installed, Toast.LENGTH_LONG).show();
-
+                    YGOUtil.showTextToast(getString(R.string.ypk_installed));
                     LogUtil.i("webCrawler", "Ex-card package is installed");
 
                     /* 如果未开启先行卡设置，则跳转到设置页面 */
@@ -190,26 +188,11 @@ public class ExCardListFragment extends Fragment {
                         Intent startSetting = new Intent(context, MainActivity.class);
                         startSetting.putExtra("flag", 4);
                         startActivity(startSetting);
-                        Toast.makeText(context, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                        YGOUtil.showTextToast(getString(R.string.ypk_go_setting));
                     }
 
                     break;
-//                case UnzipUtils.ZIP_UNZIP_EXCEPTION:
-//                    Toast.makeText(context, getString(R.string.install_failed_bcos) + msg.obj,
-//                            Toast.LENGTH_SHORT).show();
-//                    break;
-//                case HomeFragment.TYPE_GET_DATA_VER_OK:
-//                    WebActivity.exCardVer = msg.obj.toString();
-//                    String oldVer = SharedPreferenceUtil.getExpansionDataVer();
-//                    if (!TextUtils.isEmpty(WebActivity.exCardVer)) {
-//                        if (!WebActivity.exCardVer.equals(oldVer)) {
-//                            //btn_download展示默认视图
-//                        } else {
-//                            btnDownload.setText(R.string.tip_redownload);
-//                        }
-//                    } else {
-//                        showExNew();
-//                    }
+
             }
         }
     };
