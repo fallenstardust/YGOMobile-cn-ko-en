@@ -265,7 +265,8 @@
     <string name="Checking_Update">Revizando actualización ahora</string>
     <string name="Found_Update">Se ha encontrado una nueva actualización, ¿desea descargarla?</string>
     <string name="Checking_Update_Failed">Error al comprobar la actualización</string>
-    <string name="Ask_to_Change_Other_Way">intentando de otra manera...</string>
+   <string name="Download_precard_failed">Falló la descarga de cartas pre-lanzamiento</string>
+    <string name="Ask_to_Change_Other_Way">Intentando de otra manera...</string>
     <string name="DuelAssistant">El Asistente de Duelo está encendido</string>
     <string name="masterrule">Regla Maestra</string>
     <string name="tutorial">Tutorial</string>
