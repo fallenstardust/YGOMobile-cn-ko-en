@@ -66,8 +66,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     private LinearLayout find_in_page;
     private EditText et_context_keyword;
     private ImageButton btn_context_search_close, btn_context_search_last, btn_context_search_next;
-    private Button btn_download;
-    private int FailedCount;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -92,11 +90,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         });
         if (doIntent(getIntent())) {
             mWebViewPlus.loadUrl(mUrl);
-            if (mUrl.startsWith(URL_YGO233_ADVANCE)) {
-                btn_download.setVisibility(View.VISIBLE);
-            } else {
-                btn_download.setVisibility(View.GONE);
-            }
         }
         TextView.OnEditorActionListener searchListener = (v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
