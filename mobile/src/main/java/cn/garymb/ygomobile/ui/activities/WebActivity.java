@@ -68,57 +68,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     private ImageButton btn_context_search_close, btn_context_search_last, btn_context_search_next;
     private Button btn_download;
     private int FailedCount;
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case DownloadUtil.TYPE_DOWNLOAD_ING:
-                    btn_download.setText(msg.arg1 + "%");
-                    break;
-                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
-                    ++FailedCount;
-                    if (FailedCount <= 2) {
-                        Toast.makeText(getActivity(), R.string.Ask_to_Change_Other_Way, Toast.LENGTH_SHORT).show();
-                        downloadfromWeb(URL_YGO233_FILE_ALT);
-                    }
-                    YGOUtil.showTextToast("error" + msg.obj);
-                    break;
-                case UnzipUtils.ZIP_READY:
-                    btn_download.setText(R.string.title_use_ex);
-                    break;
-                case UnzipUtils.ZIP_UNZIP_OK:
-                    if (!AppsSettings.get().isReadExpansions()) {
-                        Intent startSetting = new Intent(getContext(), MainActivity.class);
-                        startSetting.putExtra("flag", 4);
-                        startActivity(startSetting);
-                        Toast.makeText(getContext(), R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
-                    } else {
-                        DataManager.get().load(true);
-                        Toast.makeText(getContext(), R.string.ypk_installed, Toast.LENGTH_LONG).show();
-                    }
-                    String servername = "";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                        servername = "23333先行服务器";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
-                        servername = "YGOPRO 사전 게시 중국서버";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
-                        servername = "Mercury23333 OCG/TCG Pre-release";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
-                        servername = "Mercury23333 OCG/TCG Pre-release";
-                    AddServer(getActivity(), servername, "s1.ygo233.com", 23333, "Knight of Hanoi");
-                    btn_download.setVisibility(View.GONE);
-                    SharedPreferenceUtil.setExpansionDataVer(WebActivity.exCardVer);
-                    break;
-                case UnzipUtils.ZIP_UNZIP_EXCEPTION:
-                    Toast.makeText(getContext(), getString(R.string.install_failed_bcos) + msg.obj, Toast.LENGTH_SHORT).show();
-                    break;
-
-            }
-        }
-    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -278,9 +227,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                 et_context_keyword.getText().clear();//清除输入内容
                 mWebViewPlus.clearMatches();//清除页面上的高亮项：
                 break;
-            case R.id.web_btn_download_prerelease:
-                downloadfromWeb(URL_YGO233_FILE);
-                break;
 
         }
     }
@@ -297,9 +243,6 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
 
         btn_context_search_close = $(R.id.web_text_search_close);
         btn_context_search_close.setOnClickListener(this);
-
-        btn_download = $(R.id.web_btn_download_prerelease);
-        btn_download.setOnClickListener(this);
     }
 
     public static void open(Context context, String title, String url) {
@@ -333,53 +276,5 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
         WebActivity.open(context, cardInfo.Name, uri);
-    }
-
-    private void downloadfromWeb(String fileUrl) {
-        File file = new File(AppsSettings.get().getResourcePath() + "-preRlease.zip");
-        if (file.exists()) {
-            FileUtils.deleteFile(file);
-        }
-        DownloadUtil.get().download(fileUrl, file.getParent(), file.getName(), new DownloadUtil.OnDownloadListener() {
-            @Override
-            public void onDownloadSuccess(File file) {
-                Message message = new Message();
-                message.what = UnzipUtils.ZIP_READY;
-                try {
-                    File ydks = new File(AppsSettings.get().getDeckDir());
-                    File[] subYdks = ydks.listFiles();
-                    for (File files : subYdks) {
-                        if (files.getName().contains("-") && files.getName().contains(" new cards"))
-                            files.delete();
-                    }
-                    UnzipUtils.upZipSelectFile(file, AppsSettings.get().getResourcePath(), ".ypk");
-                } catch (Exception e) {
-                    message.what = UnzipUtils.ZIP_UNZIP_EXCEPTION;
-                } finally {
-                    message.what = UnzipUtils.ZIP_UNZIP_OK;
-                }
-                handler.sendMessage(message);
-            }
-
-
-            @Override
-            public void onDownloading(int progress) {
-                Message message = new Message();
-                message.what = DownloadUtil.TYPE_DOWNLOAD_ING;
-                message.arg1 = progress;
-                handler.sendMessage(message);
-            }
-
-            @Override
-            public void onDownloadFailed(Exception e) {
-                //下载失败后删除下载的文件
-                FileUtils.deleteFile(file);
-                Message message = new Message();
-                message.what = TYPE_DOWNLOAD_EXCEPTION;
-                message.obj = e.toString();
-                handler.sendMessage(message);
-            }
-        });
-
     }
 }
