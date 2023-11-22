@@ -16,6 +16,7 @@ public class UnzipUtils {
     public static final int ZIP_READY = 600;
     public static final int ZIP_UNZIP_OK = 601;
     public static final int ZIP_UNZIP_EXCEPTION = 602;
+
     /**
      * 解压缩一个文件
      *
@@ -82,7 +83,7 @@ public class UnzipUtils {
             if (entry.isDirectory()) {
                 continue;
             }
-            if (entry.getName().contains(nameContains)) {
+            if (entry.getName().contains(nameContains)) {//如果zip中包含.ypk格式的文件，则将其放到/storage/emulated/0/Android/data/cn.garymb.ygomobile.CN/files/ygocore目录下
                 InputStream is = zf.getInputStream(entry);
                 String str = folderPath + File.separator + entry.getName();
                 str = new String(str.getBytes("8859_1"), StandardCharsets.UTF_8);

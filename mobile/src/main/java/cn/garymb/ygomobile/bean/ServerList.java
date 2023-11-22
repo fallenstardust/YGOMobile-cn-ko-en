@@ -4,6 +4,9 @@ import net.kk.xml.annotations.XmlElement;
 
 import java.util.List;
 
+/**
+ * 将服务器列表写入xml文件时利用的PO类
+ */
 @XmlElement("servers")
 public class ServerList {
     @XmlElement("version")
@@ -20,7 +23,7 @@ public class ServerList {
     }
 
     public ServerList(int version, List<ServerInfo> serverInfoList) {
-        mServerInfoList = serverInfoList;
+        this.mServerInfoList = serverInfoList;
         this.vercode = version;
     }
 

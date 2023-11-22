@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -197,6 +198,25 @@ public class OkhttpUtil {
         client.newCall(request.build()).enqueue(callback);
     }
 
+    public static Response synchronousGet(String address, Map<String, Object> map, String cookie) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+
+        HttpUrl.Builder httpBuilder = HttpUrl.parse(address).newBuilder();
+        if (map != null) {
+            for (Map.Entry<String, Object> param : map.entrySet()) {
+                httpBuilder.addQueryParameter(param.getKey(), param.getValue().toString());
+            }
+        }
+
+        Request.Builder request = new Request.Builder()
+                .url(httpBuilder.build());
+        Log.e("OkhttpUtil", "为" + httpBuilder.build());
+        if (!TextUtils.isEmpty(cookie)) {
+            request.addHeader("cookie", cookie);
+        }
+        return client.newCall(request.build()).execute();
+    }
+
     public static void del(String address, Map<String, Object> map, String cookie, Callback callback) {
         OkHttpClient client = new OkHttpClient();
 
@@ -292,10 +312,18 @@ public class OkhttpUtil {
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie);
         }
-        Log.e("OkhttpUtil",json+" 状态 "+ request.build());
+        Log.e("OkhttpUtil", json + " 状态 " + request.build());
         okHttpClient.newCall(request.build()).enqueue(callback);
     }
 
+    /**
+     * 将byte[]类型的十六进制数据（不进行解码）转为字符串格式。如，byte[]中存储的值为0xab78，则转换后的字符串的内容为“ab78”，
+     * byte[]中存储的值为0xb78，则转换后的字符串的内容为“0b78”
+     * 可用于将byte中的数据不做改变地打印到log中。
+     *
+     * @param buf
+     * @return
+     */
     public static String parseByte2HexStr(byte[] buf) {
         if (null == buf) {
             return null;

@@ -12,6 +12,9 @@ import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
 
+/**
+ * 旧版本用于展示先行卡更新日志的页面，暂不使用。
+ */
 public class ExCardLogAdapter extends BaseExpandableListAdapter {
 
     public ExCardLogAdapter(Context context) {

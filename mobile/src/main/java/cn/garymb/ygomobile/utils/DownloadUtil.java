@@ -22,6 +22,7 @@ public class DownloadUtil {
     private final OkHttpClient okHttpClient;
     public static final int TYPE_DOWNLOAD_EXCEPTION = 1;
     public static final int TYPE_DOWNLOAD_ING = 2;
+    public static final int TYPE_DOWNLOAD_OK = 3;
     //暂时关闭
     private static final boolean ENABLE_CACHE = false;
     private static final Map<String, Call> cache = new HashMap<>();
@@ -83,8 +84,8 @@ public class DownloadUtil {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if(!response.isSuccessful()){
-                    listener.onDownloadFailed(new Exception("error:"+response.code()));
+                if (!response.isSuccessful()) {
+                    listener.onDownloadFailed(new Exception("error:" + response.code()));
                     return;
                 }
                 String contentLen = response.header("Content-Length");
@@ -104,10 +105,11 @@ public class DownloadUtil {
                 try {
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
-                    if(contentLength > 0 && total != contentLength){
+                    if (contentLength > 0 && total != contentLength) {
                         listener.onDownloadFailed(new Exception("file length[" + total + "] < " + contentLen));
                     } else {
-                        out = new FileOutputStream(file);
+                        /* 入参为false时，向file覆盖写入 */
+                        out = new FileOutputStream(file, false);
                         long sum = 0;
                         while ((len = is.read(buf)) != -1) {
                             out.write(buf, 0, len);
@@ -126,11 +128,11 @@ public class DownloadUtil {
                     IOUtils.close(is);
                 }
                 if (saved) {
-					if (contentLength > 0 && file.length() < contentLength) {
-						listener.onDownloadFailed(new Exception("file length[" + file.length() + "] < " + contentLen));
-					} else {
-						listener.onDownloadSuccess(file);
-					}
+                    if (contentLength > 0 && file.length() < contentLength) {
+                        listener.onDownloadFailed(new Exception("file length[" + file.length() + "] < " + contentLen));
+                    } else {
+                        listener.onDownloadSuccess(file);
+                    }
                 }
                 if (ENABLE_CACHE) {
                     synchronized (cache) {

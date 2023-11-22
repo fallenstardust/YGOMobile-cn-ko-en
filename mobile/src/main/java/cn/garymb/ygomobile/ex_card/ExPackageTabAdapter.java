@@ -29,15 +29,17 @@ public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
         Fragment fragment = null;
         if (position == 0) {
             fragment = new ExCardListFragment();
-        } else if (position == 1) {
-            fragment = new ExCardLogFragment();
         }
+        /* 目前只显示一个tab，未来可能添加其他tab */
+//         else if (position == 1) {
+//            fragment = new ExCardLogFragment();
+//        }
         return fragment;
     }
 
     @Override
     public int getCount() {
-        return 2;
+        return 1;
     }
 
     @Override
@@ -46,9 +48,10 @@ public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
         if (position == 0) {
 
             title = context.getString(R.string.ex_card_list_title);
-        } else if (position == 1) {
-            title = context.getString(R.string.ex_card_log_title);
         }
+//         else if (position == 1) {
+//            title = context.getString(R.string.ex_card_log_title);
+//        }
         return title;
     }
 }

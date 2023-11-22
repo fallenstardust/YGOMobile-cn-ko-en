@@ -307,7 +307,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     }
 
     /**
-     *  根据同服务器状态设置展示列表中每项的颜色（服务器不可用就设置为灰色）
+     * 根据同服务器状态设置展示列表中每项的颜色（服务器不可用就设置为灰色）
      */
     private void changeColor() {
         /* 同步设置服务器列表的状态，在syncLoadData()里更新recyclerview的数据，在更新数据时convert()方法自动更改item的颜色 */
@@ -794,15 +794,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 //                    break;
 //                }
 
-                if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-                    WebActivity.open(getContext(), getString(R.string.action_download_expansions), Constants.URL_YGO233_ADVANCE);
-                    LogUtil.i(TAG, "cannot connect to ex card server, open webactivity");
-                } else {
-                    /* using Web crawler to extract the information of pre card */
-                    LogUtil.i(TAG, "connect to ex card http server, open webactivity");
-                    Intent exCardIntent = new Intent(getActivity(), ExCardActivity.class);
-                    startActivity(exCardIntent);
-                }
+                /* 查不到版本号也打开excard安卓原生activity */
+                Intent exCardIntent = new Intent(getActivity(), ExCardActivity.class);
+                startActivity(exCardIntent);
+
                 break;
             case R.id.action_help: {
                 final DialogPlus dialog = new DialogPlus(getContext());

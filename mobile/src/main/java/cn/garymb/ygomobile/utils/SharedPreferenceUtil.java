@@ -51,8 +51,8 @@ public class SharedPreferenceUtil {
         return getShareRecord().getInt("StartTimes", 0);
     }
 
-    public static void setExpansionDataVer(String json) {
-        getShareRecord().edit().putString("ExpansionsDataVer", json).commit();
+    public static void setExpansionDataVer(String dataVer) {
+        getShareRecord().edit().putString("ExpansionsDataVer", dataVer).commit();
     }
 
     public static String getExpansionDataVer() {
