@@ -282,8 +282,21 @@ void Game::DrawLinkedZones(ClientCard* pcard, ClientCard* fcard) {
 }
 
 void Game::DrawCards() {
-	for(auto cit = dField.overlay_cards.begin(); cit != dField.overlay_cards.end(); ++cit)
-		DrawCard(*cit);
+	for (auto cit = dField.overlay_cards.begin(); cit != dField.overlay_cards.end(); ++cit) {
+		auto pcard = (*cit);
+		auto olcard = pcard->overlayTarget;
+		if (pcard->aniFrame) {
+			DrawCard(pcard);
+		}
+		else if (olcard && olcard->location == LOCATION_MZONE) {
+			if (pcard->sequence < MAX_LAYER_COUNT) {
+				DrawCard(pcard);
+			}
+		}
+		else {
+			DrawCard(pcard);
+		}
+	}
 	for(int p = 0; p < 2; ++p) {
 		for(auto it = dField.mzone[p].begin(); it != dField.mzone[p].end(); ++it)
 			if(*it)

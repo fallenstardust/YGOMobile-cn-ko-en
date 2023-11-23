@@ -927,6 +927,7 @@ extern Game* mainGame;
 #define DEFAULT_DUEL_RULE			5
 
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
+#define MAX_LAYER_COUNT	6
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GAME_WIDTH 1024
