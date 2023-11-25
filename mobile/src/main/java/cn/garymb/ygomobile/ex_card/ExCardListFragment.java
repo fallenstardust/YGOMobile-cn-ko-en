@@ -150,7 +150,7 @@ public class ExCardListFragment extends Fragment {
         ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
         EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
 
-        DownloadUtil.get().download(fileUrl, path, fileName, new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().download(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
 
