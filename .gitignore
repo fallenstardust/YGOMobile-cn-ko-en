@@ -62,3 +62,4 @@ output-metadata.json
 /mobile/assets/data/pack
 /mobile/assets/en/data/*.cdb
 /mobile/assets/kor/data/*.cdb
+/mobile/assets/es/data/*.cdb
