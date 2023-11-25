@@ -44,25 +44,13 @@ import ocgcore.DataManager;
 
 public class ExCardListFragment extends Fragment {
     private static final String TAG = String.valueOf(ExCardListFragment.class);
+    public static DownloadState downloadState;
     private Context context;
     private View layoutView;
     private ExCardListAdapter mExCardListAdapter;
     private RecyclerView mExCardListView;
     private TextView textDownload;
     private int FailedCount;
-
-    /**
-     * 用于标志当前下载状态，用于防止用户多次重复点击“下载按钮”
-     * Mark the download state, which can prevent user from clicking the download button
-     * repeatedly.
-     */
-    enum DownloadState {
-        DOWNLOAD_ING,
-        NO_DOWNLOAD
-    }
-
-    public static DownloadState downloadState;
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -112,7 +100,6 @@ public class ExCardListFragment extends Fragment {
         changeDownloadText();
     }
 
-
     /**
      * 根据先行卡包状态改变按钮样式
      */
@@ -133,58 +120,6 @@ public class ExCardListFragment extends Fragment {
             //the UNCHECKED state only exists temporarily before the check action, so we need not handle it.
         }
     }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case DownloadUtil.TYPE_DOWNLOAD_ING:
-                    textDownload.setText(msg.arg1 + "%");
-                    break;
-                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
-                    downloadState = DownloadState.NO_DOWNLOAD;
-                    ++FailedCount;
-                    if (FailedCount <= 2) {
-                        YGOUtil.showTextToast(getString(R.string.Ask_to_Change_Other_Way));
-                        downloadfromWeb(URL_YGO233_FILE_ALT);
-                    }
-                    YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
-                    break;
-//                case UnzipUtils.ZIP_READY:
-//                    textDownload.setText(R.string.title_use_ex);
-//                    break;
-                case DownloadUtil.TYPE_DOWNLOAD_OK:
-                    downloadState = DownloadState.NO_DOWNLOAD;
-                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
-                    //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
-
-                    /* 注意，要先更新版本号 */
-                    SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
-                    ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
-                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//安装后，通知UI做更新
-                    DataManager.get().load(true);
-
-
-                    YGOUtil.showTextToast(getString(R.string.ypk_installed));
-                    LogUtil.i("webCrawler", "Ex-card package is installed");
-
-                    /* 如果未开启先行卡设置，则跳转到设置页面 */
-                    if (!AppsSettings.get().isReadExpansions()) {//解压完毕，但此时
-                        LogUtil.i("webCrawler", "Ex-card setting is not opened");
-                        Intent startSetting = new Intent(context, MainActivity.class);
-                        startSetting.putExtra("flag", 4);
-                        startActivity(startSetting);
-                        YGOUtil.showTextToast(getString(R.string.ypk_go_setting));
-                    }
-
-                    break;
-
-            }
-        }
-    };
 
     /**
      * @param event
@@ -237,7 +172,79 @@ public class ExCardListFragment extends Fragment {
             }
         });
 
+    }    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case DownloadUtil.TYPE_DOWNLOAD_ING:
+                    textDownload.setText(msg.arg1 + "%");
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
+                    downloadState = DownloadState.NO_DOWNLOAD;
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        YGOUtil.showTextToast(getString(R.string.Ask_to_Change_Other_Way));
+                        downloadfromWeb(URL_YGO233_FILE_ALT);
+                    }
+                    YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
+                    break;
+//                case UnzipUtils.ZIP_READY:
+//                    textDownload.setText(R.string.title_use_ex);
+//                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_OK:
+                    downloadState = DownloadState.NO_DOWNLOAD;
+                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
+                    //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
+
+                    File[] files = AppsSettings.get().getExpansionsPath().listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.exists() && (file.getName().contains(Constants.cacheExCardPackageName) || file.getName().contains(Constants.mercuryExCardPackageName))) {
+                                //删除残留的指定先行卡包,避免具备相同id的数据库之间引起冲突
+                                FileUtils.deleteFile(file);
+                            }
+                        }
+                    }
+
+                    /* 注意，要先更新版本号 */
+                    SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
+                    ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//安装后，通知UI做更新
+                    DataManager.get().load(true);
+
+
+                    YGOUtil.showTextToast(getString(R.string.ypk_installed));
+                    LogUtil.i("webCrawler", "Ex-card package is installed");
+
+                    /* 如果未开启先行卡设置，则跳转到设置页面 */
+                    if (!AppsSettings.get().isReadExpansions()) {//解压完毕，但此时
+                        LogUtil.i("webCrawler", "Ex-card setting is not opened");
+                        Intent startSetting = new Intent(context, MainActivity.class);
+                        startSetting.putExtra("flag", 4);
+                        startActivity(startSetting);
+                        YGOUtil.showTextToast(getString(R.string.ypk_go_setting));
+                    }
+
+                    break;
+
+            }
+        }
+    };
+
+    /**
+     * 用于标志当前下载状态，用于防止用户多次重复点击“下载按钮”
+     * Mark the download state, which can prevent user from clicking the download button
+     * repeatedly.
+     */
+    enum DownloadState {
+        DOWNLOAD_ING,
+        NO_DOWNLOAD
     }
+
+
 
 
 }

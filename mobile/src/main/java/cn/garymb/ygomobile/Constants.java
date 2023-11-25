@@ -260,4 +260,6 @@ public interface Constants {
     };
 
     public final String officialExCardPackageName = "ygopro-super-pre.ypk";//官方扩展卡包ypk文件的名称
+    public final String mercuryExCardPackageName = "ygo233.com-pre-release";//23333扩展卡包ypk文件的名称
+    public final String cacheExCardPackageName = "内测先行卡";//临时扩展卡包ypk文件的名称
 }
