@@ -158,18 +158,7 @@ public class ExCardListFragment extends Fragment {
 //                    break;
                 case DownloadUtil.TYPE_DOWNLOAD_OK:
                     downloadState = DownloadState.NO_DOWNLOAD;
-                    /* 将先行服务器信息添加到服务器列表中 */
-                    String servername = "";
-                    //todo 改成用安卓的localization机制strings.xml
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                        servername = "萌卡超先行服";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
-                        servername = "Mycard Super-pre Server";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
-                        servername = "Mycard Super-pre Server";
-                    if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
-                        servername = "Mycard Super-pre Server";
-                    AddServer(getActivity(), servername, Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
+                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
 
                     /* 注意，要先更新版本号 */

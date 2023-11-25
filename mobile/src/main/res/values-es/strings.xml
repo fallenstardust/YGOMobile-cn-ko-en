@@ -79,7 +79,6 @@
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Ávatar del juego</string>
-    <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A</string>
     <string name="restart_app">"¡Reinicie la aplicación!"</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -265,7 +264,6 @@
     <string name="Checking_Update">Buscando actualizaciones, por favor espere</string>
     <string name="Found_Update">Se ha encontrado una nueva actualización, ¿desea descargarla?</string>
     <string name="Checking_Update_Failed">Error al comprobar la actualización</string>
-    <string name="Download_precard_failed">Falló la descarga de las cartas pre-lanzamiento</string>
     <string name="Ask_to_Change_Other_Way">No se pudo obtener la línea principal, probando la línea alternativa...</string>
     <string name="DuelAssistant">El Asistente de Duelo está activado</string>
     <string name="masterrule">Regla Maestra</string>
@@ -364,5 +362,7 @@
     <string name="tip_card_info_diff">Esta carta no está incluida en el software. Intente actualizar el software o verifique si la carta está disponible en el paquete de cartas de expansión.</string>
     <string name="tip_deckInfo_isNot_completeDeck">El mazo de cartas actual se analiza de manera anormal y haremos todo lo posible para convertirlo en cartas existentes.</string>
     <string name="tip_ygopro_is_running">Actualmente hay un juego en ejecución y no se puede iniciar un nuevo duelo. La contraseña de la sala se ha guardado en el historial. Finaliza el juego actual y luego selecciona el historial para unirte a la sala.</string>
+    <string name="Download_Precard_Failed">Falló la descarga de las cartas pre-lanzamiento</string>
+    <string name="Pre_Server_Name">Mycard Super-pre Server</string>
 </resources>
 
