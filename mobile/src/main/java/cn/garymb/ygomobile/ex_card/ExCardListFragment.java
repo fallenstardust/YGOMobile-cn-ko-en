@@ -135,14 +135,21 @@ public class ExCardListFragment extends Fragment {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
         String path = AppsSettings.get().getExpansionsPath().getAbsolutePath();
         String fileName = Constants.officialExCardPackageName;
-        File file = new File(path + "/" + fileName);
-        if (file.exists()) {
-            /* 删除旧的先行卡包 */
-            FileUtils.deleteFile(file);
-            SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
-            ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
-            EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+        File file = new File(path + "/" + fileName + ".ypk");
+        /* 删除旧的先行卡包 */
+        File[] files = AppsSettings.get().getExpansionsPath().listFiles();
+        if (files != null) {
+            for (File oldfile : files) {
+                if (oldfile.exists() && (oldfile.getName().contains(fileName) || oldfile.getName().contains(Constants.cacheExCardPackageName) || oldfile.getName().contains(Constants.mercuryExCardPackageName))) {
+                    //删除残留的指定先行卡包,避免具备相同id的数据库之间引起冲突
+                    FileUtils.deleteFile(oldfile);
+                }
+            }
         }
+        SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
+        ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
+        EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+
         DownloadUtil.get().download(fileUrl, path, fileName, new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
@@ -172,6 +179,16 @@ public class ExCardListFragment extends Fragment {
             }
         });
 
+    }
+
+    /**
+     * 用于标志当前下载状态，用于防止用户多次重复点击“下载按钮”
+     * Mark the download state, which can prevent user from clicking the download button
+     * repeatedly.
+     */
+    enum DownloadState {
+        DOWNLOAD_ING,
+        NO_DOWNLOAD
     }    @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -198,17 +215,6 @@ public class ExCardListFragment extends Fragment {
                     downloadState = DownloadState.NO_DOWNLOAD;
                     AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
-
-                    File[] files = AppsSettings.get().getExpansionsPath().listFiles();
-                    if (files != null) {
-                        for (File file : files) {
-                            if (file.exists() && (file.getName().contains(Constants.cacheExCardPackageName) || file.getName().contains(Constants.mercuryExCardPackageName))) {
-                                //删除残留的指定先行卡包,避免具备相同id的数据库之间引起冲突
-                                FileUtils.deleteFile(file);
-                            }
-                        }
-                    }
-
                     /* 注意，要先更新版本号 */
                     SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
                     ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
@@ -233,16 +239,6 @@ public class ExCardListFragment extends Fragment {
             }
         }
     };
-
-    /**
-     * 用于标志当前下载状态，用于防止用户多次重复点击“下载按钮”
-     * Mark the download state, which can prevent user from clicking the download button
-     * repeatedly.
-     */
-    enum DownloadState {
-        DOWNLOAD_ING,
-        NO_DOWNLOAD
-    }
 
 
 
