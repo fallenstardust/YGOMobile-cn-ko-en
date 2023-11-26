@@ -24,10 +24,10 @@
     <string name="dialog_select_database">Elegir archivo de base de datos</string>
     <string name="copy_databse">Copiar la base de datos</string>
     <string name="card_cover">Cubierta de Carta</string>
-    <string name="game_bg">Fondo del Juego</string>
+    <string name="game_bg">Img de Fondo del Juego</string>
     <string name="bg">Fondo del Duelo</string>
-    <string name="bg_menu">Fondo del Menú</string>
-    <string name="bg_deck">Fondo del Deck</string>
+    <string name="bg_menu">Img de Fondo del Menú</string>
+    <string name="bg_deck">Img deFondo del Deck</string>
     <string name="no_find_image_selector">Selector de imágenes no encontrado</string>
     <string name="no_find_file_selectotr">Selector de archivos no encontrado</string>
     <string name="no_find_image_cutor">Herramienta de recorte no encontrada</string>
@@ -42,7 +42,7 @@
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
     <string name="the_name_is_folder">El nombre de la carpeta</string>
-    <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir.</string>
+    <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
          Haga clic en Configuración - Permisos - Abra los permisos requeridos.</string>
     <string name="fetch_ex_card">Obtener cartas pre-lanzamiento a través de Internet</string>
@@ -58,7 +58,7 @@
     <string name="settings_game_enable_sound_effect">Habilitar efecto de sonido</string>
     <string name="settings_game_screen_orientation">Bloquear pantalla durante un duelo</string>
     <string name="settings_game_font_antialias">Antialias de fuente</string>
-    <string name="settings_game_lab_pendulum_scale">Imágenes de Escala de Péndulo</string>
+    <string name="settings_game_lab_pendulum_scale">Img de Escala de Péndulo</string>
     <string name="settings_game_font_antialias_summary">Deshabilitar esta opción puede aumentar la velocidad de fotogramas</string>
     <string name="settings_about_author_pref">Autor</string>
     <string name="settings_about_version_pref">Versión</string>
@@ -68,10 +68,10 @@
     <string name="settings_game_card_quality">Calidad de imagen de las cartas</string>
     <string name="settings_game_font_name">Fuente del juego</string>
     <string name="settings_game">Opciones del juego</string>
-    <string name="settings_game_res_path">Ruta del juego</string>
+    <string name="settings_game_res_path">HostIP</string>
     <string name="settings_game_core_version">Versión del núcleo del juego</string>
     <string name="settings_category_diy">Personalizar</string>
-    <string name="settings_game_diy_cover">Fondo del juego</string>
+    <string name="settings_game_diy_cover">Img de Fondo del juego</string>
     <string name="settings_game_diy_card_back">Cubierta de carta</string>
     <string name="settings_game_diy_card_db">Usar base de datos personalizada</string>
     <string name="settings_test_options">Opciones Experimentales</string>
@@ -106,18 +106,18 @@
 
     <string name="server_list">Servidores de duelo</string>
     <string name="server_name">Nombre:</string>
-    <string name="server_ip">Anfitrión:</string>
+    <string name="server_ip">Host:</string>
     <string name="server_user">Usuario:</string>
     <string name="server_room_name">Nombre de la sala:</string>
     <string name="server_port">Puerto:</string>
-    <string name="server_room_pwd">Contraseña:</string>
-    <string name="server_user_pwd">Contraseña:</string>
+    <string name="server_room_pwd">PSW:</string>
+    <string name="server_user_pwd">PSW:</string>
     <string name="server_info_edit">Editar información del servidor</string>
     <string name="save">Guardar</string>
     <string name="must_info">Información requerida</string>
     <string name="server_is_exist">¡La información del servidor ya existe!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
-    <string name="card_search">Búsqueda de cartas</string>
+    <string name="card_search">Buscar/string>
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Selección de deck categorizado</string>
     <string name="search">Buscar</string>
@@ -130,7 +130,7 @@
     <string name="label_race">Raza</string>
     <string name="label_ot">Regla</string>
     <string name="label_limit">Tipo de Límite</string>
-    <string name="label_limitlist">Lista de Limitados</string>
+    <string name="label_limitlist">Banlist</string>
     <string name="label_type">Tipo de Cartas</string>
     <string name="label_set">Arquetipo</string>
     <string name="label_level">Nvl/Rng/Lnk</string>
@@ -148,7 +148,7 @@
     <string name="delete_deck">Eliminar deck</string>
     <string name="save_deck">Salvar deck</string>
     <string name="save_as_deck">Salvar deck como</string>
-    <string name="deck_list">Lista de decks</string>
+    <string name="deck_list">Decks</string>
     <string name="card_add_main">+Deck Principal</string>
     <string name="card_add_side">+Side Deck</string>
     <string name="deck_main" formatted="false">Principal:%d  Monstruo:%d Mágica:%d Trampa:%d</string>
@@ -172,7 +172,7 @@
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
-    <string name="intput_room_name">Nombre de la sala de entrada</string>
+    <string name="intput_room_name">Nombre de la sala</string>
     <string name="join">Unirse</string>
     <string name="quick_join">Únete al juego</string>
     <string name="join_game">Únete al juego</string>
@@ -188,8 +188,8 @@
     <string name="settings_deck_delete_dialog">Eliminar cuadro de diálogo de cartas</string>
     <string name="settings_deck_delete_dialog_desc">Mostrar el cuadro de diálogo de eliminación de cartas en el editor de decks</string>
     <string name="delete_card" formatted="false">¿Eliminar carta %s?</string>
-    <string name="clear_deck">Vaciar</string>
-    <string name="question_clear_deck">¿Vaciar este deck?</string>
+    <string name="clear_deck">Limpiar</string>
+    <string name="question_clear_deck">¿Limpiar este deck?</string>
     <string name="delete_server_info">¿Eliminar la información de este servidor?</string>
     <string name="exit_edit_mode">Salir del Modo de Edición</string>
     <string name="logo_text">¡Gracias por apoyarnos!</string>
@@ -234,7 +234,7 @@
     <string name="deck_manager_v2">Editor de Decks V2</string>
     <string name="reset_game_ver_fail">Fallo al intentar restablecer la versión del juego</string>
     <string name="deck_name">Deck</string>
-    <string name="category_name">Categoría del deck</string>
+    <string name="category_name">Categoría</string>
     <string name="save_quit">Guardar y salir</string>
     <string name="tip_reset_game_res">Verificación de datos del juego completada</string>
     <string name="join_helper_tip1">Puedes mover tu servidor favorito hacia arriba,
@@ -245,7 +245,7 @@
     <string name="SYSTEM_ALERT_WINDOW">Debes habilitar el permiso de ventana flotante\nHabilitar el permiso para usar la función Asistente de duelo normalmente</string>
     <string name="OpenTIP">Cómo utilizar la adición rápida de salas</string>
     <string name="Open_Alert_Window">Ir a abrir la ventana flotante</string>
-    <string name="Function_Menu">MENÚ</string>
+    <string name="Function_Menu">MENU</string>
     <string name="Join_QQ">Grupo QQ</string>
     <string name="about_Join_QQ">Únete al grupo QQ para informar problemas</string>
     <string name="donatefor">Su donación se utilizará para mantener las tarifas de actualización automática, recopilar datos de actualización, retocar imágenes posteriores y comprar modelos adaptados, etc.</string>
@@ -275,7 +275,7 @@
     <string name="return_to_duel">Tocar aquí para volver al duelo☞</string>
     <string name="Start_ServiceDuelAssistant">Activar Asistente de Duelo</string>
     <string name="about_DuelAssistant">Copia el PWS para entrar al juego de forma rápida
-        \ncopie el texto del deck para guardarlo como YDK y abrirlo en el editor de decks</string>
+        \nCopia el texto del deck para guardarlo como YDK y abrirlo en el editor de decks</string>
     <string name="find_deck_text">Texto del deck detectado, ¿quieres guardarlo?</string>
     <string name="save_failed_bcos">Error al guardar debido a</string>
     <string name="deck_text_copyed">Texto del Deck copiado al portapapeles</string>
@@ -290,7 +290,7 @@
     <string name="please_select_target_category">¿En qué categoría debería ponerlo?</string>
     <string name="delete_confirm">¿Estás seguro de que deseas eliminar esta categoría? También se eliminarán todos los decks de la categoría.</string>
     <string name="no_deck_is_selected">No se ha seleccionado ningún deck</string>
-    <string name="done">¡Hecho\!</string>
+    <string name="done">¡Hecho!</string>
     <string name="donot_edit_Deck">Por favor no cambies los decks en esta categoría.</string>
     <string name="code_share">Compartir código</string>
     <string name="screenshoot">Compartir captura de pantalla</string>
@@ -334,8 +334,8 @@
     <string name="guide_view_deck_manager">Tocar para cambiar los decks \nPuedes gestionar las categorías de los decks aquí.</string>
     <string name="guide_view_move_card">Presione una carta para moverla a otro lugar \nmantenga presionada esta carta para eliminarla.</string>
     <string name="guide_view_banner">Noticias de Mycard, puedes tocar para ver \nSólo en chino por ahora, lo siento.</string>
-    <string name="title_delete_ex">eEliminar expansiones</string>
-    <string name="about_delete_ex">Si necesita eliminar todas las cartas de expansión</string>
+    <string name="title_delete_ex">Eliminar expansiones</string>
+    <string name="about_delete_ex">Si necesita eliminar todas las cartas de expansión use esta opción</string>
     <string name="file_installed">Archivo cargado</string>
     <string name="ask_delete_ex">Tocar OK para confirmar la eliminación.</string>
     <string name="label_ot_TCG">TCG</string>
@@ -347,8 +347,8 @@
     <string name="settings_screen_padding">Altura reservada de la pantalla curva.</string>
     <string name="tip_load_cdb_error">Error al cargar la base de datos</string>
     <string name="action_download_expansions">Descargar \nexpansiones</string>
-    <string name="replay">Ver repetición</string>
-    <string name="bot_mode">vs Bot</string>
+    <string name="replay">Repeticiones</string>
+    <string name="bot_mode">Jugar vs IA</string>
     <string name="personal">My</string>
     <string name="login_mycard">Iniciar sesión</string>
     <string name="logout_mycard">¿Cerrar sesión en mycard?</string>
