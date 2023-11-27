@@ -157,8 +157,8 @@
     <string name="deck_extra" formatted="false">Extra:%d  Fusión:%d Sincronía:%d Xyz:%d Enlace:%d</string>
     <string name="deck_side" formatted="false">Side:%d  Monstruo:%d Mágica:%d Trampa:%d</string>
     <string name="card_result">Lista de Cartas</string>
-    <string name="unsort">Desordenar</string>
-    <string name="sort">Ordenar</string>
+    <string name="unsort">Desordenar deck</string>
+    <string name="sort">Ordenar deck</string>
     <string name="loading">Cargando...</string>
     <string name="loading_failed">Carga fallida</string>
     <string name="question">Pregunta</string>
@@ -190,7 +190,7 @@
     <string name="settings_deck_delete_dialog">Eliminar cuadro de diálogo de cartas</string>
     <string name="settings_deck_delete_dialog_desc">Mostrar el cuadro de diálogo de eliminación de cartas en el editor de decks</string>
     <string name="delete_card" formatted="false">¿Eliminar carta %s?</string>
-    <string name="clear_deck">Limpiar</string>
+    <string name="clear_deck">Limpiar deck</string>
     <string name="question_clear_deck">¿Limpiar este deck?</string>
     <string name="delete_server_info">¿Eliminar la información de este servidor?</string>
     <string name="exit_edit_mode">Salir del Modo de Edición</string>
@@ -229,8 +229,8 @@
     <string name="tip_network_image">El servidor de imágenes está cerrado</string>
     <string name="game_version">Versión del Juego</string>
     <string name="tip">Información</string>
-    <string name="error_game_ver">¡Formato erróneo! Debe comenzar con 0x, como por ejemplo: 0x1342 (muestra 1.034.2)</string>
-    <string name="tip_no_netwrok">Por favor, confirme que está conectado a Internet</string>
+    <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, como por ejemplo: 0x1360 (muestra 1.036.0)</string>
+    <string name="tip_no_netwrok">Por favor, verifique que esté conectado a Internet</string>
     <string name="message">"Copiando paquete de datos..."</string>
     <string name="ex_pack">Paquete de cartas de expansión</string>
     <string name="deck_manager_v2">Editor de Decks V2</string>
@@ -313,12 +313,13 @@
     <string name="deck_back_up">Respaldar</string>
     <string name="deck_restore">Restaurar</string>
     <string name="deck_backup_n_restore">Respaldar/Restaurar</string>
-    <string name="deck_explain">Respaldar: hacer una copia de seguridad de todos los decks en Sdcard/ygocore
-        \nRestaurar: restaurar decks respaldados</string>
+    <string name="deck_explain">Respaldar: hacer una copia de seguridad de todos los decks en Sdcard/ygocore.
+        \nRestaurar: restaurar los decks respaldados</string>
     <string name="restore_deck">Se encontraron decks respaldados en su dispositivo, ¿desea restaurarlos?</string>
     <string name="explain_permission">
-         El uso de dichas funciones de este software requerirá los siguientes permisos necesarios:
-         \nPermisos de almacenamiento: realizar copias de seguridad y restaurar decks, necesarios para personalizar fondos, avatares y cubiertas de cartas</string>
+         El uso de estas funciones requiere los siguientes permisos:
+         \nPermiso de Almacenamiento: necesario para respaldar y restaurar decks; para personalizar, fuentes, fondos, avatares y cubiertas de cartas
+</string>
     <string name="guide_menu">Menú:\nFunciones principales como: </string>
     <string name="guide_mycard">Mycard: Clasificar récord de duelo, observar juegos, sala de chat, etc.</string>
     <string name="guide_serverlist">Lista de Servidores: Toque un servidor para unirse al juego en línea</string>
