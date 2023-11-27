@@ -117,7 +117,7 @@
     <string name="must_info">Información requerida</string>
     <string name="server_is_exist">¡La información del servidor ya existe!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
-    <string name="card_search">Buscar/string>
+    <string name="card_search">Buscar</string>
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Selección de deck categorizado</string>
     <string name="search">Buscar</string>
