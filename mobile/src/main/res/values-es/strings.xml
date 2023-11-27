@@ -37,7 +37,7 @@
     <string name="quit_tip">¿Salir de la aplicación?</string>
     <string name="last_path">Última carpeta</string>
     <string name="create_folder">Nueva carpeta</string>
-    <string name="intpu_name">Nombre de entrada</string>
+    <string name="intpu_name">Insertar nombre del deck</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
@@ -172,7 +172,7 @@
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
-    <string name="intput_room_name">Nombre de la sala</string>
+    <string name="intput_room_name">Insertar nombre de la sala</string>
     <string name="join">Unirse</string>
     <string name="quick_join">Únete al juego</string>
     <string name="join_game">Únete al juego</string>
