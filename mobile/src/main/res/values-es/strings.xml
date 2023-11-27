@@ -24,10 +24,10 @@
     <string name="dialog_select_database">Elegir archivo de base de datos</string>
     <string name="copy_databse">Copiar la base de datos</string>
     <string name="card_cover">Cubierta de Carta</string>
-    <string name="game_bg">Img de Fondo del Juego</string>
-    <string name="bg">Img de Fondo del Duelo</string>
-    <string name="bg_menu">Img de Fondo del Menú</string>
-    <string name="bg_deck">Img de Fondo del Deck</string>
+    <string name="game_bg">Fondo del Juego</string>
+    <string name="bg">Fondo del Duelo</string>
+    <string name="bg_menu">Fondo del Menú</string>
+    <string name="bg_deck">Fondo del Deck</string>
     <string name="no_find_image_selector">Selector de imágenes no encontrado</string>
     <string name="no_find_file_selectotr">Selector de archivos no encontrado</string>
     <string name="no_find_image_cutor">Herramienta de recorte no encontrada</string>
@@ -35,9 +35,9 @@
     <string name="settings">Configuración</string>
     <string name="quit">Salir</string>
     <string name="quit_tip">¿Desea salir de la aplicación?</string>
-    <string name="last_path">Última carpeta</string>
+    <string name="last_path">Directorio anterior</string>
     <string name="create_folder">Nueva carpeta</string>
-    <string name="intpu_name">Insertar nombre del deck</string>
+    <string name="intpu_name">Ingresar nombre del deck</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
@@ -45,7 +45,7 @@
     <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
          Toque en Configuración - Permisos - Habilite los permisos requeridos.</string>
-    <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento, espere por favor...</string>
+    <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento desde la web, espere por favor...</string>
     <string name="ex_card_list_title">Lista de cartas</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
@@ -56,36 +56,36 @@
     <string name="settings_about">Acerca de</string>
     <string name="settings_about_sub_about">Acerca de</string>
     <string name="settings_game_enable_sound_effect">Habilitar efecto de sonido</string>
-    <string name="settings_game_screen_orientation">Bloquear pantalla durante un duelo</string>
+    <string name="settings_game_screen_orientation">Bloquear Pantalla Durante un Duelo</string>
     <string name="settings_game_font_antialias">Anti-aliasing de fuente</string>
-    <string name="settings_game_lab_pendulum_scale">Img de Escala de Péndulo</string>
+    <string name="settings_game_lab_pendulum_scale">Imagen de Escala de Péndulo</string>
     <string name="settings_game_font_antialias_summary">Deshabilitar esta opción puede aumentar la velocidad de fotogramas</string>
     <string name="settings_about_author_pref">Autor</string>
     <string name="settings_about_version_pref">Versión</string>
     <string name="donation">Donación</string>
-    <string name="settings_about_check_update">Comprobar actualizaciones</string>
-    <string name="settings_about_change_log">Historial de cambios</string>
-    <string name="settings_game_card_quality">Calidad de imagen de las cartas</string>
-    <string name="settings_game_font_name">Fuentes del juego</string>
+    <string name="settings_about_check_update">Comprobar Actualizaciones</string>
+    <string name="settings_about_change_log">Historial de Cambios</string>
+    <string name="settings_game_card_quality">Calidad de Imagen de las Cartas</string>
+    <string name="settings_game_font_name">Fuentes del Juego</string>
     <string name="settings_game">Opciones del juego</string>
     <string name="settings_game_res_path">HostIP</string>
     <string name="settings_game_core_version">Versión del núcleo del juego</string>
     <string name="settings_category_diy">Personalizar</string>
-    <string name="settings_game_diy_cover">Img de Fondo del juego</string>
-    <string name="settings_game_diy_card_back">Cubierta de carta</string>
+    <string name="settings_game_diy_cover">Fondo del Juego</string>
+    <string name="settings_game_diy_card_back">Cubierta de Carta</string>
     <string name="settings_game_diy_card_db">Usar base de datos personalizada</string>
     <string name="settings_test_options">Opciones Experimentales</string>
-    <string name="settings_test_replace_kernel">Reemplazar kernel (necesita root)</string>
-    <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
+    <string name="settings_test_replace_kernel">Reemplazar Kernel (Necesita root)</string>
+    <string name="settings_game_immersive_mode">Optimizar si su Resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
-    <string name="settings_game_avatar">Ávatar del juego</string>
+    <string name="settings_game_avatar">Imagen de Perfil</string>
      <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A\nTraductor ES: Dark Zane
 </string>
-    <string name="restart_app">"¡Reinicie la aplicación!"</string>
+    <string name="restart_app">"¡Por favor, reinicie la aplicación!"</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
-        <item>OpenGL ES 2.0 sombreadores fijos</item>
-        <item>OpenGL ES 2.0 sombreadores incorporados</item>
+        <item>OpenGL ES 2.0 sombreadores corregidos</item>
+        <item>OpenGL ES 2.0 sombreadores mejorados</item>
     </string-array>
     <string-array name="card_quality">
         <item>Velocidad</item>
@@ -119,13 +119,13 @@
     <string name="must_info">Información requerida</string>
     <string name="server_is_exist">¡La información del servidor ya existe!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
-    <string name="card_search">Buscar</string>
+    <string name="card_search">Buscado cartas...</string>
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Gestionar categorías</string>
     <string name="search">Buscar</string>
-    <string name="search_open">Seleccionar</string>
+    <string name="search_open">Filtrar</string>
     <string name="search_close">Cerrar</string>
-    <string name="hit_keyword1">palabras clave (separadas por ESPACIO)</string>
+    <string name="hit_keyword1">palabras clave(separadas por ESPACIO)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">Reiniciar</string>
@@ -174,7 +174,7 @@
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
-    <string name="intput_room_name">Insertar nombre de la sala</string>
+    <string name="intput_room_name">Ingresar nombre de la sala</string>
     <string name="join">Unirse</string>
     <string name="quick_join">Únete al juego</string>
     <string name="join_game">Únete al juego</string>
@@ -202,7 +202,7 @@
     <string name="deck_share_fail">Fallo al compartir deck</string>
     <string name="choose_game_path">Seleccionar directorio del juego</string>
     <string name="download_home">Página de NetDisk</string>
-    <string name="reset_game_res">Restablecer recursos</string>
+    <string name="reset_game_res">Restablecer Recursos</string>
     <string name="downloading_images">Descargando imágenes</string>
     <string name="download_image_progress" formatted="false">Descargando imagen de carta %d/%d</string>
     <string name="download_image_error" formatted="false">Descarga fallida. Mantenga presionado para volver a intentarlo</string>
@@ -297,16 +297,16 @@
     <string name="code_share">Compartir código</string>
     <string name="screenshoot">Compartir captura de pantalla</string>
     <string name="ydk_share">Compartir archivo ydk</string>
-    <string name="unable_to_edit_empty_deck">No se pueden editar los decks vacíos</string>
-    <string name="create_new_failed">La creación falló</string>
-    <string name="about_pref_settings_keep_scale">Visualización de escala de resolución original</string>
-    <string name="already_top">Primera carta lista</string>
-    <string name="already_end">Última carta lista</string>
-    <string name="tip_redownload">Volver a descargar</string>
-    <string name="tip_expansions_image">No hay imagen para cartas pre-lanzamiento</string>
-    <string name="tip_return_to_duel">Regresado al juego actual</string>
+    <string name="unable_to_edit_empty_deck">No puedes usar un deck vacío</string>
+    <string name="create_new_failed">Falló la creación</string>
+    <string name="about_pref_settings_keep_scale">Resolución de Pantalla: Escala Original</string>
+    <string name="already_top">Primera carta del deck</string>
+    <string name="already_end">Última carta del deck</string>
+    <string name="tip_redownload">Re-descargar</string>
+    <string name="tip_expansions_image">No hay imagenes para cartas pre-lanzamiento</string>
+    <string name="tip_return_to_duel">¡Haz regresado al juego actual!</string>
     <string name="my_favorites">myFav★</string>
-    <string name="ypk_installed">Archivo de expansión instalado</string>
+    <string name="ypk_installed">¡Archivo de expansión descargado e instalado!</string>
     <string name="ypk_go_setting">Para usarlo, le recomendamos que consulte \"Usar Expansiones\" a menos que haya instalado los pre-lanzamientos de otra manera</string>
     <string name="ypk_delete">Mantenga presionado el nombre para eliminar</string>
     <string name="install_failed_bcos">La instalación falló debido a: </string>
@@ -326,27 +326,27 @@
     <string name="guide_help">Ayuda: Guía específica de cómo usar YGOMobile y aprender las Reglas Maestras</string>
     <string name="guide_settings">Configuraciones: Activar Expansiones y Asistente de Duelos. Establecer avatares del juego, fondo, cubierta de carta.</string>
     <string name="guide_reset">Tocar para restablecer cuando las imágenes o cualquier archivo se eliminen por error</string>
-    <string name="guide_abt_room_list">La contraseña de la sala ingresada será registrada. Mantener presionado solo para eliminar registros</string>
-    <string name="guide_join_room">Puedes unirte al juego sin contraseña para iniciar un duelo aleatorio con el modo predeterminado
-                                \nUse la contraseña especificada y comparta con otros jugadores para unirse al mismo juego
-                                \nPara más Modelos de Contraseñas de duelo puedes ver el tortuial.</string>
+    <string name="guide_abt_room_list">El PSW de la sala ingresada será registrada. Mantener presionado solo para eliminar registros</string>
+    <string name="guide_join_room">Puedes unirte al juego sin PSW para iniciar un duelo aleatorio con el modo predeterminado
+                                \nUse el PSW especificada y comparta con otros jugadores para unirse al mismo juego
+                                \nPara más Modelos de PSWs de duelo puedes ver el tortuial.</string>
     <string name="guide_button_search">Toca el botón de búsqueda para editar los criterios de búsqueda</string>
     <string name="guide_search_result_count">Aquí se muestra el recuento de resultados de búsqueda</string>
     <string name="guide_button_search_result">Tocar para ver el resultado de la búsqueda. \nTambién se mostrarán las cartas favoritas.</string>
     <string name="guide_view_deck_manager">Tocar para cambiar los decks. \nPuedes gestionar las categorías de los decks aquí.</string>
     <string name="guide_view_move_card">Presione y arrastre una carta para moverla a otro lugar. \nMantenga presionada la carta para eliminarla.</string>
     <string name="guide_view_banner">Noticias de Mycard, puedes tocar para ver. \nSólo en chino por ahora, lo siento.</string>
-    <string name="title_delete_ex">Eliminar expansiones</string>
+    <string name="title_delete_ex">Eliminar Expansiones</string>
     <string name="about_delete_ex">Si necesita eliminar todas las cartas de expansión use esta opción</string>
     <string name="file_installed">Archivo cargado</string>
     <string name="ask_delete_ex">Tocar OK para confirmar la eliminación.</string>
     <string name="label_ot_TCG">TCG</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_All">Todo</string>
-    <string name="label_ot_CUSTOM">Personalizado</string>
+    <string name="label_ot_CUSTOM">Custom</string>
     <string name="label_ot_No_Exclusive">No exclusivo</string>
-    <string name="label_ot_SC_OCG">OCG ChinoS.</string>
-    <string name="settings_screen_padding">Altura reservada de la pantalla curva</string>
+    <string name="label_ot_SC_OCG">Chino.S OCG</string>
+    <string name="settings_screen_padding">Altura Reservada (Para Pantalla Curva)</string>
     <string name="tip_load_cdb_error">Error al cargar la base de datos</string>
     <string name="action_download_expansions">Descargar \nexpansiones</string>
     <string name="replay">Repeticiones</string>
@@ -358,12 +358,12 @@
     <string name="edit_your_message">Introduce tu mensaje</string>
     <string name="login_succeed">Sala de chat iniciada</string>
     <string name="reChatJoining">Volver a iniciar sesión...</string>
-    <string name="settings_data_language">Lenguaje</string>
+    <string name="settings_data_language">Elegir Idioma</string>
     <string name="settings_data_language_about">Cambiar el idioma de la interfaz de usuario de YGOMobile y la base de datos de las cartas</string>
     <string name="find_in_page">Encontrar: </string>
     <string name="tip_card_info_diff">Esta carta no está incluida en el software. Intente actualizar el software o verifique si la carta está disponible en el paquete de cartas de expansión.</string>
     <string name="tip_deckInfo_isNot_completeDeck">El deck actual se analiza de manera anormal y haremos todo lo posible para convertirlo en cartas existentes.</string>
-    <string name="tip_ygopro_is_running">Actualmente hay un duelo en ejecución y no se puede iniciar un nuevo duelo. La contraseña de la sala se ha guardado en el historial. Finaliza el juego actual y luego selecciona el historial para unirte a la sala.</string>
+    <string name="tip_ygopro_is_running">Actualmente hay un duelo en ejecución y no se puede iniciar un nuevo duelo. El PSW de la sala se ha guardado en el historial. Finaliza el juego actual y luego selecciona el historial para unirte a la sala.</string>
     <string name="Download_Precard_Failed">Falló la descarga de las cartas pre-lanzamiento</string>
     <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
 </resources>
