@@ -10,21 +10,21 @@
         <item>1</item>
     </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
-        <item>El duelo es una cosa, la bondad lo es todo</item>
-        <item>¿Tocar incorrectamente en un duelo? al teléfono「Configuración」→「Pantalla」→「NotchDisplay」→「Ocultar el área notch」</item>
-        <item>Puedes moverte hacia la izquierda en cada lista de servidores en la página de inicio para encontrar 「Editar」y 「Eliminar」.</item>
-        <item>Intente hacer clic en la bola inferior izquierda para obtener más funciones.</item>
-        <item>puedes iniciar 「Juego individual」 → 「Modo Bot」 para jugar con Local Windbot</item>
-        <item>¿Por qué las cartas no tienen imágenes? Por favor haga clic en 「Restablecer recurso」</item>
-        <item>Construye tu propio Deck y obtendrás más sorteos afortunados.</item>
-        <item>¿Has visto la bola en la parte inferior derecha de cada lista de servidores? Intenta hacer clic en ella</item>
-        <item>Las tarjetas publicadas y las de prelanzamiento son diferentes; tenga en cuenta después de parchearlas.</item>
-        <item>Antes del informe de errores\, prepare la captura de pantalla y reprodúzcala</item>
-        <item>Si no sabes cómo usar YGOMobile, intenta hacer clic en todas partes.</item>
-        <item>Mantener el desarrollo no es fácil, serás bienvenido a donar para ayudarnos :)</item>
-        <item>Elimine la repetición que muestra que se produce un error, lo solucionaremos algún día.</item>
-        <item>Un buen Deck no siempre es bueno para ti, intenta construir tu propio estilo.</item>
-        <item>Sigue jugando y aprendiendo, pronto serás más fuerte. Incluso si eres principiante o un jugador de antaño que regresa.</item>
-        <item>Manten presionada la carta que deseas eliminar en el editor de Decks vertical</item>
+        <item>Sé cortés con tus oponentes y disfruta del juego.</item>
+        <item>¿Disminuye la precisión de un toque cuando juegas? Siga los pasos a continuación:「My」→「Optimizar si su Resolución no es 16:9」.</item>
+        <item>Puedes deslizar hacia la izquierda cada lista de servidores en la página de inicio para encontrar「Editar」y「Eliminar」.</item>
+        <item>Intente tocar la bola inferior derecha para obtener más funciones.</item>
+        <item>Puedes iniciar 「YGOPro」 → 「Modo IA」 para jugar vs la IA Local.</item>
+        <item>¿Por qué las cartas no tienen imágenes? Por favor toque en 「Restablecer Recursos」.</item>
+        <item>Construye tu propio deck y el corazón de las cartas te recompensará</item>
+        <item>¿Has visto la bola en la parte inferior derecha de cada lista de servidores? Intenta hacer clic en ella.</item>
+        <item>Las cartas oficiales y las de pre-lanzamiento son diferentes; tenga en cuenta después de parchearlas.</item>
+        <item>Antes de reportar algún error, debes tener a mano capturas de pantalla y repeticiones.</item>
+        <item>Si no sabes cómo usar YGOMobile, intenta tocar en todas partes.</item>
+        <item>Se necesita mucho tiempo y esfuerzo para mantener la aplicación. Le agradeceríamos que pudiera hacer una donación utilizando la marca en la parte superior derecha:)</item>
+        <item>Los errores de reproducción suelen deberse a diferencias de script entre el servidor y el cliente, y todavía no existe una solución adecuada. Utilice la reproducción en la nube siempre que sea posible.</item>
+        <item>Para ser más fuerte, debes usar y comprender el deck, no solo copiarlo, intenta construir tu propio estilo.</item>
+        <item>Ya seas un principiante o un duelista recurrente, no es muy difícil si estás dispuesto a aprender.</item>
+        <item>Para eliminar una carta en el Editor de Decks, solo debes mantenerla presionada.</item>
     </string-array>
 </resources>
