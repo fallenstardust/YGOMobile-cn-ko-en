@@ -7,8 +7,8 @@
     <string name="action_add_server">Añadir servidor</string>
     <string name="dont_start_game">No se puede iniciar el juego</string>
     <!-- check -->
-    <string name="check_res">Consultar recursos</string>
-    <string name="check_things">Consultar %s ...</string>
+    <string name="check_res">Consultando recursos</string>
+    <string name="check_things">Consultando %s ...</string>
     <string name="core_config">Configuración principal</string>
     <string name="tip_new_deck">Nuevo deck</string>
     <string name="cards_cdb">base de datos</string>
@@ -266,7 +266,7 @@
     <string name="Checking_Update">Buscando actualizaciones, por favor espere</string>
     <string name="Found_Update">Se ha encontrado una nueva actualización, ¿desea descargarla?</string>
     <string name="Checking_Update_Failed">Error al comprobar la actualización</string>
-    <string name="Ask_to_Change_Other_Way">No se pudo obtener la línea principal, probando la línea alternativa...</string>
+    <string name="Ask_to_Change_Other_Way">No se pudo conectar al servidor principal, probando un servidor alternativo...</string>
     <string name="DuelAssistant">El Asistente de Duelo está activado</string>
     <string name="masterrule">Regla Maestra</string>
     <string name="tutorial">Ver Tutoriales</string>
