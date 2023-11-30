@@ -11,8 +11,8 @@
     </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
         <item>Sé cortés con tus oponentes y disfruta del juego.</item>
-        <item>¿Disminuye la precisión de un toque cuando juegas? Siga los pasos a continuación:「My」→「Optimizar si su Resolución no es 16:9」.</item>
-        <item>Puedes deslizar hacia la izquierda cada lista de servidores en la página de inicio para encontrar「Editar」y「Eliminar」.</item>
+        <item>¿Ha disminuido la precisión de un toque cuando juegas? Siga los pasos:「My」→「Optimizar si su resolución no es 16:9」.</item>
+        <item>Puedes deslizar hacia la izquierda cada lista de servidores en la página de inicio para encontrar「Eliminar」.</item>
         <item>Intente tocar la bola inferior derecha para obtener más funciones.</item>
         <item>Puedes iniciar 「YGOPro」 → 「Modo IA」 para jugar vs la IA Local.</item>
         <item>¿Por qué las cartas no tienen imágenes? Por favor toque en 「Restablecer Recursos」.</item>
