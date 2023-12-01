@@ -2,13 +2,13 @@ package cn.garymb.ygomobile.ex_card;
 
 
 import static cn.garymb.ygomobile.Constants.URL_PRE_CARD;
-import static cn.garymb.ygomobile.utils.StringUtils.mergeListDelimeter;
 
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.ImageView;
 
 import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.signature.ObjectKey;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.google.gson.Gson;
@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import okhttp3.Response;
 
@@ -106,16 +107,26 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
     protected void convert(BaseViewHolder helper, ExCardData item) {
         helper.setText(R.id.ex_card_name, item.getName());
         helper.setText(R.id.ex_card_description, item.getDesc());
-        helper.setText(R.id.ex_card_overall,item.getOverallString());
+        helper.setText(R.id.ex_card_overall, item.getOverallString());
 
         ImageView imageview = helper.getView(R.id.ex_card_image);
         //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)
         //cn.garymb.ygomobile.loader.ImageLoader.setDefaults(...)
         //is a private function,so I copied the content of it to here
-        RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).load(item.getPicUrl());
-        resource.placeholder(R.drawable.unknown);
-        resource.error(R.drawable.unknown);
-        resource.into(imageview);
+        /* 如果查不到版本号，则不显示图片 */
+        /* 如果能查到版本号，则显示图片，利用glide的signature，将版本号和url作为signature，由glide判断是否使用缓存 */
+        if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE
+                || ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
+            RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).
+                    load(item.getPicUrl())
+                    .signature(new ObjectKey(ServerUtil.serverExCardVersion + item.getPicUrl()));
+            resource.placeholder(R.drawable.unknown);
+            resource.error(R.drawable.unknown);
+            resource.into(imageview);
+        } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED || ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
+            /* 版本号都拿不到，就不显示图片了 */
+        }
+
 
     }
 }
