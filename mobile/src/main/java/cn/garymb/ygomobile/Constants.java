@@ -166,6 +166,10 @@ public interface Constants {
     String URL_YGO233_ADVANCE = "";//"https://ygo233.com/pre#pre_release_cards";//关闭233先行卡服务器，但不要删除该字段，许多未调用的遗留代码使用该contant
     String URL_YGO233_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
+//    String URL_YGO233_DATAVER = "http://192.168.0.103:8006/ygo/version.txt";
+//    String URL_PRE_CARD = "http://192.168.0.103:8006/ygo/test-release.json";
+
+
     String URL_YGO233_FILE = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_YGO233_FILE_ALT = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_YGO233_BUG_REPORT = "https://ygo233.com/pre#faq";
