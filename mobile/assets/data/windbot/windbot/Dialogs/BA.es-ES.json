@@ -15,8 +15,8 @@
   "newturn": [
     "¡Es mi turno, robo una carta!",
     "¡Mi turno, robo una carta!",
-    "Saqué una carta."
-	"Esto se pondrá interesante, robo una carta."
+    "Saqué una carta.",
+    "Esto se pondrá interesante, robo una carta."
   ],
   "endturn": [
     "La ronda ha terminado",
