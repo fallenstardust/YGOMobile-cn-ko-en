@@ -12,24 +12,24 @@
     "Ay, parece que puedes ver muy bien el otro lado."
   ],
   "newturn": [
-	"¡Mi turno, robo!",
+   "¡Mi turno, robo!",
     "¡Reponga el poder mágico!"
   ],
   "endturn": [
-	"¿Y si no quiero trabajar…",
+    "¿Y si no quiero trabajar…",
     "Hagamos esto, es tu turno."
   ],
   "directattack": [
-	"{0}, ¡Ataque directo!",
+    "{0}, ¡Ataque directo!",
     "Eso es eso y esto es esto. ¡Ataque directo!",
     "Vamos, tengo que volver a dormir.",
   ],
   "attack": [
-	"¡{0}! ¡Ataqua a {1}!",
+    "¡{0}! ¡Ataqua a {1}!",
     "¡{0}! ¡Derrota a {1}!"
   ],
   "ondirectattack": [
-	"Café helado……",
+    "Café helado……",
     "Ahhh...",
     "{0}, es terrible...",
     "Estoy cansado……"
@@ -39,7 +39,7 @@
     "¡{0} Efecto activado!"
   ],
   "summon": [
-	"¡Invoca a {0}!",
+    "¡Invoca a {0}!",
     "¡Sal {0}!",
     "{0}, sal y ayúdame."
   ],
@@ -47,7 +47,7 @@
     "……"
   ],
   "chaining": [
-	"¡{0} Activado!",
+    "¡{0} Activado!",
     "¡Espera un minuto, voy a activar {0}!",
     "Si {0} no estuviera allí, casi me habría quedado dormido."
   ]
