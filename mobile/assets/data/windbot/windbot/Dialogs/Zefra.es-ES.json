@@ -1,52 +1,52 @@
 {
   "welcome": [
-	"Hola duelista",
+    "Hola duelista",
     "Hola, eres bienvenido a jugar Yu-Gi-Oh! conmigo"
   ],
   "deckerror": [
     "Lo siento, mi Deck requiere {0} para jugar"
   ],
   "duelstart": [
-	"Oye, te voy a dar una paliza con mi segundo hermano.",
+    "Oye, te voy a dar una paliza con mi segundo hermano.",
     "Mi Deck no es bueno, así que solo le puse algunas cartas prohibidas",
     "Sólo puedo jugar con Deck simples, no juegues conmigo con cartas prohibidas"
   ],
   "newturn": [
-	"¡Ven a mí, saca la carta! (Sácala en secreto de tu bolsillo)",
+    "¡Ven a mí, saca la carta! (Sácala en secreto de tu bolsillo)",
     "Saco una carta"
   ],
   "endturn": [
-	"Ya terminé de jugar, es tu turno",
+    "Ya terminé de jugar, es tu turno",
     "Es tu turno, ¿no es un duelo de múltiples subprocesos?"
   ],
   "directattack": [
-	"{0}, ¡Ataca al oponente!",
+    "{0}, ¡Ataca al oponente!",
     "{0}, ¡Aplastalo!",
     "¡{0}, Golpéalo con un pequeño puñetazo!"
   ],
   "attack": [
-	"¡{0}, Derriba a {1}!",
+    "¡{0}, Derriba a {1}!",
     "¡Oye, {0}, ataca a {1}!"
   ],
   "ondirectattack": [
-	"Ah, no me pegues, te dejo jugar con las cartas prohibidas",
+    "Ah, no me pegues, te dejo jugar con las cartas prohibidas",
     "Sí, es demasiado fuerte. ¿Puedes llevarme contigo?",
     "Duele... quiero desconectar el servidor"
   ],
   "facedownmonstername": "Monsruo",
   "activate": [
-	"Oye, activo {0}",
+    "Oye, activo {0}",
     "Cuac, uso el poder de {0}"
   ],
   "summon": [
-	"¡Yo convoco (saco) {0}!",
+    "¡Yo convoco (saco) {0}!",
     "¡Sal, mi pequeño monstruo {0}!"
   ],
   "setmonster": [
     "Coloco un monstruo desconocido."
   ],
   "chaining": [
-	"Oye, ¿puedo usar la tarjeta prohibida para que se encienda el duelo?",
+    "Oye, ¿puedo usar la tarjeta prohibida para que se encienda el duelo?",
     "¡Eh, activo {0}!",
     "Lo siento, tengo {0}",
     "¡Jaja, activa el efecto de {0}!"
