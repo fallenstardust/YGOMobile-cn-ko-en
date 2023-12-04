@@ -12,7 +12,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
-import cn.garymb.ygomobile.utils.ServerUtil;
 
 public class LogoActivity extends Activity {
     Handler handler;
@@ -42,7 +41,6 @@ public class LogoActivity extends Activity {
             handler.postDelayed(runnable, 1000);
             Toast.makeText(LogoActivity.this, R.string.logo_text, Toast.LENGTH_SHORT).show();
         }
-        ServerUtil.initExCardState();//检查扩展卡版本
         if (!isTaskRoot()) {
             finish();
         }
