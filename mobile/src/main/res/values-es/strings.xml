@@ -254,7 +254,7 @@
     <string name="coverSelect">Tocar en la cubierta para cambiar la imagen</string>
     <string name="bgSelect">Tocar en el fondo para cambiar la imagen</string>
     <string name="avatarSelect">Tocar en el ávatar para cambiar la imagen</string>
-    <string name="ClickLinkArrows">Tocar en las flechas de enlace</string>
+    <string name="ClickLinkArrows">Tocar en las flechas</string>
     <string name="Already_Lastest">¡Ya posees la última versión del YGOMobile!</string>
     <string name="tip_no_permission" formatted="false">Se ha denegado el permiso %s.</string>
     <string name="about_immersive_mode">Se ocultará el teclado virtual</string>
@@ -282,7 +282,7 @@
     <string name="save_failed_bcos">Error al guardar debido a: </string>
     <string name="deck_text_copyed">Texto del deck copiado al portapapeles</string>
     <string name="save_n_open">Guardar y Abrir</string>
-    <string name="searchresult">Resultados de la búsqueda</string>
+    <string name="searchresult">Resultados</string>
     <string name="Pre_share">Listo para compartir, por favor espere...</string>
     <string name="category_pack">Paquetes</string>
     <string name="category_windbot_deck">Decks I.A.</string>
