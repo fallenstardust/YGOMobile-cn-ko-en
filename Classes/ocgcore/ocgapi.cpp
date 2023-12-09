@@ -72,7 +72,7 @@ extern "C" DECL_DLLEXPORT void start_duel(intptr_t pduel, int32 options) {
 	else if(options & DUEL_OBSOLETE_RULING)		//provide backward compatibility with replay
 		pd->game_field->core.duel_rule = 1;
 	else if(!pd->game_field->core.duel_rule)
-		pd->game_field->core.duel_rule = 5;
+		pd->game_field->core.duel_rule = CURRENT_RULE;
 	pd->game_field->core.shuffle_hand_check[0] = FALSE;
 	pd->game_field->core.shuffle_hand_check[1] = FALSE;
 	pd->game_field->core.shuffle_deck_check[0] = FALSE;
@@ -223,20 +223,22 @@ extern "C" DECL_DLLEXPORT int32 query_field_count(intptr_t pduel, uint8 playerid
 	if(location == LOCATION_DECK)
 		return (int32)player.list_main.size();
 	if(location == LOCATION_MZONE) {
-		uint32 count = 0;
+		int32 count = 0;
 		for(auto& pcard : player.list_mzone)
-			if(pcard) count++;
+			if(pcard)
+				++count;
 		return count;
 	}
 	if(location == LOCATION_SZONE) {
-		uint32 count = 0;
+		int32 count = 0;
 		for(auto& pcard : player.list_szone)
-			if(pcard) count++;
+			if(pcard)
+				++count;
 		return count;
 	}
 	return 0;
 }
-extern "C" DECL_DLLEXPORT int32 query_field_card(intptr_t pduel, uint8 playerid, uint8 location, int32 query_flag, byte* buf, int32 use_cache) {
+extern "C" DECL_DLLEXPORT int32 query_field_card(intptr_t pduel, uint8 playerid, uint8 location, uint32 query_flag, byte* buf, int32 use_cache) {
 	if(playerid != 0 && playerid != 1)
 		return 0;
 	duel* ptduel = (duel*)pduel;
@@ -245,7 +247,7 @@ extern "C" DECL_DLLEXPORT int32 query_field_card(intptr_t pduel, uint8 playerid,
 	if(location == LOCATION_MZONE) {
 		for(auto& pcard : player.list_mzone) {
 			if(pcard) {
-				uint32 clen = pcard->get_infos(p, query_flag, use_cache);
+				int32 clen = pcard->get_infos(p, query_flag, use_cache);
 				p += clen;
 			} else {
 				*((int32*)p) = 4;
@@ -256,7 +258,7 @@ extern "C" DECL_DLLEXPORT int32 query_field_card(intptr_t pduel, uint8 playerid,
 	else if(location == LOCATION_SZONE) {
 		for(auto& pcard : player.list_szone) {
 			if(pcard) {
-				uint32 clen = pcard->get_infos(p, query_flag, use_cache);
+				int32 clen = pcard->get_infos(p, query_flag, use_cache);
 				p += clen;
 			} else {
 				*((int32*)p) = 4;
@@ -279,7 +281,7 @@ extern "C" DECL_DLLEXPORT int32 query_field_card(intptr_t pduel, uint8 playerid,
 		else
 			return 0;
 		for(auto& pcard : *lst) {
-			uint32 clen = pcard->get_infos(p, query_flag, use_cache);
+			int32 clen = pcard->get_infos(p, query_flag, use_cache);
 			p += clen;
 		}
 	}

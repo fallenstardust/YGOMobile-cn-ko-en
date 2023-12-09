@@ -23,58 +23,61 @@ class group;
 struct chain;
 
 struct card_data {
-	uint32 code;
-	uint32 alias;
-	uint64 setcode;
-	uint32 type;
-	uint32 level;
-	uint32 attribute;
-	uint32 race;
-	int32 attack;
-	int32 defense;
-	uint32 lscale;
-	uint32 rscale;
-	uint32 link_marker;
+	uint32 code{ 0 };
+	uint32 alias{ 0 };
+	uint64 setcode{ 0 };
+	uint32 type{ 0 };
+	uint32 level{ 0 };
+	uint32 attribute{ 0 };
+	uint32 race{ 0 };
+	int32 attack{ 0 };
+	int32 defense{ 0 };
+	uint32 lscale{ 0 };
+	uint32 rscale{ 0 };
+	uint32 link_marker{ 0 };
 
 	void clear();
 };
 
 struct card_state {
-	card_state()
-		: code(0), code2(0), type(0), level(0), rank(0), link(0), lscale(0), rscale(0), attribute(0), race(0), attack(0), defense(0), base_attack(0), base_defense(0), 
-		controler(PLAYER_NONE), location(0), sequence(0), position(0), reason(0), pzone(false), reason_card(nullptr), reason_player(PLAYER_NONE), reason_effect(nullptr) {}
-
-	uint32 code;
-	uint32 code2;
+	uint32 code{ 0 };
+	uint32 code2{ 0 };
 	std::vector<uint32> setcode;
-	uint32 type;
-	uint32 level;
-	uint32 rank;
-	uint32 link;
-	uint32 lscale;
-	uint32 rscale;
-	uint32 attribute;
-	uint32 race;
-	int32 attack;
-	int32 defense;
-	int32 base_attack;
-	int32 base_defense;
-	uint8 controler;
-	uint8 location;
-	uint8 sequence;
-	uint8 position;
-	uint32 reason;
-	bool pzone;
-	card* reason_card;
-	uint8 reason_player;
-	effect* reason_effect;
+	uint32 type{ 0 };
+	uint32 level{ 0 };
+	uint32 rank{ 0 };
+	uint32 link{ 0 };
+	uint32 lscale{ 0 };
+	uint32 rscale{ 0 };
+	uint32 attribute{ 0 };
+	uint32 race{ 0 };
+	int32 attack{ 0 };
+	int32 defense{ 0 };
+	int32 base_attack{ 0 };
+	int32 base_defense{ 0 };
+	uint8 controler{ PLAYER_NONE };
+	uint8 location{ 0 };
+	uint8 sequence{ 0 };
+	uint8 position{ 0 };
+	uint32 reason{ 0 };
+	bool pzone{ false };
+	card* reason_card{ nullptr };
+	uint8 reason_player{ PLAYER_NONE };
+	effect* reason_effect{ nullptr };
+
 	bool is_location(int32 loc) const;
+	bool is_main_mzone() const {
+		return location == LOCATION_MZONE && sequence >= 0 && sequence <= 4;
+	}
+	bool is_stzone() const {
+		return location == LOCATION_SZONE && sequence >= 0 && sequence <= 4;
+	}
 	void init_state();
 };
 
 struct query_cache {
-	uint32 code;
-	uint32 alias;
+	uint32 info_location;
+	uint32 current_code;
 	uint32 type;
 	uint32 level;
 	uint32 rank;
@@ -94,23 +97,19 @@ struct query_cache {
 
 struct material_info {
 	// Synchron
-	card* limit_tuner;
-	group* limit_syn;
-	int32 limit_syn_minc;
-	int32 limit_syn_maxc;
+	card* limit_tuner{ nullptr };
+	group* limit_syn{ nullptr };
+	int32 limit_syn_minc{ 0 };
+	int32 limit_syn_maxc{ 0 };
 	// Xyz
-	group* limit_xyz;
-	int32 limit_xyz_minc;
-	int32 limit_xyz_maxc;
+	group* limit_xyz{ nullptr };
+	int32 limit_xyz_minc{ 0 };
+	int32 limit_xyz_maxc{ 0 };
 	// Link
-	group* limit_link;
-	card* limit_link_card;
-	int32 limit_link_minc;
-	int32 limit_link_maxc;
-
-	material_info()
-		: limit_tuner(nullptr), limit_syn(nullptr), limit_syn_minc(0), limit_syn_maxc(0), limit_xyz(nullptr), limit_xyz_minc(0), limit_xyz_maxc(0), 
-		limit_link(nullptr), limit_link_card(nullptr), limit_link_minc(0), limit_link_maxc(0) {}
+	group* limit_link{ nullptr };
+	card* limit_link_card{ nullptr };
+	int32 limit_link_minc{ 0 };
+	int32 limit_link_maxc{ 0 };
 };
 const material_info null_info;
 
@@ -218,7 +217,7 @@ public:
 	static bool card_operation_sort(card* c1, card* c2);
 	const bool is_extra_deck_monster() { return !!(data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)); }
 
-	uint32 get_infos(byte* buf, int32 query_flag, int32 use_cache = TRUE);
+	int32 get_infos(byte* buf, uint32 query_flag, int32 use_cache = TRUE);
 	uint32 get_info_location();
 	uint32 second_code(uint32 code);
 	uint32 get_code();
