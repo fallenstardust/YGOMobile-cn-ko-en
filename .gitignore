@@ -63,3 +63,11 @@ output-metadata.json
 /mobile/assets/en/data/*.cdb
 /mobile/assets/kor/data/*.cdb
 /mobile/assets/es/data/*.cdb
+/mobile/assets/data/sound/BGM/advantage/*.mp3
+/mobile/assets/data/sound/BGM/deck/*.mp3
+/mobile/assets/data/sound/BGM/disadvantage/*.mp3
+/mobile/assets/data/sound/BGM/duel/*.mp3
+/mobile/assets/data/sound/BGM/lose/*.mp3
+/mobile/assets/data/sound/BGM/menu/*.mp3
+/mobile/assets/data/sound/BGM/win/*.mp3
+/mobile/assets/data/sound/chants/*.mp3
