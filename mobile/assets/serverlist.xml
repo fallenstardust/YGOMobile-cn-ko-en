@@ -37,4 +37,18 @@
         <port>765</port>
         <keep>true</keep>
     </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>Koishi OCG服务器</name>
+        <ip>koishi.momobako.com</ip>
+        <port>7210</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>Koishi TCG服务器</name>
+        <ip>koishi.momobako.com</ip>
+        <port>1311</port>
+        <keep>true</keep>
+    </server>
 </servers>

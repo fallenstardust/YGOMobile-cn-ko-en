@@ -8,20 +8,20 @@
   ],
   "duelstart": [
     "Este Deck es tan viejo...",
-	"¿Qué pasó con los niños que usaron este Deck..."
+   "¿Qué pasó con los niños que usaron este Deck..."
   ],
   "newturn": [
-	"¡Es mi turno, robo una carta!",
+    "¡Es mi turno, robo una carta!",
     "¡Mi turno, robo una carta!",
     "Saqué una muy buena carta."
   ],
   "endturn": [
-	"La ronda ha terminado.",
+    "La ronda ha terminado.",
     "Mi turno ha terminado.",
     "Ahora te toca."
   ],
   "directattack": [
-	"{0}, ¡Ataque directo!",
+    "{0}, ¡Ataque directo!",
     "{0}, ¡Ataca al oponente directamente!",
     "{0}, El oponente está indefenso, ¡Ataca!",
     "{0}, ¡Ataca los Puntos de Vida del oponente!",
@@ -34,14 +34,14 @@
     "Ya no puedes detenerme. {0}, ¡Atacaaa!"
   ],
   "attack": [
-	"¡{0}, Ataca a su {1}!",
+    "¡{0}, Ataca a su {1}!",
     "¡{0}, Destruye su {1}!",
     "¡{0}, Derrota a {1}!",
     "¡{0}, Abalánzate sobre su {1}!",
     "¡{0}, Libera tu poder sobre {1}!"
   ],
   "ondirectattack": [
-	"Odioso……",
+    "Odioso……",
     "¡Es solo {0}!",
     "Ejem..."
   ],
@@ -52,7 +52,7 @@
    "Yo uso el poder de {0}."
   ],
   "summon": [
-	"Convoco a {0}.",
+    "Convoco a {0}.",
     "¡Sal, {0}!",
     "¡Aparece, {0}!",
     "¡Convoqué al poderoso {0}!",
@@ -61,11 +61,11 @@
     "Déjame convocar a {0}."
   ],
   "setmonster": [
-	"Coloqué un monstruo.",
+    "Coloqué un monstruo.",
     "He colocado un monstruo, atrévete a atacarlo."
   ],
   "chaining": [
-	"¡Jajaja! ¡Activo {0}!",
+    "¡Jajaja! ¡Activo {0}!",
     "Yo uso el poder de {0}.",
     "¡Prepárate! ¡Yo uso {0}!",
     "No estoy de acuerdo. {0}, ¡Activada!",

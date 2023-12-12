@@ -78,7 +78,7 @@ public class ServerUtil {
                 String newVer = response.body().string();
                 /* 服务器有点怪，返回的版本号带个\n，要去掉 */
                 if (newVer.endsWith("\n")) {
-                    newVer = newVer.substring(0, newVer.length() - 2);
+                    newVer = newVer.substring(0, newVer.length() - 1);
                 }
                 serverExCardVersion = newVer;
 
@@ -216,7 +216,6 @@ public class ServerUtil {
             mServerInfo.setServerAddr(Addr);
             mServerInfo.setPort(port);
             mServerInfo.setPlayerName(playerName);
-
 
 
             boolean hasServer = false;
