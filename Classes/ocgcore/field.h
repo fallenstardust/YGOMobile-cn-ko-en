@@ -167,8 +167,8 @@ struct processor {
 	using delayed_effect_collection = std::set<std::pair<effect*, tevent>>;
 	struct chain_limit_t {
 		chain_limit_t(int32 f, int32 p): function(f), player(p) {}
-		int32 function;
-		int32 player;
+		int32 function{ 0 };
+		int32 player{ PLAYER_NONE };
 	};
 	using chain_limit_list = std::vector<chain_limit_t>;
 
@@ -298,6 +298,7 @@ struct processor {
 	uint8 dice_result[5]{ 0 };
 	uint8 coin_result[MAX_COIN_COUNT]{ 0 };
 	int32 coin_count{ 0 };
+	bool is_target_ready{ false };
 
 	uint8 to_bp{ FALSE };
 	uint8 to_m2{ FALSE };
@@ -374,14 +375,14 @@ public:
 	void set_control(card* pcard, uint8 playerid, uint16 reset_phase, uint8 reset_count);
 	card* get_field_card(uint32 playerid, uint32 location, uint32 sequence);
 	int32 is_location_useable(uint32 playerid, uint32 location, uint32 sequence);
-	int32 get_useable_count(card* pcard, uint8 playerid, uint8 location, uint8 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_useable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_spsummonable_count(card* pcard, uint8 playerid, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_spsummonable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_useable_count_other(card* pcard, uint8 playerid, uint8 location, uint8 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_tofield_count(card* pcard, uint8 playerid, uint8 location, uint32 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_useable_count_fromex_rule4(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = 0);
-	int32 get_spsummonable_count_fromex_rule4(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = 0);
+	int32 get_useable_count(card* pcard, uint8 playerid, uint8 location, uint8 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_useable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_spsummonable_count(card* pcard, uint8 playerid, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_spsummonable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_useable_count_other(card* pcard, uint8 playerid, uint8 location, uint8 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_tofield_count(card* pcard, uint8 playerid, uint8 location, uint32 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_useable_count_fromex_rule4(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = nullptr);
+	int32 get_spsummonable_count_fromex_rule4(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = nullptr);
 	int32 get_mzone_limit(uint8 playerid, uint8 uplayer, uint32 reason);
 	int32 get_szone_limit(uint8 playerid, uint8 uplayer, uint32 reason);
 	uint32 get_linked_zone(int32 playerid);
@@ -411,7 +412,7 @@ public:
 	void filter_affected_cards(effect* peffect, card_set* cset);
 	void filter_inrange_cards(effect* peffect, card_set* cset);
 	void filter_player_effect(uint8 playerid, uint32 code, effect_set* eset, uint8 sort = TRUE);
-	int32 filter_matching_card(int32 findex, uint8 self, uint32 location1, uint32 location2, group* pgroup, card* pexception, group* pexgroup, uint32 extraargs, card** pret = 0, int32 fcount = 0, int32 is_target = FALSE);
+	int32 filter_matching_card(int32 findex, uint8 self, uint32 location1, uint32 location2, group* pgroup, card* pexception, group* pexgroup, uint32 extraargs, card** pret = nullptr, int32 fcount = 0, int32 is_target = FALSE);
 	int32 filter_field_card(uint8 self, uint32 location, uint32 location2, group* pgroup);
 	effect* is_player_affected_by_effect(uint8 playerid, uint32 code);
 
@@ -434,7 +435,7 @@ public:
 	int32 adjust_grant_effect();
 	void add_unique_card(card* pcard);
 	void remove_unique_card(card* pcard);
-	effect* check_unique_onfield(card* pcard, uint8 controler, uint8 location, card* icard = 0);
+	effect* check_unique_onfield(card* pcard, uint8 controler, uint8 location, card* icard = nullptr);
 	int32 check_spsummon_once(card* pcard, uint8 playerid);
 	void check_card_counter(card* pcard, int32 counter_type, int32 playerid);
 	void check_card_counter(group* pgroup, int32 counter_type, int32 playerid);
@@ -454,7 +455,7 @@ public:
 	void attack_all_target_check();
 	int32 get_must_material_list(uint8 playerid, uint32 limit, card_set* must_list);
 	int32 check_must_material(group* mg, uint8 playerid, uint32 limit);
-	void get_synchro_material(uint8 playerid, card_set* material, effect* ptuner = 0);
+	void get_synchro_material(uint8 playerid, card_set* material, effect* ptuner = nullptr);
 	int32 check_synchro_material(card* pcard, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_tuner_material(card* pcard, card* tuner, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_other_synchro_material(const card_vector& nsyn, int32 lv, int32 min, int32 max, int32 mcount);
@@ -500,15 +501,15 @@ public:
 	int32 is_able_to_enter_bp();
 
 	void add_process(uint16 type, uint16 step, effect* peffect, group* target, int32 arg1, int32 arg2, int32 arg3 = 0, int32 arg4 = 0, void* ptr1 = nullptr, void* ptr2 = nullptr);
-	int32 process();
+	uint32 process();
 	int32 execute_cost(uint16 step, effect* peffect, uint8 triggering_player);
 	int32 execute_operation(uint16 step, effect* peffect, uint8 triggering_player);
 	int32 execute_target(uint16 step, effect* peffect, uint8 triggering_player);
 	void raise_event(card* event_card, uint32 event_code, effect* reason_effect, uint32 reason, uint8 reason_player, uint8 event_player, uint32 event_value);
 	void raise_event(card_set* event_cards, uint32 event_code, effect* reason_effect, uint32 reason, uint8 reason_player, uint8 event_player, uint32 event_value);
 	void raise_single_event(card* trigger_card, card_set* event_cards, uint32 event_code, effect* reason_effect, uint32 reason, uint8 reason_player, uint8 event_player, uint32 event_value);
-	int32 check_event(uint32 code, tevent* pe = 0);
-	int32 check_event_c(effect* peffect, uint8 playerid, int32 neglect_con, int32 neglect_cost, int32 copy_info, tevent* pe = 0);
+	int32 check_event(uint32 code, tevent* pe = nullptr);
+	int32 check_event_c(effect* peffect, uint8 playerid, int32 neglect_con, int32 neglect_cost, int32 copy_info, tevent* pe = nullptr);
 	int32 check_hint_timing(effect* peffect);
 	int32 process_phase_event(int16 step, int32 phase_event);
 	int32 process_point_event(int16 step, int32 skip_trigger, int32 skip_freechain, int32 skip_new);
@@ -703,9 +704,6 @@ public:
 #define GLOBALFLAG_TUNE_MAGICIAN		0x400
 #define GLOBALFLAG_ACTIVATION_COUNT		0x800
 //
-#define PROCESSOR_NONE		0
-#define PROCESSOR_WAITING	0x10000
-#define PROCESSOR_END		0x20000
 
 #define PROCESSOR_ADJUST			1
 #define PROCESSOR_HINT				2

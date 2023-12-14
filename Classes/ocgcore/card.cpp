@@ -111,6 +111,7 @@ card::card(duel* pd) {
 	overlay_target = 0;
 	current = {};
 	previous = {};
+	spsummon = {};
 	temp.init_state();
 	unique_pos[0] = unique_pos[1] = 0;
 	spsummon_counter[0] = spsummon_counter[1] = 0;
@@ -121,7 +122,7 @@ card::card(duel* pd) {
 	spsummon_code = 0;
 	current.controler = PLAYER_NONE;
 }
-void update_cache(uint32& tdata, uint32& cache, int32*& p, uint32& query_flag, const uint32 flag) {
+inline void update_cache(uint32& tdata, uint32& cache, int32*& p, uint32& query_flag, const uint32 flag) {
 	if (tdata != cache) {
 		cache = tdata;
 		*p = tdata;
@@ -587,6 +588,45 @@ int32 card::is_link_set_card(uint32 set_code) {
 	}
 	return FALSE;
 }
+int32 card::is_special_summon_set_card(uint32 set_code) {
+	uint32 code = spsummon.code;
+	uint64 setcode;
+	if (code == data.code) {
+		setcode = data.setcode;
+	} else {
+		card_data dat;
+		::read_card(code, &dat);
+		setcode = dat.setcode;
+	}
+	uint32 settype = set_code & 0xfff;
+	uint32 setsubtype = set_code & 0xf000;
+	while(setcode) {
+		if ((setcode & 0xfff) == settype && (setcode & 0xf000 & setsubtype) == setsubtype)
+			return TRUE;
+		setcode = setcode >> 16;
+	}
+	//add set code
+	for(auto& spsetcode : spsummon.setcode) {
+		if (spsetcode && (spsetcode & 0xfff) == settype && (spsetcode & 0xf000 & setsubtype) == setsubtype)
+			return TRUE;
+	}
+	//another code
+	uint32 code2 = spsummon.code2;
+	uint64 setcode2;
+	if (code2 != 0) {
+		card_data dat;
+		::read_card(code2, &dat);
+		setcode2 = dat.setcode;
+	} else {
+		return FALSE;
+	}
+	while(setcode2) {
+		if ((setcode2 & 0xfff) == settype && (setcode2 & 0xf000 & setsubtype) == setsubtype)
+			return TRUE;
+		setcode2 = setcode2 >> 16;
+	}
+	return FALSE;
+}
 uint32 card::get_type() {
 	if(assume_type == ASSUME_TYPE)
 		return assume_value;
@@ -950,16 +990,24 @@ int32 card::get_defense() {
 int32 card::get_battle_attack() {
 	effect_set eset;
 	filter_effect(EFFECT_SET_BATTLE_ATTACK, &eset);
-	if(eset.size())
-		return eset.get_last()->get_value(this);
+	if (eset.size()) {
+		int32 atk = eset.get_last()->get_value(this);
+		if (atk < 0)
+			atk = 0;
+		return atk;
+	}
 	else
 		return get_atk_def().first;
 }
 int32 card::get_battle_defense() {
 	effect_set eset;
 	filter_effect(EFFECT_SET_BATTLE_DEFENSE, &eset);
-	if(eset.size())
-		return eset.get_last()->get_value(this);
+	if (eset.size()) {
+		int32 def = eset.get_last()->get_value(this);
+		if (def < 0)
+			def = 0;
+		return def;
+	}
 	else
 		return get_atk_def().second;
 }
@@ -1495,7 +1543,7 @@ int32 card::is_all_column() {
 		return TRUE;
 	return FALSE;
 }
-void card::equip(card *target, uint32 send_msg) {
+void card::equip(card* target, uint32 send_msg) {
 	if (equiping_target)
 		return;
 	target->equiping_cards.insert(this);
@@ -2500,6 +2548,62 @@ void card::clear_card_target() {
 	effect_target_owner.clear();
 	effect_target_cards.clear();
 }
+void card::set_special_summon_status(effect* peffect) {
+	if((peffect->code == EFFECT_SPSUMMON_PROC || peffect->code == EFFECT_SPSUMMON_PROC_G)
+		&& peffect->is_flag(EFFECT_FLAG_CANNOT_DISABLE) && peffect->is_flag(EFFECT_FLAG_UNCOPYABLE)) {
+		spsummon.code = 0;
+		spsummon.code2 = 0;
+		spsummon.type = 0;
+		spsummon.level = 0;
+		spsummon.rank = 0;
+		spsummon.attribute = 0;
+		spsummon.race = 0;
+		spsummon.attack = 0;
+		spsummon.defense = 0;
+		spsummon.setcode.clear();
+		spsummon.reason_effect = nullptr;
+		return;
+	}
+	card* pcard = peffect->get_handler();
+	auto cait = pduel->game_field->core.current_chain.rbegin();
+	if(!(peffect->type & 0x7f0) || pcard->is_has_relation(*cait)) {
+		spsummon.code = pcard->get_code();
+		spsummon.code2 = pcard->get_another_code();
+		spsummon.type = pcard->get_type();
+		spsummon.level = pcard->get_level();
+		spsummon.rank = pcard->get_rank();
+		spsummon.attribute = pcard->get_attribute();
+		spsummon.race = pcard->get_race();
+		std::pair<int32, int32> atk_def = pcard->get_atk_def();
+		spsummon.attack = atk_def.first;
+		spsummon.defense = atk_def.second;
+		spsummon.setcode.clear();
+		effect_set eset;
+		pcard->filter_effect(EFFECT_ADD_SETCODE, &eset);
+		for(int32 i = 0; i < eset.size(); ++i) {
+			spsummon.setcode.push_back((uint32)eset[i]->get_value(pcard));
+		}
+		spsummon.reason_effect = peffect;
+	} else {
+		pcard = cait->triggering_effect->get_handler();
+		spsummon.code = cait->triggering_state.code;
+		spsummon.code2 = cait->triggering_state.code2;
+		spsummon.type = cait->triggering_effect->card_type;
+		spsummon.level = cait->triggering_state.level;
+		spsummon.rank = cait->triggering_state.rank;
+		spsummon.attribute = cait->triggering_state.attribute;
+		spsummon.race = cait->triggering_state.race;
+		spsummon.attack = cait->triggering_state.attack;
+		spsummon.defense = cait->triggering_state.defense;
+		spsummon.setcode.clear();
+		effect_set eset;
+		pcard->filter_effect(EFFECT_ADD_SETCODE, &eset);
+		for(int32 i = 0; i < eset.size(); ++i) {
+			spsummon.setcode.push_back((uint32)eset[i]->get_value(pcard));
+		}
+		spsummon.reason_effect = cait->triggering_effect;
+	}
+}
 void card::filter_effect(int32 code, effect_set* eset, uint8 sort) {
 	effect* peffect;
 	auto rg = single_effect.equal_range(code);
@@ -2876,9 +2980,9 @@ void card::filter_spsummon_procedure_g(uint8 playerid, effect_set* peset) {
 		pduel->game_field->core.reason_player = op;
 	}
 }
-// return: an effect with code which affects this or 0
+// find an effect with code which affects this
 effect* card::is_affected_by_effect(int32 code) {
-	effect* peffect;
+	effect* peffect = nullptr;
 	auto rg = single_effect.equal_range(code);
 	for (; rg.first != rg.second; ++rg.first) {
 		peffect = rg.first->second;
@@ -2918,10 +3022,10 @@ effect* card::is_affected_by_effect(int32 code) {
 			&& peffect->is_available() && is_affect_by_effect(peffect))
 			return peffect;
 	}
-	return 0;
+	return nullptr;
 }
 effect* card::is_affected_by_effect(int32 code, card* target) {
-	effect* peffect;
+	effect* peffect = nullptr;
 	auto rg = single_effect.equal_range(code);
 	for (; rg.first != rg.second; ++rg.first) {
 		peffect = rg.first->second;
@@ -2962,10 +3066,10 @@ effect* card::is_affected_by_effect(int32 code, card* target) {
 		        && peffect->is_target(this) && is_affect_by_effect(peffect) && peffect->get_value(target))
 			return peffect;
 	}
-	return 0;
+	return nullptr;
 }
 int32 card::fusion_check(group* fusion_m, card* cg, uint32 chkf, uint8 not_material) {
-	group* matgroup = 0;
+	group* matgroup = nullptr;
 	if(fusion_m && !not_material) {
 		matgroup = pduel->new_group(fusion_m->container);
 		uint32 summon_type = SUMMON_TYPE_FUSION;
@@ -3015,7 +3119,7 @@ int32 card::fusion_check(group* fusion_m, card* cg, uint32 chkf, uint8 not_mater
 	return res;
 }
 void card::fusion_select(uint8 playerid, group* fusion_m, card* cg, uint32 chkf, uint8 not_material) {
-	group* matgroup = 0;
+	group* matgroup = nullptr;
 	if(fusion_m && !not_material) {
 		matgroup = pduel->new_group(fusion_m->container);
 		uint32 summon_type = SUMMON_TYPE_FUSION;
@@ -3043,7 +3147,7 @@ void card::fusion_select(uint8 playerid, group* fusion_m, card* cg, uint32 chkf,
 	} else if(fusion_m) {
 		matgroup = pduel->new_group(fusion_m->container);
 	}
-	effect* peffect = 0;
+	effect* peffect = nullptr;
 	auto ecit = single_effect.find(EFFECT_FUSION_MATERIAL);
 	if(ecit != single_effect.end())
 		peffect = ecit->second;
@@ -3611,7 +3715,7 @@ int32 card::is_destructable_by_battle(card * pcard) {
 }
 effect* card::check_indestructable_by_effect(effect* reason_effect, uint8 playerid) {
 	if(!reason_effect)
-		return 0;
+		return nullptr;
 	effect_set eset;
 	filter_effect(EFFECT_INDESTRUCTABLE_EFFECT, &eset);
 	for(int32 i = 0; i < eset.size(); ++i) {
@@ -3621,7 +3725,7 @@ effect* card::check_indestructable_by_effect(effect* reason_effect, uint8 player
 		if(eset[i]->check_value_condition(3))
 			return eset[i];
 	}
-	return 0;
+	return nullptr;
 }
 int32 card::is_destructable_by_effect(effect* reason_effect, uint8 playerid) {
 	if(!is_affect_by_effect(reason_effect))

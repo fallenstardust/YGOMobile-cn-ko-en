@@ -57,7 +57,7 @@ uint32 default_card_reader(uint32 code, card_data* data) {
 uint32 default_message_handler(void* pduel, uint32 message_type) {
 	return 0;
 }
-extern "C" DECL_DLLEXPORT intptr_t create_duel(uint32 seed) {
+extern "C" DECL_DLLEXPORT intptr_t create_duel(uint_fast32_t seed) {
 	duel* pduel = new duel();
 	duel_set.insert(pduel);
 	pduel->random.reset(seed);
@@ -127,11 +127,12 @@ extern "C" DECL_DLLEXPORT int32 get_message(intptr_t pduel, byte* buf) {
 	((duel*)pduel)->clear_buffer();
 	return len;
 }
-extern "C" DECL_DLLEXPORT int32 process(intptr_t pduel) {
+extern "C" DECL_DLLEXPORT uint32 process(intptr_t pduel) {
 	duel* pd = (duel*)pduel;
-	int result = pd->game_field->process();
-	while((result & 0xffff) == 0 && (result & 0xf0000) == 0)
+	uint32 result = 0; 
+	do {
 		result = pd->game_field->process();
+	} while ((result & PROCESSOR_BUFFER_LEN) == 0 && (result & PROCESSOR_FLAG) == 0);
 	return result;
 }
 extern "C" DECL_DLLEXPORT void new_card(intptr_t pduel, uint32 code, uint8 owner, uint8 playerid, uint8 location, uint8 sequence, uint8 position) {

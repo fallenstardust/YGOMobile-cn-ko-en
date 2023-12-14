@@ -2940,13 +2940,15 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		return FALSE;
 	}
 	case 17: {
+		effect* proc = core.units.begin()->peffect;
 		set_spsummon_counter(sumplayer);
 		check_card_counter(target, ACTIVITY_SPSUMMON, sumplayer);
 		if(target->spsummon_code)
 			++core.spsummon_once_map[sumplayer][target->spsummon_code];
-		raise_single_event(target, 0, EVENT_SPSUMMON_SUCCESS, core.units.begin()->peffect, 0, sumplayer, sumplayer, 0);
+		target->set_special_summon_status(proc);
+		raise_single_event(target, 0, EVENT_SPSUMMON_SUCCESS, proc, 0, sumplayer, sumplayer, 0);
 		process_single_event();
-		raise_event(target, EVENT_SPSUMMON_SUCCESS, core.units.begin()->peffect, 0, sumplayer, sumplayer, 0);
+		raise_event(target, EVENT_SPSUMMON_SUCCESS, proc, 0, sumplayer, sumplayer, 0);
 		process_instant_event();
 		if(core.current_chain.size() == 0) {
 			adjust_all();
@@ -3133,6 +3135,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		for(auto& pcard : pgroup->container) {
 			if(pcard->spsummon_code)
 				spsummon_once_set.insert(pcard->spsummon_code);
+			pcard->set_special_summon_status(pcard->current.reason_effect);
 		}
 		for(auto& cit : spsummon_once_set)
 			++core.spsummon_once_map[sumplayer][cit];
@@ -3335,6 +3338,7 @@ int32 field::special_summon(uint16 step, effect* reason_effect, uint8 reason_pla
 		pduel->write_buffer8(MSG_SPSUMMONED);
 		for(auto& pcard : targets->container) {
 			check_card_counter(pcard, ACTIVITY_SPSUMMON, pcard->summon_player);
+			pcard->set_special_summon_status(pcard->current.reason_effect);
 			if(!(pcard->current.position & POS_FACEDOWN))
 				raise_single_event(pcard, 0, EVENT_SPSUMMON_SUCCESS, pcard->current.reason_effect, 0, pcard->current.reason_player, pcard->summon_player, 0);
 			int32 summontype = pcard->summon_info & 0xff000000;
@@ -3856,15 +3860,12 @@ int32 field::send_replace(uint16 step, group * targets, card * target) {
 }
 int32 field::send_to(uint16 step, group * targets, effect * reason_effect, uint32 reason, uint8 reason_player) {
 	struct exargs {
-		group* targets;
+		group* targets{ nullptr };
 		card_set leave_field, leave_grave, leave_deck, detach;
-		bool show_decktop[2];
+		bool show_decktop[2]{ false };
 		card_vector cv;
 		card_vector::iterator cvit;
-		effect* predirect;
-
-		exargs()
-			: targets(nullptr), show_decktop{ FALSE }, predirect(nullptr) {}
+		effect* predirect{ nullptr };
 	} ;
 	switch(step) {
 	case 0: {
@@ -5505,7 +5506,7 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 	case 7: {
 		int32 lv = pcard->get_level();
 		if(core.global_flag & GLOBALFLAG_SCRAP_CHIMERA) {
-			effect* peffect = 0;
+			effect* peffect = nullptr;
 			for(auto& pm : core.select_cards) {
 				peffect = pm->is_affected_by_effect(EFFECT_SCRAP_CHIMERA);
 				if(peffect)
@@ -5581,7 +5582,7 @@ int32 field::select_synchro_material(int16 step, uint8 playerid, card* pcard, in
 	case 10: {
 		int32 lv = pcard->get_level();
 		if(returns.ivalue[0]) {
-			effect* peffect = 0;
+			effect* peffect = nullptr;
 			for(auto& pm : core.select_cards) {
 				peffect = pm->is_affected_by_effect(EFFECT_SCRAP_CHIMERA);
 				if(peffect)
@@ -6357,7 +6358,7 @@ int32 field::toss_coin(uint16 step, effect * reason_effect, uint8 reason_player,
 	switch(step) {
 	case 0: {
 		effect_set eset;
-		effect* peffect = 0;
+		effect* peffect = nullptr;
 		tevent e;
 		e.event_cards = 0;
 		e.event_player = playerid;
@@ -6426,7 +6427,7 @@ int32 field::toss_dice(uint16 step, effect * reason_effect, uint8 reason_player,
 	switch(step) {
 	case 0: {
 		effect_set eset;
-		effect* peffect = 0;
+		effect* peffect = nullptr;
 		tevent e;
 		e.event_cards = 0;
 		e.event_player = playerid;
