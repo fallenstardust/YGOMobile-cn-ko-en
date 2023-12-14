@@ -1,31 +1,18 @@
 package cn.garymb.ygomobile.ui.activities;
 
-import static cn.garymb.ygomobile.Constants.URL_YGO233_ADVANCE;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
-import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
-import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
-
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
@@ -33,24 +20,15 @@ import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebView;
 
-import java.io.File;
-
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
-import cn.garymb.ygomobile.utils.DownloadUtil;
-import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.UnzipUtils;
-import cn.garymb.ygomobile.utils.YGOUtil;
-import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity implements View.OnClickListener {

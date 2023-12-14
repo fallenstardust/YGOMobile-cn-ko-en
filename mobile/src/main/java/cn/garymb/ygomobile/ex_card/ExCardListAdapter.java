@@ -118,7 +118,6 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
         /* 如果能查到版本号，则显示图片，利用glide的signature，将版本号和url作为signature，由glide判断是否使用缓存 */
         if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE
                 || ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
-            //ServerUtil.serverExCardVersion = "1701569942";
             StringSignature signature = new StringSignature(ServerUtil.serverExCardVersion);
             ObjectKey key = new ObjectKey(ServerUtil.serverExCardVersion);
             RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).
