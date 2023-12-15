@@ -21,14 +21,14 @@ unsigned char DuelClient::selftype = 0;
 bool DuelClient::is_host = false;
 event_base* DuelClient::client_base = 0;
 bufferevent* DuelClient::client_bev = 0;
-char DuelClient::duel_client_read[0x2000];
-char DuelClient::duel_client_write[0x2000];
+unsigned char DuelClient::duel_client_read[0x2000];
+unsigned char DuelClient::duel_client_write[0x2000];
 bool DuelClient::is_closing = false;
 bool DuelClient::is_swapping = false;
 int DuelClient::select_hint = 0;
 int DuelClient::select_unselect_hint = 0;
 int DuelClient::last_select_hint = 0;
-char DuelClient::last_successful_msg[0x2000];
+unsigned char DuelClient::last_successful_msg[0x2000];
 unsigned int DuelClient::last_successful_msg_length = 0;
 wchar_t DuelClient::event_string[256];
 mt19937 DuelClient::rnd;
@@ -60,7 +60,7 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
 		return false;
 	}
 	connect_state = 0x1;
-	rnd.reset((unsigned int)time(nullptr));
+	rnd.reset((uint_fast32_t)std::random_device()());
 	if(!create_game) {
 		timeval timeout = {5, 0};
 		event* resp_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);

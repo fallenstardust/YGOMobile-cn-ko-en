@@ -14,8 +14,8 @@
 #endif
 #ifdef _WIN32
 
-#include <WinSock2.h>
 #define NOMINMAX
+#include <WinSock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 
@@ -90,7 +90,6 @@ inline int _wtoi(const wchar_t * s) {
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <time.h>
 #include <thread>
 #include <mutex>
@@ -120,6 +119,7 @@ using namespace video;
 using namespace io;
 using namespace gui;
 using namespace os;
+typedef int BOOL;
 
 extern const unsigned short PRO_VERSION;
 extern int enable_log;

@@ -47,7 +47,7 @@ ClientField::ClientField() {
 		mzone[p].resize(7, 0);
 		szone[p].resize(8, 0);
 	}
-	rnd.reset(std::random_device()());
+	rnd.reset((uint_fast32_t)std::random_device()());
 }
 void ClientField::Clear() {
 	for(int i = 0; i < 2; ++i) {
@@ -318,13 +318,13 @@ ClientCard* ClientField::RemoveCard(int controler, int location, int sequence) {
 	RefreshCardCountDisplay();
 	return pcard;
 }
-void ClientField::UpdateCard(int controler, int location, int sequence, char* data) {
+void ClientField::UpdateCard(int controler, int location, int sequence, unsigned char* data) {
 	ClientCard* pcard = GetCard(controler, location, sequence);
 	if(pcard)
 		pcard->UpdateInfo(data + 4);
 	RefreshCardCountDisplay();
 }
-void ClientField::UpdateFieldCard(int controler, int location, char* data) {
+void ClientField::UpdateFieldCard(int controler, int location, unsigned char* data) {
 	std::vector<ClientCard*>* lst = 0;
 	switch(location) {
 	case LOCATION_DECK:
@@ -1068,18 +1068,18 @@ void ClientField::GetCardLocation(ClientCard* pcard, irr::core::vector3df* t, ir
 			return;
 		}
 		int oseq = pcard->overlayTarget->sequence;
-        int mseq = (sequence < MAX_LAYER_COUNT) ? sequence : (MAX_LAYER_COUNT - 1);
-        if (pcard->overlayTarget->controler == 0) {
+		int mseq = (sequence < MAX_LAYER_COUNT) ? sequence : (MAX_LAYER_COUNT - 1);
+		if (pcard->overlayTarget->controler == 0) {
 			t->X = (matManager.vFieldMzone[0][oseq][0].Pos.X + matManager.vFieldMzone[0][oseq][1].Pos.X) / 2 - 0.12f + 0.06f * mseq;
 			t->Y = (matManager.vFieldMzone[0][oseq][0].Pos.Y + matManager.vFieldMzone[0][oseq][2].Pos.Y) / 2 + 0.05f;
-            t->Z = overlay_buttom + mseq * material_height;
-            r->X = 0.0f;
+			t->Z = overlay_buttom + mseq * material_height;
+			r->X = 0.0f;
 			r->Y = 0.0f;
 			r->Z = 0.0f;
 		} else {
 			t->X = (matManager.vFieldMzone[1][oseq][0].Pos.X + matManager.vFieldMzone[1][oseq][1].Pos.X) / 2 + 0.12f - 0.06f * mseq;
 			t->Y = (matManager.vFieldMzone[1][oseq][0].Pos.Y + matManager.vFieldMzone[1][oseq][2].Pos.Y) / 2 - 0.05f;
-            t->Z = overlay_buttom + mseq * material_height;
+			t->Z = overlay_buttom + mseq * material_height;
 			r->X = 0.0f;
 			r->Y = 0.0f;
 			r->Z = 3.1415926f;

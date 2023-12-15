@@ -21,8 +21,8 @@ void UpdateDeck() {
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
 	android::setLastDeck(mainGame->appMain, linebuf);
 		
-	char deckbuf[1024];
-	char* pdeck = deckbuf;
+	unsigned char deckbuf[1024];
+	auto pdeck = deckbuf;
 	BufferIO::WriteInt32(pdeck, deckManager.current_deck.main.size() + deckManager.current_deck.extra.size());
 	BufferIO::WriteInt32(pdeck, deckManager.current_deck.side.size());
 	for(size_t i = 0; i < deckManager.current_deck.main.size(); ++i)
