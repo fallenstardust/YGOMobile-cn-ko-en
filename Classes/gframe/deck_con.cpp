@@ -120,7 +120,7 @@ void DeckBuilder::Terminate() {
 	mainGame->ClearTextures();
 	mainGame->scrFilter->setVisible(false);
 	mainGame->scrPackCards->setVisible(false);
-    mainGame->scrPackCards->setPos(0);
+	mainGame->scrPackCards->setPos(0);
 	int catesel = mainGame->cbDBCategory->getSelected();
 	char linebuf[256];
 	if(catesel >= 0)

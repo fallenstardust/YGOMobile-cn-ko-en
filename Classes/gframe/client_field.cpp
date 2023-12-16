@@ -11,7 +11,6 @@
 namespace ygo {
 
 ClientField::ClientField() {
-	panel = 0;
 	//drag cardtext and lists
 	is_dragging_cardtext = false;
 	is_dragging_lstLog = false;
@@ -24,25 +23,6 @@ ClientField::ClientField() {
 	dragging_tab_start_pos = 0;
 	dragging_tab_start_y = 0;
 
-	hovered_card = 0;
-	clicked_card = 0;
-	highlighting_card = 0;
-	menu_card = 0;
-	hovered_controler = 0;
-	hovered_location = 0;
-	hovered_sequence = 0;
-	selectable_field = 0;
-	selected_field = 0;
-	deck_act = false;
-	grave_act = false;
-	remove_act = false;
-	extra_act = false;
-	pzone_act[0] = false;
-	pzone_act[1] = false;
-	conti_act = false;
-	deck_reversed = false;
-	conti_selecting = false;
-	cant_check_grave = false;
 	for(int p = 0; p < 2; ++p) {
 		mzone[p].resize(7, 0);
 		szone[p].resize(8, 0);
@@ -320,8 +300,9 @@ ClientCard* ClientField::RemoveCard(int controler, int location, int sequence) {
 }
 void ClientField::UpdateCard(int controler, int location, int sequence, unsigned char* data) {
 	ClientCard* pcard = GetCard(controler, location, sequence);
-	if(pcard)
-		pcard->UpdateInfo(data + 4);
+	int len = BufferIO::ReadInt32(data);
+	if (pcard && len > LEN_HEADER)
+		pcard->UpdateInfo(data);
 	RefreshCardCountDisplay();
 }
 void ClientField::UpdateFieldCard(int controler, int location, unsigned char* data) {
@@ -354,7 +335,7 @@ void ClientField::UpdateFieldCard(int controler, int location, unsigned char* da
 	int len;
 	for(auto cit = lst->begin(); cit != lst->end(); ++cit) {
 		len = BufferIO::ReadInt32(data);
-		if(len > 8)
+		if(len > LEN_HEADER)
 			(*cit)->UpdateInfo(data);
 		data += len - 4;
 	}
@@ -447,7 +428,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 		else if(conti_selecting)
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->chain_code));
 		else
-			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler]);
+			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler + 2]);
 		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
