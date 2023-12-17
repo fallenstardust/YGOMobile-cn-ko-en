@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "../ocgcore/mtrandom.h"
+#include "../ocgcore/ocgapi.h"
 #include <vector>
 #include <set>
 #include <map>

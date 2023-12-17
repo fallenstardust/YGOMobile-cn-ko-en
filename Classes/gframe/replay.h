@@ -2,6 +2,7 @@
 #define REPLAY_H
 
 #include "config.h"
+#include "../ocgcore/ocgapi.h"
 #include <time.h>
 
 namespace ygo {
