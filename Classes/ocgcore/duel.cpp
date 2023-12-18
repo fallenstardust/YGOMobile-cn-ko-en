@@ -17,7 +17,7 @@ duel::duel() {
 	lua = new interpreter(this);
 	game_field = new field(this);
 	game_field->temp_card = new_card(0);
-	message_buffer.reserve(MESSAGE_BUFFER_SIZE);
+	message_buffer.reserve(SIZE_MESSAGE_BUFFER);
 }
 duel::~duel() {
 	for(auto& pcard : cards)
@@ -48,8 +48,6 @@ card* duel::new_card(uint32 code) {
 	cards.insert(pcard);
 	if(code)
 		::read_card(code, &(pcard->data));
-	else
-		pcard->data.clear();
 	pcard->data.code = code;
 	lua->register_card(pcard);
 	return pcard;

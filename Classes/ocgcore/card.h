@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "effectset.h"
+#include "card_data.h"
 #include <set>
 #include <map>
 #include <unordered_set>
@@ -21,23 +22,6 @@ class duel;
 class effect;
 class group;
 struct chain;
-
-struct card_data {
-	uint32 code{ 0 };
-	uint32 alias{ 0 };
-	uint64 setcode{ 0 };
-	uint32 type{ 0 };
-	uint32 level{ 0 };
-	uint32 attribute{ 0 };
-	uint32 race{ 0 };
-	int32 attack{ 0 };
-	int32 defense{ 0 };
-	uint32 lscale{ 0 };
-	uint32 rscale{ 0 };
-	uint32 link_marker{ 0 };
-
-	void clear();
-};
 
 struct card_state {
 	uint32 code{ 0 };
@@ -76,23 +60,25 @@ struct card_state {
 };
 
 struct query_cache {
-	uint32 info_location;
-	uint32 current_code;
-	uint32 type;
-	uint32 level;
-	uint32 rank;
-	uint32 link;
-	uint32 attribute;
-	uint32 race;
-	int32 attack;
-	int32 defense;
-	int32 base_attack;
-	int32 base_defense;
-	uint32 reason;
-	int32 status;
-	uint32 lscale;
-	uint32 rscale;
-	uint32 link_marker;
+	uint32 info_location{ UINT32_MAX };
+	uint32 current_code{ UINT32_MAX };
+	uint32 type{ UINT32_MAX };
+	uint32 level{ UINT32_MAX };
+	uint32 rank{ UINT32_MAX };
+	uint32 link{ UINT32_MAX };
+	uint32 attribute{ UINT32_MAX };
+	uint32 race{ UINT32_MAX };
+	int32 attack{ -1 };
+	int32 defense{ -1 };
+	int32 base_attack{ -1 };
+	int32 base_defense{ -1 };
+	uint32 reason{ UINT32_MAX };
+	uint32 status{ UINT32_MAX };
+	uint32 lscale{ UINT32_MAX };
+	uint32 rscale{ UINT32_MAX };
+	uint32 link_marker{ UINT32_MAX };
+
+	void clear_cache();
 };
 
 struct material_info {

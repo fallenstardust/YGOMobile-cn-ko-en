@@ -50,6 +50,25 @@ void card_state::init_state() {
 	reason = 0xffffffff;
 	reason_player = 0xff;
 }
+void query_cache::clear_cache() {
+	info_location = UINT32_MAX;
+	current_code = UINT32_MAX;
+	type = UINT32_MAX;
+	level = UINT32_MAX;
+	rank = UINT32_MAX;
+	link = UINT32_MAX;
+	attribute = UINT32_MAX;
+	race = UINT32_MAX;
+	attack = -1;
+	defense = -1;
+	base_attack = -1;
+	base_defense = -1;
+	reason = UINT32_MAX;
+	status = UINT32_MAX;
+	lscale = UINT32_MAX;
+	rscale = UINT32_MAX;
+	link_marker = UINT32_MAX;
+}
 bool card::card_operation_sort(card* c1, card* c2) {
 	duel* pduel = c1->pduel;
 	int32 cp1 = c1->overlay_target ? c1->overlay_target->current.controler : c1->current.controler;
@@ -89,9 +108,6 @@ uint32 card::attacker_map::findcard(card* pcard) {
 	else
 		return it->second.second;
 }
-void card_data::clear() {
-	std::memset(this, 0, sizeof(card_data));
-}
 card::card(duel* pd) {
 	ref_handle = 0;
 	pduel = pd;
@@ -105,7 +121,6 @@ card::card(duel* pd) {
 	direct_attackable = 0;
 	summon_info = 0;
 	status = 0;
-	std::memset(&q_cache, 0xff, sizeof(query_cache));
 	equiping_target = 0;
 	pre_equip_target = 0;
 	overlay_target = 0;
@@ -141,6 +156,7 @@ int32 card::get_infos(byte* buf, uint32 query_flag, int32 use_cache) {
 	if ((query_flag & QUERY_BASE_ATTACK) || (query_flag & QUERY_BASE_DEFENSE)) {
 		base_atk_def = get_base_atk_def();
 	}
+	//first 8 bytes: data length, query flag
 	p += 2;
 	if (query_flag & QUERY_CODE) {
 		*p = data.code;
@@ -151,7 +167,7 @@ int32 card::get_infos(byte* buf, uint32 query_flag, int32 use_cache) {
 		*p = tdata;
 		++p;
 		if (q_cache.info_location != tdata) {
-			std::memset(&q_cache, 0xff, sizeof(query_cache));
+			q_cache.clear_cache();
 			q_cache.info_location = tdata;
 			use_cache = 0;
 		}
