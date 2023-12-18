@@ -36,9 +36,9 @@ int SingleMode::SinglePlayThread() {
 	std::random_device rd;
 	unsigned int seed = rd();
 	mt19937 rnd((uint_fast32_t)seed);
-	set_script_reader((script_reader)DataManager::ScriptReaderEx);
-	set_card_reader((card_reader)DataManager::CardReader);
-	set_message_handler((message_handler)MessageHandler);
+	set_script_reader(DataManager::ScriptReaderEx);
+	set_card_reader(DataManager::CardReader);
+	set_message_handler(SingleMode::MessageHandler);
 	pduel = create_duel(rnd.rand());
 	set_player_info(pduel, 0, start_lp, start_hand, draw_count);
 	set_player_info(pduel, 1, start_lp, start_hand, draw_count);
@@ -820,7 +820,7 @@ void SingleMode::SinglePlayReload() {
 	ReloadLocation(0, LOCATION_REMOVED, flag, queryBuffer);
 	ReloadLocation(1, LOCATION_REMOVED, flag, queryBuffer);
 }
-int SingleMode::MessageHandler(intptr_t fduel, int type) {
+uint32 SingleMode::MessageHandler(intptr_t fduel, uint32 type) {
 	if(!enable_log)
 		return 0;
 	char msgbuf[1024];

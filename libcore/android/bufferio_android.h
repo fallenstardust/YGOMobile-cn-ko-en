@@ -6,37 +6,37 @@
 
 class BufferIO {
 public:
-	inline static int ReadInt32(char*& p) {
+	inline static int ReadInt32(unsigned char*& p) {
 		int ret;
 		memcpy(&ret, (void *)p, sizeof(int));
 		p += 4;
 		return ret;
 	}
-	inline static short ReadInt16(char*& p) {
+	inline static short ReadInt16(unsigned char*& p) {
 		short ret;
 		memcpy(&ret, (void *)p, sizeof(short));
 		p += 2;
 		return ret;
 	}
-	inline static char ReadInt8(char*& p) {
+	inline static char ReadInt8(unsigned char*& p) {
 		char* pRet = (char*)p;
 		p++;
 		return *pRet;
 	}
-	inline static unsigned char ReadUInt8(char*& p) {
+	inline static unsigned char ReadUInt8(unsigned char*& p) {
 		unsigned char ret = *(unsigned char*)p;
 		p++;
 		return ret;
 	}
-	inline static void WriteInt32(char*& p, int val) {
+	inline static void WriteInt32(unsigned char*& p, int val) {
 		memcpy((void *)p, &val, sizeof(int));
 		p += 4;
 	}
-	inline static void WriteInt16(char*& p, short val) {
+	inline static void WriteInt16(unsigned char*& p, short val) {
 		memcpy((void *)p, &val, sizeof(short));
 		p += 2;
 	}
-	inline static void WriteInt8(char*& p, char val) {
+	inline static void WriteInt8(unsigned char*& p, char val) {
 		memcpy((void *)p, &val, sizeof(char));
 		p++;
 	}

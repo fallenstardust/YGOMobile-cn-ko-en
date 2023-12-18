@@ -3,11 +3,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include "config.h"
-#include "data_manager.h"
-#include "deck_manager.h"
 #include "replay.h"
-#include "../ocgcore/mtrandom.h"
 
 namespace ygo {
 
@@ -51,7 +47,7 @@ public:
 	static void ReplayRefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
 	static void ReplayReload();
 
-	static int MessageHandler(intptr_t fduel, int type);
+	static uint32 MessageHandler(intptr_t fduel, uint32 type);
 };
 
 }
