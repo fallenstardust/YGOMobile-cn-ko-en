@@ -595,11 +595,11 @@ void ClientField::ShowLocationCard() {
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		} else if(display_cards[i]->location == LOCATION_EXTRA || display_cards[i]->location == LOCATION_REMOVED) {
 			if(display_cards[i]->position & POS_FACEDOWN)
-				mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+				mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
 			if(display_cards[i]->controler)
-				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
+				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 			else 
-				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		} else {
 			if(display_cards[i]->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
