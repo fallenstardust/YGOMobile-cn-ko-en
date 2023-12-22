@@ -14,7 +14,6 @@
 #include <list>
 #include <vector>
 #include <cstdio>
-#include <cstring>
 
 class card;
 class effect;

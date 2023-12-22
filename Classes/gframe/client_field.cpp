@@ -29,6 +29,45 @@ ClientField::ClientField() {
 	}
 	rnd.reset((uint_fast32_t)std::random_device()());
 }
+ClientField::~ClientField() {
+	for (int i = 0; i < 2; ++i) {
+		for (auto card : deck[i]) {
+			delete card;
+		}
+		deck[i].clear();
+		for (auto card : hand[i]) {
+			delete card;
+		}
+		hand[i].clear();
+		for (auto card : mzone[i]) {
+			if (card)
+				delete card;
+			card = nullptr;
+		}
+		for (auto card : szone[i]) {
+			if (card)
+				delete card;
+			card = nullptr;
+		}
+		for (auto card : grave[i]) {
+			delete card;
+		}
+		grave[i].clear();
+		for (auto card : remove[i]) {
+			delete card;
+		}
+		remove[i].clear();
+
+		for (auto card : extra[i]) {
+			delete card;
+		}
+		extra[i].clear();
+	}
+	for (auto card : overlay_cards) {
+		delete card;
+	}
+	overlay_cards.clear();
+}
 void ClientField::Clear() {
 	for(int i = 0; i < 2; ++i) {
 		for(auto cit = deck[i].begin(); cit != deck[i].end(); ++cit)
@@ -529,13 +568,11 @@ void ClientField::ShowChainCard() {
 				mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
 			if(selectable_cards[i]->overlayTarget->controler)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-			else
-				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		} else {
 			if(selectable_cards[i]->controler)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-			else
-				mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
 		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
@@ -598,7 +635,7 @@ void ClientField::ShowLocationCard() {
 				mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
 			if(display_cards[i]->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
-			else 
+			else
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		} else {
 			if(display_cards[i]->controler)

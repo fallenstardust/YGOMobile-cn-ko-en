@@ -4,8 +4,8 @@
  *  Created on: 2010-5-2
  *      Author: Argon
  */
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include "ocgapi.h"
 #include "duel.h"
 #include "card.h"
@@ -41,11 +41,11 @@ uint32 handle_message(void* pduel, uint32 msg_type) {
 }
 byte* default_script_reader(const char* script_name, int* slen) {
 	FILE *fp;
-	fp = fopen(script_name, "rb");
+	fp = std::fopen(script_name, "rb");
 	if (!fp)
 		return 0;
 	int len = (int)fread(buffer, 1, sizeof(buffer), fp);
-	fclose(fp);
+	std::fclose(fp);
 	if(len >= sizeof(buffer))
 		return 0;
 	*slen = len;
@@ -120,7 +120,7 @@ extern "C" DECL_DLLEXPORT void set_player_info(intptr_t pduel, int32 playerid, i
 		pd->game_field->player[playerid].draw_count = drawcount;
 }
 extern "C" DECL_DLLEXPORT void get_log_message(intptr_t pduel, byte* buf) {
-	strcpy((char*)buf, ((duel*)pduel)->strbuffer);
+	std::strcpy((char*)buf, ((duel*)pduel)->strbuffer);
 }
 extern "C" DECL_DLLEXPORT int32 get_message(intptr_t pduel, byte* buf) {
 	int32 len = ((duel*)pduel)->read_buffer(buf);
