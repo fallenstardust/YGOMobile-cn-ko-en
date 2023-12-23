@@ -589,7 +589,10 @@ int32 field::recover(uint16 step, effect* reason_effect, uint32 reason, uint8 re
 		if(reason & REASON_RDAMAGE)
 			core.units.begin()->step = 2;
 		core.hint_timing[playerid] |= TIMING_RECOVER;
-		int32 limit = INT32_MAX - player[playerid].lp;
+		int32 limit = 0;
+		if (player[playerid].lp > 0) {
+			limit = INT32_MAX - player[playerid].lp;
+		}
 		int32 val = amount;
 		if (val > limit) {
 			val = limit;
@@ -3772,9 +3775,9 @@ int32 field::release(uint16 step, group * targets, effect * reason_effect, uint3
 		for (auto cit = targets->container.begin(); cit != targets->container.end();) {
 			card* pcard = *cit;
 			if (pcard->get_status(STATUS_SUMMONING | STATUS_SPSUMMON_STEP)
-			        || ((reason & REASON_SUMMON) && !pcard->is_releasable_by_summon(reason_player, pcard->current.reason_card))
-			        || (!(pcard->current.reason & (REASON_RULE | REASON_SUMMON | REASON_COST))
-			            && (!pcard->is_affect_by_effect(pcard->current.reason_effect) || !pcard->is_releasable_by_nonsummon(reason_player)))) {
+				|| ((reason & REASON_SUMMON) && !pcard->is_releasable_by_summon(reason_player, pcard->current.reason_card))
+				|| ((reason & REASON_EFFECT)
+					&& (!pcard->is_affect_by_effect(pcard->current.reason_effect) || !pcard->is_releasable_by_nonsummon(reason_player, reason)))) {
 				pcard->current.reason = pcard->temp.reason;
 				pcard->current.reason_effect = pcard->temp.reason_effect;
 				pcard->current.reason_player = pcard->temp.reason_player;
