@@ -46,7 +46,7 @@
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
          Toque en Configuración -> Permisos -> Habilite los permisos requeridos.</string>
     <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento desde la web, espere por favor...</string>
-    <string name="ex_card_list_title">Lista de cartas</string>
+    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzamiento</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
     <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que "Usar Expansiones" esté habilitado en la configuración</string>
