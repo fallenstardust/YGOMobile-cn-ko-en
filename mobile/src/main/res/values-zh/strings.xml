@@ -39,7 +39,7 @@
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
     <string name="fetch_ex_card">通过网络获取先行卡</string>
-    <string name="ex_card_list_title">先行卡</string>
+    <string name="ex_card_list_title">超先行服☆专用☆</string>
     <string name="ex_card_log_title">更新日志</string>
     <string name="ex_card_report_title">反馈</string>
     <string name="ex_card_check_toast_message">未开启扩展卡包会在该服务器遇到未知卡，推荐开启扩展卡包后再进入</string>
