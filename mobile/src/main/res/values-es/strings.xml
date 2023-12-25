@@ -44,9 +44,9 @@
     <string name="the_name_is_folder">El nombre de la carpeta</string>
     <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
-         Toque en Configuración - Permisos - Habilite los permisos requeridos.</string>
+         Toque en Configuración -> Permisos -> Habilite los permisos requeridos.</string>
     <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento desde la web, espere por favor...</string>
-    <string name="ex_card_list_title">Lista de cartas</string>
+    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzamiento</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
     <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que "Usar Expansiones" esté habilitado en la configuración</string>
@@ -67,7 +67,7 @@
     <string name="settings_about_change_log">Historial de Cambios</string>
     <string name="settings_game_card_quality">Calidad de Imagen de las Cartas</string>
     <string name="settings_game_font_name">Fuentes del Juego</string>
-    <string name="settings_game">Opciones del juego</string>
+    <string name="settings_game">Opciones del Juego</string>
     <string name="settings_game_res_path">HostIP</string>
     <string name="settings_game_core_version">Versión del núcleo del juego</string>
     <string name="settings_category_diy">Personalizar</string>
@@ -167,8 +167,8 @@
     <string name="menu">Opciones</string>
     <string name="save_tip_ok">Deck guardado con éxito</string>
     <string name="save_tip_fail">Fallo al guardar deck</string>
-    <string name="add_card_tip_ok">Carta agregada con éxito</string>
-    <string name="add_card_tip_fail">Fallo al agregar carta</string>
+    <string name="add_card_tip_ok">Carta añadida con éxito</string>
+    <string name="add_card_tip_fail">Fallo al añadir carta</string>
     <string name="tip_card_max" formatted="false">Número máximo de cartas permitidas: %d</string>
 
     <string name="file_exist">El archivo ya existe</string>
