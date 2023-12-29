@@ -1,9 +1,9 @@
 package cn.garymb.ygomobile.utils;
 
-import static cn.garymb.ygomobile.Constants.newIDsArray;
-import static cn.garymb.ygomobile.Constants.oldIDsArray;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
+import static cn.garymb.ygomobile.utils.ComparisonTableUtil.newIDsArray;
+import static cn.garymb.ygomobile.utils.ComparisonTableUtil.oldIDsArray;
 
 import android.content.Context;
 import android.text.TextUtils;
