@@ -13,7 +13,7 @@ LOCAL_MODULE := YGOMobile
 LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_ -pipe -fno-rtti -fno-exceptions -fstrict-aliasing -D_ANDROID -fPIC
 TARGET_FORMAT_STRING_CFLAGS := 
 
-LOCAL_CPPFLAGS := -std=c++14
+LOCAL_CPPFLAGS := -std=c++11
 
 ifndef NDEBUG
 LOCAL_CFLAGS += -g -D_DEBUG 
