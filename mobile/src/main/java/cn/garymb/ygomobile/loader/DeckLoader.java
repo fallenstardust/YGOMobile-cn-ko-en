@@ -1,11 +1,10 @@
 package cn.garymb.ygomobile.loader;
 
-import static cn.garymb.ygomobile.Constants.newIDsArray;
-import static cn.garymb.ygomobile.Constants.oldIDsArray;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
+import static cn.garymb.ygomobile.utils.ComparisonTableUtil.newIDsArray;
+import static cn.garymb.ygomobile.utils.ComparisonTableUtil.oldIDsArray;
 
-import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -23,7 +22,6 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
@@ -152,9 +150,9 @@ public class DeckLoader {
         for (Integer id : deck.getExtraList()) {
             if (released_code_list.contains(tmp.get(id).getCode())) {
                 code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
-                    if (cardLoader.readAllCardCodes().get(code) != null) {
-                        tmp.set(id, cardLoader.readAllCardCodes().get(code));
-                    }
+                if (cardLoader.readAllCardCodes().get(code) != null) {
+                    tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                }
             }
             if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
                 code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
@@ -179,7 +177,7 @@ public class DeckLoader {
             }
             deckInfo.addSideCards(tmp.get(id));
         }
-        Log.w("deck.source",deckInfo.toLongString());
+        Log.w("deck.source", deckInfo.toLongString());
         return deckInfo;
     }
 }
