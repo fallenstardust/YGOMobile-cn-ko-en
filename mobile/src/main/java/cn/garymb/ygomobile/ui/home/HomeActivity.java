@@ -318,6 +318,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     @Override
     protected void onResume() {
         super.onResume();
+        ServerUtil.initExCardState();//检查扩展卡版本
     }
 
     @Override
