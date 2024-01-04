@@ -1701,7 +1701,7 @@ int32 field::get_release_list(uint8 playerid, card_set* release_list, card_set* 
 	effect* re = core.reason_effect;
 	for(auto& pcard : player[playerid].list_mzone) {
 		if(pcard && pcard != exc && !(exg && exg->has_card(pcard)) && pcard->is_releasable_by_nonsummon(playerid, reason)
-		   && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
+		        && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
 		        && (!use_con || pduel->lua->check_matching(pcard, fun, exarg))) {
 			if(release_list)
 				release_list->insert(pcard);
@@ -1712,7 +1712,7 @@ int32 field::get_release_list(uint8 playerid, card_set* release_list, card_set* 
 	if(use_hand) {
 		for(auto& pcard : player[playerid].list_hand) {
 			if(pcard && pcard != exc && !(exg && exg->has_card(pcard)) && pcard->is_releasable_by_nonsummon(playerid, reason)
-			   && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
+				    && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
 			        && (!use_con || pduel->lua->check_matching(pcard, fun, exarg))) {
 				if(release_list)
 					release_list->insert(pcard);
@@ -1724,9 +1724,9 @@ int32 field::get_release_list(uint8 playerid, card_set* release_list, card_set* 
 	int32 ex_oneof_max = 0;
 	for(auto& pcard : player[1 - playerid].list_mzone) {
 		if(pcard && pcard != exc && !(exg && exg->has_card(pcard)) && (pcard->is_position(POS_FACEUP) || !use_con)
-																	  && pcard->is_releasable_by_nonsummon(playerid, reason)
-																	  && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
-																	  && (!use_con || pduel->lua->check_matching(pcard, fun, exarg))) {
+		        && pcard->is_releasable_by_nonsummon(playerid, reason)
+			    && (reason != REASON_EFFECT || pcard->is_releasable_by_effect(playerid, re))
+			    && (!use_con || pduel->lua->check_matching(pcard, fun, exarg))) {
 			pcard->release_param = 1;
 			if(pcard->is_affected_by_effect(EFFECT_EXTRA_RELEASE)) {
 				if(ex_list)
@@ -1863,7 +1863,7 @@ int32 field::get_draw_count(uint8 playerid) {
 void field::get_ritual_material(uint8 playerid, effect* peffect, card_set* material, uint8 no_level) {
 	for(auto& pcard : player[playerid].list_mzone) {
 		if(pcard && pcard->is_affect_by_effect(peffect)
-				&& pcard->is_releasable_by_nonsummon(playerid, REASON_EFFECT) && pcard->is_releasable_by_effect(playerid, peffect)
+		        && pcard->is_releasable_by_nonsummon(playerid, REASON_EFFECT) && pcard->is_releasable_by_effect(playerid, peffect)
 				&& (no_level || pcard->get_level() > 0))
 			material->insert(pcard);
 		if(pcard && pcard->is_affected_by_effect(EFFECT_OVERLAY_RITUAL_MATERIAL))
@@ -1874,7 +1874,7 @@ void field::get_ritual_material(uint8 playerid, effect* peffect, card_set* mater
 	for(auto& pcard : player[1 - playerid].list_mzone) {
 		if(pcard && pcard->is_affect_by_effect(peffect)
 		        && pcard->is_affected_by_effect(EFFECT_EXTRA_RELEASE) && pcard->is_position(POS_FACEUP)
-				&& pcard->is_releasable_by_nonsummon(playerid, REASON_EFFECT) && pcard->is_releasable_by_effect(playerid, peffect)
+		        && pcard->is_releasable_by_nonsummon(playerid, REASON_EFFECT) && pcard->is_releasable_by_effect(playerid, peffect)
 				&& (no_level || pcard->get_level() > 0))
 			material->insert(pcard);
 	}
