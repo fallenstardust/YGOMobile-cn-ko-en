@@ -213,9 +213,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
-	for (auto i : chatTiming) {
-		i = 0;
-	}
 	deckManager.LoadLFList(options);
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -1664,7 +1661,7 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBo
 }
 void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
 	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
-		for(auto pack : deckBuilder.expansionPacks) {
+		for(auto& pack : deckBuilder.expansionPacks) {
 			additem(pack.substr(5, pack.size() - 9).c_str());
 		}
 	}
@@ -1744,8 +1741,6 @@ void Game::RefreshBot() {
 }
 void Game::LoadConfig() {
 	wchar_t wstr[256];
-	if(gameConf._init)return;
-	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
 	gameConf.textfontsize = android::getIntSetting(appMain, "textfontsize", 18);;
@@ -1790,7 +1785,6 @@ void Game::LoadConfig() {
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
-	gameConf.hide_hint_button = 0;
 	gameConf.separate_clear_button = 1;
 	gameConf.search_multiple_keywords = 1;
 	gameConf.defaultOT = 1;
