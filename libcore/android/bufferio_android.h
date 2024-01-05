@@ -7,21 +7,19 @@
 class BufferIO {
 public:
 	inline static int ReadInt32(unsigned char*& p) {
-		int ret;
-		memcpy(&ret, (void *)p, sizeof(int));
+		int ret = *(int*)p;
 		p += 4;
 		return ret;
 	}
 	inline static short ReadInt16(unsigned char*& p) {
-		short ret;
-		memcpy(&ret, (void *)p, sizeof(short));
+		short ret = *(short*)p;
 		p += 2;
 		return ret;
 	}
 	inline static char ReadInt8(unsigned char*& p) {
-		char* pRet = (char*)p;
+		char ret = *(char*)p;
 		p++;
-		return *pRet;
+		return ret;
 	}
 	inline static unsigned char ReadUInt8(unsigned char*& p) {
 		unsigned char ret = *(unsigned char*)p;
@@ -29,15 +27,15 @@ public:
 		return ret;
 	}
 	inline static void WriteInt32(unsigned char*& p, int val) {
-		memcpy((void *)p, &val, sizeof(int));
+		(*(int*)p) = val;
 		p += 4;
 	}
 	inline static void WriteInt16(unsigned char*& p, short val) {
-		memcpy((void *)p, &val, sizeof(short));
+		(*(short*)p) = val;
 		p += 2;
 	}
 	inline static void WriteInt8(unsigned char*& p, char val) {
-		memcpy((void *)p, &val, sizeof(char));
+		*p = val;
 		p++;
 	}
 	template<typename T1, typename T2>
@@ -61,6 +59,7 @@ public:
 		*pstr = 0;
 		return l;
 	}
+	// UTF-16/UTF-32 to UTF-8
 	static int EncodeUTF8(const wchar_t * wsrc, char * str) {
 		char* pstr = str;
 		while(*wsrc != 0) {
@@ -71,17 +70,24 @@ public:
 				str[0] = ((*wsrc >> 6) & 0x1f) | 0xc0;
 				str[1] = ((*wsrc) & 0x3f) | 0x80;
 				str += 2;
-			} else {
+			} else if(*wsrc < 0x10000 && (*wsrc < 0xd800 || *wsrc > 0xdfff)) {
 				str[0] = ((*wsrc >> 12) & 0xf) | 0xe0;
 				str[1] = ((*wsrc >> 6) & 0x3f) | 0x80;
 				str[2] = ((*wsrc) & 0x3f) | 0x80;
 				str += 3;
+			} else {
+				str[0] = ((*wsrc >> 18) & 0x7) | 0xf0;
+				str[1] = ((*wsrc >> 12) & 0x3f) | 0x80;
+				str[2] = ((*wsrc >> 6) & 0x3f) | 0x80;
+				str[3] = ((*wsrc) & 0x3f) | 0x80;
+				str += 4;
 			}
 			wsrc++;
 		}
 		*str = 0;
 		return str - pstr;
 	}
+	// UTF-8 to UTF-16/UTF-32
 	static int DecodeUTF8(const char * src, wchar_t * wstr) {
 		const char* p = src;
 		wchar_t* wp = wstr;
@@ -90,13 +96,13 @@ public:
 				*wp = *p;
 				p++;
 			} else if((*p & 0xe0) == 0xc0) {
-				*wp = (((int)p[0] & 0x1f) << 6) | ((int)p[1] & 0x3f);
+				*wp = (((unsigned)p[0] & 0x1f) << 6) | ((unsigned)p[1] & 0x3f);
 				p += 2;
 			} else if((*p & 0xf0) == 0xe0) {
-				*wp = (((int)p[0] & 0xf) << 12) | (((int)p[1] & 0x3f) << 6) | ((int)p[2] & 0x3f);
+				*wp = (((unsigned)p[0] & 0xf) << 12) | (((unsigned)p[1] & 0x3f) << 6) | ((unsigned)p[2] & 0x3f);
 				p += 3;
 			} else if((*p & 0xf8) == 0xf0) {
-				*wp = (((int)p[0] & 0x7) << 18) | (((int)p[1] & 0x3f) << 12) | (((int)p[2] & 0x3f) << 6) | ((int)p[3] & 0x3f);
+				*wp = (((unsigned)p[0] & 0x7) << 18) | (((unsigned)p[1] & 0x3f) << 12) | (((unsigned)p[2] & 0x3f) << 6) | ((unsigned)p[3] & 0x3f);
 				p += 4;
 			} else
 				p++;
