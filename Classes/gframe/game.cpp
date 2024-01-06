@@ -1396,7 +1396,7 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
-		ALOGV("game draw frame");
+		//ALOGV("game draw frame");
 		linePatternD3D = (linePatternD3D + 1) % 30;
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
