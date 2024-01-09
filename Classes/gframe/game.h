@@ -64,7 +64,7 @@ struct Config {
 	int auto_save_replay{ 0 };
 	int draw_single_chain{ 0 };
 	int hide_player_name{ 0 };
-	int prefer_expansion_script{ 0 };
+	int prefer_expansion_script{ 1 };
 	//sound
 	bool enable_sound{ true };
 	bool enable_music{ true };
@@ -913,7 +913,7 @@ extern Game* mainGame;
 #define BUTTON_CHATTING             370
 #define SCROLL_SETTINGS			    371
 #define CHECKBOX_MULTI_KEYWORDS		372
-#define CHECKBOX_PREFER_EXPANSION	373
+//#define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
