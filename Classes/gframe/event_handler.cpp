@@ -2034,11 +2034,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+            /*
 			case CHECKBOX_PREFER_EXPANSION: {
 				mainGame->gameConf.prefer_expansion_script = mainGame->chkPreferExpansionScript->isChecked() ? 1 : 0;
 				return true;
 				break;
-			}
+			}*/
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
