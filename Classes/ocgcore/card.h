@@ -99,6 +99,12 @@ struct material_info {
 };
 const material_info null_info;
 
+constexpr uint32 CARD_MARINE_DOLPHIN = 78734254;
+constexpr uint32 CARD_TWINKLE_MOSS = 13857930;
+constexpr uint32 CARD_TIMAEUS = 1784686;
+constexpr uint32 CARD_CRITIAS = 11082056;
+constexpr uint32 CARD_HERMOS = 46232525;
+
 class card {
 public:
 	struct effect_relation_hash {
@@ -137,6 +143,8 @@ public:
 		uint8 location{ 0 };
 		uint8 sequence{ 0 };
 	};
+	static const std::unordered_map<uint32, uint32> second_code;
+
 	int32 ref_handle;
 	duel* pduel;
 	card_data data;
@@ -206,7 +214,8 @@ public:
 
 	int32 get_infos(byte* buf, uint32 query_flag, int32 use_cache = TRUE);
 	uint32 get_info_location();
-	uint32 second_code(uint32 code);
+	uint32 get_original_code() const;
+	std::tuple<uint32, uint32> get_original_code_rule() const;
 	uint32 get_code();
 	uint32 get_another_code();
 	int32 is_set_card(uint32 set_code);
@@ -389,6 +398,9 @@ public:
 #define SUMMON_TYPE_PENDULUM	0x4a000000
 #define SUMMON_TYPE_LINK		0x4c000000
 
+#define SUMMON_TYPE_MAIN		0xf0000000
+#define SUMMON_TYPE_LOCATION	0x00ff0000
+
 //Counter
 #define COUNTER_WITHOUT_PERMIT	0x1000
 //#define COUNTER_NEED_ENABLE		0x2000
@@ -403,7 +415,7 @@ public:
 #define ASSUME_ATTACK		7
 #define ASSUME_DEFENSE		8
 
-//Summon info
+//Special Summon effect info
 #define SUMMON_INFO_CODE			0x01
 #define SUMMON_INFO_CODE2			0x02
 #define SUMMON_INFO_TYPE			0x04
@@ -414,10 +426,7 @@ public:
 #define SUMMON_INFO_ATTACK			0x80
 #define SUMMON_INFO_DEFENSE			0x100
 #define SUMMON_INFO_REASON_EFFECT	0x200
-
-//double-name cards
-#define CARD_MARINE_DOLPHIN	78734254
-#define CARD_TWINKLE_MOSS	13857930
+#define SUMMON_INFO_REASON_PLAYER	0x400
 
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
 
