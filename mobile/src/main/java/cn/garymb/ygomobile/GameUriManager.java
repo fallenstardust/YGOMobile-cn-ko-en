@@ -262,8 +262,7 @@ public class GameUriManager {
                     Log.w(Constants.TAG, "game is running");
                 }
             } else if (isConf) {
-                limitManager.load();
-                stringManager.load();
+                DataManager.get().load(true);
                 Toast.makeText(activity, activity.getString(R.string.restart_app), Toast.LENGTH_LONG).show();
             }
         } else {
