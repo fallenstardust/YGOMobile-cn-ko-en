@@ -146,6 +146,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         AnimationShake2(layoutView);
         initView(layoutView);
         preLoadFile();
+        restoreDeck();
         //event
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
@@ -195,6 +196,24 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
     }
 
+    private void restoreDeck() {
+        File oriDeckFiles = new File(ORI_DECK);
+        File deckFiles = new File(AppsSettings.get().getDeckDir());
+        if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
+            DialogPlus dialogplus = new DialogPlus(mContext);
+            dialogplus.setTitle(R.string.tip);
+            dialogplus.setMessage(R.string.restore_deck);
+            dialogplus.setLeftButtonText(R.string.Cancel);
+            dialogplus.setLeftButtonListener((dlg, i) -> {
+                dialogplus.dismiss();
+            });
+            dialogplus.setRightButtonText(R.string.deck_restore);
+            dialogplus.setRightButtonListener((dlg, i) -> {
+                mContext.startPermissionsActivity();
+                dialogplus.dismiss();
+            });
+        }
+    }
     public void preLoadFile() {
         String preLoadFile = "";
         if (getArguments() != null) {

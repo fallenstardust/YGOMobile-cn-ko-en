@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.home;
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.officialExCardPackageName;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 
 import android.Manifest;
@@ -26,6 +27,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameUriManager;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.ex_card.ExCardActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.cards.CardFavorites;
@@ -113,26 +115,19 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                         }
                     });
                     dialog.setOnDismissListener(dialogInterface -> {
-//                        if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-//                            YGOUtil.isServicePermission(MainActivity.this, true);
-                        File oriDeckFiles = new File(ORI_DECK);
-                        File deckFiles = new File(AppsSettings.get().getDeckDir());
-                        if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
-                            DialogPlus dlgpls = new DialogPlus(MainActivity.this);
-                            dlgpls.setTitle(R.string.tip);
-                            dlgpls.setMessage(R.string.restore_deck);
-                            dlgpls.setLeftButtonText(R.string.Cancel);
-                            dlgpls.setLeftButtonListener((dlg, i) -> {
-                                dlgpls.dismiss();
+                        DialogPlus dialogplus = new DialogPlus(this);
+                        File oldypk = new File(AppsSettings.get().getExpansionsPath() + "/" + officialExCardPackageName + ".ypk");
+                        if (oldypk.exists()) {
+                            FileUtils.deleteFile(oldypk);
+                            dialogplus.setMessage(R.string.tip_ypk_is_deleted);
+                            dialogplus.setLeftButtonText(R.string.ok);
+                            dialogplus.setLeftButtonListener((d, i) -> {
+                                Intent exCardIntent = new Intent(this, ExCardActivity.class);
+                                startActivity(exCardIntent);
+                                dialogplus.dismiss();
                             });
-                            dlgpls.setRightButtonText(R.string.deck_restore);
-                            dlgpls.setRightButtonListener((dlg, i) -> {
-                                startPermissionsActivity();
-                                dlgpls.dismiss();
-                            });
-                            dlgpls.show();
+                            dialogplus.show();
                         }
-
                     });
                     dialog.setCancelable(false);
                     dialog.show();
