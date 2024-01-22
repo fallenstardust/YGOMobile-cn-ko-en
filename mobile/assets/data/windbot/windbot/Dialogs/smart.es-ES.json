@@ -29,7 +29,7 @@
     "La activo. Aunque el efecto de esta carta no está escrito en ella, se puede usar así."
   ],
   "summon": [
-    "Fuerte, invencible",
+	"Fuerte, invencible",
     "Invoco a {0}, gana el duelo",
     "{0} es simplemente una carta falsa",
     "Siempre me gusta {0}"
