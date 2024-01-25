@@ -96,6 +96,7 @@
         <item>조선말</item>
         <item>English</item>
         <item>Español</item>
+        <item>日本語</item>
     </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Disable</item>
