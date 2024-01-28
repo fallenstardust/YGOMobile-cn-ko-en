@@ -87,6 +87,7 @@
         <item>한글</item>
         <item>English</item>
         <item>Español</item>
+        <item>日本語</item>
     </string-array>
     <!-- settings -->
     <string name="server_list">다이렉트 듀얼</string>

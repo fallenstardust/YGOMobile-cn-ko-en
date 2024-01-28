@@ -59,6 +59,7 @@ public interface Constants {
     String ASSETS_EN = "en/";
     String ASSETS_KOR = "kor/";
     String ASSETS_ES = "es/";
+    String ASSETS_JP = "jp/";
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
     String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";

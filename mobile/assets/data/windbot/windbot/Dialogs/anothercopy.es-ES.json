@@ -55,13 +55,13 @@
     "Activo el poder de {0}."
   ],
   "summon": [
-    "Convoco a {0}.",
+    "¡Convoco a {0}!",
     "¡Sal, {0}!",
     "¡Preséntate, {0}!",
     "¡Convoqué a la bella {0}!",
     "¡Convoqué al poderoso {0}!",
     "¡Llamo a {0} para que se una a la batalla!",
-    "Llamo a {0}.",
+    "¡Llamo a {0}!",
     "Déjame convocar a {0}."
   ],
   "setmonster": [
@@ -70,7 +70,7 @@
   ],
   "chaining": [
     "¡Mira esto! ¡Activo {0}!",
-    "Utilizo el poder de {0}.",
+    "¡Utilizo el poder de {0}!",
     "¡Prepárate! ¡Uso el efecto de {0}!",
     "¡Parece que olvidaste mi {0}!",
     "¿Has considerado que tengo {0}?"

@@ -637,6 +637,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             mSettings.copyKorData();
                         } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
                             mSettings.copyEsData();
+                        } else if (language.equals(AppsSettings.languageEnum.Japanese.name)) {
+                            mSettings.copyJpData();
                         } else {
                             mSettings.copyEnData();
                         }

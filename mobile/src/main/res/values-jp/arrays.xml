@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string-array name="opengl_version_value" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="card_quality_value" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="tips" tools:ignore="InconsistentArrays">
+        <item>遊戯王界は広くないです，皆仲良くにしてね</item>
+        <item>决斗界面点触不准？可以去功能菜单→设置→沉浸式游戏界面√</item>
+        <item>サーバを左にスワイプしたら「删除」ができます</item>
+        <item>右下の浮く「機能メニュー」をクリックしたら他の機能が現れます</item>
+        <item>ネット接続しなくてもAIと対戦がしたいん？「機能メニュー」→「SOLOモード」→「AIモード」</item>
+        <item>デッキが見つからなかった？「機能メニュー」→「リセット」をクリックしてください</item>
+        <item>自分でデッキを組むにはとても楽しいです，神ドローがもっと出しやすいです</item>
+        <item>サーバ右下のジェム見たか？クリックして見て</item>
+        <item>非公式パスコードと正式パスコードは違います，パッチをしたら注意してください</item>
+        <item>觉得遇到BUG先请准备好局面截图和录像再反馈</item>
+        <item>更新する方法がからない？「メニュー」→「設定」→「更新チェック」にチェックしてください</item>
+        <item>使い方が分からないなら「メニュー」→「チュートリアル」を参考してください</item>
+        <item>维护开发不容易，欢迎前往「爱发电」的YGOMobile页面留下您的心意</item>
+        <item>リプレイエーラ，未だ解決方法がないですT.T</item>
+        <item>共有デッキを使用しても強にはなりません，自分の努力で組んだデッキは必ず報いがあります</item>
+        <item>不管是新手还是回归玩家，只要肯学习，不用多久就能成为大佬哦</item>
+        <item>立てスクリーンでカードを削除したい時はそのかーどを長押しでできます</item>
+    </string-array>
+</resources>

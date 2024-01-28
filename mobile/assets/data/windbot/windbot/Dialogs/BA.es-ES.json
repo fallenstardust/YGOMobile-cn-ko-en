@@ -7,7 +7,7 @@
     "Ah, tal vez BA corrigió algo en la CBD nuevamente y {0} desapareció."
   ],
   "duelstart": [
-    "Esto es solu un duelo vs la IA, no estés muy feliz si me derrotas.",
+    "Esto es solo un duelo vs la IA, no estés muy feliz si me derrotas.",
     "Muchas gracias al servidor 233 por permitirnos tener juegos para divertirnos, no olvides visitarnos.",
     "Sociedad anti-mainstream NOVA.",
     "Es hora del duelooooooooo."
@@ -16,7 +16,7 @@
     "¡Es mi turno, robo una carta!",
     "¡Mi turno, robo una carta!",
     "Saqué una carta.",
-    "Esto se pondrá interesante, robo una carta."
+	"Esto se pondrá interesante, robo una carta."
   ],
   "endturn": [
     "La ronda ha terminado",
@@ -45,7 +45,7 @@
     "¡{0}, ¡Libera tu poder sobre {1}!"
   ],
   "ondirectattack": [
-    "Odioso......",
+    "Ahhhh......",
     "¡Es solo {0}!",
     "Efectivamente, todavía estoy demasiado débil..."
   ],

@@ -2,6 +2,7 @@ package cn.garymb.ygomobile;
 
 import static cn.garymb.ygomobile.Constants.ASSETS_EN;
 import static cn.garymb.ygomobile.Constants.ASSETS_ES;
+import static cn.garymb.ygomobile.Constants.ASSETS_JP;
 import static cn.garymb.ygomobile.Constants.ASSETS_KOR;
 import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
@@ -745,7 +746,8 @@ public class AppsSettings {
         Chinese(0, "zh"),
         Korean(1, "ko"),
         English(2, "en"),
-        Spanish(3, "es");
+        Spanish(3, "es"),
+        Japanese(4,"jp");
 
         public Integer code;
         public String name;
@@ -817,6 +819,23 @@ public class AppsSettings {
         replaceLineFeed();
         //设置语言为3=Spanish
         setDataLanguage(languageEnum.Spanish.code);
+    }
+
+    public void copyJpData() throws IOException {
+        String jpStringConf = ASSETS_JP + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String jpBotConf = ASSETS_JP + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String jpCdb = ASSETS_JP + getDatapath(DATABASE_NAME);
+        //复制数据库
+        copyCdbFile(jpCdb);
+        //复制人机资源
+        IOUtils.copyFilesFromAssets(context, getDatapath(Constants.WINDBOT_PATH), getResourcePath(), true);
+        //复制游戏配置文件
+        IOUtils.copyFilesFromAssets(context, jpStringConf, getResourcePath(), true);
+        IOUtils.copyFilesFromAssets(context, jpBotConf, getResourcePath(), true);
+        //替换换行符
+        replaceLineFeed();
+        //设置语言为4=Japanese
+        setDataLanguage(languageEnum.Japanese.code);
     }
 
     private void replaceLineFeed(){

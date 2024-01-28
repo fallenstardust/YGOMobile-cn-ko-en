@@ -96,6 +96,7 @@
         <item>Koreano</item>
         <item>Inglés</item>
         <item>Español</item>
+        <item>日本語</item>
     </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Deshabilitado</item>
@@ -114,12 +115,12 @@
     <string name="server_port">Port:</string>
     <string name="server_room_pwd">PSW:</string>
     <string name="server_user_pwd">PSW:</string>
-    <string name="server_info_edit">Editar información del servidor</string>
+    <string name="server_info_edit">Editar info del servidor</string>
     <string name="save">Guardar</string>
     <string name="must_info">Información requerida</string>
     <string name="server_is_exist">¡La información del servidor ya existe!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
-    <string name="card_search">Buscado cartas...</string>
+    <string name="card_search">Buscar</string>
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Gestionar categorías</string>
     <string name="search">Buscar</string>
@@ -150,7 +151,7 @@
     <string name="delete_deck">Eliminar deck</string>
     <string name="save_deck">Guardar deck</string>
     <string name="save_as_deck">Guardar deck como</string>
-    <string name="deck_list">Decks</string>
+    <string name="deck_list">Deck</string>
     <string name="card_add_main">+Main Deck</string>
     <string name="card_add_side">+Side Deck</string>
     <string name="deck_main" formatted="false">Main:%d  Monstruo:%d Mágica:%d Trampa:%d</string>
@@ -235,7 +236,7 @@
     <string name="ex_pack">Paquete de cartas de expansión</string>
     <string name="deck_manager_v2">Editor de Decks V2</string>
     <string name="reset_game_ver_fail">Fallo al intentar restablecer la versión del juego</string>
-    <string name="deck_name">Decks</string>
+    <string name="deck_name">Deck</string>
     <string name="category_name">Categoría</string>
     <string name="save_quit">Guardar y salir</string>
     <string name="tip_reset_game_res">Restauración de datos del juego completada</string>
@@ -282,7 +283,7 @@
     <string name="save_failed_bcos">Error al guardar debido a: </string>
     <string name="deck_text_copyed">Texto del deck copiado al portapapeles</string>
     <string name="save_n_open">Guardar y Abrir</string>
-    <string name="searchresult">Resultados</string>
+    <string name="searchresult">Resultado</string>
     <string name="Pre_share">Listo para compartir, por favor espere...</string>
     <string name="category_pack">Paquetes</string>
     <string name="category_windbot_deck">Decks I.A.</string>
@@ -300,8 +301,8 @@
     <string name="unable_to_edit_empty_deck">No puedes usar un deck vacío</string>
     <string name="create_new_failed">Falló la creación</string>
     <string name="about_pref_settings_keep_scale">Resolución de Pantalla: Escala Original</string>
-    <string name="already_top">Primera carta del deck</string>
-    <string name="already_end">Última carta del deck</string>
+    <string name="already_top">Primera carta de la lista</string>
+    <string name="already_end">Última carta de la lista</string>
     <string name="tip_redownload">Re-descargar</string>
     <string name="tip_expansions_image">No hay imágenes para cartas pre-lanzamiento</string>
     <string name="tip_return_to_duel">¡Haz regresado al juego actual!</string>

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
+    <!--string name="app_name">YGOMobile</string-->
+    <string name="action_settings">設定</string>
+    <string name="action_game">AI対戦</string>
+    <string name="action_about">ソフトについて</string>
+    <string name="dont_start_game">ゲーム起動できません</string>
+    <!-- check -->
+    <string name="check_res">リソースを検索</string>
+    <string name="check_things">検索%s ...</string>
+    <string name="core_config">ゲームコーア</string>
+    <string name="tip_new_deck">新規デッキ</string>
+    <string name="cards_cdb">データベース</string>
+    <string name="scripts">スクリプト</string>
+    <string name="images">画像</string>
+    <string name="single_lua">詰めデュエルファイル</string>
+    <string name="font_files">フォントファイル</string>
+    <string name="game_sound">サウンドファイル</string>
+    <string name="game_skins">スキンファイル</string>
+    <string name="coping_pendulum_image">ペンデュラム画像をコピーする</string>
+    <string name="dialog_select_file">ファイルを選択してください</string>
+    <string name="dialog_select_image">画像を選択してください</string>
+    <string name="dialog_select_database">データベースを選択してください</string>
+    <string name="copy_databse">データベースをコピー中</string>
+    <string name="card_cover">プロテクター</string>
+    <string name="game_bg">ゲーム背景画像</string>
+    <string name="bg">デュエル背景画像</string>
+    <string name="bg_menu">メニュー背景画像</string>
+    <string name="bg_deck">デッキ編集背景画像</string>
+    <string name="action_add_server">サーバーを追加する</string>
+    <string name="action_download_expansions">非公式データをダウンロード</string>
+    <string name="no_find_file_selectotr">ファイル選択機能が見つかりませんでした</string>
+    <string name="no_find_image_selector">画像選択機能が見つかりませんでした</string>
+    <string name="no_find_image_cutor">トリミングツールが見つかりませんでした</string>
+    <string name="help">ヘルプ</string>
+    <string name="settings">設定</string>
+    <string name="quit">終了</string>
+    <string name="quit_tip">ゲーム終了しますか？</string>
+    <string name="back_tip">もう一回戻りボタンを押して戻ります</string>
+    <string name="string_help_text">権限が足りません。\n 設定-権限 をクリックして全部を通してください。</string>
+    <string name="fetch_ex_card">ネットからカードをダウンロード</string>
+    <string name="ex_card_list_title">超非公式☆専用☆</string>
+    <string name="ex_card_log_title">更新リスト</string>
+    <string name="ex_card_report_title">フィードバック</string>
+    <string name="ex_card_check_toast_message">非公式パックをダウンロードしないとサーバー対戦ではUNKOWNカードをとして扱う、非公式パックを先にダウンロードしてください</string>
+    <string name="ex_card_check_toast_message_ii">非公式パックをダウンロードしないとサーバー対戦ではUNKOWNカードをとして扱う、非公式パックを先にダウンロードしてください</string>
+    <string name="ex_card_check_toast_message_iii">非公式データを認識できません、２３３サイトからダウンロードします</string>
+
+    <!-- settings -->
+    <string name="settings_about">ソフトについて</string>
+    <string name="settings_about_sub_about">ソフトについて</string>
+    <string name="settings_game_enable_sound_effect">ゲーム起動用サウンド</string>
+    <string name="settings_game_screen_orientation">横画面ロック</string>
+    <string name="settings_game_font_antialias">アンチエリアシング</string>
+    <string name="settings_game_lab_pendulum_scale">ペンデュラムスケール画像</string>
+    <string name="settings_game_font_antialias_summary">アンチエリアシングを禁止してFPSを上げる</string>
+    <string name="settings_about_author_pref">作者</string>
+    <string name="settings_about_version_pref">バージョン</string>
+    <string name="settings_about_check_update">更新チェック</string>
+    <string name="settings_about_change_log">更新リスト</string>
+    <string name="settings_game_card_quality">画像画質</string>
+    <string name="settings_game_font_name">フォント</string>
+    <string name="settings_game_res_path">ゲームメインメニュー</string>
+    <string name="settings_game_core_version">ゲームコアバージョン</string>
+    <string name="settings_category_diy">カスタマイズ</string>
+    <string name="settings_game">ゲーム設定</string>
+    <string name="settings_game_diy_cover">ゲーム壁紙</string>
+    <string name="settings_game_diy_card_back">カードをプロテクター</string>
+    <string name="settings_game_diy_card_db">非公式データベースを使用する</string>
+    <string name="settings_test_options">テストオプション</string>
+    <string name="settings_test_replace_kernel">コアを入れ替える</string>
+    <string name="settings_game_immersive_mode">没入型ゲームUI</string>
+    <string name="settings_game_opengl">OpenGL</string>
+    <string name="settings_game_avatar">アバター画像</string>
+    <string name="restart_app">ゲームを再起動する</string>
+    <string-array name="opengl_version">
+        <item>OpenGL ES 1.X</item>
+        <item>OpenGL ES 2.0 fixed shaders</item>
+        <item>OpenGL ES 2.0 builtin shaders</item>
+    </string-array>
+    <string-array name="card_quality">
+        <item>低い</item>
+        <item>高い</item>
+    </string-array>
+    <string-array name="data_language" translatable="false">
+        <item>简体中文</item>
+        <item>조선말</item>
+        <item>English</item>
+        <item>Español</item>
+        <item>日本語</item>
+    </string-array>
+    <!-- settings -->
+    <string name="server_list">ヂュエル</string>
+    <string name="server_name">サーバー名:</string>
+    <string name="server_ip">IP:</string>
+    <string name="server_user">プレイヤ名:</string>
+    <string name="server_room_name">房间密码:</string>
+    <string name="server_port">PORT:</string>
+    <string name="server_room_pwd">パスワード:</string>
+    <string name="server_user_pwd">パスワード:</string>
+    <string name="server_info_edit">サーバー情報編集器</string>
+    <string name="save">保存</string>
+    <string name="must_info">必須</string>
+    <string name="server_is_exist">同名サーバー名がすでに存在しています！</string>
+    <string name="server_info_error">サーバー情報データエーラ発生</string>
+    <string name="card_search">カード検索</string>
+    <string name="deck_manager">デッキ編集</string>
+    <string name="category_manager">デッキカテゴリを選択</string>
+    <string name="search">検索</string>
+    <string name="find_in_page">テキスト検索：</string>
+    <string name="search_open">フィルター</string>
+    <string name="search_close">終了</string>
+    <string name="reset">リセット</string>
+    <string name="hit_keyword1">キーワード</string>
+    <string name="hit_atk">ATK</string>
+    <string name="hit_def">DEF</string>
+    <string name="label_race">種族</string>
+    <string name="label_ot">専用</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_SC_OCG">简体中文</string>
+    <string name="label_ot_CUSTOM">カスタマイズカード</string>
+    <string name="label_ot_No_Exclusive">ユニークではない</string>
+    <string name="label_ot_All">全カード</string>
+    <string name="label_limit">制限なし</string>
+    <string name="label_limitlist">リミットレギュレーション</string>
+    <string name="label_type">カード種類</string>
+    <string name="label_set">テキスト</string>
+    <string name="label_level">レベル/标数</string>
+    <string name="label_attr">属性</string>
+    <string name="label_category">効果分類</string>
+    <string name="linkmarker">◀リンクマーカー▶</string>>
+    <string name="searching">ロード中</string>
+    <string name="card_faq">オンラインで判定をチェック</string>
+    <string name="no_webbrowser">ブラウザはインストールしていません</string>
+    <string name="load_game">ゲーム起動中</string>
+
+    <string name="last_path">バック</string>
+    <string name="create_folder">新規フォルダ作成</string>
+    <string name="intpu_name">输入卡组名</string>
+    <string name="the_name_is_folder">フォルダ名</string>
+    <string name="tab_search">検索</string>
+    <string name="tab_result">リスト</string>
+    <string name="tab_manager">管理</string>
+    <string name="deck_main" formatted="false">メインデッキ:%d   モンスター:%d 魔法:%d 罠:%d</string>
+    <string name="deck_extra" formatted="false">ＥＸデッキ:%d   融合:%d シンクロ:%d エクシーズ:%d りんく:%d</string>
+    <string name="deck_side" formatted="false">サイドデッキ:%d   モンスター:%d 魔法:%d 罠:%d</string>
+    <string name="card_result">リスト</string>
+    <string name="unsort">シャッフル</string>
+    <string name="sort">整列</string>
+    <string name="card_add_main">+メインデッキ</string>
+    <string name="card_add_side">+サイドデッキ</string>
+    <string name="new_deck">新規デッキ</string>
+    <string name="move_deck">移動</string>
+    <string name="copy_deck">コピー</string>
+    <string name="rename_deck">デッキ名を変更</string>
+    <string name="delete_deck">削除</string>
+    <string name="save_deck">保存</string>
+    <string name="save_as_deck">名前を付けて保存 </string>
+    <string name="deck_list">デッキリスト</string>
+    <string name="loading">ロード..."</string>
+    <string name="loading_failed">ロード失敗"</string>
+    <string name="tip">ヒント</string>
+    <string name="question">問う</string>
+    <string name="question_delete_deck">デッキを削除?</string>
+    <string name="noname">未命名</string>
+    <string name="menu">メニュー</string>
+    <string name="save_tip_ok">デッキ保存成功</string>
+    <string name="save_tip_fail">デッキ保存失敗</string>
+    <string name="add_card_tip_ok">カード追加成功</string>
+    <string name="add_card_tip_fail">カード追加失敗</string>
+    <string name="tip_card_max" formatted="false">カード最大数:%d</string>
+    <string name="file_exist">ファイルはすでに存在します</string>
+    <string name="share_deck">デッキ共有</string>
+    <string name="code_share">デッキコード共有</string>
+    <string name="screenshoot">スクリーンショット共有</string>
+    <string name="ydk_share">ydk共有</string>
+    <string name="no_share_app">共アプリは見つかりません</string>
+    <string name="intput_room_name">パスワードを入力（空いても大丈夫）</string>
+    <string name="join">入る</string>
+    <string name="quick_join">部屋に入る</string>
+    <string name="join_game">開始</string>
+    <string name="settings_game_sensor_refresh">UIをリフレッシュする</string>
+    <string name="label_pendulum">ペンデュラムスケール</string>
+    <string name="all">全カード</string>
+    <string name="donation">寄付</string>
+    <string name="refresh">リフレッシュ</string>
+    <string name="select_deck">デッキを選択</string>
+    <string name="quit_deck_tip">変更を破棄しますか？</string>
+    <string name="deck_delete_text">デッキ削除</string>
+    <string name="question_keep_cur_deck">現在のカードを残す？</string>
+    <string name="check_choose_file" formatted="false"> %s を選択しますか？</string>
+    <string name="settings_deck_delete_dialog">デッキダイヤログを削除</string>
+    <string name="settings_deck_delete_dialog_desc">デッキ編集中ダイヤログを削除</string>
+    <string name="delete_card" formatted="false">カードを削除 %s ?</string>
+    <string name="clear_deck">クリア</string>
+    <string name="question_clear_deck">デッキクリア?</string>
+    <string name="delete_server_info">現在のサーバーを削除しますか？</string>
+    <string name="exit_edit_mode">編集を終了する</string>
+    <string name="logo_text">サポートしていただきありがとうございます</string>
+    <string name="start_game_error">ゲーム起動失敗</string>
+    <string name="set_font_size">フォントサイズ</string>
+    <string name="copy_to_clipbroad">已经复制到粘贴板</string>
+    <string name="deck_share_head">YGOMobileからデッキ共有しています。</string>
+    <string name="deck_share_fail">デッキ共有失敗</string>
+    <string name="choose_game_path">选择游戏目录</string>
+    <string name="download_home">ネットディスクダウンロード</string>
+    <string name="reset_game_res">リソースをリセット</string>
+    <string name="downloading_images">後でもう一度試してください</string>
+    <string name="download_image_progress" formatted="false">画像をダウンロード中 %d/%d</string>
+    <string name="download_image_error" formatted="false">图片下载失败长按重试</string>
+    <string name="downloading_images_ok">画像ダウンロード完了</string>
+    <string name="tip_istunning">ゲーム作動中</string>
+    <string name="edit">編集</string>
+    <string name="delete">削除</string>
+    <string name="mycard">MYCARD</string>
+    <string name="arena">デュエルデータベース</string>
+    <string name="mc_chat">チャットルーム</string>
+    <string name="noting_to_send">メッセージは必須です</string>
+    <string name="sending_failed">送る失敗</string>
+    <string name="login_mycard">MYCARD登録</string>
+    <string name="logout_mycard">MYCARDをログアウト？</string>
+    <string name="logining_in">登録中...</string>
+    <string name="logining_failed">登録失敗，リトライしてください</string>
+    <string name="failed_reason">登録失敗，</string>
+    <string name="notice_verify_email">アカウントのメールアドレスを確認した後、チャットルームに入る事ができます</string>
+    <string name="send">送る</string>
+    <string name="mc_home">ホーム</string>
+    <string name="bbs">BBS</string>
+    <string name="McNews">新発表</string>
+    <string name="settings_pref_settings_only_game">直接ゲームを開始します</string>
+    <string name="only_game_tip">注意</string>
+    <string name="title_use_ex">非公式データを使用します</string>
+    <string name="tip_network_image">サーバーオーバーロード</string>
+    <string name="game_version">ゲームバージョン</string>
+    <string name="error_game_ver">フォーマットエーラ！0xから始まります。例え:0x1342(1.034.2)</string>
+    <string name="tip_no_netwrok">インターネットに接続されていることを確認してください</string>
+    <string name="message">"データをコピー注意..."</string>
+    <string name="ex_pack">非公式パック</string>
+    <string name="deck_manager_v2">デッキ編集器V2</string>
+    <string name="reset_game_ver_fail">ゲームバージョンリセット失敗</string>
+    <string name="deck_name">デッキ</string>
+    <string name="category_name">カテゴリ</string>
+    <string name="save_quit">サーブしてゲーム終了します</string>
+    <string name="tip_reset_game_res">ゲームデータチェック完了</string>
+    <string name="join_helper_tip1">いつも使っていたサーバーを最前位におきます
+        \nショットカットで最前位のサーバーを入ります</string>
+    <string name="join_helper_tip2">\nこの機能を使用するには浮く窓を適応してください
+        \nバックグラウンド運行を確認してください</string>
+    <string name="EXPAND_STATUS_BAR">需要开启通知权限\n権限を起動してからデュエル助手を使用する事ができます</string>
+    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n権限を起動してからデュエル助手を使用する事ができます</string>
+    <string name="OpenTIP">ショットカットで部屋を入るの説明</string>
+    <string name="Open_Alert_Window">浮く窓を適応する</string>
+    <string name="Function_Menu">機能メニュー</string>
+    <string name="Join_QQ">QQを参加</string>
+    <string name="about_Join_QQ">ソフトフィットバックはQQでお願いします</string>
+    <string name="donatefor">寄付はサーバーの維持や情報収集に使用します</string>
+    <string name="coverSelect">カードプロテクターを選択してください</string>
+    <string name="bgSelect">壁紙を選択してください</string>
+    <string name="avatarSelect">アバタを選択してください</string>
+    <string name="ClickLinkArrows">クリック矢印を発光する</string>
+    <string name="tip_no_permission" formatted="false"> %s 権限はあなたに禁止されています</string>
+    <string name="Already_Lastest">最新バージョンです</string>
+    <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
+    <string name="Download">ダウンロード</string>
+    <string name="Downloading">ダウンロード中…</string>
+    <string name="Update_Found">新バージョン発見</string>
+    <string name="OK">確定</string>
+    <string name="Cancel">キャンセル</string>
+    <string name="Checking_Update">アップデートをチェック中…</string>
+    <string name="Found_Update">新バージョン発見しました、ダウンロードしますか？</string>
+    <string name="Checking_Update_Failed">新バージョンチェック失敗</string>
+    <string name="Download_Precard_Failed">非公式データダウンロー失敗</string>
+    <string name="Pre_Server_Name">MYCARD超非公式サーバー</string>
+    <string name="Ask_to_Change_Other_Way">メインソースダウンロード失敗，他のダウンロード先を選択してください...</string>
+    <string name="DuelAssistant">デュエルアシスタント起動中</string>
+    <string name="masterrule">マスタールールを勉強します</string>
+    <string name="tutorial">ソフトチュートリアルをチェック</string>
+    <string name="about_help">知りたい内容をクリックしてください</string>
+    <string name="to_open">開く</string>
+    <string name="crashed">エラー発生、ゲーム終了します</string>
+    <string name="invalid_shortcut">ショットカット無効</string>
+    <string name="return_to_duel">デュエルに戻る☞</string>
+    <string name="Start_ServiceDuelAssistant">デュエルアシスタントをオンにする</string>
+    <string name="about_DuelAssistant">対戦ルーム番号をコピーして部屋を入る
+        \nデッキをコピーしてそのまま編集に入ります</string>
+    <string name="find_deck_text">同名デッキがすでに存在しています、保存しますか？</string>
+    <string name="save_failed_bcos">保存失敗，</string>
+    <string name="deck_text_copyed">貼り付け先にデッキをコピー成功</string>
+    <string name="save_n_open">保存して入ります</string>
+    <string name="searchresult">検索結果</string>
+    <string name="Pre_share">共有中，お待ちを……</string>
+    <string name="category_pack">パックリスト</string>
+    <string name="category_windbot_deck">AIデッキ</string>
+    <string name="category_Uncategorized">未分類デッキ</string>
+    <string name="please_input_category_name">新しい分類名を入力してください</string>
+    <string name="invalid_category_name">無効な分類名です</string>
+    <string name="please_select_target_category">分類先を選択してください</string>
+    <string name="delete_confirm">分類を削除しますか，分類下のすべてのデッキは削除されます</string>
+    <string name="no_deck_is_selected">未選択のデッキをコピー</string>
+    <string name="done">完成！</string>
+    <string name="donot_edit_Deck">分類下のデッキを変更しないでください</string>
+    <string name="unable_to_edit_empty_deck">空きデッキは編集できません</string>
+    <string name="create_new_failed">新規作成失敗</string>
+    <string name="about_pref_settings_keep_scale">最初のゲーム画面比例をセット</string>
+    <string name="already_top">もう最初のカードです</string>
+    <string name="already_end">もう最後のカードです</string>
+    <string name="tip_redownload">最ダウンロード</string>
+    <string name="tip_expansions_image">当サイドのカードでなければ、大きな画像が存在しない</string>
+    <string name="tip_return_to_duel">デュエルに戻りました</string>
+    <string name="my_favorites">ブックマーク★</string>
+    <string name="ypk_installed">YPK非公式データインストール成功</string>
+    <string name="ypk_go_setting">YPK非公式データファイアです,使用するには非公式をチェックが必要です</string>
+    <string name="ypk_delete">長押しで削除</string>
+    <string name="install_failed_bcos">インストール失敗，：</string>
+    <string name="deck_back_up">バックアップ</string>
+    <string name="deck_restore">復元</string>
+    <string name="deck_backup_n_restore">バックアップ/復元</string>
+    <string name="deck_explain">バックアップ：すべてのデッキをygocoreの目録に保存します
+        \n復元：すべてのデッキここに復元しました</string>
+    <string name="restore_deck">復元記録を発見しました，復元をしますか？</string>
+    <string name="explain_permission">
+        このソート使用する為に以下の権限を許してください：
+        \nセーブ権限：バックアップ、復元デッキ，壁紙カスタマイズ、アバタ、プロテクター必須</string>
+    <string name="guide_menu">機能メニュー：\n主の機能は"</string>
+    <string name="guide_mycard">MYCARDプラットホーム：\n対戦サーバーを提供します\nランキング，観戦，チャット</string>
+    <string name="guide_serverlist">サーバーリスト\nクリックして入ります</string>
+    <string name="guide_server_edit">編集ボタン:\nサーバー情報を変更する。\nゲーム名等々</string>
+    <string name="guide_help">チュートリアル：ソフトの使い方やマスタールールの説明</string>
+    <string name="guide_settings">設定：デュエルアシスタント起動，非公式データを使用する（存在するなら），アバタを変更，壁紙，プロテクター等々</string>
+    <string name="guide_reset">画像が無いや削除された場合ではリセットをクリックしてください</string>
+    <string name="guide_abt_room_list">入力したパスワードは記録されます；長押しで削除できます</string>
+    <string name="guide_join_room">パスワードを入力しないとランダム対戦モードに入ります
+                                \nパスワードを入力して友達と対戦できます
+                                \nデュエルモードのパスワードはチュートリアルに参考してください</string>
+    <string name="guide_button_search">査条件をクリックして編集する</string>
+    <string name="guide_search_result_count">カード数の検査結果を示す</string>
+    <string name="guide_button_search_result">検査結果を示す\nブックマークカードを常に表示する</string>
+    <string name="guide_view_deck_manager">デッキを変更する\nデッキ分類も管理できます</string>
+    <string name="guide_view_move_card">カードを長押しながら移動できます\nカードを長押しで削除できます</string>
+    <string name="guide_view_banner">MYCARDニュース，クリックして確認する</string>
+    <string name="title_delete_ex">非公式データを削除</string>
+    <string name="ask_delete_ex">クリアを確認してください</string>
+    <string name="about_delete_ex">非公式データによるエーラは非公式データを削除はおすすめです</string>
+    <string name="file_installed">ファイル導入成功</string>
+    <string name="settings_screen_padding">窓の預入高さ</string>
+    <string name="tip_load_cdb_error">データロードエー</string>
+    <string name="replay">リプレイを見る</string>
+    <string name="bot_mode">AIモード</string>
+    <string name="personal">自分の</string>
+    <string name="back_to_mycard_home">MYCARDホームページに戻る</string>
+    <string name="edit_your_message">メッセージを入力してください</string>
+    <string name="login_succeed">登録成功</string>
+    <string name="reChatJoining">接続は切断された,最接続中……</string>
+    <string name="settings_data_language">言語を変更します</string>
+    <string name="settings_data_language_about">YGOPROのUI、説明文やテキストを切り替えます</string>
+    <string name="tip_card_info_diff">未確認カードです。ソフトを更新してくださいまたは非公式データを更新してください。</string>
+    <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常，オフィシャルパスコードに変更してください</string>
+    <string name="tip_ygopro_is_running">YGOPROは既に運行している，新しいデュエル開始できません，ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
+    <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
+</resources>
