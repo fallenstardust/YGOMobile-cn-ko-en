@@ -1412,9 +1412,6 @@ int32 field::equip(uint16 step, uint8 equip_player, card * equip_card, card * ta
 			if(equip_card->get_type() & TYPE_TRAP) {
 				peffect->code = EFFECT_ADD_TYPE;
 				peffect->value = TYPE_EQUIP;
-			} else if(equip_card->data.type & TYPE_UNION) {
-				peffect->code = EFFECT_CHANGE_TYPE;
-				peffect->value = TYPE_EQUIP + TYPE_SPELL + TYPE_UNION;
 			} else {
 				peffect->code = EFFECT_CHANGE_TYPE;
 				peffect->value = TYPE_EQUIP + TYPE_SPELL;
@@ -1454,7 +1451,7 @@ int32 field::equip(uint16 step, uint8 equip_player, card * equip_card, card * ta
 	}
 	return TRUE;
 }
-int32 field::summon(uint16 step, uint8 sumplayer, card* target, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone) {
+int32 field::summon(uint16 step, uint8 sumplayer, card* target, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone, uint32 action_type) {
 	switch(step) {
 	case 0: {
 		if(!target->is_summonable_card())
@@ -1954,7 +1951,7 @@ int32 field::summon(uint16 step, uint8 sumplayer, card* target, effect* proc, ui
 		process_single_event();
 		raise_event(target, EVENT_SUMMON_SUCCESS, proc, 0, sumplayer, sumplayer, 0);
 		process_instant_event();
-		if(core.current_chain.size() == 0) {
+		if (action_type == SUMMON_IN_IDLE) {
 			adjust_all();
 			core.hint_timing[sumplayer] |= TIMING_SUMMON;
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, FALSE, 0);
@@ -1964,7 +1961,7 @@ int32 field::summon(uint16 step, uint8 sumplayer, card* target, effect* proc, ui
 	}
 	return TRUE;
 }
-int32 field::flip_summon(uint16 step, uint8 sumplayer, card * target) {
+int32 field::flip_summon(uint16 step, uint8 sumplayer, card * target, uint32 action_type) {
 	switch(step) {
 	case 0: {
 		if(target->current.location != LOCATION_MZONE)
@@ -2050,7 +2047,7 @@ int32 field::flip_summon(uint16 step, uint8 sumplayer, card * target) {
 		raise_event(target, EVENT_CHANGE_POS, 0, 0, sumplayer, sumplayer, 0);
 		process_instant_event();
 		adjust_all();
-		if(core.current_chain.size() == 0) {
+		if (action_type == SUMMON_IN_IDLE) {
 			core.hint_timing[sumplayer] |= TIMING_FLIPSUMMON;
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, FALSE, 0);
 		}
@@ -2059,7 +2056,7 @@ int32 field::flip_summon(uint16 step, uint8 sumplayer, card * target) {
 	}
 	return TRUE;
 }
-int32 field::mset(uint16 step, uint8 setplayer, card* target, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone) {
+int32 field::mset(uint16 step, uint8 setplayer, card* target, effect* proc, uint8 ignore_count, uint8 min_tribute, uint32 zone, uint32 action_type) {
 	switch(step) {
 	case 0: {
 		if(!target->is_summonable_card())
@@ -2387,7 +2384,7 @@ int32 field::mset(uint16 step, uint8 setplayer, card* target, effect* proc, uint
 		adjust_instant();
 		raise_event(target, EVENT_MSET, proc, 0, setplayer, setplayer, 0);
 		process_instant_event();
-		if(core.current_chain.size() == 0) {
+		if(action_type == SUMMON_IN_IDLE) {
 			adjust_all();
 			core.hint_timing[setplayer] |= TIMING_MSET;
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, FALSE, FALSE);
@@ -2667,7 +2664,7 @@ int32 field::sset_g(uint16 step, uint8 setplayer, uint8 toplayer, group* ptarget
 	}
 	return TRUE;
 }
-int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uint32 summon_type) {
+int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uint32 summon_type, uint32 action_type) {
 	switch(step) {
 	case 0: {
 		effect_set eset;
@@ -2951,7 +2948,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		process_single_event();
 		raise_event(target, EVENT_SPSUMMON_SUCCESS, proc, 0, sumplayer, sumplayer, 0);
 		process_instant_event();
-		if(core.current_chain.size() == 0) {
+		if(action_type == SUMMON_IN_IDLE) {
 			adjust_all();
 			core.hint_timing[sumplayer] |= TIMING_SPSUMMON;
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, FALSE, 0);
@@ -2959,6 +2956,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		return TRUE;
 	}
 	case 20: {
+		// EFFECT_SPSUMMON_PROC_G (Pendulum Summon)
 		effect* peffect = core.units.begin()->peffect;
 		core.units.begin()->ptarget = pduel->new_group();
 		if(peffect->operation) {
@@ -3128,6 +3126,13 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		return FALSE;
 	}
 	case 28: {
+		group * pgroup = core.units.begin()->ptarget;
+		raise_event(&pgroup->container, EVENT_SPSUMMON_SUCCESS_G_P, core.units.begin()->peffect, 0, sumplayer, sumplayer, 0);
+		process_instant_event();
+		adjust_all();
+		return FALSE;
+	}
+	case 29: {
 		group* pgroup = core.units.begin()->ptarget;
 		pduel->write_buffer8(MSG_SPSUMMONED);
 		set_spsummon_counter(sumplayer);
@@ -3145,7 +3150,7 @@ int32 field::special_summon_rule(uint16 step, uint8 sumplayer, card* target, uin
 		process_single_event();
 		raise_event(&pgroup->container, EVENT_SPSUMMON_SUCCESS, core.units.begin()->peffect, 0, sumplayer, sumplayer, 0);
 		process_instant_event();
-		if(core.current_chain.size() == 0) {
+		if(action_type == SUMMON_IN_IDLE) {
 			adjust_all();
 			core.hint_timing[sumplayer] |= TIMING_SPSUMMON;
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, FALSE, 0);
