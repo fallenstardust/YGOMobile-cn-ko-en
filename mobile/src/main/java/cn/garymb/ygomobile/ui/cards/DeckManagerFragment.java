@@ -141,7 +141,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        activity = (HomeActivity)getActivity();
+        activity = (HomeActivity) getActivity();
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         initView(layoutView);
@@ -219,18 +219,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         File oriDeckFiles = new File(ORI_DECK);
         File deckFiles = new File(AppsSettings.get().getDeckDir());
         if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
-            DialogPlus dialogplus = new DialogPlus(mContext);
-            dialogplus.setTitle(R.string.tip);
-            dialogplus.setMessage(R.string.restore_deck);
-            dialogplus.setLeftButtonText(R.string.Cancel);
-            dialogplus.setLeftButtonListener((dlg, i) -> {
-                dialogplus.dismiss();
-            });
-            dialogplus.setRightButtonText(R.string.deck_restore);
-            dialogplus.setRightButtonListener((dlg, i) -> {
-                mContext.startPermissionsActivity();
-                dialogplus.dismiss();
-            });
+            mContext.startPermissionsActivity();
         }
         init(_file);
     }
