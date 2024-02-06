@@ -146,8 +146,7 @@ public class StringManager implements Closeable {
                 if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME))) {
                     continue;
                 }
-                String[] words = line.split("[\t ]+");
-//
+                String[] words = line.split("[ ]+");
                 if (words.length >= 3) {
                     if (PRE_SETNAME.equals(words[0])) {
 //                        System.out.println(Arrays.toString(words));
