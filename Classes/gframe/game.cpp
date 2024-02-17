@@ -1841,33 +1841,41 @@ void Game::SaveConfig() {
 }
 
 void Game::ShowCardInfo(int code) {
-	CardData cd;
 	wchar_t formatBuffer[256];
-	dataManager.GetData(code, &cd);
-	imgCard->setImage(imageManager.GetTexture(code));
-	imgCard->setScaleImage(true);
-	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	auto cit = dataManager.GetCodePointer(code);
+	bool is_valid = (cit != dataManager.datas_end);
+	imgCard->setImage(imageManager.GetTexture(code, true));
+	if (is_valid) {
+		auto& cd = cit->second;
+		if (cd.is_alternative())
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
+		else
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
+	else {
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
 	stName->setText(formatBuffer);
 	int offset = 0;
-	if(!gameConf.hide_setname) {
-		unsigned long long sc = cd.setcode;
-		if(cd.alias) {
-			auto aptr = dataManager.GetCodePointer(cd.alias);
-			if(aptr != dataManager.datas_end)
-				sc = aptr->second.setcode;
+	if (is_valid && !gameConf.hide_setname) {
+		auto& cd = cit->second;
+		auto target = cit;
+		if (cd.alias && dataManager.GetCodePointer(cd.alias) != dataManager.datas_end) {
+			target = dataManager.GetCodePointer(cd.alias);
 		}
-		if(sc) {
+		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(sc));
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode));
 			stSetName->setText(formatBuffer);
-		} else
+		}
+		else
 			stSetName->setText(L"");
-	} else {
+	}
+	else {
 		stSetName->setText(L"");
 	}
-	if(cd.type & TYPE_MONSTER) {
+	if(is_valid && cit->second.type & TYPE_MONSTER) {
+		auto& cd = cit->second;
 		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type), dataManager.FormatRace(cd.race), dataManager.FormatAttribute(cd.attribute));
 		stInfo->setText(formatBuffer);
 		if(!(cd.type & TYPE_LINK)) {
@@ -1903,8 +1911,12 @@ void Game::ShowCardInfo(int code) {
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 83 * yScale, 250 * xScale, 106 * yScale));
 		stText->setRelativePosition(rect<s32>(10 * xScale, (83 + offset) * yScale, 251 * xScale, 340 * yScale));
 		scrCardText->setRelativePosition(rect<s32>(255 * xScale, (83 + offset) * yScale, 258 * xScale, 340 * yScale));
-	} else {
-		myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cd.type));
+	}
+	else {
+		if (is_valid)
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type));
+		else
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(0));
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 60 * yScale, 250 * xScale, 106 * yScale));
@@ -2018,6 +2030,7 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 }
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
+	ClearCardInfo(0);
 	imgCard->setImage(imageManager.tCover[0]);
 	scrCardText->setVisible(false);
 	imgCard->setScaleImage(true);
