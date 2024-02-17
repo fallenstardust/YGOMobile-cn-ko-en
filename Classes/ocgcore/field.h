@@ -155,11 +155,14 @@ struct processor_unit {
 	int32 value3{ 0 };
 	int32 value4{ 0 };
 };
+constexpr int SIZE_SVALUE = SIZE_RETURN_VALUE / 2;
+constexpr int SIZE_IVALUE = SIZE_RETURN_VALUE / 4;
+constexpr int SIZE_LVALUE = SIZE_RETURN_VALUE / 8;
 union return_value {
-	int8 bvalue[64];
-	int16 svalue[32];
-	int32 ivalue[16];
-	int64 lvalue[8];
+	int8 bvalue[SIZE_RETURN_VALUE];
+	int16 svalue[SIZE_SVALUE];
+	int32 ivalue[SIZE_IVALUE];
+	int64 lvalue[SIZE_LVALUE];
 };
 struct processor {
 	using effect_vector = std::vector<effect*>;
@@ -427,7 +430,7 @@ public:
 
 	int32 get_release_list(uint8 playerid, card_set* release_list, card_set* ex_list, card_set* ex_list_oneof, int32 use_con, int32 use_hand, int32 fun, int32 exarg, card* exc, group* exg, uint32 reason);
 	int32 check_release_list(uint8 playerid, int32 count, int32 use_con, int32 use_hand, int32 fun, int32 exarg, card* exc, group* exg, uint32 reason);
-	int32 get_summon_release_list(card* target, card_set* release_list, card_set* ex_list, card_set* ex_list_oneof, group* mg = NULL, uint32 ex = 0, uint32 releasable = 0xff00ff, uint32 pos = 0x1);
+	int32 get_summon_release_list(card* target, card_set* release_list, card_set* ex_list, card_set* ex_list_oneof, group* mg = nullptr, uint32 ex = 0, uint32 releasable = 0xff00ff, uint32 pos = 0x1);
 	int32 get_summon_count_limit(uint8 playerid);
 	int32 get_draw_count(uint8 playerid);
 	void get_ritual_material(uint8 playerid, effect* peffect, card_set* material, uint8 no_level = FALSE);

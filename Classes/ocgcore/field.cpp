@@ -11,6 +11,7 @@
 #include "group.h"
 #include "effect.h"
 #include "interpreter.h"
+#include <cstring>
 
 int32 field::field_used_count[32] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5};
 
@@ -628,7 +629,7 @@ int32 field::get_useable_count(card* pcard, uint8 playerid, uint8 location, uint
 		return get_useable_count_other(pcard, playerid, location, uplayer, reason, zone, list);
 }
 /**
-* @param pcard	the card about to move from Extra Deck (NULL means any card in Extra Deck)
+* @param pcard	the card about to move from Extra Deck (nullptr means any card in Extra Deck)
 * @return usable count in zone of playerid's MZONE for pcard
 */
 int32 field::get_useable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone, uint32* list) {
@@ -658,7 +659,7 @@ int32 field::get_spsummonable_count(card* pcard, uint8 playerid, uint32 zone, ui
 		return get_tofield_count(pcard, playerid, LOCATION_MZONE, playerid, LOCATION_REASON_TOFIELD, zone, list);
 }
 /**
-* @param pcard	the card about to move from Extra Deck (NULL means any card in Extra Deck)
+* @param pcard	the card about to move from Extra Deck (nullptr means any card in Extra Deck)
 * @return the number of available grids in zone of playerid's MZONE for pcard
 */
 int32 field::get_spsummonable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone, uint32* list) {
