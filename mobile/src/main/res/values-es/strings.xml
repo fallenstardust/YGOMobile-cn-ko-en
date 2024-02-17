@@ -39,7 +39,7 @@
     <string name="create_folder">Nueva carpeta</string>
     <string name="intpu_name">Ingresar nombre del deck</string>
     <string name="tab_search">Buscar</string>
-    <string name="tab_result">Resultado</string>
+    <string name="tab_result">Result</string>
     <string name="tab_manager">Deck</string>
     <string name="the_name_is_folder">El nombre de la carpeta</string>
     <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
