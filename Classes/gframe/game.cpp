@@ -1844,7 +1844,8 @@ void Game::ShowCardInfo(int code) {
 	wchar_t formatBuffer[256];
 	auto cit = dataManager.GetCodePointer(code);
 	bool is_valid = (cit != dataManager.datas_end);
-	imgCard->setImage(imageManager.GetTexture(code, true));
+	imgCard->setImage(imageManager.GetTexture(code));
+	imgCard->setScaleImage(true);
 	if (is_valid) {
 		auto& cd = cit->second;
 		if (cd.is_alternative())
