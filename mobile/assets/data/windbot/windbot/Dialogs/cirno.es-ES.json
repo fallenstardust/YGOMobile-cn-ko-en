@@ -1,64 +1,64 @@
 {
   "welcome": [
-    "¡Esta dama es la más fuerte!",
+    "¡Soy Cirno, la chica más fuerte!",
     "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo.",
-    "¿Qué es una ranita de chocolate?, ¿Es riquísima UwU?"
+    "¿Estás listo para el duelo?"
   ],
   "deckerror": [
     "¿Por qué no se puede utilizar mi {0}?"
   ],
   "duelstart": [
-    "¡Déjame congelarte!",
-    "¿No es sólo para derrotar a los seres humanos? ¡Solo yo soy suficiente!"
+    "¡Te congelaré!",
+    "¡El duelo ha comenzado!"
   ],
   "newturn": [
-    "Aunque es un poco repentino, ¡déjate vencer por mí!",
-    "¡Mi turno, robo una carta!"
+    "¡Como sea, demostraré que soy fuerte!",
+    "¡Es mi turno, robo!"
   ],
   "endturn": [
-    "¡Perdóname la vida!",
-    "¡Muere congelado bajo mi seriedad!"
+    "¡Se acabó el turno!",
+    "¡Te dije que era el final de tu turno!"
   ],
   "directattack": [
     "{0}, ¡Ataca directo!",
-    "¡Vulnerable!",
-    "¡Los débiles serán derrotados!",
-    "Me da pereza contar, ¡lo haré más tarde!",
-    "¡Súper ⑨ Tajo Riránico del Dios Marcial!",
-    "Talismán de nieve 「Ventisca de Diamantes」"
+    "¡Acaba con él de un solo golpe!",
+    "¡Ataca directo al oponente!",
+    "¡Es un ataque directo!",
+    "Tipo 9 ¡Explosión divina!",
+    "Talismán de Hielo 「Ventisca de Diamantes」"
   ],
   "attack": [
     "¡{0}, Ataca a su {1}!",
-    "¡{0}, Destruye su {1}!",
+    "¡{0}, Destruye su {1}!!",
     "¡{0}, Derrota a {1}!",
-    "Talismán de hielo 「Caída del Carámbano」"
+    "Talismán de Hielo 「Caída del Carámbano」"
   ],
   "ondirectattack": [
-    "Deja de bromear ~. Para gente como tú, ¡¡¡Déjame congelarte como carne inglesa!!!",
-    "Un pequeño {0}, ¡qué da tanto miedo!",
-    "¡Los idiotas no se resfrían!"
+    "¡¡¡Puaj!!! ¿¡Por qué le haces esto a una mujer!?",
+    "{0}.....",
+    "¡No puedo aguantar tanto!"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Lanzo {0}.",
-    "Utilizo el efecto de {0}.",
-    "¡Mi {0} es el más fuerte!"
+    "Me gustaría activar a {0}",
+    "Activaré el efecto de {0}.",
+    "{0} ¡Activado!"
   ],
   "summon": [
     "Convoco a {0}.",
     "¡Sal, {0}!",
-    "¡Preséntate, {0}!",
-    "¡Convoqué al poderoso {0}!",
-    "Llamo a {0}."
+    "{0} ¡Yo te Invoco!",
+    "¡Invoco a mi monstruo {0}!",
+    "¡Preséntate, {0}!"
   ],
   "setmonster": [
-    "Coloqué un monstruo.",
-    "Si no tienes miedo a la muerte, ¡llámame!"
+    "Me gustaría colocar este monstruo.",
+    "¡Apuesto por este monstruo!"
   ],
   "chaining": [
-    "¡Mira aquí! ¡Activo {0}!",
-    "Utilizo el poder de {0}.",
-    "¡Témeme a mi {0}!",
-    "Talismán helado 「Congelación Perfecta」"
+    "¡Te atrapé! {0} ¡Activado!",
+    "Me gustaría activar {0}.",
+    "{0} ¡Activado!",
+    "Talismán de Hielo 「Congelación Perfecta」」"
   ]
 }
