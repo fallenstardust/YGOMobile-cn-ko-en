@@ -1,7 +1,7 @@
 {
   "welcome": [
-    "Es muy raro que alguien encuentre esto.",
-    "¡Nunca pensé que podrías luchar contra mí! Duelista. Pero eso es todo. A continuación, yo, D.M.A (Duelista muy amigable), seré tu oponente."
+    "Ha llegado una persona verdaderamente rara.",
+    "¡No sabía que pelearías conmigo! Duelista. La cosa no termina ahí, D.M.A (Duelista Muy Amistoso) te apoyará."
   ],
   "deckerror": [
     "Ah, tal vez BA corrigió algo en la CBD nuevamente y {0} desapareció."
@@ -15,64 +15,63 @@
   "newturn": [
     "¡Es mi turno, robo una carta!",
     "¡Mi turno, robo una carta!",
-    "Saqué una carta.",
-	"Esto se pondrá interesante, robo una carta."
+    "¡Esto se pondrá interesante, robo una carta!"
   ],
   "endturn": [
-    "La ronda ha terminado",
-    "Mi turno ha terminado",
-    "¿Se considera esto un desarrollo exitoso...?",
-    "Ahora te toca. Tu siguiente frase es... Quiero activar Gray Flow Rei, ¿verdad?"
+    "Fin del turno",
+    "Es el final del turno.",
+    "Esto es suficiente......",
+    "Es tu turno. ¡Ahora, saca tu carta! ¡Continuemos el duelo!"
   ],
   "directattack": [
     "{0}, ¡Ataca directo!",
     "{0}, ¡Ataca a nuestro rival directamente!",
-    "{0}, Donde no hay defensas, ¡Ataca!",
-    "{0}, ¡Ataca los Puntos de Vida de nuestro oponente!",
-    "{0}，¡Ataca directamente los Puntos de Vida salud del oponente!",
-    "{0}, ¡Derrota al oponente mediante un ataque directo!",
-    "{0}, ¡Usa un ataque directo para derrotar al oponente!",
-    "{0}, ¡Ataca directamente para liberar tu poder!",
-    "¡Mi {0} aplastará tus Puntos de Vida!",
-    "¡Muestra tu fuerza a tu oponente, {0}!",
+    "{0}, ¡Ataca al monstruo defensor del oponente!",
+    "{0}, ¡Reduce los LP de tu oponente!",
+    "{0}, ¡Reduce los LP de tu oponente con un ataque directo!",
+    "{0}, ¡Derrota a tu oponente con un ataque directo!",
+    "{0}, ¡Usa un ataque directo para derrotar a tu oponente!",
+    "{0}, ¡Ataca con todas tus fuerzas!",
+    "¡Mi {0} te aplastará!",
+    "¡Detén el tiempo con el ataque final {0}!",
     "Ya no puedes detenerme. {0}, ¡Atacaaa!"
   ],
   "attack": [
-    "¡{0}, Ataca a su {1}!",
-    "¡{0}, Destruye su {1}!",
-    "¡{0}, Derrota a {1}!",
-    "¡{0}, Corre hacia {1} y liquídalo!",
-    "¡{0}, ¡Libera tu poder sobre {1}!"
+    "{0}, ¡Ataca a su {1}!",
+    "{0}, ¡Destruye su {1}!",
+    "{0}, ¡Derrota a {1}!",
+    "¡Es una apisonadora! {1}!",
+    "¡UwUwUwUwUwUwU!"
   ],
   "ondirectattack": [
-    "Ahhhh......",
-    "¡Es solo {0}!",
-    "Efectivamente, todavía estoy demasiado débil..."
+    "Mentecato.......",
+    "¡{0}!",
+    "¿¡El tiempo se ha detenido!?"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Lanzo {0}.",
-    "Utilizo el efecto de {0}.",
-    "Utilizo el poder de {0}."
+    "{0} Detendré el tiempo.",
+    "¡Activo {0}!",
+    "¡{0} es todo o nada!"
   ],
   "summon": [
     "¡Es realmente el MEJOR de entre los mejores! Sal {0}.",
     "¡Sal, {0}!",
     "¡Preséntate, {0}!",
-    "¡Convoqué al poderoso {0}!",
-    "¡Llamo a {0} para unirse a la batalla!",
-    "Llamo a {0}.",
-    "Convoco a {0}."
+    "¡Invoco al poderoso {0}!",
+    "¡Llamo a {0} para que se una a la batalla!",
+    "¡Invoco a {0}!",
+    "¡Convoco a {0}!"
   ],
   "setmonster": [
-    "Coloqué un monstruo boca abajo.",
-    "Coloqué un monstruo en el campo."
+    "¡Coloco un monstruo boca abajo!",
+    "¡Coloco un monstruo en el campo!"
   ],
   "chaining": [
     "¡Mira lo que tengo aquí! ¡Activo {0}!",
     "Utilizo el poder de {0}.",
-    "Muy buena táctica... ¡Pero no es suficiente! {0}!",
-    "Como era de esperar de un Nazi, pudiste ver a través de mi finta... ¿Dijiste que eres un simple duelista? {0}, ¡Activo mi carta!",
+    "Muy buena táctica... ¡Pero no es suficiente! {0}",
+    "De hecho, eres un gran duelista... ¿Estás listo para recibir esto? {0} ¡Activado!",
     "¡Parece que olvidaste mi {0}!",
     "¿Has considerado que tengo {0}?"
   ]
