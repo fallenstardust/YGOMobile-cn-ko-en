@@ -7,21 +7,21 @@
     "Lo siento, parece que hay algún problema con el número de {0} en mi Deck."
   ],
   "duelstart": [
-	"¡La diversión apenas comienza!",
+    "¡La diversión apenas comienza!",
     "¡Te sacaré una con este el duelo!, ¿o lágrimas?, ¿quién sabe?"
   ],
   "newturn": [
-	"¡Es mi turno, robo una carta!",
+    "¡Es mi turno, robo una carta!",
     "¡Mi turno, robo una carta!",
     "Saqué una carta."
   ],
   "endturn": [
-	"La ronda ha terminado.",
+    "La ronda ha terminado.",
     "Mi turno ha terminado.",
     "Te cedo el turno."
   ],
   "directattack": [
-	"{0}, ¡Ataque directo!",
+    "{0}, ¡Ataque directo!",
     "{0}, ¡Ataca al oponente directamente!",
     "{0}, El oponente está indefenso, ¡ataca!",
     "{0}, ¡Ataca los Puntos de Vida del oponente!",
@@ -34,25 +34,25 @@
     "Ya no puedes detenerme. {0}, ¡Ataca!"
   ],
   "attack": [
-	"¡{0}, Ataca a su {1}!",
+    "¡{0}, Ataca a su {1}!",
     "¡{0}, Destruye su {1}!",
     "¡{0}, Derrota a {1}!",
     "¡{0}, Corre hacia su {1}!",
     "¡{0}, Libera tu poder sobre {1}!"
   ],
   "ondirectattack": [
-	"ñeee……",
+    "Ñeee……",
     "¡Es solo {0}!",
     "¿Crees que puedes derrotarme así?"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-	"Activo {0}.",
+    "Activo {0}.",
     "Yo uso el efecto de {0}.",
     "Yo uso el poder de {0}."
   ],
   "summon": [
-	"Convoco a {0}.",
+    "Convoco a {0}.",
     "¡Sal, {0}!",
     "¡Aparece, {0}!",
     "¡Convoqué al poderoso {0}!",
@@ -61,11 +61,11 @@
     "Déjame convocar a {0}."
   ],
   "setmonster": [
-	"Coloqué un monstruo.",
+    "Coloqué un monstruo.",
     "He colocado un monstruo."
   ],
   "chaining": [
-	"¡XD, caiste! ¡Activo {0}!",
+    "¡XD, caiste! ¡Activo {0}!",
     "Yo uso el poder de {0}.",
     "¡Prepárate! ¡Yo uso {0}!",
     "No estoy de acuerdo. {0}, ¡Activa!",
