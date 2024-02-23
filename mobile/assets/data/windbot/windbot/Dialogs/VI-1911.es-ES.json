@@ -1,60 +1,78 @@
 {
   "welcome": [
-    "Somos un robot llamado Lao Meow Master, un ser que no es muy bueno jugando a las cartas.",
-    "Bienvenido a descargar y conocer el programa principal YGO-VI-EX de la versión Meow de YGO. Para descargar, busque en Weibo: Lao Meow Master 1911."
+    "Ha llegado una persona realmente rara.",
+    "No sabía que pelearías conmigo! Duelista. No se detiene aquí, D.A. (Duelista Amigable) te derrotará."
   ],
   "deckerror": [
-    "Ah, {0} no se puede volver a utilizar."
+    "Bueno, si BA modifica el CBD, {0} puede desaparecer."
   ],
   "duelstart": [
-	"Nadie puede vencernos.",
-    "Somos tan incompetentes que no podemos usar bien ningún Deck.",
-    "Danos tu mano izquierda, no somos rival para ti.",
-    "Bueno, no importa."
+    "Esto es IA. No esperes demasiado.",
+    "Gracias por utilizar el servidor 233. No olvides visitarnos..",
+    "Sociedad anti-mainstream NOVA.",
+    "Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
   ],
   "newturn": [
-	"Ah, ¿es nuestro turno?",
-    "Robamos una carta."
+    "Es mi turno. ¡Robo!",
+    "¡Mi turno, robo!",
+    "Saco una carta."
   ],
   "endturn": [
-	"Tenemos suerte de que no nos hayas matado.",
-    "No importa, veamos qué podemos hacer en la próxima ronda."
+    "Fin del turno.",
+    "Es el final del turno.",
+    "Esto es suficiente......",
+    "Es tu turno. ¡Ahora, saca tu carta! ¡Continuemos el duelo!"
   ],
   "directattack": [
-	"Usamos a {0} para atacar.",
-    "Esta carta está bien, solo usaremos {0} para atacar.",
-    "Aún es temprano, llamemos a {0} primero.",
-    "No es tan mala suerte. El ataque de {0} debería ser efectivo."
+    "{0}, ¡Ataque directo!",
+    "{0}, ¡Ataca a tu oponente directamente!",
+    "{0}, ¡Ataca al monstruo defensor del oponente!",
+    "{0}, ¡Reduce los LP de tu oponente!",
+    "{0}, ¡Reduce los LP de tu oponente con ataques directos!",
+    "{0}, ¡Derrota a tu oponente con un ataque directo!",
+    "{0}, ¡Derrota a tus oponentes con ataques directos!",
+    "{0}, ¡Ataca con todas tus fuerzas!",
+    "¡Mi {0} te aplastará!",
+    "¡Detén el tiempo con el ataque final {0}!",
+    "Ataca {0}. Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy!"
   ],
   "attack": [
-	"{0}, ataca a {1}.",
-    "No hay tiempo, {0}, apúrate y dale a {1}. Vamos a ver dónde hay errores que deben corregirse.",
-    "Parece funcionar, {1} no es tan fuerte como {0}, {0} ataca."
+    "¡{0}, ataca a {1}!",
+    "¡{0}, aniquila a {1}!",
+    "¡{0}, muestra a {1} tu verdadero poder!",
+    "¡Mi monstruo es demaciado para tí! {1}!",
+    "¡Ja ja ja ja ja ja ja!"
   ],
   "ondirectattack": [
-	"Solamente nos acostumbraremos a esto.",
-    "{0}, tienes suerte.",
-    "Está bien, está bien."
+    "Mentecato.......",
+    "¡{0}!",
+    "¿¡El tiempo se ha detenido!?"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-	"Activo el efecto de {0}.",
-    "Ah, espera, usamos el efecto de {0}.",
-    "¿Cómo se usa este {0}? Simplemente lo activamos."
+    "Detendré el tiempo con {0}.",
+    "¡Activo {0}!",
+    "¡{0} es la mejor!"
   ],
   "summon": [
-	"Invocar{0}",
-    "{0} parece no tener errores hoy.",
-    "{0} en realidad se actualizó en el servidor.",
-    "{0}: Master Meow es un tipo tan malo, así que deja de jugar a las cartas."
+    "Invoco a {0}",
+    "Llamo a {0}",
+    "{0} ¡Yo te Invoco!",
+    "¡Gran {0}, yo te Invoco!",
+    "¡Sal {0}!",
+    "Convocaré a {0}.",
+    "Invocaré a {0}."
   ],
   "setmonster": [
-    "Colocamos un monstruo y mira, si quieres termina el turno sin hacerlo trizas.",
-    "No hay elección, colocamos un monstruo."
+    "Puse este monstruo.",
+    "¡Coloco un monstruo!"
   ],
   "chaining": [
-	"Activamos el efecto de {0} para encadenar.",
-    "No seas travieso, {0} se activa.",
-    "Hay otro {0}, activado."
+    "Activo el efecto de {0}",
+    "Activaré {0}.",
+    "Genial... ¡Activaré {0}!",
+    "De hecho, eres el mejor duelista... ¿Estás listo para recibir esto? {0} ¡Activado!",
+    "Esta es la activación final. ¡Activo {0}!",
+    "¡Te pondré a prueba con esto, {0} activado!"
   ]
 }
