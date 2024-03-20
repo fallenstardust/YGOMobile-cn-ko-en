@@ -55,7 +55,7 @@ int SingleMode::SinglePlayThread() {
 	if(mainGame->chkSinglePlayReturnDeckTop->isChecked())
 		opt |= DUEL_RETURN_DECK_TOP;
 	char filename[256];
-	size_t slen = 0;
+	int slen = 0;
 	const wchar_t* name = mainGame->lstSinglePlayList->getListItem(mainGame->lstSinglePlayList->getSelected());
 	wchar_t fname[256];
 	myswprintf(fname, L"./single/%ls", name);

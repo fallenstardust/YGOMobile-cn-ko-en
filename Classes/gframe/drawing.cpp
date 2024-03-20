@@ -1233,10 +1233,10 @@ void Game::DrawDeckBd() {
 		dx = 436.0f / (lx - 1);
 	}
 	int padding = scrPackCards->getPos() * lx;
-	for(size_t i = 0; i < mainsize - padding && i < 7 * lx; ++i) {
-		size_t j = i + padding;
+	for(int i = 0; i < mainsize - padding && i < 7 * lx; ++i) {
+		int j = i + padding;
 		DrawThumb(deckManager.current_deck.main[j], position2di((314 + (i % lx) * dx)  * mainGame->xScale, (164 + (i / lx) * dy)  * mainGame->yScale), deckBuilder.filterList);
-		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == (int)j)
+		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == j)
 			driver->draw2DRectangleOutline(recti((313 + (i % lx) * dx)  * mainGame->xScale, (163 + (i / lx) * dy) * mainGame->yScale, (359 + (i % lx) * dx) * mainGame->xScale, (228 + (i / lx) * dy) * mainGame->yScale));
 	}
 	if(!deckBuilder.showing_pack) {
