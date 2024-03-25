@@ -119,7 +119,6 @@ using namespace video;
 using namespace io;
 using namespace gui;
 using namespace os;
-typedef int BOOL;
 
 extern const unsigned short PRO_VERSION;
 extern int enable_log;
