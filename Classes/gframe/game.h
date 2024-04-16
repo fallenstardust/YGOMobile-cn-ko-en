@@ -397,6 +397,7 @@ public:
 	irr::gui::IGUIButton* btnHostPrepNotReady;
 	irr::gui::IGUIButton* btnHostPrepStart;
 	irr::gui::IGUIButton* btnHostPrepCancel;
+	irr::gui::IGUIButton* btnHostDeckSelect;
 	//replay
 	irr::gui::IGUIWindow* wReplay;
 	irr::gui::IGUIImage* bgReplay;
@@ -752,7 +753,7 @@ extern Game* mainGame;
 #define BUTTON_HP_READY				126
 #define BUTTON_HP_NOTREADY			127
 #define COMBOBOX_HP_CATEGORY		128
-#define COMBOBOX_HP_DECK			129
+#define BUTTON_HP_DECK_SELECT		129
 #define LISTBOX_REPLAY_LIST			130
 #define BUTTON_LOAD_REPLAY			131
 #define BUTTON_CANCEL_REPLAY		132

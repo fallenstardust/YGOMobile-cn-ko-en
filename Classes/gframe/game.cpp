@@ -474,6 +474,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostPrepStart, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepCancel = env->addButton(rect<s32>(440 * xScale, 350 * yScale, 550 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 		ChangeToIGUIImageButton(btnHostPrepCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
+    btnHostDeckSelect = env->addButton(rect<s32>(300 * xScale, 300 * yScale, 410 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, L"");
+		ChangeToIGUIImageButton(btnHostDeckSelect, imageManager.tButton_S, imageManager.tButton_S_pressed);
 
 	//img always use *yScale to keep proportion
 	wCardImg = env->addStaticText(L"",rect<s32>(1 * yScale, 1 * yScale, ( 2 + CARD_IMG_WIDTH) * yScale, (2 + CARD_IMG_HEIGHT) * yScale), true, false, 0, -1, true);
