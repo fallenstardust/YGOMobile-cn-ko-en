@@ -33,6 +33,40 @@ void UpdateDeck() {
 		BufferIO::WriteInt32(pdeck, deckManager.current_deck.side[i]->first);
 	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
 }
+
+void ShowHostPrepareDeckManage() {
+    mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect, false);
+    mainGame->cbCategorySelect->setSelected(mainGame->deckBuilder.prev_category);
+    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->cbDeckSelect->setSelected(mainGame->deckBuilder.prev_deck);
+    irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
+    lstCategories->clear();
+    lstCategories->addItem(dataManager.GetSysString(1450));
+    lstCategories->addItem(dataManager.GetSysString(1451));
+    lstCategories->addItem(dataManager.GetSysString(1452));
+    lstCategories->addItem(dataManager.GetSysString(1453));
+    FileSystem::TraversalDir(L"./deck", [lstCategories](const wchar_t* name, bool isdir) {
+        if(isdir) {
+            lstCategories->addItem(name);
+        }
+    });
+    lstCategories->setSelected(mainGame->deckBuilder.prev_category);
+    mainGame->deckBuilder.RefreshDeckList();
+    mainGame->deckBuilder.RefreshReadonly(mainGame->deckBuilder.prev_category);
+    mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
+    mainGame->PopupElement(mainGame->wDeckManage);
+}
+
+void ChangeHostPrepareDeckCategory(int catesel) {
+    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->cbDeckSelect->setSelected(0);
+    mainGame->deckBuilder.RefreshReadonly(catesel);
+    deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->deckBuilder.is_modified = false;
+    mainGame->deckBuilder.prev_category = catesel;
+    mainGame->deckBuilder.prev_deck = 0;
+}
+
 bool MenuHandler::OnEvent(const irr::SEvent& event) {
 	if(mainGame->dField.OnCommonEvent(event))
 		return false;
@@ -61,6 +95,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			else
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			switch(id) {
+             case BUTTON_HP_DECK_SELECT: {
+                 if (!mainGame->wQuery->isVisible()) {
+                     ShowHostPrepareDeckManage();
+                 }
+                 break;
+             }
+             case BUTTON_CLOSE_DECKMANAGER: {
+                 mainGame->HideElement(mainGame->wDeckManage);
+                 break;
+             }
 			case BUTTON_MODE_EXIT: {
 				mainGame->soundManager->StopBGM();
 				mainGame->SaveConfig();
@@ -551,6 +595,38 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_LISTBOX_CHANGED: {
 			switch(id) {
+				case LISTBOX_CATEGORIES: {
+                    if(mainGame->wDMQuery->isVisible()) {
+                        mainGame->lstCategories->setSelected(mainGame->deckBuilder.prev_category);
+                        break;
+                    }
+                    int catesel = mainGame->lstCategories->getSelected();
+                    if(catesel == 3) {
+                        catesel = 2;
+                        mainGame->lstCategories->setSelected(catesel);
+                        if(mainGame->deckBuilder.prev_category == catesel)
+                            break;
+                    }
+                    mainGame->deckBuilder.RefreshDeckList();
+                    mainGame->lstDecks->setSelected(0);
+                    mainGame->cbCategorySelect->setSelected(catesel);
+                    ChangeHostPrepareDeckCategory(catesel);
+                    break;
+				}
+				case LISTBOX_DECKS: {
+                    if(mainGame->wDMQuery->isVisible()) {
+                        mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
+                        break;
+                    }
+                    int decksel = mainGame->lstDecks->getSelected();
+                    mainGame->cbDeckSelect->setSelected(decksel);
+                    if(decksel == -1)
+                        break;
+                    mainGame->btnHostDeckSelect->setText(mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+                    mainGame->deckBuilder.RefreshPackListScroll();
+                    mainGame->deckBuilder.prev_deck = decksel;
+                    break;
+				}
 			case LISTBOX_LAN_HOST: {
 				int sel = mainGame->lstHostList->getSelected();
 				if(sel == -1)
@@ -694,7 +770,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->RefreshBot();
 				break;
 			}
-			case COMBOBOX_HP_CATEGORY: {
+            case COMBOBOX_HP_CATEGORY: {
 				int catesel = mainGame->cbCategorySelect->getSelected();
 				if(catesel == 3) {
 					catesel = 2;
