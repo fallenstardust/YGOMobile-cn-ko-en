@@ -210,6 +210,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_HP_DUELIST: {
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
+				mainGame->btnHostDeckSelect->setEnabled(true);
 				DuelClient::SendPacketToServer(CTOS_HS_TODUELIST);
 				break;
 			}
@@ -242,12 +243,14 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				DuelClient::SendPacketToServer(CTOS_HS_READY);
 				mainGame->cbCategorySelect->setEnabled(false);
 				mainGame->cbDeckSelect->setEnabled(false);
+                mainGame->btnHostDeckSelect->setEnabled(false);
 				break;
 			}
 			case BUTTON_HP_NOTREADY: {
 				DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
+                mainGame->btnHostDeckSelect->setEnabled(true);
 				break;
 			}
 			case BUTTON_HP_START: {
@@ -622,7 +625,11 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     mainGame->cbDeckSelect->setSelected(decksel);
                     if(decksel == -1)
                         break;
-                    mainGame->btnHostDeckSelect->setText(mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+                    wchar_t cate[256];
+                    wchar_t cate_deck[256];
+                    myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"-");
+                    myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+                    mainGame->btnHostDeckSelect->setText(cate_deck);
                     mainGame->deckBuilder.RefreshPackListScroll();
                     mainGame->deckBuilder.prev_deck = decksel;
                     break;
@@ -754,10 +761,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					DuelClient::SendPacketToServer(CTOS_HS_READY);
 					mainGame->cbCategorySelect->setEnabled(false);
 					mainGame->cbDeckSelect->setEnabled(false);
+                    mainGame->btnHostDeckSelect->setEnabled(false);
 				} else {
 					DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
 					mainGame->cbCategorySelect->setEnabled(true);
 					mainGame->cbDeckSelect->setEnabled(true);
+                    mainGame->btnHostDeckSelect->setEnabled(true);
 				}
 				break;
 			}
