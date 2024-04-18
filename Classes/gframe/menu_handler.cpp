@@ -210,6 +210,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_HP_DUELIST: {
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
+				mainGame->btnHostDeckSelect->setEnabled(true);
 				DuelClient::SendPacketToServer(CTOS_HS_TODUELIST);
 				break;
 			}

@@ -474,12 +474,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostPrepStart, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepCancel = env->addButton(rect<s32>(440 * xScale, 350 * yScale, 550 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 		ChangeToIGUIImageButton(btnHostPrepCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-
-    wchar_t cate[256];
-    wchar_t cate_deck[256];
-    myswprintf(cate, L"%ls%ls", gameConf.lastcategory == dataManager.GetSysString(1452)? L"" : gameConf.lastcategory, gameConf.lastcategory == dataManager.GetSysString(1452)? L"" : L"-");
-    myswprintf(cate_deck, L"%ls%ls", cate, gameConf.lastdeck);
-    btnHostDeckSelect = env->addButton(rect<s32>(320 * xScale, 300 * yScale, 550 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, cate_deck);
+    btnHostDeckSelect = env->addButton(rect<s32>(320 * xScale, 300 * yScale, 550 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, L"");
 
 	//img always use *yScale to keep proportion
 	wCardImg = env->addStaticText(L"",rect<s32>(1 * yScale, 1 * yScale, ( 2 + CARD_IMG_WIDTH) * yScale, (2 + CARD_IMG_HEIGHT) * yScale), true, false, 0, -1, true);
