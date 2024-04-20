@@ -52,15 +52,22 @@ void ShowHostPrepareDeckManage() {
     });
     lstCategories->setSelected(mainGame->deckBuilder.prev_category);
     mainGame->deckBuilder.RefreshDeckList();
-    mainGame->deckBuilder.RefreshReadonly(mainGame->deckBuilder.prev_category);
-    mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
+    mainGame->btnNewCategory->setEnabled(false);
+    mainGame->btnRenameCategory->setEnabled(false);
+    mainGame->btnDeleteCategory->setEnabled(false);
+    mainGame->btnNewDeck->setEnabled(false);
+    mainGame->btnRenameDeck->setEnabled(false);
+    mainGame->btnDMDeleteDeck->setEnabled(false);
+    mainGame->btnMoveDeck->setEnabled(false);
+    mainGame->btnCopyDeck->setEnabled(false);
+    mainGame->lstDecks->setSelected(mainGame->cbDeckSelect->getSelected());
     mainGame->PopupElement(mainGame->wDeckManage);
 }
+
 
 void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
     mainGame->cbDeckSelect->setSelected(0);
-    mainGame->deckBuilder.RefreshReadonly(catesel);
     deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
     mainGame->deckBuilder.is_modified = false;
     mainGame->deckBuilder.prev_category = catesel;
@@ -120,6 +127,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_JOIN_HOST: {
+				mainGame->HideElement(mainGame->wDeckManage);
 				bot_mode = false;
 				mainGame->TrimText(mainGame->ebJoinHost);
 				mainGame->TrimText(mainGame->ebJoinPort);
@@ -164,6 +172,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_JOIN_CANCEL: {
+				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
 				if(exit_on_return)
@@ -208,6 +217,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_DUELIST: {
+				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
 				mainGame->btnHostDeckSelect->setEnabled(true);
@@ -215,6 +225,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_OBSERVER: {
+				mainGame->HideElement(mainGame->wDeckManage);
 				DuelClient::SendPacketToServer(CTOS_HS_TOOBSERVER);
 				break;
 			}
@@ -241,6 +252,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				}
 				UpdateDeck();
 				DuelClient::SendPacketToServer(CTOS_HS_READY);
+				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->cbCategorySelect->setEnabled(false);
 				mainGame->cbDeckSelect->setEnabled(false);
                 mainGame->btnHostDeckSelect->setEnabled(false);
@@ -248,6 +260,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_HP_NOTREADY: {
 				DuelClient::SendPacketToServer(CTOS_HS_NOTREADY);
+                mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->cbCategorySelect->setEnabled(true);
 				mainGame->cbDeckSelect->setEnabled(true);
                 mainGame->btnHostDeckSelect->setEnabled(true);
@@ -255,6 +268,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_HP_START: {
 				DuelClient::SendPacketToServer(CTOS_HS_START);
+                mainGame->HideElement(mainGame->wDeckManage);
 				break;
 			}
 			case BUTTON_HP_CANCEL: {
@@ -264,6 +278,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->btnJoinCancel->setEnabled(true);
 				mainGame->btnStartBot->setEnabled(true);
 				mainGame->btnBotCancel->setEnabled(true);
+				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->HideElement(mainGame->wHostPrepare);
 				if(bot_mode)
 					mainGame->ShowElement(mainGame->wSinglePlay);
@@ -752,6 +767,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(!caller->isEnabled())
 					break;
 				mainGame->env->setFocus(mainGame->wHostPrepare);
+                mainGame->HideElement(mainGame->wDeckManage);
 				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
 					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
 						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
