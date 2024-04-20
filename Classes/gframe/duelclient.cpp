@@ -319,6 +319,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, unsigned int len) {
 			mainGame->addMessageBox(L"", msgbuf);
 			mainGame->cbCategorySelect->setEnabled(true);
 			mainGame->cbDeckSelect->setEnabled(true);
+			mainGame->btnHostDeckSelect->setEnabled(true);
 			mainGame->btnHostPrepStart->setEnabled(true);
 			mainGame->gMutex.unlock();
 			break;
@@ -491,13 +492,14 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, unsigned int len) {
 		mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
 		mainGame->cbCategorySelect->setEnabled(true);
 		mainGame->cbDeckSelect->setEnabled(true);
+		mainGame->btnHostDeckSelect->setEnabled(true);
 		mainGame->HideElement(mainGame->wCreateHost);
 		mainGame->HideElement(mainGame->wLanWindow);
 		mainGame->HideElement(mainGame->wSinglePlay);
 		mainGame->ShowElement(mainGame->wHostPrepare);
         wchar_t cate[256];
         wchar_t cate_deck[256];
-        myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==2 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==2 ? L"" : L"-");
+        myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==2 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==2 ? L"" : L"|");
         myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()));
         mainGame->btnHostDeckSelect->setText(cate_deck);
 		if(!mainGame->chkIgnore1->isChecked())

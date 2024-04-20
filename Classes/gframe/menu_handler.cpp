@@ -614,6 +614,11 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     mainGame->lstDecks->setSelected(0);
                     mainGame->cbCategorySelect->setSelected(catesel);
                     ChangeHostPrepareDeckCategory(catesel);
+					wchar_t cate[256];
+					wchar_t cate_deck[256];
+					myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"|");
+					myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+					mainGame->btnHostDeckSelect->setText(cate_deck);
                     break;
 				}
 				case LISTBOX_DECKS: {
@@ -627,7 +632,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                         break;
                     wchar_t cate[256];
                     wchar_t cate_deck[256];
-                    myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"-");
+                    myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"|");
                     myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
                     mainGame->btnHostDeckSelect->setText(cate_deck);
                     mainGame->deckBuilder.RefreshPackListScroll();
