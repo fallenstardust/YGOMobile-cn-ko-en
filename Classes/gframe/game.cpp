@@ -883,14 +883,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnReset = env->addButton(rect<s32>(0, 540 * yScale , 150 * xScale, 600 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
         ChangeToIGUIImageButton(btnReset, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck edit
-	wDeckEdit = env->addWindow(rect<s32>(309 * xScale, 1 * yScale, 605 * xScale, 130 * yScale), false, L"");
+	wDeckEdit = env->addWindow(rect<s32>(309 * xScale, 1 * yScale, 519 * xScale, 130 * yScale), false, L"");
     wDeckEdit->getCloseButton()->setVisible(false);
     wDeckEdit->setDrawTitlebar(false);
 	wDeckEdit->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckEdit, &bgDeckEdit, imageManager.tDialog_L);
-	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
-	    ChangeToIGUIImageButton(btnManageDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	//deck manage
+	btnManageDeck = env->addButton(rect<s32>(10 * xScale, 35 * yScale, 140 * xScale, 75 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+    //deck manage
 	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 460 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
@@ -941,26 +940,29 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrPackCards->setSmallStep(1);
 	scrPackCards->setVisible(false);
         ChangeToIGUIImageButton(btnDMCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
-	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBCATEGORY);
+	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 10 * yScale, 60 * xScale, 50 * yScale), false, false, wDeckEdit);
+	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBCATEGORY);
 	cbDBCategory->setMaxSelectionRows(15);
-	stDeck = env->addStaticText(dataManager.GetSysString(1301), rect<s32>(10 * xScale, 39 * yScale, 100 * xScale, 59 * yScale), false, false, wDeckEdit);
-	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 35 * yScale, 220 * xScale, 60 * yScale), wDeckEdit, COMBOBOX_DBDECKS);
+	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBDECKS);
 	cbDBDecks->setMaxSelectionRows(15);
-	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 290 * xScale, 60 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
+	btnSaveDeck = env->addButton(rect<s32>(145 * xScale, 35 * yScale, 200 * xScale, 75 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
         ChangeToIGUIImageButton(btnSaveDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(80 * xScale, 65 * yScale, 220 * xScale, 90 * yScale), wDeckEdit, -1);
+	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 80 * yScale, 140 * xScale, 120 * yScale), wDeckEdit, -1);
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnSaveDeckAs = env->addButton(rect<s32>(225 * xScale, 65 * yScale, 290 * xScale, 90 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
+	btnSaveDeckAs = env->addButton(rect<s32>(145 * xScale, 80 * yScale, 200 * xScale, 120 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
         ChangeToIGUIImageButton(btnSaveDeckAs, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnDeleteDeck = env->addButton(rect<s32>(10 * xScale, 95 * yScale, 70 * xScale, 116 * yScale), wDeckEdit, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));
+	btnDeleteDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 245 * yScale, 310 * yScale, 285 * yScale), 0, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));
         ChangeToIGUIImageButton(btnDeleteDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnShuffleDeck = env->addButton(rect<s32>(130 * xScale, 95 * yScale, 180 * xScale, 116 * yScale), wDeckEdit, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
+	btnShuffleDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 70 * yScale, 310 * yScale, 110 * yScale), 0, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
         ChangeToIGUIImageButton(btnShuffleDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnSortDeck = env->addButton(rect<s32>(185 * xScale, 95 * yScale, 235 * xScale, 116 * yScale), wDeckEdit, BUTTON_SORT_DECK, dataManager.GetSysString(1305));
+	btnSortDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 115 * yScale, 310 * yScale, 155 * yScale), 0, BUTTON_SORT_DECK, dataManager.GetSysString(1305));
         ChangeToIGUIImageButton(btnSortDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnClearDeck = env->addButton(rect<s32>(240 * xScale, 95 * yScale, 290 * xScale, 116 * yScale), wDeckEdit, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
+	btnClearDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 160 * yScale, 310 * yScale, 200 * yScale), 0, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
         ChangeToIGUIImageButton(btnClearDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
+    btnDeleteDeck->setVisible(false);
+    btnShuffleDeck->setVisible(false);
+    btnSortDeck->setVisible(false);
+    btnClearDeck->setVisible(false);
 	btnSideOK = env->addButton(rect<s32>(510 * xScale, 40 * yScale, 820 * xScale, 80 * yScale), 0, BUTTON_SIDE_OK, dataManager.GetSysString(1334));
         ChangeToIGUIImageButton(btnSideOK, imageManager.tButton_L, imageManager.tButton_L_pressed);
 	btnSideOK->setVisible(false);

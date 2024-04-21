@@ -57,6 +57,10 @@ void DeckBuilder::Initialize() {
 	mainGame->btnLeaveGame->setVisible(true);
 	mainGame->btnLeaveGame->setText(dataManager.GetSysString(1306));
 	mainGame->wPallet->setVisible(true);
+    mainGame->btnDeleteDeck->setVisible(true);
+    mainGame->btnShuffleDeck->setVisible(true);
+    mainGame->btnSortDeck->setVisible(true);
+    mainGame->btnClearDeck->setVisible(true);
 	mainGame->imgChat->setVisible(false);
 	mainGame->imgQuickAnimation->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
@@ -77,6 +81,11 @@ void DeckBuilder::Initialize() {
 	prev_category = mainGame->cbDBCategory->getSelected();
 	RefreshReadonly(prev_category);
 	RefreshPackListScroll();
+    wchar_t cate[256];
+    wchar_t cate_deck[256];
+    myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
+    myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
+    mainGame->btnManageDeck->setText(cate_deck);
 	prev_operation = 0;
 	prev_sel = -1;
 	is_modified = false;
@@ -93,6 +102,10 @@ void DeckBuilder::Terminate() {
 	mainGame->wInfos->setVisible(false);
 	mainGame->btnLeaveGame->setVisible(false);
     mainGame->wPallet->setVisible(false);
+    mainGame->btnDeleteDeck->setVisible(false);
+    mainGame->btnShuffleDeck->setVisible(false);
+    mainGame->btnSortDeck->setVisible(false);
+    mainGame->btnClearDeck->setVisible(false);
     mainGame->imgChat->setVisible(true);
     mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);
@@ -1020,6 +1033,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->lstDecks->setSelected(0);
 				mainGame->cbDBCategory->setSelected(catesel);
 				ChangeCategory(catesel);
+                wchar_t cate[256];
+                wchar_t cate_deck[256];
+                myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
+                myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
+                mainGame->btnManageDeck->setText(cate_deck);
 				break;
 			}
 			case LISTBOX_DECKS: {
@@ -1038,6 +1056,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				deckManager.LoadDeck(filepath, showing_pack);
 				RefreshPackListScroll();
 				prev_deck = decksel;
+                wchar_t cate[256];
+                wchar_t cate_deck[256];
+                myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
+                myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
+                mainGame->btnManageDeck->setText(cate_deck);
 				break;
 			}
 			}
