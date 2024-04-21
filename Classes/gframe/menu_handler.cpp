@@ -50,8 +50,9 @@ void ShowHostPrepareDeckManage() {
             lstCategories->addItem(name);
         }
     });
-    lstCategories->setSelected(mainGame->deckBuilder.prev_category);
+	lstCategories->setSelected(mainGame->deckBuilder.prev_category);
     mainGame->deckBuilder.RefreshDeckList();
+	mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
     mainGame->btnNewCategory->setEnabled(false);
     mainGame->btnRenameCategory->setEnabled(false);
     mainGame->btnDeleteCategory->setEnabled(false);
@@ -60,7 +61,6 @@ void ShowHostPrepareDeckManage() {
     mainGame->btnDMDeleteDeck->setEnabled(false);
     mainGame->btnMoveDeck->setEnabled(false);
     mainGame->btnCopyDeck->setEnabled(false);
-    mainGame->lstDecks->setSelected(mainGame->cbDeckSelect->getSelected());
     mainGame->PopupElement(mainGame->wDeckManage);
 }
 
