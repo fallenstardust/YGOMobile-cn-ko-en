@@ -35,13 +35,8 @@ void UpdateDeck() {
 }
 
 void ShowHostPrepareDeckManage() {
-    mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect, false);
-    mainGame->cbCategorySelect->setSelected(mainGame->deckBuilder.prev_category);
-    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
-    mainGame->cbDeckSelect->setSelected(mainGame->deckBuilder.prev_deck);
     irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
     lstCategories->clear();
-    lstCategories->addItem(dataManager.GetSysString(1450));
     lstCategories->addItem(dataManager.GetSysString(1451));
     lstCategories->addItem(dataManager.GetSysString(1452));
     lstCategories->addItem(dataManager.GetSysString(1453));
@@ -68,7 +63,6 @@ void ShowHostPrepareDeckManage() {
 void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
     mainGame->cbDeckSelect->setSelected(0);
-    deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
     mainGame->deckBuilder.is_modified = false;
     mainGame->deckBuilder.prev_category = catesel;
     mainGame->deckBuilder.prev_deck = 0;
@@ -619,8 +613,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                         break;
                     }
                     int catesel = mainGame->lstCategories->getSelected();
-                    if(catesel == 3) {
-                        catesel = 2;
+                    if(catesel == 2) {
+                        catesel = 1;
                         mainGame->lstCategories->setSelected(catesel);
                         if(mainGame->deckBuilder.prev_category == catesel)
                             break;

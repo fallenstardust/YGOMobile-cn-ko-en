@@ -210,15 +210,27 @@ void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text) 
 	wchar_t catepath[256];
 	switch(index) {
 	case 0:
-		myswprintf(catepath, L"./pack");
+		if (mainGame->wHostPrepare->isVisible()) {
+			myswprintf(catepath, L"./windbot/Decks");
+		} else {
+			myswprintf(catepath, L"./pack");
+		}
 		break;
 	case 1:
-		myswprintf(catepath, L"./windbot/Decks");
+		if (mainGame->wHostPrepare->isVisible()) {
+			myswprintf(catepath, L"./deck");
+		} else {
+			myswprintf(catepath, L"./windbot/Decks");
+		}
 		break;
 	case -1:
 	case 2:
 	case 3:
-		myswprintf(catepath, L"./deck");
+		if (mainGame->wHostPrepare->isVisible()) {
+			myswprintf(catepath, L"./deck/%ls", text);
+		} else {
+			myswprintf(catepath, L"./deck");
+		}
 		break;
 	default:
 		myswprintf(catepath, L"./deck/%ls", text);
