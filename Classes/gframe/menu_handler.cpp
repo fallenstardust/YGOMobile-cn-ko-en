@@ -50,7 +50,7 @@ void ShowHostPrepareDeckManage() {
         }
     });
 	lstCategories->setSelected(mainGame->deckBuilder.prev_category);
-    mainGame->deckBuilder.RefreshDeckList();
+    mainGame->deckBuilder.RefreshDeckList(false);
 	mainGame->lstDecks->setSelected(mainGame->deckBuilder.prev_deck);
     mainGame->btnNewCategory->setEnabled(false);
     mainGame->btnRenameCategory->setEnabled(false);
@@ -623,7 +623,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                         if(mainGame->deckBuilder.prev_category == catesel)
                             break;
                     }
-                    mainGame->deckBuilder.RefreshDeckList();
+                    mainGame->deckBuilder.RefreshDeckList(false);
                     mainGame->lstDecks->setSelected(0);
                     mainGame->cbCategorySelect->setSelected(catesel);
                     ChangeHostPrepareDeckCategory(catesel);
