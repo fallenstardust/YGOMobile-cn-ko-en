@@ -1620,7 +1620,9 @@ void Game::LoadExpansions() {
 }
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
-	cbCategory->addItem(dataManager.GetSysString(1450));
+	if (cbCategory != mainGame->cbCategorySelect) {
+		cbCategory->addItem(dataManager.GetSysString(1450));
+	}
 	cbCategory->addItem(dataManager.GetSysString(1451));
 	cbCategory->addItem(dataManager.GetSysString(1452));
 	cbCategory->addItem(dataManager.GetSysString(1453));
@@ -1629,7 +1631,11 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 			cbCategory->addItem(name);
 		}
 	});
-	cbCategory->setSelected(2);
+    if (cbCategory == mainGame->cbCategorySelect) {
+        cbCategory->setSelected(1);
+    } else {
+        cbCategory->setSelected(2);
+    }
 	if(selectlastused) {
 		for(size_t i = 0; i < cbCategory->getItemCount(); ++i) {
 			if(!wcscmp(cbCategory->getItem(i), gameConf.lastcategory)) {
@@ -1649,13 +1655,15 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	}
 }
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
-	if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
-		// can't use pack list in duel
-		cbDeck->clear();
-		return;
-	}
+    if (cbCategory != mainGame->cbCategorySelect) {
+        if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
+            // can't use pack list in duel
+            cbDeck->clear();
+            return;
+        }
+    }
 	wchar_t catepath[256];
-	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
+	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText(), cbCategory == mainGame->cbDBCategory);
 	cbDeck->clear();
 	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
 }

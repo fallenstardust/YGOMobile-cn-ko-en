@@ -218,7 +218,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				int catesel = mainGame->cbDBCategory->getSelected();
 				wchar_t catepath[256];
-				deckManager.GetCategoryPath(catepath, catesel, mainGame->cbDBCategory->getText());
+				deckManager.GetCategoryPath(catepath, catesel, mainGame->cbDBCategory->getText(), true);
 				wchar_t filepath[256];
 				myswprintf(filepath, L"%ls/%ls.ydk", catepath, dname);
 				if(deckManager.SaveDeck(deckManager.current_deck, filepath)) {
@@ -522,7 +522,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				case BUTTON_NEW_DECK: {
 					const wchar_t* deckname = mainGame->ebDMName->getText();
 					wchar_t catepath[256];
-					deckManager.GetCategoryPath(catepath, mainGame->cbDBCategory->getSelected(), mainGame->cbDBCategory->getText());
+					deckManager.GetCategoryPath(catepath, mainGame->cbDBCategory->getSelected(), mainGame->cbDBCategory->getText(), true);
 					wchar_t filepath[256];
 					myswprintf(filepath, L"%ls/%ls.ydk", catepath, deckname);
 					bool res = false;
@@ -1051,7 +1051,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t filepath[256];
 				wchar_t catepath[256];
-				deckManager.GetCategoryPath(catepath, mainGame->lstCategories->getSelected(), mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()));
+				deckManager.GetCategoryPath(catepath, mainGame->lstCategories->getSelected(), mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), true);
 				myswprintf(filepath, L"%ls/%ls.ydk", catepath, mainGame->lstDecks->getListItem(decksel));
 				deckManager.LoadDeck(filepath, showing_pack);
 				RefreshPackListScroll();
@@ -1645,11 +1645,11 @@ void DeckBuilder::SortList() {
 	}
 }
 
-void DeckBuilder::RefreshDeckList() {
+void DeckBuilder::RefreshDeckList(bool showPack) {
 	irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
 	irr::gui::IGUIListBox* lstDecks = mainGame->lstDecks;
 	wchar_t catepath[256];
-	deckManager.GetCategoryPath(catepath, lstCategories->getSelected(), lstCategories->getListItem(lstCategories->getSelected()));
+	deckManager.GetCategoryPath(catepath, lstCategories->getSelected(), lstCategories->getListItem(lstCategories->getSelected()), showPack);
 	lstDecks->clear();
 	mainGame->RefreshDeck(catepath, [lstDecks](const wchar_t* item) { lstDecks->addItem(item); });
 }

@@ -501,7 +501,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, unsigned int len) {
 		mainGame->deckBuilder.prev_deck = mainGame->cbDeckSelect->getSelected();
         wchar_t cate[256];
         wchar_t cate_deck[256];
-        myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==2 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==2 ? L"" : L"|");
+        myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==1 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==1 ? L"" : L"|");
         myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()));
         mainGame->btnHostDeckSelect->setText(cate_deck);
 		if(!mainGame->chkIgnore1->isChecked())
