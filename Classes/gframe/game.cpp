@@ -1631,7 +1631,7 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 			cbCategory->addItem(name);
 		}
 	});
-    if (cbCategory != mainGame->cbCategorySelect) {
+    if (cbCategory == mainGame->cbCategorySelect) {
         cbCategory->setSelected(1);
     } else {
         cbCategory->setSelected(2);

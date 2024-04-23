@@ -35,6 +35,10 @@ void UpdateDeck() {
 }
 
 void ShowHostPrepareDeckManage() {
+    mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect, false);
+    mainGame->cbCategorySelect->setSelected(mainGame->deckBuilder.prev_category);
+    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->cbDeckSelect->setSelected(mainGame->deckBuilder.prev_deck);
     irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
     lstCategories->clear();
     lstCategories->addItem(dataManager.GetSysString(1451));
@@ -625,7 +629,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     ChangeHostPrepareDeckCategory(catesel);
 					wchar_t cate[256];
 					wchar_t cate_deck[256];
-					myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"|");
+					myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==1 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==1 ? L"" : L"|");
 					myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
 					mainGame->btnHostDeckSelect->setText(cate_deck);
                     break;
@@ -641,7 +645,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                         break;
                     wchar_t cate[256];
                     wchar_t cate_deck[256];
-                    myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==2 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==2 ? L"" : L"|");
+                    myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==1 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==1 ? L"" : L"|");
                     myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
                     mainGame->btnHostDeckSelect->setText(cate_deck);
                     mainGame->deckBuilder.RefreshPackListScroll();
