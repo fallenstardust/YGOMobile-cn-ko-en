@@ -206,30 +206,33 @@ bool DeckManager::LoadSide(Deck& deck, int* dbuf, int mainc, int sidec) {
 	deck = ndeck;
 	return true;
 }
-void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text) {
+void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack) {
 	wchar_t catepath[256];
 	switch(index) {
 	case 0:
-		if (mainGame->wHostPrepare->isVisible()) {
-			myswprintf(catepath, L"./windbot/Decks");
-		} else {
+		if (showPack) {
 			myswprintf(catepath, L"./pack");
+
+		} else {
+			myswprintf(catepath, L"./windbot/Decks");
 		}
 		break;
 	case 1:
-		if (mainGame->wHostPrepare->isVisible()) {
-			myswprintf(catepath, L"./deck");
-		} else {
+		if (showPack) {
 			myswprintf(catepath, L"./windbot/Decks");
+		} else {
+			myswprintf(catepath, L"./deck");
+
 		}
 		break;
 	case -1:
 	case 2:
 	case 3:
-		if (mainGame->wHostPrepare->isVisible()) {
-			myswprintf(catepath, L"./deck/%ls", text);
-		} else {
+		if (showPack) {
 			myswprintf(catepath, L"./deck");
+		} else {
+			myswprintf(catepath, L"./deck/%ls", text);
+
 		}
 		break;
 	default:
@@ -242,7 +245,7 @@ void DeckManager::GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, 
 	wchar_t catepath[256];
 	wchar_t* deckname = (wchar_t*)cbDeck->getItem(cbDeck->getSelected());
 	if(deckname != NULL) {
-		GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
+		GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText(), cbCategory == mainGame->cbDBCategory);
 		myswprintf(filepath, L"%ls/%ls.ydk", catepath, deckname);
 		BufferIO::CopyWStr(filepath, ret, 256);
 	}
