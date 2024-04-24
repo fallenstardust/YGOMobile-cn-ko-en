@@ -463,8 +463,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stHostPrepOB = env->addStaticText(strbuf, rect<s32>(320 * xScale, 310 * yScale, 560 * xScale, 350 * yScale), false, false, wHostPrepare);
 	stHostPrepRule = env->addStaticText(L"", rect<s32>(320 * xScale, 30 * yScale, 560 * xScale, 300 * yScale), false, true, wHostPrepare);
 	env->addStaticText(dataManager.GetSysString(1254), rect<s32>(10 * xScale, 320 * yScale, 110 * xScale, 350 * yScale), false, false, wHostPrepare);
-	cbCategorySelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(10 * xScale, 350 * yScale, 110 * xScale, 390 * yScale), wHostPrepare, COMBOBOX_HP_CATEGORY);
-	cbDeckSelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(120 * xScale, 350 * yScale, 270 * xScale, 390 * yScale), wHostPrepare);
+	cbCategorySelect = env->addComboBox(rect<s32>(0, 0, 0, 0), wHostPrepare, COMBOBOX_HP_CATEGORY);
+	cbDeckSelect = env->addComboBox(rect<s32>(0, 0, 0, 0), wHostPrepare);
+	btnHostDeckSelect = env->addButton(rect<s32>(10 * xScale, 350 * yScale, 270 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, L"");
 	btnHostPrepReady = env->addButton(rect<s32>(170 * xScale, 175 * yScale, 280 * xScale, 215 * yScale), wHostPrepare, BUTTON_HP_READY, dataManager.GetSysString(1218));
 		ChangeToIGUIImageButton(btnHostPrepReady, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepNotReady = env->addButton(rect<s32>(170 * xScale, 175 * yScale, 280 * xScale, 215 * yScale), wHostPrepare, BUTTON_HP_NOTREADY, dataManager.GetSysString(1219));
@@ -474,7 +475,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostPrepStart, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepCancel = env->addButton(rect<s32>(440 * xScale, 350 * yScale, 550 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_CANCEL, dataManager.GetSysString(1210));
 		ChangeToIGUIImageButton(btnHostPrepCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-    btnHostDeckSelect = env->addButton(rect<s32>(320 * xScale, 300 * yScale, 550 * xScale, 340 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, L"");
 
 	//img always use *yScale to keep proportion
 	wCardImg = env->addStaticText(L"",rect<s32>(1 * yScale, 1 * yScale, ( 2 + CARD_IMG_WIDTH) * yScale, (2 + CARD_IMG_HEIGHT) * yScale), true, false, 0, -1, true);
@@ -883,12 +883,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnReset = env->addButton(rect<s32>(0, 540 * yScale , 150 * xScale, 600 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
         ChangeToIGUIImageButton(btnReset, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck edit
-	wDeckEdit = env->addWindow(rect<s32>(309 * xScale, 1 * yScale, 519 * xScale, 130 * yScale), false, L"");
+	wDeckEdit = env->addWindow(rect<s32>(310 * xScale, 1 * yScale, 600 * xScale, 130 * yScale), false, L"");
     wDeckEdit->getCloseButton()->setVisible(false);
     wDeckEdit->setDrawTitlebar(false);
 	wDeckEdit->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckEdit, &bgDeckEdit, imageManager.tDialog_L);
-	btnManageDeck = env->addButton(rect<s32>(10 * xScale, 35 * yScale, 140 * xScale, 75 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+	btnManageDeck = env->addButton(rect<s32>(10 * xScale, 35 * yScale, 220 * xScale, 75 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
     //deck manage
 	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 460 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
@@ -945,11 +945,11 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	cbDBCategory->setMaxSelectionRows(15);
 	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBDECKS);
 	cbDBDecks->setMaxSelectionRows(15);
-	btnSaveDeck = env->addButton(rect<s32>(145 * xScale, 35 * yScale, 200 * xScale, 75 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
+	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 280 * xScale, 75 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
         ChangeToIGUIImageButton(btnSaveDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 80 * yScale, 140 * xScale, 120 * yScale), wDeckEdit, -1);
+	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 80 * yScale, 220 * xScale, 120 * yScale), wDeckEdit, -1);
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnSaveDeckAs = env->addButton(rect<s32>(145 * xScale, 80 * yScale, 200 * xScale, 120 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
+	btnSaveDeckAs = env->addButton(rect<s32>(225 * xScale, 80 * yScale, 280 * xScale, 120 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
         ChangeToIGUIImageButton(btnSaveDeckAs, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnDeleteDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 245 * yScale, 310 * yScale, 285 * yScale), 0, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));
         ChangeToIGUIImageButton(btnDeleteDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1655,7 +1655,7 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	}
 }
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
-    if (cbCategory != mainGame->cbCategorySelect) {
+    if (cbCategory == mainGame->cbDBCategory) {
         if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
             // can't use pack list in duel
             cbDeck->clear();
