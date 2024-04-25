@@ -45,6 +45,14 @@ static inline bool havePopupWindow() {
 	return mainGame->wQuery->isVisible() || mainGame->wCategories->isVisible() || mainGame->wLinkMarks->isVisible() || mainGame->wDeckManage->isVisible() || mainGame->wDMQuery->isVisible();
 }
 
+void SetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, wchar_t* string){
+	wchar_t cate[256];
+	wchar_t cate_deck[256];
+	myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : string);
+	myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
+	button->setText(cate_deck);
+}
+
 void DeckBuilder::Initialize() {
 	mainGame->is_building = true;
 	mainGame->is_siding = false;
@@ -81,11 +89,7 @@ void DeckBuilder::Initialize() {
 	prev_category = mainGame->cbDBCategory->getSelected();
 	RefreshReadonly(prev_category);
 	RefreshPackListScroll();
-    wchar_t cate[256];
-    wchar_t cate_deck[256];
-    myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
-    myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
-    mainGame->btnManageDeck->setText(cate_deck);
+    SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 	prev_operation = 0;
 	prev_sel = -1;
 	is_modified = false;
@@ -247,6 +251,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
+                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				prev_operation = id;
 				prev_sel = sel;
 				break;
@@ -376,6 +381,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->stDMMessage2->setText(mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()));
 				mainGame->PopupElement(mainGame->wDMQuery);
 				mainGame->gMutex.unlock();
+                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				prev_operation = id;
 				break;
 			}
@@ -1033,11 +1039,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->lstDecks->setSelected(0);
 				mainGame->cbDBCategory->setSelected(catesel);
 				ChangeCategory(catesel);
-                wchar_t cate[256];
-                wchar_t cate_deck[256];
-                myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
-                myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
-                mainGame->btnManageDeck->setText(cate_deck);
+                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				break;
 			}
 			case LISTBOX_DECKS: {
@@ -1056,11 +1058,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				deckManager.LoadDeck(filepath, showing_pack);
 				RefreshPackListScroll();
 				prev_deck = decksel;
-                wchar_t cate[256];
-                wchar_t cate_deck[256];
-                myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : L"\n");
-                myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
-                mainGame->btnManageDeck->setText(cate_deck);
+                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				break;
 			}
 			}
