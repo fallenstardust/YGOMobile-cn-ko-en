@@ -381,7 +381,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->stDMMessage2->setText(mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()));
 				mainGame->PopupElement(mainGame->wDMQuery);
 				mainGame->gMutex.unlock();
-                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				prev_operation = id;
 				break;
 			}
@@ -699,6 +698,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				mainGame->stDMMessage2->setVisible(false);
 				mainGame->ebDMName->setVisible(false);
 				mainGame->cbDMCategory->setVisible(false);
+                SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 				break;
 			}
 			case BUTTON_DM_CANCEL: {
@@ -770,6 +770,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						prev_deck = sel;
 						is_modified = false;
 					}
+                    SetCategoryDeckNameOnButton(mainGame->btnManageDeck, L"\n");
 					prev_sel = -1;
 				} else if(prev_operation == BUTTON_LEAVE_GAME) {
 					Terminate();
