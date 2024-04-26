@@ -34,11 +34,11 @@ void UpdateDeck() {
 	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
 }
 
-void ShowHostPrepareDeckManage() {
-    mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect, false);
-    mainGame->cbCategorySelect->setSelected(mainGame->deckBuilder.prev_category);
-    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
-    mainGame->cbDeckSelect->setSelected(mainGame->deckBuilder.prev_deck);
+void ShowHostPrepareDeckManage(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDecks) {
+    mainGame->RefreshCategoryDeck(cbCategory, cbDecks, false);
+    cbCategory->setSelected(mainGame->deckBuilder.prev_category);
+    mainGame->RefreshDeck(cbCategory, cbDecks);
+    cbDecks->setSelected(mainGame->deckBuilder.prev_deck);
     irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
     lstCategories->clear();
     lstCategories->addItem(dataManager.GetSysString(1451));
@@ -114,7 +114,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			switch(id) {
              case BUTTON_HP_DECK_SELECT: {
                  if (!mainGame->wQuery->isVisible()) {
-                     ShowHostPrepareDeckManage();
+                     ShowHostPrepareDeckManage(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
                  }
                  break;
              }
@@ -434,46 +434,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->PopupElement(mainGame->wACMessage, 20);
 				break;
 			}
+            case BUTTON_BOT_DECK_SELECT: {
+				ShowHostPrepareDeckManage(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+                break;
+            }
 			case BUTTON_BOT_START: {
 				int sel = mainGame->lstBotList->getSelected();
 				if(sel == -1)
 					break;
 				bot_mode = true;
-#ifdef _WIN32
-				if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
-					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
-					break;
-				}
-				if(!DuelClient::StartClient(0x7f000001, mainGame->gameConf.serverport)) {
-					NetServer::StopServer();
-					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
-					break;
-				}
-				STARTUPINFOW si;
-				PROCESS_INFORMATION pi;
-				ZeroMemory(&si, sizeof(si));
-				si.cb = sizeof(si);
-				ZeroMemory(&pi, sizeof(pi));
-				wchar_t cmd[MAX_PATH];
-				wchar_t arg1[512];
-				if(mainGame->botInfo[sel].select_deckfile) {
-					wchar_t botdeck[256];
-					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
-					myswprintf(arg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
-				}
-				else
-					myswprintf(arg1, L"%ls", mainGame->botInfo[sel].command);
-				int flag = 0;
-				flag += (mainGame->chkBotHand->isChecked() ? 0x1 : 0);
-				myswprintf(cmd, L"Bot.exe \"%ls\" %d %d", arg1, flag, mainGame->gameConf.serverport);
-				if(!CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-				{
-					NetServer::StopServer();
-					break;
-				}
-#elif defined(_IRR_ANDROID_PLATFORM_)
+#ifdef _IRR_ANDROID_PLATFORM_
 				char args[512];
 				wchar_t warg1[512];
 				if(mainGame->botInfo[sel].select_deckfile) {
@@ -503,40 +473,6 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
 					break;
-				}
-#else
-				if(fork() == 0) {
-					usleep(100000);
-					wchar_t warg1[512];
-					if(mainGame->botInfo[sel].select_deckfile) {
-						wchar_t botdeck[256];
-						deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
-						myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
-					}
-					else
-						myswprintf(warg1, L"%ls", mainGame->botInfo[sel].command);
-					char arg1[512];
-					BufferIO::EncodeUTF8(warg1, arg1);
-					int flag = 0;
-					flag += (mainGame->chkBotHand->isChecked() ? 0x1 : 0);
-					char arg2[8];
-					sprintf(arg2, "%d", flag);
-					char arg3[8];
-					sprintf(arg3, "%d", mainGame->gameConf.serverport);
-					execl("./bot", "bot", arg1, arg2, arg3, NULL);
-					exit(0);
-				} else {
-					if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
-						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
-						break;
-					}
-					if(!DuelClient::StartClient(0x7f000001, mainGame->gameConf.serverport)) {
-						NetServer::StopServer();
-						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));
-						break;
-					}
 				}
 #endif
 				mainGame->btnStartBot->setEnabled(false);

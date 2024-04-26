@@ -1145,6 +1145,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		cbBotDeckCategory->setVisible(false);
 		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
 		cbBotDeck->setVisible(false);
+        btnBotDeckSelect = env->addButton(rect<s32>(310 * xScale, 40 * yScale, 530 * xScale, 80 * yScale), tabBot, BUTTON_BOT_DECK_SELECT, L"");
 		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 170 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
