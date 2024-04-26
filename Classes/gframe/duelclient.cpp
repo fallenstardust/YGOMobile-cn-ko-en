@@ -502,7 +502,11 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, unsigned int len) {
         wchar_t cate[256];
         wchar_t cate_deck[256];
         myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==1 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==1 ? L"" : L"|");
-        myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()));
+        if (mainGame->cbDeckSelect->getItemCount() != 0) {
+			myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()));
+		} else {
+			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+		}
         mainGame->btnHostDeckSelect->setText(cate_deck);
 		if(!mainGame->chkIgnore1->isChecked())
 			mainGame->wChat->setVisible(true);
