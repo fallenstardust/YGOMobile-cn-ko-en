@@ -76,7 +76,11 @@ void reSetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, wchar_t* string
     wchar_t cate[256];
     wchar_t cate_deck[256];
     myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==1 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==1 ? L"" : string);
-    myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+    if (mainGame->lstDecks->getItemCount() != 0) {
+		myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+	} else {
+		myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+	}
     button->setText(cate_deck);
 }
 

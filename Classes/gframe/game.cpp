@@ -1620,7 +1620,7 @@ void Game::LoadExpansions() {
 }
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
-	if (cbCategory != mainGame->cbCategorySelect) {
+	if (cbCategory == mainGame->cbDBCategory) {
 		cbCategory->addItem(dataManager.GetSysString(1450));
 	}
 	cbCategory->addItem(dataManager.GetSysString(1451));
@@ -1631,10 +1631,10 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 			cbCategory->addItem(name);
 		}
 	});
-    if (cbCategory == mainGame->cbCategorySelect) {
-        cbCategory->setSelected(1);
-    } else {
+    if (cbCategory == mainGame->cbDBCategory) {
         cbCategory->setSelected(2);
+    } else {
+        cbCategory->setSelected(1);
     }
 	if(selectlastused) {
 		for(size_t i = 0; i < cbCategory->getItemCount(); ++i) {
