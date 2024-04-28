@@ -66,7 +66,9 @@ void ShowHostPrepareDeckManage(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 
 void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
     mainGame->cbDeckSelect->setSelected(0);
+    mainGame->cbBotDeck->setSelected(0);
     mainGame->deckBuilder.is_modified = false;
     mainGame->deckBuilder.prev_category = catesel;
     mainGame->deckBuilder.prev_deck = 0;
@@ -576,7 +578,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     mainGame->cbCategorySelect->setSelected(catesel);
                     mainGame->cbBotDeckCategory->setSelected(catesel);
                     ChangeHostPrepareDeckCategory(catesel);
-                    reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
                     break;
 				}
 				case LISTBOX_DECKS: {
@@ -590,7 +593,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 
                     if(decksel == -1)
                         break;
-                    reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
                     mainGame->deckBuilder.RefreshPackListScroll();
                     mainGame->deckBuilder.prev_deck = decksel;
                     break;
