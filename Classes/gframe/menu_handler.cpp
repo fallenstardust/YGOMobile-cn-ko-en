@@ -66,7 +66,9 @@ void ShowHostPrepareDeckManage(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 
 void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+    mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
     mainGame->cbDeckSelect->setSelected(0);
+    mainGame->cbBotDeck->setSelected(0);
     mainGame->deckBuilder.is_modified = false;
     mainGame->deckBuilder.prev_category = catesel;
     mainGame->deckBuilder.prev_deck = 0;
@@ -574,8 +576,10 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     mainGame->deckBuilder.RefreshDeckList(false);
                     mainGame->lstDecks->setSelected(0);
                     mainGame->cbCategorySelect->setSelected(catesel);
+                    mainGame->cbBotDeckCategory->setSelected(catesel);
                     ChangeHostPrepareDeckCategory(catesel);
-                    reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
                     break;
 				}
 				case LISTBOX_DECKS: {
@@ -585,9 +589,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     }
                     int decksel = mainGame->lstDecks->getSelected();
                     mainGame->cbDeckSelect->setSelected(decksel);
+                    mainGame->cbBotDeck->setSelected(decksel);
+
                     if(decksel == -1)
                         break;
-                    reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
                     mainGame->deckBuilder.RefreshPackListScroll();
                     mainGame->deckBuilder.prev_deck = decksel;
                     break;
@@ -645,13 +652,11 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t fname[256];
 				myswprintf(fname, L"./single/%ls", name);
 				FILE *fp;
-#ifdef _WIN32
-				fp = _wfopen(fname, L"rb");
-#else
+
 				char filename[256];
 				BufferIO::EncodeUTF8(fname, filename);
 				fp = fopen(filename, "rb");
-#endif
+
 				if(!fp) {
 					mainGame->stSinglePlayInfo->setText(L"");
 					break;
@@ -694,6 +699,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->SetStaticText(mainGame->stBotInfo, 200 * mainGame->xScale, mainGame->guiFont, mainGame->botInfo[sel].desc);
 				mainGame->cbBotDeckCategory->setVisible(mainGame->botInfo[sel].select_deckfile);
 				mainGame->cbBotDeck->setVisible(mainGame->botInfo[sel].select_deckfile);
+				mainGame->btnBotDeckSelect->setVisible(mainGame->botInfo[sel].select_deckfile);
+				wchar_t cate[256];
+				wchar_t cate_deck[256];
+				myswprintf(cate, L"%ls%ls", (mainGame->cbBotDeckCategory->getSelected())==1 ? L"" : mainGame->cbBotDeckCategory->getItem(mainGame->cbBotDeckCategory->getSelected()), (mainGame->cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
+				if (mainGame->cbBotDeck->getItemCount() != 0) {
+					myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbBotDeck->getItem(mainGame->cbBotDeck->getSelected()));
+				} else {
+					myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+				}
+				mainGame->btnBotDeckSelect->setText(cate_deck);
 				break;
 			}
 			}

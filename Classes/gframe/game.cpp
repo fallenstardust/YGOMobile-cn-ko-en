@@ -1146,6 +1146,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
 		cbBotDeck->setVisible(false);
         btnBotDeckSelect = env->addButton(rect<s32>(310 * xScale, 40 * yScale, 530 * xScale, 80 * yScale), tabBot, BUTTON_BOT_DECK_SELECT, L"");
+		btnBotDeckSelect->setVisible(false);
 		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 170 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
@@ -1746,6 +1747,15 @@ void Game::RefreshBot() {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
 	} else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
+		wchar_t cate[256];
+		wchar_t cate_deck[256];
+		myswprintf(cate, L"%ls%ls", (cbBotDeckCategory->getSelected())==1 ? L"" : cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()), (cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
+		if (cbBotDeck->getItemCount() != 0) {
+			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()));
+		} else {
+			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+		}
+		mainGame->btnHostDeckSelect->setText(cate_deck);
 	}
 }
 void Game::LoadConfig() {
