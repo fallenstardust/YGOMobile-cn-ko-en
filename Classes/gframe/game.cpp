@@ -1141,13 +1141,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
             ChangeToIGUIImageButton(btnBotCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 		env->addStaticText(dataManager.GetSysString(1382), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabBot);
 		stBotInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 160 * yScale), false, true, tabBot);
-		cbBotDeckCategory =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 90 * yScale, 530 * xScale, 120 * yScale), tabBot, COMBOBOX_BOT_DECKCATEGORY);
+		cbBotDeckCategory =  env->addComboBox(rect<s32>(0, 0, 0, 0), tabBot, COMBOBOX_BOT_DECKCATEGORY);
 		cbBotDeckCategory->setVisible(false);
-		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
+		cbBotDeck =  env->addComboBox(rect<s32>(0, 0, 0, 0), tabBot);
 		cbBotDeck->setVisible(false);
-        btnBotDeckSelect = env->addButton(rect<s32>(310 * xScale, 40 * yScale, 530 * xScale, 80 * yScale), tabBot, BUTTON_BOT_DECK_SELECT, L"");
+        btnBotDeckSelect = env->addButton(rect<s32>(310 * xScale, 110 * yScale, 530 * xScale, 150 * yScale), tabBot, BUTTON_BOT_DECK_SELECT, L"");
 		btnBotDeckSelect->setVisible(false);
-		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 170 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
+		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 160 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
 		cbBotRule->addItem(dataManager.GetSysString(1264));
@@ -1755,7 +1755,7 @@ void Game::RefreshBot() {
 		} else {
 			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
 		}
-		mainGame->btnHostDeckSelect->setText(cate_deck);
+		mainGame->btnBotDeckSelect->setText(cate_deck);
 	}
 }
 void Game::LoadConfig() {

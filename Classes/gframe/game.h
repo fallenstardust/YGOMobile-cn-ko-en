@@ -420,7 +420,7 @@ public:
 	irr::gui::IGUIButton* btnBotCancel;
 	irr::gui::IGUIComboBox* cbBotDeckCategory;
 	irr::gui::IGUIComboBox* cbBotDeck;
-    irr::gui::IGUIButton* btnBotDeckSelect;
+    irr::gui::IGUIButton* btnBotDeckSelect;//
 	irr::gui::IGUIComboBox* cbBotRule;
 	irr::gui::IGUICheckBox* chkBotHand;
 	irr::gui::IGUICheckBox* chkBotNoCheckDeck;
