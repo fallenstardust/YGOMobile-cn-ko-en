@@ -65,10 +65,14 @@ void ShowHostPrepareDeckManage(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 
 
 void ChangeHostPrepareDeckCategory(int catesel) {
-    mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
-    mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
-    mainGame->cbDeckSelect->setSelected(0);
-    mainGame->cbBotDeck->setSelected(0);
+	if (mainGame->wHostPrepare->isVisible()) {
+		mainGame->RefreshDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+		mainGame->cbDeckSelect->setSelected(0);
+	}
+	if (mainGame->wSinglePlay->isVisible()) {
+		mainGame->RefreshDeck(mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+		mainGame->cbBotDeck->setSelected(0);
+	}
     mainGame->deckBuilder.is_modified = false;
     mainGame->deckBuilder.prev_category = catesel;
     mainGame->deckBuilder.prev_deck = 0;
@@ -577,9 +581,13 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                     mainGame->lstDecks->setSelected(0);
                     mainGame->cbCategorySelect->setSelected(catesel);
                     mainGame->cbBotDeckCategory->setSelected(catesel);
-                    ChangeHostPrepareDeckCategory(catesel);
-					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
-                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
+					ChangeHostPrepareDeckCategory(catesel);
+					if (mainGame->wSinglePlay->isVisible()) {
+						reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
+					}
+					if (mainGame->wHostPrepare->isVisible()) {
+						reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+					}
                     break;
 				}
 				case LISTBOX_DECKS: {
@@ -588,13 +596,16 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                         break;
                     }
                     int decksel = mainGame->lstDecks->getSelected();
-                    mainGame->cbDeckSelect->setSelected(decksel);
-                    mainGame->cbBotDeck->setSelected(decksel);
-
+					if (mainGame->wSinglePlay->isVisible()) {
+						reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
+                    	mainGame->cbBotDeck->setSelected(decksel);
+					}
+					if (mainGame->wHostPrepare->isVisible()) {
+						reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
+						mainGame->cbDeckSelect->setSelected(decksel);
+					}
                     if(decksel == -1)
                         break;
-					reSetCategoryDeckNameOnButton(mainGame->btnHostDeckSelect, L"|");
-                    reSetCategoryDeckNameOnButton(mainGame->btnBotDeckSelect, L"|");
                     mainGame->deckBuilder.RefreshPackListScroll();
                     mainGame->deckBuilder.prev_deck = decksel;
                     break;
