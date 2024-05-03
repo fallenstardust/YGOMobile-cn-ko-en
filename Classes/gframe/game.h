@@ -193,7 +193,7 @@ public:
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
-	int LocalPlayer(int player);
+	int LocalPlayer(int player) const;
 	const wchar_t* LocalName(int local_player);
 
 	bool HasFocus(EGUI_ELEMENT_TYPE type) const {
