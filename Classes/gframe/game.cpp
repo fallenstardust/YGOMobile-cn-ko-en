@@ -1501,7 +1501,7 @@ void Game::MainLoop() {
 	usleep(500000);
 	SaveConfig();
 	usleep(500000);
-//	device->drop();
+	device->drop();
 }
 void Game::RefreshTimeDisplay() {
 	for(int i = 0; i < 2; ++i) {
