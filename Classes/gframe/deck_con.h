@@ -26,7 +26,7 @@ public:
 	void ClearSearch();
 	void SortList();
 
-	void RefreshDeckList(bool showPack);\\
+	void RefreshDeckList(bool showPack);//
 	void RefreshReadonly(int catesel);
 	void RefreshPackListScroll();
 	void ChangeCategory(int catesel);

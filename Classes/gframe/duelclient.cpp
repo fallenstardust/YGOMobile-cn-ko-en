@@ -1863,7 +1863,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 			SetResponseI(positions);
 			return true;
 		}
-		int count = 0, filter = 0x1, startpos;
+		int count = 0, filter = 0x1, startpos = 30;
 		while(filter != 0x10) {
 			if(positions & filter) count++;
 			filter <<= 1;
