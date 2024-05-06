@@ -49,8 +49,8 @@ void SetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, wchar_t* string){
 	wchar_t cate[256];
 	wchar_t cate_deck[256];
 	myswprintf(cate, L"%ls%ls", (mainGame->cbDBCategory->getSelected())==2 ? L"" : mainGame->cbDBCategory->getItem(mainGame->cbDBCategory->getSelected()), (mainGame->cbDBCategory->getSelected())==2 ? L"" : string);
-    if (mainGame->lstDecks->getItemCount() != 0) {
-        myswprintf(cate_deck, L"%ls%ls", cate, mainGame->lstDecks->getListItem(mainGame->lstDecks->getSelected()));
+    if (mainGame->cbDBDecks->getItemCount() != 0) {
+        myswprintf(cate_deck, L"%ls%ls", cate, mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected()));
     } else {
         myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
     }
