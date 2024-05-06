@@ -1751,7 +1751,7 @@ void Game::RefreshBot() {
 		wchar_t cate_deck[256];
 		myswprintf(cate, L"%ls%ls", (cbBotDeckCategory->getSelected())==1 ? L"" : cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()), (cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
 		if (cbBotDeck->getItemCount() != 0) {
-			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()));
+			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeck->getItem(cbBotDeck->getSelected()));
 		} else {
 			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
 		}
