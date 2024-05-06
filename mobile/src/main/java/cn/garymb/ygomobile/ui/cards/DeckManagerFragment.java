@@ -380,7 +380,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()));
+            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
         });
     }
 
