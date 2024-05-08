@@ -1747,6 +1747,8 @@ void Game::RefreshBot() {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
 	} else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
+        deckBuilder.prev_category = mainGame->cbBotDeckCategory->getSelected();
+        deckBuilder.prev_deck = mainGame->cbBotDeck->getSelected();
 		wchar_t cate[256];
 		wchar_t cate_deck[256];
 		myswprintf(cate, L"%ls%ls", (cbBotDeckCategory->getSelected())==1 ? L"" : cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()), (cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
