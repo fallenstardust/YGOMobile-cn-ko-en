@@ -177,7 +177,7 @@ public class DeckLoader {
             }
             deckInfo.addSideCards(tmp.get(id));
         }
-        Log.w("deck.source", deckInfo.toLongString());
+        //Log.w("deck.source", deckInfo.toLongString());
         return deckInfo;
     }
 }
