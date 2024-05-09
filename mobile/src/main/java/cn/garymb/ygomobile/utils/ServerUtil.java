@@ -152,14 +152,13 @@ public class ServerUtil {
                                     }
                                 }
                             }
+                            if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
+                                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                            } else {
+                                Log.w(TAG,"can't parse ex-server properly");
+                            }
                         }
-
                     }
-                }
-                if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
-                    AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
-                } else {
-                    Log.w(TAG,"can't parse ex-server properly");
                 }
                 zipFile.close();
 
