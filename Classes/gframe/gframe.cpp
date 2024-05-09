@@ -4,7 +4,7 @@
 #include <event2/thread.h>
 #include <memory>
 
-int enable_log = 0;
+unsigned int enable_log = 0x3;
 bool exit_on_return = false;
 bool bot_mode = false;
 

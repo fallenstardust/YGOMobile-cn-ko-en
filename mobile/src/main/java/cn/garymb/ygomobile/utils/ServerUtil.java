@@ -8,6 +8,7 @@ import static cn.garymb.ygomobile.utils.WebParseUtil.isValidIP;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.file.zip.ZipEntry;
 import com.file.zip.ZipFile;
@@ -151,16 +152,14 @@ public class ServerUtil {
                                     }
                                 }
                             }
+                            if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
+                                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                            } else {
+                                Log.w(TAG,"can't parse ex-server properly");
+                            }
                         }
-
                     }
                 }
-                if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
-                    AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
-                } else {
-                    YGOUtil.showTextToast("can't parse ex-server properly");
-                }
-                LogUtil.w("seesee", serverName + isHost(serverHost) + serverHost + isNumeric(serverPort) + serverPort);
                 zipFile.close();
 
             } catch (IOException e) {

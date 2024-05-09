@@ -29,6 +29,7 @@ Game *mainGame;
 
 void DuelInfo::Clear() {
 	isStarted = false;
+	isInDuel = false;
 	isFinished = false;
 	isReplay = false;
 	isReplaySkiping = false;
@@ -1705,23 +1706,29 @@ void Game::RefreshBot() {
 		return;
 	botInfo.clear();
 	FILE* fp = fopen("bot.conf", "r");
-	char linebuf[256];
-	char strbuf[256];
+	char linebuf[256]{};
+	char strbuf[256]{};
 	if(fp) {
 		while(fgets(linebuf, 256, fp)) {
 			if(linebuf[0] == '#')
 				continue;
 			if(linebuf[0] == '!') {
 				BotInfo newinfo;
-				sscanf(linebuf, "!%240[^\n]", strbuf);
+				if (sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.name);
-				fgets(linebuf, 256, fp);
-				sscanf(linebuf, "%240[^\n]", strbuf);
+				if (!fgets(linebuf, 256, fp))
+					break;
+				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.command);
-				fgets(linebuf, 256, fp);
-				sscanf(linebuf, "%240[^\n]", strbuf);
+				if (!fgets(linebuf, 256, fp))
+					break;
+				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.desc);
-				fgets(linebuf, 256, fp);
+				if (!fgets(linebuf, 256, fp))
+					break;
 				newinfo.support_master_rule_3 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_3");
 				newinfo.support_new_master_rule = !!strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
 				newinfo.support_master_rule_2020 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_2020");
@@ -1745,8 +1752,11 @@ void Game::RefreshBot() {
 	}
 	if(botInfo.size() == 0) {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
-	} else {
+	}
+	else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
+        deckBuilder.prev_category = mainGame->cbBotDeckCategory->getSelected();
+        deckBuilder.prev_deck = mainGame->cbBotDeck->getSelected();
 		wchar_t cate[256];
 		wchar_t cate_deck[256];
 		myswprintf(cate, L"%ls%ls", (cbBotDeckCategory->getSelected())==1 ? L"" : cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()), (cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
@@ -1966,7 +1976,7 @@ void Game::AddLog(const wchar_t* msg, int param) {
 		lstLog->setSelected(-1);
 	}
 }
-void Game::AddChatMsg(const wchar_t* msg, int player) {
+void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 	for(int i = 7; i > 0; --i) {
 		chatMsg[i] = chatMsg[i - 1];
 		chatTiming[i] = chatTiming[i - 1];
@@ -1977,23 +1987,22 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 	chatType[0] = player;
 	if(gameConf.hide_player_name && player < 4)
 		player = 10;
+	if(play_sound)
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 	switch(player) {
 	case 0: //from host
 		chatMsg[0].append(dInfo.hostname);
 		chatMsg[0].append(L": ");
 		break;
 	case 1: //from client
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname);
 		chatMsg[0].append(L": ");
 		break;
 	case 2: //host tag
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.hostname_tag);
 		chatMsg[0].append(L": ");
 		break;
 	case 3: //client tag
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname_tag);
 		chatMsg[0].append(L": ");
 		break;
@@ -2002,7 +2011,6 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		chatMsg[0].append(L": ");
 		break;
 	case 8: //system custom message, no prefix.
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(L"[System]: ");
 		break;
 	case 9: //error message
@@ -2125,6 +2133,40 @@ void Game::CloseDuelWindow() {
 int Game::LocalPlayer(int player) const {
 	int pid = player ? 1 : 0;
 	return dInfo.isFirst ? pid : 1 - pid;
+}
+int Game::OppositePlayer(int player) {
+	auto player_side_bit = dInfo.isTag ? 0x2 : 0x1;
+	return player ^ player_side_bit;
+}
+int Game::ChatLocalPlayer(int player) {
+	if(player > 3)
+		return player;
+	bool is_self;
+	if(dInfo.isStarted || is_siding) {
+		if(dInfo.isInDuel)
+			// when in duel
+			player = mainGame->dInfo.isFirst ? player : OppositePlayer(player);
+		else {
+			// when changing side or waiting tp result
+			auto selftype_boundary = dInfo.isTag ? 2 : 1;
+			if(DuelClient::selftype >= selftype_boundary && DuelClient::selftype < 4)
+				player = OppositePlayer(player);
+		}
+		if (DuelClient::selftype >= 4) {
+			is_self = false;
+		} else if (dInfo.isTag) {
+			is_self =  (player & 0x2) == 0 && (player & 0x1) == (DuelClient::selftype & 0x1);
+		} else {
+			is_self = player == 0;
+		}
+	} else {
+		// when in lobby
+		is_self = player == DuelClient::selftype;
+	}
+	if(dInfo.isTag && (player == 1 || player == 2)) {
+		player = 3 - player;
+	}
+	return player | (is_self ? 0x10 : 0);
 }
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
