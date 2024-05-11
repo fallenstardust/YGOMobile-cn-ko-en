@@ -106,7 +106,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) && !deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
+        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
