@@ -505,6 +505,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					mainGame->ebDeckname->setText(L"");
 				}
 				mainGame->HideElement(mainGame->wMainMenu);
+				mainGame->chatMsg->clear();
 				mainGame->deckBuilder.Initialize();
 				break;
 			}
