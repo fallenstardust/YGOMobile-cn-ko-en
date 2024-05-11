@@ -964,7 +964,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     btnShuffleDeck->setVisible(false);
     btnSortDeck->setVisible(false);
     btnClearDeck->setVisible(false);
-	btnSideOK = env->addButton(rect<s32>(510 * xScale, 40 * yScale, 820 * xScale, 80 * yScale), 0, BUTTON_SIDE_OK, dataManager.GetSysString(1334));
+	btnSideOK = env->addButton(rect<s32>(400 * xScale, 40 * yScale, 710 * xScale, 80 * yScale), 0, BUTTON_SIDE_OK, dataManager.GetSysString(1334));
         ChangeToIGUIImageButton(btnSideOK, imageManager.tButton_L, imageManager.tButton_L_pressed);
 	btnSideOK->setVisible(false);
 	btnSideShuffle = env->addButton(rect<s32>(310 * xScale, 100 * yScale, 370 * xScale, 130 * yScale), 0, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
@@ -1582,7 +1582,7 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth,
 		strBuffer[pbuffer++] = c;
 	}
 	strBuffer[pbuffer] = 0;
-	pControl->setText(strBuffer);
+	if(pControl) pControl->setText(strBuffer);
 	ret.assign(strBuffer);
 	return ret;
 }
@@ -1777,10 +1777,10 @@ void Game::LoadConfig() {
 	gameConf.gamename[0] = 0;
     BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
     BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
-    //irr:os::Printer::log("getLastCategory", android::getLastCategory(appMain).c_str());
+
 	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
-	//os::Printer::log(android::getFontPath(appMain).c_str());
+
 	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
@@ -2128,6 +2128,7 @@ void Game::CloseDuelWindow() {
 	lstHostList->clear();
 	DuelClient::hosts.clear();
 	ClearTextures();
+	ResizeChatInputWindow();
 	closeDoneSignal.Set();
 }
 int Game::LocalPlayer(int player) const {
@@ -2170,6 +2171,14 @@ int Game::ChatLocalPlayer(int player) {
 }
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
+}
+void Game::ResizeChatInputWindow() {
+	s32 x = 305 * xScale;
+	if(is_building) x = 802 * xScale;
+    //305 * xScale, 610 * yScale, 1020 * xScale, 640 * yScale
+	wChat->setRelativePosition(recti(x, (GAME_HEIGHT - 30) * xScale, GAME_WIDTH * xScale, GAME_HEIGHT * yScale));
+    //3 * xScale, 2 * yScale, 710 * xScale, 28 * yScale
+	ebChatInput->setRelativePosition(recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * xScale));
 }
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);
