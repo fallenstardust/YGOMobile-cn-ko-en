@@ -1212,7 +1212,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     } else {
         imgChat->setImage(imageManager.tTalk);
     }
-	wChat = env->addWindow(rect<s32>(305 * xScale, 610 * yScale, 1020 * xScale, 640 * yScale), false, L"");
+	wChat = env->addWindow(rect<s32>(305 * xScale, 605 * yScale, 1020 * xScale, 640 * yScale), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
@@ -2175,9 +2175,7 @@ const wchar_t* Game::LocalName(int local_player) {
 void Game::ResizeChatInputWindow() {
 	s32 x = 305 * xScale;
 	if(is_building) x = 802 * xScale;
-    //305 * xScale, 610 * yScale, 1020 * xScale, 640 * yScale
-	wChat->setRelativePosition(recti(x, (GAME_HEIGHT - 30) * xScale, GAME_WIDTH * xScale, GAME_HEIGHT * yScale));
-    //3 * xScale, 2 * yScale, 710 * xScale, 28 * yScale
+	wChat->setRelativePosition(recti(x, (GAME_HEIGHT - 35) * yScale, (GAME_WIDTH - 4) * xScale, GAME_HEIGHT * yScale));
 	ebChatInput->setRelativePosition(recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * xScale));
 }
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
