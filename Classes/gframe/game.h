@@ -210,7 +210,7 @@ public:
 		editbox->setText(text.c_str());
 	}
 
-
+	void ResizeChatInputWindow();
 	template<typename T>
 	static std::vector<T> TokenizeString(T input, const T& token);
 
@@ -261,6 +261,8 @@ public:
 
 	bool is_building;
 	bool is_siding;
+
+	irr::core::dimension2d<irr::u32> window_size;
 
 	ClientField dField;
 	DeckBuilder deckBuilder;

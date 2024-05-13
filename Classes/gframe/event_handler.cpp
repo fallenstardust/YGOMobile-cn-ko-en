@@ -2011,7 +2011,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					mainGame->imgChat->setImage(imageManager.tShut);
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
-				bool show = (!mainGame->dInfo.isStarted || mainGame->is_building) ? false : !mainGame->chkIgnore1->isChecked();
+				bool show = (mainGame->is_building && !mainGame->is_siding) ? false : !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();

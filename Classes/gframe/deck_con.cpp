@@ -114,6 +114,7 @@ void DeckBuilder::Terminate() {
     mainGame->btnShuffleDeck->setVisible(false);
     mainGame->btnSortDeck->setVisible(false);
     mainGame->btnClearDeck->setVisible(false);
+	mainGame->ResizeChatInputWindow();
     mainGame->imgChat->setVisible(true);
     mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);

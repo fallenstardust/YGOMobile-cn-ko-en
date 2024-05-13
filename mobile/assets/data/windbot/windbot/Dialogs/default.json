@@ -64,5 +64,11 @@
     "Before you do that, I'll chain {0}!",
     "Nice try, but I have {0}!",
     "Didn't expect {0}, did you?"
+  ],
+  "surrender": [
+    "I surrender.",
+    "You win this time.",
+    "I can't win this duel.",
+    "Good game."
   ]
 }
