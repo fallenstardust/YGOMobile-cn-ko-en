@@ -1389,9 +1389,7 @@ void Game::DrawDeckBd() {
 		}
 #endif
 		if (deckBuilder.is_draging) {
-			DrawThumb(deckBuilder.draging_pointer,
-					  position2di(deckBuilder.dragx - 22, deckBuilder.dragy - 32),
-					  deckBuilder.filterList);
+			DrawThumb(deckBuilder.draging_pointer,position2di(deckBuilder.dragx - 22, deckBuilder.dragy - 32),deckBuilder.filterList);
 		}
 	}
 }

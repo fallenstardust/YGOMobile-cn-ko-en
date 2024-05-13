@@ -1,48 +1,37 @@
 #ifndef BUFFERIO_H
 #define BUFFERIO_H
 
-#include <wchar.h>
-#include <string.h>
+#include <cstdint>
+#include "../ocgcore/buffer.h"
 
 class BufferIO {
 public:
 	inline static int ReadInt32(unsigned char*& p) {
-		int ret = *(int*)p;
-		p += 4;
-		return ret;
+		return buffer_read<int32_t>(p);
 	}
 	inline static short ReadInt16(unsigned char*& p) {
-		short ret = *(short*)p;
-		p += 2;
-		return ret;
+		return buffer_read<int16_t>(p);
 	}
 	inline static char ReadInt8(unsigned char*& p) {
-		char ret = *(char*)p;
-		p++;
-		return ret;
+		return buffer_read<char>(p);
 	}
 	inline static unsigned char ReadUInt8(unsigned char*& p) {
-		unsigned char ret = *(unsigned char*)p;
-		p++;
-		return ret;
+		return buffer_read<unsigned char>(p);
 	}
 	inline static void WriteInt32(unsigned char*& p, int val) {
-		(*(int*)p) = val;
-		p += 4;
+		buffer_write<int32_t>(p, val);
 	}
 	inline static void WriteInt16(unsigned char*& p, short val) {
-		(*(short*)p) = val;
-		p += 2;
+		buffer_write<int16_t>(p, val);
 	}
 	inline static void WriteInt8(unsigned char*& p, char val) {
-		*p = val;
-		p++;
+		buffer_write<char>(p, val);
 	}
 	template<typename T1, typename T2>
 	inline static int CopyWStr(T1* src, T2* pstr, int bufsize) {
 		int l = 0;
 		while(src[l] && l < bufsize - 1) {
-			pstr[l] = src[l];
+			pstr[l] = (T2)src[l];
 			l++;
 		}
 		pstr[l] = 0;
@@ -52,7 +41,7 @@ public:
 	inline static int CopyWStrRef(T1* src, T2*& pstr, int bufsize) {
 		int l = 0;
 		while(src[l] && l < bufsize - 1) {
-			pstr[l] = src[l];
+			pstr[l] = (T2)src[l];
 			l++;
 		}
 		pstr += l;
@@ -64,7 +53,7 @@ public:
 		char* pstr = str;
 		while(*wsrc != 0) {
 			if(*wsrc < 0x80) {
-				*str = *wsrc;
+				*str = (char)*wsrc;
 				++str;
 			} else if(*wsrc < 0x800) {
 				str[0] = ((*wsrc >> 6) & 0x1f) | 0xc0;
@@ -112,12 +101,14 @@ public:
 		return wp - wstr;
 	}
 	static int GetVal(const wchar_t* pstr) {
-		int ret = 0;
+		unsigned int ret = 0;
 		while(*pstr >= L'0' && *pstr <= L'9') {
 			ret = ret * 10 + (*pstr - L'0');
 			pstr++;
 		}
-		return ret;
+		if (*pstr == 0)
+			return (int)ret;
+		return 0;
 	}
 };
 
