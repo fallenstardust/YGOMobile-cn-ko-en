@@ -6,11 +6,11 @@ import java.util.List;
 import ocgcore.enums.LimitType;
 
 /**
- * ���ڴ洢��ֹ�������ƿ���׼���ƿ�
- * ���๦�ܰ�����
- * 1���ý�ֹ�������ƿ���׼���ƿ�
- * 2��ȡ��ֹ�������ƿ���׼���ƿ�
- * 3�ж�ĳ�ſ��Ƿ����ڽ�ֹ�������ƿ���׼���ƿ�
+ * 用于存储禁止卡、限制卡、准限制卡
+ * 本类功能包括：
+ * 1设置禁止卡、限制卡、准限制卡
+ * 2读取禁止卡、限制卡、准限制卡
+ * 3判断某张卡是否属于禁止卡、限制卡、准限制卡
  */
 public class LimitList {
     private String name = "?";
@@ -117,7 +117,7 @@ public class LimitList {
     }
 
     /**
-     * �ж����code��alias��Ӧ�Ŀ�Ƭ�Ƿ�������������x��x��typeȷ��
+     * 判断入参code或alias对应的卡片是否属于限制类型x，x由type确定
      * @param code
      * @param alias
      * @param type
