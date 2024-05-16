@@ -255,20 +255,16 @@ void DeckManager::GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, 
 bool DeckManager::LoadDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
 	wchar_t filepath[256];
 	GetDeckFile(filepath, cbCategory, cbDeck);
-	bool is_packlist = cbCategory->getSelected() == 0;
+	bool is_packlist = cbCategory == mainGame->cbDBCategory ? (cbCategory->getSelected() == 0) : false;
 	bool res = LoadDeck(filepath, is_packlist);
 	if(res && mainGame->is_building)
 		mainGame->deckBuilder.RefreshPackListScroll();
 	return res;
 }
 FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
-#ifdef WIN32
-	FILE* fp = _wfopen(file, (wchar_t*)mode);
-#else
 	char file2[256];
 	BufferIO::EncodeUTF8(file, file2);
 	FILE* fp = fopen(file2, mode);
-#endif
 	return fp;
 }
 IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {

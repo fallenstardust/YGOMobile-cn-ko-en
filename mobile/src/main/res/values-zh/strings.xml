@@ -204,7 +204,7 @@
     <string name="deck_share_head">卡组分享来源YGOMobile</string>
     <string name="deck_share_fail">卡组分享失败</string>
     <string name="choose_game_path">选择游戏目录</string>
-    <string name="download_home">网盘下载</string>
+    <string name="download_home">官网下载</string>
     <string name="reset_game_res">重置资源</string>
     <string name="downloading_images">上次任务正在停止，请稍后再试</string>
     <string name="download_image_progress" formatted="false">正在下载卡图 %d/%d</string>
