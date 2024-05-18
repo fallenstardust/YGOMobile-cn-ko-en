@@ -605,9 +605,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (checkLimit(cardInfo)) {
             boolean rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.SideCard);
             if (rs) {
-                Toast.makeText(getContext(), R.string.add_card_tip_ok, Toast.LENGTH_SHORT).show();
+                activity.showToast(R.string.add_card_tip_ok);
             } else {
-                Toast.makeText(getContext(), R.string.add_card_tip_fail, Toast.LENGTH_SHORT).show();
+                activity.showToast(R.string.add_card_tip_fail);
             }
             return rs;
         }
@@ -623,9 +623,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.MainCard);
             }
             if (rs) {
-                Toast.makeText(getContext(), R.string.add_card_tip_ok, Toast.LENGTH_SHORT).show();
+                activity.showToast(R.string.add_card_tip_ok);
             } else {
-                Toast.makeText(getContext(), R.string.add_card_tip_fail, Toast.LENGTH_SHORT).show();
+                activity.showToast(R.string.add_card_tip_fail);
             }
             return rs;
         }

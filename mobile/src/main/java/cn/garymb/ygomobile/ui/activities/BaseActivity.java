@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
@@ -331,6 +332,7 @@ public class BaseActivity extends AppCompatActivity {
         }
         Toast toast = makeToast();
         toast.setText(text);
+        toast.setGravity(Gravity.TOP, 0, 0);
         toast.setDuration(duration);
         toast.show();
     }
