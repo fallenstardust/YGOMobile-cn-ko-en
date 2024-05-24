@@ -133,11 +133,11 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(tit == tMap.end()) {
 		char file[256];
 //		char file_img[256];
-		sprintf(file, "expansions/pics/%d.jpg", code);
+		snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 		irr::video::ITexture* img = NULL;
 		std::list<std::string>::iterator iter;
 		for (iter = support_types.begin(); iter != support_types.end(); ++iter) {	
-			sprintf(file, "/expansions/pics/%d.%s", code, iter->c_str());
+			snprintf(file, sizeof file, "/expansions/pics/%d.%s", code, iter->c_str());
 			img = driver->getTexture(image_work_path + path(file));
 //			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
 //			img = GetTextureFromFile(file_img, width, height);
@@ -147,7 +147,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		}
 		if(img == NULL) {
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
-				sprintf(file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
+				snprintf(file, sizeof file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
 				img = driver->getTexture(file);
 //				img = GetTextureFromFile(file, width, height);
 				if (img != NULL) {
@@ -157,7 +157,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		}
 		if(img == NULL){//sdcard first, then zip
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
-				sprintf(file, "pics/%d.%s", code, iter->c_str());
+				snprintf(file, sizeof file, "pics/%d.%s", code, iter->c_str());
 				//load image in zip
 				irr::io::IReadFile* in_zip_file = device->getFileSystem()->createAndOpenFile(file);
 				if (in_zip_file && in_zip_file->getSize() > 0) {
@@ -190,10 +190,10 @@ irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	}
 	irr::video::ITexture* texture;
 	char file[256];
-	sprintf(file, "expansions/pics/%d.jpg", code);
+	snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 	irr::video::IImage* srcimg = driver->createImageFromFile(file);
 	if(srcimg == NULL) {
-		sprintf(file, "pics/%d.jpg", code);
+		snprintf(file, sizeof file, "pics/%d.jpg", code);
 		srcimg = driver->createImageFromFile(file);
 	}
 	if(srcimg == NULL) {
@@ -221,18 +221,18 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	auto tit = tFields.find(code);
 	if(tit == tFields.end()) {
 		char file[256];
-		sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+		snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 		irr::video::ITexture* img = driver->getTexture(file);
 		if(img == NULL) {
-			sprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+			snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
 		if(img == NULL) {
-			sprintf(file,  "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+			snprintf(file, sizeof file, "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
 		if(img == NULL) {
-			sprintf(file, "pics/field/%d.jpg", code);
+			snprintf(file, sizeof file, "pics/field/%d.jpg", code);
 			img = driver->getTexture(file);
 			if(img == NULL) {
 				tFields[code] = NULL;
