@@ -37,7 +37,7 @@ public:
 			return false;
 		}
 		if (m_phostInfo != NULL) {
-			BufferIO::DecodeUTF8(m_phostInfo, dst);
+			BufferIO::DecodeUTF8String(m_phostInfo, dst, 256);
 			return true;
 		}
 		char formatParams[512] = { 0 };
@@ -58,7 +58,7 @@ public:
 			char * extraParams = formatParams + strlen(formatParams);
 			sprintf(extraParams, "$%s", m_proomPasswd);
 		}
-		BufferIO::DecodeUTF8(formatParams, dst);
+		BufferIO::DecodeUTF8String(formatParams, dst, 256);
 		return true;
 	}
 private:
