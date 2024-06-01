@@ -897,7 +897,7 @@ int32 scriptlib::duel_return_to_field(lua_State *L) {
 	pcard->enable_field_effect(false);
 	pduel->game_field->adjust_instant();
 	pduel->game_field->refresh_location_info_instant();
-	pduel->game_field->move_to_field(pcard, pcard->previous.controler, pcard->previous.controler, pcard->previous.location, pos, TRUE, 1, pcard->previous.pzone, zone);
+	pduel->game_field->move_to_field(pcard, pcard->previous.controler, pcard->previous.controler, pcard->previous.location, pos, TRUE, RETURN_TEMP_REMOVE_TO_FIELD, pcard->previous.pzone, zone);
 	return lua_yieldk(L, 0, (lua_KContext)pduel, [](lua_State *L, int32 status, lua_KContext ctx) {
 		duel* pduel = (duel*)ctx;
 		lua_pushboolean(L, pduel->game_field->returns.ivalue[0]);
@@ -4358,7 +4358,7 @@ int32 scriptlib::duel_is_player_can_flipsummon(lua_State * L) {
 	return 1;
 }
 int32 scriptlib::duel_is_player_can_spsummon_monster(lua_State * L) {
-	check_param_count(L, 9);
+	check_param_count(L, 2);
 	int32 playerid = (int32)lua_tointeger(L, 1);
 	if(playerid != 0 && playerid != 1) {
 		lua_pushboolean(L, 0);
@@ -4369,21 +4369,19 @@ int32 scriptlib::duel_is_player_can_spsummon_monster(lua_State * L) {
 	::read_card(code, &dat);
 	dat.code = code;
 	dat.alias = 0;
-	if(!lua_isnil(L, 3)) {
-		uint64 setcode_list = lua_tointeger(L, 3);
-		dat.set_setcode(setcode_list);
-	}
-	if(!lua_isnil(L, 4))
+	if(lua_gettop(L) >= 3 && !lua_isnil(L, 3))
+		dat.set_setcode((uint64)lua_tointeger(L, 3));
+	if(lua_gettop(L) >= 4 && !lua_isnil(L, 4))
 		dat.type = (uint32)lua_tointeger(L, 4);
-	if(!lua_isnil(L, 5))
+	if(lua_gettop(L) >= 5 && !lua_isnil(L, 5))
 		dat.attack = (int32)lua_tointeger(L, 5);
-	if(!lua_isnil(L, 6))
+	if(lua_gettop(L) >= 6 && !lua_isnil(L, 6))
 		dat.defense = (int32)lua_tointeger(L, 6);
-	if(!lua_isnil(L, 7))
+	if(lua_gettop(L) >= 7 && !lua_isnil(L, 7))
 		dat.level = (uint32)lua_tointeger(L, 7);
-	if(!lua_isnil(L, 8))
+	if(lua_gettop(L) >= 8 && !lua_isnil(L, 8))
 		dat.race = (uint32)lua_tointeger(L, 8);
-	if(!lua_isnil(L, 9))
+	if(lua_gettop(L) >= 9 && !lua_isnil(L, 9))
 		dat.attribute = (uint32)lua_tointeger(L, 9);
 	int32 pos = POS_FACEUP;
 	int32 toplayer = playerid;

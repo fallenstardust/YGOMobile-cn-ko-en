@@ -522,6 +522,8 @@ void Game::DrawMisc() {
 	//finish button
 	if(btnCancelOrFinish->isVisible() && dField.select_ready)
 		DrawSelectionLine(btnCancelOrFinish, 4, 0xff00ff00);
+	if(btnLeaveGame->isVisible() && dField.tag_teammate_surrender)
+		DrawSelectionLine(btnLeaveGame, 4, 0xff00ff00);
 	//lp bar
 	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);

@@ -348,6 +348,7 @@ struct processor {
 	uint8 current_player{ PLAYER_NONE };
 	uint8 conti_player{ PLAYER_NONE };
 	uint8 select_deck_seq_preserved{ FALSE };
+	uint8 selecting_player{ PLAYER_NONE };
 	std::unordered_map<uint32, std::pair<uint32, uint32>> summon_counter;
 	std::unordered_map<uint32, std::pair<uint32, uint32>> normalsummon_counter;
 	std::unordered_map<uint32, std::pair<uint32, uint32>> spsummon_counter;
@@ -473,7 +474,7 @@ public:
 	void attack_all_target_check();
 	int32 get_must_material_list(uint8 playerid, uint32 limit, card_set* must_list);
 	int32 check_must_material(group* mg, uint8 playerid, uint32 limit);
-	void get_synchro_material(uint8 playerid, card_set* material, effect* ptuner = nullptr);
+	void get_synchro_material(uint8 playerid, card_set* material, effect* tuner_limit = nullptr);
 	int32 check_synchro_material(card* pcard, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_tuner_material(card* pcard, card* tuner, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_other_synchro_material(const card_vector& nsyn, int32 lv, int32 min, int32 max, int32 mcount);

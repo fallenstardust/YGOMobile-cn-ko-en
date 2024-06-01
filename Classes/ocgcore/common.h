@@ -42,9 +42,6 @@ typedef signed char int8;
 #ifndef NULL
 #define NULL 0
 #endif
-struct card_sort {
-	bool operator()(void* const & c1, void* const & c2) const;
-};
 
 #define CURRENT_RULE	5
 
@@ -79,6 +76,10 @@ struct card_sort {
 #define POS_DEFENSE				0xc
 //Flip effect flags
 #define NO_FLIP_EFFECT			0x10000
+
+//Move to field flags
+#define RETURN_TEMP_REMOVE_TO_FIELD		1
+#define RETURN_TRAP_MONSTER_TO_SZONE	2
 
 //Types
 #define TYPE_MONSTER		0x1			//

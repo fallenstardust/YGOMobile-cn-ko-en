@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.home;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.util.Log;
 import android.util.SparseArray;
@@ -309,6 +310,7 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
         }
     }
 
+    @SuppressLint("StringFormatInvalid")
     private void onEnd() {
         synchronized (mCardStatus) {
             mCardStatus.clear();

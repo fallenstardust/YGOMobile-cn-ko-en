@@ -23,9 +23,7 @@ const std::unordered_map<uint32, uint32> card::second_code = {
 	{CARD_HERMOS, 10000070u}
 };
 
-bool card_sort::operator()(void* const & p1, void* const & p2) const {
-	card* c1 = (card*)p1;
-	card* c2 = (card*)p2;
+bool card_sort::operator()(card* const& c1, card* const& c2) const {
 	return c1->cardid < c2->cardid;
 }
 bool card_state::is_location(int32 loc) const {
@@ -97,7 +95,7 @@ bool card::card_operation_sort(card* c1, card* c2) {
 			return c1->overlay_target->current.sequence < c2->overlay_target->current.sequence;
 		else
 			return c1->current.sequence < c2->current.sequence;
-	} else if (c1->current.location & LOCATION_DECK && !pduel->game_field->core.select_deck_seq_preserved) {
+	} else if (c1->current.location & LOCATION_DECK && cp1 == pduel->game_field->core.selecting_player && !pduel->game_field->core.select_deck_seq_preserved) {
 		// if deck reversed and the card being at the top, it should go first
 		if(pduel->game_field->core.deck_reversed) {
 			if(c1->current.sequence == pduel->game_field->player[cp1].list_main.size() - 1)
@@ -456,7 +454,7 @@ std::tuple<uint32, uint32> card::get_original_code_rule() const {
 uint32 card::get_code() {
 	if(assume_type == ASSUME_CODE)
 		return assume_value;
-	if (temp.code != 0xffffffff)
+	if(temp.code != UINT32_MAX) // prevent recursion, return the former value
 		return temp.code;
 	effect_set effects;
 	uint32 code = std::get<0>(get_original_code_rule());
@@ -464,7 +462,7 @@ uint32 card::get_code() {
 	filter_effect(EFFECT_CHANGE_CODE, &effects);
 	if (effects.size())
 		code = effects.get_last()->get_value(this);
-	temp.code = 0xffffffff;
+	temp.code = UINT32_MAX;
 	return code;
 }
 // return: the current second card name
@@ -608,7 +606,7 @@ uint32 card::get_type() {
 		return data.type;
 	if(current.is_location(LOCATION_PZONE))
 		return TYPE_PENDULUM + TYPE_SPELL;
-	if (temp.type != 0xffffffff)
+	if(temp.type != UINT32_MAX) // prevent recursion, return the former value
 		return temp.type;
 	effect_set effects;
 	int32 type = data.type;
@@ -625,7 +623,7 @@ uint32 card::get_type() {
 			type = effects[i]->get_value(this);
 		temp.type = type;
 	}
-	temp.type = 0xffffffff;
+	temp.type = UINT32_MAX;
 	if (data.type & TYPE_TOKEN)
 		type |= TYPE_TOKEN;
 	return type;
@@ -993,7 +991,7 @@ uint32 card::get_level() {
 		return 0;
 	if(assume_type == ASSUME_LEVEL)
 		return assume_value;
-	if (temp.level != 0xffffffff)
+	if(temp.level != UINT32_MAX) // prevent recursion, return the former value
 		return temp.level;
 	effect_set effects;
 	int32 level = data.level;
@@ -1016,7 +1014,7 @@ uint32 card::get_level() {
 	level += up;
 	if(level < 1 && (get_type() & TYPE_MONSTER))
 		level = 1;
-	temp.level = 0xffffffff;
+	temp.level = UINT32_MAX;
 	return level;
 }
 uint32 card::get_rank() {
@@ -1026,7 +1024,7 @@ uint32 card::get_rank() {
 		return assume_value;
 	if(!(current.location & LOCATION_MZONE))
 		return data.level;
-	if (temp.level != 0xffffffff)
+	if(temp.level != UINT32_MAX) // prevent recursion, return the former value
 		return temp.level;
 	effect_set effects;
 	int32 rank = data.level;
@@ -1049,7 +1047,7 @@ uint32 card::get_rank() {
 	rank += up;
 	if(rank < 1 && (get_type() & TYPE_MONSTER))
 		rank = 1;
-	temp.level = 0xffffffff;
+	temp.level = UINT32_MAX;
 	return rank;
 }
 uint32 card::get_link() {
@@ -1108,7 +1106,7 @@ uint32 card::get_attribute() {
 		return assume_value;
 	if(!(data.type & TYPE_MONSTER) && !(get_type() & TYPE_MONSTER) && !is_affected_by_effect(EFFECT_PRE_MONSTER))
 		return 0;
-	if (temp.attribute != 0xffffffff)
+	if(temp.attribute != UINT32_MAX) // prevent recursion, return the former value
 		return temp.attribute;
 	effect_set effects;
 	int32 attribute = data.attribute;
@@ -1128,7 +1126,7 @@ uint32 card::get_attribute() {
 		attribute = effects[i]->get_value(this);
 		temp.attribute = attribute;
 	}
-	temp.attribute = 0xffffffff;
+	temp.attribute = UINT32_MAX;
 	return attribute;
 }
 uint32 card::get_fusion_attribute(uint8 playerid) {
@@ -1178,7 +1176,7 @@ uint32 card::get_race() {
 		return assume_value;
 	if(!(data.type & TYPE_MONSTER) && !(get_type() & TYPE_MONSTER) && !is_affected_by_effect(EFFECT_PRE_MONSTER))
 		return 0;
-	if (temp.race != 0xffffffff)
+	if(temp.race != UINT32_MAX) // prevent recursion, return the former value
 		return temp.race;
 	effect_set effects;
 	int32 race = data.race;
@@ -1198,7 +1196,7 @@ uint32 card::get_race() {
 		race = effects[i]->get_value(this);
 		temp.race = race;
 	}
-	temp.race = 0xffffffff;
+	temp.race = UINT32_MAX;
 	return race;
 }
 uint32 card::get_link_race(uint8 playerid) {
@@ -1234,7 +1232,7 @@ uint32 card::get_grave_race(uint8 playerid) {
 uint32 card::get_lscale() {
 	if(!current.is_location(LOCATION_PZONE))
 		return data.lscale;
-	if (temp.lscale != 0xffffffff)
+	if(temp.lscale != UINT32_MAX) // prevent recursion, return the former value
 		return temp.lscale;
 	effect_set effects;
 	int32 lscale = data.lscale;
@@ -1257,13 +1255,13 @@ uint32 card::get_lscale() {
 	lscale += up + upc;
 	if(lscale < 0 && current.pzone)
 		lscale = 0;
-	temp.lscale = 0xffffffff;
+	temp.lscale = UINT32_MAX;
 	return lscale;
 }
 uint32 card::get_rscale() {
 	if(!current.is_location(LOCATION_PZONE))
 		return data.rscale;
-	if (temp.rscale != 0xffffffff)
+	if(temp.rscale != UINT32_MAX) // prevent recursion, return the former value
 		return temp.rscale;
 	effect_set effects;
 	int32 rscale = data.rscale;
@@ -1286,7 +1284,7 @@ uint32 card::get_rscale() {
 	rscale += up + upc;
 	if(rscale < 0 && current.pzone)
 		rscale = 0;
-	temp.rscale = 0xffffffff;
+	temp.rscale = UINT32_MAX;
 	return rscale;
 }
 uint32 card::get_link_marker() {
@@ -1518,8 +1516,8 @@ int32 card::is_all_column() {
 	return FALSE;
 }
 uint8 card::get_select_sequence(uint8 *deck_seq_pointer) {
-	if(current.location == LOCATION_DECK && !pduel->game_field->core.select_deck_seq_preserved) {
-		return deck_seq_pointer[current.controler]++;
+	if(current.location == LOCATION_DECK && current.controler == pduel->game_field->core.selecting_player && !pduel->game_field->core.select_deck_seq_preserved) {
+		return (*deck_seq_pointer)++;
 	} else {
 		return current.sequence;
 	}
