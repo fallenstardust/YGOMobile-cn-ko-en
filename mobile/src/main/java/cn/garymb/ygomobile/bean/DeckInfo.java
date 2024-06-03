@@ -195,15 +195,15 @@ public class DeckInfo {
         sideCount = Math.min(sideCards.size(), Constants.DECK_SIDE_MAX);
     }
 
-    public int getMainCount() {
+    public Integer getMainCount() {
         return mainCount;
     }
 
-    public int getExtraCount() {
+    public Integer getExtraCount() {
         return extraCount;
     }
 
-    public int getSideCount() {
+    public Integer getSideCount() {
         return sideCount;
     }
 

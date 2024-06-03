@@ -81,7 +81,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
         //填入内容
-        if (String.valueOf(deckInfo.getMainCount()) != null) {
+        if (deckInfo.getMainCount()!= null) {
             holder.main.setText(String.valueOf(deckInfo.getMainCount()));
             if (deckInfo.getMainCount() < 40) {
                 holder.main.setTextColor(Color.YELLOW);
@@ -94,13 +94,13 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.main.setText("-");
             holder.main.setTextColor(Color.RED);
         }
-        if (String.valueOf(deckInfo.getExtraCount()) != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
+        if (deckInfo.getExtraCount() != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
             holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
         } else {
             holder.extra.setText("-");
             holder.extra.setTextColor(Color.RED);
         }
-        if (String.valueOf(deckInfo.getSideCount()) != null) {
+        if (deckInfo.getSideCount() != null) {
             holder.side.setText(String.valueOf(deckInfo.getSideCount()));
         } else {
             holder.side.setText("-");
