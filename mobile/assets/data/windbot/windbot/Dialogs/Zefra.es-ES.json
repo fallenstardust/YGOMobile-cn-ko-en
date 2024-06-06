@@ -13,14 +13,14 @@
   ],
   "newturn": [
     "¡Mi turno!, ¡robo una carta!",
-    "Robo."
+    "¡Robo!"
   ],
   "endturn": [
     "Mi turno ha terminado. Es tu turno.",
     "Es tu turno, no estas haciendo trampa, ¿verdad?"
   ],
   "directattack": [
-    "{0}, ¡Ataca al oponente!",
+    "{0}, ¡Ataca a nuestro oponente!",
     "{0}, ¡Aplástalo!",
     "{0}, ¡Golpéalo con un pequeño puñetazo!"
   ],
@@ -46,9 +46,14 @@
     "Puse un monstruo desconocido."
   ],
   "chaining": [
-    "Oye, ¿puedo usar la tarjeta prohibida para que se encienda el duelo?",
+    "Oye, ¿puedo usar cartas prohibidas para que se encienda el duelo?",
     "¡Eh, activo {0}!",
     "Lo siento, tengo {0}",
-    "¡Jaja, activa el efecto de {0}!"
+    "¡Jaja, activo el efecto de {0}!"
+  ],
+  "custom": [
+    "¡Baff! ¡El cuerpo principal va a la guerra!",
+    "¡¡¡No puedo jugar con mi mano atascada!!!",
+    "Oye, que no cunda el pánico, también hay una sala de exposición (￣y▽￣)╭"
   ]
 }
