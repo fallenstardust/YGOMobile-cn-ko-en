@@ -4,9 +4,9 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>233正式1区</name>
-        <ip>s1.ygo233.com</ip>
-        <port>233</port>
+        <name>萌卡超先行☆须下载扩展卡（见右下角）</name>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
         <keep>true</keep>
     </server>
     <server>
@@ -14,6 +14,13 @@
         <name>决斗编年史</name>
         <ip>duels.link</ip>
         <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>233正式1区（更新不及时）</name>
+        <ip>s1.ygo233.com</ip>
+        <port>233</port>
         <keep>true</keep>
     </server>
     <server>

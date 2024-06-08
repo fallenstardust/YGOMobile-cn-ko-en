@@ -4,23 +4,16 @@
 
     <server>
         <player-name>신선한 고기</player-name>
+        <name>Mycard_Superpre☆needs download expansions</name>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>신선한 고기</player-name>
         <name>YGOPRO 중국 서버 1</name>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
-        <keep>true</keep>
-    </server>
-    <server>
-        <player-name>신선한 고기</player-name>
-        <name>YGOPRO 중국 서버 2</name>
-        <ip>s2.ygo233.com</ip>
-        <port>233</port>
-        <keep>true</keep>
-    </server>
-    <server>
-        <player-name>신선한 고기</player-name>
-        <name>YGOPRO 중국 서버 3</name>
-        <ip>s2.ygo233.com</ip>
-        <port>2333</port>
         <keep>true</keep>
     </server>
     <server>
