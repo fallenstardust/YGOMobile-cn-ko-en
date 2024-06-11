@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <servers>
     <version>2</version>
-	
+
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>Mycard_Superpre☆needs download expansions</name>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
      <server>
         <player-name>Knight of Hanoi</player-name>
         <name>Koishi TCG Server</name>

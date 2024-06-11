@@ -71,5 +71,9 @@
     "No estoy de acuerdo. {0}, ¡Activa!",
     "¡Parece que olvidaste mi {0}!",
     "¿Has considerado que tengo {0}?"
+  ],
+    "surrender": [
+    "Me Rindo.",
+    "Reconozco tu victoria."
   ]
 }

@@ -21,7 +21,7 @@
   ],
   "directattack": [
     "{0}, ¡Ataca directo!",
-    "{0}, ¡Atacarlo directamente!",
+    "{0}, ¡Atácalo directamente!",
     "Estás indefenso. ¡Ataca, {0}!",
     "{0}, ¡Ataca sus Puntos de Vida!",
     "{0}, ¡Ataca sus Puntos de Vida directamente!",
@@ -64,5 +64,11 @@
     "¡Antes de que hagas eso, encadenaré {0}!",
     "¡Buen intento, pero tengo {0}!",
     "No los esperabas {0}, ¿verdad?"
+  ],
+  "surrender": [
+    "Me rindo.",
+    "Esta vez ganaste.",
+    "No puedo ganar este duelo.",
+    "Buen play."
   ]
 }
