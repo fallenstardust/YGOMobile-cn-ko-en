@@ -846,10 +846,11 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::PLAYER_ENTER);
 		STOC_HS_PlayerEnter packet;
 		std::memcpy(&packet, pdata, STOC_HS_PlayerEnter_size);
-		const auto* pkt = &packet;
+		auto pkt = &packet;
 		if(pkt->pos > 3)
 			break;
 		wchar_t name[20];
+		BufferIO::NullTerminate(pkt->name);
 		BufferIO::CopyWStr(pkt->name, name, 20);
 		if(mainGame->dInfo.isTag) {
 			if(pkt->pos == 0)
@@ -1543,7 +1544,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 			wchar_t ynbuf[256];
 			myswprintf(ynbuf, dataManager.GetSysString(221), dataManager.FormatLocation(l, s), dataManager.GetName(code));
 			myswprintf(textBuffer, L"%ls\n%ls\n%ls", event_string, ynbuf, dataManager.GetSysString(223));
-		} else if(desc < 2048) {
+		} else if(desc <= MAX_STRING_ID) {
 			myswprintf(textBuffer, dataManager.GetSysString(desc), dataManager.GetName(code));
 		} else {
 			myswprintf(textBuffer, dataManager.GetDesc(desc), dataManager.GetName(code));
@@ -4164,19 +4165,11 @@ void DuelClient::BeginRefreshHost() {
 	remotes.clear();
 	hosts.clear();
 	event_base* broadev = event_base_new();
-#ifdef _IRR_ANDROID_PLATFORM_
-	//get local ip address in android style
-	int ipaddr = android::getLocalAddr(mainGame->appMain);
-	if (ipaddr == -1) {
-		return;
-	}
-#else
 	char hname[256];
 	gethostname(hname, 256);
 	hostent* host = gethostbyname(hname);
 	if(!host)
 		return;
-#endif
 	SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	sockaddr_in reply_addr;
 	memset(&reply_addr, 0, sizeof(reply_addr));
@@ -4201,22 +4194,24 @@ void DuelClient::BeginRefreshHost() {
 	sockTo.sin_port = htons(7920);
 	HostRequest hReq;
 	hReq.identifier = NETWORK_CLIENT_ID;
-#ifdef _IRR_ANDROID_PLATFORM_
-	local.sin_addr.s_addr = ipaddr;
-	SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sSend == INVALID_SOCKET)
-		return;
-	int opt = TRUE;
-	setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*) &opt,
-			sizeof opt);
-	if (bind(sSend, (sockaddr*) &local, sizeof(sockaddr)) == SOCKET_ERROR) {
+	for(int i = 0; i < 8; ++i) {
+		if(host->h_addr_list[i] == 0)
+			break;
+		unsigned int local_addr = 0;
+		std::memcpy(&local_addr, host->h_addr_list[i], sizeof local_addr);
+		local.sin_addr.s_addr = local_addr;
+		SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if(sSend == INVALID_SOCKET)
+			break;
+		int opt = TRUE;
+		setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*)&opt, sizeof opt);
+		if(bind(sSend, (sockaddr*)&local, sizeof(sockaddr)) == SOCKET_ERROR) {
+			closesocket(sSend);
+			break;
+		}
+		sendto(sSend, (const char*)&hReq, sizeof(HostRequest), 0, (sockaddr*)&sockTo, sizeof(sockaddr));
 		closesocket(sSend);
-		return;
 	}
-	sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0,
-			(sockaddr*) &sockTo, sizeof(sockaddr));
-	closesocket(sSend);
-#endif
 }
 int DuelClient::RefreshThread(event_base* broadev) {
 	event_base_dispatch(broadev);
