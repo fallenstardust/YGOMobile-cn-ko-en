@@ -9,6 +9,13 @@
         <port>888</port>
         <keep>true</keep>
     </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>Evolution TCG Server</name>
+        <ip>server.evolutionygo.com</ip>
+        <port>7711</port>
+        <keep>true</keep>
+    </server>
      <server>
         <player-name>Knight of Hanoi</player-name>
         <name>Koishi TCG Server</name>
