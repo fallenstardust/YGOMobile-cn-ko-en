@@ -31,7 +31,7 @@ typedef signed char int8;
 #define TRUE 1
 #define FALSE 0
 #define SIZE_MESSAGE_BUFFER 0x2000
-#define SIZE_RETURN_VALUE 128
+#define SIZE_RETURN_VALUE 512
 
 #define PROCESSOR_BUFFER_LEN	0x0fffffff
 #define PROCESSOR_FLAG			0xf0000000
@@ -43,7 +43,7 @@ typedef signed char int8;
 #define NULL 0
 #endif
 
-#define CURRENT_RULE	5
+#define CURRENT_RULE	5	//current rule: 5, Master Rule 2020
 
 //Locations
 #define LOCATION_DECK		0x01		//
