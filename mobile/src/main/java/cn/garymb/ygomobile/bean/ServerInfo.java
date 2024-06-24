@@ -6,6 +6,9 @@ import net.kk.xml.annotations.XmlElement;
 public class ServerInfo {
     @XmlElement("name")
     private String name;
+
+    @XmlElement("desc")
+    private String desc;
     @XmlElement("ip")
     private String serverAddr;
     @XmlElement("port")
@@ -23,8 +26,9 @@ public class ServerInfo {
 
     }
 
-    public ServerInfo(String name, String serverAddr, int port) {
+    public ServerInfo(String name, String desc,String serverAddr, int port) {
         this.name = name;
+        this.desc = desc;
         this.serverAddr = serverAddr;
         this.port = port;
     }
@@ -43,6 +47,14 @@ public class ServerInfo {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     public String getServerAddr() {
@@ -103,6 +115,7 @@ public class ServerInfo {
     public String toString() {
         return "ServerInfo{" +
                 "name='" + name + '\'' +
+                "desc='" + desc + '\'' +
                 ", serverAddr='" + serverAddr + '\'' +
                 ", port=" + port +
                 ", playerName='" + playerName + '\'' +

@@ -67,7 +67,18 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:textColor="@color/brightgreen"
                 android:textSize="15sp"
-                tools:text="233正式服务器" />
+                tools:text="serverName" />
+
+            <TextView
+                android:id="@+id/server_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/holo_green_bright"
+                android:textSize="10sp"
+                tools:text="desc" />
 
             <FrameLayout
                 android:layout_width="match_parent"

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
+import static android.os.Build.VERSION_CODES.R;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
@@ -32,6 +33,7 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import okhttp3.Call;
@@ -112,7 +114,7 @@ public class ServerUtil {
         if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
             LogUtil.e("GameUriManager", "读取压缩包");
             try {
-                String serverName = null, serverHost = null, serverPort = null;
+                String serverName = null, serverDesc = null, serverHost = null, serverPort = null;
                 ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
                 Enumeration<ZipEntry> entris = zipFile.getEntries();
                 ZipEntry entry;
@@ -139,6 +141,12 @@ public class ServerUtil {
                                         serverName = words[1];
                                     }
                                 }
+                                if (line.startsWith("ServerDesc")) {
+                                    String[] words = line.trim().split("[\t| =]+");
+                                    if (words.length >= 2) {
+                                        serverDesc = words[1];
+                                    }
+                                }
                                 if (line.startsWith("ServerHost")) {
                                     String[] words = line.trim().split("[\t| =]+");
                                     if (words.length >= 2) {
@@ -153,7 +161,7 @@ public class ServerUtil {
                                 }
                             }
                             if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
-                                AddServer(context, serverName, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                                AddServer(context, serverName, serverDesc, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
                             } else {
                                 Log.w(TAG,"can't parse ex-server properly");
                             }
@@ -202,7 +210,7 @@ public class ServerUtil {
      * @param port
      * @param playerName
      */
-    public static void AddServer(Context context, String name, String Addr, int port, String playerName) {
+    public static void AddServer(Context context, String name, String desc, String Addr, int port, String playerName) {
 
         /* 读取本地文件server_list.xml */
         File xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
@@ -212,6 +220,7 @@ public class ServerUtil {
             List<ServerInfo> serverInfos = new ArrayList<>();
             ServerInfo mServerInfo = new ServerInfo();
             mServerInfo.setName(name);
+            mServerInfo.setDesc(desc);
             mServerInfo.setServerAddr(Addr);
             mServerInfo.setPort(port);
             mServerInfo.setPlayerName(playerName);

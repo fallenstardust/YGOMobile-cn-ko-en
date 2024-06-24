@@ -109,6 +109,7 @@
 
     <string name="server_list">Duel Servers</string>
     <string name="server_name">Name:</string>
+    <string name="server_desc">Note:</string>
     <string name="server_ip">Host:</string>
     <string name="server_user">User:</string>
     <string name="server_room_name">Room Name:</string>
@@ -118,6 +119,7 @@
     <string name="server_info_edit">Server Info Edit</string>
     <string name="save">Save</string>
     <string name="must_info">must info</string>
+    <string name="optional_info">optional info</string>
     <string name="server_is_exist">the server is exist</string>
     <string name="server_info_error">server info is bad.</string>
     <string name="card_search">Card Search</string>
@@ -368,4 +370,5 @@
     <string name="tip_deckInfo_isNot_completeDeck">Card info Exception! Tried to become exsisted Card Info</string>
     <string name="tip_ygopro_is_running">ygopro is running now. unable to create a new duel before it is closed. \nthe room password has been recorded in record list.\npls close ygopro and rejoin room through the record of room password</string>
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
+    <string name="tip_superpre_desc">fastest upgrade. download expansions</string>
 </resources>

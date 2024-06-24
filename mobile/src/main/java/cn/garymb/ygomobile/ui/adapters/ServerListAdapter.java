@@ -113,6 +113,7 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
         int position = baseViewHolder.getAdapterPosition()
                 - getHeaderLayoutCount();
         baseViewHolder.setText(R.id.server_name, serverInfo.getName());
+        baseViewHolder.setText(R.id.server_desc, serverInfo.getDesc());
         baseViewHolder.setText(R.id.text_ip, serverInfo.getServerAddr());
         baseViewHolder.setText(R.id.text_player, serverInfo.getPlayerName());
         baseViewHolder.setText(R.id.text_port, String.valueOf(serverInfo.getPort()));

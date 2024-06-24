@@ -213,7 +213,7 @@ public class ExCardListFragment extends Fragment {
 //                    break;
                 case DownloadUtil.TYPE_DOWNLOAD_OK:
                     downloadState = DownloadState.NO_DOWNLOAD;
-                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
+                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), context.getString(R.string.tip_superpre_desc), Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
                     /* 注意，要先更新版本号 */
                     SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);

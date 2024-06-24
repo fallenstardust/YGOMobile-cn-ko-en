@@ -4,7 +4,8 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>萌卡直连正式+扩展卡服（右下角下载）</name>
+        <name>萌卡直连正式+扩展卡服</name>
+        <desc>与本应用正式卡同步更新并提供超先行卡尝鲜</desc>
         <ip>mygo.superpre.pro</ip>
         <port>888</port>
         <keep>true</keep>
@@ -12,13 +13,15 @@
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>决斗编年史</name>
+        <desc>由系统随机分配卡组决斗</desc>
         <ip>duels.link</ip>
         <port>2333</port>
         <keep>true</keep>
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>233正式1区（更新时间不定）</name>
+        <name>233正式1区</name>
+        <desc>这些年更新时间不定</desc>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
@@ -26,6 +29,7 @@
     <server>
         <player-name>Knight of Hanoi</player-name>
         <name>2Pick轮抽</name>
+        <desc>临场随机组卡再进行决斗</desc>
         <ip>2pick.mycard.moe</ip>
         <port>765</port>
         <keep>true</keep>

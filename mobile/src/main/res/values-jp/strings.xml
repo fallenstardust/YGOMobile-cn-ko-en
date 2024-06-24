@@ -92,6 +92,7 @@
     <!-- settings -->
     <string name="server_list">ヂュエル</string>
     <string name="server_name">サーバー名:</string>
+    <string name="server_desc">備考:</string>
     <string name="server_ip">IP:</string>
     <string name="server_user">プレイヤ名:</string>
     <string name="server_room_name">房间密码:</string>
@@ -101,6 +102,7 @@
     <string name="server_info_edit">サーバー情報編集器</string>
     <string name="save">保存</string>
     <string name="must_info">必須</string>
+    <string name="optional_info">任意</string>
     <string name="server_is_exist">同名サーバー名がすでに存在しています！</string>
     <string name="server_info_error">サーバー情報データエーラ発生</string>
     <string name="card_search">カード検索</string>
@@ -358,4 +360,5 @@
     <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常，オフィシャルパスコードに変更してください</string>
     <string name="tip_ygopro_is_running">YGOPROは既に運行している，新しいデュエル開始できません，ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
+    <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
 </resources>

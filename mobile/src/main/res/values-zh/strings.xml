@@ -92,6 +92,7 @@
     <!-- settings -->
     <string name="server_list">直连决斗</string>
     <string name="server_name">名称:</string>
+    <string name="server_desc">备注:</string>
     <string name="server_ip">主机信息:</string>
     <string name="server_user">昵称:</string>
     <string name="server_room_name">房间密码:</string>
@@ -101,6 +102,7 @@
     <string name="server_info_edit">服务器信息编辑</string>
     <string name="save">保存</string>
     <string name="must_info">必填</string>
+    <string name="optional_info">选填</string>
     <string name="server_is_exist">服务器信息已经存在！</string>
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
@@ -358,4 +360,5 @@
     <string name="tip_deckInfo_isNot_completeDeck">当前卡组解析异常，将尽量转换为已有卡片</string>
     <string name="tip_ygopro_is_running">当前有游戏正在运行，无法开启新的决斗，已将房间密码存入历史记录，请结束当前游戏后再选择该历史记录以加入房间</string>
     <string name="tip_ypk_is_deleted">正式卡更新会让旧先行卡失效，请及时重新下载先行卡补丁</string>
+    <string name="tip_superpre_desc">与本应用正式卡同步更新并提供超先行卡尝鲜</string>
 </resources>

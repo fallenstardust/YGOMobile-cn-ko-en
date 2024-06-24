@@ -109,6 +109,7 @@
 
     <string name="server_list">Servidores de duelo</string>
     <string name="server_name">Nombre:</string>
+    <string name="server_desc">Nota:</string>
     <string name="server_ip">Host:</string>
     <string name="server_user">Usuario:</string>
     <string name="server_room_name">Nombre de la sala:</string>
@@ -118,6 +119,7 @@
     <string name="server_info_edit">Editar info del servidor</string>
     <string name="save">Guardar</string>
     <string name="must_info">Información requerida</string>
+    <string name="optional_info">Información opcional</string>
     <string name="server_is_exist">¡La información del servidor ya existe!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
     <string name="card_search">Buscar</string>
@@ -369,5 +371,6 @@
     <string name="Download_Precard_Failed">Falló la descarga de las cartas pre-lanzamiento</string>
     <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
+    <string name="tip_superpre_desc">fastest upgrade. download expansions</string>
 </resources>
 
