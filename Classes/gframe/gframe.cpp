@@ -2,6 +2,7 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
+#include <locale.h>
 #include <memory>
 
 unsigned int enable_log = 0x3;
@@ -9,7 +10,7 @@ bool exit_on_return = false;
 bool bot_mode = false;
 
 void ClickButton(irr::gui::IGUIElement* btn) {
-	irr::SEvent event{};
+	irr::SEvent event;
 	event.EventType = irr::EET_GUI_EVENT;
 	event.GUIEvent.EventType = irr::gui::EGET_BUTTON_CLICKED;
 	event.GUIEvent.Caller = btn;

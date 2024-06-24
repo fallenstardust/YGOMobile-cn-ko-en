@@ -259,6 +259,8 @@ bool DeckManager::LoadDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUICom
 	bool res = LoadDeck(filepath, is_packlist);
 	if(res && mainGame->is_building)
 		mainGame->deckBuilder.RefreshPackListScroll();
+	if (!res)
+		current_deck.clear();
 	return res;
 }
 FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
@@ -287,8 +289,8 @@ bool DeckManager::LoadDeck(const wchar_t* file, bool is_packlist) {
 	}
 	if(!reader)
 		return false;
-	size_t size = reader->getSize();
-	if(size >= 0x20000) {
+	auto size = reader->getSize();
+	if(size >= (int)sizeof deckBuffer) {
 		reader->drop();
 		return false;
 	}
@@ -303,7 +305,7 @@ bool DeckManager::LoadDeck(std::istringstream* deckStream, bool is_packlist) {
 	int cardlist[300];
 	bool is_side = false;
 	std::string linebuf;
-	while(std::getline(*deckStream, linebuf) && ct < 300) {
+	while(std::getline(*deckStream, linebuf, '\n') && ct < 300) {
 		if(linebuf[0] == '!') {
 			is_side = true;
 			continue;
