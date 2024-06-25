@@ -13,6 +13,7 @@ public class ServerInfoViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder
     public ServerInfoViewHolder(View itemView) {
         super(itemView);
         serverName = $(R.id.server_name);
+        serverDesc = $(R.id.server_desc);
         serverIp = $(R.id.text_ip);
         serverPort = $(R.id.text_port);
         userName = $(R.id.text_player);
@@ -26,6 +27,7 @@ public class ServerInfoViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder
     public final SwipeHorizontalMenuLayout mMenuLayout;
     public final View contentView;
     public final TextView serverName;
+    public final TextView serverDesc;
     public final TextView userName;
     public final TextView serverIp;
     public final TextView serverPort;
