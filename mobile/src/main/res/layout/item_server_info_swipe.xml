@@ -77,12 +77,14 @@
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:textColor="@color/holo_green_bright"
-                android:textSize="10sp"
+                android:textSize="8sp"
                 tools:text="desc" />
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingTop="@dimen/dp_10"
+                android:paddingBottom="@dimen/dp_4"
                 android:orientation="horizontal">
 
                 <LinearLayout

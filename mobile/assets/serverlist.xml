@@ -4,8 +4,8 @@
 
     <server>
         <player-name>Knight of Hanoi</player-name>
-        <name>萌卡直连正式+扩展卡服</name>
-        <desc>与本应用正式卡同步更新并提供超先行卡尝鲜</desc>
+        <name>萌卡直连正式+超先行服</name>
+        <desc>与本应用正式卡同步支持使用右下角下载的扩展卡</desc>
         <ip>mygo.superpre.pro</ip>
         <port>888</port>
         <keep>true</keep>

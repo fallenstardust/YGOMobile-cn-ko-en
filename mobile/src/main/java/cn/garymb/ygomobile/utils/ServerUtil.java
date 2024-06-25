@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.utils;
 
-import static android.os.Build.VERSION_CODES.R;
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
@@ -33,7 +32,6 @@ import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
-import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ServerListManager;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import okhttp3.Call;
@@ -202,6 +200,30 @@ public class ServerUtil {
         return fileList;
     }
 
+    public static void refreshServer(Context context) throws IOException {
+        /* 读取apk中assets文件夹下的serverlist.xml文件 */
+        ServerList assetList = ServerListManager.readList(context.getAssets().open(ASSET_SERVER_LIST));
+        /* 读取本地文件server_list.xml */
+        File xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
+        ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
+
+        if (fileList == null) {
+            return;
+        }
+        for (int i=0; i<assetList.getServerInfoList().size();i++) {
+            /*考虑到fileList的serverinfo其他信息被用户修改过，专门只比较域名地址和端口来视为相同的server来补充备注*/
+            for (int j=0; j<fileList.getServerInfoList().size();j++){
+                if (assetList.getServerInfoList().get(i).getServerAddr().equals(fileList.getServerInfoList().get(j).getServerAddr())
+                        && assetList.getServerInfoList().get(i).getPort() == (fileList.getServerInfoList().get(j).getPort())
+                        && !assetList.getServerInfoList().get(i).getDesc().equals(fileList.getServerInfoList().get(j).getDesc())) {
+
+                    fileList.getServerInfoList().get(j).setDesc(assetList.getServerInfoList().get(i).getDesc());
+                    
+                }
+            }
+        }
+        saveItems(context,xmlFile,fileList.getServerInfoList());
+    }
     /**
      * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
      *
