@@ -5,6 +5,7 @@
     <server>
         <player-name>신선한 고기</player-name>
         <name>Mycard_Superpre☆needs download expansions</name>
+        <desc>mycard‘s server within expansions cards</desc>
         <ip>mygo.superpre.pro</ip>
         <port>888</port>
         <keep>true</keep>
@@ -12,20 +13,15 @@
     <server>
         <player-name>신선한 고기</player-name>
         <name>YGOPRO 중국 서버 1</name>
+        <desc>unknow upgrade time</desc>
         <ip>s1.ygo233.com</ip>
         <port>233</port>
         <keep>true</keep>
     </server>
     <server>
         <player-name>신선한 고기</player-name>
-        <name>듀얼 링크</name>
-        <ip>duels.link</ip>
-        <port>2333</port>
-        <keep>true</keep>
-    </server>
-    <server>
-        <player-name>신선한 고기</player-name>
         <name>듀얼 크로니클즈</name>
+        <desc>use random deck to duel</desc>
         <ip>2333.duelstart.com</ip>
         <port>2333</port>
         <keep>true</keep>
@@ -33,6 +29,7 @@
     <server>
         <player-name>신선한 고기</player-name>
         <name>2 Pick MyCard 모에</name>
+        <desc>build new deck to duel</desc>
         <ip>2pick.mycard.moe</ip>
         <port>765</port>
         <keep>true</keep>
