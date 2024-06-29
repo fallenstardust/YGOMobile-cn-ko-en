@@ -623,6 +623,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 	}
 	case STOC_DUEL_START: {
 		mainGame->HideElement(mainGame->wHostPrepare);
+        mainGame->HideElement(mainGame->wDeckManage);
 		mainGame->WaitFrameSignal(11);
 		mainGame->gMutex.lock();
 		mainGame->dField.Clear();
