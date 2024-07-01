@@ -81,7 +81,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
         //填入内容
-        if (deckInfo.getMainCount()!= null) {
+        if (deckInfo != null) {
             holder.main.setText(String.valueOf(deckInfo.getMainCount()));
             if (deckInfo.getMainCount() < 40) {
                 holder.main.setTextColor(Color.YELLOW);
@@ -94,13 +94,13 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.main.setText("-");
             holder.main.setTextColor(Color.RED);
         }
-        if (deckInfo.getExtraCount() != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
+        if (deckInfo != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
             holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
         } else {
             holder.extra.setText("-");
             holder.extra.setTextColor(Color.RED);
         }
-        if (deckInfo.getSideCount() != null) {
+        if (deckInfo != null) {
             holder.side.setText(String.valueOf(deckInfo.getSideCount()));
         } else {
             holder.side.setText("-");
@@ -111,54 +111,55 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
         }
-
-        //判断是否含有先行卡
-        Deck deck = this.deckInfo.toDeck();
-        List<String> strList = new ArrayList<>();
-        for (int i = 0; i < deck.getDeckCount(); i++) {
-            strList.add(deck.getAlllist().get(i).toString());
-        }
-        for (int i = 0; i < deck.getDeckCount(); i++) {
-            if (strList.get(i).length() > 8) {
-                holder.prerelease_star.setVisibility(View.VISIBLE);
-                break;
-            } else {
-                holder.prerelease_star.setVisibility(View.GONE);
-                continue;
-            }
-        }
-        //判断是否符合默认禁卡表以显示标识
-        if (mLimitList != null) {
+        if (deckInfo != null) {
+            //判断是否含有先行卡
+            Deck deck = this.deckInfo.toDeck();
+            List<String> strList = new ArrayList<>();
             for (int i = 0; i < deck.getDeckCount(); i++) {
-                if (mLimitList.getStringForbidden().contains(strList.get(i))) {
-                    holder.banned_mark.setVisibility(View.VISIBLE);
+                strList.add(deck.getAlllist().get(i).toString());
+            }
+            for (int i = 0; i < deck.getDeckCount(); i++) {
+                if (strList.get(i).length() > 8) {
+                    holder.prerelease_star.setVisibility(View.VISIBLE);
                     break;
-                } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
-                    int limitcount = 0;
-                    for (int j = 0; j < deck.getDeckCount(); j++) {
-                        if (strList.get(i).equals(strList.get(j))) {
-                            limitcount++;
-                        }
-                    }
-                    if (limitcount > 1) {
-                        holder.banned_mark.setVisibility(View.VISIBLE);
-                        break;
-                    }
-                } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
-                    int semicount = 0;
-                    for (int k = 0; k < deck.getDeckCount(); k++) {
-                        if (strList.get(i).equals(strList.get(k))) {
-                            semicount++;
-                        }
-
-                    }
-                    if (semicount > 2) {
-                        holder.banned_mark.setVisibility(View.VISIBLE);
-                        break;
-                    }
                 } else {
-                    holder.banned_mark.setVisibility(View.GONE);
+                    holder.prerelease_star.setVisibility(View.GONE);
                     continue;
+                }
+            }
+            //判断是否符合默认禁卡表以显示标识
+            if (mLimitList != null) {
+                for (int i = 0; i < deck.getDeckCount(); i++) {
+                    if (mLimitList.getStringForbidden().contains(strList.get(i))) {
+                        holder.banned_mark.setVisibility(View.VISIBLE);
+                        break;
+                    } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
+                        int limitcount = 0;
+                        for (int j = 0; j < deck.getDeckCount(); j++) {
+                            if (strList.get(i).equals(strList.get(j))) {
+                                limitcount++;
+                            }
+                        }
+                        if (limitcount > 1) {
+                            holder.banned_mark.setVisibility(View.VISIBLE);
+                            break;
+                        }
+                    } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
+                        int semicount = 0;
+                        for (int k = 0; k < deck.getDeckCount(); k++) {
+                            if (strList.get(i).equals(strList.get(k))) {
+                                semicount++;
+                            }
+
+                        }
+                        if (semicount > 2) {
+                            holder.banned_mark.setVisibility(View.VISIBLE);
+                            break;
+                        }
+                    } else {
+                        holder.banned_mark.setVisibility(View.GONE);
+                        continue;
+                    }
                 }
             }
         }

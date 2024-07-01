@@ -27,7 +27,7 @@ public class DeckInfo {
 
     public File source;
 
-    private int mainCount, extraCount, sideCount;
+    private Integer mainCount, extraCount, sideCount;
 
     public DeckInfo() {
         mainCards = new ArrayList<>();
