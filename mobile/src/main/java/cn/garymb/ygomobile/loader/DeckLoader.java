@@ -133,49 +133,63 @@ public class DeckLoader {
         int code;
         isChanged = false;
         for (Integer id : deck.getMainlist()) {
-            if (released_code_list.contains(tmp.get(id).getCode())) {//先查看id对应的卡片密码是否在正式数组中存在
-                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));//替换成对应先行数组里的code
-                if (cardLoader.readAllCardCodes().get(code) != null) {//万一他还没下载扩展卡包就不执行否则会空指错误
+            if (tmp.get(id) != null) {
+                if (released_code_list.contains(tmp.get(id).getCode())) {//先查看id对应的卡片密码是否在正式数组中存在
+                    code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));//替换成对应先行数组里的code
+                    if (cardLoader.readAllCardCodes().get(code) != null) {//万一他还没下载扩展卡包就不执行否则会空指错误
+                        tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    }
+                }//执行完后变成先行密码，如果constants对照表里存在该密码，则如下又转换一次，确保正式更新后不会出错，最好发布app后必须及时更新在线对照表
+                if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                    code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
                     tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    isChanged = true;
                 }
-            }//执行完后变成先行密码，如果constants对照表里存在该密码，则如下又转换一次，确保正式更新后不会出错，最好发布app后必须及时更新在线对照表
-            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
-                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
-                tmp.set(id, cardLoader.readAllCardCodes().get(code));
-                isChanged = true;
+                deckInfo.addMainCards(id, tmp.get(id), type == DeckItemType.Pack);
+            } else {
+                Log.w("deckreader", "Card is unexpectedly null for id: " + id);
             }
-            deckInfo.addMainCards(id, tmp.get(id), type == DeckItemType.Pack);
+
         }
         tmp = cardLoader.readCards(deck.getExtraList(), true);
         for (Integer id : deck.getExtraList()) {
-            if (released_code_list.contains(tmp.get(id).getCode())) {
-                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
-                if (cardLoader.readAllCardCodes().get(code) != null) {
-                    tmp.set(id, cardLoader.readAllCardCodes().get(code));
+            if (tmp.get(id) != null) {
+                if (released_code_list.contains(tmp.get(id).getCode())) {
+                    code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
+                    if (cardLoader.readAllCardCodes().get(code) != null) {
+                        tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    }
                 }
+                if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                    code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
+                    tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    isChanged = true;
+                }
+                deckInfo.addExtraCards(tmp.get(id));
+            } else {
+                Log.w("deckreader", "Card is unexpectedly null for id: " + id);
             }
-            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
-                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
-                tmp.set(id, cardLoader.readAllCardCodes().get(code));
-                isChanged = true;
-            }
-            deckInfo.addExtraCards(tmp.get(id));
         }
         tmp = cardLoader.readCards(deck.getSideList(), true);
 //        Log.i("kk", "desk:" + tmp.size()+"/"+side.size());
         for (Integer id : deck.getSideList()) {
-            if (released_code_list.contains(tmp.get(id).getCode())) {
-                code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
-                if (cardLoader.readAllCardCodes().get(code) != null) {
-                    tmp.set(id, cardLoader.readAllCardCodes().get(code));
+            if (tmp.get(id) != null) {
+                if (released_code_list.contains(tmp.get(id).getCode())) {
+                    code = pre_code_list.get(released_code_list.indexOf(tmp.get(id).getCode()));
+                    if (cardLoader.readAllCardCodes().get(code) != null) {
+                        tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    }
                 }
+                if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
+                    code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
+                    tmp.set(id, cardLoader.readAllCardCodes().get(code));
+                    isChanged = true;
+                }
+                deckInfo.addSideCards(tmp.get(id));
+            } else {
+                Log.w("deckreader", "Card is unexpectedly null for id: " + id);
             }
-            if (ArrayUtil.contains(oldIDsArray, tmp.get(id).getCode())) {
-                code = ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, tmp.get(id).getCode()));
-                tmp.set(id, cardLoader.readAllCardCodes().get(code));
-                isChanged = true;
-            }
-            deckInfo.addSideCards(tmp.get(id));
+
         }
         //Log.w("deck.source", deckInfo.toLongString());
         return deckInfo;
