@@ -82,18 +82,31 @@
         android:textSize="16sp" />
 
     <TextView
+        android:layout_above="@id/tv_record"
             android:id="@+id/tv_slogan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
-            android:layout_marginBottom="80dp"
             android:gravity="center"
             android:lineSpacingExtra="5dp"
             android:text="@string/app_signature"
             android:textColor="@color/black"
             android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/tv_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="80dp"
+        android:gravity="center"
+        android:lineSpacingExtra="5dp"
+        android:text="蜀ICP备19023791号-2A"
+        android:textColor="@color/grayDark"
+        android:textSize="12sp"/>
 
     <TextView
         android:visibility="gone"

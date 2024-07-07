@@ -27,6 +27,9 @@ import com.ourygo.ygomobile.util.OYUtil
 import com.ourygo.ygomobile.util.ScaleUtils
 import com.ourygo.ygomobile.util.StatUtil
 import com.ourygo.ygomobile.view.OYToolbar
+import com.qw.soul.permission.SoulPermission
+import com.qw.soul.permission.bean.Permissions
+import com.qw.soul.permission.callbcak.CheckRequestPermissionsListener
 import ocgcore.data.Card
 
 open class BaseActivity : AppCompatActivity() {
@@ -462,6 +465,13 @@ open class BaseActivity : AppCompatActivity() {
         toast!!.setText(text)
         toast.duration = duration
         toast.show()
+    }
+
+    protected fun requestPermissions(
+        permissions: Permissions,
+        listener: CheckRequestPermissionsListener
+    ) {
+        SoulPermission.getInstance().checkAndRequestPermissions(permissions, listener)
     }
 
     companion object {

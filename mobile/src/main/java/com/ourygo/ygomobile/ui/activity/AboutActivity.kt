@@ -7,9 +7,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import cn.garymb.ygomobile.lite.R
+import cn.garymb.ygomobile.lite.databinding.AboutActivityBinding
 import cn.garymb.ygomobile.ui.activities.BaseActivity
 import com.feihua.dialogutils.bean.UpdateLog
 import com.feihua.dialogutils.util.DialogUtils
+import com.ourygo.ygomobile.util.IntentUtil
 import com.ourygo.ygomobile.util.OYUtil
 import com.ourygo.ygomobile.util.Record
 
@@ -19,11 +21,22 @@ class AboutActivity : BaseActivity() {
     private lateinit var tv_qq_group: TextView
     private lateinit var ll_version: LinearLayout
     private lateinit var iv_icon: ImageView
+    private lateinit var binding: AboutActivityBinding
     private val du by lazy {
         DialogUtils.getInstance(this)
     }
     private val updateList by lazy {
         arrayListOf(
+            UpdateLog.toUpdateLog(
+                "1.2.7",
+                """
+                更新ygo内核
+                更新卡包AC04+AJ
+                OCG禁卡表更新至2024.7
+                关于界面增加备案号标识
+                其他优化
+                """.trimIndent()
+            ),
             UpdateLog.toUpdateLog(
                 "1.2.6",
                 """
@@ -202,7 +215,8 @@ class AboutActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.about_activity)
+        binding = AboutActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         initView()
     }
 
@@ -242,6 +256,9 @@ class AboutActivity : BaseActivity() {
         ll_version.setOnClickListener {
             val v = du.dialogUpdateLog(OYUtil.s(R.string.update_log), updateList)
             v[1].setOnClickListener { du.dis() }
+        }
+        binding.tvRecord.setOnClickListener {
+            startActivity(IntentUtil.getUrlIntent("https://beian.miit.gov.cn/"))
         }
         initUpdateLog()
     }

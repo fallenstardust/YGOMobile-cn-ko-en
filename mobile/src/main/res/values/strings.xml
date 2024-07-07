@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="app_name" translatable="false">YGO-OY</string>
-    <string name="app_version_name" translatable="false">1.2.6</string>
+    <string name="app_version_name" translatable="false">1.2.7</string>
     <string name="start_exception">Start Exception</string>
     <string name="copy_exception">Copy Exception</string>
     <string name="join_room">Join Room</string>

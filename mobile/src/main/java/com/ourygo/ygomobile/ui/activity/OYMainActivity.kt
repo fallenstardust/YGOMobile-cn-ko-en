@@ -1,5 +1,6 @@
 package com.ourygo.ygomobile.ui.activity
 
+import android.Manifest
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
@@ -53,6 +54,9 @@ import com.ourygo.ygomobile.util.SdkInitUtil
 import com.ourygo.ygomobile.util.SharedPreferenceUtil
 import com.ourygo.ygomobile.util.YGOUtil.getYGOServerList
 import com.ourygo.ygomobile.view.OYTabLayout
+import com.qw.soul.permission.bean.Permission
+import com.qw.soul.permission.bean.Permissions
+import com.qw.soul.permission.callbcak.CheckRequestPermissionsListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -77,6 +81,12 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         DuelAssistantManagement.getInstance()
     }
     private var dialogUtils: DialogUtils? = null
+    private val REQUEST_PERMISSION: Permissions = Permissions.build(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.INTERNET
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e("OyMainActivity", "创建" + (savedInstanceState != null))
@@ -90,12 +100,32 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         LogUtil.time(TAG, "1")
         initView()
         initData()
-        LogUtil.time(TAG, "2")
-        checkNotch()
-        LogUtil.time(TAG, "3")
-        checkRes();
-        LogUtil.time(TAG, "4")
-        LogUtil.printSumTime(TAG)
+        requestPermissions(REQUEST_PERMISSION, object : CheckRequestPermissionsListener {
+            override fun onAllPermissionOk(allPermissions: Array<Permission>) {
+                LogUtil.time(TAG, "2")
+                checkNotch()
+                LogUtil.time(TAG, "3")
+                checkRes();
+                LogUtil.time(TAG, "4")
+                LogUtil.printSumTime(TAG)
+            }
+
+            override fun onPermissionDenied(refusedPermissions: Array<Permission>) {
+                var isSuccess = true
+                for (permission in refusedPermissions) {
+                    if (!permission.isGranted) {
+                        isSuccess = false
+                        break
+                    }
+                }
+                if (!isSuccess) {
+                    OYUtil.show("需要同意所有权限才能正常使用软件")
+                    finish()
+                }
+            }
+        })
+
+
     }
 
     private val handler: Handler = Handler(Looper.getMainLooper()) { true }
