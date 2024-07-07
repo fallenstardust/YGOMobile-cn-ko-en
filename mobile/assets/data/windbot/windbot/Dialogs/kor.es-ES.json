@@ -1,0 +1,76 @@
+{
+  "welcome": [
+    "Hola. Soy un robot.",
+    "Actualmente estamos probando la IA. Si hay algún problema, infórmalo."
+  ],
+  "deckerror": [
+    "Lo siento. {0} no es correcto."
+  ],
+  "duelstart": [
+    "¡Empieza el verdadero duelo!",
+    "¡Tengamos un buen duelo!",
+	"¡Si te derroto tendrás que llamarme MAESTRO por una semana!"
+  ],
+  "newturn": [
+    "¡Es mi turno, robo!",
+    "¡Mi turno, robo!",
+    "¡Sacaré una carta!"
+  ],
+  "endturn": [
+    "Se acabó el turno.",
+    "Termina mi turno.",
+    "Y con esto termino mi turno."
+  ],
+  "directattack": [
+    "{0}, ¡Ataca directo!",
+    "{0}, ¡Ataca directo al oponente!",
+    "{0}, ¡Derrota a tu oponente!",
+    "{0}, ¡Reduce los Puntos de Vida de tu oponente con ataques!",
+    "{0}, ¡Ataca directamente!",
+    "{0}, ¡Golpea al oponente!",
+    "{0}, ¡Reduce los Puntos de Vida de tu oponente!",
+    "{0}, ¡Reduce los Puntos de Vida de tu oponente a 0 con un ataque directo!",
+    "{0}, ¡Es un ataque directo!",
+    "{0}! ¡El oponente está indefenso, ataca directo!",
+    "{0}! ¡Ataca!"
+  ],
+  "attack": [
+    "¡{0}, Ataca a {1}!",
+    "¡{0}, Elimina a {1}!",
+    "¡{0}, Derrota a su {1}!",
+    "¡{0}, Derriba a {1}!",
+    "¡{0}, Concentra el ataque en {1}!"
+  ],
+  "ondirectattack": [
+    "Arg......",
+    "{0}Te arrepentirás por eso.....",
+    "Hasta este punto, es imposible."
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+    "{0} ¡Activado!",
+    "¡Activaré el efecto de {0}!",
+    "La carta que quiero activar es {0}."
+  ],
+  "summon": [
+    "{0} ¡Invocado con éxito!",
+    "¡Sal, {0}!",
+    "¡Deleítate con la grandeza de, {0}!",
+    "¡Te presento a mi monstruo más fuerte {0}!",
+    "¡Convocaré a {0}!",
+    "Es tu fin, Invoco a {0}!",
+    "El monstruo que invocaré es {0}."
+  ],
+  "setmonster": [
+    "Colocaré un monstruo.",
+    "Coloqué este monstruo en modo de defensa boca abajo."
+  ],
+  "chaining": [
+    "¡Me atrapaste! {0} ¡Activado!",
+    "La carta que quiero activar es {0}.",
+    "¡Es la hora! {0} ¡Activado!",
+    "La carta que usaré es {0}.",
+    "{0} ¡Activado!",
+    "No esperabas a {0}."
+  ]
+}

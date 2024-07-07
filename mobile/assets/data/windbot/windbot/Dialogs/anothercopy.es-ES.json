@@ -1,0 +1,61 @@
+{
+  "welcome": [
+    "UH Hola",
+    "Hola, soy un robot"
+  ],
+  "deckerror": [
+    "Hay un problema con esto. {0} Por favor, compruébalo"
+  ],
+  "duelstart": [
+    "Jokbab (jokbab) jajaja",
+    "Tu Deck es una pila de papel.",
+    "Ya gané, y esto no ha comenzado jaja.",
+    "En la prueba del Deck Orcust es normal que el robot cometa errores, por favor dame más consejos."
+  ],
+  "newturn": [
+    "Acabare esto aquí y ahora.",
+    "¡Mi turno, robo una carta!",
+    "Parece facil."
+  ],
+  "endturn": [
+    "Mira jaja.",
+    "He terminado mi turno, te toca jugar.",
+    "Mmm……",
+    "¿Qué vas a hacer?"
+  ],
+  "directattack": [
+    "{0}，Ataca",
+    "{0}，Golpéalo",
+    "{0}，¡Maldita sea!",
+    "ja ja ja ja ja. {0}，¡Ataca los Puntos de Vida de nuestro oponente!"
+  ],
+  "attack": [
+    "¡Golpea a {1} {0}!",
+    "¡{0}, Derrota a {1}!"
+  ],
+  "ondirectattack": [
+    "Jajajajaja",
+    "Jajajajajajaja {0} Otra vez",
+    "Jajaja....."
+  ],
+  "facedownmonstername": "Mmm",
+  "activate": [
+    "Activo a{0}.",
+    "Activo el efecto de {0}.",
+    "Activo el poder de {0}."
+  ],
+  "summon": [
+    "¡Convoco a {0}!",
+    "¡Sal, {0}!",
+    "¡Llamo a {0} para que se una a la batalla!"
+  ],
+  "setmonster": [
+    "Coloco un monstruo.",
+    "He colocado un monstruo en mi lado del campo."
+  ],
+  "chaining": [
+    "¡Mira esto! ¡Activo {0}!",
+    "¡Utilizo el poder de {0}!",
+    "¡Prepárate! ¡Uso el efecto de {0}!"
+  ]
+}

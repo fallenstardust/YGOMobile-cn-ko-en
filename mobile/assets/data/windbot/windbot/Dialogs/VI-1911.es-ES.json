@@ -1,0 +1,78 @@
+{
+  "welcome": [
+    "Ha llegado una persona realmente rara.",
+    "No sabía que pelearías conmigo! Duelista. No se detiene aquí, D.A. (Duelista Amigable) te derrotará."
+  ],
+  "deckerror": [
+    "Bueno, si BA modifica el CBD, {0} puede desaparecer."
+  ],
+  "duelstart": [
+    "Esto es IA. No esperes demasiado.",
+    "Gracias por utilizar el servidor 233. No olvides visitarnos..",
+    "Sociedad anti-mainstream NOVA.",
+    "Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+  ],
+  "newturn": [
+    "Es mi turno. ¡Robo!",
+    "¡Mi turno, robo!",
+    "Saco una carta."
+  ],
+  "endturn": [
+    "Fin del turno.",
+    "Es el final del turno.",
+    "Esto es suficiente......",
+    "Es tu turno. ¡Ahora, saca tu carta! ¡Continuemos el duelo!"
+  ],
+  "directattack": [
+    "{0}, ¡Ataque directo!",
+    "{0}, ¡Ataca a tu oponente directamente!",
+    "{0}, ¡Ataca al monstruo defensor del oponente!",
+    "{0}, ¡Reduce los LP de tu oponente!",
+    "{0}, ¡Reduce los LP de tu oponente con ataques directos!",
+    "{0}, ¡Derrota a tu oponente con un ataque directo!",
+    "{0}, ¡Derrota a tus oponentes con ataques directos!",
+    "{0}, ¡Ataca con todas tus fuerzas!",
+    "¡Mi {0} te aplastará!",
+    "¡Detén el tiempo con el ataque final {0}!",
+    "Ataca {0}. Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy!"
+  ],
+  "attack": [
+    "¡{0}, ataca a {1}!",
+    "¡{0}, aniquila a {1}!",
+    "¡{0}, muestra a {1} tu verdadero poder!",
+    "¡Mi monstruo es demaciado para tí! {1}!",
+    "¡Ja ja ja ja ja ja ja!"
+  ],
+  "ondirectattack": [
+    "Mentecato.......",
+    "¡{0}!",
+    "¿¡El tiempo se ha detenido!?"
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+    "Detendré el tiempo con {0}.",
+    "¡Activo {0}!",
+    "¡{0} es la mejor!"
+  ],
+  "summon": [
+    "Invoco a {0}",
+    "Llamo a {0}",
+    "{0} ¡Yo te Invoco!",
+    "¡Gran {0}, yo te Invoco!",
+    "¡Sal {0}!",
+    "Convocaré a {0}.",
+    "Invocaré a {0}."
+  ],
+  "setmonster": [
+    "Puse este monstruo.",
+    "¡Coloco un monstruo!"
+  ],
+  "chaining": [
+    "Activo el efecto de {0}",
+    "Activaré {0}.",
+    "Genial... ¡Activaré {0}!",
+    "De hecho, eres el mejor duelista... ¿Estás listo para recibir esto? {0} ¡Activado!",
+    "Esta es la activación final. ¡Activo {0}!",
+    "¡Te pondré a prueba con esto, {0} activado!"
+  ]
+}
