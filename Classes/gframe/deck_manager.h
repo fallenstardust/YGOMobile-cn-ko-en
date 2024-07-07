@@ -8,9 +8,13 @@
 #include <sstream>
 
 namespace ygo {
+	constexpr int DECK_MAX_SIZE = 60;
+	constexpr int DECK_MIN_SIZE = 40;
+	constexpr int EXTRA_MAX_SIZE = 15;
+	constexpr int SIDE_MAX_SIZE = 15;
 
 struct LFList {
-	unsigned int hash;
+	unsigned int hash{};
 	std::wstring listName;
 	std::unordered_map<int, int> content;
 };
@@ -45,7 +49,7 @@ public:
 	int CheckDeck(Deck& deck, int lfhash, int rule);
 	int LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_packlist = false);
 	bool LoadSide(Deck& deck, int* dbuf, int mainc, int sidec);
-	void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text);
+	void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack);//
 	void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	bool LoadDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	FILE* OpenDeckFile(const wchar_t* file, const char* mode);

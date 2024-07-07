@@ -132,6 +132,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				if(mainGame->dInfo.player_type == 7) {
 					DuelClient::StopClient();
 					mainGame->dInfo.isStarted = false;
+					mainGame->dInfo.isInDuel = false;
 					mainGame->dInfo.isFinished = false;
 					mainGame->device->setEventReceiver(&mainGame->menuHandler);
 					mainGame->CloseDuelWindow();
@@ -147,7 +148,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(exit_on_return)
 						mainGame->OnGameClose();
 				} else {
-					mainGame->PopupElement(mainGame->wSurrender);
+					if(!(mainGame->dInfo.isTag && mainGame->dField.tag_surrender))
+						mainGame->PopupElement(mainGame->wSurrender);
 				}
 				break;
 			}
@@ -155,10 +157,12 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				DuelClient::SendPacketToServer(CTOS_SURRENDER);
 				mainGame->HideElement(mainGame->wSurrender);
+				mainGame->dField.tag_surrender = true;
 				break;
 			}
 			case BUTTON_SURRENDER_NO: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+				mainGame->dField.tag_teammate_surrender = false;
 				mainGame->HideElement(mainGame->wSurrender);
 				break;
 			}
@@ -853,7 +857,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				    		myswprintf(formatBuffer, L"%d", select_min);
 					    	mainGame->stCardPos[id - BUTTON_CARD_0]->setText(formatBuffer);
 						    if(select_min == select_max) {
-							    unsigned char respbuf[64];
+								unsigned char respbuf[SIZE_RETURN_VALUE];
     							for(int i = 0; i < select_max; ++i)
 	    							respbuf[i] = sort_list[i] - 1;
 		    					DuelClient::SetResponseB(respbuf, select_max);
@@ -2007,7 +2011,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					mainGame->imgChat->setImage(imageManager.tShut);
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
-				bool show = (!mainGame->dInfo.isStarted || mainGame->is_building) ? false : !mainGame->chkIgnore1->isChecked();
+				bool show = (mainGame->is_building && !mainGame->is_siding) ? false : !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
@@ -2031,11 +2035,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+            /*
 			case CHECKBOX_PREFER_EXPANSION: {
 				mainGame->gameConf.prefer_expansion_script = mainGame->chkPreferExpansionScript->isChecked() ? 1 : 0;
 				return true;
 				break;
-			}
+			}*/
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
@@ -2495,6 +2500,7 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_location = LOCATION_REMOVED;
 			}
 		} else if(rule == 1 && boardx >= matManager.vFieldSzone[1][7][rule][1].Pos.X && boardx <= matManager.vFieldSzone[1][7][rule][2].Pos.X) {
+			// deprecated szone[7]
 			if(boardy >= matManager.vFieldSzone[1][7][rule][2].Pos.Y && boardy <= matManager.vFieldSzone[1][7][rule][0].Pos.Y) {
 				hovered_controler = 1;
 				hovered_location = LOCATION_SZONE;
@@ -2526,7 +2532,8 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_controler = 1;
 				hovered_location = LOCATION_EXTRA;
 			}
-		} else if(rule == 0 && boardx >= matManager.vFieldSzone[0][7][rule][0].Pos.X && boardx <= matManager.vFieldSzone[0][7][rule][1].Pos.X) {
+		} else if(rule == 1 && boardx >= matManager.vFieldSzone[0][7][rule][0].Pos.X && boardx <= matManager.vFieldSzone[0][7][rule][1].Pos.X) {
+			// deprecated szone[7]
 			if(boardy >= matManager.vFieldSzone[0][7][rule][0].Pos.Y && boardy <= matManager.vFieldSzone[0][7][rule][2].Pos.Y) {
 				hovered_controler = 0;
 				hovered_location = LOCATION_SZONE;
@@ -2551,24 +2558,61 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = sequence;
 			} else if(boardy >= matManager.vFieldMzone[0][5][0].Pos.Y && boardy <= matManager.vFieldMzone[0][5][2].Pos.Y) {
 				if(sequence == 1) {
-					if(!mzone[1][6]) {
+					if (mzone[0][5]) {
 						hovered_controler = 0;
 						hovered_location = LOCATION_MZONE;
 						hovered_sequence = 5;
-					} else {
+					}
+					else if(mzone[1][6]) {
 						hovered_controler = 1;
 						hovered_location = LOCATION_MZONE;
 						hovered_sequence = 6;
 					}
-				} else if(sequence == 3) {
-					if(!mzone[1][5]) {
+					else if((mainGame->dInfo.curMsg == MSG_SELECT_PLACE || mainGame->dInfo.curMsg == MSG_SELECT_DISFIELD)) {
+						if (mainGame->dField.selectable_field & (0x1 << (16 + 6))) {
+							hovered_controler = 1;
+							hovered_location = LOCATION_MZONE;
+							hovered_sequence = 6;
+						}
+						else {
+							hovered_controler = 0;
+							hovered_location = LOCATION_MZONE;
+							hovered_sequence = 5;
+						}
+					}
+					else{
+						hovered_controler = 0;
+						hovered_location = LOCATION_MZONE;
+						hovered_sequence = 5;
+					}
+				}
+				else if(sequence == 3) {
+					if (mzone[0][6]) {
 						hovered_controler = 0;
 						hovered_location = LOCATION_MZONE;
 						hovered_sequence = 6;
-					} else {
+					}
+					else if (mzone[1][5]) {
 						hovered_controler = 1;
 						hovered_location = LOCATION_MZONE;
 						hovered_sequence = 5;
+					}
+					else if ((mainGame->dInfo.curMsg == MSG_SELECT_PLACE || mainGame->dInfo.curMsg == MSG_SELECT_DISFIELD)) {
+						if (mainGame->dField.selectable_field & (0x1 << (16 + 5))) {
+							hovered_controler = 1;
+							hovered_location = LOCATION_MZONE;
+							hovered_sequence = 5;
+						}
+						else {
+							hovered_controler = 0;
+							hovered_location = LOCATION_MZONE;
+							hovered_sequence = 6;
+						}
+					}
+					else {
+						hovered_controler = 0;
+						hovered_location = LOCATION_MZONE;
+						hovered_sequence = 6;
 					}
 				}
 			} else if(boardy >= matManager.vFieldMzone[1][0][2].Pos.Y && boardy <= matManager.vFieldMzone[1][0][0].Pos.Y) {
@@ -2672,6 +2716,9 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 	} else mainGame->btnReset->setVisible(false);
 	panel = mainGame->wCmdMenu;
 	mainGame->wCmdMenu->setVisible(true);
+	mainGame->btnBP->setEnabled(false);
+	mainGame->btnM2->setEnabled(false);
+	mainGame->btnEP->setEnabled(false);
 	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 20 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 130 * mainGame->xScale, y - 30 * mainGame->yScale));
 }
 void ClientField::UpdateChainButtons() {
@@ -2764,7 +2811,7 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 	}
 }
 void ClientField::SetResponseSelectedCards() const {
-	unsigned char respbuf[64];
+	unsigned char respbuf[SIZE_RETURN_VALUE];
 	respbuf[0] = selected_cards.size();
 	for (size_t i = 0; i < selected_cards.size(); ++i)
 		respbuf[i + 1] = selected_cards[i]->select_seq;

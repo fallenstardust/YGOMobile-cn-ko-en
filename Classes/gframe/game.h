@@ -10,6 +10,8 @@
 #include <vector>
 #include <list>
 
+#define DEFAULT_DUEL_RULE 5
+
 namespace ygo {
 
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -21,101 +23,104 @@ namespace ygo {
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
 #endif
 struct Config {
-	bool _init;
-	bool use_d3d;
-	bool use_image_scale;
-	unsigned short antialias;
-	unsigned short serverport;
-	unsigned char textfontsize;
-	wchar_t lasthost[100];
-	wchar_t lastport[10];
-	wchar_t nickname[20];
-	wchar_t gamename[20];
-	wchar_t lastcategory[64];
-	wchar_t lastdeck[64];
-	wchar_t textfont[256];
-	wchar_t numfont[256];
-	wchar_t roompass[20];
-	wchar_t bot_deck_path[64];
+	bool use_d3d{ false };
+	bool use_image_scale{ true };
+	unsigned short antialias{ 1 };
+	unsigned short serverport{ 7911 };
+	unsigned char textfontsize{ 18 };
+	wchar_t lasthost[100]{};
+	wchar_t lastport[10]{};
+	wchar_t nickname[20]{};
+	wchar_t gamename[20]{};
+	wchar_t lastcategory[64]{};
+	wchar_t lastdeck[64]{};
+	wchar_t textfont[256]{};
+	wchar_t numfont[256]{};
+	wchar_t roompass[20]{};
+	wchar_t bot_deck_path[64]{};
 	//settings
-	int chkMAutoPos;
-	int chkSTAutoPos;
-	int chkRandomPos;
-	int chkAutoChain;
-	int chkWaitChain;
-	int chkDefaultShowChain;
-	int chkIgnore1;
-	int chkIgnore2;
-	int use_lflist;
-	int default_lflist;
-	int default_rule;
-	int hide_setname;
-	int hide_hint_button;
-	int control_mode;
-	int draw_field_spell;
-	int separate_clear_button;
-	int auto_search_limit;
-	int search_multiple_keywords;
-	int chkIgnoreDeckChanges;
-	int defaultOT;
-	int enable_bot_mode;
-	int quick_animation;
-	int auto_save_replay;
-	int draw_single_chain;
-	int hide_player_name;
-	int prefer_expansion_script;
+	int chkMAutoPos{ 0 };
+	int chkSTAutoPos{ 0 };
+	int chkRandomPos{ 0 };
+	int chkAutoChain{ 0 };
+	int chkWaitChain{ 0 };
+	int chkDefaultShowChain{ 0 };
+	int chkIgnore1{ 0 };
+	int chkIgnore2{ 0 };
+	int use_lflist{ 1 };
+	int default_lflist{ 0 };
+	int default_rule{ DEFAULT_DUEL_RULE };
+	int hide_setname{ 0 };
+	int hide_hint_button{ 0 };
+	int control_mode{ 0 };
+	int draw_field_spell{ 1 };
+	int separate_clear_button{ 1 };
+	int auto_search_limit{ -1 };
+	int search_multiple_keywords{ 1 };
+	int chkIgnoreDeckChanges{ 0 };
+	int defaultOT{ 1 };
+	int enable_bot_mode{ 0 };
+	int quick_animation{ 0 };
+	int auto_save_replay{ 0 };
+	int draw_single_chain{ 0 };
+	int hide_player_name{ 0 };
+	int prefer_expansion_script{ 1 };
 	//sound
-	bool enable_sound;
-	bool enable_music;
-	double sound_volume;
-	double music_volume;
+	bool enable_sound{ true };
+	bool enable_music{ true };
+	double sound_volume{ 0.5 };
+	double music_volume{ 0.5 };
 	double music_mode;
 };
 
 struct DuelInfo {
-	bool isStarted;
-	bool isFinished;
-	bool isReplay;
-	bool isReplaySkiping;
-	bool isFirst;
-	bool isTag;
-	bool isSingleMode;
-	bool is_shuffling;
-	bool tag_player[2];
-	int lp[2];
-	int start_lp;
+	bool isStarted{ false };
+	bool isInDuel{ false };
+	bool isFinished{false};
+	bool isReplay{ false };
+	bool isReplaySkiping{ false };
+	bool isFirst{ false };
+	bool isTag{ false };
+	bool isSingleMode{ false };
+	bool is_shuffling{ false };
+	bool tag_player[2]{};
+	bool isReplaySwapped{ false };
+	int lp[2]{};
+	int start_lp{ 0 };
+	int duel_rule{ 0 };
+	int turn{ 0 };
+	short curMsg{ 0 };
+	wchar_t hostname[20]{};
+	wchar_t clientname[20]{};
+	wchar_t hostname_tag[20]{};
+	wchar_t clientname_tag[20]{};
+	wchar_t strLP[2][16]{};
+	wchar_t* vic_string{ nullptr };
+	unsigned char player_type{ 0 };
+	unsigned char time_player{ 0 };
+	unsigned short time_limit{ 0 };
+	unsigned short time_left[2]{};
+
+	void Clear();
+	
 	int card_count[2];
 	int total_attack[2];
-	int duel_rule;
-	int turn;
-	short curMsg;
-	wchar_t hostname[20];
-	wchar_t clientname[20];
-	wchar_t hostname_tag[20];
-	wchar_t clientname_tag[20];
-	wchar_t strLP[2][16];
-	wchar_t* vic_string;
-	unsigned char player_type;
-	unsigned char time_player;
-	unsigned short time_limit;
-	unsigned short time_left[2];
 	wchar_t str_time_left[2][16];
 	video::SColor time_color[2];
 	wchar_t str_card_count[2][16];
 	wchar_t str_total_attack[2][16];
 	video::SColor card_count_color[2];
 	video::SColor total_attack_color[2];
-	bool isReplaySwapped;
 };
 
 struct BotInfo {
-	wchar_t name[256];
-	wchar_t command[256];
-	wchar_t desc[256];
-	bool support_master_rule_3;
-	bool support_new_master_rule;
-	bool support_master_rule_2020;
-	bool select_deckfile;
+	wchar_t name[256]{};
+	wchar_t command[256]{};
+	wchar_t desc[256]{};
+	bool support_master_rule_3{ false };
+	bool support_new_master_rule{ false };
+	bool support_master_rule_2020{ false };
+	bool select_deckfile{ false };
 };
 
 struct FadingUnit {
@@ -175,7 +180,7 @@ public:
 	void ShowCardInfo(int code);
 	void ClearCardInfo(int player = 0);
 	void AddLog(const wchar_t* msg, int param = 0);
-	void AddChatMsg(const wchar_t* msg, int player);
+	void AddChatMsg(const wchar_t* msg, int player, bool play_sound = false);
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
@@ -189,7 +194,9 @@ public:
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
 
-	int LocalPlayer(int player);
+	int LocalPlayer(int player) const;
+	int OppositePlayer(int player);
+	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
 
 	bool HasFocus(EGUI_ELEMENT_TYPE type) const {
@@ -198,12 +205,12 @@ public:
 	}
 
 	void TrimText(irr::gui::IGUIElement* editbox) const {
-	    irr::core::stringw text(editbox->getText());
-	    text.trim();
-	    editbox->setText(text.c_str());
+		irr::core::stringw text(editbox->getText());
+		text.trim();
+		editbox->setText(text.c_str());
 	}
 
-
+	void ResizeChatInputWindow();
 	template<typename T>
 	static std::vector<T> TokenizeString(T input, const T& token);
 
@@ -226,8 +233,8 @@ public:
 
 	int hideChatTimer;
 	bool hideChat;
-	int chatTiming[8];
-	int chatType[8];
+	int chatTiming[8]{};
+	int chatType[8]{};
 	unsigned short linePatternD3D;
 	unsigned short linePatternGL;
 	int waitFrame;
@@ -254,6 +261,8 @@ public:
 
 	bool is_building;
 	bool is_siding;
+
+	irr::core::dimension2d<irr::u32> window_size;
 
 	ClientField dField;
 	DeckBuilder deckBuilder;
@@ -393,6 +402,7 @@ public:
 	irr::gui::IGUIButton* btnHostPrepNotReady;
 	irr::gui::IGUIButton* btnHostPrepStart;
 	irr::gui::IGUIButton* btnHostPrepCancel;
+	irr::gui::IGUIButton* btnHostDeckSelect;
 	//replay
 	irr::gui::IGUIWindow* wReplay;
 	irr::gui::IGUIImage* bgReplay;
@@ -415,6 +425,7 @@ public:
 	irr::gui::IGUIButton* btnBotCancel;
 	irr::gui::IGUIComboBox* cbBotDeckCategory;
 	irr::gui::IGUIComboBox* cbBotDeck;
+    irr::gui::IGUIButton* btnBotDeckSelect;//
 	irr::gui::IGUIComboBox* cbBotRule;
 	irr::gui::IGUICheckBox* chkBotHand;
 	irr::gui::IGUICheckBox* chkBotNoCheckDeck;
@@ -703,6 +714,7 @@ extern Game* mainGame;
 	}
 
 }
+#define SIZE_QUERY_BUFFER	0x4000
 
 #define CARD_IMG_WIDTH		200
 #define CARD_IMG_HEIGHT		290
@@ -747,6 +759,7 @@ extern Game* mainGame;
 #define BUTTON_HP_READY				126
 #define BUTTON_HP_NOTREADY			127
 #define COMBOBOX_HP_CATEGORY		128
+#define BUTTON_HP_DECK_SELECT		129
 #define LISTBOX_REPLAY_LIST			130
 #define BUTTON_LOAD_REPLAY			131
 #define BUTTON_CANCEL_REPLAY		132
@@ -769,6 +782,7 @@ extern Game* mainGame;
 #define BUTTON_BOT_START			154
 #define COMBOBOX_BOT_RULE			155
 #define COMBOBOX_BOT_DECKCATEGORY	156
+#define BUTTON_BOT_DECK_SELECT		157
 #define EDITBOX_CHAT				199
 
 #define BUTTON_MSG_OK				200
@@ -908,7 +922,7 @@ extern Game* mainGame;
 #define BUTTON_CHATTING             370
 #define SCROLL_SETTINGS			    371
 #define CHECKBOX_MULTI_KEYWORDS		372
-#define CHECKBOX_PREFER_EXPANSION	373
+//#define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
@@ -918,15 +932,26 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 
+//STOC_GAME_MSG messages
+#define MSG_WAITING				3
+#define MSG_START				4
+#define MSG_UPDATE_DATA			6	// flag=0: clear
+#define MSG_UPDATE_CARD			7	// flag=QUERY_CODE, code=0: clear
+#define MSG_REQUEST_DECK		8
+#define MSG_REFRESH_DECK		34
+#define MSG_CARD_SELECTED		80
+#define MSG_UNEQUIP				95
+#define MSG_BE_CHAIN_TARGET		121
+#define MSG_CREATE_RELATION		122
+#define MSG_RELEASE_RELATION	123
+
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4
 #define AVAIL_SC					0x8
 #define AVAIL_OCGTCG				(AVAIL_OCG|AVAIL_TCG)
 
-#define DEFAULT_DUEL_RULE			5
-
-#define CARD_ARTWORK_VERSIONS_OFFSET	10
+#define MAX_LAYER_COUNT	6
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GAME_WIDTH 1024

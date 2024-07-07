@@ -27,41 +27,42 @@ enum effect_flag2 : uint32;
 
 class effect {
 public:
-	int32 ref_handle;
-	duel* pduel;
-	card* owner;
-	card* handler;
-	uint8 effect_owner;
-	uint32 description;
-	uint32 code;
-	uint32 flag[2];
-	uint32 id;
-	uint16 type;
-	uint16 copy_id;
-	uint16 range;
-	uint16 s_range;
-	uint16 o_range;
-	uint8 count_limit;
-	uint8 count_limit_max;
-	uint16 reset_count;
-	uint32 reset_flag;
-	uint32 count_code;
-	uint32 category;
-	uint32 hint_timing[2];
-	uint32 card_type;
-	uint32 active_type;
-	uint16 active_location;
-	uint16 active_sequence;
-	card* active_handler;
-	uint16 status;
+	int32 ref_handle{ 0 };
+	duel* pduel{ nullptr };
+	card* owner{ nullptr };
+	card* handler{ nullptr };
+	uint8 effect_owner{ PLAYER_NONE };
+	uint32 description{ 0 };
+	uint32 code{ 0 };
+	uint32 flag[2]{};
+	uint32 id{ 0 };
+	uint16 type{ 0 };
+	uint16 copy_id{ 0 };
+	uint16 range{ 0 };
+	uint16 s_range{ 0 };
+	uint16 o_range{ 0 };
+	uint8 count_limit{ 0 };
+	uint8 count_limit_max{ 0 };
+	uint16 reset_count{ 0 };
+	uint32 reset_flag{ 0 };
+	uint32 count_code{ 0 };
+	uint32 category{ 0 };
+	uint32 hint_timing[2]{};
+	uint32 card_type{ 0 };
+	uint32 active_type{ 0 };
+	uint16 active_location{ 0 };
+	uint16 active_sequence{ 0 };
+	card* active_handler{ nullptr };
+	uint16 status{ 0 };
 	std::vector<uint32> label;
-	int32 label_object;
-	int32 condition;
-	int32 cost;
-	int32 target;
-	int32 value;
-	int32 operation;
-	uint8 cost_checked;
+	int32 label_object{ 0 };
+	int32 condition{ 0 };
+	int32 cost{ 0 };
+	int32 target{ 0 };
+	int32 value{ 0 };
+	int32 operation{ 0 };
+	uint8 cost_checked{ FALSE };
+	effect_set required_handorset_effects;
 
 	explicit effect(duel* pd);
 	~effect() = default;
@@ -73,7 +74,8 @@ public:
 	int32 limit_counter_is_available();
 	int32 is_single_ready();
 	int32 check_count_limit(uint8 playerid);
-	int32 is_activateable(uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE, int32 neglect_loc = FALSE, int32 neglect_faceup = FALSE);
+	int32 get_required_handorset_effects(effect_set* eset, uint8 playerid, const tevent& e, int32 neglect_loc = FALSE);
+	int32 is_activateable(uint8 playerid, const tevent &e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE, int32 neglect_loc = FALSE, int32 neglect_faceup = FALSE);
 	int32 is_action_check(uint8 playerid);
 	int32 is_activate_ready(effect* reason_effect, uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE);
 	int32 is_activate_ready(uint8 playerid, const tevent& e, int32 neglect_cond = FALSE, int32 neglect_cost = FALSE, int32 neglect_target = FALSE);
@@ -108,7 +110,7 @@ public:
 	void set_activate_location();
 	void set_active_type();
 	uint32 get_active_type();
-	int32 get_code_type();
+	int32 get_code_type() const;
 
 	bool is_flag(effect_flag flag) const {
 		return !!(this->flag[0] & flag);
@@ -201,7 +203,7 @@ enum effect_flag : uint32 {
 	EFFECT_FLAG_CLIENT_HINT			= 0x4000000,
 	EFFECT_FLAG_CONTINUOUS_TARGET	= 0x8000000,
 	EFFECT_FLAG_LIMIT_ZONE			= 0x10000000,
-//	EFFECT_FLAG_COF					= 0x20000000,
+	EFFECT_FLAG_ACTIVATE_CONDITION	= 0x20000000,
 //	EFFECT_FLAG_CVAL_CHECK			= 0x40000000,
 	EFFECT_FLAG_IMMEDIATELY_APPLY	= 0x80000000,
 };
@@ -518,6 +520,7 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EVENT_SUMMON_NEGATED		1114
 #define EVENT_FLIP_SUMMON_NEGATED	1115
 #define EVENT_SPSUMMON_NEGATED		1116
+#define EVENT_SPSUMMON_SUCCESS_G_P	1117
 #define EVENT_CONTROL_CHANGED		1120
 #define EVENT_EQUIP					1121
 #define EVENT_ATTACK_ANNOUNCE		1130
@@ -548,8 +551,8 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define EVENT_REMOVE_COUNTER		0x20000
 #define EVENT_CUSTOM				0x10000000
 
-#define DOUBLE_DAMAGE				0x80000000
-#define HALF_DAMAGE					0x80000001
+constexpr int32 DOUBLE_DAMAGE = 0x80000000;
+constexpr int32 HALF_DAMAGE = 0x80000001;
 
 // flag effect
 #define EFFECT_FLAG_EFFECT	0x20000000
@@ -561,7 +564,13 @@ inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
 #define CODE_PHASE		3	// header + phase_id (12 bits)
 #define CODE_VALUE		4	// numeric value, max = 4095
 
-const std::unordered_set<uint32> continuous_event({ EVENT_ADJUST, EVENT_BREAK_EFFECT, EVENT_TURN_END });
+const std::unordered_set<uint32> continuous_event{
+	EVENT_ADJUST,
+	EVENT_BREAK_EFFECT,
+	EVENT_TURN_END,
+	EVENT_PRE_BATTLE_DAMAGE,
+	EVENT_SPSUMMON_SUCCESS_G_P,
+};
 bool is_continuous_event(uint32 code);
 
 #endif /* EFFECT_H_ */

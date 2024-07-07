@@ -79,9 +79,9 @@ video::IImage* SGUITTGlyph::createGlyphImage(const FT_Bitmap& bits, video::IVide
 		const u32 image_pitch = image->getPitch() / sizeof(u16);
 		u16* image_data = (u16*)image->lock();
 		u8* glyph_data = bits.buffer;
-		for (s32 y = 0; y < bits.rows; ++y) {
+		for (s32 y = 0; y < (s32)bits.rows; ++y) {
 			u16* row = image_data;
-			for (s32 x = 0; x < bits.width; ++x) {
+			for (s32 x = 0; x < (s32)bits.width; ++x) {
 				// Monochrome bitmaps store 8 pixels per byte.  The left-most pixel is the bit 0x80.
 				// So, we go through the data each bit at a time.
 				if ((glyph_data[y * bits.pitch + (x / 8)] & (0x80 >> (x % 8))) != 0)
@@ -105,9 +105,9 @@ video::IImage* SGUITTGlyph::createGlyphImage(const FT_Bitmap& bits, video::IVide
 		const u32 image_pitch = image->getPitch() / sizeof(u32);
 		u32* image_data = (u32*)image->lock();
 		u8* glyph_data = bits.buffer;
-		for (s32 y = 0; y < bits.rows; ++y) {
+		for (s32 y = 0; y < (s32)bits.rows; ++y) {
 			u8* row = glyph_data;
-			for (s32 x = 0; x < bits.width; ++x) {
+			for (s32 x = 0; x < (s32)bits.width; ++x) {
 				image_data[y * image_pitch + x] |= static_cast<u32>(255.0f * (static_cast<float>(*row++) / gray_count)) << 24;
 				//data[y * image_pitch + x] |= ((u32)(*bitsdata++) << 24);
 			}
@@ -154,8 +154,8 @@ void SGUITTGlyph::preload(u32 char_index, FT_Face face, video::IVideoDriver* dri
 
 	glyph_page = parent->getLastGlyphPageIndex();
 	u32 texture_side_length = page->texture_size.Width - font_size;
-	u32 margin = font_size * 0.5;
-	u32 sprite_size = font_size * 1.5;
+	u32 margin = (u32)(font_size * 0.5);
+	u32 sprite_size = (u32)(font_size * 1.5);
 	core::vector2di page_position(
 		(s32)(page->used_slots % (s32)(texture_side_length / sprite_size)) * sprite_size + margin,
 		(s32)(page->used_slots / (s32)(texture_side_length / sprite_size)) * sprite_size + margin
@@ -527,29 +527,28 @@ void CGUITTFont::draw(const core::stringw& text, const core::rect<s32>& position
 	core::ustring::const_iterator iter(utext);
 	while (!iter.atEnd()) {
 		uchar32_t currentChar = *iter;
+
+		bool lineBreak = false;
+		if (currentChar == L'\r') { // Mac or Windows breaks
+			lineBreak = true;
+			if (*(iter + 1) == L'\n')	// Windows line breaks.
+				currentChar = *(++iter);
+		} else if (currentChar == L'\n') { // Unix breaks
+			lineBreak = true;
+		}
+		if (lineBreak) {
+			previousChar = 0;
+			offset.Y += supposed_line_height; //font_metrics.ascender / 64;
+			offset.X = position.UpperLeftCorner.X;
+			if (hcenter)
+				offset.X += (position.getWidth() - textDimension.Width) >> 1;
+			++iter;
+			continue;
+		}
+
 		n = getGlyphIndexByChar(currentChar);
 		bool visible = (Invisible.findFirst(currentChar) == -1);
 		if (n > 0 && visible) {
-			bool lineBreak = false;
-			if (currentChar == L'\r') { // Mac or Windows breaks
-				lineBreak = true;
-				if (*(iter + 1) == (uchar32_t)'\n')	// Windows line breaks.
-					currentChar = *(++iter);
-			} else if (currentChar == (uchar32_t)'\n') { // Unix breaks
-				lineBreak = true;
-			}
-
-			if (lineBreak) {
-				previousChar = 0;
-				offset.Y += supposed_line_height; //font_metrics.ascender / 64;
-				offset.X = position.UpperLeftCorner.X;
-
-				if (hcenter)
-					offset.X += (position.getWidth() - textDimension.Width) >> 1;
-				++iter;
-				continue;
-			}
-
 			// Calculate the glyph offset.
 			s32 offx = Glyphs[n - 1].offset.X;
 			s32 offy = (font_metrics.ascender / 64) - Glyphs[n - 1].offset.Y;

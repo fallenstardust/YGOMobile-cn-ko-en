@@ -6,6 +6,8 @@
  */
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -34,10 +36,6 @@ import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.SignUtils;
 import cn.garymb.ygomobile.widget.ComboBoxCompat;
 import cn.garymb.ygomobile.widget.EditWindowCompat;
-import cn.garymb.ygomobile.widget.overlay.OverlayOvalView;
-import cn.garymb.ygomobile.widget.overlay.OverlayView;
-
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 /**
  * @author mabin
@@ -46,8 +44,7 @@ public class YGOMobileActivity extends GameActivity implements
         IrrlichtBridge.IrrlichtHost,
         View.OnClickListener,
         PopupWindow.OnDismissListener,
-        TextView.OnEditorActionListener,
-        OverlayOvalView.OnDuelOptionsSelectListener {
+        TextView.OnEditorActionListener {
     private static final String TAG = YGOMobileActivity.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int CHAIN_CONTROL_PANEL_X_POSITION_LEFT_EDGE = 205;
@@ -315,34 +312,6 @@ public class YGOMobileActivity extends GameActivity implements
             }
         }
         mGlobalComboBox.dismiss();
-    }
-
-    @Override
-    public void onDuelOptionsSelected(int mode, boolean action) {
-        switch (mode) {
-            case OverlayView.MODE_CANCEL_CHAIN_OPTIONS:
-                if (DEBUG)
-                    Log.d(TAG, "Constants.MODE_CANCEL_CHAIN_OPTIONS: " + action);
-                IrrlichtBridge.cancelChain();
-                break;
-            case OverlayView.MODE_REFRESH_OPTION:
-                if (DEBUG)
-                    Log.d(TAG, "Constants.MODE_REFRESH_OPTION: " + action);
-                IrrlichtBridge.refreshTexture();
-                break;
-            case OverlayView.MODE_REACT_CHAIN_OPTION:
-                if (DEBUG)
-                    Log.d(TAG, "Constants.MODE_REACT_CHAIN_OPTION: " + action);
-                IrrlichtBridge.reactChain(action);
-                break;
-            case OverlayView.MODE_IGNORE_CHAIN_OPTION:
-                if (DEBUG)
-                    Log.d(TAG, "Constants.MODE_IGNORE_CHAIN_OPTION: " + action);
-                IrrlichtBridge.ignoreChain(action);
-                break;
-            default:
-                break;
-        }
     }
 
     @Override

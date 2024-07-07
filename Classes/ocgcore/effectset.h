@@ -18,22 +18,21 @@ class effect;
 bool effect_sort_id(const effect* e1, const effect* e2);
 
 struct effect_set {
-	effect_set()
-		: count(0), container{ nullptr } {}
 	void add_item(effect* peffect) {
-		if(count >= 64) return;
+		if (count >= 64)
+			return;
 		container[count++] = peffect;
 	}
 	void remove_item(int index) {
-		if(index >= count)
+		if (index < 0 || index >= count)
 			return;
 		if(index == count - 1) {
-			count--;
+			--count;
 			return;
 		}
 		for(int i = index; i < count - 1; ++i)
 			container[i] = container[i + 1];
-		count--;
+		--count;
 	}
 	void clear() {
 		count = 0;
@@ -47,9 +46,11 @@ struct effect_set {
 		std::sort(container.begin(), container.begin() + count, effect_sort_id);
 	}
 	effect* const& get_last() const {
+		assert(count);
 		return container[count - 1];
 	}
 	effect*& get_last() {
+		assert(count);
 		return container[count - 1];
 	}
 	effect* const& operator[] (int index) const {
@@ -65,17 +66,16 @@ struct effect_set {
 		return container[index];
 	}
 private:
-	std::array<effect*, 64> container;
-	int count;
+	std::array<effect*, 64> container{ nullptr };
+	int count{ 0 };
 };
 
 struct effect_set_v {
-	effect_set_v() {}
 	void add_item(effect* peffect) {
 		container.push_back(peffect);
 	}
 	void remove_item(int index) {
-		if(index >= (int)container.size())
+		if (index < 0 || index >= (int)container.size())
 			return;
 		container.erase(container.begin() + index);
 	}
@@ -92,9 +92,11 @@ struct effect_set_v {
 		std::sort(container.begin(), container.begin() + count, effect_sort_id);
 	}
 	effect* const& get_last() const {
+		assert(container.size());
 		return container.back();
 	}
 	effect*& get_last() {
+		assert(container.size());
 		return container.back();
 	}
 	effect* const& operator[] (int index) const {

@@ -2,16 +2,17 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
+#include <locale.h>
 #include <memory>
 
-int enable_log = 0;
+unsigned int enable_log = 0x3;
 bool exit_on_return = false;
 bool bot_mode = false;
 bool open_file = false;
 wchar_t open_file_name[256] = L"";
 
 void ClickButton(irr::gui::IGUIElement* btn) {
-	irr::SEvent event{};
+	irr::SEvent event;
 	event.EventType = irr::EET_GUI_EVENT;
 	event.GUIEvent.EventType = irr::gui::EGET_BUTTON_CLICKED;
 	event.GUIEvent.Caller = btn;

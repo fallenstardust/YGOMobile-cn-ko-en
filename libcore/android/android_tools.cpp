@@ -8,7 +8,7 @@
 namespace irr {
 namespace android {
 
-inline static void ReadString(irr::io::path &path, char*& p) {
+inline static void ReadString(irr::io::path &path, unsigned char*& p) {
 	int length = BufferIO::ReadInt32(p);
 	if (length != 0) {
 		path.append(p, length);
@@ -20,7 +20,7 @@ inline static void ReadString(irr::io::path &path, char*& p) {
 InitOptions::InitOptions(void*data) :
 		m_opengles_version(0), m_card_quality(0), m_font_aa_enabled(TRUE) {
 	if (data != NULL) {
-		char* rawdata = (char*)data;
+		unsigned char* rawdata = (unsigned char*)data;
 		int tmplength = 0;
 		m_opengles_version = BufferIO::ReadInt32(rawdata);
 

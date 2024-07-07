@@ -21,11 +21,44 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1360;
+const unsigned short PRO_VERSION = 0x1361;
 
 namespace ygo {
 
 Game *mainGame;
+
+void DuelInfo::Clear() {
+	isStarted = false;
+	isInDuel = false;
+	isFinished = false;
+	isReplay = false;
+	isReplaySkiping = false;
+	isFirst = false;
+	isTag = false;
+	isSingleMode = false;
+	is_shuffling = false;
+	tag_player[0] = false;
+	tag_player[1] = false;
+	isReplaySwapped = false;
+	lp[0] = 0;
+	lp[1] = 0;
+	start_lp = 0;
+	duel_rule = 0;
+	turn = 0;
+	curMsg = 0;
+	hostname[0] = 0;
+	clientname[0] = 0;
+	hostname_tag[0] = 0;
+	clientname_tag[0] = 0;
+	strLP[0][0] = 0;
+	strLP[1][0] = 0;
+	vic_string = 0;
+	player_type = 0;
+	time_player = 0;
+	time_limit = 0;
+	time_left[0] = 0;
+	time_left[1] = 0;
+}
 
 void Game::process(irr::SEvent &event) {
 	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
@@ -181,8 +214,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
-	memset(&dInfo, 0, sizeof(DuelInfo));
-	memset(chatTiming, 0, sizeof(chatTiming));
 	deckManager.LoadLFList(options);
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -433,8 +464,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stHostPrepOB = env->addStaticText(strbuf, rect<s32>(320 * xScale, 310 * yScale, 560 * xScale, 350 * yScale), false, false, wHostPrepare);
 	stHostPrepRule = env->addStaticText(L"", rect<s32>(320 * xScale, 30 * yScale, 560 * xScale, 300 * yScale), false, true, wHostPrepare);
 	env->addStaticText(dataManager.GetSysString(1254), rect<s32>(10 * xScale, 320 * yScale, 110 * xScale, 350 * yScale), false, false, wHostPrepare);
-	cbCategorySelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(10 * xScale, 350 * yScale, 110 * xScale, 390 * yScale), wHostPrepare, COMBOBOX_HP_CATEGORY);
-	cbDeckSelect = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(120 * xScale, 350 * yScale, 270 * xScale, 390 * yScale), wHostPrepare);
+	cbCategorySelect = env->addComboBox(rect<s32>(0, 0, 0, 0), wHostPrepare, COMBOBOX_HP_CATEGORY);
+	cbDeckSelect = env->addComboBox(rect<s32>(0, 0, 0, 0), wHostPrepare);
+	btnHostDeckSelect = env->addButton(rect<s32>(10 * xScale, 350 * yScale, 270 * xScale, 390 * yScale), wHostPrepare, BUTTON_HP_DECK_SELECT, L"");
 	btnHostPrepReady = env->addButton(rect<s32>(170 * xScale, 175 * yScale, 280 * xScale, 215 * yScale), wHostPrepare, BUTTON_HP_READY, dataManager.GetSysString(1218));
 		ChangeToIGUIImageButton(btnHostPrepReady, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnHostPrepNotReady = env->addButton(rect<s32>(170 * xScale, 175 * yScale, 280 * xScale, 215 * yScale), wHostPrepare, BUTTON_HP_NOTREADY, dataManager.GetSysString(1219));
@@ -594,9 +626,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	posY += 40 * yScale;
 	chkAutoSaveReplay = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1366));
 	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
-	posY += 40 * yScale;
-    chkPreferExpansionScript = env->addCheckBox(false, rect<s32>(posX, posY, posX + 280 * xScale, posY + 30 * yScale), wSettings, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
-    chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
     posY += 40 * yScale;
     chkMusicMode = env->addCheckBox(false, rect<s32>(posX, posY, posX + 260 * xScale, posY + 30 * yScale), wSettings, -1, dataManager.GetSysString(1281));
     chkMusicMode->setChecked(gameConf.music_mode != 0);
@@ -858,14 +887,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnReset = env->addButton(rect<s32>(0, 540 * yScale , 150 * xScale, 600 * yScale), wCmdMenu, BUTTON_CMD_RESET, dataManager.GetSysString(1162));
         ChangeToIGUIImageButton(btnReset, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//deck edit
-	wDeckEdit = env->addWindow(rect<s32>(309 * xScale, 1 * yScale, 605 * xScale, 130 * yScale), false, L"");
+	wDeckEdit = env->addWindow(rect<s32>(310 * xScale, 1 * yScale, 600 * xScale, 130 * yScale), false, L"");
     wDeckEdit->getCloseButton()->setVisible(false);
     wDeckEdit->setDrawTitlebar(false);
 	wDeckEdit->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckEdit, &bgDeckEdit, imageManager.tDialog_L);
-	btnManageDeck = env->addButton(rect<s32>(225 * xScale, 5 * yScale, 290 * xScale, 30 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
-	    ChangeToIGUIImageButton(btnManageDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	//deck manage
+	btnManageDeck = env->addButton(rect<s32>(10 * xScale, 35 * yScale, 220 * xScale, 75 * yScale), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+    //deck manage
 	wDeckManage = env->addWindow(rect<s32>(530 * xScale, 10 * yScale, 920 * xScale, 460 * yScale), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
 	wDeckManage->getCloseButton()->setVisible(false);
@@ -916,27 +944,30 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrPackCards->setSmallStep(1);
 	scrPackCards->setVisible(false);
         ChangeToIGUIImageButton(btnDMCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 9 * yScale, 100 * xScale, 29 * yScale), false, false, wDeckEdit);
-	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 5 * yScale, 220 * xScale, 30 * yScale), wDeckEdit, COMBOBOX_DBCATEGORY);
+	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), rect<s32>(10 * xScale, 10 * yScale, 60 * xScale, 50 * yScale), false, false, wDeckEdit);
+	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBCATEGORY);
 	cbDBCategory->setMaxSelectionRows(15);
-	stDeck = env->addStaticText(dataManager.GetSysString(1301), rect<s32>(10 * xScale, 39 * yScale, 100 * xScale, 59 * yScale), false, false, wDeckEdit);
-	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(80 * xScale, 35 * yScale, 220 * xScale, 60 * yScale), wDeckEdit, COMBOBOX_DBDECKS);
+	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBDECKS);
 	cbDBDecks->setMaxSelectionRows(15);
-	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 290 * xScale, 60 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
+	btnSaveDeck = env->addButton(rect<s32>(225 * xScale, 35 * yScale, 280 * xScale, 75 * yScale), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
         ChangeToIGUIImageButton(btnSaveDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(80 * xScale, 65 * yScale, 220 * xScale, 90 * yScale), wDeckEdit, -1);
+	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(10 * xScale, 80 * yScale, 220 * xScale, 120 * yScale), wDeckEdit, -1);
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnSaveDeckAs = env->addButton(rect<s32>(225 * xScale, 65 * yScale, 290 * xScale, 90 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
+	btnSaveDeckAs = env->addButton(rect<s32>(225 * xScale, 80 * yScale, 280 * xScale, 120 * yScale), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
         ChangeToIGUIImageButton(btnSaveDeckAs, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnDeleteDeck = env->addButton(rect<s32>(10 * xScale, 95 * yScale, 70 * xScale, 116 * yScale), wDeckEdit, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));
+	btnDeleteDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 245 * yScale, 310 * yScale, 285 * yScale), 0, BUTTON_DELETE_DECK, dataManager.GetSysString(1308));
         ChangeToIGUIImageButton(btnDeleteDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnShuffleDeck = env->addButton(rect<s32>(130 * xScale, 95 * yScale, 180 * xScale, 116 * yScale), wDeckEdit, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
+	btnShuffleDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 70 * yScale, 310 * yScale, 110 * yScale), 0, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
         ChangeToIGUIImageButton(btnShuffleDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnSortDeck = env->addButton(rect<s32>(185 * xScale, 95 * yScale, 235 * xScale, 116 * yScale), wDeckEdit, BUTTON_SORT_DECK, dataManager.GetSysString(1305));
+	btnSortDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 115 * yScale, 310 * yScale, 155 * yScale), 0, BUTTON_SORT_DECK, dataManager.GetSysString(1305));
         ChangeToIGUIImageButton(btnSortDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnClearDeck = env->addButton(rect<s32>(240 * xScale, 95 * yScale, 290 * xScale, 116 * yScale), wDeckEdit, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
+	btnClearDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 160 * yScale, 310 * yScale, 200 * yScale), 0, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
         ChangeToIGUIImageButton(btnClearDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnSideOK = env->addButton(rect<s32>(510 * xScale, 40 * yScale, 820 * xScale, 80 * yScale), 0, BUTTON_SIDE_OK, dataManager.GetSysString(1334));
+    btnDeleteDeck->setVisible(false);
+    btnShuffleDeck->setVisible(false);
+    btnSortDeck->setVisible(false);
+    btnClearDeck->setVisible(false);
+	btnSideOK = env->addButton(rect<s32>(400 * xScale, 40 * yScale, 710 * xScale, 80 * yScale), 0, BUTTON_SIDE_OK, dataManager.GetSysString(1334));
         ChangeToIGUIImageButton(btnSideOK, imageManager.tButton_L, imageManager.tButton_L_pressed);
 	btnSideOK->setVisible(false);
 	btnSideShuffle = env->addButton(rect<s32>(310 * xScale, 100 * yScale, 370 * xScale, 130 * yScale), 0, BUTTON_SHUFFLE_DECK, dataManager.GetSysString(1307));
@@ -1114,11 +1145,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
             ChangeToIGUIImageButton(btnBotCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 		env->addStaticText(dataManager.GetSysString(1382), rect<s32>(310 * xScale, 10 * yScale, 500 * xScale, 30 * yScale), false, true, tabBot);
 		stBotInfo = env->addStaticText(L"", rect<s32>(310 * xScale, 40 * yScale, 560 * xScale, 160 * yScale), false, true, tabBot);
-		cbBotDeckCategory =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 90 * yScale, 530 * xScale, 120 * yScale), tabBot, COMBOBOX_BOT_DECKCATEGORY);
+		cbBotDeckCategory =  env->addComboBox(rect<s32>(0, 0, 0, 0), tabBot, COMBOBOX_BOT_DECKCATEGORY);
 		cbBotDeckCategory->setVisible(false);
-		cbBotDeck =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 130 * yScale, 530 * xScale, 160 * yScale), tabBot);
+		cbBotDeck =  env->addComboBox(rect<s32>(0, 0, 0, 0), tabBot);
 		cbBotDeck->setVisible(false);
-		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 170 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
+        btnBotDeckSelect = env->addButton(rect<s32>(310 * xScale, 110 * yScale, 530 * xScale, 150 * yScale), tabBot, BUTTON_BOT_DECK_SELECT, L"");
+		btnBotDeckSelect->setVisible(false);
+		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(310 * xScale, 160 * yScale, 530 * xScale, 200 * yScale), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
 		cbBotRule->addItem(dataManager.GetSysString(1264));
@@ -1182,7 +1215,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     } else {
         imgChat->setImage(imageManager.tTalk);
     }
-	wChat = env->addWindow(rect<s32>(305 * xScale, 610 * yScale, 1020 * xScale, 640 * yScale), false, L"");
+	wChat = env->addWindow(rect<s32>(305 * xScale, 605 * yScale, 1020 * xScale, 640 * yScale), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
@@ -1371,7 +1404,7 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
-		ALOGV("game draw frame");
+		//ALOGV("game draw frame");
 		linePatternD3D = (linePatternD3D + 1) % 30;
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
@@ -1474,7 +1507,7 @@ void Game::MainLoop() {
 	usleep(500000);
 	SaveConfig();
 	usleep(500000);
-//	device->drop();
+	device->drop();
 }
 void Game::RefreshTimeDisplay() {
 	for(int i = 0; i < 2; ++i) {
@@ -1554,7 +1587,7 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth,
 		strBuffer[pbuffer++] = c;
 	}
 	strBuffer[pbuffer] = 0;
-	pControl->setText(strBuffer);
+	if(pControl) pControl->setText(strBuffer);
 	ret.assign(strBuffer);
 	return ret;
 }
@@ -1595,7 +1628,9 @@ void Game::LoadExpansions() {
 }
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
-	cbCategory->addItem(dataManager.GetSysString(1450));
+	if (cbCategory == mainGame->cbDBCategory) {
+		cbCategory->addItem(dataManager.GetSysString(1450));
+	}
 	cbCategory->addItem(dataManager.GetSysString(1451));
 	cbCategory->addItem(dataManager.GetSysString(1452));
 	cbCategory->addItem(dataManager.GetSysString(1453));
@@ -1604,7 +1639,11 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 			cbCategory->addItem(name);
 		}
 	});
-	cbCategory->setSelected(2);
+    if (cbCategory == mainGame->cbDBCategory) {
+        cbCategory->setSelected(2);
+    } else {
+        cbCategory->setSelected(1);
+    }
 	if(selectlastused) {
 		for(size_t i = 0; i < cbCategory->getItemCount(); ++i) {
 			if(!wcscmp(cbCategory->getItem(i), gameConf.lastcategory)) {
@@ -1624,19 +1663,21 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	}
 }
 void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
-	if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
-		// can't use pack list in duel
-		cbDeck->clear();
-		return;
-	}
+    if (cbCategory == mainGame->cbDBCategory) {
+        if(cbCategory != cbDBCategory && cbCategory->getSelected() == 0) {
+            // can't use pack list in duel
+            cbDeck->clear();
+            return;
+        }
+    }
 	wchar_t catepath[256];
-	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText());
+	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText(), cbCategory == mainGame->cbDBCategory);
 	cbDeck->clear();
 	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
 }
 void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
 	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
-		for(auto pack : deckBuilder.expansionPacks) {
+		for(auto& pack : deckBuilder.expansionPacks) {
 			additem(pack.substr(5, pack.size() - 9).c_str());
 		}
 	}
@@ -1670,23 +1711,29 @@ void Game::RefreshBot() {
 		return;
 	botInfo.clear();
 	FILE* fp = fopen("bot.conf", "r");
-	char linebuf[256];
-	char strbuf[256];
+	char linebuf[256]{};
+	char strbuf[256]{};
 	if(fp) {
 		while(fgets(linebuf, 256, fp)) {
 			if(linebuf[0] == '#')
 				continue;
 			if(linebuf[0] == '!') {
 				BotInfo newinfo;
-				sscanf(linebuf, "!%240[^\n]", strbuf);
+				if (sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.name);
-				fgets(linebuf, 256, fp);
-				sscanf(linebuf, "%240[^\n]", strbuf);
+				if (!fgets(linebuf, 256, fp))
+					break;
+				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.command);
-				fgets(linebuf, 256, fp);
-				sscanf(linebuf, "%240[^\n]", strbuf);
+				if (!fgets(linebuf, 256, fp))
+					break;
+				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.desc);
-				fgets(linebuf, 256, fp);
+				if (!fgets(linebuf, 256, fp))
+					break;
 				newinfo.support_master_rule_3 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_3");
 				newinfo.support_new_master_rule = !!strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
 				newinfo.support_master_rule_2020 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_2020");
@@ -1710,14 +1757,24 @@ void Game::RefreshBot() {
 	}
 	if(botInfo.size() == 0) {
 		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
-	} else {
+	}
+	else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
+        deckBuilder.prev_category = mainGame->cbBotDeckCategory->getSelected();
+        deckBuilder.prev_deck = mainGame->cbBotDeck->getSelected();
+		wchar_t cate[256];
+		wchar_t cate_deck[256];
+		myswprintf(cate, L"%ls%ls", (cbBotDeckCategory->getSelected())==1 ? L"" : cbBotDeckCategory->getItem(cbBotDeckCategory->getSelected()), (cbBotDeckCategory->getSelected())==1 ? L"" : L"|");
+		if (cbBotDeck->getItemCount() != 0) {
+			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeck->getItem(cbBotDeck->getSelected()));
+		} else {
+			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+		}
+		mainGame->btnBotDeckSelect->setText(cate_deck);
 	}
 }
 void Game::LoadConfig() {
 	wchar_t wstr[256];
-	if(gameConf._init)return;
-	gameConf._init = TRUE;
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
 	gameConf.textfontsize = android::getIntSetting(appMain, "textfontsize", 18);;
@@ -1725,10 +1782,10 @@ void Game::LoadConfig() {
 	gameConf.gamename[0] = 0;
     BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
     BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
-    //irr:os::Printer::log("getLastCategory", android::getLastCategory(appMain).c_str());
+
 	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
-	//os::Printer::log(android::getFontPath(appMain).c_str());
+
 	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
@@ -1750,7 +1807,6 @@ void Game::LoadConfig() {
 	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
 	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
 	gameConf.draw_single_chain = android::getIntSetting(appMain, "draw_single_chain", 0);
-	gameConf.prefer_expansion_script = android::getIntSetting(appMain, "prefer_expansion_script", 0);
 	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 1);
 	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 50);
 	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 1);
@@ -1762,7 +1818,6 @@ void Game::LoadConfig() {
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
-	gameConf.hide_hint_button = 0;
 	gameConf.separate_clear_button = 1;
 	gameConf.search_multiple_keywords = 1;
 	gameConf.defaultOT = 1;
@@ -1802,8 +1857,6 @@ void Game::SaveConfig() {
         android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 	gameConf.draw_single_chain = chkDrawSingleChain->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "draw_single_chain", gameConf.draw_single_chain);
-	gameConf.prefer_expansion_script = chkPreferExpansionScript->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "prefer_expansion_script", gameConf.prefer_expansion_script);
 	gameConf.enable_sound = chkEnableSound->isChecked() ? 1 : 0;
 	    android::saveIntSetting(appMain, "enable_sound", gameConf.enable_sound);
 	gameConf.enable_music = chkEnableMusic->isChecked() ? 1 : 0;
@@ -1825,34 +1878,42 @@ void Game::SaveConfig() {
 }
 
 void Game::ShowCardInfo(int code) {
-	CardData cd;
 	wchar_t formatBuffer[256];
-	if(!dataManager.GetData(code, &cd))
-		memset(&cd, 0, sizeof(CardData));
+	auto cit = dataManager.GetCodePointer(code);
+	bool is_valid = (cit != dataManager.datas_end);
 	imgCard->setImage(imageManager.GetTexture(code));
 	imgCard->setScaleImage(true);
-	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	if (is_valid) {
+		auto& cd = cit->second;
+		if (cd.is_alternative())
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
+		else
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
+	else {
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
 	stName->setText(formatBuffer);
 	int offset = 0;
-	if(!gameConf.hide_setname) {
-		unsigned long long sc = cd.setcode;
-		if(cd.alias) {
-			auto aptr = dataManager._datas.find(cd.alias);
-			if(aptr != dataManager._datas.end())
-				sc = aptr->second.setcode;
+	if (is_valid && !gameConf.hide_setname) {
+		auto& cd = cit->second;
+		auto target = cit;
+		if (cd.alias && dataManager.GetCodePointer(cd.alias) != dataManager.datas_end) {
+			target = dataManager.GetCodePointer(cd.alias);
 		}
-		if(sc) {
+		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(sc));
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode));
 			stSetName->setText(formatBuffer);
-		} else
+		}
+		else
 			stSetName->setText(L"");
-	} else {
+	}
+	else {
 		stSetName->setText(L"");
 	}
-	if(cd.type & TYPE_MONSTER) {
+	if(is_valid && cit->second.type & TYPE_MONSTER) {
+		auto& cd = cit->second;
 		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type), dataManager.FormatRace(cd.race), dataManager.FormatAttribute(cd.attribute));
 		stInfo->setText(formatBuffer);
 		if(!(cd.type & TYPE_LINK)) {
@@ -1888,8 +1949,12 @@ void Game::ShowCardInfo(int code) {
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 83 * yScale, 250 * xScale, 106 * yScale));
 		stText->setRelativePosition(rect<s32>(10 * xScale, (83 + offset) * yScale, 251 * xScale, 340 * yScale));
 		scrCardText->setRelativePosition(rect<s32>(255 * xScale, (83 + offset) * yScale, 258 * xScale, 340 * yScale));
-	} else {
-		myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cd.type));
+	}
+	else {
+		if (is_valid)
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type));
+		else
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(0));
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 60 * yScale, 250 * xScale, 106 * yScale));
@@ -1916,7 +1981,7 @@ void Game::AddLog(const wchar_t* msg, int param) {
 		lstLog->setSelected(-1);
 	}
 }
-void Game::AddChatMsg(const wchar_t* msg, int player) {
+void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 	for(int i = 7; i > 0; --i) {
 		chatMsg[i] = chatMsg[i - 1];
 		chatTiming[i] = chatTiming[i - 1];
@@ -1927,23 +1992,22 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 	chatType[0] = player;
 	if(gameConf.hide_player_name && player < 4)
 		player = 10;
+	if(play_sound)
+		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 	switch(player) {
 	case 0: //from host
 		chatMsg[0].append(dInfo.hostname);
 		chatMsg[0].append(L": ");
 		break;
 	case 1: //from client
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname);
 		chatMsg[0].append(L": ");
 		break;
 	case 2: //host tag
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.hostname_tag);
 		chatMsg[0].append(L": ");
 		break;
 	case 3: //client tag
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(dInfo.clientname_tag);
 		chatMsg[0].append(L": ");
 		break;
@@ -1952,7 +2016,6 @@ void Game::AddChatMsg(const wchar_t* msg, int player) {
 		chatMsg[0].append(L": ");
 		break;
 	case 8: //system custom message, no prefix.
-		soundManager->PlaySoundEffect(SoundManager::SFX::CHAT);
 		chatMsg[0].append(L"[System]: ");
 		break;
 	case 9: //error message
@@ -1980,7 +2043,7 @@ void Game::AddDebugMsg(const char* msg) {
 	}
 	if (enable_log & 0x2) {
 		char msgbuf[1040];
-		sprintf(msgbuf, "[Script Error]: %s", msg);
+		snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
 		ErrorLog(msgbuf);
 	}
 }
@@ -2003,6 +2066,7 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 }
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
+	ClearCardInfo(0);
 	imgCard->setImage(imageManager.tCover[0]);
 	scrCardText->setVisible(false);
 	imgCard->setScaleImage(true);
@@ -2069,13 +2133,55 @@ void Game::CloseDuelWindow() {
 	lstHostList->clear();
 	DuelClient::hosts.clear();
 	ClearTextures();
+	ResizeChatInputWindow();
 	closeDoneSignal.Set();
 }
-int Game::LocalPlayer(int player) {
-	return dInfo.isFirst ? player : 1 - player;
+int Game::LocalPlayer(int player) const {
+	int pid = player ? 1 : 0;
+	return dInfo.isFirst ? pid : 1 - pid;
+}
+int Game::OppositePlayer(int player) {
+	auto player_side_bit = dInfo.isTag ? 0x2 : 0x1;
+	return player ^ player_side_bit;
+}
+int Game::ChatLocalPlayer(int player) {
+	if(player > 3)
+		return player;
+	bool is_self;
+	if(dInfo.isStarted || is_siding) {
+		if(dInfo.isInDuel)
+			// when in duel
+			player = mainGame->dInfo.isFirst ? player : OppositePlayer(player);
+		else {
+			// when changing side or waiting tp result
+			auto selftype_boundary = dInfo.isTag ? 2 : 1;
+			if(DuelClient::selftype >= selftype_boundary && DuelClient::selftype < 4)
+				player = OppositePlayer(player);
+		}
+		if (DuelClient::selftype >= 4) {
+			is_self = false;
+		} else if (dInfo.isTag) {
+			is_self =  (player & 0x2) == 0 && (player & 0x1) == (DuelClient::selftype & 0x1);
+		} else {
+			is_self = player == 0;
+		}
+	} else {
+		// when in lobby
+		is_self = player == DuelClient::selftype;
+	}
+	if(dInfo.isTag && (player == 1 || player == 2)) {
+		player = 3 - player;
+	}
+	return player | (is_self ? 0x10 : 0);
 }
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
+}
+void Game::ResizeChatInputWindow() {
+	s32 x = 305 * xScale;
+	if(is_building) x = 802 * xScale;
+	wChat->setRelativePosition(recti(x, (GAME_HEIGHT - 35) * yScale, (GAME_WIDTH - 4) * xScale, GAME_HEIGHT * yScale));
+	ebChatInput->setRelativePosition(recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * xScale));
 }
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);

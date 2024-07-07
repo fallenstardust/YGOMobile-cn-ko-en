@@ -31,7 +31,7 @@ bool CAndroidGUIComboBox::OnEvent(const SEvent& event) {
 		contents = (char **)malloc(count * sizeof(char *));
 		for (int i = 0; i < count; i++) {
 			content = (char *)malloc(256 * 4);
-			BufferIO::EncodeUTF8(getItem(i), content);
+			BufferIO::EncodeUTF8String(getItem(i), content, 256 * 4);
 			*(contents + i) = content;
 		}
 		android::showAndroidComboBoxCompat(ygo::mainGame->appMain, true, contents, count);

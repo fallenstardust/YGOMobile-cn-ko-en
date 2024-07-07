@@ -14,8 +14,8 @@
 #endif
 #ifdef _WIN32
 
-#include <WinSock2.h>
 #define NOMINMAX
+#include <WinSock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 
@@ -40,7 +40,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <locale.h>
 
 #define SD_BOTH 2
 #define SOCKET int
@@ -90,7 +89,6 @@ inline int _wtoi(const wchar_t * s) {
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <time.h>
 #include <thread>
 #include <mutex>
@@ -122,7 +120,7 @@ using namespace gui;
 using namespace os;
 
 extern const unsigned short PRO_VERSION;
-extern int enable_log;
+extern unsigned int enable_log;
 extern bool exit_on_return;
 extern bool bot_mode;
 #endif

@@ -282,8 +282,21 @@ void Game::DrawLinkedZones(ClientCard* pcard, ClientCard* fcard) {
 }
 
 void Game::DrawCards() {
-	for(auto cit = dField.overlay_cards.begin(); cit != dField.overlay_cards.end(); ++cit)
-		DrawCard(*cit);
+	for (auto cit = dField.overlay_cards.begin(); cit != dField.overlay_cards.end(); ++cit) {
+		auto pcard = (*cit);
+		auto olcard = pcard->overlayTarget;
+		if (pcard->aniFrame) {
+			DrawCard(pcard);
+		}
+		else if (olcard && olcard->location == LOCATION_MZONE) {
+			if (pcard->sequence < MAX_LAYER_COUNT) {
+				DrawCard(pcard);
+			}
+		}
+		else {
+			DrawCard(pcard);
+		}
+	}
 	for(int p = 0; p < 2; ++p) {
 		for(auto it = dField.mzone[p].begin(); it != dField.mzone[p].end(); ++it)
 			if(*it)
@@ -509,6 +522,8 @@ void Game::DrawMisc() {
 	//finish button
 	if(btnCancelOrFinish->isVisible() && dField.select_ready)
 		DrawSelectionLine(btnCancelOrFinish, 4, 0xff00ff00);
+	if(btnLeaveGame->isVisible() && dField.tag_teammate_surrender)
+		DrawSelectionLine(btnLeaveGame, 4, 0xff00ff00);
 	//lp bar
 	//driver->draw2DImage(imageManager.tLPFrame, recti(400 * mainGame->xScale, 10 * mainGame->yScale, 629 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
 	//driver->draw2DImage(imageManager.tLPFrame, recti(691 * mainGame->xScale, 10 * mainGame->yScale, 920 * mainGame->xScale, 30 * mainGame->yScale), recti(0, 0, 200, 20), 0, 0, true);
@@ -1011,19 +1026,40 @@ void Game::DrawSpec() {
 	    showChat = false;
 	    hideChatTimer--;
 	}
+	int chatRectY = 0;
 	for(int i = 0; i < 8; ++i) {
 		static unsigned int chatColor[] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xff8080ff, 0xffff4040, 0xffff4040,
 		                                   0xffff4040, 0xff40ff40, 0xff4040ff, 0xff40ffff, 0xffff40ff, 0xffffff40, 0xffffffff, 0xff808080, 0xff404040};
 		if(chatTiming[i]) {
 			chatTiming[i]--;
-			if(mainGame->dInfo.isStarted && i >= 5)
-				continue;
-			if(!showChat && i > 2)
-				continue;
-			int w = guiFont->getDimension(chatMsg[i].c_str()).Width;
-			driver->draw2DRectangle(recti(305 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 307 * mainGame->xScale + w, (616 - 20 * i) * mainGame->yScale), 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-			guiFont->draw(chatMsg[i].c_str(), rect<s32>(305 * mainGame->xScale, (595 - 20 * i) * mainGame->yScale, 1020 * mainGame->xScale, (615 - 20 * i) * mainGame->yScale), 0xff000000, false, false);
-			guiFont->draw(chatMsg[i].c_str(), rect<s32>(306 * mainGame->xScale, (596 - 20 * i) * mainGame->yScale, 1021 * mainGame->xScale, (616 - 20 * i) * mainGame->yScale), chatColor[chatType[i]], false, false);
+			if(!is_building) {
+				if(dInfo.isStarted && i >= 5)
+					continue;
+				if(!showChat && i > 2)
+					continue;
+			}
+
+			int x = wChat->getRelativePosition().UpperLeftCorner.X;
+			int y = (GAME_HEIGHT - 25) * mainGame->yScale;
+			int maxwidth = 705 * xScale;
+			if(is_building) {
+				x = 810 * xScale;
+				maxwidth = 205 * xScale;
+			}
+
+			std::wstring msg = SetStaticText(nullptr, maxwidth, guiFont, chatMsg[i].c_str());
+			int w = guiFont->getDimension(msg).Width;
+			int h = guiFont->getDimension(msg).Height + 2;
+
+			recti rectloc(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
+			recti msgloc(x, y - chatRectY - h, x - 4, y - chatRectY);
+			recti shadowloc = msgloc + position2di(1, 1);
+
+			driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
+			guiFont->draw(msg.c_str(), msgloc, 0xff000000, false, false);
+			guiFont->draw(msg.c_str(), shadowloc, chatColor[chatType[i]], false, false);
+
+			chatRectY += h;
 		}
 	}
 }
@@ -1220,10 +1256,10 @@ void Game::DrawDeckBd() {
 		dx = 436.0f / (lx - 1);
 	}
 	int padding = scrPackCards->getPos() * lx;
-	for(size_t i = 0; i < mainsize - padding && i < 7 * lx; ++i) {
-		size_t j = i + padding;
+	for(int i = 0; i < mainsize - padding && i < 7 * lx; ++i) {
+		int j = i + padding;
 		DrawThumb(deckManager.current_deck.main[j], position2di((314 + (i % lx) * dx)  * mainGame->xScale, (164 + (i / lx) * dy)  * mainGame->yScale), deckBuilder.filterList);
-		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == (int)j)
+		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == j)
 			driver->draw2DRectangleOutline(recti((313 + (i % lx) * dx)  * mainGame->xScale, (163 + (i / lx) * dy) * mainGame->yScale, (359 + (i % lx) * dx) * mainGame->xScale, (228 + (i / lx) * dy) * mainGame->yScale));
 	}
 	if(!deckBuilder.showing_pack) {
@@ -1285,70 +1321,78 @@ void Game::DrawDeckBd() {
 				driver->draw2DRectangleOutline(recti((313 + i * dx) * mainGame->xScale, 563 * mainGame->yScale, (359 + i * dx) * mainGame->xScale, 629 * mainGame->yScale));
 		}
 	}
-	//search result
-	driver->draw2DRectangle(recti(805 * mainGame->xScale, 137 * mainGame->yScale, 930 * mainGame->xScale, 157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(recti(805 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale, 157 * mainGame->yScale));
-	DrawShadowText(guiFont, dataManager.GetSysString(1333), recti(795 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
-	DrawShadowText(numFont, deckBuilder.result_string, recti(865 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale, 156 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, false);
-	driver->draw2DRectangle(recti(805 * mainGame->xScale, 160 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(recti(804 * mainGame->xScale, 159 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale));
+	if(is_siding) {
+		// side chat background
+		driver->draw2DRectangle(recti(805 * mainGame->xScale, 10 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangleOutline(recti(804 * mainGame->xScale, 9 * mainGame->yScale, 1020 * mainGame->xScale, 630 * mainGame->yScale));
+	} else {
+		//search result
+		driver->draw2DRectangle(recti(805 * mainGame->xScale, 137 * mainGame->yScale, 930 * mainGame->xScale,157 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangleOutline(recti(805 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale,157 * mainGame->yScale));
+		DrawShadowText(guiFont, dataManager.GetSysString(1333),recti(795 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale,156 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, true, false);
+		DrawShadowText(numFont, deckBuilder.result_string,recti(865 * mainGame->xScale, 136 * mainGame->yScale, 930 * mainGame->xScale,156 * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, true, false);
+		driver->draw2DRectangle(recti(805 * mainGame->xScale, 160 * mainGame->yScale, 1020 * mainGame->xScale,630 * mainGame->yScale), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangleOutline(recti(804 * mainGame->xScale, 159 * mainGame->yScale, 1020 * mainGame->xScale,630 * mainGame->yScale));
 #ifdef _IRR_ANDROID_PLATFORM_
-	for(size_t i = 0; i < 7 && i + scrFilter->getPos() < deckBuilder.results.size(); ++i) {
-		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
-		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
-			driver->draw2DRectangle(0x80000000, recti(806 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1019 * mainGame->xScale, (230 + i * 66) * mainGame->yScale));
-		DrawThumb(ptr, position2di(805 * mainGame->xScale, (165 + i * 66) * mainGame->yScale), deckBuilder.filterList);
-		if(ptr->second.type & TYPE_MONSTER) {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-			if(!(ptr->second.type & TYPE_LINK)) {
-				const wchar_t* form = L"\u2605";
-				if(ptr->second.type & TYPE_XYZ) form = L"\u2606";
-				myswprintf(textBuffer, L"%ls/%ls %ls%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), form, ptr->second.level);
-				DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-				if(ptr->second.attack < 0 && ptr->second.defense < 0)
-					myswprintf(textBuffer, L"?/?");
-				else if(ptr->second.attack < 0)
-					myswprintf(textBuffer, L"?/%d", ptr->second.defense);
-				else if(ptr->second.defense < 0)
-					myswprintf(textBuffer, L"%d/?", ptr->second.attack);
-				else myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
+		for (size_t i = 0; i < 7 && i + scrFilter->getPos() < deckBuilder.results.size(); ++i) {
+			code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
+			if (deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int) i)
+				driver->draw2DRectangle(0x80000000, recti(806 * mainGame->xScale,(164 + i * 66) * mainGame->yScale,1019 * mainGame->xScale,(230 + i * 66) * mainGame->yScale));
+			DrawThumb(ptr, position2di(805 * mainGame->xScale, (165 + i * 66) * mainGame->yScale),deckBuilder.filterList);
+			if (ptr->second.type & TYPE_MONSTER) {
+				myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
+				DrawShadowText(guiFont, textBuffer,recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale,1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, false, false);
+				if (!(ptr->second.type & TYPE_LINK)) {
+					const wchar_t *form = L"\u2605";
+					if (ptr->second.type & TYPE_XYZ) form = L"\u2606";
+					myswprintf(textBuffer, L"%ls/%ls %ls%d",dataManager.FormatAttribute(ptr->second.attribute),dataManager.FormatRace(ptr->second.race), form, ptr->second.level);
+					DrawShadowText(guiFont, textBuffer,recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale,1000 * mainGame->xScale,(207 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0),0xffffffff, 0xff000000, false, false);
+					if (ptr->second.attack < 0 && ptr->second.defense < 0)
+						myswprintf(textBuffer, L"?/?");
+					else if (ptr->second.attack < 0)
+						myswprintf(textBuffer, L"?/%d", ptr->second.defense);
+					else if (ptr->second.defense < 0)
+						myswprintf(textBuffer, L"%d/?", ptr->second.attack);
+					else
+						myswprintf(textBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
+				} else {
+					myswprintf(textBuffer, L"%ls/%ls LINK-%d",dataManager.FormatAttribute(ptr->second.attribute),dataManager.FormatRace(ptr->second.race), ptr->second.level);
+					DrawShadowText(guiFont, textBuffer,recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale,1000 * mainGame->xScale,(207 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0),0xffffffff, 0xff000000, false, false);
+					if (ptr->second.attack < 0)
+						myswprintf(textBuffer, L"?/-");
+					else
+						myswprintf(textBuffer, L"%d/-", ptr->second.attack);
+				}
+				if (ptr->second.type & TYPE_PENDULUM) {
+					wchar_t scaleBuffer[16];
+					myswprintf(scaleBuffer, L" %d/%d", ptr->second.lscale, ptr->second.rscale);
+					wcscat(textBuffer, scaleBuffer);
+				}
+				if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
+					wcscat(textBuffer, L" [OCG]");
+				else if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
+					wcscat(textBuffer, L" [TCG]");
+				else if ((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
+					wcscat(textBuffer, L" [Custom]");
+				DrawShadowText(guiFont, textBuffer,recti(850 * mainGame->xScale, (209 + i * 66) * mainGame->yScale,1000 * mainGame->xScale, (230 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, false, false);
 			} else {
-				myswprintf(textBuffer, L"%ls/%ls LINK-%d", dataManager.FormatAttribute(ptr->second.attribute), dataManager.FormatRace(ptr->second.race), ptr->second.level);
-				DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-				if(ptr->second.attack < 0)
-					myswprintf(textBuffer, L"?/-");
-				else myswprintf(textBuffer, L"%d/-", ptr->second.attack);
+				myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
+				DrawShadowText(guiFont, textBuffer,recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale,1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, false, false);
+				const wchar_t *ptype = dataManager.FormatType(ptr->second.type);
+				DrawShadowText(guiFont, ptype,recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale,1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale),recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff,0xff000000, false, false);
+				textBuffer[0] = 0;
+				if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
+					wcscat(textBuffer, L"[OCG]");
+				else if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
+					wcscat(textBuffer, L"[TCG]");
+				else if ((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
+					wcscat(textBuffer, L"[Custom]");
 			}
-			if(ptr->second.type & TYPE_PENDULUM) {
-				wchar_t scaleBuffer[16];
-				myswprintf(scaleBuffer, L" %d/%d", ptr->second.lscale, ptr->second.rscale);
-				wcscat(textBuffer, scaleBuffer);
-			}
-			if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
-				wcscat(textBuffer, L" [OCG]");
-			else if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
-				wcscat(textBuffer, L" [TCG]");
-			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
-				wcscat(textBuffer, L" [Custom]");
-			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (209 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (230 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-		} else {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			DrawShadowText(guiFont, textBuffer, recti(850 * mainGame->xScale, (164 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (185 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-			const wchar_t* ptype = dataManager.FormatType(ptr->second.type);
-			DrawShadowText(guiFont, ptype, recti(850 * mainGame->xScale, (186 + i * 66) * mainGame->yScale, 1000 * mainGame->xScale, (207 + i * 66) * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, false, false);
-			textBuffer[0] = 0;
-			if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
-				wcscat(textBuffer, L"[OCG]");
-			else if((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
-				wcscat(textBuffer, L"[TCG]");
-			else if((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
-				wcscat(textBuffer, L"[Custom]");
 		}
-	}
 #endif
-	if(deckBuilder.is_draging) {
-		DrawThumb(deckBuilder.draging_pointer, position2di(deckBuilder.dragx - 22, deckBuilder.dragy - 32), deckBuilder.filterList);
+		if (deckBuilder.is_draging) {
+			DrawThumb(deckBuilder.draging_pointer,position2di(deckBuilder.dragx - 22, deckBuilder.dragy - 32),deckBuilder.filterList);
+		}
 	}
 }
 }

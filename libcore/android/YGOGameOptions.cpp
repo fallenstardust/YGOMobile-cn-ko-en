@@ -17,7 +17,7 @@ YGOGameOptions::YGOGameOptions(void* data): m_pipAddr(NULL), m_puserName(NULL), 
 		m_phostInfo(NULL){
 	//read ip addr
 	char log[128];
-	char * rawdata = (char*)data;
+	unsigned char * rawdata = (unsigned char*)data;
 	int tmplength = ::BufferIO::ReadInt32(rawdata);
 	if (tmplength != 0) {
 		m_pipAddr = new char[tmplength + 1];

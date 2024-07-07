@@ -5,6 +5,7 @@
  *      Author: Argon
  */
 
+#include <cstring>
 #include "duel.h"
 #include "interpreter.h"
 #include "field.h"
@@ -12,12 +13,16 @@
 #include "effect.h"
 #include "group.h"
 #include "ocgapi.h"
+#include "buffer.h"
 
 duel::duel() {
 	lua = new interpreter(this);
 	game_field = new field(this);
 	game_field->temp_card = new_card(0);
-	clear_buffer();
+	message_buffer.reserve(SIZE_MESSAGE_BUFFER);
+#ifdef _WIN32
+	_set_error_mode(_OUT_TO_MSGBOX);
+#endif // _WIN32
 }
 duel::~duel() {
 	for(auto& pcard : cards)
@@ -48,8 +53,6 @@ card* duel::new_card(uint32 code) {
 	cards.insert(pcard);
 	if(code)
 		::read_card(code, &(pcard->data));
-	else
-		pcard->data.clear();
 	pcard->data.code = code;
 	lua->register_card(pcard);
 	return pcard;
@@ -95,8 +98,9 @@ void duel::delete_effect(effect* peffect) {
 	delete peffect;
 }
 int32 duel::read_buffer(byte* buf) {
-	std::memcpy(buf, buffer, bufferlen);
-	return bufferlen;
+	if(message_buffer.size())
+		std::memcpy(buf, message_buffer.data(), message_buffer.size());
+	return (int32)message_buffer.size();
 }
 void duel::release_script_group() {
 	for(auto& pgroup : sgroups) {
@@ -113,30 +117,26 @@ void duel::restore_assumes() {
 		pcard->assume_type = 0;
 	assumes.clear();
 }
+void duel::write_buffer(const void* data, int size) {
+	vector_write_block(message_buffer, data, size);
+}
 void duel::write_buffer32(uint32 value) {
-	std::memcpy(bufferp, &value, sizeof(value));
-	bufferp += 4;
-	bufferlen += 4;
+	vector_write<uint32_t>(message_buffer, value);
 }
 void duel::write_buffer16(uint16 value) {
-	std::memcpy(bufferp, &value, sizeof(value));
-	bufferp += 2;
-	bufferlen += 2;
+	vector_write<uint16_t>(message_buffer, value);
 }
 void duel::write_buffer8(uint8 value) {
-	std::memcpy(bufferp, &value, sizeof(value));
-	bufferp += 1;
-	bufferlen += 1;
+	vector_write<unsigned char>(message_buffer, value);
 }
 void duel::clear_buffer() {
-	bufferlen = 0;
-	bufferp = buffer;
+	message_buffer.clear();
 }
 void duel::set_responsei(uint32 resp) {
 	game_field->returns.ivalue[0] = resp;
 }
 void duel::set_responseb(byte* resp) {
-	std::memcpy(game_field->returns.bvalue, resp, 64);
+	std::memcpy(game_field->returns.bvalue, resp, SIZE_RETURN_VALUE);
 }
 int32 duel::get_next_integer(int32 l, int32 h) {
 	if (game_field->core.duel_options & DUEL_OLD_REPLAY) {

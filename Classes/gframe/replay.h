@@ -2,7 +2,6 @@
 #define REPLAY_H
 
 #include "config.h"
-#include <time.h>
 
 namespace ygo {
 
@@ -18,16 +17,13 @@ namespace ygo {
 #define MAX_COMP_SIZE	0x2000
 
 struct ReplayHeader {
-	unsigned int id;
-	unsigned int version;
-	unsigned int flag;
-	unsigned int seed;
-	unsigned int datasize;
-	unsigned int start_time;
-	unsigned char props[8];
-
-	ReplayHeader()
-		: id(0), version(0), flag(0), seed(0), datasize(0), start_time(0), props{ 0 } {}
+	unsigned int id{};
+	unsigned int version{};
+	unsigned int flag{};
+	unsigned int seed{};
+	unsigned int datasize{};
+	unsigned int start_time{};
+	unsigned char props[8]{};
 };
 
 class Replay {
@@ -51,30 +47,30 @@ public:
 	static bool CheckReplay(const wchar_t* name);
 	static bool DeleteReplay(const wchar_t* name);
 	static bool RenameReplay(const wchar_t* oldname, const wchar_t* newname);
-	bool ReadNextResponse(unsigned char resp[64]);
+	bool ReadNextResponse(unsigned char resp[]);
 	void ReadName(wchar_t* data);
-	void ReadHeader(ReplayHeader& header);
+	//void ReadHeader(ReplayHeader& header);
 	void ReadData(void* data, int length);
 	int ReadInt32();
 	short ReadInt16();
 	char ReadInt8();
 	void Rewind();
 
-	FILE* fp;
+	FILE* fp{ nullptr };
 #ifdef _WIN32
-	HANDLE recording_fp;
+	HANDLE recording_fp{ nullptr };
 #endif
 
 	ReplayHeader pheader;
 	unsigned char* replay_data;
 	unsigned char* comp_data;
-	size_t replay_size;
-	size_t comp_size;
+	size_t replay_size{};
+	size_t comp_size{};
 
 private:
-	unsigned char* pdata;
-	bool is_recording;
-	bool is_replaying;
+	unsigned char* pdata{ nullptr };
+	bool is_recording{};
+	bool is_replaying{};
 };
 
 }

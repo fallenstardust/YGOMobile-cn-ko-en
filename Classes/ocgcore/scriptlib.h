@@ -11,9 +11,13 @@
 #include "common.h"
 #include "interpreter.h"
 
+constexpr bool match_all(uint32 x, uint32 y) {
+	return (x & y) == y;
+}
+
 class scriptlib {
 public:
-	static int32 check_param(lua_State* L, int32 param_type, int32 index, BOOL retfalse = FALSE);
+	static int32 check_param(lua_State* L, int32 param_type, int32 index, int32 retfalse = FALSE);
 	static int32 check_param_count(lua_State* L, int32 count);
 	static int32 check_action_permission(lua_State* L);
 
@@ -30,6 +34,7 @@ public:
 	static int32 card_is_pre_set_card(lua_State *L);
 	static int32 card_is_fusion_set_card(lua_State *L);
 	static int32 card_is_link_set_card(lua_State *L);
+	static int32 card_is_special_summon_set_card(lua_State *L);
 	static int32 card_get_type(lua_State *L);
 	static int32 card_get_origin_type(lua_State *L);
 	static int32 card_get_fusion_type(lua_State *L);
@@ -85,6 +90,7 @@ public:
 	static int32 card_get_previous_race_onfield(lua_State *L);
 	static int32 card_get_previous_attack_onfield(lua_State *L);
 	static int32 card_get_previous_defense_onfield(lua_State *L);
+	static int32 card_get_previous_overlay_count_onfield(lua_State *L);
 	static int32 card_get_owner(lua_State *L);
 	static int32 card_get_controler(lua_State *L);
 	static int32 card_get_previous_controler(lua_State *L);
@@ -133,6 +139,7 @@ public:
 	static int32 card_is_summon_type(lua_State *L);
 	static int32 card_is_summon_location(lua_State *L);
 	static int32 card_is_summon_player(lua_State *L);
+	static int32 card_get_special_summon_info(lua_State *L);
 	static int32 card_is_status(lua_State *L);
 	static int32 card_is_not_tuner(lua_State *L);
 	static int32 card_is_tuner(lua_State* L);
@@ -365,6 +372,7 @@ public:
 	static int32 group_select(lua_State *L);
 	static int32 group_select_unselect(lua_State *L);
 	static int32 group_random_select(lua_State *L);
+	static int32 group_cancelable_select(lua_State *L);
 	static int32 group_is_exists(lua_State *L);
 	static int32 group_check_with_sum_equal(lua_State *L);
 	static int32 group_select_with_sum_equal(lua_State *L);
@@ -455,6 +463,7 @@ public:
 	static int32 duel_discard_hand(lua_State *L);
 	static int32 duel_disable_shuffle_check(lua_State *L);
 	static int32 duel_disable_self_destroy_check(lua_State *L);
+	static int32 duel_preserve_select_deck_seq(lua_State *L);
 	static int32 duel_shuffle_deck(lua_State *L);
 	static int32 duel_shuffle_extra(lua_State *L);
 	static int32 duel_shuffle_hand(lua_State *L);
@@ -485,6 +494,7 @@ public:
 	static int32 duel_get_field_card(lua_State *L);
 	static int32 duel_check_location(lua_State *L);
 	static int32 duel_get_current_chain(lua_State *L);
+	static int32 duel_get_ready_chain(lua_State* L);
 	static int32 duel_get_chain_info(lua_State *L);
 	static int32 duel_get_chain_event(lua_State *L);
 	static int32 duel_get_first_target(lua_State *L);
@@ -560,6 +570,7 @@ public:
 	static int32 duel_remove_overlay_card(lua_State *L);
 
 	static int32 duel_hint(lua_State *L);
+	static int32 duel_get_last_select_hint(lua_State *L);
 	static int32 duel_hint_selection(lua_State *L);
 	static int32 duel_select_effect_yesno(lua_State *L);
 	static int32 duel_select_yesno(lua_State *L);
@@ -600,6 +611,7 @@ public:
 	static int32 duel_is_player_can_send_to_grave(lua_State *L);
 	static int32 duel_is_player_can_send_to_deck(lua_State *L);
 	static int32 duel_is_player_can_additional_summon(lua_State *L);
+	static int32 duel_is_chain_solving(lua_State *L);
 	static int32 duel_is_chain_negatable(lua_State *L);
 	static int32 duel_is_chain_disablable(lua_State *L);
 	static int32 duel_is_chain_disabled(lua_State *L);

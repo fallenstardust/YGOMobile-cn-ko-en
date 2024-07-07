@@ -5,7 +5,7 @@
  *      Author: Argon
  */
 
-#include <string.h>
+#include <cstring>
 #include "scriptlib.h"
 #include "duel.h"
 #include "field.h"
@@ -128,16 +128,9 @@ int32 scriptlib::debug_pre_add_counter(lua_State *L) {
 	uint32 countertype = (uint32)lua_tointeger(L, 2);
 	uint32 count = (uint32)lua_tointeger(L, 3);
 	uint16 cttype = countertype;
-	auto pr = pcard->counters.emplace(cttype, card::counter_map::mapped_type());
+	auto pr = pcard->counters.emplace(cttype, 0);
 	auto cmit = pr.first;
-	if(pr.second) {
-		cmit->second[0] = 0;
-		cmit->second[1] = 0;
-	}
-	if(countertype & COUNTER_WITHOUT_PERMIT)
-		cmit->second[0] += count;
-	else
-		cmit->second[1] += count;
+	cmit->second += count;
 	return 0;
 }
 int32 scriptlib::debug_reload_field_begin(lua_State *L) {
@@ -152,7 +145,7 @@ int32 scriptlib::debug_reload_field_begin(lua_State *L) {
 	else if (flag & DUEL_OBSOLETE_RULING)
 		pduel->game_field->core.duel_rule = 1;
 	else
-		pduel->game_field->core.duel_rule = 5;
+		pduel->game_field->core.duel_rule = CURRENT_RULE;
 	return 0;
 }
 int32 scriptlib::debug_reload_field_end(lua_State *L) {
@@ -170,13 +163,11 @@ int32 scriptlib::debug_set_ai_name(lua_State *L) {
 	duel* pduel = interpreter::get_duel_info(L);
 	pduel->write_buffer8(MSG_AI_NAME);
 	const char* pstr = lua_tostring(L, 1);
-	int len = (int)strlen(pstr);
+	int len = (int)std::strlen(pstr);
 	if(len > 100)
 		len = 100;
 	pduel->write_buffer16(len);
-	memcpy(pduel->bufferp, pstr, len);
-	pduel->bufferp += len;
-	pduel->bufferlen += len;
+	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);
 	return 0;
 }
@@ -186,13 +177,11 @@ int32 scriptlib::debug_show_hint(lua_State *L) {
 	duel* pduel = interpreter::get_duel_info(L);
 	pduel->write_buffer8(MSG_SHOW_HINT);
 	const char* pstr = lua_tostring(L, 1);
-	int len = (int)strlen(pstr);
+	int len = (int)std::strlen(pstr);
 	if(len > 1024)
 		len = 1024;
 	pduel->write_buffer16(len);
-	memcpy(pduel->bufferp, pstr, len);
-	pduel->bufferp += len;
-	pduel->bufferlen += len;
+	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);
 	return 0;
 }

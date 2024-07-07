@@ -11,21 +11,21 @@ class TagDuel: public DuelMode {
 public:
 	TagDuel();
 	virtual ~TagDuel();
-	virtual void Chat(DuelPlayer* dp, void* pdata, int len);
-	virtual void JoinGame(DuelPlayer* dp, void* pdata, bool is_creater);
+	virtual void Chat(DuelPlayer* dp, unsigned char* pdata, int len);
+	virtual void JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater);
 	virtual void LeaveGame(DuelPlayer* dp);
 	virtual void ToDuelist(DuelPlayer* dp);
 	virtual void ToObserver(DuelPlayer* dp);
 	virtual void PlayerReady(DuelPlayer* dp, bool ready);
 	virtual void PlayerKick(DuelPlayer* dp, unsigned char pos);
-	virtual void UpdateDeck(DuelPlayer* dp, void* pdata, unsigned int len);
+	virtual void UpdateDeck(DuelPlayer* dp, unsigned char* pdata, int len);
 	virtual void StartDuel(DuelPlayer* dp);
 	virtual void HandResult(DuelPlayer* dp, unsigned char res);
 	virtual void TPResult(DuelPlayer* dp, unsigned char tp);
 	virtual void Process();
 	virtual void Surrender(DuelPlayer* dp);
-	virtual int Analyze(char* msgbuffer, unsigned int len);
-	virtual void GetResponse(DuelPlayer* dp, void* pdata, unsigned int len);
+	virtual int Analyze(unsigned char* msgbuffer, unsigned int len);
+	virtual void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len);
 	virtual void TimeConfirm(DuelPlayer* dp);
 	virtual void EndDuel();
 	
@@ -38,8 +38,11 @@ public:
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1);
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
 
-	static int MessageHandler(intptr_t fduel, int type);
+	static uint32 MessageHandler(intptr_t fduel, uint32 type);
 	static void TagTimer(evutil_socket_t fd, short events, void* arg);
+
+private:
+	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
 	
 protected:
 	DuelPlayer* players[4];
@@ -47,6 +50,7 @@ protected:
 	DuelPlayer* cur_player[2];
 	std::set<DuelPlayer*> observers;
 	bool ready[4];
+	bool surrender[4];
 	Deck pdeck[4];
 	int deck_error[4];
 	unsigned char hand_result[2];
