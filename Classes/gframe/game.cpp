@@ -284,7 +284,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 #ifdef _IRR_ANDROID_PLATFORM_
 	//main menu
 	wchar_t strbuf[256];
-	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", PRO_VERSION >> 12, (PRO_VERSION >> 4) & 0xff, PRO_VERSION & 0xf);
+	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
 	wMainMenu = env->addWindow(rect<s32>(450 * xScale, 40 * yScale, 900 * xScale, 600 * yScale), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDrawBackground(false);
