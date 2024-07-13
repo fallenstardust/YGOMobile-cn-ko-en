@@ -28,6 +28,13 @@ class AboutActivity : BaseActivity() {
     private val updateList by lazy {
         arrayListOf(
             UpdateLog.toUpdateLog(
+                "1.2.8",
+                """
+                修复点击卡片选项取消后阶段按钮置灰不恢复的问题
+                修复本地AI不准备的问题
+                """.trimIndent()
+            ),
+            UpdateLog.toUpdateLog(
                 "1.2.7",
                 """
                 更新ygo内核
