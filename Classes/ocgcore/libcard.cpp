@@ -1869,7 +1869,7 @@ int32 scriptlib::card_register_flag_effect(lua_State *L) {
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 code = (lua_tointeger(L, 2) & MAX_CARD_ID) | EFFECT_FLAG_EFFECT;
 	int32 reset = (int32)lua_tointeger(L, 3);
-	int32 flag = (int32)lua_tointeger(L, 4);
+	uint32 flag = (uint32)lua_tointeger(L, 4);
 	int32 count = (int32)lua_tointeger(L, 5);
 	int32 lab = 0;
 	int32 desc = 0;
@@ -2045,7 +2045,7 @@ int32 scriptlib::card_copy_effect(lua_State *L) {
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	uint32 code = (uint32)lua_tointeger(L, 2);
 	uint32 reset = (uint32)lua_tointeger(L, 3);
-	uint32 count = (uint32)lua_tointeger(L, 4);
+	int32 count = (int32)lua_tointeger(L, 4);
 	if(count == 0)
 		count = 1;
 	if(reset & RESET_PHASE && !(reset & (RESET_SELF_TURN | RESET_OPPO_TURN)))
@@ -2059,7 +2059,7 @@ int32 scriptlib::card_replace_effect(lua_State * L) {
 	card* pcard = *(card**)lua_touserdata(L, 1);
 	uint32 code = (uint32)lua_tointeger(L, 2);
 	uint32 reset = (uint32)lua_tointeger(L, 3);
-	uint32 count = (uint32)lua_tointeger(L, 4);
+	int32 count = (int32)lua_tointeger(L, 4);
 	if(count == 0)
 		count = 1;
 	if(reset & RESET_PHASE && !(reset & (RESET_SELF_TURN | RESET_OPPO_TURN)))
@@ -2971,7 +2971,7 @@ int32 scriptlib::card_is_can_remove_counter(lua_State *L) {
 	check_param_count(L, 5);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	uint32 playerid = (uint32)lua_tointeger(L, 2);
+	int32 playerid = (int32)lua_tointeger(L, 2);
 	if(playerid != 0 && playerid != 1)
 		return 0;
 	uint32 countertype = (uint32)lua_tointeger(L, 3);

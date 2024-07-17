@@ -43,7 +43,7 @@ public:
 	uint16 o_range{ 0 };
 	uint8 count_limit{ 0 };
 	uint8 count_limit_max{ 0 };
-	uint16 reset_count{ 0 };
+	int32 reset_count{ 0 };
 	uint32 reset_flag{ 0 };
 	uint32 count_code{ 0 };
 	uint32 category{ 0 };
@@ -89,7 +89,7 @@ public:
 	int32 is_chainable(uint8 tp);
 	int32 is_hand_trigger();
 	int32 reset(uint32 reset_level, uint32 reset_type);
-	void dec_count(uint32 playerid = 2);
+	void dec_count(uint8 playerid = PLAYER_NONE);
 	void recharge();
 	int32 get_value(uint32 extraargs = 0);
 	int32 get_value(card* pcard, uint32 extraargs = 0);
@@ -112,11 +112,11 @@ public:
 	uint32 get_active_type();
 	int32 get_code_type() const;
 
-	bool is_flag(effect_flag flag) const {
-		return !!(this->flag[0] & flag);
+	bool is_flag(effect_flag x) const {
+		return !!(flag[0] & x);
 	}
-	bool is_flag(effect_flag2 flag) const {
-		return !!(this->flag[1] & flag);
+	bool is_flag(effect_flag2 x) const {
+		return !!(flag[1] & x);
 	}
 };
 
@@ -213,10 +213,10 @@ enum effect_flag2 : uint32 {
 	EFFECT_FLAG2_WICKED					= 0x0004,
 	EFFECT_FLAG2_OPTION					= 0x0008,
 };
-inline effect_flag operator|(effect_flag flag1, effect_flag flag2)
-{
+constexpr effect_flag operator|(effect_flag flag1, effect_flag flag2) {
 	return static_cast<effect_flag>(static_cast<uint32>(flag1) | static_cast<uint32>(flag2));
 }
+constexpr uint32 INTERNAL_FLAGS = EFFECT_FLAG_INITIAL | EFFECT_FLAG_FUNC_VALUE | EFFECT_FLAG_COUNT_LIMIT | EFFECT_FLAG_FIELD_ONLY | EFFECT_FLAG_ABSOLUTE_TARGET;
 //========== Codes ==========
 #define EFFECT_IMMUNE_EFFECT			1	//
 #define EFFECT_DISABLE					2	//
