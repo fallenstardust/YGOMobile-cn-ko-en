@@ -32,6 +32,9 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
+/**
+ * 在对应的recyclerview中添加了很多透明的item来“占位”，占位后便于根据“拖动卡片的位置”计算添加的卡片类型（是主卡组、额外卡组还是副卡组）
+ */
 public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implements CardListProvider {
     private final List<DeckItem> mItems = new ArrayList<>();
     private final SparseArray<Integer> mCount = new SparseArray<>();
@@ -107,7 +110,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
             int id = DeckItem.MainStart + getMainCount();
             removeItem(DeckItem.MainEnd);
             addItem(id, new DeckItem(cardInfo, type));
-            notifyItemChanged(DeckItem.MainEnd);
+            //notifyItemChanged(DeckItem.MainEnd);//todo 这行好像没啥用啊？？
             notifyItemChanged(id);
             notifyItemChanged(DeckItem.MainLabel);
             return true;
@@ -452,12 +455,6 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return !TextUtils.equals(mDeckMd5, md5);
     }
 
-    @Override
-    public DeckViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = mLayoutInflater.inflate(R.layout.item_deck_card, parent, false);
-        return new DeckViewHolder(view);
-    }
-
     private String getString(int id, Object... args) {
         return context.getString(id, args);
     }
@@ -544,12 +541,19 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     @Override
+    public DeckViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        // Inflating a layout from XML and returning the holder
+        View view = mLayoutInflater.inflate(R.layout.item_deck_card, parent, false);
+        return new DeckViewHolder(view);
+    }
+
+    @Override
     public void onBindViewHolder(DeckViewHolder holder, int position) {
+        //Populating data into the item through holder
         DeckItem item = mItems.get(position);
         holder.setItemType(item.getType());
         if (item.getType() == DeckItemType.MainLabel || item.getType() == DeckItemType.SideLabel
-                || item.getType() == DeckItemType.ExtraLabel) {
-            //分隔栏
+                || item.getType() == DeckItemType.ExtraLabel) {//处理分隔栏的item view
             if (item.getType() == DeckItemType.MainLabel) {
                 holder.setText(getMainString());
             } else if (item.getType() == DeckItemType.SideLabel) {
@@ -557,7 +561,8 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
             } else if (item.getType() == DeckItemType.ExtraLabel) {
                 holder.setText(getExtraString());
             }
-        } else {
+        } else {//处理展示卡图的item view
+            /* 动态计算控件的高度，优先根据卡图的实际大小计算高度，如果结果<=0，则根据recyclerView的宽度计算控件高度 */
             if (mHeight <= 0) {
                 if (holder.cardImage.getMeasuredWidth() > 0) {
                     mWidth = holder.cardImage.getMeasuredWidth();
@@ -574,11 +579,10 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
             //显示卡片
             holder.showImage();
             holder.setSize(mHeight);
-            if (item.getType() == DeckItemType.Space) {
-                //占位但是不显示卡图
+            if (item.getType() == DeckItemType.Space) {//占位，不显示卡图
                 holder.setCardType(0);
                 holder.showEmpty();
-            } else {
+            } else {//非占位，显示卡图
 
                 Card cardInfo = item.getCardInfo();
 //                holder.cardImage.setOnClickListener(new View.OnClickListener() {

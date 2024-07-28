@@ -107,6 +107,10 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
+/**
+ * 注意，卡组编辑页面中的长按事件回调在ItemTouchHelperPlus中实现，而非在
+ *  RecyclerViewItemListener.OnItemListener中
+ */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
@@ -298,6 +302,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     }
 
+    /**
+     * 在此处处理卡组中卡片的长按删除
+     * @param pos
+     */
     @Override
     public void onDragLongPress(int pos) {
         if (pos < 0) return;
