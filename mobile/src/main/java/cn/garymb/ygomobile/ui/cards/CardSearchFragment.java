@@ -18,7 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.RecyclerViewItemListener;
+import androidx.recyclerview.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
