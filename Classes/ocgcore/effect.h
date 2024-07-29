@@ -97,6 +97,7 @@ public:
 	void get_value(uint32 extraargs, std::vector<int32>* result);
 	void get_value(card* pcard, uint32 extraargs, std::vector<int32>* result);
 	void get_value(effect* peffect, uint32 extraargs, std::vector<int32>* result);
+	int32 get_integer_value();
 	int32 check_value_condition(uint32 extraargs = 0);
 	void* get_label_object();
 	int32 get_speed();
@@ -109,7 +110,7 @@ public:
 	int32 in_range(const chain& ch);
 	void set_activate_location();
 	void set_active_type();
-	uint32 get_active_type();
+	uint32 get_active_type(uint8 uselast = TRUE);
 	int32 get_code_type() const;
 
 	bool is_flag(effect_flag x) const {

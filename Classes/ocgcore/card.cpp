@@ -1504,7 +1504,7 @@ int32 card::is_all_column() {
 	card_set cset;
 	get_column_cards(&cset);
 	int32 full = 3;
-	if(pduel->game_field->core.duel_rule >= 4 && (current.sequence == 1 || current.sequence == 3))
+	if(pduel->game_field->core.duel_rule >= NEW_MASTER_RULE && (current.sequence == 1 || current.sequence == 3))
 		++full;
 	if(cset.size() == full)
 		return TRUE;
@@ -1579,7 +1579,7 @@ void card::xyz_overlay(card_set* materials) {
 	if(materials->size() == 0)
 		return;
 	card_set des, leave_grave, leave_deck;
-	field::card_vector cv;
+	card_vector cv;
 	for(auto& pcard : *materials)
 		cv.push_back(pcard);
 	std::sort(cv.begin(), cv.end(), card::card_operation_sort);
@@ -3244,12 +3244,12 @@ int32 card::check_cost_condition(int32 ecode, int32 playerid, int32 sumtype) {
 	pduel->game_field->core.reason_player = op;
 	return res;
 }
-int32 card::is_summonable_card() {
+int32 card::is_summonable_card() const {
 	if(!(data.type & TYPE_MONSTER))
 		return FALSE;
-	return !(data.type & (TYPE_RITUAL | TYPE_SPSUMMON
-		| TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK
-		| TYPE_TOKEN | TYPE_TRAPMONSTER));
+	if (data.type & TYPES_EXTRA_DECK)
+		return FALSE;
+	return !(data.type & (TYPE_RITUAL | TYPE_SPSUMMON | TYPE_TOKEN));
 }
 int32 card::is_spsummonable_card() {
 	if(!(data.type & TYPE_MONSTER))

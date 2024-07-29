@@ -24,6 +24,9 @@ class effect;
 class group;
 struct chain;
 
+using card_set = std::set<card*, card_sort>;
+using card_vector = std::vector<card*>;
+
 struct card_state {
 	uint32 code{ 0 };
 	uint32 code2{ 0 };
@@ -113,9 +116,7 @@ public:
 			return std::hash<uint16>()(v.second);
 		}
 	};
-	using card_vector = std::vector<card*>;
 	using effect_container = std::multimap<uint32, effect*>;
-	using card_set = std::set<card*, card_sort>;
 	using effect_indexer = std::unordered_map<effect*, effect_container::iterator>;
 	using effect_relation = std::unordered_set<std::pair<effect*, uint16>, effect_relation_hash>;
 	using relation_map = std::unordered_map<card*, uint32>;
@@ -212,7 +213,7 @@ public:
 	explicit card(duel* pd);
 	~card() = default;
 	static bool card_operation_sort(card* c1, card* c2);
-	const bool is_extra_deck_monster() { return !!(data.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)); }
+	bool is_extra_deck_monster() const { return !!(data.type & TYPES_EXTRA_DECK); }
 
 	int32 get_infos(byte* buf, uint32 query_flag, int32 use_cache = TRUE);
 	uint32 get_info_location();
@@ -341,7 +342,7 @@ public:
 	void get_unique_target(card_set* cset, int32 controler, card* icard = nullptr);
 	int32 check_cost_condition(int32 ecode, int32 playerid);
 	int32 check_cost_condition(int32 ecode, int32 playerid, int32 sumtype);
-	int32 is_summonable_card();
+	int32 is_summonable_card() const;
 	int32 is_spsummonable_card();
 	int32 is_fusion_summonable_card(uint32 summon_type);
 	int32 is_spsummonable(effect* proc, material_info info = null_info);
