@@ -217,6 +217,7 @@ public:
 	static int32 card_is_link_summonable(lua_State *L);
 	static int32 card_is_can_be_summoned(lua_State *L);
 	static int32 card_is_can_be_special_summoned(lua_State *L);
+	static int32 card_is_can_be_placed_on_field(lua_State *L);
 	static int32 card_is_able_to_hand(lua_State *L);
 	static int32 card_is_able_to_grave(lua_State *L);
 	static int32 card_is_able_to_deck(lua_State *L);
@@ -365,7 +366,6 @@ public:
 	static int32 group_get_next(lua_State *L);
 	static int32 group_get_first(lua_State *L);
 	static int32 group_get_count(lua_State *L);
-	static int32 group_for_each(lua_State *L);
 	static int32 group_filter(lua_State *L);
 	static int32 group_filter_count(lua_State *L);
 	static int32 group_filter_select(lua_State *L);
