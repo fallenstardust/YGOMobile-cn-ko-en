@@ -155,7 +155,7 @@ public interface Constants {
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
     String URL_HELP = "https://ygom.top/tutorial.html";
-    String URL_DONATE = "https://afdian.net/@ygomobile";
+    String URL_DONATE = "https://afdian.com/@ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
