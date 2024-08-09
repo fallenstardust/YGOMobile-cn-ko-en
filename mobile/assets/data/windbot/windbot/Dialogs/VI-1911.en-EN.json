@@ -1,0 +1,60 @@
+{
+"welcome": [
+"I am a robot named Lao Miaoshi, who is not very good at playing cards.",
+"Welcome to download and learn about the main program of the cat version of YGO, YGO-VI-EX. Please search on Weibo: Lao Miaoshi 1911."
+],
+"deckerror": [
+"Ah, {0} is no longer usable."
+],
+"duelstart": [
+"No one can defeat me.",
+"I am incompetent, and I can't use any deck well.",
+"You let me with your left hand, and I am no match for you.",
+"Well, it doesn't matter."
+],
+"newturn": [
+"Ah, it's my turn.",
+"Draw a card."
+],
+"endturn": [
+"I am lucky, and I was not killed by you.",
+"It doesn't matter, let's see what I can do next round."
+],
+"directattack": [
+"Use {0} to attack.",
+"This card is OK, let's attack with {0}.",
+"It's still early, let's attack with {0} first.",
+"The luck isn't too bad, {0}'s attack should be able to get through."
+],
+"attack": [
+"{0}, attack {1}.",
+"There's no time, {0}, hurry up and attack {1}, we need to see if there's a bug that needs to be fixed.",
+"It seems to work, {1} is not as strong as {0}, {0} attacks.",
+],
+"ondirectattack": [
+"You'll get used to it.",
+"{0}, you're lucky.",
+"Not bad, not bad.",
+],
+"facedownmonstername": "Monster",
+"activate": [
+"Activate the effect of {0}.",
+"Ah wait, use the effect of {0}.",
+"What do I do with {0}, just hand it in.",
+],
+"summon": [
+"Summon {0}",
+"{0} seems to have no bugs today.",
+"{0} has actually been updated on the server.",
+"{0}: If you are such a bad player, don't play cards."
+],
+"setmonster": [
+"Place a monster and see if you want to end the turn.",
+"No choice, place a monster."
+],
+"chaining": [
+"Activate the effect of {0} to chain.",
+"Don't be naughty, {0} is activated.",
+"There is another {0}, send it."
+]
+}

@@ -1,0 +1,61 @@
+{
+"welcome": [
+"Hello, I am a robot. My name is Near, but I am not the real one, just an avatar.",
+"One day, my power will be stronger than the real one! Just wait and see!",
+"The AI ​​function is under testing. Please report any problems in time.",
+],
+"deckerror": [
+"What? You won't let me use my invincible {0}!",
+],
+"duelstart": [
+"No one can defeat me!",
+"I am omnipotent and can use any deck!",
+"I give you my left hand, and you are no match for me.",
+"I am the number one demon fairy in the universe!",
+],
+"newturn": [
+"It's my turn again. Draw a card. I hope you will have another turn.",
+"I drew a card magnificently.",
+],
+"endturn": [
+"You are lucky. I didn't kill you.",
+"I let you. The turn is over. Cherish your next turn.",
+],
+"directattack": [
+"My {0} is so cute. Next, I will let him play with you. Gently grab the opponent. He has no place to defend.",
+"Next, I will use my {0} to give the opponent the cutest blow~",
+"The cute {0} has wronged you. Go and hug the opponent. Don't be too polite~",
+"The opponent doesn't have any defense. It seems that he is moved by my {0}'s cuteness. Next, you go to show your cute figure in front of the opponent~"
+],
+"attack": [
+"Humph, {1} is too ugly. My {0} will destroy him~",
+"Is {1} as cute as my {0}? My {0} disagrees. Go and beat it to death!",
+"{1} is actually cuter than my {0}? This is not okay. I can't stand it. {0}, let's make him disappear from my sight!"
+],
+"ondirectattack": [
+"Damn it, you actually took advantage of someone's misfortune! What kind of hero are you!",
+"It's just a small character like {0}!",
+"Do you think you won just like that?"
+],
+"facedownmonstername": "Monster",
+"activate": [
+"I activated the cute effect of my {0}.",
+"I used the effect of {0} to show my opponent a cute look~",
+"I was so moved by {0}'s cuteness that I used its effect."
+],
+"summon": [
+"I summoned {0}, and meowed at my opponent~",
+"Come out, cute and charming {0}~",
+"I released a cute {0} from my pet house.",
+"{0}: I heard that you like me very much, so I came."
+],
+"setmonster": [
+"I placed a monster. When it turns over, don't be scared by its cute appearance~",
+"I placed a monster. Guess what it is? "
+],
+"chaining": [
+"I waved the magic wand and activated the effect of {0}~",
+"Ah! This time I'm dead! ...Hey, you've been fooled, I'll activate {0}!",
+"You're too rash, didn't you expect that I would activate {0}? "
+]
+}

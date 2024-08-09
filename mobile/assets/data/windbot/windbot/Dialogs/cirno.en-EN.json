@@ -1,0 +1,64 @@
+{
+"welcome": [
+"I am the strongest!",
+"AI function is under testing, please report any problems in time.",
+"What is Pancake Frog, is it delicious?"
+],
+"deckerror": [
+"Why can't my {0} be used?"
+],
+"duelstart": [
+"Let me freeze you!",
+"It's just to defeat humans, I'm enough!"
+],
+"newturn": [
+"Although it's a bit sudden, I'll defeat you!",
+"My turn, draw a card!"
+],
+"endturn": [
+"Spare your life!",
+"Freeze to death under my seriousness!"
+],
+"directattack": [
+"{0}, direct attack!",
+"Unable to withstand a single blow!",
+"The weak will be beaten!",
+"I'm too lazy to count, I'll talk about it after the fight!",
+"Super ⑨ Martial God Tyrant Slash!",
+"Snow Talisman 「Diamond Blizzard」"
+],
+"attack": [
+"{0}, attack this {1}!",
+"{0}, destroy this {1}!",
+"{0}, defeat {1}!",
+"Ice Talisman 「Icicle Fall」"
+],
+"ondirectattack": [
+"Don't be ridiculous~. For someone like you, I'll keep you frozen together with English beef!! ",
+"What's so scary about a tiny {0}!",
+"Fools don't catch colds!"
+],
+"facedownmonstername": "Monster",
+"activate": [
+"I activate {0}.",
+"I use the effect of {0}.",
+"My {0} is the strongest!"
+],
+"summon": [
+"I summon {0}.",
+"Come out, {0}!",
+"Appear, {0}!",
+"I summoned the powerful {0}!",
+"I called out {0}."
+],
+"setmonster": [
+"I placed a monster. ",
+"If you are not afraid of death, come and attack me!"
+],
+"chaining": [
+"Look here! I activate {0}!",
+"I use the power of {0}. ",
+"Fear my {0}!",
+"Freezing Talisman 「Perfect Freeze」"
+]
+}

@@ -1,0 +1,64 @@
+{
+"welcome": [
+"Hello everyone, I'm a new player",
+"How do you play Yu-Gi-Oh?",
+"Fortunately I don't play Yu-Gi-Oh"
+],
+"deckerror": [
+"{0} in the deck is dead"
+],
+"duelstart": [
+"What if I don't want to work",
+"What if I don't want to work because my IQ is low"
+],
+"newturn": [
+"So many terrible new cards",
+"This game is so hard to play",
+"so lazy can't move"
+],
+"endturn": [
+"I have no choice but to die",
+"Not now, I don't know when",
+"too hot need ice cream"
+],
+"directattack": [
+"Sounds like a deadbeat",
+"Old deadbeat, steady"
+],
+"attack": [
+"Doesn't sound like a deadbeat",
+"Scary"
+],
+"ondirectattack": [
+"Wow!",
+"Is it that terrible",
+"Sounds like a deadbeat",
+"I can't bear it"
+],
+"facedownmonstername": "Pigeon",
+"activate": [
+"I don't know why I'm passing",
+"I've passed, feels good"
+],
+"summon": [
+"Terrible",
+"It's none of my business",
+"That is still, It's none of my business",
+"I've passed, feels good"
+],
+"setmonster": [
+"I'm slacking off, I don't want to update",
+"Then I'll pass it"
+],
+"chaining": [
+"What is that",
+"But I passed",
+"No good",
+"Terrible"
+],
+"surrender": [
+"It's terrible (run away)",
+"This game is hard to play (run away)",
+"Fortunately I don't play Yu-Gi-Oh (run away)"
+]
+}
