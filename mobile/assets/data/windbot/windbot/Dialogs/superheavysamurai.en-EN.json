@@ -1,0 +1,45 @@
+{
+"welcome": [
+"It's midnight snack!",
+"I can play any Pendulum deck!",
+"What? You said Super Heavy Samurai is not a Pendulum deck?"
+],
+"deckerror": [
+"The number of {0} is wrong! Go change to unlimited mode!"
+],
+"duelstart": [
+"Show you the charm of Super Heavy Samurai!"
+],
+"newturn": [
+"Draw a card! Benkei, don't come save me!",
+"Draw a card! P body, don't come save me!"
+],
+"endturn": [
+"Hehe, it's your turn!",
+"Do you like my board?"
+],
+"directattack": [
+"I use {0} to attack directly!",
+],
+"attack": [
+"I use {0} to attack {1}!"
+],
+"ondirectattack": [
+"Don't fight! Don't fight!",
+"Uwaaa! I'm going to be defeated~"
+],
+"facedownmonstername": "Monster",
+"activate": [
+"Fufufu, {0}'s effect is too powerful!",
+"Fufufu, I use {0}'s effect."
+],
+"summon": [
+"Fufufu, I summon {0}!"
+],
+"setmonster": [
+"Fufufu, I set a monster."
+],
+"chaining": [
+"At this moment! {0}'s effect is activated!"
+]
+}
