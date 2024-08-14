@@ -18,7 +18,7 @@ buildscript {
 }
 
 ext {
-    compileSdkVersion = 31
+    compileSdkVersion = 33
     //buildToolsVersion = compileSdkVersion+".0.0"
     supportVersion = "30.0.0"
 }
