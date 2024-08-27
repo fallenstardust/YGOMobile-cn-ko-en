@@ -2,13 +2,24 @@
 #define GAME_H
 
 #include "config.h"
+#ifdef _IRR_ANDROID_PLATFORM_
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#include <GLES/glplatform.h>
+#endif
+#include "CGUIImageButton.h"
+#include "CGUITTFont.h"
+#include "mysignal.h"
 #include "client_field.h"
 #include "deck_con.h"
 #include "menu_handler.h"
-#include "sound_manager.h"
+#include <time.h>
 #include <unordered_map>
 #include <vector>
 #include <list>
+#include <mutex>
+#include <functional>
+#include "sound_manager.h"
 
 #define DEFAULT_DUEL_RULE 5
 

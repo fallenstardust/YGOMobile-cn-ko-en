@@ -7,6 +7,7 @@
 #include "game.h"
 #include "replay.h"
 #include "replay_mode.h"
+#include <thread>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/android_tools.h>
 #endif
@@ -45,7 +46,7 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
 	client_base = event_base_new();
 	if(!client_base)
 		return false;
-	memset(&sin, 0, sizeof(sin));
+	std::memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(ip);
 	sin.sin_port = htons(port);
@@ -63,8 +64,8 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
 	rnd.reset((uint_fast32_t)std::random_device()());
 	if(!create_game) {
 		timeval timeout = {5, 0};
-		event* resp_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);
-		event_add(resp_event, &timeout);
+		event* timeout_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);
+		event_add(timeout_event, &timeout);
 	}
 	std::thread(ClientThread).detach();
 	return true;
@@ -146,10 +147,10 @@ void DuelClient::ClientEvent(bufferevent *bev, short events, void *ctx) {
 				BufferIO::CopyWStr(mainGame->ebServerPass->getText(), cscg.pass, 20);
 				cscg.info.rule = mainGame->cbRule->getSelected();
 				cscg.info.mode = mainGame->cbMatchMode->getSelected();
-				cscg.info.start_hand = _wtoi(mainGame->ebStartHand->getText());
-				cscg.info.start_lp = _wtoi(mainGame->ebStartLP->getText());
-				cscg.info.draw_count = _wtoi(mainGame->ebDrawCount->getText());
-				cscg.info.time_limit = _wtoi(mainGame->ebTimeLimit->getText());
+				cscg.info.start_hand = wcstol(mainGame->ebStartHand->getText(),nullptr,10);
+				cscg.info.start_lp = wcstol(mainGame->ebStartLP->getText(),nullptr,10);
+				cscg.info.draw_count = wcstol(mainGame->ebDrawCount->getText(),nullptr,10);
+				cscg.info.time_limit = wcstol(mainGame->ebTimeLimit->getText(),nullptr,10);
 				cscg.info.lflist = mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
 				cscg.info.duel_rule = mainGame->cbDuelRule->getSelected() + 1;
 				cscg.info.no_check_deck = mainGame->chkNoCheckDeck->isChecked();
@@ -1431,8 +1432,8 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 			else if (pcard->location == LOCATION_EXTRA)
 				mainGame->dField.extra_act = true;
 			else {
-				int seq = mainGame->dInfo.duel_rule >= 4 ? 0 : 6;
-				if (pcard->location == LOCATION_SZONE && pcard->sequence == seq && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget)
+				int left_seq = mainGame->dInfo.duel_rule >= 4 ? 0 : 6;
+				if (pcard->location == LOCATION_SZONE && pcard->sequence == left_seq && (pcard->type & TYPE_PENDULUM) && !pcard->equipTarget)
 					mainGame->dField.pzone_act[pcard->controler] = true;
 			}
 		}
@@ -3198,8 +3199,8 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 				pcard = mainGame->dField.GetCard(player, LOCATION_DECK, mainGame->dField.deck[player].size() - 1);
 				mainGame->dField.deck[player].erase(mainGame->dField.deck[player].end() - 1);
 				mainGame->dField.AddCard(pcard, player, LOCATION_HAND, 0);
-				for(size_t i = 0; i < mainGame->dField.hand[player].size(); ++i)
-					mainGame->dField.MoveCard(mainGame->dField.hand[player][i], 10);
+				for(int j = 0; j < (int)mainGame->dField.hand[player].size(); ++j)
+					mainGame->dField.MoveCard(mainGame->dField.hand[player][j], 10);
 				mainGame->gMutex.unlock();
 				mainGame->WaitFrameSignal(5);
 			}
@@ -4177,30 +4178,30 @@ void DuelClient::BeginRefreshHost() {
 	if(!host)
 		return;
 #endif
-    SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    sockaddr_in reply_addr;
-    memset(&reply_addr, 0, sizeof(reply_addr));
-    reply_addr.sin_family = AF_INET;
-    reply_addr.sin_port = htons(7921);
-    reply_addr.sin_addr.s_addr = 0;
-    if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_ERROR) {
-        closesocket(reply);
-        return;
-    }
-    timeval timeout = {3, 0};
-    resp_event = event_new(broadev, reply, EV_TIMEOUT | EV_READ | EV_PERSIST, BroadcastReply, broadev);
-    event_add(resp_event, &timeout);
-    std::thread(RefreshThread, broadev).detach();
-    //send request
-    SOCKADDR_IN local;
-    local.sin_family = AF_INET;
-    local.sin_port = htons(7922);
-    SOCKADDR_IN sockTo;
-    sockTo.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    sockTo.sin_family = AF_INET;
-    sockTo.sin_port = htons(7920);
-    HostRequest hReq;
-    hReq.identifier = NETWORK_CLIENT_ID;
+	SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	sockaddr_in reply_addr;
+	std::memset(&reply_addr, 0, sizeof reply_addr);
+	reply_addr.sin_family = AF_INET;
+	reply_addr.sin_port = htons(7921);
+	reply_addr.sin_addr.s_addr = 0;
+	if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_ERROR) {
+		closesocket(reply);
+		return;
+	}
+	timeval timeout = {3, 0};
+	resp_event = event_new(broadev, reply, EV_TIMEOUT | EV_READ | EV_PERSIST, BroadcastReply, broadev);
+	event_add(resp_event, &timeout);
+	std::thread(RefreshThread, broadev).detach();
+	//send request
+	SOCKADDR_IN local;
+	local.sin_family = AF_INET;
+	local.sin_port = htons(7922);
+	SOCKADDR_IN sockTo;
+	sockTo.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	sockTo.sin_family = AF_INET;
+	sockTo.sin_port = htons(7920);
+	HostRequest hReq;
+	hReq.identifier = NETWORK_CLIENT_ID;
 #ifdef _IRR_ANDROID_PLATFORM_
     local.sin_addr.s_addr = ipaddr;
     SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -4215,7 +4216,7 @@ void DuelClient::BeginRefreshHost() {
     sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0, (sockaddr*) &sockTo, sizeof(sockaddr));
     closesocket(sSend);
 #else
-    for(int i = 0; i < 8; ++i) {
+	for(int i = 0; i < 8; ++i) {
 		if(host->h_addr_list[i] == 0)
 			break;
 		unsigned int local_addr = 0;

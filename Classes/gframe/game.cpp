@@ -1,15 +1,15 @@
 #include "config.h"
 #include "game.h"
+#include "myfilesystem.h"
 #include "image_manager.h"
 #include "data_manager.h"
 #include "deck_manager.h"
-#include "myfilesystem.h"
 #include "replay.h"
 #include "materials.h"
 #include "duelclient.h"
 #include "netserver.h"
 #include "single_mode.h"
-
+#include <thread>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
@@ -25,7 +25,7 @@ const unsigned short PRO_VERSION = 0x1361;
 
 namespace ygo {
 
-Game *mainGame;
+Game* mainGame;
 
 void DuelInfo::Clear() {
 	isStarted = false;
@@ -1729,10 +1729,10 @@ void Game::RefreshBot() {
 				BufferIO::DecodeUTF8(strbuf, newinfo.desc);
 				if (!fgets(linebuf, 256, fp))
 					break;
-				newinfo.support_master_rule_3 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_3");
-				newinfo.support_new_master_rule = !!strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
-				newinfo.support_master_rule_2020 = !!strstr(linebuf, "SUPPORT_MASTER_RULE_2020");
-				newinfo.select_deckfile = !!strstr(linebuf, "SELECT_DECKFILE");
+				newinfo.support_master_rule_3 = !!std::strstr(linebuf, "SUPPORT_MASTER_RULE_3");
+				newinfo.support_new_master_rule = !!std::strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
+				newinfo.support_master_rule_2020 = !!std::strstr(linebuf, "SUPPORT_MASTER_RULE_2020");
+				newinfo.select_deckfile = !!std::strstr(linebuf, "SELECT_DECKFILE");
 				int rule = cbBotRule->getSelected() + 3;
 				if((rule == 3 && newinfo.support_master_rule_3)
 					|| (rule == 4 && newinfo.support_new_master_rule)

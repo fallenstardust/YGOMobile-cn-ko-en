@@ -1,5 +1,6 @@
 #include "config.h"
 #include "menu_handler.h"
+#include "myfilesystem.h"
 #include "netserver.h"
 #include "duelclient.h"
 #include "deck_manager.h"
@@ -158,7 +159,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					BufferIO::CopyWStr(mainGame->ebJoinPort->getText(), port, 6);
 					struct evutil_addrinfo hints;
 					struct evutil_addrinfo *answer = NULL;
-					memset(&hints, 0, sizeof(hints));
+					std::memset(&hints, 0, sizeof hints);
 					hints.ai_family = AF_INET;
 					hints.ai_socktype = SOCK_STREAM;
 					hints.ai_protocol = IPPROTO_TCP;
@@ -177,7 +178,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 						evutil_freeaddrinfo(answer);
 					}
 				}
-				unsigned int remote_port = _wtoi(mainGame->ebJoinPort->getText());
+				unsigned int remote_port = wcstol(mainGame->ebJoinPort->getText(), nullptr, 10);
 				BufferIO::CopyWStr(pstr, mainGame->gameConf.lasthost, 100);
 				BufferIO::CopyWStr(mainGame->ebJoinPort->getText(), mainGame->gameConf.lastport, 20);
 				if(DuelClient::StartClient(remote_addr, remote_port, false)) {
@@ -246,20 +247,20 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HP_KICK: {
-				int id = 0;
-				while(id < 4) {
-					if(mainGame->btnHostPrepKick[id] == caller)
+				int index = 0;
+				while(index < 4) {
+					if(mainGame->btnHostPrepKick[index] == caller)
 						break;
-					id++;
+					++index;
 				}
 				CTOS_Kick csk;
-				csk.pos = id;
+				csk.pos = index;
 				DuelClient::SendPacketToServer(CTOS_HS_KICK, csk);
 				break;
 			}
 			case BUTTON_HP_READY: {
 				if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
-					!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
+					!deckManager.LoadCurrentDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 					mainGame->gMutex.lock();
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1406));
@@ -342,7 +343,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->dField.Clear();
 				mainGame->HideElement(mainGame->wReplay);
 				mainGame->device->setEventReceiver(&mainGame->dField);
-				unsigned int start_turn = _wtoi(mainGame->ebRepStartTurn->getText());
+				unsigned int start_turn = wcstol(mainGame->ebRepStartTurn->getText(), nullptr, 10);
 				if(start_turn == 1)
 					start_turn = 0;
 				ReplayMode::StartReplay(start_turn);
@@ -401,40 +402,40 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(mainGame->lstReplayList->getSelected() == -1)
 					break;
 				Replay replay;
-				wchar_t ex_filename[256];
-				wchar_t namebuf[4][20];
-				wchar_t filename[256];
+				wchar_t ex_filename[256]{};
+				wchar_t namebuf[4][20]{};
+				wchar_t filename[256]{};
 				myswprintf(ex_filename, L"%ls", mainGame->lstReplayList->getListItem(mainGame->lstReplayList->getSelected()));
 				if(!replay.OpenReplay(ex_filename))
 					break;
 				const ReplayHeader& rh = replay.pheader;
 				if(rh.flag & REPLAY_SINGLE_MODE)
 					break;
-				int max = (rh.flag & REPLAY_TAG) ? 4 : 2;
+				int player_count = (rh.flag & REPLAY_TAG) ? 4 : 2;
 				//player name
-				for(int i = 0; i < max; ++i)
+				for(int i = 0; i < player_count; ++i)
 					replay.ReadName(namebuf[i]);
 				//skip pre infos
 				for(int i = 0; i < 4; ++i)
 					replay.ReadInt32();
 				//deck
-				for(int i = 0; i < max; ++i) {
+				std::vector<int> deckbuf;
+				for(int i = 0; i < player_count; ++i) {
+					deckbuf.clear();
 					int main = replay.ReadInt32();
-					Deck tmp_deck;
+					deckbuf.push_back(main);
 					for (int j = 0; j < main; ++j) {
-						auto card = dataManager.GetCodePointer(replay.ReadInt32());
-						if (card != dataManager.datas_end)
-							tmp_deck.main.push_back(card);
+						deckbuf.push_back(replay.ReadInt32());
 					}
 					int extra = replay.ReadInt32();
+					deckbuf.push_back(extra);
 					for (int j = 0; j < extra; ++j) {
-						auto card = dataManager.GetCodePointer(replay.ReadInt32());
-						if (card != dataManager.datas_end)
-							tmp_deck.extra.push_back(card);
+						deckbuf.push_back(replay.ReadInt32());
 					}
+					deckbuf.push_back(0);
 					FileSystem::SafeFileName(namebuf[i]);
 					myswprintf(filename, L"deck/%ls-%d %ls.ydk", ex_filename, i + 1, namebuf[i]);
-					deckManager.SaveDeck(tmp_deck, filename);
+					deckManager.SaveDeckBuffer(deckbuf.data(), filename);
 				}
 				mainGame->stACMessage->setText(dataManager.GetSysString(1335));
 				mainGame->PopupElement(mainGame->wACMessage, 20);
@@ -501,7 +502,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_DECK_EDIT: {
 				mainGame->RefreshCategoryDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 				if(mainGame->cbDBCategory->getSelected() != -1 && mainGame->cbDBDecks->getSelected() != -1) {
-					deckManager.LoadDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
+					deckManager.LoadCurrentDeck(mainGame->cbDBCategory, mainGame->cbDBDecks);
 					mainGame->ebDeckname->setText(L"");
 				}
 				mainGame->HideElement(mainGame->wMainMenu);
@@ -640,7 +641,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				tm* st = localtime(&curtime);
 				wcsftime(infobuf, 256, L"%Y/%m/%d %H:%M:%S\n", st);
 				repinfo.append(infobuf);
-				wchar_t namebuf[4][20];
+				wchar_t namebuf[4][20]{};
 				ReplayMode::cur_replay.ReadName(namebuf[0]);
 				ReplayMode::cur_replay.ReadName(namebuf[1]);
 				if(ReplayMode::cur_replay.pheader.flag & REPLAY_TAG) {
@@ -678,9 +679,9 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				std::wstring message = L"";
 				bool in_message = false;
 				while(fgets(linebuf, 1024, fp)) {
-					if(!strncmp(linebuf, "--[[message", 11)) {
-						size_t len = strlen(linebuf);
-						char* msgend = strrchr(linebuf, ']');
+					if(!std::strncmp(linebuf, "--[[message", 11)) {
+						size_t len = std::strlen(linebuf);
+						char* msgend = std::strrchr(linebuf, ']');
 						if(len <= 13) {
 							in_message = true;
 							continue;
@@ -691,7 +692,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 							break;
 						}
 					}
-					if(!strncmp(linebuf, "]]", 2)) {
+					if(!std::strncmp(linebuf, "]]", 2)) {
 						in_message = false;
 						break;
 					}
@@ -735,7 +736,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
                 mainGame->HideElement(mainGame->wDeckManage);
 				if(static_cast<irr::gui::IGUICheckBox*>(caller)->isChecked()) {
 					if(mainGame->cbCategorySelect->getSelected() == -1 || mainGame->cbDeckSelect->getSelected() == -1 ||
-						!deckManager.LoadDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
+						!deckManager.LoadCurrentDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect)) {
 						mainGame->gMutex.lock();
 						static_cast<irr::gui::IGUICheckBox*>(caller)->setChecked(false);
 						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
@@ -765,7 +766,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->RefreshBot();
 				break;
 			}
-            case COMBOBOX_HP_CATEGORY: {
+			case COMBOBOX_HP_CATEGORY: {
 				int catesel = mainGame->cbCategorySelect->getSelected();
 				if(catesel == 3) {
 					catesel = 2;
