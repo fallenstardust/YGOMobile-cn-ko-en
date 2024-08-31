@@ -1,45 +1,32 @@
 package com.ourygo.ygomobile.util.glide;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 import com.bumptech.glide.load.resource.bitmap.TransformationUtils;
-import com.ourygo.ygomobile.util.OYUtil;
 
 import java.security.MessageDigest;
 
-import cn.garymb.ygomobile.lite.R;
+public class GlideBannerTransform extends BitmapTransformation {
 
-public class GlideBannerTransform extends BitmapTransformation
- {
+    public GlideBannerTransform() {
+        super();
+    }
 
-     public GlideBannerTransform() {
-         super();
-     }
-
-     @Override
-     protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) {
+    @Override
+    protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) {
 //         return TransformationUtils.roundedCorners(pool,toTransform,radius);
-         int height=outHeight;
-         int width=height*3;
-         Bitmap bitmap = TransformationUtils.centerCrop(pool, toTransform,width,height);
-         return bitmap;
-     }
+        int width = outHeight * 3;
+        return TransformationUtils.centerCrop(pool, toTransform, width, outHeight);
+    }
 
 
-     public String getId() {
-         return getClass().getName() + hashCode();
-     }
-
+    public String getId() {
+        return getClass().getName() + hashCode();
+    }
 
 
 //     @Override
@@ -55,18 +42,18 @@ public class GlideBannerTransform extends BitmapTransformation
 //     }
 
 
-     @Override
-     public int hashCode() {
-         return super.hashCode();
-     }
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 
-     @Override
-     public boolean equals(@Nullable Object obj) {
-         return super.equals(obj);
-     }
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return super.equals(obj);
+    }
 
-     @Override
-     public void updateDiskCacheKey(MessageDigest messageDigest) {
-         messageDigest.update(getId().getBytes());
-     }
+    @Override
+    public void updateDiskCacheKey(MessageDigest messageDigest) {
+        messageDigest.update(getId().getBytes());
+    }
 }

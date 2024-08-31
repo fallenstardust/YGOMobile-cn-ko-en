@@ -1,8 +1,6 @@
 package com.ourygo.ygomobile.ui.activity
 
 import android.Manifest
-import android.content.DialogInterface
-import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -41,7 +39,6 @@ import com.ourygo.ygomobile.bean.FragmentData
 import com.ourygo.ygomobile.bean.YGOServerList
 import com.ourygo.ygomobile.ui.fragment.MainFragment
 import com.ourygo.ygomobile.ui.fragment.McLayoutFragment
-import com.ourygo.ygomobile.ui.fragment.MyCardFragment
 import com.ourygo.ygomobile.ui.fragment.MyCardWebFragment
 import com.ourygo.ygomobile.ui.fragment.OtherFunctionFragment
 import com.ourygo.ygomobile.util.AppInfoManagement
@@ -62,18 +59,17 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 
 class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
-    private var tl_tab: OYTabLayout? = null
+    private var tlTab: OYTabLayout? = null
 
     //    private VerticalTabLayout vtab;
-    private lateinit var rv_tab: RecyclerView
-    private lateinit var vp_pager: ViewPager
-    private lateinit var iv_card_query: ImageView
+    private lateinit var rvTab: RecyclerView
+    private lateinit var vpPager: ViewPager
+    private lateinit var ivCardQuery: ImageView
     private val fragmentList by lazy {
         ArrayList<FragmentData>()
     }
     private var mainFragment: MainFragment? = null
     private var myCardWebFragment: MyCardWebFragment? = null
-    private val myCardFragment: MyCardFragment? = null
     private var mcLayoutFragment: McLayoutFragment? = null
     private var otherFunctionFragment: OtherFunctionFragment? = null
     private lateinit var mResCheckTask: ResCheckTask
@@ -105,7 +101,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
                 LogUtil.time(TAG, "2")
                 checkNotch()
                 LogUtil.time(TAG, "3")
-                checkRes();
+                checkRes()
                 LogUtil.time(TAG, "4")
                 LogUtil.printSumTime(TAG)
             }
@@ -130,24 +126,18 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 
     private val handler: Handler = Handler(Looper.getMainLooper()) { true }
 
-    fun initBugly() {
-//        Bugly.init(this, OYApplication.BUGLY_ID, false);
+    private fun initBugly() {
         if (OYUtil.isTodayFirstStart) //检测是否有更新,不提示
             OYUtil.checkUpdate(this, false)
     }
 
-    protected fun checkResourceDownload(listener: ResCheckListener?) {
+    private fun checkResourceDownload(listener: ResCheckListener?) {
         mResCheckTask = ResCheckTask(this, listener)
         mResCheckTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
-        //        if (Build.VERSION.SDK_INT >= 11) {
-//            mResCheckTask.exefcuteOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-//        } else {
-//            mResCheckTask.execute();
-//        }
     }
 
     private fun checkNotch() {
-        ScreenUtil.findNotchInformation(this@OYMainActivity) { isNotch: Boolean, notchHeight: Int, phoneType: Int ->
+        ScreenUtil.findNotchInformation(this@OYMainActivity) { isNotch: Boolean, notchHeight: Int, _: Int ->
             try {
                 FileLogUtil.writeAndTime("检查刘海$isNotch   $notchHeight")
             } catch (e: IOException) {
@@ -176,7 +166,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
     }
 
     private fun checkRes() {
-        checkResourceDownload { error: Int, isNew: Boolean -> }
+        checkResourceDownload { _: Int, _: Boolean -> }
     }
 
     private fun initDuelAssistant() {
@@ -187,29 +177,24 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 
     fun selectMycard() {
         if (isHorizontal) {
-//            vtab.setTabSelected(1);
-            vp_pager.currentItem = 1
+            vpPager.currentItem = 1
         } else {
-            tl_tab!!.currentTab = 1
+            tlTab!!.currentTab = 1
         }
     }
 
     private fun initView() {
         if (isHorizontal) {
-//            vtab = findViewById(R.id.vTab);
-            rv_tab = findViewById(R.id.rv_tab)
-            rv_tab.setLayoutManager(LinearLayoutManager(this))
+            rvTab = findViewById(R.id.rv_tab)
+            rvTab.setLayoutManager(LinearLayoutManager(this))
         } else {
-            tl_tab = findViewById(R.id.tl_tab)
-            iv_card_query = findViewById(R.id.iv_card_query)
+            tlTab = findViewById(R.id.tl_tab)
+            ivCardQuery = findViewById(R.id.iv_card_query)
         }
-        vp_pager = findViewById(R.id.vp_pager)
+        vpPager = findViewById(R.id.vp_pager)
         LogUtil.time(TAG, "1.2")
-        //        String mcName = SharedPreferenceUtil.getMyCardUserName();
-//        refreshMyCardUser(mcName);
         mainFragment = MainFragment()
         myCardWebFragment = MyCardWebFragment()
-        //        myCardFragment = new MyCardFragment();
         mcLayoutFragment = McLayoutFragment()
         otherFunctionFragment = OtherFunctionFragment()
         LogUtil.time(TAG, "1.3")
@@ -237,23 +222,22 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         )
     }
 
-    fun initData() {
-        vp_pager.adapter = FmPagerAdapter(supportFragmentManager, fragmentList)
-        //        tl_tab.setTabMode(TabLayout.MODE_FIXED);
+    private fun initData() {
+        vpPager.adapter = FmPagerAdapter(supportFragmentManager, fragmentList)
         //缓存两个页面
-        vp_pager.offscreenPageLimit = 3
+        vpPager.offscreenPageLimit = 3
         LogUtil.time(TAG, "1.4")
         //TabLayout加载viewpager
         if (isHorizontal) {
             val verTabBQAdapter = VerTabBQAdapter(fragmentList)
-            rv_tab.adapter = verTabBQAdapter
-            verTabBQAdapter.setOnItemClickListener { adapter: BaseQuickAdapter<*, *>?, view: View?, position: Int ->
+            rvTab.adapter = verTabBQAdapter
+            verTabBQAdapter.setOnItemClickListener { _: BaseQuickAdapter<*, *>?, _: View?, position: Int ->
                 if (position != verTabBQAdapter.selectPosition) {
                     verTabBQAdapter.selectPosition = position
-                    vp_pager.currentItem = position
+                    vpPager.currentItem = position
                 }
             }
-            vp_pager.addOnPageChangeListener(object : OnPageChangeListener {
+            vpPager.addOnPageChangeListener(object : OnPageChangeListener {
                 override fun onPageScrolled(
                     position: Int,
                     positionOffset: Float,
@@ -299,11 +283,11 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 //            vtab.setTabSelected(0);
         } else {
             LogUtil.time(TAG, "1.4.1")
-            tl_tab!!.setViewPager(vp_pager)
+            tlTab!!.setViewPager(vpPager)
             LogUtil.time(TAG, "1.4.2")
-            tl_tab!!.currentTab = 0
+            tlTab!!.currentTab = 0
             LogUtil.time(TAG, "1.5")
-            iv_card_query.setOnClickListener { view: View? ->
+            ivCardQuery.setOnClickListener {
                 startActivity(
                     IntentUtil.getWebIntent(
                         this@OYMainActivity,
@@ -322,31 +306,29 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
 如果你觉得好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台"""
             )
             val dialog = dialogUtils!!.dialog
-            val b1: Button
-            val b2: Button
-            b1 = views[0] as Button
-            b2 = views[1] as Button
+            val b1: Button = views[0] as Button
+            val b2: Button = views[1] as Button
             b1.text = "取消"
             b2.text = "支持我们"
-            b1.setOnClickListener { v: View? -> dialog.dismiss() }
-            b2.setOnClickListener { v: View? ->
+            b1.setOnClickListener { dialog.dismiss() }
+            b2.setOnClickListener {
                 dialog.dismiss()
                 OYUtil.startAifadian(this@OYMainActivity)
             }
-            val tv_message = dialogUtils!!.messageTextView
-            tv_message.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
+            val tvMessage = dialogUtils!!.messageTextView
+            tvMessage.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
             SharedPreferenceUtil.setFirstStart(false)
             SharedPreferenceUtil.nextAifadianNum =
                 SharedPreferenceUtil.appStartTimes + (10 + (Math.random() * 20).toInt())
-            dialog.setOnDismissListener { dialog12: DialogInterface? ->
+            dialog.setOnDismissListener {
                 val b3 = dialogUtils!!.dialogt1(
                     "卡组导入提示", "YGO-OY储存路径为内部储存/ygocore，如果你之前有使用过原版" +
                             "，可以打开原版软件，点击下边栏的卡组选项——功能菜单——备份/还原来导入或导出原版ygo中的卡组"
                 )
                 val dialog1 = dialogUtils!!.dialog
-                b3.setOnClickListener({ v: View? -> dialog1.dismiss() })
-                val tv_message1 = dialogUtils!!.messageTextView
-                tv_message1.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
+                b3.setOnClickListener { dialog1.dismiss() }
+                val tvMessage1 = dialogUtils!!.messageTextView
+                tvMessage1.setLineSpacing(OYUtil.dp2px(3f).toFloat(), 1f)
                 dialog1.setOnDismissListener { }
             }
         }
@@ -356,14 +338,12 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
                 "如果喵觉得软件好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台"
             )
             val dialog1 = dialogUtils!!.dialog
-            val b11: Button
-            val b21: Button
-            b11 = views1[0] as Button
-            b21 = views1[1] as Button
+            val b11: Button = views1[0] as Button
+            val b21: Button = views1[1] as Button
             b11.text = "取消"
             b21.text = "支持我们"
-            b11.setOnClickListener { v: View? -> dialogUtils!!.dis() }
-            b21.setOnClickListener { v: View? ->
+            b11.setOnClickListener { dialogUtils!!.dis() }
+            b21.setOnClickListener {
                 dialog1.dismiss()
                 OYUtil.startAifadian(this@OYMainActivity)
             }
@@ -380,19 +360,16 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
             if (Constants.URI_ROOM == uri!!.host) {
                 duelAssistantManagement!!.setLastMessage(ClipManagement.getInstance().clipMessage)
                 YGODAUtil.deRoomListener(uri) { host1: String?, port: Int, password: String?, exception: String? ->
-                    if (TextUtils.isEmpty(
+                    if (TextUtils.isEmpty(exception)) {
+                        joinDARoom(host1, port, password)
+                    } else {
+                        OYUtil.snackExceptionToast(
+                            this@OYMainActivity,
+                            vpPager,
+                            "加入房间失败",
                             exception
                         )
-                    ) joinDARoom(
-                        host1,
-                        port,
-                        password
-                    ) else OYUtil.snackExceptionToast(
-                        this@OYMainActivity,
-                        vp_pager,
-                        "加入房间失败",
-                        exception
-                    )
+                    }
                 }
                 return
             } else if (Constants.URI_DECK == uri.host) {
@@ -402,50 +379,19 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         GameUriManager(this).doIntent(intent)
     }
 
-    fun refreshMyCardUser(name: String?) {
-//        if (TextUtils.isEmpty(name)) {
-//            tv_name.setText(getString(R.string.no_login));
-//            iv_avatar.setImageResource(R.drawable.avatar);
-//            iv_avatar.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    vp_pager.setCurrentItem(1);
-//                }
-//            });
-//            tv_name.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    vp_pager.setCurrentItem(1);
-//                }
-//            });
-//        } else {
-//            tv_name.setText(name);
-//            ImageUtil.setImage(this, MyCardUtil.getAvatarUrl(name), iv_avatar);
-//        }
-    }
-
     override fun onBackPressed() {
         if (isHorizontal) {
-//            if (vtab.getSelectedTabPosition() != 0) {
-//                vtab.setTabSelected(0);
-//                return;
-//            }
-            if (vp_pager.currentItem != 0) {
-                vp_pager.currentItem = 0
+            if (vpPager.currentItem != 0) {
+                vpPager.currentItem = 0
                 return
             }
         } else {
-            if (tl_tab!!.currentTab != 0) {
-                tl_tab!!.currentTab = 0
+            if (tlTab!!.currentTab != 0) {
+                tlTab!!.currentTab = 0
                 return
             }
         }
         super.onBackPressed()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        Log.e("MainF", "$requestCode 返回1 $resultCode")
     }
 
     override fun onJoinRoom(host: String, port: Int, password: String, id: Int) {
@@ -511,8 +457,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
             OYUtil.show("卡组解析失败，原因为：$exception")
             return
         }
-        val deckInfo: Deck
-        deckInfo = if (uri != null) {
+        val deckInfo: Deck = if (uri != null) {
             Deck(uri, mainList, exList, sideList)
         } else {
             Deck(

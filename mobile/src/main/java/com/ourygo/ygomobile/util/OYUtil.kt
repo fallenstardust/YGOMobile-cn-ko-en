@@ -44,7 +44,7 @@ import org.json.JSONObject
 import java.util.Calendar
 
 object OYUtil {
-    private const val URL_AIFAFIAN = "httpgetNewCardBags://afdian.net/@ourygo"
+    private const val URL_AIFAFIAN = "https://afdian.com/@ourygo"
 
     @JvmStatic
     fun initToolbar(activity: AppCompatActivity, toolbar: Toolbar, s: String?, isBack: Boolean) {
