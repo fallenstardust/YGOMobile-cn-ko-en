@@ -12,6 +12,14 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>萌卡直连正式+超先行服2区</name>
+        <desc>与本应用正式卡同步支持使用右下角下载的扩展卡</desc>
+        <ip>mygo2.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>决斗编年史</name>
         <desc>由系统随机分配卡组决斗</desc>
         <ip>duels.link</ip>

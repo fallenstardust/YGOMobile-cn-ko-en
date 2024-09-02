@@ -12,6 +12,14 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>Mycard_Superpre(2)☆needs download expansions</name>
+        <desc>mycard‘s server within expansions cards</desc>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>Evolution TCG Server</name>
         <desc>TCG environments</desc>
         <ip>server.evolutionygo.com</ip>

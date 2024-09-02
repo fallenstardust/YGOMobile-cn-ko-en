@@ -175,7 +175,7 @@ public interface Constants {
     String URL_YGO233_FILE_ALT = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_YGO233_BUG_REPORT = "https://ygo233.com/pre#faq";
     int PORT_Mycard_Super_Pre_Server = 888;
-    String URL_Mycard_Super_Pre_Server = "mygo.superpre.pro";
+    String URL_Mycard_Super_Pre_Server = "mygo2.superpre.pro";
     //String URL_YGO233_2 = "s2.ygo233.com";
 
     String SERVER_FILE = "server_list.xml";

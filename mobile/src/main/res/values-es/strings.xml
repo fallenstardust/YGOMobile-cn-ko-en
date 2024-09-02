@@ -369,7 +369,7 @@
     <string name="tip_deckInfo_isNot_completeDeck">El deck actual se analiza de manera anormal y haremos todo lo posible para convertirlo en cartas existentes.</string>
     <string name="tip_ygopro_is_running">Actualmente hay un duelo en ejecución y no se puede iniciar un nuevo duelo. La PSW de la sala se ha guardado en el historial. Finaliza el juego actual y luego selecciona el historial para unirte a la sala.</string>
     <string name="Download_Precard_Failed">Falló la descarga de las cartas pre-lanzamiento</string>
-    <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
+    <string name="Pre_Server_Name">Servidor Super-pre Mycard(2)</string>
     <string name="tip_ypk_is_deleted">Actualice las cartas pre-lanzadas de inmediato</string>
     <string name="tip_superpre_desc">Actualización más rápida. Descargar expansiones</string>
 </resources>
