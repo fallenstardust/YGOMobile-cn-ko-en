@@ -159,7 +159,7 @@ public class ServerUtil {
                                 }
                             }
                             if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
-                                AddServer(context, serverName, serverDesc, serverHost, Integer.valueOf(serverPort), "Knight of Hanoi");
+                                AddServer(context, serverName, serverDesc, serverHost, Integer.valueOf(serverPort), Constants.PlayerName);
                             } else {
                                 Log.w(TAG,"can't parse ex-server properly");
                             }
@@ -211,16 +211,30 @@ public class ServerUtil {
             return;
         }
         for (int i=0; i<assetList.getServerInfoList().size();i++) {
+
+            String assetName = assetList.getServerInfoList().get(i).getName();
+            String assetDesc = assetList.getServerInfoList().get(i).getDesc();
+            String assetAddr = assetList.getServerInfoList().get(i).getServerAddr();
+            int assetPort = assetList.getServerInfoList().get(i).getPort();
+
             /*考虑到fileList的serverinfo其他信息被用户修改过，专门只比较域名地址和端口来视为相同的server来补充备注*/
             for (int j=0; j<fileList.getServerInfoList().size();j++){
-                if (assetList.getServerInfoList().get(i).getServerAddr().equals(fileList.getServerInfoList().get(j).getServerAddr())
-                        && assetList.getServerInfoList().get(i).getPort() == (fileList.getServerInfoList().get(j).getPort())
-                        && !assetList.getServerInfoList().get(i).getDesc().equals(fileList.getServerInfoList().get(j).getDesc())) {
+                String fileAddr = fileList.getServerInfoList().get(j).getServerAddr();
+                int filePort = fileList.getServerInfoList().get(j).getPort();
+                String fileDesc = fileList.getServerInfoList().get(j).getDesc();
 
-                    fileList.getServerInfoList().get(j).setDesc(assetList.getServerInfoList().get(i).getDesc());
-                    
+                //IP相同port相同则为已存在相同serverInfo
+                if (assetAddr.equals(fileAddr) && (assetPort == filePort)) {
+                    if (!assetDesc.equals(fileDesc)) {
+                        fileList.getServerInfoList().get(j).setDesc(assetDesc);
+                    }
                 }
             }
+
+            if (!fileList.getServerInfoList().contains(assetList.getServerInfoList().get(i))) {
+                AddServer(context, assetName, assetDesc, assetAddr, assetPort, Constants.PlayerName);
+            }
+
         }
         saveItems(context,xmlFile,fileList.getServerInfoList());
     }
@@ -284,7 +298,7 @@ public class ServerUtil {
     }
 
     public static boolean isPreServer(int port, String addr) {
-        return (port == Constants.PORT_Mycard_Super_Pre_Server && addr.equals(Constants.URL_Mycard_Super_Pre_Server));
+        return (port == Constants.PORT_Mycard_Super_Pre_Server && (addr.equals(Constants.URL_Mycard_Super_Pre_Server) || addr.equals(Constants.URL_Mycard_Super_Pre_Server_2)));
     }
 
 }

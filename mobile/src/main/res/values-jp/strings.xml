@@ -273,7 +273,7 @@
     <string name="Found_Update">新バージョン発見しました、ダウンロードしますか？</string>
     <string name="Checking_Update_Failed">新バージョンチェック失敗</string>
     <string name="Download_Precard_Failed">非公式データダウンロー失敗</string>
-    <string name="Pre_Server_Name">MYCARD超非公式サーバー(2)</string>
+    <string name="Pre_Server_Name">MYCARD超非公式サーバー</string>
     <string name="Ask_to_Change_Other_Way">メインソースダウンロード失敗，他のダウンロード先を選択してください...</string>
     <string name="DuelAssistant">デュエルアシスタント起動中</string>
     <string name="masterrule">マスタールールを勉強します</string>
