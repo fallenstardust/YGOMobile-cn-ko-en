@@ -958,7 +958,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnShuffleDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnSortDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 115 * yScale, 310 * yScale, 155 * yScale), 0, BUTTON_SORT_DECK, dataManager.GetSysString(1305));
         ChangeToIGUIImageButton(btnSortDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnClearDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 160 * yScale, 310 * yScale, 200 * yScale), 0, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
+	btnClearDeck = env->addButton(rect<s32>((3 + CARD_IMG_WIDTH) * yScale, 200 * yScale, 310 * yScale, 240 * yScale), 0, BUTTON_CLEAR_DECK, dataManager.GetSysString(1304));
         ChangeToIGUIImageButton(btnClearDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
     btnDeleteDeck->setVisible(false);
     btnShuffleDeck->setVisible(false);

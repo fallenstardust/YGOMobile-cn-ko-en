@@ -80,13 +80,14 @@ struct chain {
 };
 
 struct player_info {
-	int32 lp{ 0 };
-	int32 start_count{ 0 };
-	int32 draw_count{ 0 };
+	int32 lp{ 8000 };
+	int32 start_count{ 5 };
+	int32 draw_count{ 1 };
 	uint32 used_location{ 0 };
 	uint32 disabled_location{ 0 };
 	uint32 extra_p_count{ 0 };
 	uint32 tag_extra_p_count{ 0 };
+	int32 szone_size{ 6 };
 	card_vector list_mzone;
 	card_vector list_szone;
 	card_vector list_main;
@@ -127,19 +128,19 @@ struct field_effect {
 	grant_effect_container grant_effect;
 };
 struct field_info {
-	int32 field_id{ 0 };
-	int16 copy_id{ 0 };
-	int16 turn_id{ 0 };
+	int32 field_id{ 1 };
+	int16 copy_id{ 1 };
+	int16 turn_id{};
 	int16 turn_id_by_player[2]{};
-	int16 card_id{ 0 };
-	uint16 phase{ 0 };
-	uint8 turn_player{ 0 };
+	int16 card_id{ 1 };
+	uint16 phase{};
+	uint8 turn_player{};
 	uint8 priorities[2]{};
 	uint8 can_shuffle{ TRUE };
 };
 struct lpcost {
-	int32 count{ 0 };
-	int32 amount{ 0 };
+	int32 count{};
+	int32 amount{};
 	int32 lpstack[8]{};
 };
 struct processor_unit {
@@ -306,7 +307,7 @@ struct processor {
 	uint8 extra_summon[2]{};
 	int32 spe_effect[2]{};
 	int32 last_select_hint[2]{ 0 };
-	int32 duel_options{ 0 };
+	uint32 duel_options{ 0 };
 	int32 duel_rule{ CURRENT_RULE };
 	uint32 copy_reset{ 0 };
 	int32 copy_reset_count{ 0 };
@@ -350,7 +351,7 @@ struct processor {
 	uint32 hint_timing[2]{};
 	uint8 current_player{ PLAYER_NONE };
 	uint8 conti_player{ PLAYER_NONE };
-	uint8 select_deck_seq_preserved{ FALSE };
+	uint8 select_deck_sequence_revealed{ FALSE };
 	uint8 selecting_player{ PLAYER_NONE };
 	std::unordered_map<uint32, std::pair<uint32, uint32>> summon_counter;
 	std::unordered_map<uint32, std::pair<uint32, uint32>> normalsummon_counter;
@@ -374,12 +375,12 @@ public:
 
 	duel* pduel;
 	player_info player[2];
-	card* temp_card;
+	card* temp_card{};
 	field_info infos;
 	//lpcost cost[2];
 	field_effect effects;
 	processor core;
-	return_value returns;
+	return_value returns{};
 	tevent nil_event;
 
 	static int32 field_used_count[32];
@@ -463,6 +464,7 @@ public:
 	void check_chain_counter(effect* peffect, int32 playerid, int32 chainid, bool cancel = false);
 	void set_spsummon_counter(uint8 playerid);
 	int32 check_spsummon_counter(uint8 playerid, uint8 ct = 1);
+	bool is_select_hide_deck_sequence(uint8 playerid);
 
 	int32 check_lp_cost(uint8 playerid, uint32 cost, uint32 must_pay);
 	void save_lp_cost() {}

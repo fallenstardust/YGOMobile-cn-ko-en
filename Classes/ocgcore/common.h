@@ -43,6 +43,7 @@ typedef signed char int8;
 #define NULL 0
 #endif
 
+#define MASTER_RULE3		3	//Master Rule 3 (2014)
 #define NEW_MASTER_RULE		4	//New Master Rule (2017)
 #define MASTER_RULE_2020	5	//Master Rule 2020
 #define CURRENT_RULE		5
@@ -418,6 +419,7 @@ typedef signed char int8;
 #define DUEL_TAG_MODE			0x20
 #define DUEL_SIMPLE_AI			0x40
 #define DUEL_RETURN_DECK_TOP	0x80
+#define DUEL_REVEAL_DECK_SEQ	0x100
 
 //Activity
 #define ACTIVITY_SUMMON			1
