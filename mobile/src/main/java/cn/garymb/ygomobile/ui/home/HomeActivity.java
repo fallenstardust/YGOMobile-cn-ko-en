@@ -190,7 +190,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                         if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
-                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
                             DialogPlus dialog = new DialogPlus(getActivity());
                             dialog.setMessage(R.string.Found_Update);
                             dialog.setLeftButtonText(R.string.download_home);

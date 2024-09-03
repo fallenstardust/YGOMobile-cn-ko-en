@@ -388,7 +388,6 @@ public class AppsSettings {
      */
     public int getDataLanguage() {
         try {
-            Log.i(BuildConfig.VERSION_NAME, mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + PREF_DEF_DATA_LANGUAGE));
             return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_DATA_LANGUAGE, "" + PREF_DEF_DATA_LANGUAGE));
         } catch (Exception e) {
             return PREF_DEF_DATA_LANGUAGE;
