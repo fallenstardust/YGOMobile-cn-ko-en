@@ -270,7 +270,7 @@
     <string name="OK">确定</string>
     <string name="Cancel">取消</string>
     <string name="Checking_Update">检查更新中，请稍候</string>
-    <string name="Found_Update">发现新版本，前往下载？</string>
+    <string name="Found_Update">有重要更新！为不影响后续使用，请尽快下载安装新版本！</string>
     <string name="Checking_Update_Failed">检查更新失败</string>
     <string name="Download_Precard_Failed">先行卡下载失败</string>
     <string name="Pre_Server_Name">萌卡超先行服</string>
