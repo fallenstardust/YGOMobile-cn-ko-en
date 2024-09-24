@@ -276,9 +276,9 @@ void DeckManager::GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, 
 	}
 }
 FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
-	char file2[256];
-	BufferIO::EncodeUTF8(file, file2);
-	FILE* fp = fopen(file2, mode);
+	char fullname[256]{};
+	BufferIO::EncodeUTF8(file, fullname);
+	FILE* fp = myfopen(fullname, mode);
 	return fp;
 }
 IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {

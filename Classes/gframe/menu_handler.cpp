@@ -664,12 +664,9 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				const wchar_t* name = mainGame->lstSinglePlayList->getListItem(sel);
 				wchar_t fname[256];
 				myswprintf(fname, L"./single/%ls", name);
-				FILE *fp;
-
-				char filename[256];
-				BufferIO::EncodeUTF8(fname, filename);
-				fp = fopen(filename, "rb");
-
+				char fullname[256]{};
+				BufferIO::EncodeUTF8(fname, fullname);
+				FILE* fp = myfopen(fullname, "rb");
 				if(!fp) {
 					mainGame->stSinglePlayInfo->setText(L"");
 					break;
