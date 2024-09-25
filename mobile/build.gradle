@@ -6,11 +6,11 @@ android {
 
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
-        minSdkVersion 21
+        minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 311100975
-        versionName "3.11.10"
+        versionCode 311110000
+        versionName "3.11.11"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndk {
