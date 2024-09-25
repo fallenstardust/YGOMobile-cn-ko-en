@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := YGOMobile
 
-LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_ -pipe -fno-rtti -fno-exceptions -fstrict-aliasing -D_ANDROID -fPIC
+LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_ -pipe -fno-rtti -fno-exceptions -fstrict-aliasing -D_ANDROID -fPIC -DLUA_COMPAT_5_2
 TARGET_FORMAT_STRING_CFLAGS := 
 
 LOCAL_CPPFLAGS := -std=c++11
@@ -85,7 +85,7 @@ LOCAL_STATIC_LIBRARIES += libssl_static
 LOCAL_STATIC_LIBRARIES += libcrypto_static
 LOCAL_STATIC_LIBRARIES += libevent2
 LOCAL_STATIC_LIBRARIES += libocgcore_static
-LOCAL_STATIC_LIBRARIES += liblua5.3
+LOCAL_STATIC_LIBRARIES += liblua5.4
 LOCAL_STATIC_LIBRARIES += libsndfile
 LOCAL_STATIC_LIBRARIES += libmpg123
 LOCAL_STATIC_LIBRARIES += openal
