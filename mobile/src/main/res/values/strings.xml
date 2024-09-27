@@ -233,7 +233,7 @@
     <string name="game_version">Game Version</string>
     <string name="tip">Info</string>
     <string name="error_game_ver">Wrong！be right as "0x1342"(as 1.034.2)</string>
-    <string name="tip_no_netwrok">please confirm net works</string>
+    <string name="tip_no_netwrok" translatable="false">please confirm net works</string>
     <string name="message">Copying datas...</string>
     <string name="ex_pack">Extend cards</string>
     <string name="deck_manager_v2">Deck Manager V2</string>
@@ -371,4 +371,5 @@
     <string name="tip_ygopro_is_running">ygopro is running now. unable to create a new duel before it is closed. \nthe room password has been recorded in record list.\npls close ygopro and rejoin room through the record of room password</string>
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
     <string name="tip_superpre_desc">fastest upgrade. download expansions</string>
+    <string name="tip_download_ex">New cards available!</string>
 </resources>

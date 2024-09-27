@@ -361,4 +361,5 @@
     <string name="tip_ygopro_is_running">当前有游戏正在运行，无法开启新的决斗，已将房间密码存入历史记录，请结束当前游戏后再选择该历史记录以加入房间</string>
     <string name="tip_ypk_is_deleted">正式卡更新会让旧先行卡失效，请及时重新下载先行卡补丁</string>
     <string name="tip_superpre_desc">与本应用正式卡同步更新并提供超先行卡尝鲜</string>
+    <string name="tip_download_ex">有新卡快来玩！</string>
 </resources>

@@ -361,4 +361,5 @@
     <string name="tip_ygopro_is_running">YGOPROは既に運行している，新しいデュエル開始できません，ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
     <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
+    <string name="tip_download_ex">新しいカードがあるよ、遊びに来て！</string>
 </resources>

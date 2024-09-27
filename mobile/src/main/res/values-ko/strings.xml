@@ -362,4 +362,5 @@
     <string name="Pre_Server_Name">Mycard Super-pre Server</string>
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
     <string name="tip_superpre_desc">Please upgrade pre-released cards at once</string>
+    <string name="tip_download_ex">새 카드가 있어, 놀러 와!</string>
 </resources>

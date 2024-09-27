@@ -79,8 +79,7 @@
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-     <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A\nTraductor ES: Dark Zane
-</string>
+    <string name="tip_download_ex">¡Hay nuevas cartas, ven a jugar!</string>
     <string name="restart_app">"¡Por favor, reinicie la aplicación!"</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
