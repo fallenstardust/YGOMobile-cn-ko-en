@@ -11,7 +11,7 @@
     <string name="check_things">Consultando %s ...</string>
     <string name="core_config">Configuración principal</string>
     <string name="tip_new_deck">Nuevo deck</string>
-    <string name="cards_cdb">base de datos</string>
+    <string name="cards_cdb">cards.cdb</string>
     <string name="scripts">scripts</string>
     <string name="images">imágenes</string>
     <string name="single_lua">archivos individuales</string>
@@ -39,7 +39,7 @@
     <string name="create_folder">Nueva carpeta</string>
     <string name="intpu_name">Ingresar nombre del deck</string>
     <string name="tab_search">Buscar</string>
-    <string name="tab_result">Result</string>
+    <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
     <string name="the_name_is_folder">El nombre de la carpeta</string>
     <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
@@ -139,7 +139,7 @@
     <string name="label_set">Arquetipo</string>
     <string name="label_level">Nvl/Rng/Lnk</string>
     <string name="label_attr">Atributo</string>
-    <string name="linkmarker">◀F.Enlace▶</string>>
+    <string name="linkmarker">◀F.Enlace▶</string>
     <string name="label_category">Categoría</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
@@ -172,7 +172,6 @@
     <string name="add_card_tip_ok">Carta añadida con éxito</string>
     <string name="add_card_tip_fail">Fallo al añadir carta</string>
     <string name="tip_card_max" formatted="false">Número máximo de cartas permitidas: %d</string>
-
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
