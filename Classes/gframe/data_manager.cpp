@@ -181,24 +181,12 @@ bool DataManager::Error(spmemvfs_db_t* pDB, sqlite3_stmt* pStmt, int errNo) {
 	spmemvfs_env_fini();
 	return false;
 }
-bool DataManager::GetData(unsigned int code, CardData* pData) {
-	code_pointer cdit = _datas.find(code);
+bool DataManager::GetData(unsigned int code, CardData* pData) const {
+	auto cdit = _datas.find(code);
 	if(cdit == _datas.end())
 		return false;
-	auto& data = cdit->second;
 	if (pData) {
-		pData->code = data.code;
-		pData->alias = data.alias;
-		memcpy(pData->setcode, data.setcode, SIZE_SETCODE);
-		pData->type = data.type;
-		pData->level = data.level;
-		pData->attribute = data.attribute;
-		pData->race = data.race;
-		pData->attack = data.attack;
-		pData->defense = data.defense;
-		pData->lscale = data.lscale;
-		pData->rscale = data.rscale;
-		pData->link_marker = data.link_marker;
+		*pData = cdit->second;
 	}
 	return true;
 }
@@ -208,7 +196,7 @@ code_pointer DataManager::GetCodePointer(unsigned int code) const {
 string_pointer DataManager::GetStringPointer(unsigned int code) const {
 	return _strings.find(code);
 }
-bool DataManager::GetString(unsigned int code, CardString* pStr) {
+bool DataManager::GetString(unsigned int code, CardString* pStr) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end()) {
 		pStr->name = unknown_string;
@@ -218,7 +206,7 @@ bool DataManager::GetString(unsigned int code, CardString* pStr) {
 	*pStr = csit->second;
 	return true;
 }
-const wchar_t* DataManager::GetName(unsigned int code) {
+const wchar_t* DataManager::GetName(unsigned int code) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end())
 		return unknown_string;
@@ -226,7 +214,7 @@ const wchar_t* DataManager::GetName(unsigned int code) {
 		return csit->second.name.c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetText(unsigned int code) {
+const wchar_t* DataManager::GetText(unsigned int code) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end())
 		return unknown_string;
@@ -234,7 +222,7 @@ const wchar_t* DataManager::GetText(unsigned int code) {
 		return csit->second.text.c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetDesc(unsigned int strCode) {
+const wchar_t* DataManager::GetDesc(unsigned int strCode) const {
 	if (strCode < (MIN_CARD_ID << 4))
 		return GetSysString(strCode);
 	unsigned int code = (strCode >> 4) & 0x0fffffff;
@@ -246,7 +234,7 @@ const wchar_t* DataManager::GetDesc(unsigned int strCode) {
 		return csit->second.desc[offset].c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetSysString(int code) {
+const wchar_t* DataManager::GetSysString(int code) const {
 	if (code < 0 || code > MAX_STRING_ID)
 		return unknown_string;
 	auto csit = _sysStrings.find(code);
@@ -254,25 +242,25 @@ const wchar_t* DataManager::GetSysString(int code) {
 		return unknown_string;
 	return csit->second.c_str();
 }
-const wchar_t* DataManager::GetVictoryString(int code) {
+const wchar_t* DataManager::GetVictoryString(int code) const {
 	auto csit = _victoryStrings.find(code);
 	if(csit == _victoryStrings.end())
 		return unknown_string;
 	return csit->second.c_str();
 }
-const wchar_t* DataManager::GetCounterName(int code) {
+const wchar_t* DataManager::GetCounterName(int code) const {
 	auto csit = _counterStrings.find(code);
 	if(csit == _counterStrings.end())
 		return unknown_string;
 	return csit->second.c_str();
 }
-const wchar_t* DataManager::GetSetName(int code) {
+const wchar_t* DataManager::GetSetName(int code) const {
 	auto csit = _setnameStrings.find(code);
 	if(csit == _setnameStrings.end())
-		return NULL;
+		return nullptr;
 	return csit->second.c_str();
 }
-std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) {
+std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) const {
 	std::vector<unsigned int> matchingCodes;
 	for(auto csit = _setnameStrings.begin(); csit != _setnameStrings.end(); ++csit) {
 		auto xpos = csit->second.find_first_of(L'|');//setname|another setname or extra info
@@ -299,8 +287,8 @@ const wchar_t* DataManager::GetNumString(int num, bool bracket) {
 	*++p = 0;
 	return numBuffer;
 }
-const wchar_t* DataManager::FormatLocation(int location, int sequence) {
-	if(location == 0x8) {
+const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
+	if(location == LOCATION_SZONE) {
 		if(sequence < 5)
 			return GetSysString(1003);
 		else if(sequence == 5)
@@ -308,12 +296,16 @@ const wchar_t* DataManager::FormatLocation(int location, int sequence) {
 		else
 			return GetSysString(1009);
 	}
-	unsigned filter = 1;
 	int i = 1000;
-	for(; filter != 0x100 && filter != location; filter <<= 1)
-		++i;
-	if(filter == location)
-		return GetSysString(i);
+	int string_id = 0;
+	for (unsigned filter = LOCATION_DECK; filter <= LOCATION_PZONE; filter <<= 1, ++i) {
+		if (filter == location) {
+			string_id = i;
+			break;
+		}
+	}
+	if (string_id)
+		return GetSysString(string_id);
 	else
 		return unknown_string;
 }
