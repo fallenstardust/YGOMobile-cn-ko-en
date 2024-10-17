@@ -1,7 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_DATAVER;
+import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
 import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
 import static cn.garymb.ygomobile.utils.WebParseUtil.isValidIP;
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.bean.ServerList;
@@ -56,10 +57,27 @@ public class ServerUtil {
      * 比对服务器的先行卡版本号与本地先行卡版本号，
      * 更新全局变量exCardVersion（如删除先行卡、重新安装先行卡等）
      */
-    public static void initExCardState() {
+    public static void initExCardState(Context context) {
         String oldVer = SharedPreferenceUtil.getExpansionDataVer();
         LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
-        OkhttpUtil.get(URL_YGO233_DATAVER, new Callback() {
+        String language = context.getResources().getConfiguration().locale.getLanguage();
+        String id = "";
+        String URL_DATAVER = URL_CN_DATAVER;
+        if (!language.isEmpty()) {
+            if (AppsSettings.get().getDataLanguage() == -1) {
+                if (language.equals(AppsSettings.languageEnum.English.name)) id = "EN";
+                if (language.equals(AppsSettings.languageEnum.Korean.name)) id = "KR";
+                if (language.equals(AppsSettings.languageEnum.Spanish.name)) id = "ES";
+                if (language.equals(AppsSettings.languageEnum.Japanese)) id = "JP";
+            } else {
+                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code) id = "KR";
+                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code) id = "EN";
+                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code) id = "ES";
+                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code) id = "JP";
+            }
+            URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + id + "/version.txt";
+        }
+        OkhttpUtil.get(URL_DATAVER, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 exCardState = ExCardState.ERROR;
@@ -69,7 +87,7 @@ public class ServerUtil {
                 if (failCounter < 10) {
                     LogUtil.i(TAG, "network failed, retry fetch pre-card version:");
                     failCounter++;
-                    initExCardState();
+                    initExCardState(context);
                 }
             }
 
@@ -161,7 +179,7 @@ public class ServerUtil {
                             if (serverName != null && (isHost(serverHost) || isValidIP(serverHost)) && isNumeric(serverPort)) {
                                 AddServer(context, serverName, serverDesc, serverHost, Integer.valueOf(serverPort), Constants.PlayerName);
                             } else {
-                                Log.w(TAG,"can't parse ex-server properly");
+                                Log.w(TAG, "can't parse ex-server properly");
                             }
                         }
                     }
@@ -210,7 +228,7 @@ public class ServerUtil {
         if (fileList == null) {
             return;
         }
-        for (int i=0; i<assetList.getServerInfoList().size();i++) {
+        for (int i = 0; i < assetList.getServerInfoList().size(); i++) {
 
             String assetName = assetList.getServerInfoList().get(i).getName();
             String assetDesc = assetList.getServerInfoList().get(i).getDesc();
@@ -218,7 +236,7 @@ public class ServerUtil {
             int assetPort = assetList.getServerInfoList().get(i).getPort();
 
             /*考虑到fileList的serverinfo其他信息被用户修改过，专门只比较域名地址和端口来视为相同的server来补充备注*/
-            for (int j=0; j<fileList.getServerInfoList().size();j++){
+            for (int j = 0; j < fileList.getServerInfoList().size(); j++) {
                 String fileAddr = fileList.getServerInfoList().get(j).getServerAddr();
                 int filePort = fileList.getServerInfoList().get(j).getPort();
                 String fileDesc = fileList.getServerInfoList().get(j).getDesc();
@@ -236,8 +254,9 @@ public class ServerUtil {
             }
 
         }
-        saveItems(context,xmlFile,fileList.getServerInfoList());
+        saveItems(context, xmlFile, fileList.getServerInfoList());
     }
+
     /**
      * 从资源文件serverlist.xml（或本地文件server_list.xml)解析服务器列表，并将新添加的服务器信息（name，addr，port）合并到服务器列表中。
      *

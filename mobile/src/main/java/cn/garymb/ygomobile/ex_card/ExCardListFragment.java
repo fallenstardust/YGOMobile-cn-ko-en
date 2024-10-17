@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ex_card;
 
+import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
 import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
@@ -92,7 +93,7 @@ public class ExCardListFragment extends Fragment {
                 LogUtil.i(TAG, "start download");
                 if (downloadState != DownloadState.DOWNLOAD_ING) {
                     downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(URL_YGO233_FILE);
+                    downloadfromWeb(URL_FILE);
                 }
             }
         });

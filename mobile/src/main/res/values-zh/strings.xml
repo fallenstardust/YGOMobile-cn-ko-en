@@ -227,7 +227,7 @@
     <string name="failed_reason">登录失败，原因是</string>
     <string name="notice_verify_email">请验证账号邮箱后重登方可进入聊天室</string>
     <string name="send">发送</string>
-    <string name="mc_home">大厅</string>
+    <string name="mc_home">直连大厅</string>
     <string name="bbs">社区</string>
     <string name="McNews">公告</string>
     <string name="settings_pref_settings_only_game">直接启动游戏</string>
