@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
+import static cn.garymb.ygomobile.Constants.URL_SUPERPRE_CN_FILE;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
 import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
 import static cn.garymb.ygomobile.utils.WebParseUtil.isValidIP;
@@ -321,7 +322,7 @@ public class ServerUtil {
             id = "ES";
         if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code)
             id = "JP";
-        url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + id + "/ygopro-super-pre.ypk";
+        url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + id + "/ygopro-super-pre.ypk";
         Log.w("seesee",url);
         return url;
     }
