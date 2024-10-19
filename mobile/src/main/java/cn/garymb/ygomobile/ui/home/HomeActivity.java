@@ -105,7 +105,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
-        ServerUtil.initExCardState(this);//检查扩展卡版本
+        ServerUtil.initExCardState();//检查扩展卡版本
     }
 
     @Override
@@ -318,7 +318,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     @Override
     protected void onResume() {
         super.onResume();
-        ServerUtil.initExCardState(this);//检查扩展卡版本
+        ServerUtil.initExCardState();//检查扩展卡版本
     }
 
     @Override

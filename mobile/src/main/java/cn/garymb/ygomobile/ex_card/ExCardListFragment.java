@@ -1,8 +1,5 @@
 package cn.garymb.ygomobile.ex_card;
 
-import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
 
@@ -93,7 +90,7 @@ public class ExCardListFragment extends Fragment {
                 LogUtil.i(TAG, "start download");
                 if (downloadState != DownloadState.DOWNLOAD_ING) {
                     downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(URL_FILE);
+                    downloadfromWeb(ServerUtil.downloadUrl());
                 }
             }
         });
@@ -205,7 +202,7 @@ public class ExCardListFragment extends Fragment {
                     ++FailedCount;
                     if (FailedCount <= 2) {
                         YGOUtil.showTextToast(getString(R.string.Ask_to_Change_Other_Way));
-                        downloadfromWeb(URL_YGO233_FILE_ALT);
+                        downloadfromWeb(ServerUtil.downloadUrl());
                     }
                     YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
                     break;

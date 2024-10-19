@@ -41,12 +41,6 @@ import okhttp3.Response;
 
 public class ServerUtil {
     private static final String TAG = ServerUtil.class.getSimpleName();
-
-    public enum ExCardState {
-        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
-        UNCHECKED, UPDATED, NEED_UPDATE, ERROR
-    }
-
     /* 存储了当前先行卡是否需要更新的状态，UI逻辑直接读取该变量就能获知是否已安装先行卡 */
     public volatile static ExCardState exCardState = ExCardState.UNCHECKED;//TODO 可能有并发问题
     public volatile static String serverExCardVersion = "";
@@ -57,26 +51,23 @@ public class ServerUtil {
      * 比对服务器的先行卡版本号与本地先行卡版本号，
      * 更新全局变量exCardVersion（如删除先行卡、重新安装先行卡等）
      */
-    public static void initExCardState(Context context) {
+    public static void initExCardState() {
         String oldVer = SharedPreferenceUtil.getExpansionDataVer();
         LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
-        String language = context.getResources().getConfiguration().locale.getLanguage();
         String id = "";
         String URL_DATAVER = URL_CN_DATAVER;
-        if (!language.isEmpty()) {
-            if (AppsSettings.get().getDataLanguage() == -1) {
-                if (language.equals(AppsSettings.languageEnum.English.name)) id = "EN";
-                if (language.equals(AppsSettings.languageEnum.Korean.name)) id = "KR";
-                if (language.equals(AppsSettings.languageEnum.Spanish.name)) id = "ES";
-                if (language.equals(AppsSettings.languageEnum.Japanese)) id = "JP";
-            } else {
-                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code) id = "KR";
-                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code) id = "EN";
-                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code) id = "ES";
-                if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code) id = "JP";
-            }
-            URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + id + "/version.txt";
-        }
+
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
+            id = "KR";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
+            id = "EN";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
+            id = "ES";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code)
+            id = "JP";
+
+        URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + id + "/version.txt";
+        Log.w("seesee", URL_DATAVER);
         OkhttpUtil.get(URL_DATAVER, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -87,7 +78,7 @@ public class ServerUtil {
                 if (failCounter < 10) {
                     LogUtil.i(TAG, "network failed, retry fetch pre-card version:");
                     failCounter++;
-                    initExCardState(context);
+                    initExCardState();
                 }
             }
 
@@ -191,7 +182,6 @@ public class ServerUtil {
             }
         }
     }
-
 
     /**
      * 读取xmlFile指定的本地文件server_list.xml和apk资源文件（assets）下的serverlist.xml，返回其中版本最新的
@@ -318,6 +308,27 @@ public class ServerUtil {
 
     public static boolean isPreServer(int port, String addr) {
         return (port == Constants.PORT_Mycard_Super_Pre_Server && (addr.equals(Constants.URL_Mycard_Super_Pre_Server) || addr.equals(Constants.URL_Mycard_Super_Pre_Server_2)));
+    }
+
+    public static String downloadUrl() {
+        String url;
+        String id ="";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
+            id = "KR";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
+            id = "EN";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
+            id = "ES";
+        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code)
+            id = "JP";
+        url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + id + "/ygopro-super-pre.ypk";
+        Log.w("seesee",url);
+        return url;
+    }
+
+    public enum ExCardState {
+        /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
+        UNCHECKED, UPDATED, NEED_UPDATE, ERROR
     }
 
 }

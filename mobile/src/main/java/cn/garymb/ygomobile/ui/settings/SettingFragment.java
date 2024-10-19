@@ -38,7 +38,7 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
+import static cn.garymb.ygomobile.Constants.URL_SUPERPRE_CN_FILE_ALT;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
@@ -290,7 +290,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 case TYPE_SETTING_GET_VERSION_FAILED:
                     ++FailedCount;
                     if (FailedCount <= 2) {
-                        checkUpgrade(URL_YGO233_FILE_ALT);
+                        checkUpgrade(URL_HOME_VERSION);
                     } else {
                         Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     }
