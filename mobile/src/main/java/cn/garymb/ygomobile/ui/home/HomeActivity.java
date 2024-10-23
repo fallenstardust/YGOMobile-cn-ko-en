@@ -141,7 +141,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         bottomNavigationBar = findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.home, R.string.mc_home))
-                .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))
+                .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.card_search))
                 .addItem(new BottomNavigationItem(R.drawable.deck, R.string.deck_manager))
                 .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard).setBadgeItem(mTextBadgeItem))
                 .addItem(new BottomNavigationItem(R.drawable.my, R.string.personal))
