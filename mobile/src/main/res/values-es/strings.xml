@@ -42,11 +42,11 @@
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
     <string name="the_name_is_folder">El nombre de la carpeta</string>
-    <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
+    <string name="back_tip">Presione la tecla \"Atrás\" nuevamente para salir del juego.</string>
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
          Toque en Configuración -> Permisos -> Habilite los permisos requeridos.</string>
-    <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento desde la web, espere por favor...</string>
-    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzamiento</string>
+    <string name="fetch_ex_card">Obteniendo cartas pre-lanzadas desde la web, espere por favor...</string>
+    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzadas</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
     <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que \"Usar Expansiones\" esté habilitado en la configuración</string>
@@ -75,11 +75,11 @@
     <string name="settings_game_diy_card_back">Cubierta de Carta</string>
     <string name="settings_game_diy_card_db">Usar base de datos personalizada</string>
     <string name="settings_test_options">Opciones Experimentales</string>
-    <string name="settings_test_replace_kernel">Remplazar Kernel (Necesita Root)</string>
+    <string name="settings_test_replace_kernel">Reemplazar Kernel (Necesita Root)</string>
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-    <string name="tip_download_ex">¡Hay nuevas cartas prelanzadas disponibles!</string>
+    <string name="tip_download_ex">¡Hay nuevas cartas pre-lanzadas disponibles!</string>
     <string name="restart_app">¡Por favor, reinicie la aplicación!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -105,7 +105,6 @@
         <item>15</item>
     </string-array>
     <!-- settings -->
-
     <string name="server_list">Servidores de duelo</string>
     <string name="server_name">Nombre:</string>
     <string name="server_desc">Nota:</string>
@@ -230,7 +229,7 @@
     <string name="tip_network_image">El servidor de imágenes está cerrado</string>
     <string name="game_version">Versión del Juego</string>
     <string name="tip">Información</string>
-    <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, como por ejemplo: 0x1360 (muestra 1.036.0)</string>
+    <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, por ejemplo: 0x1360 (muestra 1.036.0)</string>
     <string name="tip_no_netwrok">Por favor, verifique su conexión a Internet</string>
     <string name="message">Copiando paquete de datos...</string>
     <string name="ex_pack">Paquete de cartas de expansión</string>
@@ -248,7 +247,7 @@
     <string name="SYSTEM_ALERT_WINDOW">Debes habilitar el permiso de ventana flotante\nHabilita el permiso para usar la función Asistente de Duelo normalmente</string>
     <string name="OpenTIP">Cómo utilizar la adición rápida de salas</string>
     <string name="Open_Alert_Window">Ir a abrir la ventana flotante</string>
-    <string name="Function_Menu">MENU</string>
+    <string name="Function_Menu">MENÚ</string>
     <string name="Join_QQ">Grupo QQ</string>
     <string name="about_Join_QQ">Únete al grupo QQ para informar problemas</string>
     <string name="donatefor">Su donación se utilizará para mantener las tarifas de actualización automática, recopilar datos de actualización, retocar imágenes posteriores y comprar modelos adaptados, etc.</string>
@@ -308,7 +307,7 @@
     <string name="tip_return_to_duel">¡Haz regresado al juego actual!</string>
     <string name="my_favorites">myFav★</string>
     <string name="ypk_installed">¡Archivo de expansión descargado e instalado!</string>
-    <string name="ypk_go_setting">Para usarlo, le recomendamos que consulte \"Usar Expansiones\" a menos que haya instalado los pre-lanzamientos de otra manera</string>
+    <string name="ypk_go_setting">Para usarlo, le recomendamos que consulte \"Usar Expansiones\" a menos que haya instalado las cartas pre-lanzadas de otra manera</string>
     <string name="ypk_delete">Mantenga presionado el nombre para eliminar</string>
     <string name="install_failed_bcos">La instalación falló debido a: </string>
     <string name="deck_back_up">Respaldar</string>
@@ -317,8 +316,7 @@
     <string name="deck_explain">Respaldar: hacer una copia de seguridad de todos los decks en Sdcard/ygocore.
         \nRestaurar: restaurar los decks respaldados</string>
     <string name="restore_deck">Se encontraron decks respaldados en su dispositivo, ¿desea restaurarlos?</string>
-    <string name="explain_permission">
-         El uso de estas funciones requiere los siguientes permisos:
+    <string name="explain_permission">El uso de estas funciones requiere los siguientes permisos:
          \nPermiso de Almacenamiento: necesario para respaldar y restaurar decks; para personalizar fuentes, fondos, avatares y cubiertas de cartas
     </string>
     <string name="guide_menu">Menú:\nFunciones principales como: </string>
