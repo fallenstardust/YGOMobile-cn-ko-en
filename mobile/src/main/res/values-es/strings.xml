@@ -49,7 +49,7 @@
     <string name="ex_card_list_title">Lista de Cartas Pre-Lanzamiento</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
-    <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que "Usar Expansiones" esté habilitado en la configuración</string>
+    <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que \"Usar Expansiones\" esté habilitado en la configuración</string>
     <string name="ex_card_check_toast_message_ii">Antes de unirte a este servidor, descarga las expansiones</string>
     <string name="ex_card_check_toast_message_iii">Error al obtener la expansión de las cartas, abriendo el sitio web 233 para descargarlas.</string>
     <!-- settings -->
@@ -79,8 +79,8 @@
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-    <string name="tip_download_ex">¡Hay nuevas cartas, ven a jugar!</string>
-    <string name="restart_app">"¡Por favor, reinicie la aplicación!"</string>
+    <string name="tip_download_ex">¡Hay nuevas cartas prelanzadas disponibles!</string>
+    <string name="restart_app">¡Por favor, reinicie la aplicación!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
         <item>OpenGL ES 2.0 sombreadores corregidos</item>
@@ -232,7 +232,7 @@
     <string name="tip">Información</string>
     <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, como por ejemplo: 0x1360 (muestra 1.036.0)</string>
     <string name="tip_no_netwrok">Por favor, verifique su conexión a Internet</string>
-    <string name="message">"Copiando paquete de datos..."</string>
+    <string name="message">Copiando paquete de datos...</string>
     <string name="ex_pack">Paquete de cartas de expansión</string>
     <string name="deck_manager_v2">Editor de Decks V2</string>
     <string name="reset_game_ver_fail">Fallo al intentar restablecer la versión del juego</string>
@@ -320,7 +320,7 @@
     <string name="explain_permission">
          El uso de estas funciones requiere los siguientes permisos:
          \nPermiso de Almacenamiento: necesario para respaldar y restaurar decks; para personalizar fuentes, fondos, avatares y cubiertas de cartas
-</string>
+    </string>
     <string name="guide_menu">Menú:\nFunciones principales como: </string>
     <string name="guide_mycard">MyCard: Clasificar récord de duelo, observar juegos, sala de chat, etc.</string>
     <string name="guide_serverlist">Lista de Servidores: Toque un servidor para unirse al juego en línea</string>
