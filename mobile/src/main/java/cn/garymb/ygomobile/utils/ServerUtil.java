@@ -11,9 +11,6 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.file.zip.ZipEntry;
-import com.file.zip.ZipFile;
-
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedReader;
@@ -27,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -123,8 +122,8 @@ public class ServerUtil {
             LogUtil.e("GameUriManager", "读取压缩包");
             try {
                 String serverName = null, serverDesc = null, serverHost = null, serverPort = null;
-                ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
-                Enumeration<ZipEntry> entris = zipFile.getEntries();
+                ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
+                Enumeration<? extends ZipEntry> entris = zipFile.entries();
                 ZipEntry entry;
                 StringBuilder content = new StringBuilder();
                 while (entris.hasMoreElements()) {

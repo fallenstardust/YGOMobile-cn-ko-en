@@ -8,9 +8,6 @@ import android.util.SparseArray;
 
 import androidx.annotation.WorkerThread;
 
-import com.file.zip.ZipEntry;
-import com.file.zip.ZipFile;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,6 +19,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import cn.garymb.ygomobile.App;
@@ -86,11 +85,11 @@ public class CardManager {
         String savePath = App.get().getExternalCacheDir().getAbsolutePath();
         List<File> fileList = new ArrayList<>();
 
-        ZipFile zf = new ZipFile(zipPath, "GBK");
+        ZipFile zf = new ZipFile(zipPath);
         InputStream in = new BufferedInputStream(new FileInputStream(zipPath));
         ZipInputStream zin = new ZipInputStream(in);
         ZipEntry ze;
-        Enumeration<ZipEntry> entris = zf.getEntries();
+        Enumeration<? extends ZipEntry> entris = zf.entries();
         while (entris.hasMoreElements()) {
             ze = entris.nextElement();
             if (ze.isDirectory()) {
