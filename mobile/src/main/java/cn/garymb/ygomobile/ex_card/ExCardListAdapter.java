@@ -43,7 +43,7 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
                     LogUtil.d(TAG, "start fetch");
                     List<ExCardData> exCardDataList = null;
                     try {
-                        Response response = OkhttpUtil.synchronousGet(URL_PRE_CARD, null, null);
+                        Response response = OkhttpUtil.synchronousGet(ServerUtil.preCardListJson(), null, null);
                         String responseBodyString = response.body().string();
                         Type listType = new TypeToken<List<ExCardData>>() {
                         }.getType();

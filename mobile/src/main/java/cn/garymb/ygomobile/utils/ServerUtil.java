@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.utils;
 
 import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
+import static cn.garymb.ygomobile.Constants.URL_PRE_CARD;
 import static cn.garymb.ygomobile.Constants.URL_SUPERPRE_CN_FILE;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
 import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
@@ -54,19 +55,8 @@ public class ServerUtil {
     public static void initExCardState() {
         String oldVer = SharedPreferenceUtil.getExpansionDataVer();
         LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
-        String id = "";
         String URL_DATAVER = URL_CN_DATAVER;
-
-        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
-            id = "KR";
-        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.English.code)
-            id = "EN";
-        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
-            id = "ES";
-        if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code)
-            id = "JP";
-
-        URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + id + "/version.txt";
+        URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + getLanguageId() + "/version.txt";
         Log.w("seesee", URL_DATAVER);
         OkhttpUtil.get(URL_DATAVER, new Callback() {
             @Override
@@ -310,8 +300,7 @@ public class ServerUtil {
         return (port == Constants.PORT_Mycard_Super_Pre_Server && (addr.equals(Constants.URL_Mycard_Super_Pre_Server) || addr.equals(Constants.URL_Mycard_Super_Pre_Server_2)));
     }
 
-    public static String downloadUrl() {
-        String url;
+    private static String getLanguageId() {
         String id ="";
         if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Korean.code)
             id = "KR";
@@ -321,11 +310,24 @@ public class ServerUtil {
             id = "ES";
         if (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Japanese.code)
             id = "JP";
-        url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + id + "/ygopro-super-pre.ypk";
+        return id;
+    }
+
+    public static String downloadUrl() {
+        String url;
+        url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
+                ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
         Log.w("seesee",url);
         return url;
     }
 
+    public static String preCardListJson() {
+        String json;
+        json = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
+                ? URL_PRE_CARD : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/test-release.json";
+        Log.w("seesee",json);
+        return json;
+    }
     public enum ExCardState {
         /* 已安装最新版扩展卡，扩展卡不是最新版本，无法查询到服务器版本 */
         UNCHECKED, UPDATED, NEED_UPDATE, ERROR
