@@ -61,7 +61,7 @@ int SingleMode::SinglePlayThread() {
 	wchar_t fname[256];
 	myswprintf(fname, L"./single/%ls", name);
 	slen = BufferIO::EncodeUTF8(fname, filename);
-		if(!preload_script(pduel, filename, 0))
+		if(!preload_script(pduel, filename))
 		slen = 0;
 	if(slen == 0) {
 		end_duel(pduel);
