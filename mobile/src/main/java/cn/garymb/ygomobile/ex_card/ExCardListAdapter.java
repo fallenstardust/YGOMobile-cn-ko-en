@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.ex_card;
 
 
-import static cn.garymb.ygomobile.Constants.URL_PRE_CARD;
-
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.ImageView;
@@ -40,58 +38,53 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
     public void loadData() {
         final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
         VUiKit.defer().when(() -> {
-                    LogUtil.d(TAG, "start fetch");
-                    List<ExCardData> exCardDataList = null;
-                    try {
-                        Response response = OkhttpUtil.synchronousGet(ServerUtil.preCardListJson(), null, null);
-                        String responseBodyString = response.body().string();
-                        Type listType = new TypeToken<List<ExCardData>>() {
-                        }.getType();
-                        Gson gson = new Gson();
+            LogUtil.d(TAG, "start fetch");
+            List<ExCardData> exCardDataList = null;
+            try {
+                Response response = OkhttpUtil.synchronousGet(ServerUtil.preCardListJson(), null, null);
+                String responseBodyString = response.body().string();
+                Type listType = new TypeToken<List<ExCardData>>() {
+                }.getType();
+                Gson gson = new Gson();
+                // Convert JSON to Java object using Gson
+                exCardDataList = gson.fromJson(responseBodyString, listType);
+            } catch (IOException e) {
+                Log.e(TAG, "Error occured when fetching data from pre-card server");
+                return null;
+            }
 
-                        // Convert JSON to Java object using Gson
-                        exCardDataList = gson.fromJson(responseBodyString, listType);
+            if (exCardDataList.isEmpty()) {
+                return null;
+            } else {
+                return exCardDataList;
+            }
 
+        }).fail((e) -> {
+            Log.e("seesee",e+"");
+            if (dialog_read_ex.isShowing()) {//关闭异常
+                try {
+                    dialog_read_ex.dismiss();
+                } catch (Exception ex) {
 
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error occured when fetching data from pre-card server");
-                        return null;
-                    }
+                }
+            }
+            LogUtil.i(TAG, "webCrawler fail");
 
-                    if (exCardDataList.isEmpty()) {
-                        return null;
-                    } else {
-                        return exCardDataList;
-                    }
-
-                })
-                .fail((e) -> {
-                    //关闭异常
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                        } catch (Exception ex) {
-                        }
-                    }
-
-                    LogUtil.i(TAG, "webCrawler fail");
-                })
-                .done((exCardDataList) -> {
-
-                    if (exCardDataList != null) {
-                        LogUtil.i(TAG, "webCrawler done");
-
-                        getData().clear();
-                        addData(exCardDataList);
-                        notifyDataSetChanged();
-                    }
-                    if (dialog_read_ex.isShowing()) {
-                        try {
-                            dialog_read_ex.dismiss();
-                        } catch (Exception ex) {
-                        }
-                    }
-                });
+        }).done((exCardDataList) -> {
+            Log.w("seesee",exCardDataList+"");
+            if (exCardDataList != null) {
+                LogUtil.i(TAG, "webCrawler done");
+                getData().clear();
+                addData(exCardDataList);
+                notifyDataSetChanged();
+            }
+            if (dialog_read_ex.isShowing()) {
+                try {
+                    dialog_read_ex.dismiss();
+                } catch (Exception ex) {
+                }
+            }
+        });
 
     }
 
