@@ -8,6 +8,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         flavorDimensions "versionCode"
+        ndkVersion "15.1.4119039"
        /* ndk {
             moduleName "YGOMobile"
             abiFilters "armeabi-v7a","x86"
