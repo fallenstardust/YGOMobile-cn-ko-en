@@ -190,7 +190,7 @@ public class ScreenUtil {
                 ClassLoader classLoader = activity.getClassLoader();
                 @SuppressWarnings("rawtypes")
                 Class SystemProperties = classLoader.loadClass("android.os.SystemProperties");
-//参数类型
+                //参数类型
                 @SuppressWarnings("rawtypes")
                 Class[] paramTypes = new Class[2];
                 paramTypes[0] = String.class;

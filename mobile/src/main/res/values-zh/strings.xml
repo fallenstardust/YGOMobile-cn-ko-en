@@ -90,7 +90,7 @@
         <item>日本語</item>
     </string-array>
     <!-- settings -->
-    <string name="server_list">直连决斗</string>
+    <string name="server_list">联机对战</string>
     <string name="server_name">名称:</string>
     <string name="server_desc">备注:</string>
     <string name="server_ip">主机信息:</string>
@@ -133,7 +133,7 @@
     <string name="label_category">效果分类</string>
     <string name="linkmarker">◀连接标记▶</string>>
     <string name="searching">读取中</string>
-    <string name="card_faq">在线裁定查询</string>
+    <string name="card_faq">裁定查询</string>
     <string name="no_webbrowser">没有安装浏览器</string>
     <string name="load_game">启动游戏中</string>
 
@@ -227,7 +227,7 @@
     <string name="failed_reason">登录失败，原因是</string>
     <string name="notice_verify_email">请验证账号邮箱后重登方可进入聊天室</string>
     <string name="send">发送</string>
-    <string name="mc_home">直连大厅</string>
+    <string name="mc_home">直连决斗</string>
     <string name="bbs">社区</string>
     <string name="McNews">公告</string>
     <string name="settings_pref_settings_only_game">直接启动游戏</string>

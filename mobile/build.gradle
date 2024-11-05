@@ -13,7 +13,7 @@ android {
         versionName "3.11.11"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
-        ndkVersion "15.1.4119039"
+        ndkVersion "20.1.5948944"
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86"
         }
