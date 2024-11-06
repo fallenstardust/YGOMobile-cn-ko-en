@@ -9,6 +9,7 @@ import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -53,6 +54,7 @@ import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -106,6 +108,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         initBottomNavigationBar();
         onNewIntent(getIntent());
         ServerUtil.initExCardState();//检查扩展卡版本
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {//TODO 需要适配Api35
+            SharedPreferenceUtil.setImmersiveMode(true);
+        }
     }
 
     @Override
