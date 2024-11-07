@@ -9,8 +9,8 @@ android {
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 311120003
-        versionName "3.11.12"
+        versionCode 311120004
+        versionName "3.11.12fix1"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "20.1.5948944"
@@ -98,7 +98,7 @@ dependencies {
     implementation "org.igniterealtime.smack:smack-tcp:4.3.0"
     //
     implementation 'org.greenrobot:eventbus:3.0.0'
-    implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.0'
+    implementation 'com.tubb.smrv:swipemenu-recyclerview:5.4.8'
     //
     implementation(name: 'libWindbot', ext: 'aar')
 
@@ -107,7 +107,7 @@ dependencies {
     //dialog库
     implementation 'com.github.feihuaduo:DialogUtils:1.8.9.23'
     //recyclerview的adapter库
-    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.4'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:4.1.4'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     //图片选择

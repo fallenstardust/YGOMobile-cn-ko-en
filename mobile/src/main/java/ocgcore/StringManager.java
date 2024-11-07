@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -63,8 +63,8 @@ public class StringManager implements Closeable {
                     if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
                         Log.e("StringManager", "读取压缩包");
                         try {
-                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile());
-                            Enumeration<? extends ZipEntry> entris = zipFile.entries();
+                            ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
+                            Enumeration<ZipEntry> entris = zipFile.getEntries();
                             ZipEntry entry;
                             while (entris.hasMoreElements()) {
                                 entry = entris.nextElement();
