@@ -1132,7 +1132,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 			break;
 		}
 		case HINT_RACE: {
-			myswprintf(textBuffer, dataManager.GetSysString(1511), dataManager.FormatRace(data));
+			myswprintf(textBuffer, dataManager.GetSysString(1511), dataManager.FormatRace(data).c_str());
 			mainGame->AddLog(textBuffer);
 			mainGame->gMutex.lock();
 			mainGame->SetStaticText(mainGame->stACMessage, 310 * mainGame->xScale, mainGame->guiFont, textBuffer);
@@ -1142,7 +1142,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 			break;
 		}
 		case HINT_ATTRIB: {
-			myswprintf(textBuffer, dataManager.GetSysString(1511), dataManager.FormatAttribute(data));
+			myswprintf(textBuffer, dataManager.GetSysString(1511), dataManager.FormatAttribute(data).c_str());
 			mainGame->AddLog(textBuffer);
 			mainGame->gMutex.lock();
 			mainGame->SetStaticText(mainGame->stACMessage, 310 * mainGame->xScale, mainGame->guiFont, textBuffer);
@@ -1229,7 +1229,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		int type = BufferIO::ReadUInt8(pbuf);
 		mainGame->showcarddif = 110;
 		mainGame->showcardp = 0;
-		mainGame->dInfo.vic_string = 0;
+		mainGame->dInfo.vic_string = L"";
 		wchar_t vic_buf[256];
 		if(player == 2)
 			mainGame->showcardcode = 3;
@@ -1255,7 +1255,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		}
 		mainGame->showcard = 101;
 		mainGame->WaitFrameSignal(120);
-		mainGame->dInfo.vic_string = 0;
+		mainGame->dInfo.vic_string = L"";
 		mainGame->showcard = 0;
 		break;
 	}
@@ -3234,7 +3234,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		mainGame->WaitFrameSignal(30);
 		mainGame->lpframe = 10;
 		mainGame->WaitFrameSignal(11);
-		mainGame->lpcstring = 0;
+		mainGame->lpcstring = L"";
 		mainGame->dInfo.lp[player] = final;
 		mainGame->gMutex.lock();
 		myswprintf(mainGame->dInfo.strLP[player], L"%d", mainGame->dInfo.lp[player]);
@@ -3263,7 +3263,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		mainGame->WaitFrameSignal(30);
 		mainGame->lpframe = 10;
 		mainGame->WaitFrameSignal(11);
-		mainGame->lpcstring = 0;
+		mainGame->lpcstring = L"";
 		mainGame->dInfo.lp[player] = final;
 		mainGame->gMutex.lock();
 		myswprintf(mainGame->dInfo.strLP[player], L"%d", mainGame->dInfo.lp[player]);
@@ -3415,7 +3415,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		mainGame->WaitFrameSignal(30);
 		mainGame->lpframe = 10;
 		mainGame->WaitFrameSignal(11);
-		mainGame->lpcstring = 0;
+		mainGame->lpcstring = L"";
 		mainGame->dInfo.lp[player] = final;
 		mainGame->gMutex.lock();
 		myswprintf(mainGame->dInfo.strLP[player], L"%d", mainGame->dInfo.lp[player]);

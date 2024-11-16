@@ -21,9 +21,12 @@
 #include <functional>
 #include "sound_manager.h"
 
-#define DEFAULT_DUEL_RULE 5
+constexpr int DEFAULT_DUEL_RULE = 5;
+constexpr int CONFIG_LINE_SIZE = 1024;
 
 namespace ygo {
+
+bool IsExtension(const wchar_t* filename, const wchar_t* extension);
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define LOG_TAG "ygo-jni"
@@ -43,12 +46,13 @@ struct Config {
 	wchar_t lastport[10]{};
 	wchar_t nickname[20]{};
 	wchar_t gamename[20]{};
-	wchar_t lastcategory[64]{};
-	wchar_t lastdeck[64]{};
+	wchar_t roompass[20]{};
+	//path
+	wchar_t lastcategory[256]{};
+	wchar_t lastdeck[256]{};
 	wchar_t textfont[256]{};
 	wchar_t numfont[256]{};
-	wchar_t roompass[20]{};
-	wchar_t bot_deck_path[64]{};
+	wchar_t bot_deck_path[256]{};
 	//settings
 	int chkMAutoPos{ 0 };
 	int chkSTAutoPos{ 0 };
@@ -106,14 +110,14 @@ struct DuelInfo {
 	wchar_t hostname_tag[20]{};
 	wchar_t clientname_tag[20]{};
 	wchar_t strLP[2][16]{};
-	wchar_t* vic_string{ nullptr };
+	std::wstring vic_string;
 	unsigned char player_type{ 0 };
 	unsigned char time_player{ 0 };
 	unsigned short time_limit{ 0 };
 	unsigned short time_left[2]{};
 
 	void Clear();
-	
+
 	int card_count[2];
 	int total_attack[2];
 	wchar_t str_time_left[2][16];
@@ -174,7 +178,6 @@ public:
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
-	void DrawShadowText(irr::gui::CGUITTFont* font, const core::stringw& text, const core::rect<s32>& position, const core::rect<s32>& padding, video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = 0);
 	void DrawMisc();
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
 	void DrawGUI();
@@ -224,8 +227,10 @@ public:
 	void ResizeChatInputWindow();
 	template<typename T>
 	static std::vector<T> TokenizeString(T input, const T& token);
+	template<typename T>
+	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const core::rect<s32>& position, const core::rect<s32>& padding,
+		video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = nullptr);
 
-// don't merge
 	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
 	Signal frameSignal;
@@ -265,7 +270,7 @@ public:
 	int lpd;
 	int lpplayer;
 	int lpccolor;
-	wchar_t* lpcstring;
+	std::wstring lpcstring;
 	bool always_chain;
 	bool ignore_chain;
 	bool chain_when_avail;
@@ -710,21 +715,22 @@ private:
     };
 
 extern Game* mainGame;
-	template<typename T>
-	inline std::vector<T> Game::TokenizeString(T input, const T & token) {
-		std::vector<T> res;
-		std::size_t pos;
-		while((pos = input.find(token)) != T::npos) {
-			if(pos != 0)
-				res.push_back(input.substr(0, pos));
-			input = input.substr(pos + 1);
-		}
-		if(input.size())
-			res.push_back(input);
-		return res;
+template<typename T>
+inline std::vector<T> Game::TokenizeString(T input, const T & token) {
+	std::vector<T> res;
+	std::size_t pos;
+	while((pos = input.find(token)) != T::npos) {
+		if(pos != 0)
+			res.push_back(input.substr(0, pos));
+		input = input.substr(pos + 1);
 	}
+	if(input.size())
+		res.push_back(input);
+	return res;
+}
 
 }
+
 #define SIZE_QUERY_BUFFER	0x4000
 
 #define CARD_IMG_WIDTH		200

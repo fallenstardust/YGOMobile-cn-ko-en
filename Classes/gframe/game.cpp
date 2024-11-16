@@ -52,12 +52,20 @@ void DuelInfo::Clear() {
 	clientname_tag[0] = 0;
 	strLP[0][0] = 0;
 	strLP[1][0] = 0;
-	vic_string = 0;
 	player_type = 0;
 	time_player = 0;
 	time_limit = 0;
 	time_left[0] = 0;
 	time_left[1] = 0;
+}
+
+bool IsExtension(const wchar_t* filename, const wchar_t* extension) {
+	int flen = std::wcslen(filename);
+	int elen = std::wcslen(extension);
+	if (!flen || !elen || flen < elen)
+		return false;
+	auto fend = filename + flen;
+	return !wcsncasecmp(fend - elen, extension, elen);
 }
 
 void Game::process(irr::SEvent &event) {
@@ -207,7 +215,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	showcard = 0;
 	is_attacking = false;
 	lpframe = 0;
-	lpcstring = 0;
 	always_chain = false;
 	ignore_chain = false;
 	chain_when_avail = false;
@@ -239,8 +246,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 
 	imageManager.SetDevice(device);
 	imageManager.ClearTexture();
-	if(!imageManager.Initial(workingDir))
+	if(!imageManager.Initial(workingDir)) {
+		ErrorLog("Failed to load textures!");
 		return false;
+	}
 	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
 	io::path* cdbs = options->getDBFiles();
 	len = options->getDbCount();
@@ -260,8 +269,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
 		ALOGD("loadStrings expansions/strings.conf");
 	}
-	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str()))
+	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
+		ErrorLog("Failed to load strings!");
 		return false;
+	}
 	LoadExpansions();
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
@@ -837,7 +848,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     stANAttribute->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
 	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
 		chkAttribute[i] = env->addCheckBox(false, rect<s32>((50 + (i % 4) * 80) * xScale, (60 + (i / 4) * 55) * yScale, (130 + (i % 4) * 80) * xScale, (90 + (i / 4) * 55) * yScale),
-		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter));
+		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter).c_str());
 	//announce race
 	wANRace = env->addWindow(rect<s32>(500 * xScale, 40 * yScale, 800 * xScale, 560 * yScale), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
@@ -847,7 +858,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     stANRace->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
 	for(int filter = 0x1, i = 0; i < RACES_COUNT; filter <<= 1, ++i)
 		chkRace[i] = env->addCheckBox(false, rect<s32>((30 + (i % 3) * 90) * xScale, (60 + (i / 3) * 50) * yScale, (100 + (i % 3) * 90) * xScale, (110 + (i / 3) * 50) * yScale),
-		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter));
+		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter).c_str());
 	//selection hint
 	stHintMsg = env->addStaticText(L"", rect<s32>(500 * xScale, 90 * yScale, 820 * xScale, 120 * yScale), true, false, 0, -1, false);
 	stHintMsg->setBackgroundColor(0xee11113d);
@@ -1017,13 +1028,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter != 0x80; filter <<= 1)
-		cbAttribute->addItem(dataManager.FormatAttribute(filter), filter);
+		cbAttribute->addItem(dataManager.FormatAttribute(filter).c_str(), filter);
 	env->addStaticText(dataManager.GetSysString(1321), rect<s32>(10 * xScale, 51 * yScale, 70 * xScale, 71 * yScale), false, false, wFilter);
 	cbRace = CAndroidGUIComboBox::addAndroidComboBox(env, rect<s32>(60 * xScale, (40 + 75 / 6) * yScale, 190 * xScale, (60 + 75 / 6) * yScale), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
 	cbRace->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter < (1 << RACES_COUNT); filter <<= 1)
-		cbRace->addItem(dataManager.FormatRace(filter), filter);
+		cbRace->addItem(dataManager.FormatRace(filter).c_str(), filter);
 	env->addStaticText(dataManager.GetSysString(1322), rect<s32>(205 * xScale, 28 * yScale, 280 * xScale, 48 * yScale), false, false, wFilter);
 	ebAttack = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, rect<s32>(260 * xScale, 26 * yScale, 340 * xScale, 46 * yScale), wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
@@ -1898,7 +1909,7 @@ void Game::ShowCardInfo(int code) {
 		}
 		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode));
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode).c_str());
 			stSetName->setText(formatBuffer);
 		}
 		else
@@ -1909,13 +1920,14 @@ void Game::ShowCardInfo(int code) {
 	}
 	if(is_valid && cit->second.type & TYPE_MONSTER) {
 		auto& cd = cit->second;
-		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type), dataManager.FormatRace(cd.race), dataManager.FormatAttribute(cd.attribute));
+		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type).c_str(), dataManager.FormatRace(cd.race).c_str(), dataManager.FormatAttribute(cd.attribute).c_str());
 		stInfo->setText(formatBuffer);
+		const wchar_t* form = L"\u2605";
+		wchar_t adBuffer[64]{};
+		wchar_t scaleBuffer[16]{};
 		if(!(cd.type & TYPE_LINK)) {
-			const wchar_t* form = L"\u2605";
-			if(cd.type & TYPE_XYZ) form = L"\u2606";
-			myswprintf(formatBuffer, L"[%ls%d] ", form, cd.level);
-			wchar_t adBuffer[16];
+			if(cd.type & TYPE_XYZ)
+				form = L"\u2606";
 			if(cd.attack < 0 && cd.defense < 0)
 				myswprintf(adBuffer, L"?/?");
 			else if(cd.attack < 0)
@@ -1924,22 +1936,17 @@ void Game::ShowCardInfo(int code) {
 				myswprintf(adBuffer, L"%d/?", cd.attack);
 			else
 				myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
-			wcscat(formatBuffer, adBuffer);
 		} else {
-			myswprintf(formatBuffer, L"[LINK-%d] ", cd.level);
-			wchar_t adBuffer[16];
+			form = L"LINK-";
 			if(cd.attack < 0)
-				myswprintf(adBuffer, L"?/-   ");
+				myswprintf(adBuffer, L"?/-   %ls", dataManager.FormatLinkMarker(cd.link_marker).c_str());
 			else
-				myswprintf(adBuffer, L"%d/-   ", cd.attack);
-			wcscat(formatBuffer, adBuffer);
-			wcscat(formatBuffer, dataManager.FormatLinkMarker(cd.link_marker));
+				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, dataManager.FormatLinkMarker(cd.link_marker).c_str());
 		}
 		if(cd.type & TYPE_PENDULUM) {
-			wchar_t scaleBuffer[16];
 			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
-			wcscat(formatBuffer, scaleBuffer);
 		}
+		myswprintf(formatBuffer, L"[%ls%d] %ls%ls", form, cd.level, adBuffer, scaleBuffer);
 		stDataInfo->setText(formatBuffer);
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 83 * yScale, 250 * xScale, 106 * yScale));
 		stText->setRelativePosition(rect<s32>(10 * xScale, (83 + offset) * yScale, 251 * xScale, 340 * yScale));
@@ -1947,9 +1954,9 @@ void Game::ShowCardInfo(int code) {
 	}
 	else {
 		if (is_valid)
-			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type));
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type).c_str());
 		else
-			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(0));
+			myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
 		stSetName->setRelativePosition(rect<s32>(10 * xScale, 60 * yScale, 250 * xScale, 106 * yScale));
