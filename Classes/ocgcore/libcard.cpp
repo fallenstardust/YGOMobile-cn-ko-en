@@ -393,10 +393,14 @@ int32 scriptlib::card_get_current_scale(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**)lua_touserdata(L, 1);
-	if(pcard->current.pzone && pcard->current.sequence == (pcard->pduel->game_field->core.duel_rule >= NEW_MASTER_RULE ? 0 : 6))
-		lua_pushinteger(L, pcard->get_lscale());
+	if (pcard->current.pzone) {
+		if (pcard->current.sequence == pcard->pduel->game_field->get_pzone_sequence(0))
+			lua_pushinteger(L, pcard->get_lscale());
+		else
+			lua_pushinteger(L, pcard->get_rscale());
+	}
 	else
-		lua_pushinteger(L, pcard->get_rscale());
+		lua_pushinteger(L, pcard->data.lscale);
 	return 1;
 }
 int32 scriptlib::card_is_link_marker(lua_State *L) {
@@ -1343,6 +1347,24 @@ int32 scriptlib::card_is_tuner(lua_State* L) {
 	card* pcard = *(card**)lua_touserdata(L, 1);
 	card* scard = *(card**)lua_touserdata(L, 2);
 	lua_pushboolean(L, pcard->is_tuner(scard));
+	return 1;
+}
+int32 scriptlib::card_is_original_effect_property(lua_State* L) {
+	check_param_count(L, 2);
+	check_param(L, PARAM_TYPE_CARD, 1);
+	check_param(L, PARAM_TYPE_FUNCTION, 2);
+	card* pcard = *(card**)lua_touserdata(L, 1);
+	int32 filter = interpreter::get_function_handle(L, 2);
+	lua_pushboolean(L, pcard->is_original_effect_property(filter));
+	return 1;
+}
+int32 scriptlib::card_is_effect_property(lua_State* L) {
+	check_param_count(L, 2);
+	check_param(L, PARAM_TYPE_CARD, 1);
+	check_param(L, PARAM_TYPE_FUNCTION, 2);
+	card* pcard = *(card**)lua_touserdata(L, 1);
+	int32 filter = interpreter::get_function_handle(L, 2);
+	lua_pushboolean(L, pcard->is_effect_property(filter));
 	return 1;
 }
 int32 scriptlib::card_set_status(lua_State *L) {
@@ -3515,6 +3537,8 @@ static const struct luaL_Reg cardlib[] = {
 	{ "IsStatus", scriptlib::card_is_status },
 	{ "IsNotTuner", scriptlib::card_is_not_tuner },
 	{ "IsTuner", scriptlib::card_is_tuner },
+	{ "IsOriginalEffectProperty", scriptlib::card_is_original_effect_property },
+	{ "IsEffectProperty", scriptlib::card_is_effect_property },
 	{ "SetStatus", scriptlib::card_set_status },
 	{ "IsDualState", scriptlib::card_is_dual_state },
 	{ "EnableDualState", scriptlib::card_enable_dual_state },

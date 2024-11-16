@@ -16,8 +16,6 @@
 #include <set>
 #include <map>
 #include <list>
-#include <array>
-#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -390,7 +388,9 @@ public:
 	void swap_card(card* pcard1, card* pcard2, uint8 new_sequence1, uint8 new_sequence2);
 	void swap_card(card* pcard1, card* pcard2);
 	void set_control(card* pcard, uint8 playerid, uint16 reset_phase, uint8 reset_count);
-	card* get_field_card(uint8 playerid, uint32 general_location, uint8 sequence);
+
+	int32 get_pzone_sequence(uint8 pseq) const;
+	card* get_field_card(uint8 playerid, uint32 general_location, uint8 sequence) const;
 	int32 is_location_useable(uint8 playerid, uint32 general_location, uint8 sequence) const;
 	int32 get_useable_count(card* pcard, uint8 playerid, uint8 location, uint8 uplayer, uint32 reason, uint32 zone = 0xff, uint32* list = nullptr);
 	int32 get_useable_count_fromex(card* pcard, uint8 playerid, uint8 uplayer, uint32 zone = 0xff, uint32* list = nullptr);
@@ -629,7 +629,7 @@ public:
 	int32 toss_dice(uint16 step, effect* reason_effect, uint8 reason_player, uint8 playerid, uint8 count1, uint8 count2);
 	int32 rock_paper_scissors(uint16 step, uint8 repeat);
 
-	bool check_response(int32 vector_size, int32 min_len, int32 max_len) const;
+	bool check_response(size_t vector_size, int32 min_len, int32 max_len) const;
 	int32 select_battle_command(uint16 step, uint8 playerid);
 	int32 select_idle_command(uint16 step, uint8 playerid);
 	int32 select_effect_yes_no(uint16 step, uint8 playerid, uint32 description, card* pcard);

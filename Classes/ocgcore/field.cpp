@@ -486,7 +486,21 @@ void field::set_control(card* pcard, uint8 playerid, uint16 reset_phase, uint8 r
 	pcard->current.controler = playerid;
 }
 
-card* field::get_field_card(uint8 playerid, uint32 general_location, uint8 sequence) {
+int32 field::get_pzone_sequence(uint8 pseq) const {
+	if (core.duel_rule >= NEW_MASTER_RULE) {
+		if(!pseq)
+			return 0;
+		else
+			return 4;
+	}
+	else {
+		if (!pseq)
+			return 6;
+		else
+			return 7;
+	}
+}
+card* field::get_field_card(uint8 playerid, uint32 general_location, uint8 sequence) const {
 	if (!check_playerid(playerid))
 		return nullptr;
 	switch(general_location) {
@@ -512,12 +526,9 @@ card* field::get_field_card(uint8 playerid, uint32 general_location, uint8 seque
 		break;
 	}
 	case LOCATION_PZONE: {
-		if(sequence == 0) {
-			card* pcard = player[playerid].list_szone[core.duel_rule >= NEW_MASTER_RULE ? 0 : 6];
-			return (pcard && pcard->current.pzone) ? pcard : 0;
-		} else if(sequence == 1) {
-			card* pcard = player[playerid].list_szone[core.duel_rule >= NEW_MASTER_RULE ? 4 : 7];
-			return (pcard && pcard->current.pzone) ? pcard : 0;
+		if(sequence == 0 || sequence == 1) {
+			card* pcard = player[playerid].list_szone[get_pzone_sequence(sequence)];
+			return (pcard && pcard->current.pzone) ? pcard : nullptr;
 		} else
 			return nullptr;
 		break;
@@ -567,33 +578,28 @@ int32 field::is_location_useable(uint8 playerid, uint32 general_location, uint8 
 	if (general_location == LOCATION_MZONE) {
 		if (sequence >= (int32)player[playerid].list_mzone.size())
 			return FALSE;
-		if(flag & (0x1u << sequence))
+		if(flag & (0x1U << sequence))
 			return FALSE;
 		if(sequence >= 5) {
 			uint32 oppo = player[1 - playerid].disabled_location | player[1 - playerid].used_location;
-			if(oppo & (0x1u << (11 - sequence)))
+			if(oppo & (0x1U << (11 - sequence)))
 				return FALSE;
 		}
 	} else if (general_location == LOCATION_SZONE) {
 		if (sequence >= player[playerid].szone_size)
 			return FALSE;
-		if(flag & (0x100u << sequence))
+		if(flag & (0x100U << sequence))
 			return FALSE;
 	} else if (general_location == LOCATION_FZONE) {
 		if (sequence >= 1)
 			return FALSE;
-		if(flag & (0x100u << (5 + sequence)))
+		if(flag & (0x100U << (5 + sequence)))
 			return FALSE;
 	} else if (general_location == LOCATION_PZONE) {
 		if (sequence >= 2)
 			return FALSE;
-		if(core.duel_rule >= NEW_MASTER_RULE) {
-			if(flag & (0x100u << (sequence * 4)))
-				return FALSE;
-		} else {
-			if(flag & (0x100u << (6 + sequence)))
-				return FALSE;
-		}
+		if (flag & (0x100U << get_pzone_sequence(sequence)))
+			return FALSE;
 	}
 	return TRUE;
 }
@@ -1161,6 +1167,8 @@ void field::tag_swap(uint8 playerid) {
 		pduel->write_buffer32(pcard->data.code | (pcard->is_position(POS_FACEUP) ? 0x80000000 : 0));
 }
 void field::add_effect(effect* peffect, uint8 owner_player) {
+	if (!peffect)
+		return;
 	if (effects.indexer.find(peffect) != effects.indexer.end())
 		return;
 	effect_container::iterator it;
@@ -1332,7 +1340,7 @@ void field::add_effect_code(uint32 code, uint32 playerid) {
 		count_map = &core.effect_count_code_duel;
 	else if(code & EFFECT_COUNT_CODE_CHAIN)
 		count_map = &core.effect_count_code_chain;
-	++(*count_map)[code + (playerid << 30)];
+	(*count_map)[code + (playerid << 30)]++;
 }
 uint32 field::get_effect_code(uint32 code, uint32 playerid) {
 	auto* count_map = &core.effect_count_code;
@@ -1502,7 +1510,7 @@ int32 field::filter_matching_card(lua_State* L, int32 findex, uint8 self, uint32
 		}
 		if(location & LOCATION_PZONE) {
 			for(int32 i = 0; i < 2; ++i) {
-				card* pcard = player[self].list_szone[core.duel_rule >= NEW_MASTER_RULE ? i * 4 : i + 6];
+				card* pcard = player[self].list_szone[get_pzone_sequence(i)];
 				if(pcard && pcard->current.pzone && !pcard->is_treated_as_not_on_field()
 				        && pcard != pexception && !(pexgroup && pexgroup->has_card(pcard))
 				        && pduel->lua->check_filter(L, pcard, findex, extraargs)
@@ -1628,7 +1636,7 @@ int32 field::filter_field_card(uint8 self, uint32 location1, uint32 location2, g
 		}
 		if(location & LOCATION_PZONE) {
 			for(int32 i = 0; i < 2; ++i) {
-				card* pcard = player[self].list_szone[core.duel_rule >= NEW_MASTER_RULE ? i * 4 : i + 6];
+				card* pcard = player[self].list_szone[get_pzone_sequence(i)];
 				if(pcard && pcard->current.pzone) {
 					result.insert(pcard);
 				}
