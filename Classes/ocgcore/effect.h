@@ -44,7 +44,7 @@ public:
 	int32 reset_count{ 0 };
 	uint32 reset_flag{ 0 };
 	uint32 count_code{ 0 };
-	uint32 category{ 0 };
+	uint64 category{ 0 };
 	uint32 hint_timing[2]{};
 	uint32 card_type{ 0 };
 	uint32 active_type{ 0 };
@@ -577,5 +577,11 @@ const std::unordered_set<uint32> continuous_event{
 	EVENT_SPSUMMON_SUCCESS_G_P,
 };
 bool is_continuous_event(uint32 code);
+
+const std::unordered_set<uint32> affect_summoning_effect{
+	EFFECT_CANNOT_DISABLE_SUMMON,
+	EFFECT_CANNOT_DISABLE_SPSUMMON,
+	EVENT_BE_PRE_MATERIAL,
+};
 
 #endif /* EFFECT_H_ */
