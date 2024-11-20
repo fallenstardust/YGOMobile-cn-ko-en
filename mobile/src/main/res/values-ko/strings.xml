@@ -345,6 +345,8 @@
     <string name="file_installed">파일을 불러왔습니다</string>
     <string name="settings_screen_padding">화면 스타일</string>
     <string name="tip_load_cdb_error">데이터를 불러오는 중에 오류가 발생했습니다.</string>
+    <string name="tip_download_failed">저장 실패</string>
+    <string name="tip_download_OK">에 저장됨</string>
     <string name="replay">리플레이 보기</string>
     <string name="bot_mode">AI 모드</string>
     <string name="personal">개인 설정</string>
@@ -363,4 +365,5 @@
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
     <string name="tip_superpre_desc">Please upgrade pre-released cards at once</string>
     <string name="tip_download_ex">새 카드가 있어, 놀러 와!</string>
+    <string name="replay_list">재생 목록</string>
 </resources>

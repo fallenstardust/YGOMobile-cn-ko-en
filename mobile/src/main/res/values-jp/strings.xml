@@ -347,6 +347,7 @@
     <string name="file_installed">ファイル導入成功</string>
     <string name="settings_screen_padding">窓の預入高さ</string>
     <string name="tip_load_cdb_error">データロードエー</string>
+    <string name="tip_download_failed">保存失敗</string>
     <string name="replay">リプレイを見る</string>
     <string name="bot_mode">AIモード</string>
     <string name="personal">自分の</string>
@@ -362,4 +363,5 @@
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
     <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
     <string name="tip_download_ex">新しいカードがあるよ、遊びに来て！</string>
+    <string name="replay_list">リプレイ</string>
 </resources>

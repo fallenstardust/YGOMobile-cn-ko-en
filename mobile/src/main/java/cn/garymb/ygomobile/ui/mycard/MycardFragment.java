@@ -27,15 +27,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.ourygo.lib.duelassistant.util.Util;
+import com.tencent.smtt.sdk.DownloadListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
@@ -48,6 +53,8 @@ import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
+import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.HandlerUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -55,7 +62,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
-    private static final int TYPE_MC_LOGIN_FAILED = 1;
+    private static final int TYPE_MC_LOGIN_FAILED = -1;
     private HomeActivity homeActivity;
     long exitLasttime = 0;
     //头像昵称账号
@@ -76,19 +83,23 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
+
         @Override
-        public void handleMessage(Message msg) {
+        public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
-            if (msg.what == TYPE_MC_LOGIN) {
-                McUser mcUser = (McUser) msg.obj;
-                if (!TextUtils.isEmpty(mcUser.getAvatar_url())) {
-                    GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
-                }
-                mNameView.setText(mcUser.getUsername());//刷新用户名
-                mStatusView.setText(mcUser.getEmail());//刷新账号信息
-                serviceManagement.start();
-            }
-            if (msg.what == TYPE_MC_LOGIN_FAILED) {
+            switch (msg.what) {
+                case TYPE_MC_LOGIN:
+                    McUser mcUser = (McUser) msg.obj;
+                    if (!TextUtils.isEmpty(mcUser.getAvatar_url())) {
+                       GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
+                     }
+                    mNameView.setText(mcUser.getUsername());//刷新用户名
+                    mStatusView.setText(mcUser.getEmail());//刷新账号信息
+                    serviceManagement.start();
+                    break;
+
+                case TYPE_MC_LOGIN_FAILED:
+                    break;
 
             }
         }
@@ -113,6 +124,52 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         mMyCard = new MyCard(getActivity());
         mMcUser = new McUser();
         mWebViewPlus = view.findViewById(R.id.webbrowser);
+        //设置网页下载监听
+        mWebViewPlus.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                String fileName = "";
+                try {
+                    //从contentDisposition获取文件名并转换urlcode为UTF-8
+                    fileName = URLDecoder.decode(contentDisposition.substring(contentDisposition.lastIndexOf("''") + 2), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+                String destFileDir = "";
+                if (contentDisposition.endsWith(Constants.YDK_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getDeckDir();
+                } else if (contentDisposition.endsWith(Constants.YRP_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getReplayDir();
+                } else {//萌卡还有些什么文件格式后续可以添加
+                    destFileDir = AppsSettings.get().getResourcePath();
+                }
+
+                File file = new File(destFileDir + "/" + fileName);
+                DownloadUtil.get().download(url, destFileDir, file.getName(), new DownloadUtil.OnDownloadListener() {
+                    @Override
+                    public void onDownloadSuccess(File file) {
+                        if (file.getName().endsWith("ydk")) {
+                            YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.deck_list));
+                        } else if (file.getName().endsWith("yrp")) {
+                            YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
+                        } else {
+                            YGOUtil.showTextToast(getString(R.string.tip_download_failed));
+                        }
+                    }
+
+                    @Override
+                    public void onDownloading(int progress) {}
+
+                    @Override
+                    public void onDownloadFailed(Exception e) {
+                        //下载失败后删除下载的文件
+                        FileUtils.deleteFile(file);
+                        YGOUtil.showTextToast(getString(R.string.tip_download_failed));
+                    }
+                });
+            }
+        });
+        //init layout
         mProgressBar = view.findViewById(R.id.progressBar);
         mProgressBar.setMax(100);
         tv_back_mc = view.findViewById(R.id.tv_back_mc);

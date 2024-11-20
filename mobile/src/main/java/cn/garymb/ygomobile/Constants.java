@@ -100,6 +100,8 @@ public interface Constants {
     String CORE_SKIN_AVATAR_OPPONENT = "opponent.jpg";
     String UNKNOWN_IMAGE = "unknown.jpg";
     String YDK_FILE_EX = ".ydk";
+    String YRP_FILE_EX = ".yrp";
+    String YPK_FILE_EX = ".ypk";
     int[] CORE_SKIN_BG_SIZE = new int[]{1920, 1080};
 
     int[] CORE_SKIN_CARD_MINI_SIZE = new int[]{44, 64};

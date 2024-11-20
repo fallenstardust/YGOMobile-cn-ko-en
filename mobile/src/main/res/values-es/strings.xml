@@ -349,6 +349,8 @@
     <string name="settings_screen_padding">Altura Reservada (Para Pantalla Curva)</string>
     <string name="tip_load_cdb_error">Error al intentar cargar la base de datos</string>
     <string name="action_download_expansions">Descargar \nexpansiones</string>
+    <string name="tip_download_failed">Fallo al guardar</string>
+    <string name="tip_download_OK">guardado en</string>
     <string name="replay">Repeticiones</string>
     <string name="bot_mode">Jugar vs IA</string>
     <string name="personal">My</string>
@@ -368,5 +370,6 @@
     <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
     <string name="tip_ypk_is_deleted">Actualice las cartas pre-lanzadas de inmediato</string>
     <string name="tip_superpre_desc">Actualización más rápida. Descargar expansiones</string>
+    <string name="replay_list">lista de reproducción</string>
 </resources>
 

@@ -8,6 +8,9 @@ import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 import static cn.garymb.ygomobile.Constants.REQUEST_SETTINGS_CODE;
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+import static cn.garymb.ygomobile.Constants.YPK_FILE_EX;
+import static cn.garymb.ygomobile.Constants.YRP_FILE_EX;
 import static cn.garymb.ygomobile.utils.ServerUtil.loadServerInfoFromZipOrYpk;
 
 import android.app.Activity;
@@ -123,10 +126,10 @@ public class GameUriManager {
                     return file;
                 }
             }
-            return new File(dir, "tmp_" + System.currentTimeMillis() + ".ydk");
+            return new File(dir, "tmp_" + System.currentTimeMillis() + YDK_FILE_EX);
         } else {
             IOUtils.createFolder(dir);
-            file = new File(dir, name + ".ydk");
+            file = new File(dir, name + YDK_FILE_EX);
         }
         return file;
     }
@@ -166,7 +169,7 @@ public class GameUriManager {
         }
         String name = getPathName(path, false);
         File local;
-        if (name.toLowerCase(Locale.US).endsWith(".ydk")) {
+        if (name.toLowerCase(Locale.US).endsWith(YDK_FILE_EX)) {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
             local = getDeckFile(dir, getPathName(path, true));
         } else if (name.toLowerCase(Locale.US).endsWith(".ypk")) {
@@ -178,7 +181,7 @@ public class GameUriManager {
                 }
             }
             local = new File(AppsSettings.get().getExpansionsPath(), name);
-        } else if (name.toLowerCase(Locale.US).endsWith(".yrp")) {
+        } else if (name.toLowerCase(Locale.US).endsWith(YRP_FILE_EX)) {
             local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_REPLAY_PATH, name);
         } else if (name.toLowerCase(Locale.US).endsWith(".lua")) {
             local = new File(AppsSettings.get().getResourcePath() + "/" + CORE_SINGLE_PATH, name);
@@ -226,9 +229,9 @@ public class GameUriManager {
                 Toast.makeText(activity, "open file error", Toast.LENGTH_LONG).show();
                 return;
             }
-            boolean isYdk = file.getName().toLowerCase(Locale.US).endsWith(".ydk");
-            boolean isYpk = file.getName().toLowerCase(Locale.US).endsWith(".ypk");
-            boolean isYrp = file.getName().toLowerCase(Locale.US).endsWith(".yrp");
+            boolean isYdk = file.getName().toLowerCase(Locale.US).endsWith(YDK_FILE_EX);
+            boolean isYpk = file.getName().toLowerCase(Locale.US).endsWith(YPK_FILE_EX);
+            boolean isYrp = file.getName().toLowerCase(Locale.US).endsWith(YRP_FILE_EX);
             boolean isLua = file.getName().toLowerCase(Locale.US).endsWith(".lua");
             boolean isConf = file.getName().toLowerCase(Locale.US).endsWith(".conf");
             Log.i(Constants.TAG, "open file:" + uri + "->" + file.getAbsolutePath());

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 import static cn.garymb.ygomobile.utils.ComparisonTableUtil.newIDsArray;
@@ -89,7 +90,7 @@ public class DeckUtil {
         File[] files = new File(path).listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".ydk")) {
+                if (file.isFile() && file.getName().endsWith(YDK_FILE_EX)) {
                     deckList.add(new DeckFile(file));
                 }
             }
@@ -118,7 +119,7 @@ public class DeckUtil {
                 if (file.isDirectory()) {
                     deckList.addAll(getDeckAllList(file.getAbsolutePath(), true));
                 }
-                if (file.isFile() && file.getName().endsWith(".ydk")) {
+                if (file.isFile() && file.getName().endsWith(YDK_FILE_EX)) {
                     deckList.add(new DeckFile(file));
                 }
             }
@@ -167,7 +168,7 @@ public class DeckUtil {
         File[] files = new File(appsSettings.getExpansionsPath(), Constants.CORE_DECK_PATH).listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".ydk")) {
+                if (file.isFile() && file.getName().endsWith(YDK_FILE_EX)) {
                     deckList.add(new DeckFile(file));
                 }
             }
@@ -181,7 +182,7 @@ public class DeckUtil {
                     Enumeration<?> entries = zipFile.entries();
                     while (entries.hasMoreElements()) {
                         ZipEntry entry = (ZipEntry) entries.nextElement();
-                        if (entry.getName().endsWith(".ydk")) {
+                        if (entry.getName().endsWith(YDK_FILE_EX)) {
                             String name = entry.getName();
                             name = name.substring(name.lastIndexOf("/"));
                             InputStream inputStream = zipFile.getInputStream(entry);

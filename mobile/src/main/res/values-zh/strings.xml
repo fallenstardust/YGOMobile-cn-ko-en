@@ -348,6 +348,7 @@
     <string name="settings_screen_padding">瀑布屏预留高度</string>
     <string name="tip_load_cdb_error">加载数据出错</string>
     <string name="replay">查看录像</string>
+    <string name="replay_list">录像列表</string>
     <string name="bot_mode">人机练习</string>
     <string name="personal">我的设置</string>
     <string name="back_to_mycard_home">返回萌卡首页</string>
@@ -362,4 +363,6 @@
     <string name="tip_ypk_is_deleted">正式卡更新会让旧先行卡失效，请及时重新下载先行卡补丁</string>
     <string name="tip_superpre_desc">与本应用正式卡同步更新并提供超先行卡尝鲜</string>
     <string name="tip_download_ex">新卡下载！</string>
+    <string name="tip_download_failed">保存失败，请检查网络并重试</string>
+    <string name="tip_download_OK">已保存至</string>
 </resources>

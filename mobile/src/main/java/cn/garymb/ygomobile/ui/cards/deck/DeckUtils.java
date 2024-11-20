@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.utils.IOUtils;
@@ -138,7 +139,7 @@ public class DeckUtils {
         FileWriter fw = null;
 
         //如果文件存在，则重写内容；如果文件不存在，则创建文件
-        File f = new File(AppsSettings.get().getDeckDir(),name+".ydk");
+        File f = new File(AppsSettings.get().getDeckDir(),name + Constants.YDK_FILE_EX);
         fw = new FileWriter(f, false);
 
         PrintWriter pw = new PrintWriter(fw);
