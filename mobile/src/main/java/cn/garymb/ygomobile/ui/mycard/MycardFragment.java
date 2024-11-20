@@ -2,6 +2,9 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import static android.app.Activity.RESULT_OK;
 
+import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
+import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ClipData;
@@ -33,6 +36,8 @@ import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -43,11 +48,14 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
+import cn.garymb.ygomobile.bean.events.ExCardEvent;
+import cn.garymb.ygomobile.ex_card.ExCardListFragment;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
@@ -56,8 +64,12 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.HandlerUtil;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.ServerUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.DataManager;
 
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
@@ -99,6 +111,20 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     break;
 
                 case TYPE_MC_LOGIN_FAILED:
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_ING:
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
+                    YGOUtil.showTextToast(getString(R.string.tip_download_failed));
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_OK:
+                    if (msg.obj.toString().endsWith(Constants.YDK_FILE_EX)) {
+                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.deck_list));
+                    } else if (msg.obj.toString().endsWith(Constants.YRP_FILE_EX)) {
+                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
+                    } else {
+                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath());
+                    }
                     break;
 
             }
@@ -148,23 +174,28 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 DownloadUtil.get().download(url, destFileDir, file.getName(), new DownloadUtil.OnDownloadListener() {
                     @Override
                     public void onDownloadSuccess(File file) {
-                        if (file.getName().endsWith("ydk")) {
-                            YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.deck_list));
-                        } else if (file.getName().endsWith("yrp")) {
-                            YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
-                        } else {
-                            YGOUtil.showTextToast(getString(R.string.tip_download_failed));
-                        }
+                        Message message = new Message();
+                        message.what = DownloadUtil.TYPE_DOWNLOAD_OK;
+                        message.obj = file.getName();
+                        handler.sendMessage(message);
                     }
 
+
                     @Override
-                    public void onDownloading(int progress) {}
+                    public void onDownloading(int progress) {
+                        Message message = new Message();
+                        message.what = DownloadUtil.TYPE_DOWNLOAD_ING;
+                        message.arg1 = progress;
+                        handler.sendMessage(message);
+                    }
 
                     @Override
                     public void onDownloadFailed(Exception e) {
                         //下载失败后删除下载的文件
                         FileUtils.deleteFile(file);
-                        YGOUtil.showTextToast(getString(R.string.tip_download_failed));
+                        Message message = new Message();
+                        message.what = TYPE_DOWNLOAD_EXCEPTION;
+                        handler.sendMessage(message);
                     }
                 });
             }

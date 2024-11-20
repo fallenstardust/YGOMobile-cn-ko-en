@@ -151,7 +151,6 @@ public class ExCardListFragment extends Fragment {
         DownloadUtil.get().download(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-
                 Message message = new Message();
                 message.what = DownloadUtil.TYPE_DOWNLOAD_OK;
                 handler.sendMessage(message);
@@ -168,7 +167,6 @@ public class ExCardListFragment extends Fragment {
 
             @Override
             public void onDownloadFailed(Exception e) {
-
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(file);
                 Message message = new Message();
