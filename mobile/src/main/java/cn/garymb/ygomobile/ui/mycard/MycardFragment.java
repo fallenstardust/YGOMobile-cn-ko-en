@@ -166,7 +166,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     destFileDir = AppsSettings.get().getDeckDir();
                 } else if (fileName.endsWith(Constants.YRP_FILE_EX)) {
                     destFileDir = AppsSettings.get().getReplayDir();
-                } else if (fileName.endsWith(Constants.CORE_LIMIT_PATH)) {
+                } else if (fileName.endsWith(Constants.CORE_LIMIT_PATH) || fileName.endsWith(Constants.YPK_FILE_EX)) {
                     destFileDir = AppsSettings.get().getExpansionsPath().getPath();
                 } else if (fileName.endsWith(Constants.LUA_FILE_EX)) {
                     destFileDir = AppsSettings.get().getSingleDir();
