@@ -20,8 +20,11 @@ class effect;
 struct tevent;
 struct effect_set;
 struct effect_set_v;
-enum effect_flag : uint32;
-enum effect_flag2 : uint32;
+enum effect_flag : uint64;
+enum effect_flag2 : uint64;
+enum code_type : int32;
+
+bool is_continuous_event(uint32 code);
 
 class effect {
 public:
@@ -32,7 +35,6 @@ public:
 	uint8 effect_owner{ PLAYER_NONE };
 	uint32 description{ 0 };
 	uint32 code{ 0 };
-	uint32 flag[2]{};
 	uint32 id{ 0 };
 	uint32 type{ 0 };
 	uint16 copy_id{ 0 };
@@ -41,18 +43,19 @@ public:
 	uint16 o_range{ 0 };
 	uint8 count_limit{ 0 };
 	uint8 count_limit_max{ 0 };
+	uint16 status{ 0 };
 	int32 reset_count{ 0 };
 	uint32 reset_flag{ 0 };
 	uint32 count_code{ 0 };
 	uint64 category{ 0 };
+	uint64 flag[2]{};
 	uint32 hint_timing[2]{};
 	uint32 card_type{ 0 };
 	uint32 active_type{ 0 };
 	uint16 active_location{ 0 };
 	uint16 active_sequence{ 0 };
 	card* active_handler{ nullptr };
-	uint16 status{ 0 };
-	std::vector<uint32> label;
+	std::vector<lua_Integer> label;
 	int32 label_object{ 0 };
 	int32 condition{ 0 };
 	int32 cost{ 0 };
@@ -112,7 +115,7 @@ public:
 	void set_activate_location();
 	void set_active_type();
 	uint32 get_active_type(uint8 uselast = TRUE);
-	int32 get_code_type() const;
+	code_type get_code_type() const;
 
 	bool is_flag(effect_flag x) const {
 		return !!(flag[0] & x);
@@ -178,7 +181,7 @@ constexpr uint32 EFFECT_TYPES_TRIGGER_LIKE = EFFECT_TYPE_ACTIVATE | EFFECT_TYPE_
 constexpr uint32 EFFECT_TYPES_CHAIN_LINK = EFFECT_TYPES_TRIGGER_LIKE | EFFECT_TYPE_FLIP | EFFECT_TYPE_IGNITION;
 
 //========== Flags ==========
-enum effect_flag : uint32 {
+enum effect_flag : uint64 {
 	EFFECT_FLAG_INITIAL				= 0x0001,
 	EFFECT_FLAG_FUNC_VALUE			= 0x0002,
 	EFFECT_FLAG_COUNT_LIMIT			= 0x0004,
@@ -212,7 +215,7 @@ enum effect_flag : uint32 {
 //	EFFECT_FLAG_CVAL_CHECK			= 0x40000000,
 	EFFECT_FLAG_IMMEDIATELY_APPLY	= 0x80000000,
 };
-enum effect_flag2 : uint32 {
+enum effect_flag2 : uint64 {
 	EFFECT_FLAG2_REPEAT_UPDATE			= 0x0001,
 	EFFECT_FLAG2_COF					= 0x0002,
 	EFFECT_FLAG2_WICKED					= 0x0004,
@@ -564,10 +567,12 @@ constexpr int32 HALF_DAMAGE = 0x80000001;
 #define MAX_CARD_ID			0xfffffff
 
 // The type of effect code
-#define CODE_CUSTOM		1	// header + id (28 bits)
-#define CODE_COUNTER	2	// header + counter_id (16 bits)
-#define CODE_PHASE		3	// header + phase_id (12 bits)
-#define CODE_VALUE		4	// numeric value, max = 4095
+enum code_type : int32 {
+	CODE_CUSTOM = 1,	// header + id (28 bits)
+	CODE_COUNTER,		// header + counter_id (16 bits)
+	CODE_PHASE,			// header + phase_id (12 bits)
+	CODE_VALUE,			// numeric value, max = 4095
+};
 
 const std::unordered_set<uint32> continuous_event{
 	EVENT_ADJUST,
@@ -576,7 +581,6 @@ const std::unordered_set<uint32> continuous_event{
 	EVENT_PRE_BATTLE_DAMAGE,
 	EVENT_SPSUMMON_SUCCESS_G_P,
 };
-bool is_continuous_event(uint32 code);
 
 const std::unordered_set<uint32> affect_summoning_effect{
 	EFFECT_CANNOT_DISABLE_SUMMON,

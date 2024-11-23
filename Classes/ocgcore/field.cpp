@@ -804,11 +804,11 @@ int32 field::get_szone_limit(uint8 playerid, uint8 uplayer, uint32 reason) {
 }
 uint32 field::get_linked_zone(int32 playerid) {
 	uint32 zones = 0;
-	for(auto& pcard : player[playerid].list_mzone) {
+	for(const auto& pcard : player[playerid].list_mzone) {
 		if(pcard)
-			zones |= pcard->get_linked_zone() & 0xff;
+			zones |= pcard->get_linked_zone() & 0xffff;
 	}
-	for(auto& pcard : player[1 - playerid].list_mzone) {
+	for(const auto& pcard : player[1 - playerid].list_mzone) {
 		if(pcard)
 			zones |= pcard->get_linked_zone() >> 16;
 	}
@@ -872,19 +872,19 @@ int32 field::check_extra_link(int32 playerid) {
 	if(!player[playerid].list_mzone[5] || !player[playerid].list_mzone[6])
 		return FALSE;
 	card* pcard = player[playerid].list_mzone[5];
-	uint32 checked = 1u << 5;
+	uint32 checked = 0x1u << 5;
 	uint32 linked_zone = pcard->get_mutual_linked_zone();
 	while(true) {
-		if((linked_zone >> 6) & 1)
+		if((linked_zone >> 6) & 0x1U)
 			return TRUE;
-		int32 checking = (int32)(linked_zone & ~checked);
+		uint32 checking = linked_zone & ~checked;
 		if(!checking)
 			return FALSE;
-		int32 rightmost = checking & (-checking);
-		checked |= (uint32)rightmost;
-		if(rightmost < 0x10000) {
+		uint32 rightmost = checking & (-checking);
+		checked |= rightmost;
+		if(rightmost < 0x10000U) {
 			for(int32 i = 0; i < 7; ++i) {
-				if(rightmost & 1) {
+				if(rightmost & 0x1U) {
 					pcard = player[playerid].list_mzone[i];
 					linked_zone |= pcard->get_mutual_linked_zone();
 					break;
@@ -894,7 +894,7 @@ int32 field::check_extra_link(int32 playerid) {
 		} else {
 			rightmost >>= 16;
 			for(int32 i = 0; i < 7; ++i) {
-				if(rightmost & 1) {
+				if(rightmost & 0x1U) {
 					pcard = player[1 - playerid].list_mzone[i];
 					uint32 zone = pcard->get_mutual_linked_zone();
 					linked_zone |= (zone << 16) | (zone >> 16);
@@ -1662,7 +1662,7 @@ int32 field::filter_field_card(uint8 self, uint32 location1, uint32 location2, g
 	}
 	if (pgroup)
 		pgroup->container.insert(result.begin(), result.end());
-	return result.size();
+	return (int32)result.size();
 }
 effect* field::is_player_affected_by_effect(uint8 playerid, uint32 code) {
 	auto rg = effects.aura_effect.equal_range(code);
@@ -1927,11 +1927,11 @@ void field::get_fusion_material(uint8 playerid, card_set* material_all, card_set
 	}
 	material_all->insert(material_base->begin(), material_base->end());
 }
-void field::ritual_release(card_set* material) {
+void field::ritual_release(const card_set& material) {
 	card_set rel;
 	card_set rem;
 	card_set tgy;
-	for(auto& pcard : *material) {
+	for(const auto& pcard : material) {
 		if(pcard->current.location == LOCATION_GRAVE)
 			rem.insert(pcard);
 		else if(pcard->current.location == LOCATION_OVERLAY || pcard->current.location == LOCATION_EXTRA)
@@ -1939,9 +1939,9 @@ void field::ritual_release(card_set* material) {
 		else
 			rel.insert(pcard);
 	}
-	send_to(&tgy, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player, PLAYER_NONE, LOCATION_GRAVE, 0, POS_FACEUP);
-	release(&rel, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player);
-	send_to(&rem, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player, PLAYER_NONE, LOCATION_REMOVED, 0, POS_FACEUP);
+	send_to(tgy, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player, PLAYER_NONE, LOCATION_GRAVE, 0, POS_FACEUP);
+	release(rel, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player);
+	send_to(rem, core.reason_effect, REASON_RITUAL + REASON_EFFECT + REASON_MATERIAL, core.reason_player, PLAYER_NONE, LOCATION_REMOVED, 0, POS_FACEUP);
 }
 void field::get_xyz_material(lua_State* L, card* scard, int32 findex, uint32 lv, int32 maxc, group* mg) {
 	core.xmaterial_lst.clear();
@@ -2124,6 +2124,8 @@ int32 field::adjust_grant_effect() {
 		effect* geffect = (effect*)peffect->get_label_object();
 		if (geffect->type & EFFECT_TYPE_GRANT)
 			continue;
+		if (geffect->code == EFFECT_UNIQUE_CHECK)
+			continue;
 		card_set cset;
 		if(peffect->is_available())
 			filter_affected_cards(peffect, &cset);
@@ -2138,9 +2140,6 @@ int32 field::adjust_grant_effect() {
 			if(!pcard->is_affect_by_effect(peffect) || !cset.count(pcard))
 				remove_set.insert(pcard);
 		}
-		//X gains an effect from itself will break card::remove_effect
-		if (!peffect->is_flag(EFFECT_FLAG_FIELD_ONLY))
-			add_set.erase(peffect->handler);
 		for(auto& pcard : add_set) {
 			effect* ceffect = geffect->clone();
 			ceffect->owner = pcard;
