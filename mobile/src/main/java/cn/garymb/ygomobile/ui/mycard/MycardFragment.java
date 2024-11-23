@@ -162,10 +162,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     throw new RuntimeException(e);
                 }
                 String destFileDir = "";
-                if (contentDisposition.endsWith(Constants.YDK_FILE_EX)) {
+                if (fileName.endsWith(Constants.YDK_FILE_EX)) {
                     destFileDir = AppsSettings.get().getDeckDir();
-                } else if (contentDisposition.endsWith(Constants.YRP_FILE_EX)) {
+                } else if (fileName.endsWith(Constants.YRP_FILE_EX)) {
                     destFileDir = AppsSettings.get().getReplayDir();
+                } else if (fileName.endsWith(Constants.CORE_LIMIT_PATH)) {
+                    destFileDir = AppsSettings.get().getExpansionsPath().getPath();
+                } else if (fileName.endsWith(Constants.LUA_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getSingleDir();
                 } else {//萌卡还有些什么文件格式后续可以添加
                     destFileDir = AppsSettings.get().getResourcePath();
                 }
