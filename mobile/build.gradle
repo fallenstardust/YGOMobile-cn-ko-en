@@ -107,7 +107,7 @@ dependencies {
     //dialog库
     implementation 'com.github.feihuaduo:DialogUtils:1.8.9.23'
     //recyclerview的adapter库
-    implementation 'io.github.cymchad:BaseRecyclerViewAdapterHelper4:4.1.4'
+    implementation 'io.github.cymchad:BaseRecyclerViewAdapterHelper:3.0.14'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     //图片选择

@@ -122,6 +122,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.deck_list));
                     } else if (msg.obj.toString().endsWith(Constants.YRP_FILE_EX)) {
                         YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
+                    } else if (msg.obj.toString().endsWith(Constants.YPK_FILE_EX) || msg.obj.toString().endsWith(Constants.CORE_LIMIT_PATH)) {
+                        YGOUtil.showTextToast(getString(R.string.ypk_installed) + getString(R.string.restart_app));
                     } else {
                         YGOUtil.showTextToast(getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath());
                     }
