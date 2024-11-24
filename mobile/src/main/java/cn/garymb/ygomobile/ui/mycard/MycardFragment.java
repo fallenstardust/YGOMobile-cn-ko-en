@@ -1,9 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import static android.app.Activity.RESULT_OK;
-
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
-import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -36,8 +34,6 @@ import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -48,14 +44,11 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
-import cn.garymb.ygomobile.bean.events.ExCardEvent;
-import cn.garymb.ygomobile.ex_card.ExCardListFragment;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
@@ -64,9 +57,6 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.HandlerUtil;
-import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.ServerUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
@@ -124,6 +114,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
                     } else if (msg.obj.toString().endsWith(Constants.YPK_FILE_EX) || msg.obj.toString().endsWith(Constants.CORE_LIMIT_PATH)) {
                         YGOUtil.showTextToast(getString(R.string.ypk_installed) + getString(R.string.restart_app));
+                        DataManager.get().load(true);
                     } else {
                         YGOUtil.showTextToast(getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath());
                     }
