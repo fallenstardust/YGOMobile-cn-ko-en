@@ -41,8 +41,7 @@ public class YGOUtil {
     }
 
     public static void showTextToast(int gravity, String message, int duration) {
-        Toast toast = new Toast(App.get());
-        toast.setDuration(duration);
+        Toast toast = Toast.makeText(App.get(), message, duration);
         toast.setGravity(gravity,0, 0);
         toast.setText(message);
         toast.show();
