@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -109,14 +110,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     break;
                 case DownloadUtil.TYPE_DOWNLOAD_OK:
                     if (msg.obj.toString().endsWith(Constants.YDK_FILE_EX)) {
-                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.deck_list));
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + getString(R.string.deck_list), Toast.LENGTH_SHORT);
                     } else if (msg.obj.toString().endsWith(Constants.YRP_FILE_EX)) {
-                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + getString(R.string.replay_list));
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + getString(R.string.replay_list), Toast.LENGTH_SHORT);
                     } else if (msg.obj.toString().endsWith(Constants.YPK_FILE_EX) || msg.obj.toString().endsWith(Constants.CORE_LIMIT_PATH)) {
-                        YGOUtil.showTextToast(getString(R.string.ypk_installed) + getString(R.string.restart_app));
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.ypk_installed) + getString(R.string.restart_app), Toast.LENGTH_SHORT);
                         DataManager.get().load(true);
                     } else {
-                        YGOUtil.showTextToast(getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath());
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath(), Toast.LENGTH_LONG);
                     }
                     break;
 

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -18,6 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ourygo.lib.duelassistant.util.PermissionUtil;
 import com.ourygo.lib.duelassistant.util.Util;
 
+import java.time.Duration;
+
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -26,7 +29,23 @@ public class YGOUtil {
 
     //提示
     public static void showTextToast(String message) {
-        Toast.makeText(App.get(), message, Toast.LENGTH_SHORT).show();
+        showTextToast(Gravity.BOTTOM, message, Toast.LENGTH_SHORT);
+    }
+
+    public static void showTextToast(String message, int duration) {
+        showTextToast(Gravity.BOTTOM, message, duration);
+    }
+
+    public static void showTextToast(int gravity, String message) {
+        showTextToast(gravity, message, Toast.LENGTH_SHORT);
+    }
+
+    public static void showTextToast(int gravity, String message, int duration) {
+        Toast toast = new Toast(App.get());
+        toast.setDuration(duration);
+        toast.setGravity(gravity,0, 0);
+        toast.setText(message);
+        toast.show();
     }
 
     public static int c(int colorId) {

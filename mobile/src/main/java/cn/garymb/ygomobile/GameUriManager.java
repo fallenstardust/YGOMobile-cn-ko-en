@@ -226,6 +226,7 @@ public class GameUriManager {
         if ("file".equals(uri.getScheme()) || "content".equals(uri.getScheme())) {
             File file = toLocalFile(uri);
             if (file == null || !file.exists()) {
+                YGOUtil.showTextToast("open file error");
                 Toast.makeText(activity, "open file error", Toast.LENGTH_LONG).show();
                 return;
             }
