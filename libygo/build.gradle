@@ -5,7 +5,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        ndkVersion "20.1.5948944"
+        ndkVersion "21.3.6528147"
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
 

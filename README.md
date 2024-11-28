@@ -8,13 +8,13 @@ Android编译环境
 ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 ---------------------
     稳定ndk
-    https://dl.google.com/android/repository/android-ndk-r20b-windows-x86_64.zip
-    https://dl.google.com/android/repository/android-ndk-r20b-darwin-x86_64.zip
-    https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r21d-windows-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r21d-darwin-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip
     
 重要
 ---------------------------------------------
-    NDKR20编译已经通过，更加新的NDK可能通不过
+    NDKR21d编译已经通过，更加新的NDK可能通不过
     根据自己的系统下载上面的压缩包，解压并且配置环境变量，cmd窗口，输ndk-build --version，看到一堆数字和英文的版权就是ok了
     不懂环境变量？没关系，自己自动把下文的ndk-build前面，加上NDK解压的文件夹比如D:\NDK\ndk-build -j4
 
