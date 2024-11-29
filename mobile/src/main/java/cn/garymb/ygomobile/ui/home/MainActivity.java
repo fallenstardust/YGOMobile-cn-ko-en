@@ -204,7 +204,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
         if (enableStart) {
             YGOStarter.startGame(this, null);
         } else {
-            VUiKit.show(this, R.string.dont_start_game);
+            YGOUtil.showTextToast(R.string.dont_start_game);
         }
     }
 
