@@ -54,13 +54,12 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
-import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.settings.SharedPreferencesPlus;
 import cn.garymb.ygomobile.utils.DeckUtil;
-import cn.garymb.ygomobile.utils.DensityUtils;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * 静态类
@@ -195,7 +194,7 @@ public class AppsSettings {
         }
         int ret = Math.min(w, h);
         //测试代码，曲面屏左右2变需要留空白，但是游戏画面比例不对，需要修改c那边代码
-        int fix_h = DensityUtils.dp2px(context, getScreenPadding());
+        int fix_h = YGOUtil.dp2px(getScreenPadding());
         Log.d(IrrlichtBridge.TAG, "screen padding=" + fix_h);
         return ret - fix_h * 2;
     }

@@ -5,9 +5,13 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -19,17 +23,29 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ourygo.lib.duelassistant.util.PermissionUtil;
 import com.ourygo.lib.duelassistant.util.Util;
 
+import org.jdeferred.android.AndroidDeferredManager;
+
 import java.time.Duration;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 
 public class YGOUtil {
+    private static Toast mToast;
 
     //提示
+    public static void showTextToast(int resId) {
+        showTextToast(s(resId));
+    }
+
     public static void showTextToast(String message) {
         showTextToast(Gravity.BOTTOM, message, Toast.LENGTH_SHORT);
+    }
+
+    public static void showTextToast(int resId, int duration) {
+        showTextToast(s(resId), duration);
     }
 
     public static void showTextToast(String message, int duration) {
@@ -40,11 +56,47 @@ public class YGOUtil {
         showTextToast(gravity, message, Toast.LENGTH_SHORT);
     }
 
+    public static void showTextToast(int gravity, int resId, int duration) {
+        showTextToast(gravity, s(resId), duration);
+    }
+
     public static void showTextToast(int gravity, String message, int duration) {
-        Toast toast = Toast.makeText(App.get(), message, duration);
-        toast.setGravity(gravity,0, 0);
-        toast.setText(message);
-        toast.show();
+        mToast = Toast.makeText(App.get(), message, duration);
+        mToast.setGravity(gravity,0, 0);
+        mToast.setText(message);
+        mToast.show();
+    }
+
+    public static void show(int id, Object... args) {
+        Context context = App.get();
+        final String str = args.length == 0 ? context.getString(id) : context.getString(id, args);
+        VUiKit.post(() -> {
+            if (mToast == null) {
+                showTextToast(str);
+            } else {
+                mToast.setText(str);
+            }
+            mToast.show();
+        });
+    }
+
+    public static void show(String str) {
+        VUiKit.post(() -> {
+            if (mToast == null) {
+                showTextToast(str);
+            } else {
+                mToast.setText(str);
+            }
+            mToast.show();
+        });
+    }
+
+    public static int getScreenWidth() {
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+    }
+
+    public static int getScreenHeiget() {
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
     }
 
     public static int c(int colorId) {
@@ -175,7 +227,23 @@ public class YGOUtil {
         return dialog;
     }
 
+    /**
+     * dp转px
+     */
+    public static int dp2px(float dp) {
+        if(dp == 0){
+            return 0;
+        }
+        float density = App.get().getResources().getDisplayMetrics().density;
+        int px = Math.round(dp * density);// 4.9->5 4.4->4
+        return px;
+    }
 
+    public static float px2dp(int px) {
+        float density = App.get().getResources().getDisplayMetrics().density;
+        float dp = px / density;
+        return dp;
+    }
 }
 
 

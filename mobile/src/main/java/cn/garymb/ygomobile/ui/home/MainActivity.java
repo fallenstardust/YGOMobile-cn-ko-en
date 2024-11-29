@@ -35,6 +35,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MainActivity extends HomeActivity implements BottomNavigationBar.OnTabSelectedListener {
     private final String[] PERMISSIONS = {
@@ -148,9 +149,9 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             try {
                 FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
             } catch (Throwable e) {
-                Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
             }
-            Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.done);
         }
     }
 

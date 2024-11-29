@@ -27,6 +27,7 @@ import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.utils.CurImageInfo;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
@@ -175,7 +176,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 try {
                     FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile);
                 } catch (IOException e) {
-                    Toast.makeText(getContext(), e + "", Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
                     onChooseFileFail(curPreference);
                 }
                 onChooseFileOk(curPreference, mCurImageInfo.mOutFile);

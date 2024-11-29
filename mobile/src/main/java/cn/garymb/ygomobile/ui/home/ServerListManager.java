@@ -26,6 +26,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.XmlUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.StringManager;
 
 public class ServerListManager {
@@ -133,7 +134,7 @@ public class ServerListManager {
             if (TextUtils.isEmpty(info.getName())
                     || TextUtils.isEmpty(info.getServerAddr())
                     || TextUtils.isEmpty(editViewHolder.serverPort.getText())) {
-                Toast.makeText(getContext(), R.string.server_is_exist, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.server_is_exist);
                 return;
             }
             if (isAdd) {

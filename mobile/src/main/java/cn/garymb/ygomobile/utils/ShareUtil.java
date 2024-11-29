@@ -33,7 +33,7 @@ public class ShareUtil {
                 }
             }
             if (!ok) {
-                Toast.makeText(context, R.string.no_share_app, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(context.getString(R.string.no_share_app));
             }
             return ok;
         }
@@ -70,7 +70,7 @@ public class ShareUtil {
                 }
             }
             if (!ok) {
-                Toast.makeText(context, R.string.no_share_app, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.no_share_app);
             }
             return ok;
         }

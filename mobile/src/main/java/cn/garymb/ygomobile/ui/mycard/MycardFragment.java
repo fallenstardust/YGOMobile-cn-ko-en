@@ -389,7 +389,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 return false;
             } else {
                 exitLasttime = System.currentTimeMillis();
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.back_tip);
             }
         }
         if (mWebViewPlus.canGoBack() && !homeActivity.fragment_mycard_chatting_room.isVisible()) {
@@ -440,7 +440,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     if (mMcUser.getUsername() != null && mMcUser.getPassword() != null) {
                         serviceManagement.start();
                     } else {
-                        Toast.makeText(getActivity(), R.string.login_mycard, Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(R.string.login_mycard);
                     }
                 }
                 break;

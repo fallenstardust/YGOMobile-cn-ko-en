@@ -84,7 +84,7 @@ public class GameUriManager {
                 options.mRoomName = intent.getStringExtra(Constants.QUERY_ROOM);
                 YGOStarter.startGame(getActivity(), options);
             } catch (Exception e) {
-                Toast.makeText(getActivity(), R.string.start_game_error, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(activity.getString(R.string.start_game_error));
                 activity.finish();
             }
         } else {
@@ -242,10 +242,10 @@ public class GameUriManager {
                 if (!AppsSettings.get().isReadExpansions()) {
                     startSetting.putExtra("flag", 4);
                     activity.startActivity(startSetting);//todo ??再次打开MainActivity?
-                    Toast.makeText(activity, R.string.ypk_go_setting, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(activity.getString(R.string.start_game_error), Toast.LENGTH_LONG);
                 } else {
                     DataManager.get().load(true);
-                    Toast.makeText(activity, R.string.ypk_installed, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(activity.getString(R.string.ypk_installed), Toast.LENGTH_LONG);
                     loadServerInfoFromZipOrYpk(getActivity(), file);
                   //ypk不与excard机制相干涉
 
@@ -253,20 +253,20 @@ public class GameUriManager {
             } else if (isYrp) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-r", file.getName());
-                    Toast.makeText(activity, activity.getString(R.string.file_installed), Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(activity.getString(R.string.file_installed), Toast.LENGTH_LONG);
                 } else {
                     Log.w(Constants.TAG, "game is running");
                 }
             } else if (isLua) {
                 if (!YGOStarter.isGameRunning(getActivity())) {
                     YGOStarter.startGame(getActivity(), null, "-s", file.getName());
-                    Toast.makeText(activity, "load single lua file", Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast("load single lua file", Toast.LENGTH_LONG);
                 } else {
                     Log.w(Constants.TAG, "game is running");
                 }
             } else if (isConf) {
                 DataManager.get().load(true);
-                Toast.makeText(activity, activity.getString(R.string.restart_app), Toast.LENGTH_LONG).show();
+                YGOUtil.showTextToast(activity.getString(R.string.restart_app), Toast.LENGTH_LONG);
             }
         } else {
             String host = uri.getHost();

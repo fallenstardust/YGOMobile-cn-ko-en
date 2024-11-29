@@ -69,7 +69,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             @Override
             public void run() {
                 Looper.prepare();
-                Toast.makeText(context, R.string.crashed, Toast.LENGTH_LONG).show();
+                YGOUtil.showTextToast(context.getString(R.string.crashed), Toast.LENGTH_LONG);
                 Looper.loop();
             }
         }.start();

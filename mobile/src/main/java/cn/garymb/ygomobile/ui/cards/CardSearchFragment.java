@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -103,7 +104,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
             }
         }).fail((e) -> {
-            Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(getString(R.string.tip_load_cdb_error), Toast.LENGTH_SHORT);
             Log.e(IrrlichtBridge.TAG, "load cdb", e);
         }).done((rs) -> {
             dlg.dismiss();
@@ -259,7 +260,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 return false;
             } else {
                 exitLasttime = System.currentTimeMillis();
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.back_tip, Toast.LENGTH_SHORT);
             }
         }
         return true;

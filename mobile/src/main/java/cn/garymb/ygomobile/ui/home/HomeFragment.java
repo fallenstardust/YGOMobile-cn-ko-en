@@ -301,7 +301,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             ll_new_notice.setVisibility(View.VISIBLE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.ex_card_check_toast_message_iii);
             ll_new_notice.setVisibility(View.GONE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
             //do nothing
@@ -407,9 +407,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
             if (Build.VERSION.SDK_INT >= 23 && YGOStarter.isGameRunning(getActivity())) {
-                Toast toast = Toast.makeText(App.get().getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
+                YGOUtil.showTextToast(Gravity.CENTER, R.string.tip_return_to_duel);
                 openGame();
             } else {
                 //保存名字
@@ -523,7 +521,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             String[] tipsList = this.getResources().getStringArray(R.array.tips);
             int x = (int) (Math.random() * tipsList.length);
             String tips = tipsList[x];
-            Toast.makeText(getActivity(), tips, Toast.LENGTH_LONG).show();
+            YGOUtil.showTextToast(tips, Toast.LENGTH_LONG);
         }
     }
 
@@ -669,10 +667,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
                 //如果是先行卡服务器，并且未开启先行卡设置，则通过toast提示
                 if (!AppsSettings.get().isReadExpansions()) {
-                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.ex_card_check_toast_message, Toast.LENGTH_LONG);
                 } else if (ServerUtil.exCardState != ServerUtil.ExCardState.UPDATED) {
                     //如果是先行卡服务器，并且未开启下载先行卡，则通过toast提示
-                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_ii, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.ex_card_check_toast_message_ii, Toast.LENGTH_LONG);
                 }
             }
             joinRoom(event.position);
@@ -827,7 +825,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(Constants.URL_DONATE));
-                Toast.makeText(getActivity(), R.string.donatefor, Toast.LENGTH_LONG).show();
+                YGOUtil.showTextToast(R.string.donatefor, Toast.LENGTH_LONG);
                 startActivity(intent);
             }
             break;

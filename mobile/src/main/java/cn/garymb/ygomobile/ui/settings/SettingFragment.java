@@ -96,6 +96,7 @@ import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import okhttp3.Call;
@@ -243,7 +244,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         }
                     }
                     mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
-                    Toast.makeText(getContext(), R.string.restart_app, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
                     DataManager.get().load(true);
                 }
                 mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
@@ -281,10 +282,10 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             });
                             dialog.show();
                         } else {
-                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                            YGOUtil.showTextToast(R.string.Already_Lastest);
                         }
                     } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed), Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(R.string.Checking_Update_Failed);
                     }
                     break;
                 case TYPE_SETTING_GET_VERSION_FAILED:
@@ -292,7 +293,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     if (FailedCount <= 2) {
                         checkUpgrade(URL_HOME_VERSION);
                     } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(getString(R.string.Checking_Update_Failed) + msg.obj.toString());
                     }
                     break;
             }
@@ -344,7 +345,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     simpleListAdapter.notifyDataSetChanged();
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
                     DataManager.get().load(true);
-                    Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.done, Toast.LENGTH_LONG);
                     if (name.contains(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
                         SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
                         ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
@@ -572,12 +573,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
             dlg.dismiss();
             mSettings.setUseExtraCards(false);
             checkBoxPreference.setChecked(false);
-            Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.restart_app);
         }).done((ok) -> {
             dlg.dismiss();
             checkBoxPreference.setChecked(ok);
             mSettings.setUseExtraCards(ok);
-            Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.restart_app);
         });
     }
 
@@ -670,7 +671,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 Log.e("SettingFragment", "错误" + e);
             }
         }).done((rs) -> {
-            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.done);
             dialog.dismiss();
         });
     }

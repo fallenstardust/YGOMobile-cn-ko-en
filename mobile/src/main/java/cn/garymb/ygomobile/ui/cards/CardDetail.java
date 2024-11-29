@@ -419,7 +419,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     try {
                         context.startActivity(intent);
                     } catch (Throwable e) {
-                        Toast.makeText(context, "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast("dev error:not found activity.", Toast.LENGTH_SHORT);
                     }
                 });
 

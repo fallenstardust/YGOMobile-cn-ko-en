@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class ShareFileActivity extends Activity {
     @Override
@@ -56,7 +57,7 @@ public class ShareFileActivity extends Activity {
         try {
             startActivity(Intent.createChooser(shareIntent, getString(R.string.send)));
         } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.sending_failed) + e, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(getString(R.string.sending_failed) + e, Toast.LENGTH_LONG);
         }
         finish();
     }

@@ -55,6 +55,7 @@ import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -397,8 +398,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             super.onBackPressed();
         } else {
             exitLasttime = System.currentTimeMillis();
-            if (fragment_home.isVisible() || fragment_settings.isVisible())
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+            if (fragment_home.isVisible() || fragment_settings.isVisible()) YGOUtil.showTextToast(R.string.back_tip);
         }
     }
 

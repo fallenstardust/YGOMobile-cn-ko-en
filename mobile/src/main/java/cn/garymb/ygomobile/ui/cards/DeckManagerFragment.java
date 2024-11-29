@@ -664,7 +664,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 return false;
             } else {
                 exitLasttime = System.currentTimeMillis();
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.back_tip);
             }
         }
         return true;
@@ -679,22 +679,22 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return count != null && count <= 3;
         }
         if (limitList.check(cardInfo, LimitType.Forbidden)) {
-            Toast.makeText(getContext(), getString(R.string.tip_card_max, 0), Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(getString(R.string.tip_card_max, 0));
             return false;
         }
         if (count != null) {
             if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
-                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 1), Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(getString(R.string.tip_card_max, 1));
                     return false;
                 }
             } else if (limitList.check(cardInfo, LimitType.SemiLimit)) {
                 if (count >= 2) {
-                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 2), Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(getString(R.string.tip_card_max, 2));
                     return false;
                 }
             } else if (count >= Constants.CARD_MAX_COUNT) {
-                Toast.makeText(getContext(), getString(R.string.tip_card_max, 3), Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
                 return false;
             }
         }
@@ -739,7 +739,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 break;
             case R.id.action_share_deck:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 shareDeck();
@@ -754,7 +754,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     } else {
                         if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                                 TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                            Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                            YGOUtil.showTextToast(R.string.donot_edit_Deck);
                         } else {
                             save(mDeckAdapater.getYdkFile());
                         }
@@ -763,12 +763,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 break;
             case R.id.action_rename:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                         TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
                 }
@@ -791,12 +791,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             break;
             case R.id.action_delete_deck: {
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                         TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.question_delete_deck);
@@ -929,8 +929,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             du.dis();
             YGOUtil.copyMessage(getContext(), tv_code.getText().toString().trim());
             DuelAssistantManagement.getInstance().setLastMessage(tv_code.getText().toString().trim());
-            Toast.makeText(getContext(), getString(R.string.deck_text_copyed), Toast.LENGTH_SHORT).show();
-
+            YGOUtil.showTextToast(R.string.deck_text_copyed);
         });
 
         bt_image_share.setOnClickListener(v -> {
@@ -950,7 +949,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             try {
                 startActivity(intent);
             } catch (Throwable e) {
-                Toast.makeText(getContext(), "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast("dev error:not found activity." + e);
             }
         });
 
@@ -974,7 +973,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         } else {
             clipboardManager.setText(uri);
         }
-        Toast.makeText(getContext(), R.string.copy_to_clipbroad, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.copy_to_clipbroad);
     }
 
     private File getSelectDeck(Spinner spinner) {
@@ -1082,7 +1081,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 else
                     ydk = new File(savePath, filename);
                 if (ydk.exists()) {
-                    Toast.makeText(getContext(), R.string.file_exist, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.file_exist);
                     return;
                 }
                 if (!keepOld && oldYdk != null && oldYdk.exists()) {
@@ -1111,9 +1110,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private void save(File ydk) {
         if (mDeckAdapater.save(ydk)) {
-            Toast.makeText(getContext(), R.string.save_tip_ok, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.save_tip_ok);
         } else {
-            Toast.makeText(getContext(), R.string.save_tip_fail, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.save_tip_fail);
         }
     }
 
@@ -1169,18 +1168,18 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     files.delete();
             }
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(e + "");
         }
-        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.done);
     }
 
     private void doRestoreDeck() {
         try {
             FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(e + "");
         }
-        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.done);
     }
 
     @Override
