@@ -12,6 +12,7 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
+        android:extractNativeLibs="true"
         android:requestLegacyExternalStorage="true"
         android:taskAffinity="cn.garymb.ygomobile.task"
         tools:replace="android:allowBackup,android:supportsRtl"
