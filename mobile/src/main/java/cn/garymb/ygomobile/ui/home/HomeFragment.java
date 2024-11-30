@@ -716,7 +716,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         duelAssistantManagement.init(getActivity());
         duelAssistantManagement.addDuelAssistantListener(this);
-//        YGOUtil.startDuelService(this);
     }
 
     @Override

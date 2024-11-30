@@ -131,7 +131,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
-        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity()) + "(" + SystemUtils.getVersion(getActivity()) + ")");
+        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
         bind(PREF_RESET_GAME_RES, getString(R.string.guide_reset));
         bind(PREF_JOIN_QQ, getString(R.string.about_Join_QQ));
@@ -271,7 +271,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
                         if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getActivity());
+                            DialogPlus dialog = new DialogPlus(getContext());
                             dialog.setMessage(R.string.Found_Update);
                             dialog.setLeftButtonText(R.string.download_home);
                             dialog.setLeftButtonListener((dlg, s) -> {
@@ -305,7 +305,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         if (PREF_CHANGE_LOG.equals(key)) {
-            new DialogPlus(getActivity())
+            new DialogPlus(getContext())
                     .setTitleText(getString(R.string.settings_about_change_log))
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
@@ -387,13 +387,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
             avatar1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                showImageDialog(preference, outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
             avatar2.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
+                showImageDialog(preference, outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
                 dialog.dismiss();
             });
         } else if (SETTINGS_COVER.equals(key)) {
@@ -410,17 +410,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
             cover1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.card_cover),
-                        outFile,
-                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
+                showImageDialog(preference, outFile, true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
                 dialog.dismiss();
             });
             cover2.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.card_cover),
-                        outFile,
-                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
+                showImageDialog(preference,outFile, true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
                 dialog.dismiss();
             });
         } else if (SETTINGS_CARD_BG.equals(key)) {
@@ -439,25 +435,20 @@ public class SettingFragment extends PreferenceFragmentPlus {
             bg.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg),
-                        outFile,
+                showImageDialog(preference,outFile,
                         true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
                 dialog.dismiss();
             });
             bg_menu.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg_menu),
-                        outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
+                showImageDialog(preference, outFile, true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
                 dialog.dismiss();
             });
             bg_deck.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg_deck),
-                        outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
+                showImageDialog(preference, outFile, true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
                 dialog.dismiss();
             });
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
@@ -501,7 +492,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         } else if (PREF_GAME_PATH.equalsIgnoreCase(preference.getKey())) {
             if (!TextUtils.equals(mSettings.getResourcePath(), file)) {
 //                Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(getActivity(), MainActivity.class).setAction(ACTION_RELOAD));
+                startActivity(new Intent(getContext(), MainActivity.class).setAction(ACTION_RELOAD));
                 getActivity().finish();
             }
             mSettings.setResourcePath(file);
@@ -516,10 +507,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
     }
 
-    private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
-        int width = getResources().getDisplayMetrics().widthPixels;
-        final ImageView imageView = new ImageView(getActivity());
-        FrameLayout frameLayout = new FrameLayout(getActivity());
+    private void showImageDialog(Preference preference, String outFile, boolean isJpeg, int outWidth, int outHeight) {
+        final ImageView imageView = new ImageView(getContext());
+        FrameLayout frameLayout = new FrameLayout(getContext());
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -528,7 +518,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, isJpeg, outWidth, outHeight);
         File img = new File(outFile);
         if (img.exists()) {
-            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
+            GlideCompat.with(getContext()).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
@@ -538,7 +528,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
         File img = new File(outFile);
         if (img.exists()) {
-            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
+            GlideCompat.with(getContext()).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
@@ -547,7 +537,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
     private void copyDataBase(Preference preference, String file) {
         CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-        Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.copy_databse));
+        Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.copy_databse));
         VUiKit.defer().when(() -> {
             File db = new File(mSettings.getResourcePath(), Constants.DATABASE_NAME);
             InputStream in = null;
@@ -588,11 +578,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
         File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
         if (ok) {
             //rename
-            Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
+            Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
                 try {
                     IOUtils.createFolder(dir);
-                    IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
+                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
                             dir.getAbsolutePath(), false);
                 } catch (IOException e) {
                 }

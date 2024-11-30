@@ -154,15 +154,6 @@ public class YGOUtil {
         return visibleItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 3 && state == RecyclerView.SCROLL_STATE_IDLE;
     }
 
-    public static void startDuelService(Context context) {
-//        if (AppsSettings.get().isServiceDuelAssistant()) {
-//            if (!Util.startDuelService(context)) {
-//                getNotificationPermissionDialog(context).show();
-//            }
-//        }
-    }
-
-
     //判断是否有悬浮窗权限
     public static boolean isServicePermission(Context context, boolean isIntentPermission) {
         if (!PermissionUtil.isServicePermission(context)) {
