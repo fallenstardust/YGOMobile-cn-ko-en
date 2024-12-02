@@ -6,7 +6,7 @@
 namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
-byte DataManager::scriptBuffer[0x20000];
+unsigned char DataManager::scriptBuffer[0x20000];
 IFileSystem* DataManager::FileSystem;
 DataManager dataManager;
 
@@ -387,7 +387,7 @@ uint32 DataManager::CardReader(uint32 code, card_data* pData) {
 		pData->clear();
 	return 0;
 }
-byte* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
+unsigned char* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 	// default script name: ./script/c%d.lua
 	char first[256]{};
 	char second[256]{};
@@ -409,7 +409,7 @@ byte* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 	else
 		return ScriptReaderZip(second, slen);
 }
-byte* DataManager::ScriptReader(const char* script_name, int* slen) {
+unsigned char* DataManager::ScriptReader(const char* script_name, int* slen) {
 	FILE *fp = fopen(script_name, "rb");
 	if(!fp)
 		return 0;
@@ -420,7 +420,7 @@ byte* DataManager::ScriptReader(const char* script_name, int* slen) {
 	*slen = len;
 	return scriptBuffer;
 }
-byte* DataManager::ScriptReaderZip(const char* script_name, int* slen) {
+unsigned char* DataManager::ScriptReaderZip(const char* script_name, int* slen) {
 	IReadFile* reader = FileSystem->createAndOpenFile(script_name);
 	if (!reader)
 		return nullptr;

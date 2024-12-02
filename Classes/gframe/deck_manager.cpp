@@ -276,9 +276,7 @@ void DeckManager::GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, 
 	}
 }
 FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
-	char fullname[256]{};
-	BufferIO::EncodeUTF8(file, fullname);
-	FILE* fp = myfopen(fullname, mode);
+	FILE* fp = myfopen(file, mode);
 	return fp;
 }
 IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
@@ -342,7 +340,7 @@ bool DeckManager::SaveDeck(Deck& deck, const wchar_t* file) {
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-#ifdef WIN32
+#ifdef _WIN32
 	BOOL result = DeleteFileW(file);
 	return !!result;
 #else

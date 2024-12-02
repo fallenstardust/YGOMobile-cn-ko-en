@@ -87,11 +87,14 @@ inline int swprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
 #endif // UNICODE
 #endif
 
-inline FILE* myfopen(const char* filename, const char* mode) {
+inline FILE* myfopen(const wchar_t* filename, const char* mode) {
 	FILE* fp{};
-	fp = fopen(filename, mode);
+	char fname[1024]{};
+	BufferIO::EncodeUTF8(filename, fname);
+	fp = fopen(fname, mode);
 	return fp;
 }
+
 
 #include <irrlicht.h>
 using namespace irr;
