@@ -54,7 +54,7 @@ public:
 	explicit interpreter(duel* pd);
 	~interpreter();
 
-	int32 register_card(card* pcard);
+	void register_card(card* pcard);
 	void register_effect(effect* peffect);
 	void unregister_effect(effect* peffect);
 	void register_group(group* pgroup);
@@ -72,7 +72,7 @@ public:
 	int32 check_filter(lua_State* L, card* pcard, int32 findex, int32 extraargs);
 	int32 get_operation_value(card* pcard, int32 findex, int32 extraargs);
 	int32 get_function_value(int32 f, uint32 param_count);
-	int32 get_function_value(int32 f, uint32 param_count, std::vector<int32>* result);
+	int32 get_function_value(int32 f, uint32 param_count, std::vector<lua_Integer>& result);
 	int32 call_coroutine(int32 f, uint32 param_count, int32* yield_value, uint16 step);
 	int32 clone_function_ref(int32 func_ref);
 	void* get_ref_object(int32 ref_handler);
@@ -83,7 +83,7 @@ public:
 	static void function2value(lua_State* L, int32 func_ref);
 	static int32 get_function_handle(lua_State* L, int32 index);
 	static duel* get_duel_info(lua_State* L);
-	static bool is_load_script(card_data data);
+	static bool is_load_script(const card_data& data);
 
 	template <size_t N, typename... TR>
 	static int sprintf(char (&buffer)[N], const char* format, TR... args) {
