@@ -52,7 +52,7 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
 	sin.sin_port = htons(port);
 	client_bev = bufferevent_socket_new(client_base, -1, BEV_OPT_CLOSE_ON_FREE);
 	bufferevent_setwatermark(client_bev, EV_READ, 3, 0);
-	bufferevent_setcb(client_bev, ClientRead, NULL, ClientEvent, (void*)create_game);
+	bufferevent_setcb(client_bev, ClientRead, nullptr, ClientEvent, (void*)create_game);
 	if (bufferevent_socket_connect(client_bev, (sockaddr*)&sin, sizeof(sin)) < 0) {
 		bufferevent_free(client_bev);
 		event_base_free(client_base);
@@ -3761,7 +3761,7 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		int count = BufferIO::ReadUInt8(pbuf);
 		mainGame->dField.declare_opcodes.clear();
 		for (int i = 0; i < count; ++i)
-			mainGame->dField.declare_opcodes.push_back(BufferIO::ReadInt32(pbuf));
+			mainGame->dField.declare_opcodes.push_back(buffer_read<uint32_t>(pbuf));
 		if(select_hint)
 			myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
 		else myswprintf(textBuffer, dataManager.GetSysString(564));

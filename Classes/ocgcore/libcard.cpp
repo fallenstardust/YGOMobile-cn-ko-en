@@ -1828,6 +1828,10 @@ int32 scriptlib::card_register_effect(lua_State *L) {
 		pduel->game_field->core.reseted_effects.insert(peffect);
 		return 0;
 	}
+	for (auto& entry : category_checklist) {
+		if (peffect->category & entry.first)
+			peffect->flag[0] |= entry.second;
+	}
 	int32 id;
 	if (peffect->handler)
 		id = -1;
@@ -1891,7 +1895,7 @@ int32 scriptlib::card_register_flag_effect(lua_State *L) {
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	int32 code = (lua_tointeger(L, 2) & MAX_CARD_ID) | EFFECT_FLAG_EFFECT;
 	int32 reset = (int32)lua_tointeger(L, 3);
-	uint32 flag = (uint32)lua_tointeger(L, 4);
+	uint64 flag = lua_tointeger(L, 4);
 	int32 count = (int32)lua_tointeger(L, 5);
 	lua_Integer lab = 0;
 	int32 desc = 0;
@@ -2367,7 +2371,7 @@ int32 scriptlib::card_is_can_be_placed_on_field(lua_State *L) {
 	if(lua_gettop(L) >= 3)
 		tolocation = (uint32)lua_tointeger(L, 3);
 	if(pcard->is_status(STATUS_FORBIDDEN)
-		|| pcard->pduel->game_field->check_unique_onfield(pcard, toplayer, tolocation, NULL))
+		|| pcard->pduel->game_field->check_unique_onfield(pcard, toplayer, tolocation, nullptr))
 		lua_pushboolean(L, 0);
 	else
 		lua_pushboolean(L, 1);
@@ -3692,7 +3696,7 @@ static const struct luaL_Reg cardlib[] = {
 	{ "ResetNegateEffect", scriptlib::card_reset_negate_effect },
 	{ "AssumeProperty", scriptlib::card_assume_prop },
 	{ "SetSPSummonOnce", scriptlib::card_set_spsummon_once },
-	{ NULL, NULL }
+	{ nullptr, nullptr }
 };
 void scriptlib::open_cardlib(lua_State *L) {
 	luaL_newlib(L, cardlib);

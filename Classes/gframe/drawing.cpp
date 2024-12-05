@@ -1146,13 +1146,13 @@ void Game::DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<
 	if(lcode == 0)
 		lcode = code;
 	irr::video::ITexture* img = imageManager.GetTexture(code);
-	if(img == NULL)
-		return; //NULL->getSize() will cause a crash
+	if(img == nullptr)
+		return; //nullptr->getSize() will cause a crash
 	dimension2d<u32> size = img->getOriginalSize();
 	recti dragloc = recti(pos.X, pos.Y, pos.X + CARD_THUMB_WIDTH * mainGame->xScale, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
 	recti limitloc = recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale);
 	recti otloc = recti(pos.X + 7 * mainGame->xScale, pos.Y + 50 * mainGame->yScale, pos.X + 37 * mainGame->xScale, pos.Y + 65 * mainGame->yScale);
-	if(drag) {}
+
 	driver->draw2DImage(img, dragloc, rect<s32>(0, 0, size.Width, size.Height));
 	if(lflist->count(lcode)) {
 		switch((*lflist).at(lcode)) {

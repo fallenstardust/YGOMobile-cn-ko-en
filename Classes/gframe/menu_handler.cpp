@@ -158,7 +158,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					BufferIO::CopyWStr(pstr, hostname, 100);
 					BufferIO::CopyWStr(mainGame->ebJoinPort->getText(), port, 6);
 					struct evutil_addrinfo hints;
-					struct evutil_addrinfo *answer = NULL;
+					struct evutil_addrinfo *answer = nullptr;
 					std::memset(&hints, 0, sizeof hints);
 					hints.ai_family = AF_INET;
 					hints.ai_socktype = SOCK_STREAM;

@@ -226,8 +226,8 @@ int32 scriptlib::effect_set_property(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_EFFECT, 1);
 	effect* peffect = *(effect**) lua_touserdata(L, 1);
-	uint32 v1 = (uint32)lua_tointeger(L, 2);
-	uint32 v2 = (uint32)lua_tointeger(L, 3);
+	uint64 v1 = lua_tointeger(L, 2);
+	uint64 v2 = lua_tointeger(L, 3);
 	peffect->flag[0] = (peffect->flag[0] & INTERNAL_FLAGS) | (v1 & ~INTERNAL_FLAGS);
 	peffect->flag[1] = v2;
 	return 0;
@@ -659,7 +659,7 @@ static const struct luaL_Reg effectlib[] = {
 	{ "GetActivateSequence", scriptlib::effect_get_activate_sequence },
 	{ "CheckCountLimit", scriptlib::effect_check_count_limit },
 	{ "UseCountLimit", scriptlib::effect_use_count_limit },
-	{ NULL, NULL }
+	{ nullptr, nullptr }
 };
 void scriptlib::open_effectlib(lua_State *L) {
 	luaL_newlib(L, effectlib);

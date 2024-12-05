@@ -2054,7 +2054,7 @@ void Game::ErrorLog(const char* msg) {
 	FILE* fp = fopen("error.log", "at");
 	if(!fp)
 		return;
-	time_t nowtime = time(NULL);
+	time_t nowtime = time(nullptr);
 	tm* localedtime = localtime(&nowtime);
 	char timebuf[40];
 	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);

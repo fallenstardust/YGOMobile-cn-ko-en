@@ -97,7 +97,7 @@ int32 scriptlib::duel_register_flag_effect(lua_State *L) {
 		return 0;
 	int32 code = (lua_tointeger(L, 2) & MAX_CARD_ID) | EFFECT_FLAG_EFFECT;
 	int32 reset = (int32)lua_tointeger(L, 3);
-	uint32 flag = (uint32)lua_tointeger(L, 4);
+	uint64 flag = lua_tointeger(L, 4);
 	int32 count = (int32)lua_tointeger(L, 5);
 	lua_Integer lab = 0;
 	if(lua_gettop(L) >= 6)
@@ -5030,7 +5030,7 @@ static const struct luaL_Reg duellib[] = {
 	{ "IsAbleToEnterBP", scriptlib::duel_is_able_to_enter_bp },
 	{ "SwapDeckAndGrave", scriptlib::duel_swap_deck_and_grave },
 	{ "MajesticCopy", scriptlib::duel_majestic_copy },
-	{ NULL, NULL }
+	{ nullptr, nullptr }
 };
 void scriptlib::open_duellib(lua_State *L) {
 	luaL_newlib(L, duellib);

@@ -9,7 +9,7 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
-	tBigPicture = NULL;
+	tBigPicture = nullptr;
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
@@ -135,42 +135,42 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		char file[256];
 //		char file_img[256];
 		snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
-		irr::video::ITexture* img = NULL;
+		irr::video::ITexture* img = nullptr;
 		std::list<std::string>::iterator iter;
 		for (iter = support_types.begin(); iter != support_types.end(); ++iter) {	
 			snprintf(file, sizeof file, "/expansions/pics/%d.%s", code, iter->c_str());
 			img = driver->getTexture(image_work_path + path(file));
 //			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
 //			img = GetTextureFromFile(file_img, width, height);
-			if (img != NULL) {
+			if (img != nullptr) {
 				break;
 			}
 		}
-		if(img == NULL) {
+		if(img == nullptr) {
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
 				snprintf(file, sizeof file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
 				img = driver->getTexture(file);
 //				img = GetTextureFromFile(file, width, height);
-				if (img != NULL) {
+				if (img != nullptr) {
 					break;
 				}
 			}
 		}
-		if(img == NULL){//sdcard first, then zip
+		if(img == nullptr){//sdcard first, then zip
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
 				snprintf(file, sizeof file, "pics/%d.%s", code, iter->c_str());
 				//load image in zip
 				irr::io::IReadFile* in_zip_file = device->getFileSystem()->createAndOpenFile(file);
 				if (in_zip_file && in_zip_file->getSize() > 0) {
 					img = driver->getTexture(in_zip_file);
-					if (img != NULL) {
+					if (img != nullptr) {
 						break;
 					}
 				}
 			}
 		}
-		if(img == NULL) {
-			tMap[code] = NULL;
+		if(img == nullptr) {
+			tMap[code] = nullptr;
 			return GetTextureThumb(code);
 		} else {
 			tMap[code] = img;
@@ -185,19 +185,19 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	if(code == 0)
 		return tUnknown;
-	if(tBigPicture != NULL) {
+	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
-		tBigPicture = NULL;
+		tBigPicture = nullptr;
 	}
 	irr::video::ITexture* texture;
 	char file[256];
 	snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 	irr::video::IImage* srcimg = driver->createImageFromFile(file);
-	if(srcimg == NULL) {
+	if(srcimg == nullptr) {
 		snprintf(file, sizeof file, "pics/%d.jpg", code);
 		srcimg = driver->createImageFromFile(file);
 	}
-	if(srcimg == NULL) {
+	if(srcimg == nullptr) {
 		return tUnknown;
 	}
 	if(zoom == 1) {
@@ -218,26 +218,26 @@ irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 }
 irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(code == 0)
-		return NULL;
+		return nullptr;
 	auto tit = tFields.find(code);
 	if(tit == tFields.end()) {
 		char file[256];
 		snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 		irr::video::ITexture* img = driver->getTexture(file);
-		if(img == NULL) {
+		if(img == nullptr) {
 			snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
-		if(img == NULL) {
+		if(img == nullptr) {
 			snprintf(file, sizeof file, "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
-		if(img == NULL) {
+		if(img == nullptr) {
 			snprintf(file, sizeof file, "pics/field/%d.jpg", code);
 			img = driver->getTexture(file);
-			if(img == NULL) {
-				tFields[code] = NULL;
-				return NULL;
+			if(img == nullptr) {
+				tFields[code] = nullptr;
+				return nullptr;
 			} else {
 				tFields[code] = img;
 				return img;
@@ -250,6 +250,6 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(tit->second)
 		return tit->second;
 	else
-		return NULL;
+		return nullptr;
 }
 }

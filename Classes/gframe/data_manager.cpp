@@ -84,7 +84,7 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
 	BufferIO::EncodeUTF8(wfile, file);
 	IReadFile* reader = FileSystem->createAndOpenFile(file);
-	if(reader == NULL)
+	if(reader == nullptr)
 		return false;
 	spmemvfs_db_t db;
 	spmembuffer_t* mem = (spmembuffer_t*)calloc(sizeof(spmembuffer_t), 1);
