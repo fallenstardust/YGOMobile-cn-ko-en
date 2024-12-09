@@ -55,18 +55,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         curPreference = preference;
         Intent intent = FileActivity.getIntent(getActivity(), title, type, defPath, false, FileOpenType.SelectFile);
         startActivityForResult(intent, REQUEST_CHOOSE_FILE);
-//
-//        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-////        intent.addCategory(Intent.CATEGORY_OPENABLE);
-//        intent.setType(type);
-//        try {
-//            startActivityForResult(intent,
-//                    REQUEST_CHOOSE_FILE);
-//        } catch (android.content.ActivityNotFoundException ex) {
-//            Toast.makeText(getActivity(), R.string.no_find_file_selectotr, Toast.LENGTH_SHORT)
-//                    .show();
-//            onChooseFileFail(preference);
-//        }
     }
 
     public Context getContext() {

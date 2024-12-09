@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -29,14 +30,15 @@ public class DialogImageAdapter extends BaseAdapter {
     private int itemWidth;
     private int itemHeight;
     private String mFilename;
-    private AppsSettings mSettings;  // 假设AppsSettings是你的设置类
-    private CurImageInfo mCurImageInfo;
+    private AppsSettings mSettings;
 
     public DialogImageAdapter(DialogPlus dlg, Context context, ImageView imageView, ArrayList<ImageItem> imageItems, int[] itemWidth_itemHeight, String outFile, OnImageSelectedListener listener) {
         this.mDialogPlus = dlg;
         this.context = context;
         this.mImageView = imageView;
         this.imageItems = imageItems;
+        if (itemWidth_itemHeight[0] >= 960) itemWidth_itemHeight[0]/= 7;
+        if (itemWidth_itemHeight[1] >= 540) itemWidth_itemHeight[1]/= 7;
         this.itemWidth = itemWidth_itemHeight[0];
         this.itemHeight = itemWidth_itemHeight[1];
         this.mFilename = outFile;
@@ -76,7 +78,7 @@ public class DialogImageAdapter extends BaseAdapter {
     public View getView(final int position, View convertView, ViewGroup parent) {
         ImageView iv;
         final ImageItem item = imageItems.get(position);
-
+        //初始化item的布局iv
         if (convertView == null) {
             iv = new ImageView(context);
             iv.setLayoutParams(new GridView.LayoutParams(itemWidth, itemHeight));

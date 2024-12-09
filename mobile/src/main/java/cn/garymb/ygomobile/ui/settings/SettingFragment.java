@@ -683,6 +683,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         final DialogPlus dlg = new DialogPlus(getContext());
         dlg.setContentView(R.layout.dialog_image_select);
         dlg.setTitle(R.string.dialog_select_image);
+        dlg.show();
         GridView vImgSel = dlg.findViewById(R.id.gridView);
         ArrayList<ImageItem> items = new ArrayList<>();
         // 添加相册选择item
@@ -696,6 +697,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
             }
         }
+
         // 从Intent中获取传递的图片路径
         if (imagePath != null) {
             // 设置适配器
@@ -711,7 +713,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             dlg.dismiss();
             showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
         }
-        dlg.show();
+
     }
 
 }
