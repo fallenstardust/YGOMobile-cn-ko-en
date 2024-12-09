@@ -41,8 +41,12 @@ import android.graphics.Point;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.MediaStoreSignature;
 
 import org.json.JSONArray;
 
@@ -60,6 +64,7 @@ import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 /**
  * 静态类
@@ -474,7 +479,17 @@ public class AppsSettings {
     public String getCoreSkinPath() {
         return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
     }
+    public String getAvatarPath() {
+        return new File(getResourcePath(), Constants.CORE_AVATAR_PATH).getAbsolutePath();
+    }
 
+    public String getCoverPath() {
+        return new File(getResourcePath(), Constants.CORE_COVER_PATH).getAbsolutePath();
+    }
+
+    public String getBgPath() {
+        return new File(getResourcePath(), Constants.CORE_BG_PATH).getAbsolutePath();
+    }
     /***
      * 字体路径
      */
@@ -737,6 +752,17 @@ public class AppsSettings {
         }
 //        Log.i("kk", "saveTemp:" + array);
         mSharedPreferences.putString(Constants.PREF_LAST_ROOM_LIST, array.toString());
+    }
+
+    public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
+        File img = new File(outFile);
+        if (img.exists()) {
+            GlideCompat.with(context).load(img)
+                    .signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .override(outWidth, outHeight)
+                    .into(imageView);
+        }
     }
 
     public enum languageEnum {

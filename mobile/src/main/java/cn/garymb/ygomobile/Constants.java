@@ -78,6 +78,9 @@ public interface Constants {
     String CORE_SOUND_PATH = "sound";
     String CORE_SKIN_PATH = "textures";
     String CORE_SKIN_PENDULUM_PATH = CORE_SKIN_PATH + "/extra";
+    String CORE_AVATAR_PATH = CORE_SKIN_PATH + "/extra/avatars";
+    String CORE_COVER_PATH = CORE_SKIN_PATH + "/extra/covers";
+    String CORE_BG_PATH = CORE_SKIN_PATH + "/extra/bgs";
     String CORE_DECK_PATH = "deck";
     String CORE_PACK_PATH = "pack";
     String CORE_EXPANSIONS = "expansions";

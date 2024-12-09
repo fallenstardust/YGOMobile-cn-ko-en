@@ -38,7 +38,6 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
-import static cn.garymb.ygomobile.Constants.URL_SUPERPRE_CN_FILE_ALT;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
@@ -63,6 +62,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -83,6 +83,8 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.adapter.DialogImageAdapter;
+import cn.garymb.ygomobile.bean.ImageItem;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
@@ -382,19 +384,17 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView avatar1 = viewDialog.findViewById(R.id.me);
             ImageView avatar2 = viewDialog.findViewById(R.id.opponent);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
             avatar1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-                showImageDialog(preference, outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, avatar1, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
             });
             avatar2.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-                showImageDialog(preference, outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, avatar2, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
             });
         } else if (SETTINGS_COVER.equals(key)) {
             //显示卡背图片对话框
@@ -405,19 +405,15 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView cover1 = viewDialog.findViewById(R.id.cover1);
             ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
             cover1.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-                showImageDialog(preference, outFile, true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, cover1, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
             });
             cover2.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
-                showImageDialog(preference,outFile, true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, cover2, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
             });
         } else if (SETTINGS_CARD_BG.equals(key)) {
             //显示背景图片对话框
@@ -429,27 +425,23 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ImageView bg = viewDialog.findViewById(R.id.bg);
             ImageView bg_menu = viewDialog.findViewById(R.id.bg_menu);
             ImageView bg_deck = viewDialog.findViewById(R.id.bg_deck);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
             bg.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
-                showImageDialog(preference,outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_menu.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-                showImageDialog(preference, outFile, true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_deck.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-                showImageDialog(preference, outFile, true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
@@ -504,34 +496,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
         } else {
             super.onChooseFileOk(preference, file);
-        }
-    }
-
-    private void showImageDialog(Preference preference, String outFile, boolean isJpeg, int outWidth, int outHeight) {
-        final ImageView imageView = new ImageView(getContext());
-        FrameLayout frameLayout = new FrameLayout(getContext());
-        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
-        frameLayout.addView(imageView, layoutParams);
-        showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, isJpeg, outWidth, outHeight);
-        File img = new File(outFile);
-        if (img.exists()) {
-            GlideCompat.with(getContext()).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .override(outWidth, outHeight)
-                    .into(imageView);
-        }
-    }
-
-    public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
-        File img = new File(outFile);
-        if (img.exists()) {
-            GlideCompat.with(getContext()).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .override(outWidth, outHeight)
-                    .into(imageView);
         }
     }
 
@@ -716,5 +680,41 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
         }
     }
+
+    private void DialogloadImages(Preference preference, ImageView imageView, String imagePath, int[] itemWidth_itemHeight, String outFile) {
+        final DialogPlus dlg = new DialogPlus(getContext());
+        dlg.setContentView(R.layout.dialog_image_select);
+        dlg.setTitle(R.string.dialog_select_image);
+        GridView vImgSel = dlg.findViewById(R.id.gridView);
+        ArrayList<ImageItem> items = new ArrayList<>();
+        // 添加相册选择item
+        items.add(new ImageItem("album_item", true));
+        File directory = new File(imagePath);
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            for (File file : files) {
+                if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
+                    items.add(new ImageItem(file.getAbsolutePath(), false));
+                }
+            }
+        }
+        // 从Intent中获取传递的图片路径
+        if (imagePath != null) {
+            // 设置适配器
+            DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, new DialogImageAdapter.OnImageSelectedListener() {
+                @Override
+                public void onImageSelected(String outFilePath, String title, int width, int height) {
+                    showImageCropChooser(preference, title, outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
+                }
+            });
+            vImgSel.setAdapter(dialogImageAdapter);
+
+        } else {
+            dlg.dismiss();
+            showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
+        }
+        dlg.show();
+    }
+
 }
 
