@@ -434,14 +434,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_menu.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
+                DialogloadImages(preference, bg_menu, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_deck.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
+                DialogloadImages(preference, bg_deck, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
