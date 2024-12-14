@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -18,7 +17,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.ImageItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.CurImageInfo;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -37,8 +35,6 @@ public class DialogImageAdapter extends BaseAdapter {
         this.context = context;
         this.mImageView = imageView;
         this.imageItems = imageItems;
-        if (itemWidth_itemHeight[0] >= 960) itemWidth_itemHeight[0]/= 7;
-        if (itemWidth_itemHeight[1] >= 540) itemWidth_itemHeight[1]/= 7;
         this.itemWidth = itemWidth_itemHeight[0];
         this.itemHeight = itemWidth_itemHeight[1];
         this.mFilename = outFile;
@@ -81,7 +77,11 @@ public class DialogImageAdapter extends BaseAdapter {
         //初始化item的布局iv
         if (convertView == null) {
             iv = new ImageView(context);
-            iv.setLayoutParams(new GridView.LayoutParams(itemWidth, itemHeight));
+            int width = itemWidth;
+            int height = itemHeight;
+            if (itemWidth >= 960) width = itemWidth / 7;
+            if (itemHeight >= 540) height = itemHeight / 7;
+            iv.setLayoutParams(new GridView.LayoutParams(width, height));
             iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
             iv.setPadding(3, 3, 3, 3);
         } else {
