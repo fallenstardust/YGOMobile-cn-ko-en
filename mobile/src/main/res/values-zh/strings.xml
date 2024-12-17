@@ -89,6 +89,10 @@
         <item>Español</item>
         <item>日本語</item>
     </string-array>
+    <string-array name="key_words_split" translatable="false">
+        <item>(Space)</item>
+        <item>%%</item>
+    </string-array>
     <!-- settings -->
     <string name="server_list">联机对战</string>
     <string name="server_name">名称:</string>
@@ -356,6 +360,7 @@
     <string name="login_succeed">登录成功</string>
     <string name="reChatJoining">连接断开,重新登陆中……</string>
     <string name="settings_data_language">切换资料语言</string>
+    <string name="settings_key_words_split">更改分隔方式</string>
     <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
     <string name="tip_card_info_diff">软件未收录此卡。请尝试更新软件，或查看扩展卡包中是否有此卡。</string>
     <string name="tip_deckInfo_isNot_completeDeck">当前卡组解析异常，将尽量转换为已有卡片</string>

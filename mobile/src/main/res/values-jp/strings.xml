@@ -89,6 +89,10 @@
         <item>Español</item>
         <item>日本語</item>
     </string-array>
+    <string-array name="key_words_split" translatable="false">
+        <item>(Space)</item>
+        <item>%%</item>
+    </string-array>
     <!-- settings -->
     <string name="server_list">ヂュエル</string>
     <string name="server_name">サーバー名:</string>
@@ -356,6 +360,7 @@
     <string name="login_succeed">登録成功</string>
     <string name="reChatJoining">接続は切断された,最接続中……</string>
     <string name="settings_data_language">言語を変更します</string>
+    <string name="settings_key_words_split">更改分隔方式</string>
     <string name="settings_data_language_about">YGOPROのUI、説明文やテキストを切り替えます</string>
     <string name="tip_card_info_diff">未確認カードです。ソフトを更新してくださいまたは非公式データを更新してください。</string>
     <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常，オフィシャルパスコードに変更してください</string>

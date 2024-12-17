@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.loader;
 
+import cn.garymb.ygomobile.AppsSettings;
+
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -26,6 +28,9 @@ public class CardKeyWord {
                 filterList.add(new CodeFilter(Long.parseLong(word)));
             } else {
                 String[] ws = word.split(" ");
+                if (AppsSettings.get().getKeyWordsSplit() == AppsSettings.keyWordsSplitEnum.Percent.code) {
+                    ws = word.split("%%");
+                }
                 for (String w : ws) {
                     if (TextUtils.isEmpty(w)) {
                         continue;

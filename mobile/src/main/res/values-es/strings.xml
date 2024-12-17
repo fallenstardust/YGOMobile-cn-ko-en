@@ -97,6 +97,10 @@
         <item>Español</item>
         <item>Japonés</item>
     </string-array>
+    <string-array name="key_words_split" translatable="false">
+        <item>(Space)</item>
+        <item>%%</item>
+    </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Deshabilitado</item>
         <item>5</item>
@@ -361,6 +365,7 @@
     <string name="login_succeed">Inicio de sesión exitoso</string>
     <string name="reChatJoining">Volver a iniciar sesión...</string>
     <string name="settings_data_language">Elegir Idioma</string>
+    <string name="settings_key_words_split">更改分隔方式</string>
     <string name="settings_data_language_about">Cambiar el idioma de la interfaz de usuario de YGOMobile y la base de datos de las cartas</string>
     <string name="find_in_page">Buscar: </string>
     <string name="tip_card_info_diff">Esta carta no está incluida en YGOMobile. Intente actualizar YGOMobile o verifique si la carta está disponible en el paquete de cartas de expansión.</string>

@@ -22,6 +22,8 @@ public interface Constants {
     int PREF_DEF_IMAGE_QUALITY = 1;
     String PREF_DATA_LANGUAGE = "pref_key_game_data_language";
     int PREF_DEF_DATA_LANGUAGE = -1;
+    String PREF_KEY_WORDS_SPLIT = "pref_key_words_split";
+    int PREF_DEF_KEY_WORDS_SPLIT = -1;
     String PREF_GAME_FONT = "pref_key_game_font_name";
     String PREF_USE_EXTRA_CARD_CARDS = "settings_game_diy_card_db";
     boolean PREF_DEF_USE_EXTRA_CARD_CARDS = true;
