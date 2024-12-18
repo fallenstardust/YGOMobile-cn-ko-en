@@ -226,8 +226,14 @@ public:
 	}
 
 	void ResizeChatInputWindow();
-	template<typename T>
-	static std::vector<T> TokenizeString(T input, const T& token);
+	recti Resize(s32 x, s32 y, s32 x2, s32 y2);
+	recti Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy2);
+	position2di Resize(s32 x, s32 y);
+	position2di ResizeReverse(s32 x, s32 y);
+	recti ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width);
+	recti ResizeWin(s32 x, s32 y, s32 x2, s32 y2);
+    template<typename T>
+    static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
 	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const core::rect<s32>& position, const core::rect<s32>& padding,
 		video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = nullptr);

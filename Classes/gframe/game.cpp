@@ -2186,6 +2186,46 @@ void Game::ResizeChatInputWindow() {
 	wChat->setRelativePosition(recti(x, (GAME_HEIGHT - 35) * yScale, (GAME_WIDTH - 4) * xScale, GAME_HEIGHT * yScale));
 	ebChatInput->setRelativePosition(recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * xScale));
 }
+recti Game::Resize(s32 x, s32 y, s32 x2, s32 y2) {
+	x = x * xScale;
+	y = y * yScale;
+	x2 = x2 * xScale;
+	y2 = y2 * yScale;
+	return recti(x, y, x2, y2);
+}
+recti Game::Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy2) {
+	x = x * xScale + dx;
+	y = y * yScale + dy;
+	x2 = x2 * xScale + dx2;
+	y2 = y2 * yScale + dy2;
+	return recti(x, y, x2, y2);
+}
+position2di Game::Resize(s32 x, s32 y) {
+	x = x * xScale;
+	y = y * yScale;
+	return position2di(x, y);
+}
+position2di Game::ResizeReverse(s32 x, s32 y) {
+	x = x / xScale;
+	y = y / yScale;
+	return position2di(x, y);
+}
+recti Game::ResizeWin(s32 x, s32 y, s32 x2, s32 y2) {
+	s32 w = x2 - x;
+	s32 h = y2 - y;
+	x = (x + w / 2) * xScale - w / 2;
+	y = (y + h / 2) * yScale - h / 2;
+	x2 = w + x;
+	y2 = h + y;
+	return recti(x, y, x2, y2);
+}
+recti Game::ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width) {
+	x = x * xScale - width / 2;
+	y = y * yScale;
+	x2 = x2 * xScale;
+	y2 = y2 * yScale;
+	return recti(x, y, x2, y2);
+}
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);
     recti pos = window->getRelativePosition();

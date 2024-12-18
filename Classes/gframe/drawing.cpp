@@ -909,12 +909,8 @@ void Game::DrawSpec() {
 		}
 		case 100: {
 			if(showcardp < 60) {
-				driver->draw2DImage(imageManager.tHand[(showcardcode >> 16) & 0x3],
-						recti(615 * mainGame->xScale, showcarddif * mainGame->yScale, (615 + 89) * mainGame->xScale, (128 + showcarddif) * mainGame->yScale),
-						recti(0, 0, 89, 128), 0, 0, true);
-				driver->draw2DImage(imageManager.tHand[showcardcode & 0x3],
-										recti(615 * mainGame->xScale, (540 - showcarddif) * mainGame->yScale, (615 + 89) * mainGame->xScale, (128 + 540 - showcarddif) * mainGame->yScale),
-										recti(0, 0, 89, 128), 0, 0, true);
+				driver->draw2DImage(imageManager.tHand[(showcardcode >> 16) & 0x3], recti(615 * mainGame->xScale, showcarddif * mainGame->yScale, (615 + 89) * mainGame->xScale, (128 + showcarddif) * mainGame->yScale), recti(0, 0, 89, 128), 0, 0, true);
+				driver->draw2DImage(imageManager.tHand[showcardcode & 0x3], recti(615 * mainGame->xScale, (540 - showcarddif) * mainGame->yScale, (615 + 89) * mainGame->xScale, (128 + 540 - showcarddif) * mainGame->yScale), recti(0, 0, 89, 128), 0, 0, true);
 				float dy = -0.333333f * showcardp + 10;
 				showcardp++;
 				if(showcardp < 30)
@@ -972,16 +968,19 @@ void Game::DrawSpec() {
 			auto pos = lpcFont->getDimension(lstr);
 			if(showcardp < 10) {
 				int alpha = (showcardp * 25) << 24;
-                DrawShadowText(lpcFont, lstr, recti(550 * mainGame->xScale - pos.Width / 2 - (9 - showcardp) * 40 * mainGame->xScale, 270 * mainGame->yScale, 850 * mainGame->xScale, 350 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), alpha);
+				DrawShadowText(lpcFont, lstr, ResizePhaseHint(660 - (9 - showcardp) * 40, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), alpha | 0xffffff, alpha);
 			} else if(showcardp < showcarddif) {
-                DrawShadowText(lpcFont, lstr, recti(550 * mainGame->xScale - pos.Width / 2, 270 * mainGame->yScale, 850 * mainGame->xScale, 350 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff);
+				DrawShadowText(lpcFont, lstr, ResizePhaseHint(660, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), 0xffffffff);
 				if(dInfo.vic_string.size() && (showcardcode == 1 || showcardcode == 2)) {
-					driver->draw2DRectangle(0xa0000000, recti(500 * mainGame->xScale, 320 * mainGame->yScale, 840 * mainGame->xScale, 340 * mainGame->yScale));
-                    DrawShadowText(guiFont, dInfo.vic_string, recti(500 * mainGame->xScale, 320 * mainGame->yScale, 840 * mainGame->xScale, 340 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), 0xffffffff, 0xff000000, true, true, 0);
+					int w = guiFont->getDimension(dInfo.vic_string).Width;
+					if(w < 200)
+						w = 200;
+					driver->draw2DRectangle(0xa0000000, ResizeWin(640 - w / 2, 320, 690 + w / 2, 340));
+					DrawShadowText(guiFont, dInfo.vic_string, ResizeWin(640 - w / 2, 320, 690 + w / 2, 340), Resize(-2, -1, 0, 0), 0xffffffff, 0xff000000, true, true, 0);
 				}
 			} else if(showcardp < showcarddif + 10) {
 				int alpha = ((showcarddif + 10 - showcardp) * 25) << 24;
-                DrawShadowText(lpcFont, lstr, recti(550 * mainGame->xScale - pos.Width / 2 + (showcardp - showcarddif) * 40 * mainGame->xScale, 270 * mainGame->yScale, 850 * mainGame->xScale, 350 * mainGame->yScale), recti(0, 1 * mainGame->yScale, 2 * mainGame->xScale, 0), alpha | 0xffffff, 0xff000000, true, false);
+				DrawShadowText(lpcFont, lstr, ResizePhaseHint(660 + (showcardp - showcarddif) * 40, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), alpha | 0xffffff, alpha);
 			}
 			showcardp++;
 			break;
