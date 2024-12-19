@@ -18,6 +18,7 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
+import static cn.garymb.ygomobile.Constants.PREF_DEF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
@@ -378,6 +379,24 @@ public class AppsSettings {
      */
     public void setCardQuality(int quality) {
         mSharedPreferences.putString(Constants.PREF_IMAGE_QUALITY, "" + quality);
+    }
+
+    /***
+     * 关键字分隔方法
+     */
+    public void setKeyWordsSplit(int split) {
+        mSharedPreferences.putString(Constants.PREF_KEY_WORDS_SPLIT, "" + split);
+    }
+
+    /***
+     * 关键字分隔方法
+     */
+    public int getKeyWordsSplit() {
+        try {
+            return Integer.valueOf(mSharedPreferences.getString(Constants.PREF_KEY_WORDS_SPLIT, "" + PREF_DEF_KEY_WORDS_SPLIT));
+        } catch (Exception e) {
+            return PREF_DEF_KEY_WORDS_SPLIT;
+        }
     }
 
     /***
@@ -762,6 +781,19 @@ public class AppsSettings {
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(outWidth, outHeight)
                     .into(imageView);
+        }
+    }
+
+    public enum keyWordsSplitEnum {
+        Space(0, "Space"),
+        Percent(1, "%%");
+
+        public Integer code;
+        public String name;
+
+        keyWordsSplitEnum(Integer code, String name) {
+            this.code = code;
+            this.name = name;
         }
     }
 

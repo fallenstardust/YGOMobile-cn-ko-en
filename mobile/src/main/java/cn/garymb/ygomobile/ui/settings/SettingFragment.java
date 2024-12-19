@@ -13,6 +13,7 @@ import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
+import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
@@ -150,6 +151,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
+        bind(PREF_KEY_WORDS_SPLIT, mSettings.getKeyWordsSplit());
         bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
@@ -580,6 +582,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 if (new File(fonts).list() != null)
                     FileUtils.delFile(fonts);
                 IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.FONT_DIRECTORY), mSettings.getFontDirPath(), true);
+                //选择搜索时的关键字分隔方法
+                if (mSettings.getKeyWordsSplit() == -1) {//如果设置则为空格
+                    mSettings.setKeyWordsSplit(AppsSettings.keyWordsSplitEnum.Space.code);
+                } else {
+                    mSettings.setKeyWordsSplit(mSettings.getKeyWordsSplit());
+                }
                 //根据系统语言复制特定资料文件
                 if (mSettings.getDataLanguage() == -1) {//如果未在App中指定语言，则查询系统语言并进行设置
                     String language = getContext().getResources().getConfiguration().locale.getLanguage();
