@@ -63,7 +63,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView race;
     private final TextView cardAtk;
     private final TextView cardDef;
-
+    private final LinearLayout ll_pack;
+    private final TextView packName;
     private final TextView setName;
     private final TextView otView;
     private final TextView attrView;
@@ -81,6 +82,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final View mImageFav, atkdefView;
 
     private final StringManager mStringManager;
+    private final BaseActivity mContext;
     private int curPosition;
     private Card mCardInfo;
     private CardListProvider mProvider;
@@ -94,7 +96,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
-    private boolean mShowAdd = false;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -126,7 +127,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
-    private final BaseActivity mContext;
+    private boolean mShowAdd = false;
     private OnFavoriteChangedListener mCallBack;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
@@ -135,6 +136,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage = findViewById(R.id.card_image);
         this.imageLoader = imageLoader;
         mStringManager = stringManager;
+        ll_pack = findViewById(R.id.ll_pack);
+        packName = findViewById(R.id.pack_name);
         name = findViewById(R.id.text_name);
         desc = findViewById(R.id.text_desc);
         close = findViewById(R.id.btn_close);
@@ -271,6 +274,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
+        packName.setText(getPackName());
         name.setText(cardInfo.Name);
         if (cardInfo.Name.equals("Unknown")) {
             desc.setText(R.string.tip_card_info_diff);
@@ -280,8 +284,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
+            ll_pack.setVisibility(View.INVISIBLE);
         } else {
             faq.setVisibility(View.VISIBLE);
+            ll_pack.setVisibility(View.VISIBLE);
         }
         if (mShowAdd) {
             if (cardInfo.isType(CardType.Token)) {
@@ -361,8 +367,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
+    private String getPackName(Card cardInfo) {
+        String packname = "";
+        return packname;
+    }
+
     private void showCardImageDetail(int code) {
-        AppsSettings appsSettings = AppsSettings.get();
         View view = dialog.initDialog(context, R.layout.dialog_photo);
 
         dialog.setDialogWidth(ViewGroup.LayoutParams.MATCH_PARENT);
@@ -544,7 +554,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
         }
     }
-
 
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
