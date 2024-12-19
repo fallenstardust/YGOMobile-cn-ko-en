@@ -114,12 +114,6 @@
             android:key="pref_key_game_lab_pendulum_scale"
             android:persistent="true"
             android:title="@string/settings_game_lab_pendulum_scale" />
-        <ListPreference
-            android:entries="@array/key_words_split"
-            android:entryValues="@array/key_words_split_value"
-            android:key="pref_key_words_split"
-            android:persistent="true"
-            android:title="@string/settings_key_words_split" />
         <!--<CheckBoxPreference
             android:key="pref_settings_deck_manager_v2"
             android:persistent="true"

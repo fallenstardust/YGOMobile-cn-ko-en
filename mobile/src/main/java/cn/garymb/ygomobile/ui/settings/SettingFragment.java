@@ -582,12 +582,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 if (new File(fonts).list() != null)
                     FileUtils.delFile(fonts);
                 IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.FONT_DIRECTORY), mSettings.getFontDirPath(), true);
-                //选择搜索时的关键字分隔方法
-                if (mSettings.getKeyWordsSplit() == -1) {//如果设置则为空格
-                    mSettings.setKeyWordsSplit(AppsSettings.keyWordsSplitEnum.Space.code);
-                } else {
-                    mSettings.setKeyWordsSplit(mSettings.getKeyWordsSplit());
-                }
                 //根据系统语言复制特定资料文件
                 if (mSettings.getDataLanguage() == -1) {//如果未在App中指定语言，则查询系统语言并进行设置
                     String language = getContext().getResources().getConfiguration().locale.getLanguage();

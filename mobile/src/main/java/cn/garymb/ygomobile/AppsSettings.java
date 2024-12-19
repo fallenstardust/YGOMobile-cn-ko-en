@@ -785,8 +785,8 @@ public class AppsSettings {
     }
 
     public enum keyWordsSplitEnum {
-        Space(0, "Space"),
-        Percent(1, "%%");
+        Percent(0, "%%"),
+        Space(1, "Space");
 
         public Integer code;
         public String name;

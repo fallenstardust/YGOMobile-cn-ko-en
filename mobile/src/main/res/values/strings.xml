@@ -98,10 +98,6 @@
         <item>Español</item>
         <item>日本語</item>
     </string-array>
-    <string-array name="key_words_split" translatable="false">
-        <item>(Space)</item>
-        <item>%%</item>
-    </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Disable</item>
         <item>5</item>
@@ -368,7 +364,7 @@
     <string name="login_succeed">Chatroom logined</string>
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
-    <string name="settings_key_words_split">change the way of inputting the keywords </string>
+    <string name="settings_key_words_split">Multi-keyword search (separated by spaces)</string>
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
     <string name="find_in_page">find:</string>
     <string name="tip_card_info_diff">Released and Pre-released Cards are different,pls note after patch them</string>

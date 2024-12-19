@@ -238,32 +238,35 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="0dp"
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_word1"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:layout_weight="1">
+                    android:layout_gravity="center_vertical"
+                    android:hint="@string/hit_keyword1"
+                    android:imeOptions="actionSearch"
+                    android:inputType="textNoSuggestions"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColorHint="@color/gold" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                    <androidx.appcompat.widget.AppCompatEditText
-                        android:id="@+id/edt_word1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:hint="@string/hit_keyword1"
-                        android:imeOptions="actionSearch"
-                        android:inputType="textNoSuggestions"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textColorHint="@color/gold" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-            </LinearLayout>
+            <CheckBox
+                android:id="@+id/chk_multi_keyword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginBottom="30dp"
+                android:textSize="10sp"
+                android:text="@string/settings_key_words_split"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
