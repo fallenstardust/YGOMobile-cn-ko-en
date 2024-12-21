@@ -194,7 +194,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:gravity="center_vertical"
-                        android:maxLines="1"
+                        android:maxLines="2"
                         android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                         android:textColor="@color/holo_blue_bright"
