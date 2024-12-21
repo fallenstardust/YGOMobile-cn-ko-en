@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -55,6 +56,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private static final String TAG = String.valueOf(CardDetail.class);
     private final CardManager cardManager;
+    private final PackManager packManager;
     private final ImageView cardImage;
     private final TextView name;
     private final TextView desc;
@@ -162,6 +164,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         attrView = findViewById(R.id.card_attribute);
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
+        packManager = DataManager.get().getPackManager();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -274,7 +277,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
-        packName.setText(getPackName());
+
+        packName.setText(packManager.findFileNameById(cardInfo.Alias != 0 ? cardInfo.Alias :cardInfo.Code));
         name.setText(cardInfo.Name);
         if (cardInfo.Name.equals("Unknown")) {
             desc.setText(R.string.tip_card_info_diff);
@@ -365,11 +369,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
         }
-    }
-
-    private String getPackName(Card cardInfo) {
-        String packname = "";
-        return packname;
     }
 
     private void showCardImageDetail(int code) {

@@ -154,7 +154,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         try {
             ServerUtil.refreshServer(activity);
         } catch (IOException e) {
-            Log.e("seesee",e+"");
+            Log.e(TAG,e+"");
         }
         //showNewbieGuide("homePage");
         return layoutView;

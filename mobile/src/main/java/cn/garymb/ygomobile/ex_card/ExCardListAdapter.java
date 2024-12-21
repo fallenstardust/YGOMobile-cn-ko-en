@@ -60,7 +60,7 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
             }
 
         }).fail((e) -> {
-            Log.e("seesee",e+"");
+            Log.e(TAG,e+"");
             if (dialog_read_ex.isShowing()) {//关闭异常
                 try {
                     dialog_read_ex.dismiss();
@@ -71,7 +71,6 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
             LogUtil.i(TAG, "webCrawler fail");
 
         }).done((exCardDataList) -> {
-            Log.w("seesee",exCardDataList+"");
             if (exCardDataList != null) {
                 LogUtil.i(TAG, "webCrawler done");
                 getData().clear();
