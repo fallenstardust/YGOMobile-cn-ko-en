@@ -194,8 +194,6 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:gravity="center_vertical"
-                        android:maxLines="2"
-                        android:singleLine="true"
                         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                         android:textColor="@color/holo_blue_bright"
                         tools:text="2024-12-21 25PP" />

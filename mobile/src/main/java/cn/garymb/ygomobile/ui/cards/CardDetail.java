@@ -130,7 +130,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     };
     private boolean mShowAdd = false;
-    private OnFavoriteChangedListener mCallBack;
+    private OnFavoriteChangedListener mOnFavoriteChangedListener;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
@@ -214,8 +214,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public void doMyFavorites(Card cardInfo) {
         boolean ret = CardFavorites.get().toggle(cardInfo.Code);
         mImageFav.setSelected(ret);
-        if (mCallBack != null) {
-            mCallBack.onFavoriteChange(cardInfo, ret);
+        if (mOnFavoriteChangedListener != null) {
+            mOnFavoriteChangedListener.onFavoriteChange(cardInfo, ret);
         }
     }
 
@@ -246,7 +246,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     public void setCallBack(OnFavoriteChangedListener callBack) {
-        mCallBack = callBack;
+        mOnFavoriteChangedListener = callBack;
     }
 
     public void bind(Card cardInfo, final int position, final CardListProvider provider) {
@@ -274,17 +274,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.middle);
         dialog = DialogUtils.getdx(context);
-        cardImage.setOnClickListener((v) -> {
-            showCardImageDetail(cardInfo.Code);
-        });
-
-        packName.setText(packManager.findFileNameById(cardInfo.Alias != 0 ? cardInfo.Alias :cardInfo.Code));
+        cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
+        packName.setText(packManager.findFileNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
-        if (cardInfo.Name.equals("Unknown")) {
-            desc.setText(R.string.tip_card_info_diff);
-        } else {
-            desc.setText(cardInfo.Desc);
-        }
+        desc.setText(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
@@ -557,18 +550,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
     }
+    public interface OnShowPackListListener {
+        void onShowPackList(Card card);
+    }
 
     public interface OnCardClickListener {
         void onOpenUrl(Card cardInfo);
-
         void onAddMainCard(Card cardInfo);
-
         void onAddSideCard(Card cardInfo);
-
-
         void onImageUpdate(Card cardInfo);
-
-
         void onClose();
     }
 

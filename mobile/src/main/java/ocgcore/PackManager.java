@@ -20,7 +20,12 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 
 public class PackManager implements Closeable {
     private static final String TAG = PackManager.class.getSimpleName();
+    private static final PackManager sPackManager = new PackManager();
     private final List<Map.Entry<String, List<Integer>>> packList = new ArrayList<>();
+
+    public static PackManager get() {
+        return sPackManager;
+    }
 
     public PackManager() {
     }
@@ -44,8 +49,7 @@ public class PackManager implements Closeable {
             Log.e(TAG, "Invalid path provided.");
             return false;
         }
-        File file = new File(path);
-        File[] fileList = file.listFiles();
+        File[] fileList = new File(path).listFiles();
 
         if (fileList == null || fileList.length == 0) {
             Log.w(TAG, "No files found in the directory: " + path);
