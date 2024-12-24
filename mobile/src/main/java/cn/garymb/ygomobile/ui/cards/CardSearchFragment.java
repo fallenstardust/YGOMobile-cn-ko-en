@@ -43,9 +43,12 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.widget.Shimmer;
+import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
@@ -56,7 +59,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private HomeActivity activity;
     protected CardLoader mCardLoader;
     protected DrawerLayout mDrawerlayout;
-    protected CardSearcher mCardSelector;
+    protected CardSearcher mCardSearcher;
+    protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private RecyclerView mListView;
@@ -92,10 +96,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mListView.setAdapter(mCardListAdapter);
         Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
+        mPackManager = DataManager.get().getPackManager();
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
-        mCardSelector.setCallBack(this);
+        mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        mCardSearcher.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
@@ -110,7 +115,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             dlg.dismiss();
             isLoad = true;
             mCardLoader.loadData();
-            mCardSelector.initItems();
+            mCardSearcher.initItems();
             //数据库初始化完毕后搜索被传入的关键字
             intentSearch(intentSearchMessage);
             isInitCdbOk = true;
@@ -147,7 +152,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         //卡查关键字为空不卡查
         if (TextUtils.isEmpty(currentCardSearchMessage))
             return;
-        mCardSelector.search(currentCardSearchMessage);
+        mCardSearcher.search(currentCardSearchMessage);
     }
 
     protected void setListeners() {
@@ -284,14 +289,19 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSelector.isShowFavorite()) {
-                        mCardSelector.showFavorites(false);
+                    if (mCardSearcher.isShowFavorite()) {
+                        mCardSearcher.showFavorites(false);
                     }
                 });
                 mCardDetail.setOnCardClickListener(new CardDetail.OnCardSearcherCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
+                    }
+
+                    @Override
+                    public void onShowPackList(Card cardInfo) {
+                        showPackList(cardInfo);
                     }
 
                     @Override
@@ -330,6 +340,19 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             mCardDetail.bind(cardInfo, position, provider);
         }
     }
+
+    private void showPackList(Card cardInfo) {
+        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
+
+        List<Card> packList = mPackManager.getCards(mCardLoader, idToUse);
+
+        if (packList != null) {
+            onSearchResult(packList, false);
+        } else {
+            Log.w("cc", "No pack found for the given ID/Alias: " + idToUse);
+        }
+    }
+
 
     protected void showSearch(boolean autoclose) {
         if (autoclose && mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {

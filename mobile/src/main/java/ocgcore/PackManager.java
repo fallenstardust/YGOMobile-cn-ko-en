@@ -1,6 +1,8 @@
 package ocgcore;
 
+import android.os.Build;
 import android.util.Log;
+import android.util.SparseArray;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -16,7 +18,9 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import ocgcore.data.Card;
 
 public class PackManager implements Closeable {
     private static final String TAG = PackManager.class.getSimpleName();
@@ -132,6 +136,54 @@ public class PackManager implements Closeable {
         }
         return null; // 如果没有找到匹配项，则返回null
     }
+    /**
+     * 根据给定的ID查找其所属的packName下的所有ID。
+     *
+     * @param id 给定的ID。
+     * @return 包含给定ID所属的packName下的所有ID的列表。
+     */
+    public List<Integer> getAllIdsById(Integer id) {
+        String packName = findPackNameById(id);
+        if (packName == null) {
+            Log.w("seesee", "No pack found for ID: " + id);
+            return new ArrayList<>();
+        }
+        return findIdsByPackName(packName);
+    }
+    /**
+     * 从cardLoader查询收藏的卡片
+     *
+     * @param cardLoader
+     * @return 排序后的列表
+     */
+    public List<Card> getCards(CardLoader cardLoader, Integer code) {
+        List<Integer> mList = getAllIdsById(code);
+        SparseArray<Card> id = cardLoader.readCards(mList, false);
+        List<Card> list = new ArrayList<>();
+        if (id != null) {
+            for (int i = 0; i < id.size(); i++) {
+                list.add(id.valueAt(i));
+            }
+        }
+        return list;
+    }
+    /**
+     * 从cardLoader查询收藏的卡片
+     *
+     * @param cardLoader
+     * @return 排序后的列表
+     */
+    public List<Card> getCards(CardLoader cardLoader, String packName) {
+        List<Integer> mList = findIdsByPackName(packName);
+        SparseArray<Card> id = cardLoader.readCards(mList, false);
+        List<Card> list = new ArrayList<>();
+        if (id != null) {
+            for (int i = 0; i < id.size(); i++) {
+                list.add(id.valueAt(i));
+            }
+        }
+        return list;
+    }
 
     /**
      * 将packList的内容转换为字符串表示。
@@ -142,7 +194,9 @@ public class PackManager implements Closeable {
         for (int i = 0; i < packList.size(); i++) {
             Map.Entry<String, List<Integer>> entry = packList.get(i);
             sb.append("Entry ").append(i + 1).append(": ").append(entry.getKey()).append(" -> [");
-            sb.append(String.join(", ", entry.getValue().stream().map(String::valueOf).toArray(String[]::new)));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                sb.append(String.join(", ", entry.getValue().stream().map(String::valueOf).toArray(String[]::new)));
+            }
             sb.append("]\n");
         }
         return sb.toString();
