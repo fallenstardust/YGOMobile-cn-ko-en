@@ -545,7 +545,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (isShowCard()) return;
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
-                mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
+                mCardDetail.setOnCardClickListener(new CardDetail.OnDeckManagerCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);

@@ -288,7 +288,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                         mCardSelector.showFavorites(false);
                     }
                 });
-                mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
+                mCardDetail.setOnCardClickListener(new CardDetail.OnCardSearcherCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);

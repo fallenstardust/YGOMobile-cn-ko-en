@@ -59,7 +59,7 @@ public class CardDetailRandom {
         mStringManager = DataManager.get().getStringManager();
         mPackManager = DataManager.get().getPackManager();
 
-        pack_name.setText(mPackManager.findFileNameById(cardInfo.Alias != 0 ? cardInfo.Alias :cardInfo.Code));
+        pack_name.setText(mPackManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias :cardInfo.Code));
         name.setText(cardInfo.Name);
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));

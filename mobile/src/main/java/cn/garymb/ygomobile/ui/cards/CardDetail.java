@@ -88,7 +88,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private int curPosition;
     private Card mCardInfo;
     private CardListProvider mProvider;
-    private OnCardClickListener mListener;
+    private OnDeckManagerCardClickListener mListener;
     private DialogUtils dialog;
     private PhotoView photoView;
     private LinearLayout ll_bar;
@@ -241,7 +241,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mContext;
     }
 
-    public void setOnCardClickListener(OnCardClickListener listener) {
+    public void setOnCardClickListener(OnDeckManagerCardClickListener listener) {
         mListener = listener;
     }
 
@@ -275,7 +275,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.middle);
         dialog = DialogUtils.getdx(context);
         cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
-        packName.setText(packManager.findFileNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
+        packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         desc.setText(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
@@ -554,7 +554,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onShowPackList(Card card);
     }
 
-    public interface OnCardClickListener {
+    public interface OnDeckManagerCardClickListener {
         void onOpenUrl(Card cardInfo);
         void onAddMainCard(Card cardInfo);
         void onAddSideCard(Card cardInfo);
@@ -562,8 +562,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onClose();
     }
 
-    public static class DefaultOnCardClickListener implements OnCardClickListener {
-        public DefaultOnCardClickListener() {
+    public static class OnCardSearcherCardClickListener implements OnDeckManagerCardClickListener {
+        public OnCardSearcherCardClickListener() {
         }
 
         @Override

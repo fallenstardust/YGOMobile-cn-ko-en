@@ -107,10 +107,27 @@ public class PackManager implements Closeable {
      * @param id 要查找的ID。
      * @return 如果找到匹配项，则返回对应的文件名；否则返回null。
      */
-    public String findFileNameById(Integer id) {
+    public String findPackNameById(Integer id) {
         for (Map.Entry<String, List<Integer>> entry : packList) {
             if (entry.getValue().contains(id)) {
                 return entry.getKey().substring(0, entry.getKey().lastIndexOf(Constants.YDK_FILE_EX));
+            }
+        }
+        return null; // 如果没有找到匹配项，则返回null
+    }
+
+    /**
+     * 通过给定的ID在packList中查找对应的String名称。
+     *
+     * @param packName 要查找的ID。
+     * @return 如果找到匹配项，则返回对应的文件名；否则返回null。
+     */
+    public List<Integer> findIdsByPackName(String packName) {
+        List<Integer> mList = new ArrayList<>();
+        for (Map.Entry<String, List<Integer>> entry : packList) {
+            if (entry.getKey().contains(packName)) {
+                mList.addAll(entry.getValue());
+                return mList;
             }
         }
         return null; // 如果没有找到匹配项，则返回null
