@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -55,6 +56,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private static final String TAG = String.valueOf(CardDetail.class);
     private final CardManager cardManager;
+    private final PackManager packManager;
     private final ImageView cardImage;
     private final TextView name;
     private final TextView desc;
@@ -86,7 +88,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private int curPosition;
     private Card mCardInfo;
     private CardListProvider mProvider;
-    private OnCardClickListener mListener;
+    private OnDeckManagerCardClickListener mListener;
     private DialogUtils dialog;
     private PhotoView photoView;
     private LinearLayout ll_bar;
@@ -128,7 +130,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     };
     private boolean mShowAdd = false;
-    private OnFavoriteChangedListener mCallBack;
+    private OnFavoriteChangedListener mOnFavoriteChangedListener;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
@@ -162,6 +164,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         attrView = findViewById(R.id.card_attribute);
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
+        packManager = DataManager.get().getPackManager();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -211,8 +214,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public void doMyFavorites(Card cardInfo) {
         boolean ret = CardFavorites.get().toggle(cardInfo.Code);
         mImageFav.setSelected(ret);
-        if (mCallBack != null) {
-            mCallBack.onFavoriteChange(cardInfo, ret);
+        if (mOnFavoriteChangedListener != null) {
+            mOnFavoriteChangedListener.onFavoriteChange(cardInfo, ret);
         }
     }
 
@@ -238,12 +241,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mContext;
     }
 
-    public void setOnCardClickListener(OnCardClickListener listener) {
+    public void setOnCardClickListener(OnDeckManagerCardClickListener listener) {
         mListener = listener;
     }
 
     public void setCallBack(OnFavoriteChangedListener callBack) {
-        mCallBack = callBack;
+        mOnFavoriteChangedListener = callBack;
     }
 
     public void bind(Card cardInfo, final int position, final CardListProvider provider) {
@@ -271,16 +274,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.middle);
         dialog = DialogUtils.getdx(context);
-        cardImage.setOnClickListener((v) -> {
-            showCardImageDetail(cardInfo.Code);
-        });
-        packName.setText(getPackName());
+        cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
+        packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
-        if (cardInfo.Name.equals("Unknown")) {
-            desc.setText(R.string.tip_card_info_diff);
-        } else {
-            desc.setText(cardInfo.Desc);
-        }
+        desc.setText(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
@@ -365,11 +362,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             level.setVisibility(View.GONE);
             linkArrow.setVisibility(View.GONE);
         }
-    }
-
-    private String getPackName(Card cardInfo) {
-        String packname = "";
-        return packname;
     }
 
     private void showCardImageDetail(int code) {
@@ -558,23 +550,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
     }
+    public interface OnShowPackListListener {
+        void onShowPackList(Card card);
+    }
 
-    public interface OnCardClickListener {
+    public interface OnDeckManagerCardClickListener {
         void onOpenUrl(Card cardInfo);
-
         void onAddMainCard(Card cardInfo);
-
         void onAddSideCard(Card cardInfo);
-
-
         void onImageUpdate(Card cardInfo);
-
-
         void onClose();
     }
 
-    public static class DefaultOnCardClickListener implements OnCardClickListener {
-        public DefaultOnCardClickListener() {
+    public static class OnCardSearcherCardClickListener implements OnDeckManagerCardClickListener {
+        public OnCardSearcherCardClickListener() {
         }
 
         @Override

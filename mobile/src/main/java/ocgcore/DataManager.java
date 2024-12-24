@@ -1,14 +1,11 @@
 package ocgcore;
 
-import org.greenrobot.eventbus.EventBus;
-
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.loader.CardLoader;
 
 /**
  * 单例模式，使用get()方式自动获取单例
- * 其field包括StringManager、LimitManager、CardManager
+ * 其field包括StringManager、PackManager、LimitManager、CardManager
  */
 public class DataManager {
     private static DataManager sLoader = null;
@@ -28,29 +25,27 @@ public class DataManager {
     }
 
     private final StringManager mStringManager;
+    private final PackManager mPackManager;
     private final LimitManager mLimitManager;
     private final CardManager mCardManager;
 
     private DataManager() {
         mStringManager = new StringManager();
+        mPackManager = new PackManager();
         mLimitManager = new LimitManager();
         mCardManager = new CardManager(
                 AppsSettings.get().getDataBasePath(),
                 AppsSettings.get().getExpansionsPath().getAbsolutePath());
     }
 
-    public StringManager getStringManager() {
-        return mStringManager;
-    }
-
+    public StringManager getStringManager() { return mStringManager;}
+    public PackManager getPackManager() { return mPackManager;}
     public LimitManager getLimitManager() {
         return mLimitManager;
     }
-
     public CardManager getCardManager() {
         return mCardManager;
     }
-
     private boolean mInit;
 
     public void load(boolean force) {
@@ -64,6 +59,7 @@ public class DataManager {
         }
         if (needLoad) {
             mStringManager.load();
+            mPackManager.load();
             mLimitManager.load();
             mCardManager.loadCards();
         }

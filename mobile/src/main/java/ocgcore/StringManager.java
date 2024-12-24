@@ -4,6 +4,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.file.zip.ZipEntry;
+import com.file.zip.ZipFile;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -16,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import com.file.zip.ZipEntry;
-import com.file.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;

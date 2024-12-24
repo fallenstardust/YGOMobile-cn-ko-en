@@ -186,9 +186,7 @@ public class DeckUtil {
                             String name = entry.getName();
                             name = name.substring(name.lastIndexOf("/"));
                             InputStream inputStream = zipFile.getInputStream(entry);
-                            deckList.add(new DeckFile(
-                                    IOUtils.asFile(inputStream,
-                                            appsSettings.getCacheDeckDir() + "/" + name)));
+                            deckList.add(new DeckFile(IOUtils.asFile(inputStream, appsSettings.getCacheDeckDir() + "/" + name)));
                         }
                     }
                 } finally {

@@ -35,7 +35,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -66,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -78,6 +78,7 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
@@ -103,6 +104,7 @@ import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
@@ -112,7 +114,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
-    protected CardSearcher mCardSelector;
+    protected CardSearcher mCardSearcher;
+    protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private HomeActivity activity;
@@ -164,10 +167,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mListView.setAdapter(mCardListAdapter);
         setListeners();
 
+        mPackManager = new PackManager();
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
-        mCardSelector.setCallBack(this);
+        mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        mCardSearcher.setCallBack(this);
 
         tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
@@ -414,7 +418,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }).done((rs) -> {
             isLoad = true;
             dlg.dismiss();
-            mCardSelector.initItems();
+            mCardSearcher.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
             if (rs.source != null) {
@@ -423,7 +427,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 setCurDeck(rs, false);
             }
             //设置收藏夹
-            mCardSelector.showFavorites(false);
+            mCardSearcher.showFavorites(false);
         });
     }
 
@@ -541,7 +545,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (isShowCard()) return;
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
-                mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
+                mCardDetail.setOnCardClickListener(new CardDetail.OnDeckManagerCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
@@ -569,8 +573,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
                 });
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSelector.isShowFavorite()) {
-                        mCardSelector.showFavorites(false);
+                    if (mCardSearcher.isShowFavorite()) {
+                        mCardSearcher.showFavorites(false);
                     }
                 });
             }

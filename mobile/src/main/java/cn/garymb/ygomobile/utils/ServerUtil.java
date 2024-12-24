@@ -58,7 +58,6 @@ public class ServerUtil {
         LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
         String URL_DATAVER = URL_CN_DATAVER;
         URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + getLanguageId() + "/version.txt";
-        Log.w("seesee", URL_DATAVER);
         OkhttpUtil.get(URL_DATAVER, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -318,7 +317,6 @@ public class ServerUtil {
         String url;
         url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
                 ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
-        Log.w("seesee",url);
         return url;
     }
 
@@ -326,7 +324,6 @@ public class ServerUtil {
         String json;
         json = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
                 ? URL_PRE_CARD : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/test-release.json";
-        Log.w("seesee",json);
         return json;
     }
     public enum ExCardState {
