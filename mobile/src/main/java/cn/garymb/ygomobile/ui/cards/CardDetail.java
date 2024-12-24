@@ -34,6 +34,8 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
+import cn.garymb.ygomobile.ui.widget.Shimmer;
+import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -66,7 +68,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView cardAtk;
     private final TextView cardDef;
     private final LinearLayout ll_pack;
-    private final TextView packName;
+    private final ShimmerTextView packName;
     private final TextView setName;
     private final TextView otView;
     private final TextView attrView;
@@ -98,6 +100,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
+    private Shimmer shimmer;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -140,6 +143,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mStringManager = stringManager;
         ll_pack = findViewById(R.id.ll_pack);
         packName = findViewById(R.id.pack_name);
+        toggleAnimation(packName);
         name = findViewById(R.id.text_name);
         desc = findViewById(R.id.text_desc);
         close = findViewById(R.id.btn_close);
@@ -206,6 +210,25 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mImageFav.setOnClickListener((v) -> {
             doMyFavorites(getCardInfo());
         });
+        ll_pack.setOnClickListener((v) -> {
+            if (mListener != null) {
+                Card cardInfo = getCardInfo();
+                if (cardInfo == null) {
+                    return;
+                }
+                mListener.onShowPackList(cardInfo);
+            }
+        });
+    }
+
+
+    public void toggleAnimation(ShimmerTextView target) {
+        if (shimmer != null && shimmer.isAnimating()) {
+            shimmer.cancel();
+        } else {
+            shimmer = new Shimmer();
+            shimmer.start(target);
+        }
     }
 
     /**
@@ -559,6 +582,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onAddMainCard(Card cardInfo);
         void onAddSideCard(Card cardInfo);
         void onImageUpdate(Card cardInfo);
+        void onShowPackList(Card cardInfo);
         void onClose();
     }
 
@@ -577,6 +601,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         @Override
         public void onImageUpdate(Card cardInfo) {
+
+        }
+
+        @Override
+        public void onShowPackList(Card cardInfo) {
 
         }
 
