@@ -390,36 +390,26 @@ uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 }
 unsigned char* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 	// default script name: ./script/c%d.lua
-	char first[256]{};
-	char second[256]{};
+	if (std::strncmp(script_name, "./script", 8) != 0)
+		return DefaultScriptReader(script_name, slen);
+	char expansions_path[1024]{};
+	std::snprintf(expansions_path, sizeof expansions_path, "./expansions/%s", script_name + 2);
 	if(mainGame->gameConf.prefer_expansion_script) {
-		snprintf(first, sizeof first, "expansions/%s", script_name + 2);
-		snprintf(second, sizeof second, "%s", script_name + 2);
+		if (DefaultScriptReader(expansions_path, slen))
+			return scriptBuffer;
+		else if (ScriptReaderZip(script_name + 2, slen))
+			return scriptBuffer;
+		else if (DefaultScriptReader(script_name, slen))
+			return scriptBuffer;
 	} else {
-		snprintf(first, sizeof first, "%s", script_name + 2);
-		snprintf(second, sizeof second, "expansions/%s", script_name + 2);
-	}
-	if(mainGame->gameConf.prefer_expansion_script) {
-		if(ScriptReader(first, slen))
+		if (DefaultScriptReader(script_name, slen))
 			return scriptBuffer;
-		if(ScriptReader(second, slen))
+		else if (DefaultScriptReader(expansions_path, slen))
+			return scriptBuffer;
+		else if (ScriptReaderZip(script_name + 2, slen))
 			return scriptBuffer;
 	}
-	if(ScriptReaderZip(first, slen))
-		return scriptBuffer;
-	else
-		return ScriptReaderZip(second, slen);
-}
-unsigned char* DataManager::ScriptReader(const char* script_name, int* slen) {
-	FILE *fp = fopen(script_name, "rb");
-	if(!fp)
-		return 0;
-	int len = fread(scriptBuffer, 1, sizeof(scriptBuffer), fp);
-	fclose(fp);
-	if(len >= sizeof(scriptBuffer))
-		return 0;
-	*slen = len;
-	return scriptBuffer;
+	return nullptr;
 }
 unsigned char* DataManager::ScriptReaderZip(const char* script_name, int* slen) {
 	IReadFile* reader = FileSystem->createAndOpenFile(script_name);
@@ -433,6 +423,19 @@ unsigned char* DataManager::ScriptReaderZip(const char* script_name, int* slen) 
 	reader->read(scriptBuffer, size);
 	reader->drop();
 	*slen = (int)size;
+	return scriptBuffer;
+}
+unsigned char* DataManager::DefaultScriptReader(const char* script_name, int* slen) {
+	wchar_t fname[256]{};
+	BufferIO::DecodeUTF8(script_name, fname);
+	FILE* fp = myfopen(fname, "rb");
+	if (!fp)
+		return nullptr;
+	size_t len = std::fread(scriptBuffer, 1, sizeof scriptBuffer, fp);
+	std::fclose(fp);
+	if (len >= sizeof scriptBuffer)
+		return nullptr;
+	*slen = (int)len;
 	return scriptBuffer;
 }
 
