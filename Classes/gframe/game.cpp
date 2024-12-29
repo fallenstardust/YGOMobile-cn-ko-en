@@ -786,7 +786,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(30 + 125 * i, 65, 150 + 125 * i, 235), wCardSelect, BUTTON_CARD_0 + i);
-		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrCardList = env->addScrollBar(true, Resize(30, 245, 650, 285), wCardSelect, SCROLL_CARD_SELECT);
 	btnSelectOK = env->addButton(Resize(285, 295, 395, 335), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
@@ -803,7 +803,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
 		stDisplayPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(30 + 125 * i, 65, 150 + 125 * i, 235), wCardDisplay, BUTTON_DISPLAY_0 + i);
-		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * xScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrDisplayList = env->addScrollBar(true, Resize(30, 245, 650, 285), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(Resize(285, 295, 395, 335), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));

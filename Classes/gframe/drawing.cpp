@@ -1148,9 +1148,9 @@ void Game::DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<
 	if(img == nullptr)
 		return; //nullptr->getSize() will cause a crash
 	dimension2d<u32> size = img->getOriginalSize();
-	recti dragloc = recti(pos.X, pos.Y, pos.X + CARD_THUMB_WIDTH * mainGame->xScale, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
-	recti limitloc = recti(pos.X, pos.Y, pos.X + 20 * mainGame->xScale, pos.Y + 20 * mainGame->yScale);
-	recti otloc = recti(pos.X + 7 * mainGame->xScale, pos.Y + 50 * mainGame->yScale, pos.X + 37 * mainGame->xScale, pos.Y + 65 * mainGame->yScale);
+	recti dragloc = recti(pos.X, pos.Y, pos.X + CARD_THUMB_WIDTH * mainGame->yScale, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
+	recti limitloc = recti(pos.X, pos.Y, pos.X + 20 * mainGame->yScale, pos.Y + 20 * mainGame->yScale);
+	recti otloc = recti(pos.X + 7 * mainGame->xScale, pos.Y + 50 * mainGame->yScale, pos.X + 37 * mainGame->yScale, pos.Y + 65 * mainGame->yScale);
 
 	driver->draw2DImage(img, dragloc, rect<s32>(0, 0, size.Width, size.Height));
 	if(lflist->count(lcode)) {
@@ -1240,7 +1240,7 @@ void Game::DrawDeckBd() {
 		int j = i + padding;
 		DrawThumb(deckManager.current_deck.main[j], Resize(314 + (i % lx) * dx, 164 + (i / lx) * dy), deckBuilder.filterList);
 		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == j)
-			driver->draw2DRectangleOutline(Resize(313 + (i % lx) * dx, 163 + (i / lx) * dy, 359 + (i % lx) * dx, 228 + (i / lx) * dy));
+			driver->draw2DRectangleOutline(recti ((313 + (i % lx) * dx) * xScale, (163 + (i / lx) * dy) * yScale, (313 + (i % lx) * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (163 + (i / lx) * dy + CARD_THUMB_HEIGHT + 1) * yScale));
 	}
 	if(!deckBuilder.showing_pack) {
 		//extra deck
@@ -1271,7 +1271,7 @@ void Game::DrawDeckBd() {
 		for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i) {
 			DrawThumb(deckManager.current_deck.extra[i], Resize(314 + i * dx, 466), deckBuilder.filterList);
 			if(deckBuilder.hovered_pos == 2 && deckBuilder.hovered_seq == (int)i)
-				driver->draw2DRectangleOutline(Resize(313 + i * dx, 465, 359 + i * dx, 531));
+				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale, 465 * yScale, (313 + i * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (465 + CARD_THUMB_HEIGHT + 1 ) * yScale));
 		}
 		//side deck
 		driver->draw2DRectangle(Resize(310, 537, 410, 557), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
@@ -1298,7 +1298,7 @@ void Game::DrawDeckBd() {
 		for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i) {
 			DrawThumb(deckManager.current_deck.side[i], Resize(314 + i * dx, 564), deckBuilder.filterList);
 			if(deckBuilder.hovered_pos == 3 && deckBuilder.hovered_seq == (int)i)
-				driver->draw2DRectangleOutline(Resize(313 + i * dx, 563, 359 + i * dx, 629));
+				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale, 563 * yScale, (313 + i * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (563 + CARD_THUMB_HEIGHT + 1) * yScale));
 		}
 	}
 	if(is_siding) {
@@ -1369,7 +1369,7 @@ void Game::DrawDeckBd() {
 		}
 	}
 	if(deckBuilder.is_draging) {
-		DrawThumb(deckBuilder.draging_pointer,position2di(deckBuilder.dragx - 22, deckBuilder.dragy - 32),deckBuilder.filterList, true);
+		DrawThumb(deckBuilder.draging_pointer,position2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2),deckBuilder.filterList, true);
 	}
 }
 }
