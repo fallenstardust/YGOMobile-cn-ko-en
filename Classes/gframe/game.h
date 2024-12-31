@@ -741,8 +741,8 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define SIZE_QUERY_BUFFER	0x4000
 
 #define CARD_IMG_WIDTH		200
-#define CARD_IMG_HEIGHT		290
-#define CARD_THUMB_WIDTH	44
+#define CARD_IMG_HEIGHT		287
+#define CARD_THUMB_WIDTH	45
 #define CARD_THUMB_HEIGHT	64
 
 #define UEVENT_EXIT			0x1
