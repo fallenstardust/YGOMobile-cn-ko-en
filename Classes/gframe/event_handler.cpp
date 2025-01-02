@@ -969,7 +969,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
 						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler]);
-					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->xScale, 65 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->xScale, 235  * mainGame->yScale));
+					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->yScale, 235  * mainGame->yScale));
 					// text
 					wchar_t formatBuffer[2048];
 					if(mainGame->dInfo.curMsg == MSG_SORT_CARD) {
@@ -1032,7 +1032,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTexture(display_cards[i + pos]->code));
 					else
 						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler]);
-					mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((30 + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
+					mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((30 + i * 125) * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->yScale, 235 * mainGame->yScale));
 					wchar_t formatBuffer[2048];
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
 							myswprintf(formatBuffer, L"%ls[%d](%d)",

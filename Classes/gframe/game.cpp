@@ -775,28 +775,28 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnPSDD->setImage(imageManager.tCover[0]);
 #ifdef _IRR_ANDROID_PLATFORM_
     //card select
-	wCardSelect = env->addWindow(Resize(320, 55, 1000, 400), false, L"");
+	wCardSelect = env->addWindow(recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
 	wCardSelect->setVisible(false);
         ChangeToIGUIImageWindow(wCardSelect, &bgCardSelect, imageManager.tDialog_L);
-    stCardSelect = env->addStaticText(L"", Resize(20, 10, 660, 40), false, false, wCardSelect, -1, false);
+    stCardSelect = env->addStaticText(L"", recti(20 * yScale, 10 * yScale, 660 * yScale, 40 * yScale), false, false, wCardSelect, -1, false);
 	stCardSelect->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
     for(int i = 0; i < 5; ++i) {
-		stCardPos[i] = env->addStaticText(L"", Resize(40 + 125 * i, 40, 139 + 125 * i, 60), true, false, wCardSelect, -1, true);
+		stCardPos[i] = env->addStaticText(L"", recti((30 + 125 * i) * yScale, 40 * yScale, (150 + 125 * i) * yScale, 60 * yScale), true, false, wCardSelect, -1, true);
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(30 + 125 * i, 65, 150 + 125 * i, 235), wCardSelect, BUTTON_CARD_0 + i);
+		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, recti((30 + 125 * i) * xScale, 65 * yScale, (150 + 125 * i) * yScale, 235 * yScale), wCardSelect, BUTTON_CARD_0 + i);
 		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
-	scrCardList = env->addScrollBar(true, Resize(30, 245, 650, 285), wCardSelect, SCROLL_CARD_SELECT);
-	btnSelectOK = env->addButton(Resize(285, 295, 395, 335), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
+	scrCardList = env->addScrollBar(true, recti(30 * yScale, 245 * yScale, 650 * yScale, 285 * yScale), wCardSelect, SCROLL_CARD_SELECT);
+	btnSelectOK = env->addButton(recti((340 - 55) * yScale, 295 * yScale, (340 + 55) * yScale, 335 * yScale), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnSelectOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//card display
-	wCardDisplay = env->addWindow(Resize(320, 55, 1000, 400), false, L"");
+	wCardDisplay = env->addWindow(recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardDisplay->getCloseButton()->setVisible(false);
 	wCardDisplay->setVisible(false);
         ChangeToIGUIImageWindow(wCardDisplay, &bgCardDisplay, imageManager.tDialog_L);
-    stCardDisplay = env->addStaticText(L"", Resize(20, 10, 660, 40), false, false, wCardDisplay, -1, false);
+    stCardDisplay = env->addStaticText(L"", recti(20 * yScale, 10 * yScale, 660 * yScale, 40 * yScale), false, false, wCardDisplay, -1, false);
     stCardDisplay->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
     for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
@@ -805,8 +805,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(30 + 125 * i, 65, 150 + 125 * i, 235), wCardDisplay, BUTTON_DISPLAY_0 + i);
 		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
-	scrDisplayList = env->addScrollBar(true, Resize(30, 245, 650, 285), wCardDisplay, SCROLL_CARD_DISPLAY);
-	btnDisplayOK = env->addButton(Resize(285, 295, 395, 335), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
+	scrDisplayList = env->addScrollBar(true, recti(30 * yScale, 245 * yScale, 650 * yScale, 285 * yScale), wCardDisplay, SCROLL_CARD_DISPLAY);
+	btnDisplayOK = env->addButton(recti((340 - 55) * yScale, 295 * yScale, (340 + 55) * yScale, 335 * yScale), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnDisplayOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 #endif
 	//announce number

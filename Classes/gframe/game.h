@@ -520,8 +520,8 @@ public:
 	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::IGUIStaticText* stCardDisplay;
 	irr::gui::CGUIImageButton* btnCardDisplay[5];
-	irr::gui::IGUIStaticText *stDisplayPos[5];
-	irr::gui::IGUIScrollBar *scrDisplayList;
+	irr::gui::IGUIStaticText* stDisplayPos[5];
+	irr::gui::IGUIScrollBar* scrDisplayList;
 	irr::gui::IGUIButton* btnDisplayOK;
 	//announce number
 	irr::gui::IGUIWindow* wANNumber;
