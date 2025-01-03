@@ -1360,12 +1360,11 @@ void Game::DrawDeckBd() {
             DrawShadowText(guiFont, textBuffer, Resize(850, 209 + i * 66, 1000, 230 + i * 66), Resize(1, 1, 0, 0));
 		} else {
 			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
             DrawShadowText(guiFont, textBuffer, Resize(850, 164 + i * 66, 1000, 185 + i * 66), Resize(1, 1, 0, 0));
 			myswprintf(textBuffer, L"%ls", dataManager.FormatType(ptr->second.type).c_str());
             DrawShadowText(guiFont, textBuffer, Resize(850, 186 + i * 66, 1000, 207 + i * 66), Resize(1, 1, 0, 0));
 			myswprintf(textBuffer, L"%ls", availBuffer);
-            DrawShadowText(textFont, textBuffer, Resize(850, 209 + i * 6, 955, 230 + i * 66), Resize(1, 1 , 0, 0));
+            DrawShadowText(textFont, textBuffer, Resize(850, 209 + i * 66, 1000, 230 + i * 66), Resize(1, 1 , 0, 0));
 		}
 	}
 	if(deckBuilder.is_draging) {

@@ -1928,29 +1928,29 @@ int DuelClient::ClientAnalyze(unsigned char* msg, unsigned int len) {
 		}
 		if(positions & 0x1) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSAU, code));
-			mainGame->btnPSAU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
+			mainGame->btnPSAU->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSAU->setVisible(true);
-			startpos += 150;
+			startpos += 178;
 		} else mainGame->btnPSAU->setVisible(false);
 		if(positions & 0x2) {
-			mainGame->btnPSAD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
+			mainGame->btnPSAD->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSAD->setVisible(true);
-			startpos += 150;
+			startpos += 178;
 		} else mainGame->btnPSAD->setVisible(false);
 		if(positions & 0x4) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSDU, code));
-			mainGame->btnPSDU->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
+			mainGame->btnPSDU->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSDU->setVisible(true);
-			startpos += 150;
+			startpos += 178;
 		} else mainGame->btnPSDU->setVisible(false);
 		if(positions & 0x8) {
-			mainGame->btnPSDD->setRelativePosition(rect<s32>(startpos * mainGame->xScale, 20 * mainGame->yScale, (startpos + 140) * mainGame->xScale, 160 * mainGame->yScale));
+			mainGame->btnPSDD->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSDD->setVisible(true);
-			startpos += 150;
+			startpos += 178;
 		} else mainGame->btnPSDD->setVisible(false);
 		recti pos = mainGame->wPosSelect->getRelativePosition();
 		s32 oldcenter = pos.getCenter().X;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + count * 150 * mainGame->xScale + 50 * mainGame->xScale;
+		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (count * 178 + 50) * mainGame->yScale;
 		s32 newwidth = pos.getWidth();
 		pos.UpperLeftCorner.X = oldcenter - newwidth / 2;
 		pos.LowerRightCorner.X = oldcenter + newwidth / 2;
