@@ -232,6 +232,8 @@ public:
 	position2di ResizeReverse(s32 x, s32 y);
 	recti ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width);
 	recti ResizeWin(s32 x, s32 y, s32 x2, s32 y2);
+    recti Resize_Y(s32 x, s32 y, s32 x2, s32 y2);
+    position2di Resize_Y(s32 x, s32 y);
     template<typename T>
     static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
@@ -520,8 +522,8 @@ public:
 	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::IGUIStaticText* stCardDisplay;
 	irr::gui::CGUIImageButton* btnCardDisplay[5];
-	irr::gui::IGUIStaticText *stDisplayPos[5];
-	irr::gui::IGUIScrollBar *scrDisplayList;
+	irr::gui::IGUIStaticText* stDisplayPos[5];
+	irr::gui::IGUIScrollBar* scrDisplayList;
 	irr::gui::IGUIButton* btnDisplayOK;
 	//announce number
 	irr::gui::IGUIWindow* wANNumber;
