@@ -13,9 +13,15 @@ inline void SetS3DVertex(S3DVertex* v, f32 x1, f32 y1, f32 x2, f32 y2, f32 z, f3
 	v[2] = S3DVertex(x1, y2, z, 0, 0, nz, SColor(255, 255, 255, 255), tu1, tv2);
 	v[3] = S3DVertex(x2, y2, z, 0, 0, nz, SColor(255, 255, 255, 255), tu2, tv2);
 }
-
+void Game::SetCardS3DVertex() {
+    f32 defalutScale = (mainGame->xScale - mainGame->yScale) / 10;
+    ALOGD("cc drawing defalutScale = %f",defalutScale);
+    SetS3DVertex(matManager.vCardFront, -0.35f + defalutScale, -0.5f, 0.35f - defalutScale, 0.5f, 0, 1, 0, 0, 1, 1);
+    SetS3DVertex(matManager.vCardOutline, -0.375f + defalutScale, -0.54f, 0.37f - defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
+    SetS3DVertex(matManager.vCardOutliner, 0.37f - defalutScale, -0.54f, -0.375f + defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
+    SetS3DVertex(matManager.vCardBack, 0.35f - defalutScale, -0.5f, -0.35f + defalutScale, 0.5f, 0, -1, 0, 0, 1, 1);
+}
 void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv) {
-#ifdef _IRR_ANDROID_PLATFORM_
 	glLineWidth(width+2);
 		driver->setMaterial(matManager.mOutLine);
 		if(strip) {
@@ -36,7 +42,6 @@ void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, 
 			driver->draw3DLine(vec[3].Pos, vec[2].Pos);
 			driver->draw3DLine(vec[2].Pos, vec[0].Pos);
 		}
-#endif
 }
 void Game::DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color) {
 	recti pos = element->getAbsolutePosition();

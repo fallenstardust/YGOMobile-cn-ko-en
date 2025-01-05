@@ -377,9 +377,9 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					prev_operation = id;
 					prev_sel = sel;
 #ifdef _IRR_ANDROID_PLATFORM_
-					ALOGD("1share replay file=%s", name);
+					ALOGD("cc menu_handler: 1share replay file=%s", name);
 					android::OnShareFile(mainGame->appMain, "yrp", name);
-					ALOGD("2after share replay file:index=%d", sel);
+					ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
 #endif
 					break;
 				}
