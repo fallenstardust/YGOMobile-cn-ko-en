@@ -166,7 +166,7 @@ bool DataManager::Error(sqlite3* pDB, sqlite3_stmt* pStmt) {
 	std::strncat(errmsg, sqlite3_errmsg(pDB), sizeof errmsg - 1);
 	if(pStmt)
 		sqlite3_finalize(pStmt);
-    ALOGE("cdb Error=", errmsg);
+    ALOGE("cc data_manager: cdb Error=", errmsg);
 	return false;
 }
 code_pointer DataManager::GetCodePointer(unsigned int code) const {

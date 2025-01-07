@@ -77,7 +77,7 @@ void Game::process(irr::SEvent &event) {
 }
 
 void Game::stopBGM() {
-    ALOGD("stop bgm");
+    ALOGD("cc game: stop bgm");
 	gMutex.lock();
 	soundManager->StopBGM();
 	gMutex.unlock();
@@ -109,14 +109,14 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
     switch (cmd)
     {
         case APP_CMD_PAUSE:
-            ALOGD("APP_CMD_PAUSE");
+            ALOGD("cc game: APP_CMD_PAUSE");
             if(ygo::mainGame != nullptr){
                 ygo::mainGame->stopBGM();
             }
             break;
         case APP_CMD_RESUME:
         	//第一次不一定调用
-			ALOGD("APP_CMD_RESUME");
+			ALOGD("cc game: APP_CMD_RESUME");
 			if(ygo::mainGame != nullptr){
                 ygo::mainGame->playBGM();
 			}
@@ -137,8 +137,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 	srand(time(0));
 	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
-
-#ifdef _IRR_ANDROID_PLATFORM_
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -172,10 +170,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	xScale = android::getXScale(app);
 	yScale = android::getYScale(app);
 
-	ALOGD("xScale = %f, yScale = %f", xScale, yScale);
+	ALOGD("cc game: xScale = %f, yScale = %f", xScale, yScale);
+
+    SetCardS3DVertex();//reset cardfront cardback S3DVertex size
 	//io::path databaseDir = options->getDBDir();
 	io::path workingDir = options->getWorkDir();
-    ALOGD("workingDir= %s", workingDir.c_str());
+    ALOGD("cc game: workingDir= %s", workingDir.c_str());
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
@@ -200,12 +200,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	for(int i=0;i<len;i++){
 		io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    ALOGD("add arrchive ok:%s", zip_path.c_str());
+		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
 	    }else{
-			ALOGW("add arrchive fail:%s", zip_path.c_str());
+			ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
 		}
 	}
-#endif
+
 	LoadConfig();
 	linePatternD3D = 0;
 	linePatternGL = 0x0f0f;
@@ -229,7 +229,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	} else {
 		isNPOTSupported = ((COGLES1Driver *) driver)->queryOpenGLFeature(COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
-	ALOGD("isNPOTSupported = %d", isNPOTSupported);
+	ALOGD("cc game: isNPOTSupported = %d", isNPOTSupported);
 	if (isNPOTSupported) {
 		if (quality == 1) {
 			driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -258,15 +258,15 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		wchar_t wpath[1024];
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
 		if(dataManager.LoadDB(wpath)) {
-		    ALOGD("add cdb ok:%s", cdb_path.c_str());
+		    ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
 	    }else{
-			ALOGW("add cdb fail:%s", cdb_path.c_str());
+			ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
 		}
 	}
 	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
 	//	return false;
 	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
-		ALOGD("loadStrings expansions/strings.conf");
+		ALOGD("cc game: loadStrings expansions/strings.conf");
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
 		ErrorLog("Failed to load strings!");
@@ -282,7 +282,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	if(!numFont || !guiFont) {
-	  ALOGW("add font fail ");
+	  ALOGW("cc game: add font fail ");
 	}
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
@@ -1328,9 +1328,8 @@ void Game::MainLoop() {
 	float atkframe = 0.1f;
 	irr::ITimer* timer = device->getTimer();
 	timer->setTime(0);
-#ifdef _IRR_ANDROID_PLATFORM_
+    // get FPS
 	IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId ( GUI_INFO_FPS );
-#endif
 	int fps = 0;
 	int cur_time = 0;
 #if defined(_IRR_ANDROID_PLATFORM_)
@@ -1349,14 +1348,14 @@ void Game::MainLoop() {
 		if (!driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1))
 		{
-			ALOGD("WARNING: Pixel shaders disabled "
+			ALOGD("cc game: WARNING: Pixel shaders disabled "
 					"because of missing driver/hardware support.");
 			psFileName = "";
 		}
 		if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
 				!driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
 		{
-			ALOGD("WARNING: Vertex shaders disabled "
+			ALOGD("cc game: WARNING: Vertex shaders disabled "
 					"because of missing driver/hardware support.");
 			solidvsFileName = "";
 			TACvsFileName = "";
@@ -1377,9 +1376,9 @@ void Game::MainLoop() {
 					psFileName, "vertexMain", video::EVST_VS_1_1,
 					blendvsFileName, "pixelMain", video::EPST_PS_1_1,
 					&customShadersCallback, video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
-			ALOGD("ogles2Sold = %d", ogles2Solid);
-			ALOGD("ogles2BlendTexture = %d", ogles2BlendTexture);
-			ALOGD("ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
+			ALOGD("cc game:ogles2Sold = %d", ogles2Solid);
+			ALOGD("cc game:ogles2BlendTexture = %d", ogles2BlendTexture);
+			ALOGD("cc game:ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
 	matManager.mCard.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;
@@ -1407,7 +1406,7 @@ void Game::MainLoop() {
 	}
 #endif
 	while(device->run()) {
-		//ALOGV("game draw frame");
+		//ALOGV("cc game draw frame");
 		linePatternD3D = (linePatternD3D + 1) % 30;
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
