@@ -289,7 +289,7 @@ public class YGODialogUtil {
                 public void onClick(View view) {
                     List list = new ArrayList();
                     list.add(context.getString(R.string.category_name));
-                    list.add(context.getString(R.string.deck_name));
+                    if (typeAdp.getSelectPosition() > 1) list.add(context.getString(R.string.deck_name));//不在卡包展示、人机卡组分类显露添加新卡组选项
                     SimpleListAdapter catelistadapter = new SimpleListAdapter(context);
                     catelistadapter.set(list);
                     DialogPlus dialog = new DialogPlus(context);
