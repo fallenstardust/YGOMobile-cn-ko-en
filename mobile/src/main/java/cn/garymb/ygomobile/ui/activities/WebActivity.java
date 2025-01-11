@@ -1,9 +1,16 @@
 package cn.garymb.ygomobile.ui.activities;
 
+import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -12,13 +19,20 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
+import com.tencent.smtt.sdk.DownloadListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebView;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -26,9 +40,15 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
+import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class WebActivity extends BaseActivity implements View.OnClickListener {
@@ -44,6 +64,35 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     private LinearLayout find_in_page;
     private EditText et_context_keyword;
     private ImageButton btn_context_search_close, btn_context_search_last, btn_context_search_next;
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case DownloadUtil.TYPE_DOWNLOAD_ING:
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_EXCEPTION:
+                    YGOUtil.showTextToast(getString(R.string.tip_download_failed));
+                    break;
+                case DownloadUtil.TYPE_DOWNLOAD_OK:
+                    if (msg.obj.toString().endsWith(Constants.YDK_FILE_EX)) {
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + getString(R.string.deck_list), Toast.LENGTH_SHORT);
+                    } else if (msg.obj.toString().endsWith(Constants.YRP_FILE_EX)) {
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + getString(R.string.replay_list), Toast.LENGTH_SHORT);
+                    } else if (msg.obj.toString().endsWith(Constants.YPK_FILE_EX) || msg.obj.toString().endsWith(Constants.CORE_LIMIT_PATH)) {
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.ypk_installed) + getString(R.string.restart_app), Toast.LENGTH_SHORT);
+                        DataManager.get().load(true);
+                    } else {
+                        YGOUtil.showTextToast(Gravity.TOP, getString(R.string.tip_download_OK) + AppsSettings.get().getResourcePath(), Toast.LENGTH_LONG);
+                    }
+                    break;
+
+            }
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,6 +128,60 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
             return false;
         };
         et_context_keyword.setOnEditorActionListener(searchListener);
+        //设置网页下载监听
+        mWebViewPlus.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                String fileName = "";
+                try {
+                    //从contentDisposition获取文件名并转换urlcode为UTF-8
+                    fileName = URLDecoder.decode(contentDisposition.substring(contentDisposition.lastIndexOf("''") + 2), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+                String destFileDir = "";
+                if (fileName.endsWith(Constants.YDK_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getDeckDir();
+                } else if (fileName.endsWith(Constants.YRP_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getReplayDir();
+                } else if (fileName.endsWith(Constants.CORE_LIMIT_PATH) || fileName.endsWith(Constants.YPK_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getExpansionsPath().getPath();
+                } else if (fileName.endsWith(Constants.LUA_FILE_EX)) {
+                    destFileDir = AppsSettings.get().getSingleDir();
+                } else {//萌卡还有些什么文件格式后续可以添加
+                    destFileDir = AppsSettings.get().getResourcePath();
+                }
+
+                File file = new File(destFileDir + "/" + fileName);
+                DownloadUtil.get().download(url, destFileDir, file.getName(), new DownloadUtil.OnDownloadListener() {
+                    @Override
+                    public void onDownloadSuccess(File file) {
+                        Message message = new Message();
+                        message.what = DownloadUtil.TYPE_DOWNLOAD_OK;
+                        message.obj = file.getName();
+                        handler.sendMessage(message);
+                    }
+
+
+                    @Override
+                    public void onDownloading(int progress) {
+                        Message message = new Message();
+                        message.what = DownloadUtil.TYPE_DOWNLOAD_ING;
+                        message.arg1 = progress;
+                        handler.sendMessage(message);
+                    }
+
+                    @Override
+                    public void onDownloadFailed(Exception e) {
+                        //下载失败后删除下载的文件
+                        FileUtils.deleteFile(file);
+                        Message message = new Message();
+                        message.what = TYPE_DOWNLOAD_EXCEPTION;
+                        handler.sendMessage(message);
+                    }
+                });
+            }
+        });
     }
 
     @Override
