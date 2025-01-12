@@ -79,7 +79,12 @@ public class Deck implements Parcelable {
 
     public Uri toUri() {
         Map<String,String> map=new HashMap<>();
-        map.put(Constants.QUERY_NAME, name);
+        String deckName = name;
+        int ydkIndex = deckName.indexOf(YDK_FILE_EX);
+        if (ydkIndex != -1) {
+            deckName = deckName.substring(0, ydkIndex);
+        }
+        map.put(Constants.QUERY_NAME, deckName);
         return YGODAUtil.toUri(mainlist,extraList,sideList,map);
     }
 
