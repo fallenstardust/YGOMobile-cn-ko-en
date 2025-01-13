@@ -6,8 +6,8 @@
 namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
-unsigned char DataManager::scriptBuffer[0x20000];
-IFileSystem* DataManager::FileSystem;
+unsigned char DataManager::scriptBuffer[0x100000] = {};
+IFileSystem* DataManager::FileSystem = nullptr;
 DataManager dataManager;
 
 DataManager::DataManager() : _datas(32768), _strings(32768) {
@@ -415,14 +415,11 @@ unsigned char* DataManager::ScriptReaderZip(const char* script_name, int* slen) 
 	IReadFile* reader = FileSystem->createAndOpenFile(script_name);
 	if (!reader)
 		return nullptr;
-	size_t size = reader->getSize();
-	if (size > sizeof scriptBuffer) {
-		reader->drop();
-		return nullptr;
-	}
-	reader->read(scriptBuffer, size);
+	int size = reader->read(scriptBuffer, sizeof scriptBuffer);
 	reader->drop();
-	*slen = (int)size;
+	if (size >= (int)sizeof scriptBuffer)
+		return nullptr;
+	*slen = size;
 	return scriptBuffer;
 }
 unsigned char* DataManager::DefaultScriptReader(const char* script_name, int* slen) {

@@ -41,8 +41,8 @@ uint32_t read_card(uint32_t code, card_data* data) {
 	}
 	return creader(code, data);
 }
-uint32_t handle_message(void* pduel, uint32_t msg_type) {
-	return mhandler((intptr_t)pduel, msg_type);
+uint32_t handle_message(void* pduel, uint32_t message_type) {
+	return mhandler((intptr_t)pduel, message_type);
 }
 byte* default_script_reader(const char* script_name, int* slen) {
 	FILE *fp;
@@ -72,11 +72,11 @@ extern "C" DECL_DLLEXPORT void start_duel(intptr_t pduel, uint32_t options) {
 	duel* pd = (duel*)pduel;
 	pd->game_field->core.duel_options |= options & 0xffff;
 	int32_t duel_rule = options >> 16;
-	if(duel_rule)
+	if (duel_rule >= 1 && duel_rule <= CURRENT_RULE)
 		pd->game_field->core.duel_rule = duel_rule;
 	else if(options & DUEL_OBSOLETE_RULING)		//provide backward compatibility with replay
 		pd->game_field->core.duel_rule = 1;
-	if (pd->game_field->core.duel_rule < 1 || pd->game_field->core.duel_rule > CURRENT_RULE)
+	else
 		pd->game_field->core.duel_rule = CURRENT_RULE;
 	if (pd->game_field->core.duel_rule == MASTER_RULE3) {
 		pd->game_field->player[0].szone_size = 8;
@@ -192,7 +192,7 @@ extern "C" DECL_DLLEXPORT void new_tag_card(intptr_t pduel, uint32_t code, uint8
 }
 /**
 * @brief Get card information.
-* @param buf uint32_t array
+* @param buf int32_t array
 * @return buffer length in bytes
 */
 extern "C" DECL_DLLEXPORT int32_t query_card(intptr_t pduel, uint8_t playerid, uint8_t location, uint8_t sequence, int32_t query_flag, byte* buf, int32_t use_cache) {
@@ -201,7 +201,7 @@ extern "C" DECL_DLLEXPORT int32_t query_card(intptr_t pduel, uint8_t playerid, u
 	duel* ptduel = (duel*)pduel;
 	card* pcard = nullptr;
 	location &= 0x7f;
-	if(location & LOCATION_ONFIELD)
+	if (location == LOCATION_MZONE || location == LOCATION_SZONE)
 		pcard = ptduel->game_field->get_field_card(playerid, location, sequence);
 	else {
 		card_vector* lst = nullptr;
@@ -217,10 +217,9 @@ extern "C" DECL_DLLEXPORT int32_t query_card(intptr_t pduel, uint8_t playerid, u
 			lst = &ptduel->game_field->player[playerid].list_main;
 		else
 			return LEN_FAIL;
-		if(sequence >= (int32_t)lst->size())
-			pcard = nullptr;
-		else
-			pcard = (*lst)[sequence];
+		if (sequence >= (int32_t)lst->size())
+			return LEN_FAIL;
+		pcard = (*lst)[sequence];
 	}
 	if (pcard) {
 		return pcard->get_infos(buf, query_flag, use_cache);
