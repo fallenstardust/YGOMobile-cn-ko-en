@@ -1153,9 +1153,12 @@ void Game::DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<
 	if(img == nullptr)
 		return; //nullptr->getSize() will cause a crash
 	dimension2d<u32> size = img->getOriginalSize();
-	recti dragloc = recti(pos.X, pos.Y, pos.X + CARD_THUMB_WIDTH * mainGame->yScale, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
-	recti limitloc = recti(pos.X, pos.Y, pos.X + 20 * mainGame->yScale, pos.Y + 20 * mainGame->yScale);
-	recti otloc = recti(pos.X + 7 * mainGame->xScale, pos.Y + 50 * mainGame->yScale, pos.X + 37 * mainGame->yScale, pos.Y + 65 * mainGame->yScale);
+    //mid pixel = (x2 - x1) / 2;
+    float x1 = pos.X + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2;//reset position of left-half card
+    float x2 = pos.X + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2;//reset position of right-half card
+	recti dragloc = recti(x1, pos.Y, x2, pos.Y + CARD_THUMB_HEIGHT * mainGame->yScale);
+	recti limitloc = recti(x1, pos.Y, x1 + 20 * mainGame->yScale, pos.Y + 20 * mainGame->yScale);
+	recti otloc = recti(x1, pos.Y + 50 * mainGame->yScale, x1 + 30 * mainGame->yScale, pos.Y + 65 * mainGame->yScale);
 
 	driver->draw2DImage(img, dragloc, rect<s32>(0, 0, size.Width, size.Height));
 	if(lflist->count(lcode)) {
@@ -1208,10 +1211,10 @@ void Game::DrawDeckBd() {
     DrawShadowText(guiFont, dataManager.GetSysString(deckBuilder.showing_pack ? 1477 : 1330), Resize(300, 136, 395, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
     DrawShadowText(numFont, dataManager.GetNumString(mainsize), Resize(360, 137, 420, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 	driver->draw2DRectangle(Resize(310, 160, 797, deckBuilder.showing_pack ? 630 : 436), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(309, 159, 797, deckBuilder.showing_pack ? 630 : 436));
+	driver->draw2DRectangleOutline(Resize(309, 159, 798, deckBuilder.showing_pack ? 630 : 436));
 	//type count 2DRectangle
-	driver->draw2DRectangle(Resize(638, 137, 797, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(637, 136, 797, 157));
+	driver->draw2DRectangle(Resize(638, 137, 798, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangleOutline(Resize(637, 136, 798, 157));
 	//monster count
 	driver->draw2DImage(imageManager.tCardType, Resize(645, 136, 645+14+3/8, 156), recti(0, 0, 23, 32), 0, 0, true);
     DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)), Resize(670, 137, 690, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
@@ -1245,7 +1248,7 @@ void Game::DrawDeckBd() {
 		int j = i + padding;
 		DrawThumb(deckManager.current_deck.main[j], Resize(314 + (i % lx) * dx, 164 + (i / lx) * dy), deckBuilder.filterList);
 		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == j)
-			driver->draw2DRectangleOutline(recti ((313 + (i % lx) * dx) * xScale, (163 + (i / lx) * dy) * yScale, (313 + (i % lx) * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (163 + (i / lx) * dy + CARD_THUMB_HEIGHT + 1) * yScale));
+			driver->draw2DRectangleOutline(recti ((313 + (i % lx) * dx) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2, (163 + (i / lx) * dy) * yScale, (313 + (i % lx) * dx + 1) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2, (163 + (i / lx) * dy + CARD_THUMB_HEIGHT + 1) * yScale));
 	}
 	if(!deckBuilder.showing_pack) {
 		//extra deck
@@ -1254,10 +1257,10 @@ void Game::DrawDeckBd() {
         DrawShadowText(guiFont, dataManager.GetSysString(1331), Resize(300, 439, 395, 459), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);
         DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.extra.size()), Resize(360, 440, 420, 460), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);
 		driver->draw2DRectangle(Resize(310, 463, 797, 533), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(309, 462, 797, 533));
+		driver->draw2DRectangleOutline(Resize(309, 462, 798, 533));
 		//type count 2DRectangle
 		driver->draw2DRectangle(Resize(582, 440, 797, 460), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(581, 439, 797, 460));
+		driver->draw2DRectangleOutline(Resize(581, 439, 798, 460));
 		//fusion count
 		driver->draw2DImage(imageManager.tCardType, Resize(595, 440, 595+14+3/8, 460), recti(0, 32, 23, 64), 0, 0, true);
         DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.extra, TYPE_FUSION)), Resize(620, 440, 640, 460), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
@@ -1276,7 +1279,7 @@ void Game::DrawDeckBd() {
 		for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i) {
 			DrawThumb(deckManager.current_deck.extra[i], Resize(314 + i * dx, 466), deckBuilder.filterList);
 			if(deckBuilder.hovered_pos == 2 && deckBuilder.hovered_seq == (int)i)
-				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale, 465 * yScale, (313 + i * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (465 + CARD_THUMB_HEIGHT + 1 ) * yScale));
+				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2, 465 * yScale, (313 + i * dx + 1) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2, (465 + CARD_THUMB_HEIGHT + 1 ) * yScale));
 		}
 		//side deck
 		driver->draw2DRectangle(Resize(310, 537, 410, 557), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
@@ -1284,10 +1287,10 @@ void Game::DrawDeckBd() {
         DrawShadowText(guiFont, dataManager.GetSysString(1332), Resize(300, 536, 395, 556), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);
         DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.side.size()), Resize(360, 537, 420, 557), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 		driver->draw2DRectangle(Resize(310, 560, 797, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(309, 559, 797, 630));
+		driver->draw2DRectangleOutline(Resize(309, 559, 798, 630));
 		//type count 2DRectangle
 		driver->draw2DRectangle(Resize(638, 537, 797, 557), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(637, 536, 797, 557));
+		driver->draw2DRectangleOutline(Resize(637, 536, 798, 557));
 		//monster count
 		driver->draw2DImage(imageManager.tCardType, Resize(645, 537, 645+14+3/8, 557), recti(0, 0, 23, 32), 0, 0, true);
         DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.side, TYPE_MONSTER)), Resize(670, 537, 690, 557), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
@@ -1303,21 +1306,21 @@ void Game::DrawDeckBd() {
 		for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i) {
 			DrawThumb(deckManager.current_deck.side[i], Resize(314 + i * dx, 564), deckBuilder.filterList);
 			if(deckBuilder.hovered_pos == 3 && deckBuilder.hovered_seq == (int)i)
-				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale, 563 * yScale, (313 + i * dx) * xScale + (CARD_THUMB_WIDTH + 1) * yScale, (563 + CARD_THUMB_HEIGHT + 1) * yScale));
+				driver->draw2DRectangleOutline(recti((313 + i * dx) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2, 563 * yScale, (313 + i * dx + 1) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2, (563 + CARD_THUMB_HEIGHT + 1) * yScale));
 		}
 	}
 	if(is_siding) {
 		// side chat background
-		driver->draw2DRectangle(Resize(805, 10, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(804, 9, 1020, 630));
+		driver->draw2DRectangle(Resize(806, 10, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangleOutline(Resize(805, 9, 1020, 630));
 	} else {
 		//search result
-		driver->draw2DRectangle(Resize(805, 137, 930,157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangle(Resize(806, 137, 930,157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(805, 136, 930,157));
         DrawShadowText(guiFont, dataManager.GetSysString(1333),Resize(795, 136, 930,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000, true, false);
         DrawShadowText(numFont, deckBuilder.result_string,Resize(865, 136, 930,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000, true, false);
-		driver->draw2DRectangle(Resize(805, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-		driver->draw2DRectangleOutline(Resize(804, 159, 1020, 630));
+		driver->draw2DRectangle(Resize(806, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+		driver->draw2DRectangleOutline(Resize(805, 159, 1020, 630));
 	}
 	for (size_t i = 0; i < 7 && i + scrFilter->getPos() < deckBuilder.results.size(); ++i) {
 		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
