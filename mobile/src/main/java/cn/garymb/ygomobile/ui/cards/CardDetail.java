@@ -1,12 +1,17 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.text.TextUtils;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +31,8 @@ import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -100,7 +107,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
-    private Shimmer shimmer;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -132,6 +138,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
+    private Shimmer shimmer;
     private boolean mShowAdd = false;
     private OnFavoriteChangedListener mOnFavoriteChangedListener;
 
@@ -292,6 +299,39 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
+    public void setHighlightTextWithClickableSpans(String text) {
+        // 将卡片效果文本转换成SpannableString对象才能进行高亮操作
+        SpannableString spannableString = new SpannableString(text);
+        // 使用正则表达式查找「」和""之间的所有文本
+        String patternString = "(「(.*?)」|\"(.*?)\")";
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(text);
+        // 遍历所有匹配项并设置颜色和点击监听
+        while (matcher.find()) {
+            int startIndex = matcher.start() + 1;
+            int endIndex = matcher.end() - 1;
+            // 设置颜色
+            spannableString.setSpan(new ForegroundColorSpan(Color.GREEN), startIndex, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+            // 设置点击监听
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    // 获取被点击的文本内容
+                    String clickedText = ((TextView) widget).getText().subSequence(startIndex, endIndex).toString();
+                    //TODO 点击搜索该关键词
+                }
+                @Override
+                public void updateDrawState(android.text.TextPaint ds) {
+                    //添加下划线
+                    ds.setUnderlineText(true);
+                }
+            }, startIndex, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        // 将效果文本textview设置上处理过的文本
+        desc.setText(spannableString);
+        desc.setMovementMethod(android.text.method.LinkMovementMethod.getInstance()); // 确保点击事件生效
+    }
+
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
@@ -300,7 +340,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
         packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
-        desc.setText(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
+        setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
@@ -573,16 +613,22 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
     }
+
     public interface OnShowPackListListener {
         void onShowPackList(Card card);
     }
 
     public interface OnDeckManagerCardClickListener {
         void onOpenUrl(Card cardInfo);
+
         void onAddMainCard(Card cardInfo);
+
         void onAddSideCard(Card cardInfo);
+
         void onImageUpdate(Card cardInfo);
+
         void onShowPackList(Card cardInfo);
+
         void onClose();
     }
 
