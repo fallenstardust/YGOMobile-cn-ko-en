@@ -72,8 +72,8 @@ public class PackManager implements Closeable {
             }
             return packList;
         }).done((list) -> {
-            Log.i(TAG, "Loaded " + list.size() + " files.");
-            Log.i(TAG, toString()); // 在异步任务完成后打印packList
+            Log.i(TAG, "pack: Loaded " + list.size() + " files.");
+            //Log.i(TAG, toString()); // 在异步任务完成后打印packList
         }).fail((error) -> {
             Log.e(TAG, "Error loading files: " + error.getMessage());
         });

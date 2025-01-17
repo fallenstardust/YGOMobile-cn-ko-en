@@ -612,17 +612,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private void showPackList(Card cardInfo) {
         Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
-        Log.d("seesee", "Looking for pack with ID/Alias: " + idToUse);
-
         // 确保再次检查 PackManager 是否已经加载完成
         if (mPackManager == null) {
-            Log.w("seesee", "PackManager not loaded when showing pack list.");
             return;
         }
-
         List<Card> packList = mPackManager.getCards(mCardLoader, idToUse);
-        Log.d("seesee", "Retrieved pack list: " + (packList == null ? "null" : packList.toString()));
-
         if (packList != null) {
             onSearchResult(packList, false);
         } else {

@@ -23,7 +23,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
@@ -32,7 +31,6 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
-import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.CardSet;
@@ -70,10 +68,9 @@ public class CardSearcher implements View.OnClickListener {
     private final Button resetButton;
     private final View view;
     private final View layout_monster;
-    private final ICardSearcher dataLoader;
+    private final ICardSearcher mICardSearcher;
     private final Context mContext;
     private final Button myFavButton;
-    private final ICardSearcher mCardLoader;
     protected StringManager mStringManager;
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
@@ -81,10 +78,10 @@ public class CardSearcher implements View.OnClickListener {
     private CallBack mCallBack;
     private boolean mShowFavorite;
 
-    public CardSearcher(View view, ICardSearcher dataLoader) {
+    public CardSearcher(View view, ICardSearcher iCardSearcher) {
         this.view = view;
         this.mContext = view.getContext();
-        this.dataLoader = dataLoader;
+        this.mICardSearcher = iCardSearcher;
         this.mSettings = AppsSettings.get();
         mStringManager = DataManager.get().getStringManager();
         mLimitManager = DataManager.get().getLimitManager();
@@ -115,7 +112,6 @@ public class CardSearcher implements View.OnClickListener {
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
-        mCardLoader = dataLoader;
 
         //输入即时搜索
         OnEditorActionListener searchListener = (v, actionId, event) -> {
@@ -289,7 +285,7 @@ public class CardSearcher implements View.OnClickListener {
         }
         if (mCallBack != null) {
             VUiKit.post(() -> {
-                mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+                mCallBack.onSearchResult(CardFavorites.get().getCards(mICardSearcher), !showList);
             });
         }
     }
@@ -390,8 +386,8 @@ public class CardSearcher implements View.OnClickListener {
         int index = -1;
         int count = mLimitManager.getCount();
         LimitList cur = null;
-        if (dataLoader != null) {
-            cur = dataLoader.getLimitList();
+        if (mICardSearcher != null) {
+            cur = mICardSearcher.getLimitList();
         }
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         for (int i = 0; i < count; i++) {
@@ -566,7 +562,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void search() {
-        if (dataLoader != null) {
+        if (mICardSearcher != null) {
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .keyword(text(keyWord))
                     .attribute(getIntSelect(attributeSpinner))
@@ -590,14 +586,14 @@ public class CardSearcher implements View.OnClickListener {
                     .linkKey(lineKey)
                     .build();
             Log.i(TAG, searchInfo.toString());
-            dataLoader.search(searchInfo);
+            mICardSearcher.search(searchInfo);
             lineKey = 0;
         }
     }
 
     private void resetAll() {
-        if (dataLoader != null) {
-            dataLoader.onReset();
+        if (mICardSearcher != null) {
+            mICardSearcher.onReset();
         }
         keyWord.setText(null);
         reset(otSpinner);

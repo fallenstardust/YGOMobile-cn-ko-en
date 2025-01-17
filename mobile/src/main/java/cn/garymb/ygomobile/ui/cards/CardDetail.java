@@ -31,6 +31,7 @@ import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardKeyWord;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -300,36 +303,88 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     public void setHighlightTextWithClickableSpans(String text) {
-        // 将卡片效果文本转换成SpannableString对象才能进行高亮操作
         SpannableString spannableString = new SpannableString(text);
-        // 使用正则表达式查找「」和""之间的所有文本
-        String patternString = "(「(.*?)」|\"(.*?)\")";
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(text);
-        // 遍历所有匹配项并设置颜色和点击监听
-        while (matcher.find()) {
-            int startIndex = matcher.start() + 1;
-            int endIndex = matcher.end() - 1;
-            // 设置颜色
-            spannableString.setSpan(new ForegroundColorSpan(Color.GREEN), startIndex, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-            // 设置点击监听
-            spannableString.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(View widget) {
-                    // 获取被点击的文本内容
-                    String clickedText = ((TextView) widget).getText().subSequence(startIndex, endIndex).toString();
-                    //TODO 点击搜索该关键词
-                }
-                @Override
-                public void updateDrawState(android.text.TextPaint ds) {
-                    //添加下划线
-                    ds.setUnderlineText(true);
-                }
-            }, startIndex, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // 解析器状态
+        QuoteType currentQuoteType = QuoteType.NONE;
+        Stack<Integer> stack = new Stack<>();
+        int start = -1;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            switch (currentQuoteType) {
+                case NONE:
+                    if (c == '「') {
+                        currentQuoteType = QuoteType.ANGLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    } else if (c == '"') {
+                        currentQuoteType = QuoteType.DOUBLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    }
+                    break;
+
+                case ANGLE_QUOTE:
+                    if (c == '「') {
+                        stack.push(i);
+                    } else if (c == '」' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            currentQuoteType = QuoteType.NONE;
+                        }
+                    }
+                    break;
+
+                case DOUBLE_QUOTE:
+                    if (c == '"' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            currentQuoteType = QuoteType.NONE;
+                        } else {
+                            stack.push(i);
+                            // 对于嵌套的情况，只增加/减少栈中的元素而不应用样式
+                        }
+                    }
+                    break;
+            }
         }
-        // 将效果文本textview设置上处理过的文本
+        // 处理未关闭的引号对
+        if (!stack.isEmpty()) {
+            // Handle unclosed quotes error, e.g., log a warning or throw an exception
+        }
         desc.setText(spannableString);
-        desc.setMovementMethod(android.text.method.LinkMovementMethod.getInstance()); // 确保点击事件生效
+        desc.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+    }
+
+    private void applySpan(SpannableString spannableString, int start, int end, int color) {
+        // 设置颜色
+        spannableString.setSpan(new ForegroundColorSpan(color), start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 设置点击监听
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                // 获取被点击的文本内容
+                String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
+                handleItemClick(clickedText);
+            }
+
+            @Override
+            public void updateDrawState(android.text.TextPaint ds) {
+                // 可以在这里自定义点击状态下的样式，如去掉下划线
+                ds.setUnderlineText(true);
+            }
+        }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    // 处理点击事件的方法
+    private void handleItemClick(String clickedText) {
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(clickedText).build();
+
+
     }
 
     private void setCardInfo(Card cardInfo, View view) {
@@ -666,4 +721,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
+    // 定义引号类型
+    enum QuoteType { NONE, DOUBLE_QUOTE, ANGLE_QUOTE }
 }
