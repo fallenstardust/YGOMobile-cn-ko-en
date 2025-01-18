@@ -1,18 +1,20 @@
 package cn.garymb.ygomobile.ui.cards;
 
-import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
-import android.graphics.Color;
 import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
+import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -31,16 +33,14 @@ import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.loader.CardKeyWord;
-import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -231,7 +231,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         });
     }
 
-
     public void toggleAnimation(ShimmerTextView target) {
         if (shimmer != null && shimmer.isAnimating()) {
             shimmer.cancel();
@@ -332,7 +331,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     } else if (c == '」' && !stack.isEmpty()) {
                         stack.pop();
                         if (stack.isEmpty()) {
-                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            String quotedText = text.substring(start, i).trim();
+                            // 使用 queryable 方法判断是否高亮
+                            applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             currentQuoteType = QuoteType.NONE;
                         }
                     }
@@ -342,7 +343,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     if (c == '"' && !stack.isEmpty()) {
                         stack.pop();
                         if (stack.isEmpty()) {
-                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            String quotedText = text.substring(start, i).trim();
+                            if (queryable(quotedText)) { // 使用 queryable 方法判断是否高亮
+                                applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            }
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
@@ -357,7 +361,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             // Handle unclosed quotes error, e.g., log a warning or throw an exception
         }
         desc.setText(spannableString);
-        desc.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+        desc.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     private void applySpan(SpannableString spannableString, int start, int end, int color) {
@@ -367,17 +371,48 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         spannableString.setSpan(new ClickableSpan() {
             @Override
             public void onClick(View widget) {
-                // 获取被点击的文本内容
-                String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
-                mListener.onSearchKeyWord(clickedText);
+                if (color != Color.WHITE) {
+                    // 获取被点击的文本内容
+                    String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
+                    mListener.onSearchKeyWord(clickedText);
+                } else {
+                    YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
+                }
+
             }
 
             @Override
-            public void updateDrawState(android.text.TextPaint ds) {
+            public void updateDrawState(TextPaint ds) {
                 // 可以在这里自定义点击状态下的样式，如去掉下划线
                 ds.setUnderlineText(true);
             }
         }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    private boolean queryable(String keyword) {
+        SparseArray<Card> cards = cardManager.getAllCards();
+        //创建一个新的列表来保存匹配的卡片
+        List<Card> matchingCards = new ArrayList<>();
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.valueAt(i);
+            if (card.Name.contains(keyword) || card.Desc.contains(keyword)) {
+                matchingCards.add(card);
+            }
+        }
+        // 检查匹配结果
+        if (matchingCards.isEmpty()) {
+            return false;
+        } else if (matchingCards.size() == 1) {
+            // 如果只有一个匹配项，检查是否是当前卡片
+            for (Card card : matchingCards) {
+                if (getCardInfo() != null && getCardInfo().equals(card)) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return true;
+        }
     }
 
     private void setCardInfo(Card cardInfo, View view) {
@@ -385,7 +420,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mCardInfo = cardInfo;
         imageLoader.bindImage(cardImage, cardInfo, ImageLoader.Type.middle);
         dialog = DialogUtils.getdx(context);
-        cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
+        cardImage.setOnClickListener((v) -> {
+            showCardImageDetail(cardInfo.Code);
+        });
         packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
@@ -658,6 +695,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
+    // 定义引号类型
+    private enum QuoteType {NONE, DOUBLE_QUOTE, ANGLE_QUOTE}
+
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
     }
@@ -717,6 +757,4 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
-    // 定义引号类型
-    enum QuoteType { NONE, DOUBLE_QUOTE, ANGLE_QUOTE }
 }
