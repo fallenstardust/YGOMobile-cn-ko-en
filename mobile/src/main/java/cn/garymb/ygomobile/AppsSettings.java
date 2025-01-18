@@ -252,7 +252,7 @@ public class AppsSettings {
                         return false;
                     }
                     String s_name = file.getName().toLowerCase();
-                    return s_name.endsWith(".zip") || s_name.endsWith(".ypk");
+                    return s_name.endsWith(".zip") || s_name.endsWith(Constants.YPK_FILE_EX);
                 });
     }
 

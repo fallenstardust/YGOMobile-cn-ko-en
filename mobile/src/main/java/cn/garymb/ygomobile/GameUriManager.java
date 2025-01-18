@@ -172,7 +172,7 @@ public class GameUriManager {
         if (name.toLowerCase(Locale.US).endsWith(YDK_FILE_EX)) {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
             local = getDeckFile(dir, getPathName(path, true));
-        } else if (name.toLowerCase(Locale.US).endsWith(".ypk")) {
+        } else if (name.toLowerCase(Locale.US).endsWith(YPK_FILE_EX)) {
             String[] words = name.trim().split("[()（） ]+");
             File[] ypkList = AppsSettings.get().getExpansionFiles();
             for (int i = 0; i < ypkList.length; i++) {
