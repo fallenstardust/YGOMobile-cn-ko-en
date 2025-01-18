@@ -23,7 +23,7 @@ public class CardSearchInfo implements ICardFilter{
     private int limitType;
     private String limitName;
 
-    private CardSearchInfo() {
+    public CardSearchInfo() {
     }
 
     public int getLimitType() {

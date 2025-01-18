@@ -133,7 +133,7 @@ public class ExCardListFragment extends Fragment {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
         String path = AppsSettings.get().getExpansionsPath().getAbsolutePath();
         String fileName = Constants.officialExCardPackageName;
-        File file = new File(path + "/" + fileName + ".ypk");
+        File file = new File(path + "/" + fileName + Constants.YPK_FILE_EX);
         /* 删除旧的先行卡包 */
         File[] files = AppsSettings.get().getExpansionsPath().listFiles();
         if (files != null) {

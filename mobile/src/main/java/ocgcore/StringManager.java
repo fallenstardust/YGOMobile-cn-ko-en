@@ -61,7 +61,7 @@ public class StringManager implements Closeable {
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
+                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX))) {
                         Log.e("StringManager", "读取压缩包");
                         try {
                             ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");

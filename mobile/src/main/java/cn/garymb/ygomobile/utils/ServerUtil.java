@@ -4,6 +4,7 @@ import static cn.garymb.ygomobile.Constants.ASSET_SERVER_LIST;
 import static cn.garymb.ygomobile.Constants.URL_CN_DATAVER;
 import static cn.garymb.ygomobile.Constants.URL_PRE_CARD;
 import static cn.garymb.ygomobile.Constants.URL_SUPERPRE_CN_FILE;
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.utils.StringUtils.isHost;
 import static cn.garymb.ygomobile.utils.StringUtils.isNumeric;
 import static cn.garymb.ygomobile.utils.WebParseUtil.isValidIP;
@@ -108,7 +109,7 @@ public class ServerUtil {
      * @param file
      */
     public static void loadServerInfoFromZipOrYpk(Context context, File file) {
-        if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
+        if (file.getName().endsWith(".zip") || file.getName().endsWith(YDK_FILE_EX)) {
             LogUtil.e("GameUriManager", "读取压缩包");
             try {
                 String serverName = null, serverDesc = null, serverHost = null, serverPort = null;

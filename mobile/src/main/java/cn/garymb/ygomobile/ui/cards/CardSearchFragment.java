@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
@@ -43,8 +44,6 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.ui.widget.Shimmer;
-import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
@@ -305,6 +304,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
+                    public void onSearchKeyWord(String keyword) {
+                        showSearchKeyWord(keyword);
+                    }
+
+                    @Override
                     public void onImageUpdate(Card cardInfo) {
                         mCardListAdapter.notifyItemChanged(cardInfo);
                     }
@@ -339,6 +343,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             }
             mCardDetail.bind(cardInfo, position, provider);
         }
+    }
+
+    private void showSearchKeyWord(String keyword) {
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        mCardLoader.search(searchInfo);
     }
 
     private void showPackList(Card cardInfo) {

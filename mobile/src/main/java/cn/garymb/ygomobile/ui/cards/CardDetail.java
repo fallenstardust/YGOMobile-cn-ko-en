@@ -1,12 +1,17 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.text.TextUtils;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,11 +31,16 @@ import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
 
 import java.io.File;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardKeyWord;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -100,7 +110,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
-    private Shimmer shimmer;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -132,6 +141,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
+    private Shimmer shimmer;
     private boolean mShowAdd = false;
     private OnFavoriteChangedListener mOnFavoriteChangedListener;
 
@@ -292,6 +302,84 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
+    public void setHighlightTextWithClickableSpans(String text) {
+        SpannableString spannableString = new SpannableString(text);
+
+        // 解析器状态
+        QuoteType currentQuoteType = QuoteType.NONE;
+        Stack<Integer> stack = new Stack<>();
+        int start = -1;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            switch (currentQuoteType) {
+                case NONE:
+                    if (c == '「') {
+                        currentQuoteType = QuoteType.ANGLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    } else if (c == '"') {
+                        currentQuoteType = QuoteType.DOUBLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    }
+                    break;
+
+                case ANGLE_QUOTE:
+                    if (c == '「') {
+                        stack.push(i);
+                    } else if (c == '」' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            currentQuoteType = QuoteType.NONE;
+                        }
+                    }
+                    break;
+
+                case DOUBLE_QUOTE:
+                    if (c == '"' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            applySpan(spannableString, start, i, YGOUtil.c(R.color.holo_blue_bright));
+                            currentQuoteType = QuoteType.NONE;
+                        } else {
+                            stack.push(i);
+                            // 对于嵌套的情况，只增加/减少栈中的元素而不应用样式
+                        }
+                    }
+                    break;
+            }
+        }
+        // 处理未关闭的引号对
+        if (!stack.isEmpty()) {
+            // Handle unclosed quotes error, e.g., log a warning or throw an exception
+        }
+        desc.setText(spannableString);
+        desc.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+    }
+
+    private void applySpan(SpannableString spannableString, int start, int end, int color) {
+        // 设置颜色
+        spannableString.setSpan(new ForegroundColorSpan(color), start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 设置点击监听
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                // 获取被点击的文本内容
+                String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
+                mListener.onSearchKeyWord(clickedText);
+            }
+
+            @Override
+            public void updateDrawState(android.text.TextPaint ds) {
+                // 可以在这里自定义点击状态下的样式，如去掉下划线
+                ds.setUnderlineText(true);
+            }
+        }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
     private void setCardInfo(Card cardInfo, View view) {
         if (cardInfo == null) return;
         mCardInfo = cardInfo;
@@ -300,7 +388,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {showCardImageDetail(cardInfo.Code);});
         packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
-        desc.setText(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
+        setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
@@ -573,16 +661,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public interface OnFavoriteChangedListener {
         void onFavoriteChange(Card card, boolean favorite);
     }
-    public interface OnShowPackListListener {
-        void onShowPackList(Card card);
-    }
 
     public interface OnDeckManagerCardClickListener {
         void onOpenUrl(Card cardInfo);
+
         void onAddMainCard(Card cardInfo);
+
         void onAddSideCard(Card cardInfo);
+
         void onImageUpdate(Card cardInfo);
+
         void onShowPackList(Card cardInfo);
+
+        void onSearchKeyWord(String keyword);
+
         void onClose();
     }
 
@@ -610,6 +702,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
+        public void onSearchKeyWord(String keyword) {
+
+        }
+
+        @Override
         public void onAddSideCard(Card cardInfo) {
 
         }
@@ -620,4 +717,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
+    // 定义引号类型
+    enum QuoteType { NONE, DOUBLE_QUOTE, ANGLE_QUOTE }
 }
