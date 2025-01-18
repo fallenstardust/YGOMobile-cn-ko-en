@@ -369,7 +369,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             public void onClick(View widget) {
                 // 获取被点击的文本内容
                 String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
-                handleItemClick(clickedText);
+                mListener.onSearchKeyWord(clickedText);
             }
 
             @Override
@@ -378,13 +378,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 ds.setUnderlineText(true);
             }
         }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-    }
-
-    // 处理点击事件的方法
-    private void handleItemClick(String clickedText) {
-        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(clickedText).build();
-
-
     }
 
     private void setCardInfo(Card cardInfo, View view) {
@@ -669,10 +662,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onFavoriteChange(Card card, boolean favorite);
     }
 
-    public interface OnShowPackListListener {
-        void onShowPackList(Card card);
-    }
-
     public interface OnDeckManagerCardClickListener {
         void onOpenUrl(Card cardInfo);
 
@@ -683,6 +672,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         void onImageUpdate(Card cardInfo);
 
         void onShowPackList(Card cardInfo);
+
+        void onSearchKeyWord(String keyword);
 
         void onClose();
     }
@@ -707,6 +698,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         @Override
         public void onShowPackList(Card cardInfo) {
+
+        }
+
+        @Override
+        public void onSearchKeyWord(String keyword) {
 
         }
 

@@ -78,6 +78,7 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -563,6 +564,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
 
                     @Override
+                    public void onSearchKeyWord(String keyword) {
+                        showSearchKeyWord(keyword);//根据关键词搜索
+                    }
+
+                    @Override
                     public void onClose() {
                         mDialog.dismiss();
                     }
@@ -608,6 +614,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
             mCardDetail.bind(cardInfo, pos, provider);
         }
+    }
+
+    private void showSearchKeyWord(String keyword) {
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        mCardLoader.search(searchInfo);
     }
 
     private void showPackList(Card cardInfo) {
