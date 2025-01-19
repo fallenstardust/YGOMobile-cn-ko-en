@@ -211,6 +211,15 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 mListener.onOpenUrl(cardInfo);
             }
         });
+        name.setOnClickListener((v) -> {
+            if (mListener != null) {
+                Card cardInfo = getCardInfo();
+                if (cardInfo == null) {
+                    return;
+                }
+                mListener.onGetRelatedCardList(cardInfo);
+            }
+        });
         findViewById(R.id.lastone).setOnClickListener((v) -> {
             onPreCard();
         });
@@ -715,6 +724,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onSearchKeyWord(String keyword);
 
+        void onGetRelatedCardList(Card cardInfo);
+
         void onClose();
     }
 
@@ -743,6 +754,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         @Override
         public void onSearchKeyWord(String keyword) {
+
+        }
+
+        @Override
+        public void onGetRelatedCardList(Card cardInfo) {
 
         }
 
