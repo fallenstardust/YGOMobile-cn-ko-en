@@ -158,7 +158,7 @@ public class CardLoader implements ICardSearcher {
                 ArrayList<Card> noting = new ArrayList<Card>();
                 mCallBack.onSearchResult(noting, false);
             }
-            LogUtil.e("kk", "search", e);
+            LogUtil.e("cc", "search", e);
             //wait.dismiss();
         }).done((tmp) -> {
             if (mCallBack != null) {

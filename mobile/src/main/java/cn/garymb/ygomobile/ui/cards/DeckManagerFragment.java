@@ -104,6 +104,7 @@ import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.PackManager;
 import ocgcore.data.Card;
@@ -116,6 +117,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
     protected CardSearcher mCardSearcher;
+    protected CardManager mCardManager;
     protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
@@ -169,6 +171,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         setListeners();
 
         mPackManager = DataManager.get().getPackManager();
+        mCardManager = DataManager.get().getCardManager();
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
@@ -569,6 +572,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
 
                     @Override
+                    public void onGetRelatedCardList(Card cardInfo) {
+                        getRelatedCardList(cardInfo);
+                    }
+
+                    @Override
                     public void onClose() {
                         mDialog.dismiss();
                     }
@@ -619,6 +627,50 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private void showSearchKeyWord(String keyword) {
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
+    }
+
+    private void getRelatedCardList(Card cardInfo) {
+        SparseArray<Card> cards = mCardManager.getAllCards();
+        // 使用 ArrayList 来保存匹配的卡片
+        List<Card> matchingCards = new ArrayList<>();
+
+        // 将 cardInfo 的 setCode 转换为 List<Long>
+        List<Long> cardInfoSetCodes = new ArrayList<>();
+        for (long setCode : cardInfo.getSetCode()) {
+            if (setCode != 0) cardInfoSetCodes.add(setCode);
+        }
+        Log.w("cc cardInfoSetCodes", cardInfoSetCodes.toString());
+
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.valueAt(i);
+
+            // 检查卡片是否已经存在于匹配列表中
+            if (!matchingCards.contains(card)) {
+                // 检查卡片名或描述是否包含给定卡片的名字
+                if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
+                    matchingCards.add(card);
+                    continue; // 如果名称或描述匹配，则跳过系列代码检查
+                }
+
+                // 获取卡片的系列代码并检查是否有相同的系列代码
+                for (long setCode : card.getSetCode()) {
+                    if (cardInfoSetCodes.contains(setCode)) {
+                        matchingCards.add(card);
+                        break; // 如果已经找到匹配，可以跳出内层循环
+                    }
+                }
+            }
+        }
+
+        // 日志输出匹配的卡片数量
+        Log.w("cc related cards", "Found " + matchingCards.size() + " related cards.");
+
+        // 确保 matchingCards 不为空时调用 onSearchResult
+        if (!matchingCards.isEmpty()) {
+            onSearchResult(matchingCards, false);
+        } else {
+            Log.w("cc", "No related card found");
+        }
     }
 
     private void showPackList(Card cardInfo) {
