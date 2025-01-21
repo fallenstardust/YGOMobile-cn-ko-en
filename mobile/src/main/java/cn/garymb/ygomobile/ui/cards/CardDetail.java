@@ -354,9 +354,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         stack.pop();
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
-                            if (queryable(quotedText)) { // 使用 queryable 方法判断是否高亮
-                                applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
-                            }
+                            Log.d("cc quotedText", quotedText);
+                            applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
