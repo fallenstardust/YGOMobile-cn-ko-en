@@ -9,6 +9,7 @@
 #include "deck_manager.h"
 #include "replay.h"
 #include <thread>
+#include <array>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/android_tools.h>
 #endif
@@ -104,18 +105,17 @@ void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
 	int len = evbuffer_get_length(input);
 	if (len < 2)
 		return;
-	unsigned char* duel_client_read = new unsigned char[SIZE_NETWORK_BUFFER];
+	std::array<unsigned char, SIZE_NETWORK_BUFFER> duel_client_read;
 	uint16_t packet_len = 0;
 	while (len >= 2) {
 		evbuffer_copyout(input, &packet_len, sizeof packet_len);
 		if (len < packet_len + 2)
 			break;
-		int read_len = evbuffer_remove(input, duel_client_read, packet_len + 2);
+		int read_len = evbuffer_remove(input, duel_client_read.data(), packet_len + 2);
 		if (read_len > 2)
 			HandleSTOCPacketLan(&duel_client_read[2], read_len - 2);
 		len -= packet_len + 2;
 	}
-	delete[] duel_client_read;
 }
 void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 	if (events & BEV_EVENT_CONNECTED) {
@@ -144,10 +144,10 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				BufferIO::CopyCharArray(mainGame->ebServerPass->getText(), cscg.pass);
 				cscg.info.rule = mainGame->cbRule->getSelected();
 				cscg.info.mode = mainGame->cbMatchMode->getSelected();
-				cscg.info.start_hand = wcstol(mainGame->ebStartHand->getText(),nullptr,10);
-				cscg.info.start_lp = wcstol(mainGame->ebStartLP->getText(),nullptr,10);
-				cscg.info.draw_count = wcstol(mainGame->ebDrawCount->getText(),nullptr,10);
-				cscg.info.time_limit = wcstol(mainGame->ebTimeLimit->getText(),nullptr,10);
+				cscg.info.start_hand = std::wcstol(mainGame->ebStartHand->getText(),nullptr,10);
+				cscg.info.start_lp = std::wcstol(mainGame->ebStartLP->getText(),nullptr,10);
+				cscg.info.draw_count = std::wcstol(mainGame->ebDrawCount->getText(),nullptr,10);
+				cscg.info.time_limit = std::wcstol(mainGame->ebTimeLimit->getText(),nullptr,10);
 				cscg.info.lflist = mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
 				cscg.info.duel_rule = mainGame->cbDuelRule->getSelected() + 1;
 				cscg.info.no_check_deck = mainGame->chkNoCheckDeck->isChecked();

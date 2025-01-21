@@ -1563,7 +1563,7 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth,
 	wchar_t strBuffer[4096];
 	std::wstring ret;
 
-	for(size_t i = 0; text[i] != 0 && i < wcslen(text); ++i) {
+	for(size_t i = 0; text[i] != 0 && i < std::wcslen(text); ++i) {
 		wchar_t c = text[i];
 		u32 w = font->getCharDimension(c).Width + font->getKerningWidth(c, prev);
 		prev = c;
@@ -1613,17 +1613,21 @@ void Game::LoadExpansions() {
 	for(u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
 		const IFileList* archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
 		for(u32 j = 0; j < archive->getFileCount(); ++j) {
-            wchar_t fname[1024];
+			wchar_t fname[1024];
 			const char* uname = archive->getFullFileName(j).c_str();
 			BufferIO::DecodeUTF8(uname, fname);
-			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".cdb", 4))
+			if (IsExtension(fname, L".cdb")) {
 				dataManager.LoadDB(fname);
-			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".conf", 5)) {
+				continue;
+			}
+			if (IsExtension(fname, L".conf")) {
 				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(uname);
 				dataManager.LoadStrings(reader);
+				continue;
 			}
-			if(wcsrchr(fname, '.') && !wcsncasecmp(wcsrchr(fname, '.'), L".ydk", 4)) {
+			if (!wcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
 				deckBuilder.expansionPacks.push_back(fname);
+				continue;
 			}
 		}
 	}
@@ -1648,7 +1652,7 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
     }
 	if(selectlastused) {
 		for(size_t i = 0; i < cbCategory->getItemCount(); ++i) {
-			if(!wcscmp(cbCategory->getItem(i), gameConf.lastcategory)) {
+			if(!std::wcscmp(cbCategory->getItem(i), gameConf.lastcategory)) {
 				cbCategory->setSelected(i);
 				break;
 			}
@@ -1657,7 +1661,7 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	RefreshDeck(cbCategory, cbDeck);
 	if(selectlastused) {
 		for(size_t i = 0; i < cbDeck->getItemCount(); ++i) {
-			if(!wcscmp(cbDeck->getItem(i), gameConf.lastdeck)) {
+			if(!std::wcscmp(cbDeck->getItem(i), gameConf.lastdeck)) {
 				cbDeck->setSelected(i);
 				break;
 			}
