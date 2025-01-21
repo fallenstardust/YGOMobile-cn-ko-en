@@ -354,7 +354,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         stack.pop();
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
-                            Log.d("cc quotedText", quotedText);
                             applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             currentQuoteType = QuoteType.NONE;
                         } else {
