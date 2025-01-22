@@ -398,7 +398,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
         // 确保 matchingCards 不为空时调用 onSearchResult
         if (!matchingCards.isEmpty()) {
-            onSearchResult(matchingCards, false);
+            onSearchResult(mCardLoader.sort(matchingCards), false);//为了整齐需要，调用CardLoader的sort方法排序List<Card>
         } else {
             Log.w("cc", "No related card found");
         }
@@ -410,7 +410,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         List<Card> packList = mPackManager.getCards(mCardLoader, idToUse);
 
         if (packList != null) {
-            onSearchResult(packList, false);
+            onSearchResult(packList, false);//为了保持原packlist的收录顺序，不调用CardLoader的sort方法排序List<Card>
         } else {
             Log.w("cc", "No pack found for the given ID/Alias: " + idToUse);
         }

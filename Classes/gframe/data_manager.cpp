@@ -7,7 +7,7 @@ namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
 unsigned char DataManager::scriptBuffer[0x100000] = {};
-IFileSystem* DataManager::FileSystem = nullptr;
+irr::io::IFileSystem* DataManager::FileSystem = nullptr;
 DataManager dataManager;
 
 DataManager::DataManager() : _datas(32768), _strings(32768) {
@@ -115,7 +115,7 @@ bool DataManager::LoadStrings(const char* file) {
 	fclose(fp);
 	return true;
 }
-bool DataManager::LoadStrings(IReadFile* reader) {
+bool DataManager::LoadStrings(irr::io::IReadFile* reader) {
 	char ch{};
 	std::string linebuf;
 	while (reader->read(&ch, 1)) {
@@ -257,7 +257,7 @@ const wchar_t* DataManager::GetCounterName(int code) const {
 const wchar_t* DataManager::GetSetName(int code) const {
 	auto csit = _setnameStrings.find(code);
 	if(csit == _setnameStrings.end())
-		return nullptr;
+		return unknown_string;
 	return csit->second.c_str();
 }
 std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) const {
@@ -353,11 +353,9 @@ std::wstring DataManager::FormatSetName(const uint16_t setcode[]) const {
 		if (!setcode[i])
 			break;
 		const wchar_t* setname = GetSetName(setcode[i]);
-		if(setname) {
-			if (!buffer.empty())
-				buffer.push_back(L'|');
-			buffer.append(setname);
-		}
+		if (!buffer.empty())
+			buffer.push_back(L'|');
+		buffer.append(setname);
 	}
 	if (buffer.empty())
 		return std::wstring(unknown_string);
@@ -434,6 +432,74 @@ unsigned char* DataManager::DefaultScriptReader(const char* script_name, int* sl
 		return nullptr;
 	*slen = (int)len;
 	return scriptBuffer;
+}
+bool DataManager::deck_sort_lv(code_pointer p1, code_pointer p2) {
+	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
+		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
+	if ((p1->second.type & 0x7) == 1) {
+		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
+		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+		if (type1 != type2)
+			return type1 < type2;
+		if (p1->second.level != p2->second.level)
+			return p1->second.level > p2->second.level;
+		if (p1->second.attack != p2->second.attack)
+			return p1->second.attack > p2->second.attack;
+		if (p1->second.defense != p2->second.defense)
+			return p1->second.defense > p2->second.defense;
+		return p1->first < p2->first;
+	}
+	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
+		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	return p1->first < p2->first;
+}
+bool DataManager::deck_sort_atk(code_pointer p1, code_pointer p2) {
+	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
+		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
+	if ((p1->second.type & 0x7) == 1) {
+		if (p1->second.attack != p2->second.attack)
+			return p1->second.attack > p2->second.attack;
+		if (p1->second.defense != p2->second.defense)
+			return p1->second.defense > p2->second.defense;
+		if (p1->second.level != p2->second.level)
+			return p1->second.level > p2->second.level;
+		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
+		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+		if (type1 != type2)
+			return type1 < type2;
+		return p1->first < p2->first;
+	}
+	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
+		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	return p1->first < p2->first;
+}
+bool DataManager::deck_sort_def(code_pointer p1, code_pointer p2) {
+	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
+		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
+	if ((p1->second.type & 0x7) == 1) {
+		if (p1->second.defense != p2->second.defense)
+			return p1->second.defense > p2->second.defense;
+		if (p1->second.attack != p2->second.attack)
+			return p1->second.attack > p2->second.attack;
+		if (p1->second.level != p2->second.level)
+			return p1->second.level > p2->second.level;
+		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
+		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+		if (type1 != type2)
+			return type1 < type2;
+		return p1->first < p2->first;
+	}
+	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
+		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
+	return p1->first < p2->first;
+}
+bool DataManager::deck_sort_name(code_pointer p1, code_pointer p2) {
+	const wchar_t* name1 = dataManager.GetName(p1->first);
+	const wchar_t* name2 = dataManager.GetName(p2->first);
+	int res = std::wcscmp(name1, name2);
+	if (res != 0)
+		return res < 0;
+	return p1->first < p2->first;
 }
 
 }

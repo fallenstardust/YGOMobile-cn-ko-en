@@ -4,7 +4,7 @@
 #include "config.h"
 #include <unordered_map>
 #include <vector>
-#include "client_card.h"
+#include "data_manager.h"
 #include "../ocgcore/mtrandom.h"
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
@@ -42,7 +42,7 @@ public:
 	void pop_side(int seq);
 	bool check_limit(code_pointer pointer);
 
-	long long filter_effect{};
+	unsigned long long filter_effect{};
 	unsigned int filter_type{};
 	unsigned int filter_type2{};
 	unsigned int filter_attrib{};

@@ -34,7 +34,7 @@ int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	int count = listbox->getItemCount();
 	for(int i = 0; i < count; i++){
 		auto item = listbox->getListItem(i);
-		if(wcscmp(item, target) == 0){
+		if(std::wcscmp(item, target) == 0){
 			return i;
 		}
 	}

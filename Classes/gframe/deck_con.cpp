@@ -186,9 +186,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SORT_DECK: {
-				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), ClientCard::deck_sort_lv);
-				std::sort(deckManager.current_deck.extra.begin(), deckManager.current_deck.extra.end(), ClientCard::deck_sort_lv);
-				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), ClientCard::deck_sort_lv);
+				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), DataManager::deck_sort_lv);
+				std::sort(deckManager.current_deck.extra.begin(), deckManager.current_deck.extra.end(), DataManager::deck_sort_lv);
+				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), DataManager::deck_sort_lv);
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
@@ -214,7 +214,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				int sel = -1;
 				for(size_t i = 0; i < mainGame->cbDBDecks->getItemCount(); ++i) {
-					if(!wcscmp(dname, mainGame->cbDBDecks->getItem(i))) {
+					if(!std::wcscmp(dname, mainGame->cbDBDecks->getItem(i))) {
 						sel = i;
 						break;
 					}
@@ -624,7 +624,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					const wchar_t* newcatename = mainGame->cbDMCategory->getText();
 					const wchar_t* olddeckname = mainGame->lstDecks->getListItem(decksel);
 					wchar_t deckname[256];
-					BufferIO::CopyWStr(olddeckname, deckname, 256);
+					BufferIO::CopyWideString(olddeckname, deckname);
 					wchar_t oldfilepath[256];
 					deckManager.GetDeckFile(oldfilepath, mainGame->cbDBCategory, mainGame->cbDBDecks);
 					wchar_t newfilepath[256];
@@ -664,7 +664,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					const wchar_t* newcatename = mainGame->cbDMCategory->getText();
 					const wchar_t* olddeckname = mainGame->lstDecks->getListItem(decksel);
 					wchar_t deckname[256];
-					BufferIO::CopyWStr(olddeckname, deckname, 256);
+					BufferIO::CopyWideString(olddeckname, deckname);
 					wchar_t newfilepath[256];
 					if(oldcatesel != 2 && newcatesel == 0) {
 						myswprintf(newfilepath, L"./deck/%ls.ydk", deckname);
@@ -1361,12 +1361,12 @@ void DeckBuilder::GetHoveredCard() {
 	} else if(x >= 805 * mainGame->xScale && x <= 995 * mainGame->xScale && y >= 165 * mainGame->yScale && y <= 626 * mainGame->yScale) {
 		hovered_pos = 4;
         hovered_seq = (y - 165 * mainGame->yScale) / (66 * mainGame->yScale);
-		int pos = mainGame->scrFilter->getPos() + hovered_seq;
-		if(pos >= (int)results.size()) {
+		int current_pos = mainGame->scrFilter->getPos() + hovered_seq;
+		if(current_pos >= (int)results.size()) {
 			hovered_seq = -1;
 			hovered_code = 0;
 		} else {
-			hovered_code = results[pos]->first;
+			hovered_code = results[current_pos]->first;
 		}
 	}
 	if(is_draging) {
@@ -1584,7 +1584,7 @@ void DeckBuilder::FilterCards() {
 	SortList();
 }
 void DeckBuilder::InstantSearch() {
-	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
+	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)std::wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
 		StartFilter();
 }
 void DeckBuilder::ClearSearch() {
@@ -1625,23 +1625,23 @@ void DeckBuilder::SortList() {
 	auto left = results.begin();
 	const wchar_t* pstr = mainGame->ebCardName->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
-		if(wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
+		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
 			std::iter_swap(left, it);
 			++left;
 		}
 	}
 	switch(mainGame->cbSortType->getSelected()) {
 	case 0:
-		std::sort(left, results.end(), ClientCard::deck_sort_lv);
+		std::sort(left, results.end(), DataManager::deck_sort_lv);
 		break;
 	case 1:
-		std::sort(left, results.end(), ClientCard::deck_sort_atk);
+		std::sort(left, results.end(), DataManager::deck_sort_atk);
 		break;
 	case 2:
-		std::sort(left, results.end(), ClientCard::deck_sort_def);
+		std::sort(left, results.end(), DataManager::deck_sort_def);
 		break;
 	case 3:
-		std::sort(left, results.end(), ClientCard::deck_sort_name);
+		std::sort(left, results.end(), DataManager::deck_sort_name);
 		break;
 	}
 }

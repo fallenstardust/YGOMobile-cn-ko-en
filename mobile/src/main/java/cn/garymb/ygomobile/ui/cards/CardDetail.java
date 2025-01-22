@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -353,9 +354,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         stack.pop();
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
-                            if (queryable(quotedText)) { // 使用 queryable 方法判断是否高亮
-                                applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
-                            }
+                            applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
@@ -399,28 +398,40 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     private boolean queryable(String keyword) {
+        // 检查关键词是否为空或仅包含空白字符
+        if (TextUtils.isEmpty(keyword)) {
+            return false;
+        }
+
         SparseArray<Card> cards = cardManager.getAllCards();
-        //创建一个新的列表来保存匹配的卡片
         List<Card> matchingCards = new ArrayList<>();
+
+        // 检查关键词是否存在于卡片名字或描述中
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.valueAt(i);
-            if (card.Name.contains(keyword) || card.Desc.contains(keyword)) {
+            // 确保 card.Name 和 card.Desc 不为 null
+            if ((card.Name != null && card.Name.contains(keyword)) ||
+                    (card.Desc != null && card.Desc.contains(keyword))) {
                 matchingCards.add(card);
             }
         }
+
+        // 获取当前卡片信息
+        Card currentCard = getCardInfo();
+
         // 检查匹配结果
         if (matchingCards.isEmpty()) {
-            return false;
+            return false; // 如果没有找到匹配的卡片，返回 false
         } else if (matchingCards.size() == 1) {
             // 如果只有一个匹配项，检查是否是当前卡片
-            for (Card card : matchingCards) {
-                if (getCardInfo() != null && getCardInfo().equals(card)) {
-                    return false;
-                }
+            Card matchedCard = matchingCards.get(0);
+            if (currentCard != null && currentCard.equals(matchedCard)) {
+                return false; // 如果是当前卡片，返回 false
+            } else {
+                return true; // 否则返回 true
             }
-            return true;
         } else {
-            return true;
+            return true; // 如果有多个匹配项，返回 true
         }
     }
 
