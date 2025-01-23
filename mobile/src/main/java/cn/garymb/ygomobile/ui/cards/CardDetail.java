@@ -468,22 +468,19 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
                     // 检查卡片是否已经存在于匹配列表中
                     if (!matchingCards.contains(card)) matchingCards.add(card);
-                    continue; // 如果名称或描述匹配，则跳过系列代码检查
                 }
 
                 // 获取卡片的字段并检查是否有相同的字段
                 for (long setCode : card.getSetCode()) {
                     if (cardInfoSetCodes.contains(setCode)) {
-                        if (!matchingCards.contains(card)) matchingCards.add(card);
-                        break; // 如果已经找到匹配，可以跳出内层循环
+                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
                     }
                 }
 
                 for (String keyword : highlightedTexts) {
                     if ((card.Name != null && card.Name.equals(keyword)) //和关键词完全一致的视为关联卡
                      || (card.Desc != null && (card.Desc.contains("「" + keyword + "」") || card.Desc.contains("\"" + keyword + "\"")))) {//描述中关键词指向的字段一致的视为关联卡
-                        if (!matchingCards.contains(card)) matchingCards.add(card);
-                        break; // 如果找到匹配项，则跳出内层循环
+                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
                     }
                 }
 
