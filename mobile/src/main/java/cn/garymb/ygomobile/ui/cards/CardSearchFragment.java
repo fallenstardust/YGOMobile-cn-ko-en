@@ -314,8 +314,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
-                    public void onGetRelatedCardList(Card cardInfo) {
-                        getRelatedCardList(cardInfo);
+                    public void onGetRelatedCardList(List<Card> cardList) {
+                        showCardList(cardList, true);
                     }
 
                     @Override
@@ -360,45 +360,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardLoader.search(searchInfo);
     }
 
-    private void getRelatedCardList(Card cardInfo) {
-        SparseArray<Card> cards = mCardManager.getAllCards();
-        // 使用 ArrayList 来保存匹配的卡片
-        List<Card> matchingCards = new ArrayList<>();
-
-        // 将 cardInfo 的 setCode 转换为 List<Long>
-        List<Long> cardInfoSetCodes = new ArrayList<>();
-        for (long setCode : cardInfo.getSetCode()) {
-            if (setCode != 0) cardInfoSetCodes.add(setCode);
-        }
-        Log.w("cc cardInfoSetCodes", cardInfoSetCodes.toString());
-
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.valueAt(i);
-
-            // 检查卡片是否已经存在于匹配列表中
-            if (!matchingCards.contains(card)) {
-                // 检查卡片名或描述是否包含给定卡片的名字
-                if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
-                    matchingCards.add(card);
-                    continue; // 如果名称或描述匹配，则跳过系列代码检查
-                }
-
-                // 获取卡片的系列代码并检查是否有相同的系列代码
-                for (long setCode : card.getSetCode()) {
-                    if (cardInfoSetCodes.contains(setCode)) {
-                        matchingCards.add(card);
-                        break; // 如果已经找到匹配，可以跳出内层循环
-                    }
-                }
-            }
-        }
-
-        // 日志输出匹配的卡片数量
-        Log.w("cc related cards", "Found " + matchingCards.size() + " related cards.");
-
-        // 确保 matchingCards 不为空时调用 onSearchResult
-        if (!matchingCards.isEmpty()) {
-            onSearchResult(mCardLoader.sort(matchingCards), false);//为了整齐需要，调用CardLoader的sort方法排序List<Card>
+    private void showCardList(List<Card> cardList, boolean sort) {
+        if (!cardList.isEmpty()) {
+            onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
         } else {
             Log.w("cc", "No related card found");
         }
