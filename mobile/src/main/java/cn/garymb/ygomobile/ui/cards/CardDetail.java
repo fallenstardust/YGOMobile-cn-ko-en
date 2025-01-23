@@ -496,7 +496,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
-        packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
+        packName.setText(packManager.findPackNameById((cardInfo.Alias != 0 && Math.abs(cardInfo.Alias - cardInfo.Code) <= 20) ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         relatable.setVisibility(relatable(mCardInfo) ? View.VISIBLE : View.GONE);
