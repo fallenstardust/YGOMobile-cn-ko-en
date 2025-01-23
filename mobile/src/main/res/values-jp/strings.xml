@@ -133,7 +133,8 @@
     <string name="label_category">効果分類</string>
     <string name="linkmarker">◀リンクマーカー▶</string>>
     <string name="searching">ロード中</string>
-    <string name="card_faq">オンラインで判定をチェック</string>
+    <string name="card_faq">Q&amp;A</string>
+    <string name="card_related">関連カード</string>
     <string name="no_webbrowser">ブラウザはインストールしていません</string>
     <string name="load_game">ゲーム起動中</string>
 

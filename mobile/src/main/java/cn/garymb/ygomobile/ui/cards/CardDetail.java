@@ -74,7 +74,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final CardLoader cardLoader;
     private final ImageView cardImage;
     private final TextView name;
-    private final TextView relatable;
+    private final TextView btn_related;
     private final TextView desc;
     private final TextView level;
     private final TextView type;
@@ -160,7 +160,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         packName = findViewById(R.id.pack_name);
         toggleAnimation(packName);
         name = findViewById(R.id.text_name);
-        relatable = findViewById(R.id.relatable);
+        btn_related = findViewById(R.id.btn_related);
         desc = findViewById(R.id.text_desc);
         close = findViewById(R.id.btn_close);
         cardCode = findViewById(R.id.card_code);
@@ -218,7 +218,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 mListener.onOpenUrl(cardInfo);
             }
         });
-        name.setOnClickListener((v) -> {
+        btn_related.setOnClickListener((v) -> {
             if (mListener != null) {
                 Card cardInfo = getCardInfo();
                 if (cardInfo == null) {
@@ -499,7 +499,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         packName.setText(packManager.findPackNameById((cardInfo.Alias != 0 && Math.abs(cardInfo.Alias - cardInfo.Code) <= 20) ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
-        relatable.setVisibility(relatable(mCardInfo) ? View.VISIBLE : View.GONE);
+        btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.GONE);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);

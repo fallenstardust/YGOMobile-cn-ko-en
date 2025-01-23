@@ -376,4 +376,5 @@
     <string name="tip_download_failed">Save Failed!</string>
     <string name="tip_download_OK">Saved to</string>
     <string name="replay_list">Replay List</string>
+    <string name="card_related">Related</string>
 </resources>
