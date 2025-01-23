@@ -42,6 +42,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -70,6 +71,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final String TAG = String.valueOf(CardDetail.class);
     private final CardManager cardManager;
     private final PackManager packManager;
+    private final CardLoader cardLoader;
     private final ImageView cardImage;
     private final TextView name;
     private final TextView relatable;
@@ -183,6 +185,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
         packManager = DataManager.get().getPackManager();
+        cardLoader = new CardLoader(context);
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -239,7 +242,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (cardInfo == null) {
                     return;
                 }
-                mListener.onShowPackList(cardInfo);
+                showPackList(cardInfo);
             }
         });
     }
@@ -312,6 +315,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     public Card getCardInfo() {
         return mCardInfo;
+    }
+
+    private void showPackList(Card cardInfo) {
+        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
+        mListener.onShowPackList(packManager.getCards(cardLoader, idToUse));
     }
 
     public void setHighlightTextWithClickableSpans(String text) {
@@ -780,7 +788,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onImageUpdate(Card cardInfo);
 
-        void onShowPackList(Card cardInfo);
+        void onShowPackList(List<Card> packList);
 
         void onSearchKeyWord(String keyword);
 
@@ -808,7 +816,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
-        public void onShowPackList(Card cardInfo) {
+        public void onShowPackList(List<Card> packList) {
 
         }
 

@@ -562,8 +562,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
 
                     @Override
-                    public void onShowPackList(Card cardInfo) {
-                        showPackList(cardInfo);
+                    public void onShowPackList(List<Card> packList) {
+                        showCardList(packList, false);//保持原收录顺序，不排序
                     }
 
                     @Override
@@ -573,7 +573,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
                     @Override
                     public void onGetRelatedCardList(List<Card> cardList) {
-                        showCardList(cardList, true);
+                        showCardList(cardList, true);//便于查看，排序
                     }
 
                     @Override
@@ -633,21 +633,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (!cardList.isEmpty()) {
             onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
         } else {
-            Log.w("cc", "No related card found");
-        }
-    }
-
-    private void showPackList(Card cardInfo) {
-        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
-        // 确保再次检查 PackManager 是否已经加载完成
-        if (mPackManager == null) {
-            return;
-        }
-        List<Card> packList = mPackManager.getCards(mCardLoader, idToUse);
-        if (packList != null) {
-            onSearchResult(packList, false);
-        } else {
-            Log.w("seesee", "No pack found for the given ID/Alias: " + idToUse);
+            Log.w("cc", "No card found");
         }
     }
 

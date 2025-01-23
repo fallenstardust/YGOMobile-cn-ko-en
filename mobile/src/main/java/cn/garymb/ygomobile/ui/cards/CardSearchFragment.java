@@ -304,8 +304,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
-                    public void onShowPackList(Card cardInfo) {
-                        showPackList(cardInfo);
+                    public void onShowPackList(List<Card> packList) {
+                        showCardList(packList, false);//保持原收录顺序，不排序
                     }
 
                     @Override
@@ -315,7 +315,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
                     @Override
                     public void onGetRelatedCardList(List<Card> cardList) {
-                        showCardList(cardList, true);
+                        showCardList(cardList, true);//便于查看，排序
                     }
 
                     @Override
@@ -364,19 +364,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         if (!cardList.isEmpty()) {
             onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
         } else {
-            Log.w("cc", "No related card found");
-        }
-    }
-
-    private void showPackList(Card cardInfo) {
-        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
-
-        List<Card> packList = mPackManager.getCards(mCardLoader, idToUse);
-
-        if (packList != null) {
-            onSearchResult(packList, false);//为了保持原packlist的收录顺序，不调用CardLoader的sort方法排序List<Card>
-        } else {
-            Log.w("cc", "No pack found for the given ID/Alias: " + idToUse);
+            Log.w("cc", "No card found");
         }
     }
 
