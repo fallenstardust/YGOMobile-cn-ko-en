@@ -142,6 +142,7 @@
     <string name="label_category">Categoría</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
+    <string name="card_related">Relacionadas</string>
     <string name="no_webbrowser">Ningún navegador web instalado</string>
     <string name="load_game">Cargando juego</string>
     <string name="new_deck">Nuevo</string>

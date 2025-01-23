@@ -133,6 +133,7 @@
     <string name="linkmarker">◀링크 마커▶</string>>
     <string name="searching">검색 중</string>
     <string name="card_faq">FAQ</string>
+    <string name="card_related">관련 카드</string>
     <string name="no_webbrowser">웹 브라우저가 설치되지 않았습니다</string>
     <string name="load_game">게임 시작 중</string>
 

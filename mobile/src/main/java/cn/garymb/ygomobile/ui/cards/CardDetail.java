@@ -42,6 +42,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -70,8 +71,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private static final String TAG = String.valueOf(CardDetail.class);
     private final CardManager cardManager;
     private final PackManager packManager;
+    private final CardLoader cardLoader;
     private final ImageView cardImage;
     private final TextView name;
+    private final TextView btn_related;
     private final TextView desc;
     private final TextView level;
     private final TextView type;
@@ -111,6 +114,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
+    private List<String> spanStringList = new ArrayList<>();
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -156,6 +160,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         packName = findViewById(R.id.pack_name);
         toggleAnimation(packName);
         name = findViewById(R.id.text_name);
+        btn_related = findViewById(R.id.btn_related);
         desc = findViewById(R.id.text_desc);
         close = findViewById(R.id.btn_close);
         cardCode = findViewById(R.id.card_code);
@@ -180,6 +185,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
         packManager = DataManager.get().getPackManager();
+        cardLoader = new CardLoader(context);
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();
@@ -212,13 +218,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 mListener.onOpenUrl(cardInfo);
             }
         });
-        name.setOnClickListener((v) -> {
+        btn_related.setOnClickListener((v) -> {
             if (mListener != null) {
                 Card cardInfo = getCardInfo();
                 if (cardInfo == null) {
                     return;
                 }
-                mListener.onGetRelatedCardList(cardInfo);
+                mListener.onGetRelatedCardList(relatedCards(cardInfo));
             }
         });
         findViewById(R.id.lastone).setOnClickListener((v) -> {
@@ -236,7 +242,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (cardInfo == null) {
                     return;
                 }
-                mListener.onShowPackList(cardInfo);
+                showPackList(cardInfo);
             }
         });
     }
@@ -311,9 +317,14 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         return mCardInfo;
     }
 
+    private void showPackList(Card cardInfo) {
+        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
+        mListener.onShowPackList(packManager.getCards(cardLoader, idToUse));
+    }
+
     public void setHighlightTextWithClickableSpans(String text) {
         SpannableString spannableString = new SpannableString(text);
-
+        spanStringList.clear(); // 清空之前的高亮文本列表
         // 解析器状态
         QuoteType currentQuoteType = QuoteType.NONE;
         Stack<Integer> stack = new Stack<>();
@@ -344,6 +355,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                             String quotedText = text.substring(start, i).trim();
                             // 使用 queryable 方法判断是否高亮
                             applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         }
                     }
@@ -355,6 +367,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
                             applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
@@ -363,10 +376,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     }
                     break;
             }
-        }
-        // 处理未关闭的引号对
-        if (!stack.isEmpty()) {
-            // Handle unclosed quotes error, e.g., log a warning or throw an exception
         }
         desc.setText(spannableString);
         desc.setMovementMethod(LinkMovementMethod.getInstance());
@@ -415,17 +424,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 matchingCards.add(card);
             }
         }
-
-        // 获取当前卡片信息
-        Card currentCard = getCardInfo();
-
         // 检查匹配结果
         if (matchingCards.isEmpty()) {
             return false; // 如果没有找到匹配的卡片，返回 false
         } else if (matchingCards.size() == 1) {
             // 如果只有一个匹配项，检查是否是当前卡片
             Card matchedCard = matchingCards.get(0);
-            if (currentCard != null && currentCard.equals(matchedCard)) {
+            if (getCardInfo() != null && getCardInfo().equals(matchedCard)) {
                 return false; // 如果是当前卡片，返回 false
             } else {
                 return true; // 否则返回 true
@@ -433,6 +438,54 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         } else {
             return true; // 如果有多个匹配项，返回 true
         }
+    }
+
+    private boolean relatable(Card cardInfo) {
+        List<Card> matchingCards = relatedCards(cardInfo);
+        if (!matchingCards.isEmpty())
+            return true;
+        return false;
+    }
+
+    private List<Card> relatedCards(Card cardInfo) {
+        SparseArray<Card> cards = cardManager.getAllCards();
+        // 新创建一个表避免外部修改原本的表
+        List<String> highlightedTexts = new ArrayList<>(spanStringList);
+        // 使用 ArrayList 来保存匹配的卡片
+        List<Card> matchingCards = new ArrayList<>();
+
+        // 将 cardInfo 的 setCode 转换为 List<Long>
+        List<Long> cardInfoSetCodes = new ArrayList<>();
+        for (long setCode : cardInfo.getSetCode()) {
+            if (setCode != 0) cardInfoSetCodes.add(setCode);
+        }
+        Log.w("cc cardInfoSetCodes", cardInfoSetCodes.toString());
+
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.valueAt(i);
+
+                // 检查卡片名或描述是否包含给定卡片的名字
+                if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
+                    // 检查卡片是否已经存在于匹配列表中
+                    if (!matchingCards.contains(card)) matchingCards.add(card);
+                }
+
+                // 获取卡片的字段并检查是否有相同的字段
+                for (long setCode : card.getSetCode()) {
+                    if (cardInfoSetCodes.contains(setCode)) {
+                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
+                    }
+                }
+
+                for (String keyword : highlightedTexts) {
+                    if ((card.Name != null && card.Name.equals(keyword)) //和关键词完全一致的视为关联卡
+                     || (card.Desc != null && (card.Desc.contains("「" + keyword + "」") || card.Desc.contains("\"" + keyword + "\"")))) {//描述中关键词指向的字段一致的视为关联卡
+                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
+                    }
+                }
+
+        }
+        return matchingCards;
     }
 
     private void setCardInfo(Card cardInfo, View view) {
@@ -443,9 +496,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
-        packName.setText(packManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code));
+        packName.setText(packManager.findPackNameById((cardInfo.Alias != 0 && Math.abs(cardInfo.Alias - cardInfo.Code) <= 20) ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
+        btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.GONE);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
@@ -731,11 +785,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onImageUpdate(Card cardInfo);
 
-        void onShowPackList(Card cardInfo);
+        void onShowPackList(List<Card> packList);
 
         void onSearchKeyWord(String keyword);
 
-        void onGetRelatedCardList(Card cardInfo);
+        void onGetRelatedCardList(List<Card> cardList);
 
         void onClose();
     }
@@ -759,7 +813,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
-        public void onShowPackList(Card cardInfo) {
+        public void onShowPackList(List<Card> packList) {
 
         }
 
@@ -769,7 +823,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
-        public void onGetRelatedCardList(Card cardInfo) {
+        public void onGetRelatedCardList(List<Card> cardList) {
 
         }
 
