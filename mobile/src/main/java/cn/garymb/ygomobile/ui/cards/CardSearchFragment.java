@@ -304,17 +304,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
-                    public void onShowPackList(List<Card> packList) {
-                        showCardList(packList, false);//保持原收录顺序，不排序
-                    }
-
-                    @Override
-                    public void onSearchKeyWord(String keyword) {
-                        showSearchKeyWord(keyword);
-                    }
-
-                    @Override
-                    public void onGetRelatedCardList(List<Card> cardList) {
+                    public void onShowCardList(List<Card> cardList) {
                         showCardList(cardList, true);//便于查看，排序
                     }
 
@@ -355,11 +345,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         }
     }
 
-    private void showSearchKeyWord(String keyword) {
-        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
-        mCardLoader.search(searchInfo);
-    }
-
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
             onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
@@ -367,7 +352,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             Log.w("cc", "No card found");
         }
     }
-
 
     protected void showSearch(boolean autoclose) {
         if (autoclose && mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {

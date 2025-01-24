@@ -224,7 +224,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (cardInfo == null) {
                     return;
                 }
-                mListener.onGetRelatedCardList(relatedCards(cardInfo));
+                mListener.onShowCardList(relatedCards(cardInfo));
             }
         });
         findViewById(R.id.lastone).setOnClickListener((v) -> {
@@ -319,7 +319,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void showPackList(Card cardInfo) {
         Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
-        mListener.onShowPackList(packManager.getCards(cardLoader, idToUse));
+        mListener.onShowCardList(packManager.getCards(cardLoader, idToUse));
     }
 
     public void setHighlightTextWithClickableSpans(String text) {
@@ -391,7 +391,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (color != Color.WHITE) {
                     // 获取被点击的文本内容
                     String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
-                    mListener.onSearchKeyWord(clickedText);
+                    mListener.onShowCardList(queryList(clickedText));
                 } else {
                     YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
                 }
@@ -406,24 +406,32 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
-    private boolean queryable(String keyword) {
-        // 检查关键词是否为空或仅包含空白字符
-        if (TextUtils.isEmpty(keyword)) {
-            return false;
-        }
-
+    private List<Card> queryList(String keyword) {
+        long setcode = DataManager.get().getStringManager().getSetCode(keyword);
         SparseArray<Card> cards = cardManager.getAllCards();
         List<Card> matchingCards = new ArrayList<>();
-
+        List<Long> cardInfoSetCodes = new ArrayList<>();
         // 检查关键词是否存在于卡片名字或描述中
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.valueAt(i);
-            // 确保 card.Name 和 card.Desc 不为 null
-            if ((card.Name != null && card.Name.contains(keyword)) ||
-                    (card.Desc != null && card.Desc.contains(keyword))) {
-                matchingCards.add(card);
+            cardInfoSetCodes.clear();//每张卡调用前都清空字段表以防重复
+            // 将 card 的 setCode 转换为 List<Long>
+            for (long setCode : card.getSetCode()) {
+                if (setCode > 0) cardInfoSetCodes.add(setCode);
             }
+            //关键词如果有对应字段则添加进去
+            if (cardInfoSetCodes.contains(setcode) && !matchingCards.contains(card)) matchingCards.add(card);
+            // 确保 card.Name 和 card.Desc 不为 null
+            if ((card.Name != null && card.Name.contains(keyword)) || (card.Desc != null && card.Desc.contains(keyword))) {
+                if (!matchingCards.contains(card)) matchingCards.add(card);
+            }
+
         }
+        return matchingCards;
+    }
+
+    private boolean queryable(String keyword) {
+        List<Card> matchingCards = queryList(keyword);
         // 检查匹配结果
         if (matchingCards.isEmpty()) {
             return false; // 如果没有找到匹配的卡片，返回 false
@@ -453,7 +461,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         List<String> highlightedTexts = new ArrayList<>(spanStringList);
         // 使用 ArrayList 来保存匹配的卡片
         List<Card> matchingCards = new ArrayList<>();
-
         // 将 cardInfo 的 setCode 转换为 List<Long>
         List<Long> cardInfoSetCodes = new ArrayList<>();
         for (long setCode : cardInfo.getSetCode()) {
@@ -785,11 +792,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onImageUpdate(Card cardInfo);
 
-        void onShowPackList(List<Card> packList);
-
-        void onSearchKeyWord(String keyword);
-
-        void onGetRelatedCardList(List<Card> cardList);
+        void onShowCardList(List<Card> cardList);
 
         void onClose();
     }
@@ -813,17 +816,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
-        public void onShowPackList(List<Card> packList) {
-
-        }
-
-        @Override
-        public void onSearchKeyWord(String keyword) {
-
-        }
-
-        @Override
-        public void onGetRelatedCardList(List<Card> cardList) {
+        public void onShowCardList(List<Card> cardList) {
 
         }
 
