@@ -562,17 +562,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
 
                     @Override
-                    public void onShowPackList(List<Card> packList) {
-                        showCardList(packList, false);//保持原收录顺序，不排序
-                    }
-
-                    @Override
-                    public void onSearchKeyWord(String keyword) {
-                        showSearchKeyWord(keyword);//根据关键词搜索
-                    }
-
-                    @Override
-                    public void onGetRelatedCardList(List<Card> cardList) {
+                    public void onShowCardList(List<Card> cardList) {
                         showCardList(cardList, true);//便于查看，排序
                     }
 
@@ -622,11 +612,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
             mCardDetail.bind(cardInfo, pos, provider);
         }
-    }
-
-    private void showSearchKeyWord(String keyword) {
-        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
-        mCardLoader.search(searchInfo);
     }
 
     private void showCardList(List<Card> cardList, boolean sort) {

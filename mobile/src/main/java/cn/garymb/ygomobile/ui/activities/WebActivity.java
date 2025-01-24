@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,14 +39,13 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
-import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
+import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
@@ -113,6 +111,12 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                 mFilePathCallback = filePathCallback;
                 openFileChooseProcess(fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 return true;
+            }
+        });
+        mWebViewPlus.setWebViewClient(new DefWebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return super.shouldOverrideUrlLoading(view, url);
             }
         });
         if (doIntent(getIntent())) {

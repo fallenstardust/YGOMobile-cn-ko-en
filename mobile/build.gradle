@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "cn.garymb.ygomobile"
-        minSdkVersion 23
+        minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 311140001
