@@ -317,10 +317,26 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_USER_PRIVACY_POLICY.equals(key)) {
-            new DialogPlus(getContext())
-                    .setTitleText(getString(R.string.user_privacy_policy))
-                    .loadUrl("file:///android_asset/user_Privacy_Policy_CN.html", Color.TRANSPARENT)
-                    .show();
+            DialogPlus dialogPlus = new DialogPlus(getContext())
+                    .setTitleText(getString(R.string.user_privacy_policy));
+            //根据系统语言复制特定资料文件
+            String language = getContext().getResources().getConfiguration().locale.getLanguage();
+            String fileaddr = "";
+            if (!language.isEmpty()) {
+                if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
+                } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
+                } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
+                } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+                } else {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+                }
+            }
+            dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+            dialogPlus.show();
         }
         if (PREF_RESET_GAME_RES.equals(key)) {
             updateImages();
