@@ -365,5 +365,8 @@
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
     <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
     <string name="tip_download_ex">新しいカードがあるよ、遊びに来て！</string>
+    <string name="tip_download_OK">に保存されました</string>
     <string name="replay_list">リプレイ</string>
+    <string name="user_privacy_policy">ユーザーのプライバシーポリシー</string>
+    <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
 </resources>

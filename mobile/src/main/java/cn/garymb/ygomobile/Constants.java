@@ -44,6 +44,7 @@ public interface Constants {
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
     String PREF_RESET_GAME_RES = "pref_key_reset_game_res";
+    String PREF_USER_PRIVACY_POLICY = "pref_user_privacy_policy";
     String PREF_JOIN_QQ = "pref_key_join_qq";
     String PREF_DEL_EX = "pref_key_settings_delete_ex";
     String PREF_LAST_ROOM_LIST = "pref_key_lastroom_list";

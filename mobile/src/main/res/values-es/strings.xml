@@ -373,5 +373,7 @@
     <string name="tip_ypk_is_deleted">Actualice las cartas pre-lanzadas de inmediato</string>
     <string name="tip_superpre_desc">Actualización más rápida. Descargar expansiones</string>
     <string name="replay_list">lista de reproducción</string>
+    <string name="user_privacy_policy">Política de Privacidad del Usuario</string>
+    <string name="about_user_privacy_policy">Explicación de los permisos utilizados por YGOMobile</string>
 </resources>
 

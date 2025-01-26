@@ -33,6 +33,7 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_RESET_GAME_RES;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
+import static cn.garymb.ygomobile.Constants.PREF_USER_PRIVACY_POLICY;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
@@ -165,6 +166,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
+        bind(PREF_USER_PRIVACY_POLICY,getString(R.string.about_user_privacy_policy));
         isInit = false;
     }
 
@@ -312,6 +314,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
             new DialogPlus(getContext())
                     .setTitleText(getString(R.string.settings_about_change_log))
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
+                    .show();
+        }
+        if (PREF_USER_PRIVACY_POLICY.equals(key)) {
+            new DialogPlus(getContext())
+                    .setTitleText(getString(R.string.user_privacy_policy))
+                    .loadUrl("file:///android_asset/user_Privacy_Policy_CN.html", Color.TRANSPARENT)
                     .show();
         }
         if (PREF_RESET_GAME_RES.equals(key)) {

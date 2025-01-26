@@ -367,4 +367,6 @@
     <string name="tip_download_ex">新卡下载！</string>
     <string name="tip_download_failed">保存失败，请检查网络并重试</string>
     <string name="tip_download_OK">已保存至</string>
+    <string name="user_privacy_policy">用户隐私政策</string>
+    <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
 </resources>
