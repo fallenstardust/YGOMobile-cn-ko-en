@@ -304,6 +304,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
+                    public void onSearchKeyWord(String keyword) {
+                        showSearchKeyWord(keyword);//根据关键词搜索
+                    }
+
+                    @Override
                     public void onShowCardList(List<Card> cardList) {
                         showCardList(cardList, true);//便于查看，排序
                     }
@@ -343,6 +348,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             }
             mCardDetail.bind(cardInfo, position, provider);
         }
+    }
+
+    private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡置顶显示，并同时搜索字段和效果文本
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        mCardLoader.search(searchInfo);
     }
 
     private void showCardList(List<Card> cardList, boolean sort) {

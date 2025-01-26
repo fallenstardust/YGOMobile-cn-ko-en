@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -391,7 +392,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (color != Color.WHITE) {
                     // 获取被点击的文本内容
                     String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
-                    mListener.onShowCardList(queryList(clickedText));
+                    mListener.onSearchKeyWord(clickedText);
                 } else {
                     YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
                 }
@@ -792,6 +793,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onImageUpdate(Card cardInfo);
 
+        void onSearchKeyWord(String keyword);
+
         void onShowCardList(List<Card> cardList);
 
         void onClose();
@@ -812,6 +815,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         @Override
         public void onImageUpdate(Card cardInfo) {
+
+        }
+
+        @Override
+        public void onSearchKeyWord(String keyword) {
 
         }
 
