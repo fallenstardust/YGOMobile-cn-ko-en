@@ -565,8 +565,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
 
                     @Override
-                    public void onShowCardList(List<Card> cardList) {
-                        showCardList(cardList, true);//便于查看，排序
+                    public void onShowCardList(List<Card> cardList, boolean sort) {
+                        showCardList(cardList, sort);//卡包展示不排序，其他情况排序
                     }
 
                     @Override

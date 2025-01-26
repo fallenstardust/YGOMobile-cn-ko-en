@@ -377,4 +377,6 @@
     <string name="tip_download_OK">Saved to</string>
     <string name="replay_list">Replay List</string>
     <string name="card_related">Related</string>
+    <string name="user_privacy_policy">User Privacy Policy</string>
+    <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
 </resources>
