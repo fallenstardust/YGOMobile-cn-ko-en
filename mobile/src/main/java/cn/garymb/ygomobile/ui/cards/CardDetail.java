@@ -225,7 +225,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (cardInfo == null) {
                     return;
                 }
-                mListener.onShowCardList(relatedCards(cardInfo));
+                mListener.onShowCardList(relatedCards(cardInfo), true);
             }
         });
         findViewById(R.id.lastone).setOnClickListener((v) -> {
@@ -320,7 +320,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private void showPackList(Card cardInfo) {
         Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
-        mListener.onShowCardList(packManager.getCards(cardLoader, idToUse));
+        mListener.onShowCardList(packManager.getCards(cardLoader, idToUse), false);
     }
 
     public void setHighlightTextWithClickableSpans(String text) {
@@ -795,7 +795,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
         void onSearchKeyWord(String keyword);
 
-        void onShowCardList(List<Card> cardList);
+        void onShowCardList(List<Card> cardList, boolean sort);
 
         void onClose();
     }
@@ -824,7 +824,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
 
         @Override
-        public void onShowCardList(List<Card> cardList) {
+        public void onShowCardList(List<Card> cardList, boolean sort) {
 
         }
 

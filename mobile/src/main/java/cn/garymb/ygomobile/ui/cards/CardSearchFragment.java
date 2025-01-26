@@ -309,8 +309,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                     }
 
                     @Override
-                    public void onShowCardList(List<Card> cardList) {
-                        showCardList(cardList, true);//便于查看，排序
+                    public void onShowCardList(List<Card> cardList, boolean sort) {
+                        showCardList(cardList, sort);//卡包展示不排序，关联卡片排序
                     }
 
                     @Override
