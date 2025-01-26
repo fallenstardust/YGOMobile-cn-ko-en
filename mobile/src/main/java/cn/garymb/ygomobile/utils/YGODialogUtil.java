@@ -289,7 +289,7 @@ public class YGODialogUtil {
                 public void onClick(View view) {
                     List list = new ArrayList();
                     list.add(context.getString(R.string.category_name));
-                    if (typeAdp.getSelectPosition() > 1) list.add(context.getString(R.string.deck_name));//不在卡包展示、人机卡组分类显露添加新卡组选项
+                    list.add(context.getString(R.string.deck_name));
                     SimpleListAdapter catelistadapter = new SimpleListAdapter(context);
                     catelistadapter.set(list);
                     DialogPlus dialog = new DialogPlus(context);
@@ -333,7 +333,7 @@ public class YGODialogUtil {
                                 break;
                             case 1:
                                 dialog.dismiss();
-                                onDeckMenuListener.onDeckNew(typeList.get(typeAdp.getSelectPosition()));
+                                onDeckMenuListener.onDeckNew((typeAdp.getSelectPosition() > 1 ? typeList.get(typeAdp.getSelectPosition()) : typeList.get(2)));//如果选中卡包展示和人机卡组的场合创建卡组则在未分类下创建这个新卡组
                                 break;
                         }
                     });
