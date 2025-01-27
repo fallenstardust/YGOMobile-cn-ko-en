@@ -671,7 +671,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     private void downloadCardImage(int code, boolean force) {
-        if (cardManager.getCard(code) == null) {
+        if (String.valueOf(Math.abs(code)).length() >= 9) {
             YGOUtil.showTextToast(context.getString(R.string.tip_expansions_image));
             return;
         }
