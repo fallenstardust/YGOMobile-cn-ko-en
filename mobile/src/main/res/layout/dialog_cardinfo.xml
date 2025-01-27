@@ -40,7 +40,6 @@
                 android:layout_marginLeft="5dp"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
-                android:paddingRight="16dp"
                 android:shadowColor="@color/black"
                 android:text="@string/card_faq"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"

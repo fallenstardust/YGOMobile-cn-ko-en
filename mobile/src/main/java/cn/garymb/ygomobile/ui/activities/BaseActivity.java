@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
 
 
@@ -288,52 +289,8 @@ public class BaseActivity extends AppCompatActivity {
 //                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 //            }
         } else {
-            showToast("喵不给我权限让我怎么运行？！");
+            YGOUtil.showTextToast("喵不给我权限让我怎么运行？！");
             finish();
         }
-    }
-
-    @SuppressLint("ShowToast")
-    private Toast makeToast() {
-        if (mToast == null) {
-            mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        }
-        return mToast;
-    }
-
-    /**
-     * Set how long to show the view for.
-     *
-     * @see android.widget.Toast#LENGTH_SHORT
-     * @see android.widget.Toast#LENGTH_LONG
-     */
-    public void showToast(int id, int duration) {
-        showToast(getString(id), duration);
-    }
-
-    public void showToast(CharSequence text) {
-        showToast(text, Toast.LENGTH_SHORT);
-    }
-
-    public void showToast(int id) {
-        showToast(getString(id));
-    }
-
-    /**
-     * Set how long to show the view for.
-     *
-     * @see android.widget.Toast#LENGTH_SHORT
-     * @see android.widget.Toast#LENGTH_LONG
-     */
-    public void showToast(CharSequence text, int duration) {
-        if (Looper.myLooper() != Looper.getMainLooper()) {
-            runOnUiThread(() -> showToast(text, duration));
-            return;
-        }
-        Toast toast = makeToast();
-        toast.setText(text);
-        toast.setGravity(Gravity.TOP, 0, 0);
-        toast.setDuration(duration);
-        toast.show();
     }
 }

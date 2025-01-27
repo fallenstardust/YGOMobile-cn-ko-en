@@ -65,7 +65,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 //        for(int i=0;i<permissions.length;i++){
 //            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-//                showToast(getString(R.string.tip_no_permission,permissions[i]));
+//                YGOUtil.showTextToast(getString(R.string.tip_no_permission,permissions[i]));
 //                break;
 //            }
 //        }
