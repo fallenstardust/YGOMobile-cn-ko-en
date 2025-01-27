@@ -342,13 +342,15 @@
     <string name="guide_view_banner">Noticias do MyCard, Você pode tocar para ver. \nApenas em chinês por enquanto, desculpe.</string>
     <string name="title_delete_ex">Excluir Expansões</string>
     <string name="about_delete_ex">Se precisar excluir todas as cartas de expansão, use esta opção</string>
-	<string name="ask_delete_ex">Toque OK para confirmar a exclusão.</string>
+    <string name="ask_delete_ex">Toque OK para confirmar a exclusão.</string>
     <string name="file_installed">Arquivo instalado</string>
     <string name="settings_screen_padding">Altura Reservada (Para Tela Curva)</string>
     <string name="tip_load_cdb_error">Erro ao tentar carregar o banco de dados</string>
     <string name="replay">Repetições</string>
     <string name="bot_mode">Duelo vs IA</string>
     <string name="personal">My</string>
+    <string name="login_mycard">Conecte-se</string>
+    <string name="logout_mycard">Sair do MyCard?</string>
     <string name="back_to_mycard_home">Voltar à página inicial</string>
     <string name="edit_your_message">Digite sua mensagem</string>
     <string name="login_succeed">Login bem-sucedido</string>
@@ -360,6 +362,8 @@
     <string name="tip_ygopro_is_running">Atualmente há um duelo em andamento e não é possível iniciar um novo duelo. A PSW da sala foi salva no histórico. Finalize o jogo atual e, em seguida, selecione o histórico para se juntar à sala.</string>
     <string name="tip_ypk_is_deleted">Atualize as cartas pré-lançadas imediatamente</string>
     <string name="tip_superpre_desc">Atualização mais rápida. Baixar expansões</string>
-	<string name="tip_download_ex">Há novas cartas, venha jogar!</string>
+    <string name="tip_download_ex">Há novas cartas, venha jogar!</string>
+    <string name="user_privacy_policy">Política de Privacidade do Usuário</string>
+    <string name="about_user_privacy_policy">Explicação das permissões utilizadas pelo YGOMobile</string>
 </resources>
 
