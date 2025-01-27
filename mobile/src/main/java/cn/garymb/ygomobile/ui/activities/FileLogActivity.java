@@ -13,6 +13,7 @@ import java.io.IOException;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.FileLogUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class FileLogActivity extends BaseActivity {
 
@@ -51,10 +52,10 @@ public class FileLogActivity extends BaseActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         try {
                             FileLogUtil.clear();
-                            showToast("清空完毕");
+                            YGOUtil.showTextToast("清空完毕");
                             tv_log.setText("");
                         } catch (IOException e) {
-                            showToast("清空失败，原因为"+e.getMessage());
+                            YGOUtil.showTextToast("清空失败，原因为"+e.getMessage());
                         }
                         dialog.dismiss();
                     }

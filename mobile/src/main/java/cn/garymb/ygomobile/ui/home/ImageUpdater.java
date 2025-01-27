@@ -26,6 +26,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -328,9 +329,9 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
         }
         VUiKit.post(() -> {
             if (mError == 0) {
-                mContext.showToast(R.string.downloading_images_ok, Toast.LENGTH_SHORT);
+                YGOUtil.showTextToast(R.string.downloading_images_ok, Toast.LENGTH_SHORT);
             } else {
-                mContext.showToast(mContext.getString(R.string.download_image_error, mError), Toast.LENGTH_SHORT);
+                YGOUtil.showTextToast(mContext.getString(R.string.download_image_error, mError), Toast.LENGTH_SHORT);
             }
         });
     }

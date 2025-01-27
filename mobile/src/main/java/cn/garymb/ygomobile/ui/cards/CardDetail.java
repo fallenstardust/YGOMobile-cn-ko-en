@@ -735,12 +735,12 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
         if (position == 0) {
-            getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
+            YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
         } else {
             int index = position;
             do {
                 if (index == 0) {
-                    getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
+                    YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
                     return;
                 } else {
                     index--;
@@ -749,7 +749,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             bind(provider.getCard(index), index, provider);
             if (position == 1) {
-                getContext().showToast(R.string.already_top, Toast.LENGTH_SHORT);
+                YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
             }
         }
     }
@@ -761,7 +761,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             int index = position;
             do {
                 if (index == provider.getCardsCount() - 1) {
-                    getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
+                    YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
                     return;
                 } else {
                     index++;
@@ -770,10 +770,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
             bind(provider.getCard(index), index, provider);
             if (position == provider.getCardsCount() - 1) {
-                getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
+                YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
             }
         } else {
-            getContext().showToast(R.string.already_end, Toast.LENGTH_SHORT);
+            YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
         }
     }
 
