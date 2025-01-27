@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -43,7 +42,6 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
-import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
@@ -115,7 +113,6 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Button btn_redownload;
     private Button btn_share;
     private boolean isDownloadCardImage = true;
-    private List<String> spanStringList = new ArrayList<>();
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
 
@@ -147,6 +144,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             }
         }
     };
+    private List<String> spanStringList = new ArrayList<>();
     private Shimmer shimmer;
     private boolean mShowAdd = false;
     private OnFavoriteChangedListener mOnFavoriteChangedListener;
@@ -355,7 +353,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
                             // 使用 queryable 方法判断是否高亮
-                            applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            applySpan(spannableString, start, i, queryable(quotedText) ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         }
@@ -367,7 +365,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                         stack.pop();
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
-                            applySpan(spannableString, start, i, queryable(quotedText)? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            applySpan(spannableString, start, i, queryable(quotedText) ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
                             spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         } else {
@@ -421,7 +419,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (setCode > 0) cardInfoSetCodes.add(setCode);
             }
             //关键词如果有对应字段则添加进去
-            if (cardInfoSetCodes.contains(setcode) && !matchingCards.contains(card)) matchingCards.add(card);
+            if (cardInfoSetCodes.contains(setcode) && !matchingCards.contains(card))
+                matchingCards.add(card);
             // 确保 card.Name 和 card.Desc 不为 null
             if ((card.Name != null && card.Name.contains(keyword)) || (card.Desc != null && card.Desc.contains(keyword))) {
                 if (!matchingCards.contains(card)) matchingCards.add(card);
@@ -472,25 +471,27 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.valueAt(i);
 
-                // 检查卡片名或描述是否包含给定卡片的名字
-                if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
-                    // 检查卡片是否已经存在于匹配列表中
-                    if (!matchingCards.contains(card)) matchingCards.add(card);
-                }
+            // 检查卡片名或描述是否包含给定卡片的名字
+            if (!card.Name.equals(cardInfo.Name) && (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name))) {
+                // 检查卡片是否已经存在于匹配列表中
+                if (!matchingCards.contains(card)) matchingCards.add(card);
+            }
 
-                // 获取卡片的字段并检查是否有相同的字段
-                for (long setCode : card.getSetCode()) {
-                    if (cardInfoSetCodes.contains(setCode)) {
-                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
-                    }
+            // 获取卡片的字段并检查是否有相同的字段
+            for (long setCode : card.getSetCode()) {
+                if (cardInfoSetCodes.contains(setCode)) {
+                    if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name))
+                        matchingCards.add(card);
                 }
+            }
 
-                for (String keyword : highlightedTexts) {
-                    if ((card.Name != null && card.Name.equals(keyword)) //和关键词完全一致的视为关联卡
-                     || (card.Desc != null && (card.Desc.contains("「" + keyword + "」") || card.Desc.contains("\"" + keyword + "\"")))) {//描述中关键词指向的字段一致的视为关联卡
-                        if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name)) matchingCards.add(card);
-                    }
+            for (String keyword : highlightedTexts) {
+                if ((card.Name != null && card.Name.equals(keyword)) //和关键词完全一致的视为关联卡
+                        || (card.Desc != null && (card.Desc.contains("「" + keyword + "」") || card.Desc.contains("\"" + keyword + "\"")))) {//描述中关键词指向的字段一致的视为关联卡
+                    if (!matchingCards.contains(card) && !card.Name.equals(cardInfo.Name))
+                        matchingCards.add(card);
                 }
+            }
 
         }
         return matchingCards;
@@ -734,47 +735,49 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     public void onPreCard() {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
-        if (position == 0) {
+        int cardsCount = provider.getCardsCount();
+        Log.w("cc onPreCard", position + "/" + cardsCount);
+        // 如果已经在顶部，显示提示并返回
+        if (position <= 0) {
             YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
-        } else {
-            int index = position;
-            do {
-                if (index == 0) {
-                    YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
-                    return;
-                } else {
-                    index--;
-                }
-            } while (provider.getCard(index) == null || provider.getCard(index).Name == null || provider.getCard(position).Name.equals(provider.getCard(index).Name));
-
-            bind(provider.getCard(index), index, provider);
-            if (position == 1) {
-                YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
+            return;
+        }
+        // 向前查找有效卡片
+        for (int index = position - 1; index >= 0; index--) {
+            //当进行高亮词、关联卡片查询到的结果比原列表少时，进行以下判断处理，避免index溢出错误
+            if (index > cardsCount) {
+                index = 0;
+                position = cardsCount - 1;
+            }
+            Card card = provider.getCard(index);
+            if (card != null && card.Name != null && !provider.getCard(position).Name.equals(card.Name)) {
+                bind(card, index, provider);
+                return;
             }
         }
+        // 如果没有找到合适的前一张卡片（所有卡片名称相同或为null），显示提示
+        YGOUtil.showTextToast(R.string.already_top, Toast.LENGTH_SHORT);
     }
 
     public void onNextCard() {
         int position = getCurPosition();
         CardListProvider provider = getProvider();
-        if (position < provider.getCardsCount() - 1) {
-            int index = position;
-            do {
-                if (index == provider.getCardsCount() - 1) {
-                    YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
-                    return;
-                } else {
-                    index++;
-                }
-            } while (provider.getCard(index) == null || provider.getCard(index).Name == null || provider.getCard(position).Name.equals(provider.getCard(index).Name));
-
-            bind(provider.getCard(index), index, provider);
-            if (position == provider.getCardsCount() - 1) {
-                YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
-            }
-        } else {
+        int cardsCount = provider.getCardsCount();
+        // 如果已经在底部，显示提示并返回
+        if (position >= cardsCount - 1) {
             YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
+            return;
         }
+        // 向后查找有效卡片
+        for (int index = position + 1; index < cardsCount; index++) {
+            Card card = provider.getCard(index);
+            if (card != null && card.Name != null && !provider.getCard(position).Name.equals(card.Name)) {
+                bind(card, index, provider);
+                return;
+            }
+        }
+        // 如果没有找到合适的下一张卡片（所有卡片名称相同或为null），显示提示
+        YGOUtil.showTextToast(R.string.already_end, Toast.LENGTH_SHORT);
     }
 
     // 定义引号类型
