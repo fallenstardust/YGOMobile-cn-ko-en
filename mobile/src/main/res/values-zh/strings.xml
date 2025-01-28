@@ -369,4 +369,6 @@
     <string name="tip_download_OK">已保存至</string>
     <string name="user_privacy_policy">用户隐私政策</string>
     <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
 </resources>
