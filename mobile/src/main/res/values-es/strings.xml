@@ -375,5 +375,7 @@
     <string name="replay_list">lista de reproducción</string>
     <string name="user_privacy_policy">Política de Privacidad del Usuario</string>
     <string name="about_user_privacy_policy">Explicación de los permisos utilizados por YGOMobile</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
 </resources>
 

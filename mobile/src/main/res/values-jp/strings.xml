@@ -369,4 +369,6 @@
     <string name="replay_list">リプレイ</string>
     <string name="user_privacy_policy">ユーザーのプライバシーポリシー</string>
     <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
 </resources>

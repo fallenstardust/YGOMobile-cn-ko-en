@@ -370,4 +370,6 @@
     <string name="replay_list">재생 목록</string>
     <string name="user_privacy_policy">사용자 개인정보 보호정책</string>
     <string name="about_user_privacy_policy">이 앱에서 사용하는 권한에 대한 설명</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
 </resources>

@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +25,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
+import com.ourygo.lib.duelassistant.listener.OnDuelAssistantListener;
+import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
+import com.ourygo.lib.duelassistant.util.Util;
 import com.tencent.smtt.sdk.DownloadListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
@@ -32,6 +36,7 @@ import com.tencent.smtt.sdk.WebView;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -41,6 +46,7 @@ import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.plus.DefWebChromeClient;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.widget.WebViewPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -49,7 +55,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
-public class WebActivity extends BaseActivity implements View.OnClickListener {
+public class WebActivity extends BaseActivity implements View.OnClickListener, OnDuelAssistantListener {
     private static String TAG = "WebActivity";
     private static final int FILE_CHOOSER_REQUEST = 100;
     private ValueCallback<Uri[]> mFilePathCallback;
@@ -113,7 +119,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                 return true;
             }
         });
-        mWebViewPlus.setWebViewClient(new DefWebViewClient() {
+        mWebViewPlus.setWebViewClient(new DefWebViewClient(DefWebViewClient.CHECK_ID_WEB_VIEW_NEW_ACTIVITY) {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return super.shouldOverrideUrlLoading(view, url);
@@ -186,6 +192,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
                 });
             }
         });
+        DuelAssistantManagement.getInstance().addDuelAssistantListener(this);
     }
 
     @Override
@@ -284,6 +291,7 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
         mWebViewPlus.stopLoading();
         mWebViewPlus.setWebChromeClient(null);
         mWebViewPlus.setWebViewClient(null);
+        DuelAssistantManagement.getInstance().removeDuelAssistantListener(this);
         //mWebViewPlus.onDestroy();
         super.onDestroy();
     }
@@ -354,5 +362,42 @@ public class WebActivity extends BaseActivity implements View.OnClickListener {
     public static void openFAQ(Context context, Card cardInfo) {
         String uri = Constants.WIKI_SEARCH_URL + String.format("%08d", cardInfo.getCode()) + "#faq";
         WebActivity.open(context, cardInfo.Name, uri);
+    }
+
+    @Override
+    public void onJoinRoom(String host, int port, String password, int id) {
+
+    }
+
+    @Override
+    public void onCardQuery(String key, int id) {
+
+    }
+
+    @Override
+    public boolean isListenerEffective() {
+        return Util.isContextExisted(getActivity());
+    }
+
+    @Override
+    public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
+        if (!TextUtils.isEmpty(exception)) {
+            YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
+            return;
+        }
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(getString(R.string.web_warn_save_deck));
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setRightButtonText(R.string.open);
+        dialog.show();
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            dialog.dismiss();
+            finish();
+        });
     }
 }

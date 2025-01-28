@@ -72,6 +72,7 @@ import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
+import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
@@ -130,6 +131,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     private Bundle mBundle;
     private View layoutView;
+
+    private boolean isShouldSaveAndOpenDeck = false;
+    private Uri pendingUri;
+    private List<Integer> pendingMainList;
+    private List<Integer> pendingExList;
+    private List<Integer> pendingSideList;
+    private boolean pendingIsCompleteDeck;
 
     @Nullable
     @Override
@@ -565,11 +573,11 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Override
     public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
-        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception);
+        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception, id != DefWebViewClient.CHECK_ID_WEB_VIEW_NEW_ACTIVITY);
     }
 
-    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
-        if (!TextUtils.isEmpty(exception)) {
+    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, boolean isShowDialog) {
+        if (isShowDialog && !TextUtils.isEmpty(exception)) {
             YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
             return;
         }
@@ -598,36 +606,54 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 sideList.set(sideList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
             }
         }
-        DialogPlus dialog = new DialogPlus(getContext());
-        dialog.setTitle(R.string.question);
-        dialog.setMessage(R.string.find_deck_text);
-        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonText(R.string.Cancel);
-        dialog.setRightButtonText(R.string.save_n_open);
-        dialog.show();
-        dialog.setLeftButtonListener((dlg, s) -> {
-            dialog.dismiss();
-        });
-        dialog.setRightButtonListener((dlg, s) -> {
-            dialog.dismiss();
-            Deck deck;
-            //如果是卡组url
-            if (uri != null) {
-                deck = new Deck(uri, mainList, exList, sideList);
+
+        if (isShowDialog) {
+            DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setTitle(R.string.question);
+            dialog.setMessage(R.string.find_deck_text);
+            dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+            dialog.setLeftButtonText(R.string.Cancel);
+            dialog.setRightButtonText(R.string.save_n_open);
+            dialog.show();
+            dialog.setLeftButtonListener((dlg, s) -> {
+                dialog.dismiss();
+            });
+            dialog.setRightButtonListener((dlg, s) -> {
+                dialog.dismiss();
+                saveAndOpenDeck(uri, mainList, exList, sideList, isCompleteDeck);
+            });
+        } else {
+            if (isAdded() && isResumed()) {
+                saveAndOpenDeck(uri, mainList, exList, sideList, isCompleteDeck);
             } else {
-                deck = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+                isShouldSaveAndOpenDeck = true;
+                pendingUri = uri;
+                pendingMainList = mainList;
+                pendingExList = exList;
+                pendingSideList = sideList;
+                pendingIsCompleteDeck = isCompleteDeck;
             }
-            deck.setCompleteDeck(isCompleteDeck);
-            File file = deck.saveTemp(AppsSettings.get().getDeckDir());
-            if (!deck.isCompleteDeck()) {
-                YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
-            }
-            if (!file.getAbsolutePath().isEmpty()) {
-                mBundle.putString("setDeck", file.getAbsolutePath());
-                activity.fragment_deck_cards.setArguments(mBundle);
-            }
-            activity.switchFragment(activity.fragment_deck_cards, 2, true);
-        });
+        }
+    }
+
+    private void saveAndOpenDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck) {
+        Deck deck;
+        //如果是卡组url
+        if (uri != null) {
+            deck = new Deck(uri, mainList, exList, sideList);
+        } else {
+            deck = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+        }
+        deck.setCompleteDeck(isCompleteDeck);
+        File file = deck.saveTemp(AppsSettings.get().getDeckDir());
+        if (!deck.isCompleteDeck()) {
+            YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
+        }
+        if (!file.getAbsolutePath().isEmpty()) {
+            mBundle.putString("setDeck", file.getAbsolutePath());
+            activity.fragment_deck_cards.setArguments(mBundle);
+        }
+        activity.switchFragment(activity.fragment_deck_cards, 2, true);
     }
 
     @Override
@@ -725,6 +751,19 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         BacktoDuel();
         //server list
         mServerListManager.syncLoadData();
+        if (isShouldSaveAndOpenDeck
+                && pendingMainList != null
+                && pendingExList != null
+                && pendingSideList != null
+        ) {
+            saveAndOpenDeck(pendingUri, pendingMainList, pendingExList, pendingSideList, pendingIsCompleteDeck);
+            isShouldSaveAndOpenDeck = false;
+            pendingUri = null;
+            pendingMainList = null;
+            pendingExList = null;
+            pendingSideList = null;
+            pendingIsCompleteDeck = false;
+        }
     }
 
     @Override
