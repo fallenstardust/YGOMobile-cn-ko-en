@@ -470,7 +470,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->chain_code));
 		else
 			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler + 2]);
-		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
+		mainGame->btnCardSelect[i]->setRelativePosition(mainGame->Resize_Y(startpos + i * 125, 65, startpos + 120 + i * 125, 65 + 170));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
 		if(mainGame->dInfo.curMsg != MSG_SORT_CARD) {
@@ -525,7 +525,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 			mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
-		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
+		mainGame->stCardPos[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 40, startpos + 120 + 125 * i, 40 + 20));
 	}
 	if(selectable_cards.size() <= 5) {
 		for(int i = selectable_cards.size(); i < 5; ++i) {
@@ -558,7 +558,7 @@ void ClientField::ShowChainCard() {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardSelect[i], selectable_cards[i]->code));
 		else
 			mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i]->controler]);
-		mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
+		mainGame->btnCardSelect[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 65, startpos + 120 + 125 * i, 65 + 170));
 		mainGame->btnCardSelect[i]->setPressed(false);
 		mainGame->btnCardSelect[i]->setVisible(true);
 		wchar_t formatBuffer[2048];
@@ -577,7 +577,7 @@ void ClientField::ShowChainCard() {
 			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stCardPos[i]->setVisible(true);
-		mainGame->stCardPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
+		mainGame->stCardPos[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 40, startpos + 120 + 125 * i, 40 + 20));
 	} 
 	if(selectable_cards.size() <= 5) {
 		for(int i = selectable_cards.size(); i < 5; ++i) {
@@ -613,7 +613,7 @@ void ClientField::ShowLocationCard() {
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardDisplay[i], display_cards[i]->code));
 		else
 			mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i]->controler]);
-		mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 65 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 235 * mainGame->yScale));
+		mainGame->btnCardDisplay[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 65, startpos + 120 + 125 * i, 65 + 170));
 		mainGame->btnCardDisplay[i]->setPressed(false);
 		mainGame->btnCardDisplay[i]->setVisible(true);
 		wchar_t formatBuffer[2048];
@@ -646,7 +646,7 @@ void ClientField::ShowLocationCard() {
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		}
 		mainGame->stDisplayPos[i]->setVisible(true);
-		mainGame->stDisplayPos[i]->setRelativePosition(rect<s32>((startpos + i * 125) * mainGame->xScale, 40 * mainGame->yScale, (startpos + 120 + i * 125) * mainGame->xScale, 60 * mainGame->yScale));
+		mainGame->stDisplayPos[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 40, startpos + 120 + 125 * i, 40 + 20));
 	}
 	if(display_cards.size() <= 5) {
 		for(int i = display_cards.size(); i < 5; ++i) {
@@ -1416,8 +1416,7 @@ bool ClientField::check_sum_trib(std::set<ClientCard*>::const_iterator index, st
 		|| check_sum_trib(index, end, acc + l2)
 		|| check_sum_trib(index, end, acc);
 }
-template <class T>
-static bool is_declarable(T const& cd, const std::vector<int>& opcode) {
+static bool is_declarable(const CardData& cd, const std::vector<unsigned int>& opcode) {
 	std::stack<int> stack;
 	for(auto it = opcode.begin(); it != opcode.end(); ++it) {
 		switch(*it) {
@@ -1467,7 +1466,7 @@ static bool is_declarable(T const& cd, const std::vector<int>& opcode) {
 				stack.pop();
 				int lhs = stack.top();
 				stack.pop();
-				stack.push(lhs && rhs);
+				stack.push(static_cast<int>(lhs && rhs));
 			}
 			break;
 		}
@@ -1477,7 +1476,7 @@ static bool is_declarable(T const& cd, const std::vector<int>& opcode) {
 				stack.pop();
 				int lhs = stack.top();
 				stack.pop();
-				stack.push(lhs || rhs);
+				stack.push(static_cast<int>(lhs || rhs));
 			}
 			break;
 		}
@@ -1493,7 +1492,7 @@ static bool is_declarable(T const& cd, const std::vector<int>& opcode) {
 			if (stack.size() >= 1) {
 				int val = stack.top();
 				stack.pop();
-				stack.push(!val);
+				stack.push(static_cast<int>(!val));
 			}
 			break;
 		}
@@ -1546,8 +1545,9 @@ static bool is_declarable(T const& cd, const std::vector<int>& opcode) {
 	}
 	if(stack.size() != 1 || stack.top() == 0)
 		return false;
-	return cd.code == CARD_MARINE_DOLPHIN || cd.code == CARD_TWINKLE_MOSS
-		|| (!cd.alias && (cd.type & (TYPE_MONSTER + TYPE_TOKEN)) != (TYPE_MONSTER + TYPE_TOKEN));
+	if (cd.type & TYPE_TOKEN)
+		return false;
+	return !cd.alias || second_code.find(cd.code) != second_code.end();
 }
 void ClientField::UpdateDeclarableList() {
 	const wchar_t* pname = mainGame->ebANCard->getText();
@@ -1567,10 +1567,10 @@ void ClientField::UpdateDeclarableList() {
 	}
 	mainGame->lstANCard->clear();
 	ancard.clear();
-	for(auto cit = dataManager.strings_begin; cit != dataManager.strings_end; ++cit) {
+	for(auto cit = dataManager.strings_begin(); cit != dataManager.strings_end(); ++cit) {
 		if(cit->second.name.find(pname) != std::wstring::npos) {
 			auto cp = dataManager.GetCodePointer(cit->first);
-			if (cp == dataManager.datas_end)
+			if (cp == dataManager.datas_end())
 				continue;
 			//datas.alias can be double card names or alias
 			if(is_declarable(cp->second, declare_opcodes)) {

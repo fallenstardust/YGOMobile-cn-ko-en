@@ -38,7 +38,7 @@ int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	for(int i = 0; i < count; i++){
 		auto item = listbox->getListItem(i);
         ALOGD("open deck file:for name=%ls,name=%ls", item,target);
-		if(wcscmp(item, target) == 0){
+		if(std::wcscmp(item, target) == 0){
 			return i;
 		}
 	}
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     bool keep_on_return = false;
 	bool deckCategorySpecified = false;
 #ifdef _IRR_ANDROID_PLATFORM_
-	ALOGD("handle args %d", argc);
+	ALOGD("cc gframe: handle args %d", argc);
 	int wargc = argc;
 	auto wargv = std::make_unique<wchar_t[][256]>(wargc);
     //android
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
                 wchar_t fname[1024];
                 BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
-				ALOGD("open replay file:index=%d, name=%s", index, name);
+				ALOGD("cc gframe: open replay file:index=%d, name=%s", index, name);
 			}
             ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
             ClickButton(ygo::mainGame->btnReplayMode);
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
                 wchar_t fname[1024];
                 BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstSinglePlayList, fname);
-				ALOGD("open single file:index=%d, name=%s", index, name);
+				ALOGD("cc gframe: open single file:index=%d, name=%s", index, name);
 			}
 			if(index >= 0){
 				ygo::mainGame->lstSinglePlayList->setSelected(index);

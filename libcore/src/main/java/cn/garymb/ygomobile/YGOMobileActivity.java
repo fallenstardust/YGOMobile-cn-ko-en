@@ -199,8 +199,8 @@ public class YGOMobileActivity extends GameActivity implements
         float sh = app().getScreenHeight();
         int w = (int) (app().getGameWidth() * xScale);
         int h = (int) (app().getGameHeight() * yScale);
-        Log.i(IrrlichtBridge.TAG, "game size=" + app().getGameWidth() + "x" + app().getGameHeight()
-                + ", surface=" + w + "x" + h
+        Log.i(IrrlichtBridge.TAG, "basic size=" + app().getGameWidth() + "x" + app().getGameHeight()
+                + ", game size=" + w + "x" + h
                 + ", screen=" + sw + "x" + sh
                 + ", xScale=" + xScale + ",yScale=" + yScale);
         return new Size(w, h);
