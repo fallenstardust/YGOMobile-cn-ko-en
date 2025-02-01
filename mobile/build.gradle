@@ -161,7 +161,7 @@ dependencies {
     //Tencent bugly
 //    implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
 //    implementation 'com.tencent.bugly:nativecrashreport:latest.release'
-    api 'com.tencent.tbs:tbssdk:44199'
+    api 'com.tencent.tbs:tbssdk:44286'
     //http请求库
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'com.bm.photoview:library:1.4.1'
