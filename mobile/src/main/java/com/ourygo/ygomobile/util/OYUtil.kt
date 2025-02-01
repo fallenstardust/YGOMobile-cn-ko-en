@@ -510,9 +510,9 @@ object OYUtil {
 
     @JvmStatic
     fun onStartBefore(viewPropertyAnimator: ViewPropertyAnimator, view: View) {
-        val `object` = createViewPropertyAnimatorRT(view)
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && `object` != null) {
-            setViewPropertyAnimatorRT(viewPropertyAnimator, `object`)
+        val animator = createViewPropertyAnimatorRT(view)
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && animator != null) {
+            setViewPropertyAnimatorRT(viewPropertyAnimator, animator)
         }
     }
 

@@ -11,6 +11,7 @@ import org.json.JSONException
 import org.json.JSONObject
 
 object JsonUtil {
+    private val TAG: String = "JsonUtil"
     const val CODE_OK = 200
 
     //解析mc新闻列表

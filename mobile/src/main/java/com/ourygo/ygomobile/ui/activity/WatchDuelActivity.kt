@@ -18,6 +18,7 @@ import com.ourygo.ygomobile.util.YGOUtil.joinGame
  * Create By feihua  On 2021/11/3
  */
 class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
+    private val TAG: String = "WatchDuelActivity"
     private val duelManagement by lazy {
         WatchDuelManagement.instance
     }

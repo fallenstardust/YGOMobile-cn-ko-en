@@ -7,7 +7,7 @@ import java.io.File
 
 object Record {
     const val DOWNLOAD_URL_EZ = "http://t.cn/EchWyLi"
-    const val MYCARD_NEWS_URL = "https://api.mycard.moe/apps.json"
+    const val MYCARD_NEWS_URL = "https://api.moecube.com/apps.json"
     const val MYCARD_POST_URL = "https://ygobbs.com/t/"
     const val mycardInactiveEmailUrl = "https://accounts.moecube.com/signin"
     const val YGO_LFLIST_URL = "https://raw.githubusercontent.com/moecube/ygopro/server/lflist.conf"
@@ -36,13 +36,13 @@ object Record {
     const val ARG_QQ_GROUP_KEY = "zv5xSt-Zu739mNbsBfZ9Qn_-esYqHaT9"
     const val URL_MC_LOGIN = "https://accounts.moecube.com/"
     const val ARG_SSO = "sso"
-    const val URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.mycard.moe:7923/?filter=started"
-    const val URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.mycard.moe:8923/?filter=started"
-    const val URL_MC_MATCH = "https://api.mycard.moe/ygopro/match"
+    const val URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started"
+    const val URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started"
+    const val URL_MC_MATCH = "https://api.moecube.com/ygopro/match"
     const val ARG_EVENT = "event"
     const val ARG_DATA = "data"
-    const val HOST_MC_MATCH = "tiramisu.mycard.moe"
-    const val HOST_MC_OTHER = "tiramisu.mycard.moe"
+    const val HOST_MC_MATCH = "tiramisu.moecube.com"
+    const val HOST_MC_OTHER = "tiramisu.moecube.com"
     const val PORT_MC_MATCH = 8911
     const val PORT_MC_OTHER = 7911
     const val ARG_LOCALE = "locale"

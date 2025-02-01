@@ -37,12 +37,14 @@ import cn.garymb.ygomobile.utils.DeckUtil;
 
 public class MyCard {
 
-    public static final String mHomeUrl = "https://mycard.moe/mobile/";
-    public static final String mCommunityUrl = "https://ygobbs.com/login";
-    private static final String mArenaUrl = "https://mycard.moe/ygopro/arena/";
-    private static final String return_sso_url = "https://mycard.moe/mobile/?";
-    private static final String HOST_MC = "mycard.moe";
-    private static final String MC_MAIN_URL = "https://mycard.moe/mobile/ygopro/lobby";
+    public static final String mHomeUrl = "https://mycard.world/mobile/";
+    private static final String mArenaUrl = "https://mycard.world/ygopro/arena/";
+    public static final String mCommunityReportUrl = "https://ygobbs2.com/t/bug%E5%8F%8D%E9%A6%88/";
+    private static final String mCommunityUrl = "https://ygobbs2.com/login";
+    public static final String mCompetitionUrl = "https://event.ygobbs2.com/";
+    private static final String HOST_MC = "mycard.world";
+    public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
+
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private final SharedPreferences lastModified;
     private final DefWebViewClient mDefWebViewClient;

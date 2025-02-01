@@ -394,7 +394,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         super.onBackPressed()
     }
 
-    override fun onJoinRoom(host: String, port: Int, password: String, id: Int) {
+    override fun onJoinRoom(host: String?, port: Int, password: String?, id: Int) {
         if (id == ID_MAINACTIVITY) {
             joinDARoom(host, port, password)
         }
