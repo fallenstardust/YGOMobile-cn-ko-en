@@ -82,6 +82,7 @@ public class McUser extends LitePalSupport {
     }
 
     public void setAvatar_url(String avatar_url) {
+        avatar_url = avatar_url.replaceAll("ygobbs.com", "ygobbs2.com");
         this.avatar_url = avatar_url;
     }
 

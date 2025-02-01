@@ -1,0 +1,43 @@
+{
+"welcome": [
+"Hello, I'm so handsome."
+],
+"deckerror": [
+"Sorry, there seems to be a problem with the number of {0} in my deck."
+],
+"duelstart": [
+"Let's have a fair duel (Dragon Hidden in the Crotch)"
+],
+"newturn": [
+"Next is my stage"
+],
+"endturn": [
+"Everyone has different goals. I focus more on strength. I just want to win."
+],
+"directattack": [
+"I'm here to kill you"
+],
+"attack": [
+"Disappear, trash"
+],
+"ondirectattack": [
+"Dad, spare my life",
+"So scary"
+],
+"facedownmonstername": "Monster",
+"activate": [
+"I activate the effect of this card. Although it's not written on it, it can be used like this."
+],
+"summon": [
+"Strong, invincible",
+"Summon {0}, make a fortune",
+"{0} is a fake card",
+"I always like {0}"
+],
+"setmonster": [
+"It's stuck again"
+],
+"chaining": [
+"Stupid, watch me counter it"
+]
+}

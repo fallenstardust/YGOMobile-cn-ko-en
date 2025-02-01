@@ -13,6 +13,7 @@ import android.webkit.JavascriptInterface;
 
 import com.google.gson.Gson;
 import com.ourygo.ygomobile.util.IntentUtil;
+import com.ourygo.ygomobile.util.LogUtil;
 import com.ourygo.ygomobile.util.McUserManagement;
 import com.tencent.smtt.sdk.WebView;
 
@@ -46,6 +47,7 @@ public class MyCard {
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
 
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final String TAG = "MyCard";
     private final SharedPreferences lastModified;
     private final DefWebViewClient mDefWebViewClient;
     private MyCardListener mMyCardListener;
@@ -339,6 +341,7 @@ public class MyCard {
             Log.e("feihua","登录用户"+exception);
             McUser mcUser = null;
             if (TextUtils.isEmpty(exception)) {
+                LogUtil.d(TAG,"feihua mc登录成功"+userInfo);
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
                 McUserManagement.getInstance().login(mcUser,false);
             }

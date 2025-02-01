@@ -28,6 +28,15 @@ class AboutActivity : BaseActivity() {
     private val updateList by lazy {
         arrayListOf(
             UpdateLog.toUpdateLog(
+                "1.2.9",
+                """
+                更新ygo内核
+                更新萌卡的资源
+                更新卡包QCTB+25PP+25PR+VJ
+                其他优化
+                """.trimIndent()
+            ),
+            UpdateLog.toUpdateLog(
                 "1.2.8",
                 """
                 修复点击卡片选项取消后阶段按钮置灰不恢复的问题
