@@ -324,6 +324,7 @@
     <string name="restore_deck">復元記録を発見しました，復元をしますか？</string>
     <string name="explain_permission">
         このソート使用する為に以下の権限を許してください：
+        \nクリップボードの権限：デッキコードや対戦コードの読み取りに必要
         \nセーブ権限：バックアップ、復元デッキ，壁紙カスタマイズ、アバタ、プロテクター必須</string>
     <string name="guide_menu">機能メニュー：\n主の機能は"</string>
     <string name="guide_mycard">MYCARDプラットホーム：\n対戦サーバーを提供します\nランキング，観戦，チャット</string>

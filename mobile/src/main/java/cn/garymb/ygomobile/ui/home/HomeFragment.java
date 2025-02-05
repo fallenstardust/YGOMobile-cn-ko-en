@@ -573,6 +573,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Override
     public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
+        activity.startPermissionsActivity();
         saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception, id != DefWebViewClient.CHECK_ID_WEB_VIEW_NEW_ACTIVITY);
     }
 
