@@ -318,6 +318,7 @@
         \nRestaurar: restaurar los decks respaldados</string>
     <string name="restore_deck">Se encontraron decks respaldados en su dispositivo, ¿desea restaurarlos?</string>
     <string name="explain_permission">El uso de estas funciones requiere los siguientes permisos:
+        \nPermiso del portapapeles: Necesario para leer códigos de mazo y códigos de partido
          \nPermiso de Almacenamiento: necesario para respaldar y restaurar decks; para personalizar fuentes, fondos, avatares y cubiertas de cartas
     </string>
     <string name="guide_menu">Menú:\nFunciones principales como: </string>

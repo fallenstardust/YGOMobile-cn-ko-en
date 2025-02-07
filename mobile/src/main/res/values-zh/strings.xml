@@ -324,6 +324,7 @@
     <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
     <string name="explain_permission">
         使用本软件此类功能将申请以下必要权限：
+        \n剪贴板权限：读取卡组码、约战码必需
         \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
     <string name="guide_menu">功能菜单：\n主要功能如"</string>
     <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
