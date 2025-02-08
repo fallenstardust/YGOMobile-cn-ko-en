@@ -86,24 +86,29 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                     dialog.showTitleBar();
                     dialog.setTitle(getString(R.string.settings_about_change_log));
                     dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
-                    dialog.setLeftButtonText(R.string.help);
+                    dialog.setLeftButtonText(R.string.user_privacy_policy);
                     dialog.setLeftButtonListener((dlg, i) -> {
-                        dialog.setContentView(R.layout.dialog_help);
-                        dialog.setTitle(R.string.question);
-                        dialog.hideButton();
-                        dialog.show();
-                        View viewDialog = dialog.getContentView();
-                        Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
-                        Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
-
-                        btnMasterRule.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
-                            dialog.dismiss();
-                        });
-                        btnTutorial.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
-                            dialog.dismiss();
-                        });
+                        dialog.dismiss();
+                        final DialogPlus dialogPlus = new DialogPlus(this);
+                        dialogPlus.setTitle(R.string.user_privacy_policy);
+                        //根据系统语言复制特定资料文件
+                        String language = getContext().getResources().getConfiguration().locale.getLanguage();
+                        String fileaddr = "";
+                        if (!language.isEmpty()) {
+                            if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+                            } else {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+                            }
+                        }
+                        dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+                        dialogPlus.show();
                     });
                     dialog.setRightButtonText(R.string.OK);
                     dialog.setRightButtonListener((dlg, i) -> {
