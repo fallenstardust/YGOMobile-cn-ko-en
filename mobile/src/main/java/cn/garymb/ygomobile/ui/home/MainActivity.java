@@ -108,9 +108,6 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                             }
                         }
                         dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
-                        dialogPlus.setRightButtonListener((dialogInterface, ii) -> {
-                            dialogPlus.dismiss();
-                        });
                         dialogPlus.show();
                     });
                     dialog.setRightButtonText(R.string.OK);
