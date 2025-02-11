@@ -479,14 +479,14 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
 					if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
-						mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+						mainGame->stCardPos[i]->setOverrideColor(0xfff0f8ff);
 					if(selectable_cards[i]->overlayTarget->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				} else if(selectable_cards[i]->location == LOCATION_DECK || selectable_cards[i]->location == LOCATION_EXTRA || selectable_cards[i]->location == LOCATION_REMOVED) {
 					if(selectable_cards[i]->position & POS_FACEDOWN)
-						mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+						mainGame->stCardPos[i]->setOverrideColor(0xfff0f8ff);
 					if(selectable_cards[i]->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
@@ -550,7 +550,7 @@ void ClientField::ShowChainCard() {
 		mainGame->stCardPos[i]->setText(formatBuffer);
 		if(selectable_cards[i]->location == LOCATION_OVERLAY) {
 			if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
-				mainGame->stCardPos[i]->setOverrideColor(0xff0000ff);
+				mainGame->stCardPos[i]->setOverrideColor(0xfff0f8ff);
 			if(selectable_cards[i]->overlayTarget->controler)
 				mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 			else mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
@@ -610,14 +610,14 @@ void ClientField::ShowLocationCard() {
 		mainGame->stDisplayPos[i]->setText(formatBuffer);
 		if(display_cards[i]->location == LOCATION_OVERLAY) {
 			if(display_cards[i]->owner != display_cards[i]->overlayTarget->controler)
-				mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
+				mainGame->stDisplayPos[i]->setOverrideColor(0xfff0f8ff);
 			if(display_cards[i]->overlayTarget->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 			else 
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		} else if(display_cards[i]->location == LOCATION_EXTRA || display_cards[i]->location == LOCATION_REMOVED) {
 			if(display_cards[i]->position & POS_FACEDOWN)
-				mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
+				mainGame->stDisplayPos[i]->setOverrideColor(0xfff0f8ff);
 			if(display_cards[i]->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 			else
