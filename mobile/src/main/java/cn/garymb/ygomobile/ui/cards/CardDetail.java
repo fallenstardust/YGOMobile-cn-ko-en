@@ -533,8 +533,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
         if (mShowAdd) {
             if (cardInfo.isType(CardType.Token)) {
-                addSide.setVisibility(View.INVISIBLE);
-                addMain.setVisibility(View.INVISIBLE);
+                addSide.setVisibility(View.GONE);
+                addMain.setVisibility(View.GONE);
             } else {
                 addSide.setVisibility(View.VISIBLE);
                 addMain.setVisibility(View.VISIBLE);

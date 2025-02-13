@@ -31,81 +31,61 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:weightSum="4.5"
             android:orientation="horizontal">
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btn_faq"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="5dp"
+                android:layout_weight="1"
                 android:background="@drawable/button2_bg"
+                android:tooltipText="@string/card_faq"
                 android:gravity="center"
-                android:shadowColor="@color/black"
-                android:text="@string/card_faq"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:textColor="@color/colorAccentDark"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:src="@drawable/ic_q_n_a"/>
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btn_related"
-                android:visibility="gone"
+                android:visibility="visible"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginLeft="5dp"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:shadowColor="@color/black"
-                android:text="@string/card_related"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:textColor="@color/holo_orange_bright"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:tooltipText="@string/card_related"
+                android:src="@drawable/ic_related"/>
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btn_add_main"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="4dp"
+                android:layout_weight="1"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
-                android:text="@string/card_add_main"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textColor="@color/item_title"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:visibility="invisible"
-                tools:visibility="visible" />
+                android:tooltipText="@string/card_add_main"
+                android:src="@drawable/ic_to_main"/>
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btn_add_side"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="4dp"
+                android:layout_weight="1"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
-                android:text="@string/card_add_side"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textColor="@color/item_title"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:visibility="invisible"
-                tools:visibility="visible" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                android:tooltipText="@string/card_add_side"
+                android:src="@drawable/ic_to_main" />
 
             <ImageButton
                 android:id="@+id/btn_close"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_weight="0.5"
+                android:layout_gravity="right|center"
+                android:layout_marginLeft="20dp"
                 android:background="@android:color/transparent"
                 app:srcCompat="@drawable/ic_close_black_24dp" />
         </LinearLayout>
