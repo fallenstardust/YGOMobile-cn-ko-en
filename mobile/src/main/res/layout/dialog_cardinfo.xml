@@ -31,14 +31,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:weightSum="4.5"
+            android:weightSum="5"
             android:orientation="horizontal">
 
             <ImageButton
                 android:id="@+id/btn_faq"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
                 android:layout_weight="1"
                 android:background="@drawable/button2_bg"
                 android:tooltipText="@string/card_faq"
@@ -48,7 +47,7 @@
             <ImageButton
                 android:id="@+id/btn_related"
                 android:visibility="visible"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginLeft="5dp"
@@ -59,35 +58,50 @@
 
             <ImageButton
                 android:id="@+id/btn_add_main"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
                 android:tooltipText="@string/card_add_main"
-                android:src="@drawable/ic_to_main"/>
+                android:src="@drawable/ic_to_main"
+                android:visibility="invisible"
+                tools:visibility="visible"/>
 
             <ImageButton
                 android:id="@+id/btn_add_side"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:background="@drawable/button2_bg"
                 android:gravity="center"
                 android:tooltipText="@string/card_add_side"
-                android:src="@drawable/ic_to_main" />
+                android:src="@drawable/ic_to_side"
+                android:visibility="invisible"
+                tools:visibility="visible"/>
 
-            <ImageButton
-                android:id="@+id/btn_close"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.5"
                 android:layout_gravity="right|center"
-                android:layout_marginLeft="20dp"
-                android:background="@android:color/transparent"
-                app:srcCompat="@drawable/ic_close_black_24dp" />
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btn_close"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_close_black_24dp" />
+            </LinearLayout>
         </LinearLayout>
 
         <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
@@ -143,7 +157,6 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                android:paddingRight="5dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/selector_favorite" />
         </LinearLayout>
