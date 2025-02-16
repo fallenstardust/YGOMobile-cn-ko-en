@@ -21,6 +21,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -75,7 +76,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final CardLoader cardLoader;
     private final ImageView cardImage;
     private final TextView name;
-    private final TextView btn_related;
+    private final ImageButton btn_related;
     private final TextView desc;
     private final TextView level;
     private final TextView type;
@@ -88,10 +89,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView otView;
     private final TextView attrView;
     private final View monsterLayout;
-    private final View close;
-    private final View faq;
-    private final View addMain;
-    private final View addSide;
+    private final ImageButton close;
+    private final ImageButton faq;
+    private final ImageButton addMain;
+    private final ImageButton addSide;
     private final View linkArrow;
     private final View layoutDetailPScale;
     private final TextView detailCardScale;
@@ -522,7 +523,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         packName.setText(packManager.findPackNameById((cardInfo.Alias != 0 && Math.abs(cardInfo.Alias - cardInfo.Code) <= 20) ? cardInfo.Alias : cardInfo.Code));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
-        btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.GONE);
+        btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.INVISIBLE);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);
