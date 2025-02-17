@@ -8,27 +8,21 @@
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android_native_app_glue.h>
 #include <android/android_tools.h>
+#include <android/xstring.h>
+
+#define mywcscat wcscat_x
+#include "os.h"
+#include <android/bufferio_android.h>
+#include <android/CustomShaderConstantSetCallBack.h>
 #endif
-#ifdef _WIN32
 
-#define NOMINMAX
-#include <WinSock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
-
-#ifdef _MSC_VER
-#define myswprintf _swprintf
-#define mywcsncasecmp _wcsnicmp
-#define mystrncasecmp _strnicmp
+#ifndef TEXT
+#ifdef UNICODE
+#define TEXT(x) L##x
 #else
-#define myswprintf swprintf
-#define mywcsncasecmp wcsncasecmp
-#define mystrncasecmp strncasecmp
+#define TEXT(x) x
+#endif // UNICODE
 #endif
-
-#define socklen_t int
-
-#else //_WIN32
 
 #include <errno.h>
 #include <netinet/in.h>
@@ -47,44 +41,21 @@
 #define SOCKADDR sockaddr
 #define SOCKET_ERRNO() (errno)
 
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <android/xstring.h>
-#define myswprintf(buf, fmt, ...) swprintf_x(buf, 4096, fmt, ##__VA_ARGS__)
-#define mywcscat wcscat_x
-#endif
+#define mywcsncasecmp wcsncasecmp
+#define mystrncasecmp strncasecmp
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
 #include <string>
-
-#ifdef _IRR_ANDROID_PLATFORM_
-#include "os.h"
-#include <android/bufferio_android.h>
-#endif
-
-#include "myfilesystem.h"
 #include "mysignal.h"
 #include "../ocgcore/ocgapi.h"
-#include "../ocgcore/common.h"
 
 template<size_t N, typename... TR>
-inline int swprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
+inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
 	return std::swprintf(buf, N, fmt, args...);
 }
-
-#if defined(_IRR_ANDROID_PLATFORM_)
-#include <android/CustomShaderConstantSetCallBack.h>
-#endif
-
-#ifndef TEXT
-#ifdef UNICODE
-#define TEXT(x) L##x
-#else
-#define TEXT(x) x
-#endif // UNICODE
-#endif
 
 inline FILE* myfopen(const wchar_t* filename, const char* mode) {
 	FILE* fp{};
@@ -93,7 +64,6 @@ inline FILE* myfopen(const wchar_t* filename, const char* mode) {
 	fp = fopen(fname, mode);
 	return fp;
 }
-
 
 #include <irrlicht.h>
 using namespace irr;
@@ -108,5 +78,5 @@ extern const unsigned short PRO_VERSION;
 extern unsigned int enable_log;
 extern bool exit_on_return;
 extern bool bot_mode;
-#endif
+
 #endif

@@ -755,9 +755,8 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		else
 			starttime = new_replay.pheader.seed;
 		
-		tm* localedtime = localtime(&starttime);
 		wchar_t timetext[40];
-		wcsftime(timetext, 40, L"%Y-%m-%d %H-%M-%S", localedtime);
+		std::wcsftime(timetext, sizeof timetext / sizeof timetext[0], L"%Y-%m-%d %H-%M-%S", std::localtime(&starttime));
 		mainGame->ebRSName->setText(timetext);
 		if(!mainGame->chkAutoSaveReplay->isChecked()) {
 			mainGame->wReplaySave->setText(dataManager.GetSysString(1340));
@@ -3656,39 +3655,6 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		mainGame->gMutex.lock();
 		mainGame->stANRace->setText(textBuffer);
 		mainGame->PopupElement(mainGame->wANRace);
-/*#ifdef _IRR_ANDROID_PLATFORM_
-		char* content;
-		char** contents;
-		char* label;
-		list<IGUIElement*> children = mainGame->wANRace->getChildren();
-		int count = children.size();
-		int i = 0;
-		int filter = 0x1;//属性种族宣言fixme
-		list<IGUIElement*>::Iterator current = children.begin();
-		contents = (char **) malloc(count * sizeof(char *));
-		do {
-			if ((*current)->getType() == EGUIET_CHECK_BOX) {
-				content = (char *) malloc(256 * 4);
-				if (filter & available) {//属性种族宣言fixme
-				BufferIO::EncodeUTF8(((IGUICheckBox*) (*current))->getText(),
-						content);
-				}
-				else {
-					BufferIO::EncodeUTF8(dataManager.GetSysString(1080),
-							content);
-				}
-				*(contents + i++) = content;
-			}
-			current++;
-		} while (current != children.end());
-		android::showAndroidComboBoxCompat(mainGame->appMain, true, contents, i,
-				1);
-		count = i;
-		for (int i = 0; i < count; i++) {
-			free(*(contents + i));
-		}
-		free(contents);
-#endif*/
 		mainGame->gMutex.unlock();
 		return false;
 	}
@@ -3709,40 +3675,6 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		mainGame->gMutex.lock();
 		mainGame->stANAttribute->setText(textBuffer);
 		mainGame->PopupElement(mainGame->wANAttribute);
-/*#ifdef _IRR_ANDROID_PLATFORM_
-		char* content;
-		char** contents;
-		char* label;
-		list<IGUIElement*> children = mainGame->wANAttribute->getChildren();
-		int count = children.size();
-		int i = 0;
-		int filter = 0x1;
-		list<IGUIElement*>::Iterator current = children.begin();
-		contents = (char **) malloc(count * sizeof(char *));
-		do {
-			if ((*current)->getType() == EGUIET_CHECK_BOX) {
-				content = (char *) malloc(256 * 4);
-				if (filter & available) {
-				BufferIO::EncodeUTF8(((IGUICheckBox*) (*current))->getText(),
-						content);
-				}
-				else {
-					BufferIO::EncodeUTF8(dataManager.GetSysString(1080),
-							content);
-				}
-				*(contents + i++) = content;
-				filter <<= 1;
-			}
-			current++;
-		} while (current != children.end());
-		android::showAndroidComboBoxCompat(mainGame->appMain, true, contents, i,
-				1);
-		count = i;
-		for (int i = 0; i < count; i++) {
-			free(*(contents + i));
-		}
-		free(contents);
-#endif*/
 		mainGame->gMutex.unlock();
 		return false;
 	}
