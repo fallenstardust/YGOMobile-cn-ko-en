@@ -22,9 +22,9 @@ Materials::Materials() {
 	SetS3DVertex(vActivate, -0.5f, -0.5f, 0.5f, 0.5f, 0, 1, 0, 0, 1, 1);
 	SetS3DVertex(vField, -1.0f, -4.0f, 9.0f, 4.0f, 0, 1, 0, 0, 1, 1);
     SetS3DVertex(vPScale, -0.35f, -0.5, 0.35, 0.5f, 0, 1, 0, 0, 1, 1);//pendulum scale image
-	SetS3DVertex(vFieldSpell, 1.2f, -3.2f, 6.7f, 3.2f, -0.01, 1, 0, 0, 1, 1);
-	SetS3DVertex(vFieldSpell1, 1.2f, 0.8f, 6.7f, 3.2f, -0.01, 1, 0, 0.2f, 1, 0.63636f);
-	SetS3DVertex(vFieldSpell2, 1.2f, -3.2f, 6.7f, -0.8f, -0.01, 1, 1, 0.63636f, 0, 0.2f);//better fieldspell showing
+	SetS3DVertex(vFieldSpell, 1.2f, -3.2f, 6.7f, 3.2f, -0.01f, 1, 0, 0, 1, 1);
+	SetS3DVertex(vFieldSpell1, 1.2f, 0.8f, 6.7f, 3.2f, -0.01f, 1, 0, 0.2f, 1, 0.63636f);
+	SetS3DVertex(vFieldSpell2, 1.2f, -3.2f, 6.7f, -0.8f, -0.01f, 1, 1, 0.63636f, 0, 0.2f);//better fieldspell showing
 	SetS3DVertex(vTotalAtkme, 0.5f, 1.3f, 1.5f, 2, 1, 1, 0, 0, 1, 1);
 	SetS3DVertex(vTotalAtkop, 6.4f, -0.1f, 7.4f, 0.65f, 1, 1, 0, 0, 1, 1);
 	SetS3DVertex(vTotalAtkmeT, 2.5f, 0.95f, 3.5f, 1.65f, 1, 1, 0, 0, 1, 1);

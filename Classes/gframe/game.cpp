@@ -64,7 +64,7 @@ bool IsExtension(const wchar_t* filename, const wchar_t* extension) {
 	auto elen = std::wcslen(extension);
 	if (!elen || flen < elen)
 		return false;
-	return !wcsncasecmp(filename + (flen - elen), extension, elen);
+	return !mywcsncasecmp(filename + (flen - elen), extension, elen);
 }
 
 void Game::process(irr::SEvent &event) {
@@ -150,8 +150,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
 
 	device = irr::createDeviceEx(params);
-	if(!device)
+	if(!device) {
+		ErrorLog("Failed to create Irrlicht Engine device!");
 		return false;
+	}
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
@@ -1625,7 +1627,7 @@ void Game::LoadExpansions() {
 				dataManager.LoadStrings(reader);
 				continue;
 			}
-			if (!wcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}
@@ -1682,7 +1684,7 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBo
 	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
 }
 void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
-	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
+	if(!mywcsncasecmp(deckpath, L"./pack", 6)) {
 		for(auto& pack : deckBuilder.expansionPacks) {
 			// add pack/xxx.ydk
 			additem(pack.substr(5, pack.size() - 9).c_str());
@@ -2055,10 +2057,9 @@ void Game::ErrorLog(const char* msg) {
 	FILE* fp = fopen("error.log", "at");
 	if(!fp)
 		return;
-	time_t nowtime = time(nullptr);
-	tm* localedtime = localtime(&nowtime);
+	time_t nowtime = std::time(nullptr);
 	char timebuf[40];
-	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
+	std::strftime(timebuf, sizeof timebuf, "%Y-%m-%d %H:%M:%S", std::localtime(&nowtime));
 	fprintf(fp, "[%s]%s\n", timebuf, msg);
 	fclose(fp);
 }
