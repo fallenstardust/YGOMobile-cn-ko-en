@@ -798,7 +798,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wCardDisplay->getCloseButton()->setVisible(false);
 	wCardDisplay->setVisible(false);
         ChangeToIGUIImageWindow(wCardDisplay, &bgCardDisplay, imageManager.tDialog_L);
-    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660 * yScale, 40 * yScale), false, false, wCardDisplay, -1, false);
+    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardDisplay, -1, false);
     stCardDisplay->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
     for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
