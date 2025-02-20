@@ -499,14 +499,14 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
 					if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
-						mainGame->stCardPos[i]->setOverrideColor(0xfff0f8ff);
+						mainGame->stCardPos[i]->setOverrideColor(0xff000099);
 					if(selectable_cards[i]->overlayTarget->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				} else if(selectable_cards[i]->location == LOCATION_DECK || selectable_cards[i]->location == LOCATION_EXTRA || selectable_cards[i]->location == LOCATION_REMOVED) {
 					if(selectable_cards[i]->position & POS_FACEDOWN)
-						mainGame->stCardPos[i]->setOverrideColor(0xfff0f8ff);
+						mainGame->stCardPos[i]->setOverrideColor(0xff000099);
 					if(selectable_cards[i]->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
@@ -630,14 +630,14 @@ void ClientField::ShowLocationCard() {
 		mainGame->stDisplayPos[i]->setText(formatBuffer);
 		if(display_cards[i]->location == LOCATION_OVERLAY) {
 			if(display_cards[i]->owner != display_cards[i]->overlayTarget->controler)
-				mainGame->stDisplayPos[i]->setOverrideColor(0xfff0f8ff);
+				mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
 			if(display_cards[i]->overlayTarget->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 			else 
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		} else if(display_cards[i]->location == LOCATION_EXTRA || display_cards[i]->location == LOCATION_REMOVED) {
 			if(display_cards[i]->position & POS_FACEDOWN)
-				mainGame->stDisplayPos[i]->setOverrideColor(0xfff0f8ff);
+				mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
 			if(display_cards[i]->controler)
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 			else
@@ -698,10 +698,10 @@ void ClientField::ShowSelectOption(int select_hint) {
 		int newheight = 50 + 60 * (scrollbar ? 5 : count) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 405 : 390) * mainGame->xScale;
+		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 425 : 390) * mainGame->xScale;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
 		mainGame->wOptions->setRelativePosition(pos);
-        mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 405 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
+        mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 425 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	} else {
 		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);

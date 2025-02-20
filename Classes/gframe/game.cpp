@@ -734,7 +734,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnSurrenderNo = env->addButton(Resize(200, 120, 310, 170), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnSurrenderNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//options (350)
-	wOptions = env->addWindow(Resize(470, 180, 860, 360), false, L"");
+	wOptions = env->addWindow(Resize(470, 180, 860, 390), false, L"");
 	wOptions->getCloseButton()->setVisible(false);
 	wOptions->setVisible(false);
     wOptions->setDrawBackground(false);
@@ -753,12 +753,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		btnOption[i] = env->addButton(Resize(20, 20 + 60 * i, 370, 70 + 60 * i), wOptions, BUTTON_OPTION_0 + i, L"");
 			ChangeToIGUIImageButton(btnOption[i], imageManager.tButton_L, imageManager.tButton_L_pressed);
 	}
-	scrOption = env->addScrollBar(false, Resize(0, 0, 0, 0), wOptions, SCROLL_OPTION_SELECT);
+	scrOption = env->addScrollBar(false, Resize(380, 20, 410, 310), wOptions, SCROLL_OPTION_SELECT);
 	scrOption->setLargeStep(1);
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
 #endif
-	//pos
+	//pos select
 	wPosSelect = env->addWindow(recti(660 * xScale - 223 * yScale, 160 * yScale, 660 * xScale + 223 * yScale, (160 + 228) * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
@@ -798,7 +798,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wCardDisplay->getCloseButton()->setVisible(false);
 	wCardDisplay->setVisible(false);
         ChangeToIGUIImageWindow(wCardDisplay, &bgCardDisplay, imageManager.tDialog_L);
-    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660 * yScale, 40 * yScale), false, false, wCardDisplay, -1, false);
+    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardDisplay, -1, false);
     stCardDisplay->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
     for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
