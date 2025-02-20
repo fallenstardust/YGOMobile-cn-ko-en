@@ -1056,7 +1056,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->stDisplayPos[i]->setText(formatBuffer);
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
 						if(display_cards[i + pos]->owner != display_cards[i + pos]->overlayTarget->controler)
-							mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
+							mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
 						// BackgroundColor: controller of the xyz monster
 						if(display_cards[i + pos]->overlayTarget->controler)
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
@@ -1064,7 +1064,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 					} else if(display_cards[i + pos]->location == LOCATION_EXTRA || display_cards[i + pos]->location == LOCATION_REMOVED) {
 						if(display_cards[i + pos]->position & POS_FACEDOWN)
-							mainGame->stDisplayPos[i]->setOverrideColor(0xff0000ff);
+							mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
 						if(display_cards[i + pos]->controler)
 							mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
 						else

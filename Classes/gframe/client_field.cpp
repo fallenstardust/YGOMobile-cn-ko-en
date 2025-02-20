@@ -499,14 +499,14 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				else if(selectable_cards[i]->location == LOCATION_OVERLAY) {
 					if(selectable_cards[i]->owner != selectable_cards[i]->overlayTarget->controler)
-						mainGame->stCardPos[i]->setOverrideColor(0xff008B00);
+						mainGame->stCardPos[i]->setOverrideColor(0xff000099);
 					if(selectable_cards[i]->overlayTarget->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
 					mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 				} else if(selectable_cards[i]->location == LOCATION_DECK || selectable_cards[i]->location == LOCATION_EXTRA || selectable_cards[i]->location == LOCATION_REMOVED) {
 					if(selectable_cards[i]->position & POS_FACEDOWN)
-						mainGame->stCardPos[i]->setOverrideColor(0xff008B00);
+						mainGame->stCardPos[i]->setOverrideColor(0xff000099);
 					if(selectable_cards[i]->controler)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
 					else
