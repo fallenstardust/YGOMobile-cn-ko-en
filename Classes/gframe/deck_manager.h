@@ -2,10 +2,10 @@
 #define DECKMANAGER_H
 
 #include "config.h"
-#include "data_manager.h"
 #include <unordered_map>
 #include <vector>
 #include <sstream>
+#include "data_manager.h"
 
 namespace ygo {
 	constexpr int DECK_MAX_SIZE = 60;
@@ -54,7 +54,7 @@ public:
 	void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack);//
 	void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	FILE* OpenDeckFile(const wchar_t* file, const char* mode);
-	IReadFile* OpenDeckReader(const wchar_t* file);
+	irr::io::IReadFile* OpenDeckReader(const wchar_t* file);
 	bool LoadCurrentDeck(const wchar_t* file, bool is_packlist = false);
 	bool LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	bool SaveDeck(Deck& deck, const wchar_t* file);

@@ -16,6 +16,8 @@
 #include <android/CustomShaderConstantSetCallBack.h>
 #endif
 
+#define socklen_t int
+
 #ifndef TEXT
 #ifdef UNICODE
 #define TEXT(x) L##x
@@ -44,7 +46,7 @@
 #define mywcsncasecmp wcsncasecmp
 #define mystrncasecmp strncasecmp
 
-#include <stdio.h>
+#include <cstdio>
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
@@ -57,11 +59,11 @@ inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
 	return std::swprintf(buf, N, fmt, args...);
 }
 
-inline FILE* myfopen(const wchar_t* filename, const char* mode) {
+inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
 	FILE* fp{};
 	char fname[1024]{};
 	BufferIO::EncodeUTF8(filename, fname);
-	fp = fopen(fname, mode);
+	fp = std::fopen(fname, mode);
 	return fp;
 }
 

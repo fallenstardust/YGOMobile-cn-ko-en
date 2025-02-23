@@ -1483,7 +1483,6 @@ void Game::MainLoop() {
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		if(cur_time >= 1000) {
-
 #ifdef _IRR_ANDROID_PLATFORM_
 			if ( stat ) {
 				stringw str = L"FPS: ";
@@ -1503,7 +1502,7 @@ void Game::MainLoop() {
 #ifdef _IRR_ANDROID_PLATFORM_
 		device->yield(); // probably nicer to the battery
 #endif
-}
+	}
 	DuelClient::StopClient(true);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
@@ -1720,29 +1719,29 @@ void Game::RefreshBot() {
 	if(!gameConf.enable_bot_mode)
 		return;
 	botInfo.clear();
-	FILE* fp = fopen("bot.conf", "r");
+	FILE* fp = std::fopen("bot.conf", "r");
 	char linebuf[256]{};
 	char strbuf[256]{};
 	if(fp) {
-		while(fgets(linebuf, 256, fp)) {
+		while(std::fgets(linebuf, 256, fp)) {
 			if(linebuf[0] == '#')
 				continue;
 			if(linebuf[0] == '!') {
 				BotInfo newinfo;
-				if (sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.name);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
-				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.command);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
-				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.desc);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
 				newinfo.support_master_rule_3 = !!std::strstr(linebuf, "SUPPORT_MASTER_RULE_3");
 				newinfo.support_new_master_rule = !!std::strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
@@ -1756,7 +1755,7 @@ void Game::RefreshBot() {
 				continue;
 			}
 		}
-		fclose(fp);
+		std::fclose(fp);
 	}
 	lstBotList->clear();
 	stBotInfo->setText(L"");
@@ -2049,19 +2048,19 @@ void Game::AddDebugMsg(const char* msg) {
 	}
 	if (enable_log & 0x2) {
 		char msgbuf[1040];
-		snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
+		std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
 		ErrorLog(msgbuf);
 	}
 }
 void Game::ErrorLog(const char* msg) {
-	FILE* fp = fopen("error.log", "at");
+	FILE* fp = std::fopen("error.log", "at");
 	if(!fp)
 		return;
 	time_t nowtime = std::time(nullptr);
 	char timebuf[40];
 	std::strftime(timebuf, sizeof timebuf, "%Y-%m-%d %H:%M:%S", std::localtime(&nowtime));
-	fprintf(fp, "[%s]%s\n", timebuf, msg);
-	fclose(fp);
+	std::fprintf(fp, "[%s]%s\n", timebuf, msg);
+	std::fclose(fp);
 }
 void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 	SetStaticText(stSysMessage, 370 * xScale, guiFont, text);
