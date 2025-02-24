@@ -79,7 +79,7 @@ void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->deckBuilder.prev_deck = 0;
 }
 
-void reSetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, wchar_t* string){
+void reSetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, const wchar_t* string){
     wchar_t cate[256];
     wchar_t cate_deck[256];
     myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==1 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==1 ? L"" : string);
@@ -369,23 +369,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 				break;
 			}
-				case BUTTON_SHARE_REPLAY: {
-					int sel = mainGame->lstReplayList->getSelected();
-					if(sel == -1)
-						break;
-					mainGame->gMutex.lock();
-                    char name[1024];
-					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
-					mainGame->gMutex.unlock();
-					prev_operation = id;
-					prev_sel = sel;
-#ifdef _IRR_ANDROID_PLATFORM_
-					ALOGD("cc menu_handler: 1share replay file=%s", name);
-					android::OnShareFile(mainGame->appMain, "yrp", name);
-					ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
-#endif
+			case BUTTON_SHARE_REPLAY: {
+				int sel = mainGame->lstReplayList->getSelected();
+				if(sel == -1)
 					break;
-				}
+				mainGame->gMutex.lock();
+                char name[1024];
+				BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
+				mainGame->gMutex.unlock();
+				prev_operation = id;
+				prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+				ALOGD("cc menu_handler: 1share replay file=%s", name);
+				android::OnShareFile(mainGame->appMain, "yrp", name);
+				ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
+#endif
+				break;
+			}
 			case BUTTON_RENAME_REPLAY: {
 				int sel = mainGame->lstReplayList->getSelected();
 				if(sel == -1)
@@ -676,7 +676,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				const wchar_t* name = mainGame->lstSinglePlayList->getListItem(sel);
 				wchar_t fname[256];
 				myswprintf(fname, L"./single/%ls", name);
-				FILE* fp = myfopen(fname, "rb");
+				FILE* fp = mywfopen(fname, "rb");
 				if(!fp) {
 					mainGame->stSinglePlayInfo->setText(L"");
 					break;
@@ -685,7 +685,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t wlinebuf[1024];
 				std::wstring message = L"";
 				bool in_message = false;
-				while(fgets(linebuf, 1024, fp)) {
+				while(std::fgets(linebuf, 1024, fp)) {
 					if(!std::strncmp(linebuf, "--[[message", 11)) {
 						size_t len = std::strlen(linebuf);
 						char* msgend = std::strrchr(linebuf, ']');
@@ -708,7 +708,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 						message.append(wlinebuf);
 					}
 				}
-				fclose(fp);
+				std::fclose(fp);
 				mainGame->SetStaticText(mainGame->stSinglePlayInfo, 200 * mainGame->xScale, mainGame->guiFont, message.c_str());
 				break;
 			}
