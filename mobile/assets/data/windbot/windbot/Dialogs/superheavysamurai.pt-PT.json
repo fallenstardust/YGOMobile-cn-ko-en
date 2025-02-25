@@ -1,0 +1,45 @@
+{
+  "welcome": [
+    "Hora do lanche da noite!",
+    "Posso jogar qualquer deck de pêndulo!",
+    "O que? Você está dizendo que os Samurai Super Pesados não são um deck de pêndulo?"
+  ],
+  "deckerror": [
+    "A quantidade de {0} não está correta! Coloque em modo sem restrições!"
+  ],
+  "duelstart": [
+    "Vou te mostrar o charme dos Samurai Super Pesados!"
+  ],
+  "newturn": [
+    "Comprei uma carta! Benkei, não saia, me ajude!",
+    "Comprei uma carta! Corpo P, não saia, me ajude!"
+  ],
+  "endturn": [
+    "Hehe, é sua vez!",
+    "Gostou da minha jogada?"
+  ],
+  "directattack": [
+    "Ataco diretamente com {0}!"
+  ],
+  "attack": [
+    "Ataco {1} com {0}!"
+  ],
+  "ondirectattack": [
+    "Não me ataque! Não me ataque!",
+    "Ahhh! Vou ser derrotado!"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Haha, o efeito de {0} é incrível!",
+    "Haha, uso o efeito de {0}!"
+  ],
+  "summon": [
+    "Haha, invoco {0}!"
+  ],
+  "setmonster": [
+    "Haha, coloco um monstro em posição de defesa virado para baixo!"
+  ],
+  "chaining": [
+    "Agora! Ativo o efeito de {0}!"
+  ]
+}

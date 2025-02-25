@@ -1,0 +1,49 @@
+{{
+  "welcome": [
+    "Esta é a cúspide do Grande Pico do Espírito?",
+    "Este é o reino de treinamento de dragões?"
+  ],
+  "deckerror": [
+    "{0} está amaldiçoado pela água gelada!"
+  ],
+  "duelstart": [
+    "Depois de caminhar por tanto tempo, estou com fome...",
+    "Que tipo de companheiros encontraremos mais à frente?",
+    "Juntos, você, eu e Albas..."
+  ],
+  "newturn": [
+    "Minha vez!"
+  ],
+  "endturn": [
+    "Onde está Onii-chan...",
+    "Albas terminou de comer sua comida seca.",
+    "Quando será servido o jantar?"
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "Vamos comer!"
+  ],
+  "attack": [
+    "Ataque {1} com {0}!"
+  ],
+  "ondirectattack": [
+    "Tão faminto...",
+    "Woooo...",
+    "Onii-chan……"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Ative o efeito de {0}!"
+  ],
+  "summon": [
+    "{0}, eu te invoco!",
+    "Saia, {0}!"
+  ],
+  "setmonster": [
+    "......"
+  ],
+  "chaining": [
+    "Ativo o efeito de {0}!",
+    "{0}!"
+  ]
+}

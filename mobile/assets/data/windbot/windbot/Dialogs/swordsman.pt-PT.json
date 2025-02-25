@@ -1,0 +1,75 @@
+{
+  "welcome": [
+    "Olá, sou um robô.",
+    "A função de IA está em teste. Se encontrar algum problema, informe a tempo."
+  ],
+  "deckerror": [
+    "Desculpe, parece que há um problema com a quantidade de {0} no meu Deck."
+  ],
+  "duelstart": [
+    "A diversão está apenas começando!",
+    "Vou te fazer sorrir com este duelo!"
+  ],
+  "newturn": [
+    "É o meu turno, compro uma carta!",
+    "Meu turno, compro uma carta!",
+    "Comprei uma carta."
+  ],
+  "endturn": [
+    "A rodada terminou.",
+    "Meu turno terminou.",
+    "Sua vez."
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque diretamente ao oponente!",
+    "{0}, o oponente está indefeso, ataque!",
+    "{0}, ataque os Pontos de Vida do oponente!",
+    "{0}, ataque diretamente os Pontos de Vida do oponente!",
+    "{0}, derrote o oponente com um ataque direto!",
+    "{0}, use um ataque direto para derrotar o oponente!",
+    "{0}, ataque diretamente para liberar seu poder!",
+    "Meu {0} vai esmagar seus Pontos de Vida!",
+    "Mostre sua força aos seus oponentes, {0}!",
+    "Você não pode me parar. {0}, ataque!"
+  ],
+  "attack": [
+    "¡{0}, ataque seu {1}!",
+    "¡{0}, destrua seu {1}!",
+    "¡{0}, derrote {1}!",
+    "¡{0}, ataque {1}!",
+    "¡{0}, libere seu poder sobre {1}!"
+  ],
+  "ondirectattack": [
+    "Isso incomoda...",
+    "É só {0}!",
+    "Você acha que pode me derrotar assim?"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Ativo {0}.",
+    "Eu uso o efeito de {0}.",
+    "Eu uso o poder de {0}."
+  ],
+  "summon": [
+    "Invoco {0}.",
+    "Sai, {0}!",
+    "Apareça, {0}!",
+    "Convocarei o poderoso {0}!",
+    "Chamo {0} para se juntar à batalha!",
+    "Chamei {0}.",
+    "Deixe-me convocar {0}."
+  ],
+  "setmonster": [
+    "Coloquei um monstro.",
+    "Coloquei um monstro, qual será?"
+  ],
+  "chaining": [
+    "Olhe para mim! Ativo {0}!",
+    "Eu uso o poder de {0}.",
+    "Prepare-se! Eu uso {0}!",
+    "Não concordo. {0}, ativado!",
+    "Parece que você esqueceu do meu {0}!",
+    "Já pensou que eu tenho {0}?"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "welcome": [
+    "Olá, sou um robô.",
+    "A função IA está em teste. Se encontrar algum problema, informe-nos a tempo."
+  ],
+  "deckerror": [
+    "Desculpe, parece que há algum problema com o número de {0} no meu deck."
+  ],
+  "duelstart": [
+    "A diversão está apenas começando!",
+    "Eu vou te surpreender com esse duelo! Ou lágrimas? Quem sabe?"
+  ],
+  "newturn": [
+    "É minha vez, eu compro uma carta!",
+    "Minha vez, eu compro uma carta!",
+    "Eu tirei uma carta."
+  ],
+  "endturn": [
+    "A rodada acabou.",
+    "Meu turno terminou.",
+    "Te passo o turno."
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque o oponente diretamente!",
+    "{0}, o oponente está indefeso, ataque!",
+    "{0}, ataque os Pontos de Vida do oponente!",
+    "{0}, ataque diretamente os Pontos de Vida do oponente!",
+    "{0}, derrote o oponente com um ataque direto!",
+    "{0}, use um ataque direto para derrotar o oponente!",
+    "{0}, ataque diretamente para liberar seu poder!",
+    "Meu {0} vai esmagar seus Pontos de Vida!",
+    "Mostre sua força aos seus oponentes, {0}!",
+    "Agora você não pode me parar. {0}, ataque!"
+  ],
+  "attack": [
+    "{0}, ataque o {1} dele!",
+    "{0}, destrua o {1} dele!",
+    "{0}, derrote o {1}!",
+    "{0}, corra em direção ao {1}!",
+    "{0}, libere seu poder sobre o {1}!"
+  ],
+  "ondirectattack": [
+    "Ñeee......",
+    "É só {0}!",
+    "Você acha que pode me derrotar assim?"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Ativo {0}.",
+    "Eu uso o efeito de {0}.",
+    "Eu uso o poder de {0}."
+  ],
+  "summon": [
+    "Eu invoco {0}.",
+    "Saia, {0}!",
+    "Apareça, {0}!",
+    "Eu convoquei o poderoso {0}!",
+    "Chamei {0} para se juntar à batalha!",
+    "Chamei {0}.",
+    "Deixe-me convocar {0}."
+  ],
+  "setmonster": [
+    "Coloquei um monstro.",
+    "Eu coloquei um monstro."
+  ],
+  "chaining": [
+    "XD, você caiu! Ativo {0}!",
+    "Eu uso o poder de {0}.",
+    "Prepare-se! Eu uso {0}!",
+    "Não concordo. {0}, Ative!",
+    "Parece que você esqueceu o meu {0}!",
+    "Você já considerou que eu tenho {0}?"
+  ],
+  "surrender": [
+    "Eu me rendo.",
+    "Reconheço sua vitória."
+  ]
+}

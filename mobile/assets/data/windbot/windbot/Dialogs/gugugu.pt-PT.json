@@ -1,0 +1,64 @@
+{
+  "welcome": [
+    "Olá a todos, sou novo aqui.",
+    "Como se joga Yu-Gi-Oh?",
+    "Felizmente, eu não jogo Yu-Gi-Oh!"
+  ],
+  "deckerror": [
+    "Há {0} pombas no deck."
+  ],
+  "duelstart": [
+    "O que devo fazer se não quiser trabalhar?",
+    "O que devo fazer se não quiser trabalhar porque estou em modo preguiçoso?"
+  ],
+  "newturn": [
+    "Tantas cartas novas e assustadoras.",
+    "Este jogo é muito difícil de jogar.",
+    "Tão preguiçoso, não consigo me mover."
+  ],
+  "endturn": [
+    "Então só posso fazer pomba.",
+    "Neste momento não, não sei quando.",
+    "Muito calor, preciso de um sorvete."
+  ],
+  "directattack": [
+    "Soa como pomba.",
+    "Pomba velha, ataque."
+  ],
+  "attack": [
+    "Você não soa muito pombalhão.",
+    "Horrível."
+  ],
+  "ondirectattack": [
+    "Uau!",
+    "Dá tanto medo?",
+    "Soa muito pombalhão.",
+    "Não aguento mais."
+  ],
+  "facedownmonstername": "Pomba",
+  "activate": [
+    "Pomba inconsciente.",
+    "É legal, é legal."
+  ],
+  "summon": [
+    "Horrível.",
+    "Não é da minha conta.",
+    "Isso ainda não é da minha conta.",
+    "É legal, é legal."
+  ],
+  "setmonster": [
+    "Estou no processo de pescar e não quero atualizar.",
+    "Então continua sendo uma posição de pomba, né?"
+  ],
+  "chaining": [
+    "O que é isso?",
+    "Mas eu perdi.",
+    "Não existe tal serviço.",
+    "Horrível."
+  ],
+  "surrender": [
+    "É terrível (sai correndo).",
+    "Este jogo é muito difícil de jogar (sai correndo).",
+    "Por sorte, eu não jogo Yu-Gi-Oh! (sai correndo)."
+  ]
+}

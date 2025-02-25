@@ -1,0 +1,78 @@
+{
+  "welcome": [
+    "Chegou uma pessoa realmente rara.",
+    "Não sabia que lutaria comigo! Duelista. Mas a coisa não termina aí, D.M.A (Duelista Muito Amistoso) vai te apoiar."
+  ],
+  "deckerror": [
+    "Ah, talvez BA tenha corrigido algo na CBD novamente e {0} desapareceu."
+  ],
+  "duelstart": [
+    "Isso é só um duelo contra a IA, não fique tão feliz se me derrotar.",
+    "Muito obrigado ao servidor 233 por nos permitir ter jogos para nos divertir, não se esqueça de nos visitar.",
+    "Sociedade anti-mainstream NOVA.",
+    "É hora do dueeeeeeeeeeeeeeelo."
+  ],
+  "newturn": [
+    "É minha vez, compro uma carta!",
+    "Minha vez, compro uma carta!",
+    "Isso vai ficar interessante, compro uma carta!"
+  ],
+  "endturn": [
+    "Fim do turno.",
+    "É o final do turno.",
+    "Isto é o suficiente......",
+    "É sua vez. Agora, compre sua carta! Vamos continuar o duelo!"
+  ],
+  "directattack": [
+    "{0}, Ataque direto!",
+    "{0}, Ataca nosso rival diretamente!",
+    "{0}, Ataca o monstro defensor do oponente!",
+    "{0}, Reduza os LP do seu oponente!",
+    "{0}, Reduza os LP do seu oponente com um ataque direto!",
+    "{0}, Derrote seu oponente com um ataque direto!",
+    "{0}, Use um ataque direto para derrotar seu oponente!",
+    "{0}, Ataca com todas as suas forças!",
+    "Meu {0} vai te esmagar!",
+    "Detenha o tempo com o ataque final {0}!",
+    "Você não pode mais me deter. {0}, Ataque!"
+  ],
+  "attack": [
+    "{0}, Ataca o {1} dele!",
+    "{0}, Destrua o {1} dele!",
+    "{0}, Derrote {1}!",
+    "É um rolo compressor! {1}!",
+    "¡UwUwUwUwUwUwU!"
+  ],
+  "ondirectattack": [
+    "Imbecil.......",
+    "{0}!",
+    "O tempo parou!?"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "{0} Eu pararei o tempo.",
+    "Ativo {0}!",
+    "{0} é tudo ou nada!"
+  ],
+  "summon": [
+    "É realmente o MELHOR entre os melhores! Saia {0}.",
+    "Saia, {0}!",
+    "Apresente-se, {0}!",
+    "Invoco o poderoso {0}!",
+    "Chamo {0} para que se una à batalha!",
+    "Invoco {0}!",
+    "Convoco {0}!"
+  ],
+  "setmonster": [
+    "Coloco um monstro virado para baixo!",
+    "Coloco um monstro no campo!"
+  ],
+  "chaining": [
+    "Olha o que eu tenho aqui! Ativo {0}!",
+    "Utilizo o poder de {0}.",
+    "Muito boa tática... Mas não é o suficiente! {0}",
+    "Na verdade, você é um grande duelista... Está pronto para receber isso? {0} Ativado!",
+    "¡Parece que esqueceu do meu {0}!",
+    "Você considerou que eu tenho {0}?"
+  ]
+}

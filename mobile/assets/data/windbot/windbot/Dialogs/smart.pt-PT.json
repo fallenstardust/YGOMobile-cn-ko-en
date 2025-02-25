@@ -1,0 +1,43 @@
+{
+  "welcome": [
+    "Olá, sou o melhor."
+  ],
+  "deckerror": [
+    "Desculpe, parece que há um problema com o número de {0} no meu Deck."
+  ],
+  "duelstart": [
+    "Vamos ter um duelo justo (Dragão Escondido no Bolso)."
+  ],
+  "newturn": [
+    "Agora é minha fase."
+  ],
+  "endturn": [
+    "Cada um tem objetivos diferentes. Eu me concentro mais na intensidade. Só quero ganhar."
+  ],
+  "directattack": [
+    "Estou aqui para tirar sua vida."
+  ],
+  "attack": [
+    "Desapareça, maldito bastardo."
+  ],
+  "ondirectattack": [
+    "Papai, por favor, me perdoe.",
+    "Tão temível."
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Eu ativo. Embora o efeito desta carta não esteja escrito nela, pode ser usado assim."
+  ],
+  "summon": [
+    "Forte, invencível.",
+    "Invoco {0}, ganhe o duelo.",
+    "{0} é simplesmente uma carta falsa.",
+    "Sempre gosto de {0}."
+  ],
+  "setmonster": [
+    "Estou empacado de novo."
+  ],
+  "chaining": [
+    "Sem braço, olhe para mim e eu te direi o que fazer."
+  ]
+}
