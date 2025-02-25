@@ -587,7 +587,6 @@ public class CardSearcher implements View.OnClickListener {
                     .build();
             Log.i(TAG, searchInfo.toString());
             mICardSearcher.search(searchInfo);
-            lineKey = 0;
         }
     }
 
@@ -620,6 +619,7 @@ public class CardSearcher implements View.OnClickListener {
         reset(attributeSpinner);
         atkText.setText(null);
         defText.setText(null);
+        lineKey = 0;
     }
 
     public interface CallBack {
