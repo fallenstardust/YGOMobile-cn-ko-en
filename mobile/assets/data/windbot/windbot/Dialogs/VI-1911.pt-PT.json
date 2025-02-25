@@ -1,0 +1,78 @@
+{
+  "welcome": [
+    "Chegou uma pessoa realmente rara.",
+    "Eu não sabia que você lutaria comigo! Duelista. Não para por aqui, D.A. (Duelista Amigável) irá derrotá-lo."
+  ],
+  "deckerror": [
+    "Bem, se BA modificar o CBD, {0} pode desaparecer."
+  ],
+  "duelstart": [
+    "Isso é IA. Não espere muito.",
+    "Obrigado por usar o servidor 233. Não se esqueça de nos visitar.",
+    "Sociedade anti-mainstream NOVA.",
+    "Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+  ],
+  "newturn": [
+    "É o meu turno. Compro uma carta!",
+    "Meu turno, compro uma carta!",
+    "Puxei uma carta."
+  ],
+  "endturn": [
+    "Fim do turno.",
+    "Este é o fim do turno.",
+    "Isso é o suficiente......",
+    "É sua vez. Agora, compre sua carta! Vamos continuar o duelo!"
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque diretamente seu oponente!",
+    "{0}, ataque o monstro defensor do oponente!",
+    "{0}, reduza os LP do seu oponente!",
+    "{0}, reduza os LP do seu oponente com ataques diretos!",
+    "{0}, derrote seu oponente com um ataque direto!",
+    "{0}, derrote seus oponentes com ataques diretos!",
+    "{0}, ataque com todas as suas forças!",
+    "Meu {0} vai esmagar você!",
+    "Pare o tempo com o ataque final {0}!",
+    "Ataque {0}. Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy!"
+  ],
+  "attack": [
+    "{0}, ataque {1}!",
+    "{0}, aniquile {1}!",
+    "{0}, mostre a {1} seu verdadeiro poder!",
+    "Meu monstro é demais para você! {1}!",
+    "Ha ha ha ha ha ha ha!"
+  ],
+  "ondirectattack": [
+    "Imbecil.......",
+    "{0}!",
+    "O tempo parou!?"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Vou parar o tempo com {0}.",
+    "Ativo {0}!",
+    "{0} é o melhor!"
+  ],
+  "summon": [
+    "Invoco {0}",
+    "Chamo {0}",
+    "{0}, eu o invoco!",
+    "Grande {0}, eu o invoco!",
+    "Saia, {0}!",
+    "Vou convocar {0}.",
+    "Invocarei {0}."
+  ],
+  "setmonster": [
+    "Coloquei este monstro.",
+    "Coloco um monstro!"
+  ],
+  "chaining": [
+    "Ativo o efeito de {0}.",
+    "Ativarei {0}.",
+    "Incrível... Ativarei {0}!",
+    "De fato, você é o melhor duelista... Está pronto para receber isso? {0} ativado!",
+    "Esta é a ativação final. Ativo {0}!",
+    "Vou te testar com isso, {0} ativado!"
+  ]
+}
