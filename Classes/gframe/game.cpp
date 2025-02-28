@@ -295,48 +295,63 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	newskin->drop();
 #ifdef _IRR_ANDROID_PLATFORM_
 	//main menu
-	wchar_t strbuf[256];
-	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
-	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, strbuf);
+	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, L"");
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDrawBackground(false);
+    //button Lan Mode
 	btnLanMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 30, 350, 106), wMainMenu, BUTTON_LAN_MODE);
 	btnLanMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
 	btnLanMode->setDrawBorder(false);
 	btnLanMode->setImage(imageManager.tTitleBar);
+    textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(15, 25, 350, 60), false, false, btnLanMode);
+    textLanMode->setOverrideFont(titleFont);
+    textLanMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //version code
+    wchar_t strbuf[256];
+    myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
 	env->addStaticText(strbuf, Resize(55, 2, 280, 35), false, false, btnLanMode);
-	textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(115, 25, 300, 65), false, false, btnLanMode);
-	textLanMode->setOverrideFont(titleFont);
+    //button Single Mode
 	btnSingleMode = irr::gui::CGUIImageButton::addImageButton(env,  Resize(15, 110, 350, 186), wMainMenu, BUTTON_SINGLE_MODE);
 	btnSingleMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
 	btnSingleMode->setDrawBorder(false);
     btnSingleMode->setImage(imageManager.tTitleBar);
-	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(115, 25, 300, 65), false, false, btnSingleMode);
+	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(15, 25, 350, 60), false, false, btnSingleMode);
 	textSingleMode->setOverrideFont(titleFont);
+    textSingleMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Replay Mode
 	btnReplayMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 190, 350, 266), wMainMenu, BUTTON_REPLAY_MODE);
     btnReplayMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
     btnReplayMode->setDrawBorder(false);
     btnReplayMode->setImage(imageManager.tTitleBar);
-	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(115, 25, 300, 65), false, false, btnReplayMode);
+	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(15, 25, 350, 60), false, false, btnReplayMode);
 	textReplayMode->setOverrideFont(titleFont);
+	textReplayMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Deck Edit
 	btnDeckEdit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 270, 350, 346), wMainMenu, BUTTON_DECK_EDIT);
     btnDeckEdit->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
     btnDeckEdit->setDrawBorder(false);
     btnDeckEdit->setImage(imageManager.tTitleBar);
-	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(115, 25, 300, 65), false, false, btnDeckEdit);
+	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(15, 25, 350, 60), false, false, btnDeckEdit);
 	textDeckEdit->setOverrideFont(titleFont);
+	textDeckEdit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Settings
     btnSettings = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 350, 350, 426), wMainMenu, BUTTON_SETTINGS);
     btnSettings->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
 	btnSettings->setDrawBorder(false);
 	btnSettings->setImage(imageManager.tTitleBar);
-	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(115, 25, 300, 65), false, false, btnSettings);
+	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(15, 25, 350, 60), false, false, btnSettings);
 	textSettings->setOverrideFont(titleFont);
+	textSettings->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Exit
     btnModeExit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 430, 350, 506), wMainMenu, BUTTON_MODE_EXIT);
     btnModeExit->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
 	btnModeExit->setDrawBorder(false);
 	btnModeExit->setImage(imageManager.tTitleBar);
-	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(145, 25, 300, 65), false, false, btnModeExit);
+	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(15, 25, 350, 65), false, false, btnModeExit);
 	textModeExit->setOverrideFont(titleFont);
+	textModeExit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+
+    //---------------------game windows---------------------
     //lan mode
 	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);
@@ -650,7 +665,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     scrSoundVolume->setPos(gameConf.sound_volume);
     scrSoundVolume->setLargeStep(1);
     scrSoundVolume->setSmallStep(1);
-    posY += 40 * yScale;
+    posY += 40;
     chkEnableMusic = env->addCheckBox(gameConf.enable_music, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
     chkEnableMusic->setChecked(gameConf.enable_music);
     scrMusicVolume = env->addScrollBar(true, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, SCROLL_VOLUME);
