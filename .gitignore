@@ -64,6 +64,7 @@ output-metadata.json
 /mobile/assets/kor/data/*.cdb
 /mobile/assets/es/data/*.cdb
 /mobile/assets/jp/data/*.cdb
+/mobile/assets/pt/data/*.cdb
 /mobile/assets/data/sound/BGM/advantage/*.mp3
 /mobile/assets/data/sound/BGM/deck/*.mp3
 /mobile/assets/data/sound/BGM/disadvantage/*.mp3

@@ -36,7 +36,7 @@
     <string name="settings">Configuração</string>
     <string name="quit">Sair</string>
     <string name="quit_tip">Deseja sair do aplicativo?</string>
-	<string name="back_tip">Pressione a tecla 'Voltar' novamente para sair do jogo.</string>
+	<string name="back_tip">Pressione a tecla \'Voltar\' novamente para sair do jogo.</string>
 	<string name="string_help_text">O aplicativo atual não possui as permissões necessárias.\nToque em Configuração -> Permissões -> Habilite as permissões necessárias.</string>
 	<string name="fetch_ex_card">Obtendo cartas pré-lançamento da web, por favor, aguarde...</string>
     <string name="ex_card_list_title">Lista de Cartas Pré-Lançamento</string>
@@ -80,14 +80,6 @@
     <string-array name="card_quality">
         <item>Velocidade</item>
         <item>Qualidade</item>
-    </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>Chino</item>
-        <item>Koreano</item>
-        <item>Inglés</item>
-        <item>Español</item>
-        <item>Japonés</item>
-		<item>Português</item>
     </string-array>
     <!-- settings -->
     <string name="server_list">Servidores de duelo</string>
@@ -349,8 +341,6 @@
     <string name="replay">Repetições</string>
     <string name="bot_mode">Duelo vs IA</string>
     <string name="personal">My</string>
-    <string name="login_mycard">Conecte-se</string>
-    <string name="logout_mycard">Sair do MyCard?</string>
     <string name="back_to_mycard_home">Voltar à página inicial</string>
     <string name="edit_your_message">Digite sua mensagem</string>
     <string name="login_succeed">Login bem-sucedido</string>

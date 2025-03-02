@@ -221,30 +221,44 @@ public class SettingFragment extends PreferenceFragmentPlus {
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
                 if (preference.getKey().equals(PREF_DATA_LANGUAGE)) {
-                    if (listPreference.getValue().equals("0")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Chinese.code)) {
                         try {
                             mSettings.copyCnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("1")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Korean.code)) {
                         try {
                             mSettings.copyKorData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("2")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.English.code)) {
                         try {
                             mSettings.copyEnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("3")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Spanish.code)) {
                         try {
                             mSettings.copyEsData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (listPreference.equals(AppsSettings.languageEnum.Japanese.code)) {
+                        try {
+                            mSettings.copyJpData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (listPreference.equals(AppsSettings.languageEnum.Portuguese.code)) {
+                        try {
+                            mSettings.copyPtData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -618,6 +632,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             mSettings.copyEsData();
                         } else if (language.equals(AppsSettings.languageEnum.Japanese.name)) {
                             mSettings.copyJpData();
+                        } else if (language.equals(AppsSettings.languageEnum.Portuguese.name)) {
+                            mSettings.copyPtData();
                         } else {
                             mSettings.copyEnData();
                         }
@@ -631,6 +647,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         mSettings.copyEnData();
                     if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
                         mSettings.copyEsData();
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Portuguese.code)
+                        mSettings.copyPtData();
                 }
 
                 /*

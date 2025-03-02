@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.ASSETS_ES;
 import static cn.garymb.ygomobile.Constants.ASSETS_JP;
 import static cn.garymb.ygomobile.Constants.ASSETS_KOR;
 import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
+import static cn.garymb.ygomobile.Constants.ASSETS_PT;
 import static cn.garymb.ygomobile.Constants.BOT_CONF;
 import static cn.garymb.ygomobile.Constants.CORE_BOT_CONF_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
@@ -300,6 +301,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         copyEsData(true);
                     } else if (language.equals(languageEnum.Japanese)){
                         copyJpData(true);
+                    } else if (language.equals(languageEnum.Portuguese)){
+                        copyPtData(true);
                     } else {
                         copyEnData(true);
                     }
@@ -309,6 +312,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     if (mSettings.getDataLanguage() == languageEnum.English.code) copyEnData(true);
                     if (mSettings.getDataLanguage() == languageEnum.Spanish.code) copyEsData(true);
                     if (mSettings.getDataLanguage() == languageEnum.Japanese.code) copyJpData(true);
+                    if (mSettings.getDataLanguage() == languageEnum.Portuguese.code) copyPtData(true);
                 }
             }
             han.sendEmptyMessage(0);
@@ -395,8 +399,23 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
         //复制游戏配置文件
         copyCoreConfig(jpStringConf, jpBotConf, mSettings.getResourcePath(), needsUpdate);
-        mSettings.setDataLanguage(languageEnum.Spanish.code);
         mSettings.setDataLanguage(languageEnum.Japanese.code);
+        return ERROR_NONE;
+    }
+
+    public int copyPtData(Boolean needsUpdate) throws IOException {
+        String ptStringConf = ASSETS_PT + getDatapath("conf") + "/" + CORE_STRING_PATH;
+        String ptBotConf = ASSETS_PT + getDatapath("conf") + "/" + CORE_BOT_CONF_PATH;
+        String ptCdb = ASSETS_PT + getDatapath(DATABASE_NAME);
+        String enSingle = ASSETS_EN + getDatapath(CORE_SINGLE_PATH);
+        //复制数据库
+        copyCdbFile(ptCdb, true);
+        //复制残局
+        setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.single_lua)));
+        IOUtils.copyFilesFromAssets(mContext, enSingle, mSettings.getSingleDir(), needsUpdate);
+        //复制游戏配置文件
+        copyCoreConfig(ptStringConf, ptBotConf, mSettings.getResourcePath(), needsUpdate);
+        mSettings.setDataLanguage(languageEnum.Portuguese.code);
         return ERROR_NONE;
     }
 

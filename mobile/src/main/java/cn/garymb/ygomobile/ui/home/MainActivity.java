@@ -103,6 +103,8 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                                 fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
                             } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
                                 fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Portuguese)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_PT.html";
                             } else {
                                 fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
                             }

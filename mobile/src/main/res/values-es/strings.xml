@@ -90,13 +90,6 @@
         <item>Velocidad</item>
         <item>Calidad</item>
     </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>Chino</item>
-        <item>Koreano</item>
-        <item>Inglés</item>
-        <item>Español</item>
-        <item>Japonés</item>
-    </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Deshabilitado</item>
         <item>5</item>

@@ -82,13 +82,6 @@
         <item>低</item>
         <item>高</item>
     </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>简体中文</item>
-        <item>조선말</item>
-        <item>English</item>
-        <item>Español</item>
-        <item>日本語</item>
-    </string-array>
     <!-- settings -->
     <string name="server_list">联机对战</string>
     <string name="server_name">名称:</string>
