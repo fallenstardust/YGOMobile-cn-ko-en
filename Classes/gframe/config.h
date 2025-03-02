@@ -3,6 +3,9 @@
 
 #define _IRR_STATIC_LIB_
 #define IRR_COMPILE_WITH_DX9_DEV_PACK
+
+#include <cerrno>
+
 #define _IRR_ANDROID_PLATFORM_
 
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -26,7 +29,6 @@
 #endif // UNICODE
 #endif
 
-#include <errno.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
