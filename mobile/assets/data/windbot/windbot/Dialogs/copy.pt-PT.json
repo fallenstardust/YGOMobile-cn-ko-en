@@ -1,0 +1,78 @@
+{
+  "welcome": [
+    "Olá, sou um bot.",
+    "A função IA está em teste. Se encontrar algum problema, informe a tempo."
+  ],
+  "deckerror": [
+    "{0} não é permitido no seu Deck atual. Troque-o."
+  ],
+  "duelstart": [
+    "Iniciaremos com o Deck das Doze Bestas.",
+    "Vamos começar com meu Deck favorito.",
+    "Vamos começar com um Deck familiar.",
+    "Está pronto o seu Deck?"
+  ],
+  "newturn": [
+    "É minha vez, compro!",
+    "É minha vez, compro!",
+    "Compro."
+  ],
+  "endturn": [
+    "Acabou o turno.",
+    "Meu turno terminou.",
+    "Acho que isso será o suficiente......",
+    "Sua vez."
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque o oponente diretamente!",
+    "{0}, seu oponente está indefeso, ataque!",
+    "{0}, ataque os LP do oponente!",
+    "{0}, ataque diretamente os LP do oponente!",
+    "{0}, derrote seu oponente!",
+    "{0}, derrote seu oponente com um ataque direto!",
+    "{0}, é o golpe final!",
+    "Vou derrotá-lo com meu {0}!",
+    "{0}!",
+    "Agora você não pode me parar. {0}, ataque!"
+  ],
+  "attack": [
+    "¡{0}, ataque ao {1}!",
+    "¡{0}, destrua o {1}!",
+    "¡{0}, derrote o {1}!",
+    "{0}, corra até {1} e acabe com ele!",
+    "{0}, libere seu poder sobre {1} para que lamente sua existência!"
+  ],
+  "ondirectattack": [
+    "Puaj......",
+    "¡{0}!",
+    "Eu me sinto fraco......"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "A carta a ser ativada é {0}!",
+    "A carta que usarei é {0}!",
+    "{0} ativado!"
+  ],
+  "summon": [
+    "Vou invocar {0}.",
+    "Saia {0}!",
+    "Apresente-se, {0}!",
+    "Apresento-lhe minha melhor criatura, {0}!",
+    "{0} Eu te invoco!",
+    "O monstro que invocarei é {0}!",
+    "Deixe-me convocar {0}."
+  ],
+  "setmonster": [
+    "Colocarei este monstro.",
+    "Coloquei um monstro no meu lado do campo."
+  ],
+  "chaining": [
+    "Estava esperando por este momento! {0} Ativado!",
+    "A carta que vou ativar é {0}.",
+    "{0} Ativado!",
+    "Não concordo. {0}, ativado!",
+    "{0} Está ativado!",
+    "Você não esperava que eu ativasse {0}, né?"
+  ]
+}
