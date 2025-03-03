@@ -11,7 +11,7 @@ namespace irr {
 namespace gui {
 
 void Draw2DImageRotation(video::IVideoDriver* driver, video::ITexture* image, core::rect<s32> sourceRect,
-                         core::position2d<s32> position, core::position2d<s32> rotationPoint, f32 rotation, core::vector2df scale, bool useAlphaChannel, video::SColor color) {
+                         core::vector2d<s32> position, core::vector2d<s32> rotationPoint, f32 rotation, core::vector2df scale, bool useAlphaChannel, video::SColor color) {
 	irr::video::SMaterial material;
 	irr::core::matrix4 oldProjMat = driver->getTransform(irr::video::ETS_PROJECTION);
 	driver->setTransform(irr::video::ETS_PROJECTION, irr::core::matrix4());
@@ -70,7 +70,7 @@ void Draw2DImageRotation(video::IVideoDriver* driver, video::ITexture* image, co
 	driver->setTransform(irr::video::ETS_VIEW, oldViewMat);
 }
 void Draw2DImageQuad(video::IVideoDriver* driver, video::ITexture* image, core::rect<s32> sourceRect,
-                         core::position2d<s32> corner[4], bool useAlphaChannel, video::SColor color) {
+                         core::vector2d<s32> corner[4], bool useAlphaChannel, video::SColor color) {
 	irr::video::SMaterial material;
 	irr::core::matrix4 oldProjMat = driver->getTransform(irr::video::ETS_PROJECTION);
 	driver->setTransform(irr::video::ETS_PROJECTION, irr::core::matrix4());
@@ -136,8 +136,8 @@ void CGUIImageButton::draw() {
 		return;
 	IGUISkin* skin = Environment->getSkin();
 	video::IVideoDriver* driver = Environment->getVideoDriver();
-	core::position2di center = AbsoluteRect.getCenter();
-	core::position2di pos = center;
+	core::vector2di center = AbsoluteRect.getCenter();
+	core::vector2di pos = center;
 	pos.X -= (s32)(ImageRect.getWidth() * imageScale.X * 0.5f);
 	pos.Y -= (s32)(ImageRect.getHeight() * imageScale.Y * 0.5f);
 	if(Pressed) {
@@ -164,7 +164,7 @@ void CGUIImageButton::setImage(video::ITexture* image)
 
 	Image = image;
 	if(image) {
-		ImageRect = core::rect<s32>(core::position2d<s32>(0, 0), image->getOriginalSize());
+		ImageRect = core::rect<s32>(core::vector2d<s32>(0, 0), image->getOriginalSize());
 		if(isFixedSize)
 			imageScale = core::vector2df((irr::f32)imageSize.Width / image->getSize().Width, (irr::f32)imageSize.Height / image->getSize().Height);
 	}

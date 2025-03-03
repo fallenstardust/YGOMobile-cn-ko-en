@@ -133,6 +133,15 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
             break;
     }
 }
+
+bool IsExtension(const char* filename, const char* extension) {
+	auto flen = std::strlen(filename);
+	auto elen = std::strlen(extension);
+	if (!elen || flen < elen)
+		return false;
+	return !mystrncasecmp(filename + (flen - elen), extension, elen);
+}
+
 bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 	srand(time(0));
@@ -157,7 +166,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	if (!android::perfromTrick(app)) {
 		return false;
 	}
-	core::position2di appPosition = android::initJavaBridge(app, device);
+	irr::core::vector2di appPosition = android::initJavaBridge(app, device);
 	setPositionFix(appPosition);
 	device->setProcessReceiver(this);
 
@@ -2216,15 +2225,15 @@ recti Game::Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy
 	y2 = y2 * yScale + dy2;
 	return recti(x, y, x2, y2);
 }
-position2di Game::Resize(s32 x, s32 y) {
+irr::core::vector2di Game::Resize(s32 x, s32 y) {
 	x = x * xScale;
 	y = y * yScale;
-	return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
-position2di Game::ResizeReverse(s32 x, s32 y) {
+irr::core::vector2di Game::ResizeReverse(s32 x, s32 y) {
 	x = x / xScale;
 	y = y / yScale;
-	return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
 recti Game::ResizeWin(s32 x, s32 y, s32 x2, s32 y2) {
 	s32 w = x2 - x;
@@ -2247,12 +2256,12 @@ recti Game::Resize_Y(s32 x, s32 y, s32 x2, s32 y2) {
     y = y * yScale;
     x2 = x2 * yScale;
     y2 = y2 * yScale;
-    return recti(x, y, x2, y2);
+	return recti(x, y, x2, y2);
 }
-position2di Game::Resize_Y(s32 x, s32 y) {
+irr::core::vector2di Game::Resize_Y(s32 x, s32 y) {
     x = x * yScale;
     y = y * yScale;
-    return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);

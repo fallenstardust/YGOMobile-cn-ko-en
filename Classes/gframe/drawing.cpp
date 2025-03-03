@@ -43,6 +43,7 @@ void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, 
 			driver->draw3DLine(vec[3].Pos, vec[2].Pos);
 			driver->draw3DLine(vec[2].Pos, vec[0].Pos);
 		}
+
 }
 void Game::DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color) {
 	recti pos = element->getAbsolutePosition();
@@ -896,12 +897,12 @@ void Game::DrawSpec() {
 			break;
 		}
 		case 7: {//show normal summoning
-			core::position2d<s32> corner[4];
+			irr::core::vector2d<s32> corner[4];
 			float y = sin(showcarddif * 3.1415926f / 180.0f) * CARD_IMG_HEIGHT * mainGame->yScale;
-			corner[0] = core::position2d<s32>(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale - (CARD_IMG_HEIGHT * mainGame->yScale - y) * 0.3f , 404 * mainGame->yScale - y);
-			corner[1] = core::position2d<s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale + (CARD_IMG_HEIGHT * mainGame->yScale - y) * 0.3f , 404 * mainGame->yScale - y);
-			corner[2] = core::position2d<s32>(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
-			corner[3] = core::position2d<s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
+			corner[0] = irr::core::vector2d<s32>(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale - (CARD_IMG_HEIGHT * mainGame->yScale - y) * 0.3f , 404 * mainGame->yScale - y);
+			corner[1] = irr::core::vector2d<s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale + (CARD_IMG_HEIGHT * mainGame->yScale - y) * 0.3f , 404 * mainGame->yScale - y);
+			corner[2] = irr::core::vector2d<s32>(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
+			corner[3] = irr::core::vector2d<s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
 			irr::gui::Draw2DImageQuad(driver, showimg, rect<s32>(0, 0, orisize.Width, orisize.Height), corner);
 			showcardp++;
 			showcarddif += 9;
@@ -1039,7 +1040,7 @@ void Game::DrawSpec() {
 
 			recti rectloc(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
 			recti msgloc(x, y - chatRectY - h, x - 4, y - chatRectY);
-			recti shadowloc = msgloc + position2di(1, 1);
+			recti shadowloc = msgloc + irr::core::vector2di(1, 1);
 
 			driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
 			guiFont->drawUstring(msg, msgloc, 0xff000000, false, false);
@@ -1060,7 +1061,7 @@ void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	for(auto fit = fadingList.begin(); fit != fadingList.end(); ++fit)
 		if(win == fit->guiFading && win != wOptions && win != wANNumber) // the size of wOptions is always setted by ClientField::ShowSelectOption before showing it
 			fu.fadingSize = fit->fadingSize;
-	irr::core::position2di center = fu.fadingSize.getCenter();
+	irr::core::vector2di center = fu.fadingSize.getCenter();
 	fu.fadingDiff.X = fu.fadingSize.getWidth() / 10;
 	fu.fadingDiff.Y = (fu.fadingSize.getHeight() - 4) / 10;
 	fu.fadingUL = center;
@@ -1145,7 +1146,7 @@ void Game::WaitFrameSignal(int frame) {
 	signalFrame = (gameConf.quick_animation && frame >= 12) ? 12 : frame;
 	frameSignal.Wait();
 }
-void Game::DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<int,int>* lflist, bool drag) {
+void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const std::unordered_map<int,int>* lflist, bool drag) {
 	int code = cp->first;
 	int lcode = cp->second.alias;
 	if(lcode == 0)
@@ -1249,7 +1250,7 @@ void Game::DrawDeckBd() {
 		int j = i + padding;
 		DrawThumb(deckManager.current_deck.main[j], Resize(314 + (i % lx) * dx, 164 + (i / lx) * dy), deckBuilder.filterList);
 		if(deckBuilder.hovered_pos == 1 && deckBuilder.hovered_seq == j)
-			driver->draw2DRectangleOutline(recti ((313 + (i % lx) * dx) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2, (163 + (i / lx) * dy) * yScale, (313 + (i % lx) * dx + 1) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2, (163 + (i / lx) * dy + CARD_THUMB_HEIGHT + 1) * yScale));
+			driver->draw2DRectangleOutline(recti((313 + (i % lx) * dx) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale - mainGame->yScale) / 2, (163 + (i / lx) * dy) * yScale, (313 + (i % lx) * dx + 1) * xScale + CARD_THUMB_WIDTH * (mainGame->xScale + mainGame->yScale) / 2, (163 + (i / lx) * dy + CARD_THUMB_HEIGHT + 1) * yScale));
 	}
 	if(!deckBuilder.showing_pack) {
 		//extra deck
@@ -1377,7 +1378,7 @@ void Game::DrawDeckBd() {
 		}
 	}
 	if(deckBuilder.is_draging) {
-		DrawThumb(deckBuilder.draging_pointer,position2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2),deckBuilder.filterList, true);
+		DrawThumb(deckBuilder.draging_pointer, irr::core::vector2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2 * mainGame->xScale, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2 * mainGame->yScale), deckBuilder.filterList, true);
 	}
 }
 }

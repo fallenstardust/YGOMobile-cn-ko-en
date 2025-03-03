@@ -136,14 +136,14 @@ void DeckBuilder::Terminate() {
 	mainGame->scrPackCards->setPos(0);
 	int catesel = mainGame->cbDBCategory->getSelected();
 	char linebuf[256];
-	if(catesel >= 0)
-		BufferIO::CopyWStr(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory, 64);
+	if (catesel >= 0)
+		BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
 	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
 		android::setLastCategory(mainGame->appMain, linebuf);
 		//irr:os::Printer::log("setLastCategory", linebuf);
 	int decksel = mainGame->cbDBDecks->getSelected();
-	if(decksel >= 0)
-		BufferIO::CopyWStr(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck, 64);
+	if (decksel >= 0)
+		BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
 		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
 		android::setLastDeck(mainGame->appMain, linebuf);
 		//os::Printer::log("setLastDeck", linebuf);

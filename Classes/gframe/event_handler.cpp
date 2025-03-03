@@ -1158,7 +1158,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			s32 x = event.MouseInput.X;
 			s32 y = event.MouseInput.Y;
 			hovered_location = 0;
-			irr::core::position2di pos(x, y);
+			irr::core::vector2di pos(x, y);
 			if(x < 300 * mainGame->xScale)
 				break;
 			if(mainGame->gameConf.control_mode == 1) {
@@ -1580,7 +1580,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			bool should_show_tip = false;
 			s32 x = event.MouseInput.X;
 			s32 y = event.MouseInput.Y;
-			irr::core::position2di pos(x, y);
+			irr::core::vector2di pos(x, y);
 			wchar_t formatBuffer[2048];
 			if(x < 300) {
 				irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
@@ -1621,9 +1621,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size())
 						mcard = deck[hovered_controler].back();
 				} else {
-					if(irr::core::recti(327 * mainGame->xScale, 8 * mainGame->yScale, 630 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
+					if(mainGame->Resize(327, 8, 630, 72).isPointInside(pos))
 						mplayer = 0;
-					else if(irr::core::recti(689 * mainGame->xScale, 8 * mainGame->yScale, 991 * mainGame->xScale, 72 * mainGame->yScale).isPointInside(pos))
+					else if(mainGame->Resize(689, 8, 991, 72).isPointInside(pos))
 						mplayer = 1;
 				}
 			}
@@ -1635,7 +1635,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				if(mainGame->stTip->isVisible()) {
 					should_show_tip = true;
 					irr::core::recti tpos = mainGame->stTip->getRelativePosition();
-					mainGame->stTip->setRelativePosition(irr::core::position2di(x - tpos.getWidth() - 10  * mainGame->xScale, mcard ? y - tpos.getHeight() - (10 * mainGame->yScale) : y + 10 * mainGame->xScale));
+					mainGame->stTip->setRelativePosition(irr::core::vector2di(x - tpos.getWidth() - 10  * mainGame->xScale, mcard ? y - tpos.getHeight() - (10 * mainGame->yScale) : y + 10 * mainGame->xScale));
 				}
 			}
 			if(mcard != hovered_card) {
@@ -2196,7 +2196,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	}
 	case irr::EET_MOUSE_INPUT_EVENT: {
         IGUIElement* root = mainGame->env->getRootGUIElement();
-        position2di mousepos = position2di(event.MouseInput.X, event.MouseInput.Y);
+        irr::core::vector2di mousepos = irr::core::vector2di(event.MouseInput.X, event.MouseInput.Y);
 		irr::gui::IGUIElement* eventElement = root->getElementFromPoint(mousepos);
         u32 static presstime, leftuptime;
 	    switch(event.MouseInput.Event) {
@@ -2402,7 +2402,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 void ClientField::GetHoverField(int x, int y) {
 	irr::core::recti sfRect(430 * mainGame->xScale, 504 * mainGame->yScale, 875 * mainGame->xScale, 600 * mainGame->yScale);
 	irr::core::recti ofRect(531 * mainGame->xScale, 135 * mainGame->yScale, 800 * mainGame->xScale, 191 * mainGame->yScale);
-	irr::core::position2di pos(x, y);
+	irr::core::vector2di pos(x, y);
 	int rule = (mainGame->dInfo.duel_rule >= 4) ? 1 : 0;
 	if(sfRect.isPointInside(pos)) {
 		int hc = hand[0].size();
@@ -2635,31 +2635,31 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		return;
 	}
 	menu_card = clicked_card;
-	int height = 0;
+	int height = 1;
 	if(flag & COMMAND_ACTIVATE) {
 		mainGame->btnActivate->setVisible(true);
-		mainGame->btnActivate->setRelativePosition(position2di(0, height));
+		mainGame->btnActivate->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnActivate->setVisible(false);
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
-		mainGame->btnSummon->setRelativePosition(position2di(0, height));
+		mainGame->btnSummon->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSummon->setVisible(false);
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
-		mainGame->btnSPSummon->setRelativePosition(position2di(0, height));
+		mainGame->btnSPSummon->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnSPSummon->setVisible(false);
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
-		mainGame->btnMSet->setRelativePosition(position2di(0, height));
+		mainGame->btnMSet->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
@@ -2670,7 +2670,7 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		else
 			mainGame->btnSSet->setText(dataManager.GetSysString(1159));
 		mainGame->btnSSet->setVisible(true);
-		mainGame->btnSSet->setRelativePosition(position2di(0, height));
+		mainGame->btnSSet->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
@@ -2683,35 +2683,35 @@ void ClientField::ShowMenu(int flag, int x, int y) {
 		else
 			mainGame->btnRepos->setText(dataManager.GetSysString(1156));
 		mainGame->btnRepos->setVisible(true);
-		mainGame->btnRepos->setRelativePosition(position2di(0, height));
+		mainGame->btnRepos->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnRepos->setVisible(false);
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
-		mainGame->btnAttack->setRelativePosition(position2di(0, height));
+		mainGame->btnAttack->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnAttack->setVisible(false);
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
-		mainGame->btnShowList->setRelativePosition(position2di(0, height));
+		mainGame->btnShowList->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnShowList->setVisible(false);
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
-		mainGame->btnOperation->setRelativePosition(position2di(0, height));
+		mainGame->btnOperation->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif
 	} else mainGame->btnOperation->setVisible(false);
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
-		mainGame->btnReset->setRelativePosition(position2di(0, height));
+		mainGame->btnReset->setRelativePosition(irr::core::vector2di(1, height));
 #ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
 #endif

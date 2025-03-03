@@ -1,7 +1,7 @@
 #ifndef MENU_HANDLER_H
 #define MENU_HANDLER_H
 
-#include "config.h"
+#include <irrlicht.h>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #endif
@@ -11,8 +11,8 @@ namespace ygo {
 class MenuHandler: public irr::IEventReceiver {
 public:
 	bool OnEvent(const irr::SEvent& event) override;
-	s32 prev_operation;
-	int prev_sel;
+	irr::s32 prev_operation{ 0 };
+	int prev_sel{ -1 };
 
 };
 
