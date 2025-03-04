@@ -276,7 +276,7 @@
     <string name="save_failed_bcos">Error al guardar debido a: </string>
     <string name="deck_text_copyed">Texto del deck copiado al portapapeles</string>
     <string name="save_n_open">Guardar y Abrir</string>
-    <string name="searchresult">Resultado</string>
+    <string name="searchResult">Resultado</string>
     <string name="Pre_share">Listo para compartir, por favor espere...</string>
     <string name="category_pack">Paquetes</string>
     <string name="category_windbot_deck">Decks I.A.</string>

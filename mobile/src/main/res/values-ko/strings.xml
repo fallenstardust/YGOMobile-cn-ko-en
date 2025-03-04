@@ -281,7 +281,7 @@
     <string name="save_failed_bcos">다음 이유로 인해 저장에 실패했습니다:</string>
     <string name="deck_text_copyed">덱 공유 코드를 클립 보드에 복사했습니다</string>
     <string name="save_n_open">저장 후 열기</string>
-    <string name="searchresult">검색 결과</string>
+    <string name="searchResult">검색 결과</string>
     <string name="Pre_share">공유 준비가 되었습니다. 잠시만 기다려주십시오...</string>
     <string name="category_pack">카드 패키지 표시</string>
     <string name="category_windbot_deck">AI 덱</string>

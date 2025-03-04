@@ -90,9 +90,9 @@
 
                     <TextView
                         android:layout_width="60dp"
-                        android:layout_height="20dp"
+                        android:layout_height="36.5dp"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/searchresult"
+                        android:text="@string/searchResult"
                         android:textColor="@color/white"
                         android:textStyle="bold"
                         android:shadowColor="@color/black"

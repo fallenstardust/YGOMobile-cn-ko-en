@@ -281,7 +281,7 @@
     <string name="save_failed_bcos">Erro ao salvar devido a: </string>
     <string name="deck_text_copyed">Texto do deck copiado para a área de transferência</string>
     <string name="save_n_open">Salvar e Abrir</string>
-    <string name="searchresult">Resultado</string>
+    <string name="searchResult">Resultado</string>
     <string name="Pre_share">Pronto para compartilhar, por favor aguarde...</string>
     <string name="category_pack">Pacotes</string>
     <string name="category_windbot_deck">Decks I.A.</string>

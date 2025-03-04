@@ -284,7 +284,7 @@
     <string name="save_failed_bcos">保存失敗，</string>
     <string name="deck_text_copyed">貼り付け先にデッキをコピー成功</string>
     <string name="save_n_open">保存して入ります</string>
-    <string name="searchresult">検索結果</string>
+    <string name="searchResult">検索結果</string>
     <string name="Pre_share">共有中，お待ちを……</string>
     <string name="category_pack">パックリスト</string>
     <string name="category_windbot_deck">AIデッキ</string>

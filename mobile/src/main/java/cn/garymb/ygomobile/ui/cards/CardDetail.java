@@ -395,7 +395,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                     String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
                     mListener.onSearchKeyWord(clickedText);
                 } else {
-                    YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
+                    YGOUtil.showTextToast(context.getString(R.string.searchResult) + context.getString(R.string.already_end));
                 }
 
             }
