@@ -79,7 +79,7 @@
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-    <string name="tip_download_ex">¡Hay nuevas cartas pre-lanzadas disponibles!</string>
+    <string name="tip_download_ex">¡Nuevas pre-lanzadas disponibles!</string>
     <string name="restart_app">¡Por favor, reinicie la aplicación!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -146,8 +146,8 @@
     <string name="save_deck">Guardar deck</string>
     <string name="save_as_deck">Guardar deck como</string>
     <string name="deck_list">Deck</string>
-    <string name="card_add_main">+Main Deck</string>
-    <string name="card_add_side">+Side Deck</string>
+    <string name="card_add_main">+M.Deck</string>
+    <string name="card_add_side">+S.Deck</string>
     <string name="deck_main" formatted="false">Main:%d  Monstruo:%d Mágica:%d Trampa:%d</string>
     <string name="deck_extra" formatted="false">Extra:%d  Fusión:%d Sincronía:%d Xyz:%d Enlace:%d</string>
     <string name="deck_side" formatted="false">Side:%d  Monstruo:%d Mágica:%d Trampa:%d</string>
