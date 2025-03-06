@@ -46,7 +46,7 @@ import okhttp3.Response;
 
 public class MyCard {
 
-    private static final String mHomeUrl = "https://mycard.world/mobile/";
+    private static final String mHomeUrl = "https://evolutionygo.com/";
     private static final String mArenaUrl = "https://mycard.world/ygopro/arena/";
     public static final String mCommunityReportUrl = "https://ygobbs2.com/t/bug%E5%8F%8D%E9%A6%88/";
     private static final String mCommunityUrl = "https://ygobbs2.com/login";
