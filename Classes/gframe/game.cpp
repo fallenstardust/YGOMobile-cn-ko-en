@@ -145,7 +145,7 @@ bool IsExtension(const char* filename, const char* extension) {
 bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	this->appMain = app;
 	srand(time(0));
-	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
+	irr::SIrrlichtCreationParameters params{};
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
