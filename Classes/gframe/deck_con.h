@@ -5,6 +5,7 @@
 #include <vector>
 #include <irrlicht.h>
 #include "data_manager.h"
+#include "deck_manager.h"
 #include "../ocgcore/mtrandom.h"
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
@@ -82,7 +83,7 @@ public:
 	bool showing_pack{};
 	mt19937 rnd;
 
-	const std::unordered_map<int, int>* filterList;
+	const LFList* filterList{};
 	std::vector<code_pointer> results;
 	wchar_t result_string[8]{};
 	std::vector<std::wstring> expansionPacks;
