@@ -10,6 +10,8 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
+#include <string>
+#include <regex>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
@@ -2064,17 +2066,49 @@ void Game::ClearChatMsg() {
 		chatTiming[i] = 0;
 	}
 }
+
+std::string WCharToUTF8(const wchar_t* input) {
+    std::string output;
+    if(input == nullptr) return output;
+    char buffer[1024];
+    wcstombs(buffer, input, 1024);
+    output = buffer;
+    return output;
+}
+
 void Game::AddDebugMsg(const char* msg) {
-	if (enable_log & 0x1) {
-		wchar_t wbuf[1024];
-		BufferIO::DecodeUTF8(msg, wbuf);
-		AddChatMsg(wbuf, 9);
-	}
-	if (enable_log & 0x2) {
-		char msgbuf[1040];
-		std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
-		ErrorLog(msgbuf);
-	}
+    std::string message(msg);
+    unsigned int cardID = 0;
+    std::regex cardIdPattern(R"((\d{8}))");
+    auto words_begin = std::sregex_iterator(message.begin(), message.end(), cardIdPattern);
+    auto words_end = std::sregex_iterator();
+    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+        std::smatch match = *i;
+        cardID = std::stoul(match.str());
+        break;
+    }
+    std::string cardName = "Unknown";
+    if(cardID != 0) {
+        cardName = WCharToUTF8(dataManager.GetName(cardID));
+    }
+    std::string fullMsg;
+    if(cardID != 0 && cardName != "???") {
+        fullMsg += cardName;
+        fullMsg += ":";
+    } else {
+        fullMsg += "";
+    }
+    fullMsg += message;
+    if (enable_log & 0x1) {
+        wchar_t wbuf[1024];
+        BufferIO::DecodeUTF8(fullMsg.c_str(), wbuf);
+        AddChatMsg(wbuf, 9);
+    }
+    if (enable_log & 0x2) {
+        char msgbuf[1040];
+        std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", fullMsg.c_str());
+        ErrorLog(msgbuf);
+    }
 }
 void Game::ErrorLog(const char* msg) {
 	FILE* fp = std::fopen("error.log", "at");
