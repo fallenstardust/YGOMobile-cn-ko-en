@@ -15,7 +15,7 @@ inline void SetS3DVertex(S3DVertex* v, f32 x1, f32 y1, f32 x2, f32 y2, f32 z, f3
 	v[3] = S3DVertex(x2, y2, z, 0, 0, nz, SColor(255, 255, 255, 255), tu2, tv2);
 }
 void Game::SetCardS3DVertex() {
-    f32 defalutScale = (mainGame->xScale - mainGame->yScale) / 10;
+    f32 defalutScale = (mainGame->xScale - mainGame->yScale) / 9.5f;
     ALOGD("cc drawing defalutScale = %f",defalutScale);
     SetS3DVertex(matManager.vCardFront, -0.35f + defalutScale, -0.5f, 0.35f - defalutScale, 0.5f, 0, 1, 0, 0, 1, 1);
     SetS3DVertex(matManager.vCardOutline, -0.375f + defalutScale, -0.54f, 0.37f - defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
