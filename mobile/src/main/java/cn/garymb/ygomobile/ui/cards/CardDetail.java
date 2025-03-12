@@ -410,7 +410,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
 
     private List<Card> queryList(String keyword) {
         // 获取关键词对应的 setcode
-        long setcode = DataManager.get().getStringManager().getSetCode(keyword);
+        long setcode = DataManager.get().getStringManager().getSetCode(keyword, true);
         // 从 cardManager 获取所有卡片
         SparseArray<Card> cards = cardManager.getAllCards();
         if (cards == null) {
