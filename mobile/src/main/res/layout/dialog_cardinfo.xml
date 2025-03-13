@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -31,56 +30,110 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:weightSum="5"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="5">
 
-            <ImageButton
+            <LinearLayout
                 android:id="@+id/btn_faq"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/button2_bg"
-                android:tooltipText="@string/card_faq"
-                android:gravity="center"
-                android:src="@drawable/ic_q_n_a"/>
+                android:background="@drawable/list_item_bg"
+                android:orientation="vertical">
 
-            <ImageButton
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_q_n_a" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/card_faq"
+                    android:textColor="@color/white"
+                    android:textSize="8sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_related"
-                android:visibility="visible"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginLeft="5dp"
-                android:background="@drawable/button2_bg"
-                android:gravity="center"
-                android:tooltipText="@string/card_related"
-                android:src="@drawable/ic_related"/>
+                android:layout_weight="1"
+                android:background="@drawable/list_item_bg"
+                android:orientation="vertical">
 
-            <ImageButton
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_related"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/card_related"
+                    android:textColor="@color/white"
+                    android:textSize="8sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_add_main"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
+                android:layout_marginLeft="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/button2_bg"
-                android:gravity="center"
-                android:tooltipText="@string/card_add_main"
-                android:src="@drawable/ic_to_main"
+                android:background="@drawable/list_item_bg"
+                android:orientation="vertical"
                 android:visibility="invisible"
-                tools:visibility="visible"/>
+                tools:visibility="visible">
 
-            <ImageButton
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_to_main"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/card_add_main"
+                    android:textColor="@color/white"
+                    android:textSize="8sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_add_side"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
+                android:layout_marginLeft="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/button2_bg"
-                android:gravity="center"
-                android:tooltipText="@string/card_add_side"
-                android:src="@drawable/ic_to_side"
+                android:background="@drawable/list_item_bg"
+                android:orientation="vertical"
                 android:visibility="invisible"
-                tools:visibility="visible"/>
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_to_side"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/card_add_side"
+                    android:textColor="@color/white"
+                    android:textSize="8sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"

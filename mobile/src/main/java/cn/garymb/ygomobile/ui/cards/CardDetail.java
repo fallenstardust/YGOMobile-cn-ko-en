@@ -76,7 +76,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final CardLoader cardLoader;
     private final ImageView cardImage;
     private final TextView name;
-    private final ImageButton btn_related;
+    private final LinearLayout btn_related;
     private final TextView desc;
     private final TextView level;
     private final TextView type;
@@ -90,9 +90,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView attrView;
     private final View monsterLayout;
     private final ImageButton close;
-    private final ImageButton faq;
-    private final ImageButton addMain;
-    private final ImageButton addSide;
+    private final LinearLayout faq;
+    private final LinearLayout addMain;
+    private final LinearLayout addSide;
     private final View linkArrow;
     private final View layoutDetailPScale;
     private final TextView detailCardScale;
