@@ -79,7 +79,7 @@
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-    <string name="tip_download_ex">¡Hay nuevas cartas pre-lanzadas disponibles!</string>
+    <string name="tip_download_ex">¡Nuevas Pre-lanzadas!</string>
     <string name="restart_app">¡Por favor, reinicie la aplicación!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
