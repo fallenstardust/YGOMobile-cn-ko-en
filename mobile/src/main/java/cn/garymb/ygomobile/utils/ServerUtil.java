@@ -58,7 +58,7 @@ public class ServerUtil {
         String oldVer = SharedPreferenceUtil.getExpansionDataVer();
         LogUtil.i(TAG, "server util, old pre-card version:" + oldVer);
         String URL_DATAVER = URL_CN_DATAVER;
-        URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://github.com/DaruKani/TransSuperpre/blob/main/" + getLanguageId() + "/version.txt";
+        URL_DATAVER = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code) ? URL_CN_DATAVER : "https://raw.githubusercontent.com/ElderLich/TransSuperpre/refs/heads/main/" + getLanguageId() + "/version.txt";
         OkhttpUtil.get(URL_DATAVER, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -317,14 +317,14 @@ public class ServerUtil {
     public static String downloadUrl() {
         String url;
         url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
+                ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/ElderLich/TransSuperpre/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
         return url;
     }
 
     public static String preCardListJson() {
         String json;
         json = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                ? URL_PRE_CARD : "https://raw.githubusercontent.com/DaruKani/TransSuperpre/refs/heads/main/" + getLanguageId() + "/test-release.json";
+                ? URL_PRE_CARD : "https://raw.githubusercontent.com/ElderLich/TransSuperpre/refs/heads/main/" + getLanguageId() + "/test-release.json";
         return json;
     }
     public enum ExCardState {
