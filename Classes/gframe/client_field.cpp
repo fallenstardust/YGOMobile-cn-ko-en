@@ -669,14 +669,14 @@ void ClientField::ShowSelectOption(int select_hint) {
 		mainGame->btnOptionOK->setVisible(false);
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(i < count);
-		recti pos = mainGame->wOptions->getRelativePosition();
+		irr::core::recti pos = mainGame->wOptions->getRelativePosition();
 		int newheight = 50 + 60 * (scrollbar ? 5 : count) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
 		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 425 : 390) * mainGame->xScale;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
 		mainGame->wOptions->setRelativePosition(pos);
-        mainGame->bgOptions->setRelativePosition(rect<s32>(0, 0, (scrollbar ? 425 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
+        mainGame->bgOptions->setRelativePosition(irr::core::rect<irr::s32>(0, 0, (scrollbar ? 425 : 390) * mainGame->xScale, pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y));
 	} else {
 		mainGame->SetStaticText(mainGame->stOptions, 350  * mainGame->xScale, mainGame->guiFont, dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
@@ -685,10 +685,10 @@ void ClientField::ShowSelectOption(int select_hint) {
 		mainGame->btnOptionOK->setVisible(true);
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
-		recti pos = mainGame->wOptions->getRelativePosition();
+		irr::core::recti pos = mainGame->wOptions->getRelativePosition();
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 180 * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
-		mainGame->bgOptions->setRelativePosition(pos);
+		mainGame->bgOptions->setRelativePosition(mainGame->wOptions->getRelativePosition());
 	}
 	if(select_hint)
 		myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));

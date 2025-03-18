@@ -42,8 +42,8 @@ void DeckManager::LoadLFListSingle(const char* path) {
 		std::fclose(fp);
 	}
 }
-void DeckManager::LoadLFList(android::InitOptions *options) {
-	io::path workingDir = options->getWorkDir();
+void DeckManager::LoadLFList(irr::android::InitOptions *options) {
+    irr::io::path workingDir = options->getWorkDir();
 	LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());
 	LoadLFListSingle((workingDir + path("/lflist.conf")).c_str());
 	LFList nolimit;
@@ -197,7 +197,7 @@ int DeckManager::LoadDeck(Deck& deck, std::istringstream& deckStream, bool is_pa
 		if (linebuf[0] < '0' || linebuf[0] > '9')
 			continue;
 		errno = 0;
-		code = strtol(linebuf.c_str(), nullptr, 10);
+		code = std::strtol(linebuf.c_str(), nullptr, 10);
 		if (errno == ERANGE)
 			continue;
 		cardlist[ct++] = code;
@@ -289,7 +289,7 @@ irr::io::IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
 }
 bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	current_deck.clear();
-	IReadFile* reader = OpenDeckReader(file);
+	auto reader = OpenDeckReader(file);
 	if(!reader) {
 		wchar_t localfile[256];
 		myswprintf(localfile, L"./deck/%ls.ydk", file);
@@ -315,7 +315,7 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 bool DeckManager::LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
 	wchar_t filepath[256];
 	GetDeckFile(filepath, cbCategory, cbDeck);
-	bool is_packlist = cbCategory->getSelected() == 0;
+	bool is_packlist = (cbCategory->getSelected() == 0);
 	bool res = LoadCurrentDeck(filepath, is_packlist);
 	if (res && mainGame->is_building)
 		mainGame->deckBuilder.RefreshPackListScroll();

@@ -16,11 +16,11 @@ void UpdateDeck() {
     char linebuf[256];
 	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), mainGame->gameConf.lastcategory, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-    android::setLastCategory(mainGame->appMain, linebuf);
+    irr::android::setLastCategory(mainGame->appMain, linebuf);
 
 	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()), mainGame->gameConf.lastdeck, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-	android::setLastDeck(mainGame->appMain, linebuf);
+    irr::android::setLastDeck(mainGame->appMain, linebuf);
 		
 	unsigned char deckbuf[1024]{};
 	auto pdeck = deckbuf;
@@ -103,7 +103,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		irr::gui::IGUIElement* caller = event.GUIEvent.Caller;
-		s32 id = caller->getID();
+		irr::s32 id = caller->getID();
 		if(mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) {
 			mainGame->wQuery->getParent()->bringToFront(mainGame->wQuery);
 			break;
@@ -381,7 +381,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 #ifdef _IRR_ANDROID_PLATFORM_
 				ALOGD("cc menu_handler: 1share replay file=%s", name);
-				android::OnShareFile(mainGame->appMain, "yrp", name);
+                irr::android::OnShareFile(mainGame->appMain, "yrp", name);
 				ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
 #endif
 				break;
@@ -478,7 +478,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				char arg3[32];
 				snprintf(arg3, sizeof arg3, " Port=%d", mainGame->gameConf.serverport);
 				snprintf(args, sizeof args, "%s%s%s", arg1, arg2, arg3);
-				android::runWindbot(mainGame->appMain, args);
+                irr::android::runWindbot(mainGame->appMain, args);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));	

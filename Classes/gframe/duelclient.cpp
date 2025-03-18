@@ -1948,14 +1948,14 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			mainGame->btnPSDD->setVisible(true);
 			startpos += 178;
 		} else mainGame->btnPSDD->setVisible(false);
-		recti pos = mainGame->wPosSelect->getRelativePosition();
-		s32 oldcenter = pos.getCenter().X;
+		irr::core::recti pos = mainGame->wPosSelect->getRelativePosition();
+		irr::s32 oldcenter = pos.getCenter().X;
 		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (count * 178 + 50) * mainGame->yScale;
-		s32 newwidth = pos.getWidth();
+		irr::s32 newwidth = pos.getWidth();
 		pos.UpperLeftCorner.X = oldcenter - newwidth / 2;
 		pos.LowerRightCorner.X = oldcenter + newwidth / 2;
 		mainGame->wPosSelect->setRelativePosition(pos);
-		mainGame->bgPosSelect->setRelativePosition(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()));
+		mainGame->bgPosSelect->setRelativePosition(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()));
 		mainGame->gMutex.lock();
 		mainGame->PopupElement(mainGame->wPosSelect);
 		mainGame->gMutex.unlock();
@@ -3480,11 +3480,11 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			float xd = mainGame->dField.attack_target->curPos.X;
 			float yd = mainGame->dField.attack_target->curPos.Y;
 			sy = (float)sqrt((xa - xd) * (xa - xd) + (ya - yd) * (ya - yd)) / 2;
-			mainGame->atk_t = vector3df((xa + xd) / 2, (ya + yd) / 2, 0);
+			mainGame->atk_t = irr::core::vector3df((xa + xd) / 2, (ya + yd) / 2, 0);
 			if (ca == 0)
-				mainGame->atk_r = vector3df(0, 0, -atan((xd - xa) / (yd - ya)));
+				mainGame->atk_r = irr::core::vector3df(0, 0, -atan((xd - xa) / (yd - ya)));
 			else
-				mainGame->atk_r = vector3df(0, 0, 3.1415926 - atan((xd - xa) / (yd - ya)));
+				mainGame->atk_r = irr::core::vector3df(0, 0, 3.1415926 - atan((xd - xa) / (yd - ya)));
 		} else {
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::DIRECT_ATTACK);
 			myswprintf(event_string, dataManager.GetSysString(1620), dataManager.GetName(mainGame->dField.attacker->code));
@@ -3495,11 +3495,11 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			if (ca == 0)
 				yd = -3.5f;
 			sy = (float)sqrt((xa - xd) * (xa - xd) + (ya - yd) * (ya - yd)) / 2;
-			mainGame->atk_t = vector3df((xa + xd) / 2, (ya + yd) / 2, 0);
+			mainGame->atk_t = irr::core::vector3df((xa + xd) / 2, (ya + yd) / 2, 0);
 			if (ca == 0)
-				mainGame->atk_r = vector3df(0, 0, -atan((xd - xa) / (yd - ya)));
+				mainGame->atk_r = irr::core::vector3df(0, 0, -atan((xd - xa) / (yd - ya)));
 			else
-				mainGame->atk_r = vector3df(0, 0, 3.1415926 - atan((xd - xa) / (yd - ya)));
+				mainGame->atk_r = irr::core::vector3df(0, 0, 3.1415926 - atan((xd - xa) / (yd - ya)));
 		}
 		matManager.GenArrow(sy);
 		mainGame->attack_sv = 0;
@@ -4089,7 +4089,7 @@ void DuelClient::BeginRefreshHost() {
 	event_base* broadev = event_base_new();
 #ifdef _IRR_ANDROID_PLATFORM_
     //get local ip address in android style
-    int ipaddr = android::getLocalAddr(mainGame->appMain);
+    int ipaddr = irr::android::getLocalAddr(mainGame->appMain);
     if (ipaddr == -1) {
         return;
     }

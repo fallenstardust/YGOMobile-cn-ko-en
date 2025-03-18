@@ -28,7 +28,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 	case irr::EET_GUI_EVENT: {
 		if(mainGame->fadingList.size())
 			break;
-		s32 id = event.GUIEvent.Caller->getID();
+		irr::s32 id = event.GUIEvent.Caller->getID();
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
@@ -980,8 +980,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					else if(conti_selecting)
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
-						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler]);
-					mainGame->btnCardSelect[i]->setRelativePosition(rect<s32>((30 + i * 125)  * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->yScale, 235  * mainGame->yScale));
+						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler + 2]);
+					mainGame->btnCardSelect[i]->setRelativePosition(irr::core::rect<irr::s32>((30 + i * 125)  * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->yScale, 235  * mainGame->yScale));
 					// text
 					wchar_t formatBuffer[2048];
 					if(mainGame->dInfo.curMsg == MSG_SORT_CARD) {
@@ -1043,8 +1043,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(display_cards[i + pos]->code)
 						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTexture(display_cards[i + pos]->code));
 					else
-						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler]);
-					mainGame->btnCardDisplay[i]->setRelativePosition(rect<s32>((30 + i * 125) * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->yScale, 235 * mainGame->yScale));
+						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler + 2]);
+					mainGame->btnCardDisplay[i]->setRelativePosition(irr::core::rect<irr::s32>((30 + i * 125) * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->yScale, 235 * mainGame->yScale));
 					wchar_t formatBuffer[2048];
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
@@ -1155,8 +1155,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_LEFT_UP: {
 			if(!mainGame->dInfo.isStarted)
 				break;
-			s32 x = event.MouseInput.X;
-			s32 y = event.MouseInput.Y;
+			irr::s32 x = event.MouseInput.X;
+			irr::s32 y = event.MouseInput.Y;
 			hovered_location = 0;
 			irr::core::vector2di pos(x, y);
 			if(x < 300 * mainGame->xScale)
@@ -1561,7 +1561,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			if(event.MouseInput.isLeftPressed())
 				break;
-			if(mainGame->gameConf.control_mode == 1 && event.MouseInput.X > 300) {
+			if(mainGame->gameConf.control_mode == 1 && event.MouseInput.X > 300 * mainGame->xScale) {
 				mainGame->ignore_chain = event.MouseInput.isRightPressed();
 				mainGame->always_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1578,8 +1578,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			if(!mainGame->dInfo.isStarted)
 				break;
 			bool should_show_tip = false;
-			s32 x = event.MouseInput.X;
-			s32 y = event.MouseInput.Y;
+			irr::s32 x = event.MouseInput.X;
+			irr::s32 y = event.MouseInput.Y;
 			irr::core::vector2di pos(x, y);
 			wchar_t formatBuffer[2048];
 			if(x < 300) {
@@ -1590,7 +1590,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					myswprintf(formatBuffer, dataManager.GetSysString(1700), mainGame->btnCancelOrFinish->getText());
 					mainGame->stTip->setText(formatBuffer);
 					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(formatBuffer) + irr::core::dimension2d<unsigned int>(10, 10);
-					mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
+					mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 				}
 				mainGame->stTip->setVisible(should_show_tip);
 				break;
@@ -1719,7 +1719,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							}
 							should_show_tip = true;
 							irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
-							mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
+							mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 							mainGame->stTip->setText(str.c_str());
 						}
 					} else {
@@ -1758,7 +1758,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 					should_show_tip = true;
 					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
-					mainGame->stTip->setRelativePosition(recti(x - 10 * mainGame->xScale - dtip.Width, y + 10 * mainGame->yScale, x - 10 * mainGame->xScale, y + 10 * mainGame->yScale + dtip.Height));
+					mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y + 10 * mainGame->yScale, x - 10 * mainGame->xScale, y + 10 * mainGame->yScale + dtip.Height));
 					mainGame->stTip->setText(str.c_str());
 				}
 				hovered_player = mplayer;
@@ -1849,7 +1849,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 	case irr::EET_KEY_INPUT_EVENT: {
 		switch(event.KeyInput.Key) {
 		case irr::KEY_KEY_A: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				mainGame->always_chain = event.KeyInput.PressedDown;
 				mainGame->ignore_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1858,7 +1858,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_S: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				mainGame->ignore_chain = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1867,7 +1867,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_D: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				mainGame->chain_when_avail = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->ignore_chain = false;
@@ -1884,7 +1884,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::KEY_F7:
 		case irr::KEY_F8: {
 			if(!event.KeyInput.PressedDown && !mainGame->dInfo.isReplay && mainGame->dInfo.player_type != 7 && mainGame->dInfo.isStarted
-					&& !mainGame->wCardDisplay->isVisible() && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+					&& !mainGame->wCardDisplay->isVisible() && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				int loc_id = 0;
 				display_cards.clear();
 				switch(event.KeyInput.Key) {
@@ -1961,7 +1961,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
-		s32 id = event.GUIEvent.Caller->getID();
+		irr::s32 id = event.GUIEvent.Caller->getID();
 		if(mainGame->wSysMessage->isVisible() && id != BUTTON_SYS_MSG_OK) {
 			mainGame->wSysMessage->getParent()->bringToFront(mainGame->wSysMessage);
 			//mainGame->env->setFocus(mainGame->wSysMessage);
@@ -2120,7 +2120,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					return true;
 					break;
 				}
-				u32 pos = mainGame->scrCardText->getPos();
+				irr::u32 pos = mainGame->scrCardText->getPos();
 				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth(), mainGame->textFont, mainGame->showingtext, pos);
 				return true;
 				break;
@@ -2134,8 +2134,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				break;
 			}
 			case SCROLL_SETTINGS: {
-				rect<s32> pos = mainGame->wSettings->getRelativePosition();
-				mainGame->wSettings->setRelativePosition(recti(350 * mainGame->xScale, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
+                irr::core::rect<irr::s32> pos = mainGame->wSettings->getRelativePosition();
+				mainGame->wSettings->setRelativePosition(irr::core::recti(350 * mainGame->xScale, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
 				return true;
 				break;
 			}
@@ -2168,7 +2168,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		switch(event.KeyInput.Key) {
 		case irr::KEY_KEY_R: {
 			if(mainGame->gameConf.control_mode == 0
-				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				mainGame->textFont->setTransparency(true);
 				mainGame->guiFont->setTransparency(true);
 			}
@@ -2177,7 +2177,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		}
 		case irr::KEY_F9: {
 			if(mainGame->gameConf.control_mode == 1
-				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(EGUIET_EDIT_BOX)) {
+				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
 				mainGame->textFont->setTransparency(true);
 				mainGame->guiFont->setTransparency(true);
 			}
@@ -2185,7 +2185,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_ESCAPE: {
-			if(!mainGame->HasFocus(EGUIET_EDIT_BOX))
+			if(!mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
 				mainGame->device->minimizeWindow();
 			return true;
 			break;
@@ -2195,10 +2195,10 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		break;
 	}
 	case irr::EET_MOUSE_INPUT_EVENT: {
-        IGUIElement* root = mainGame->env->getRootGUIElement();
+        irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
         irr::core::vector2di mousepos = irr::core::vector2di(event.MouseInput.X, event.MouseInput.Y);
 		irr::gui::IGUIElement* eventElement = root->getElementFromPoint(mousepos);
-        u32 static presstime, leftuptime;
+        irr::u32 static presstime, leftuptime;
 	    switch(event.MouseInput.Event) {
 	        case irr::EMIE_LMOUSE_PRESSED_DOWN: {
                 presstime = mainGame->device->getTimer()->getRealTime();
@@ -2317,7 +2317,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstLog = false;
                         break;
                     }
-                    rect<s32> lstLogpos = mainGame->lstLog->getRelativePosition();
+                    irr::core::rect<irr::s32> lstLogpos = mainGame->lstLog->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstLog->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2330,7 +2330,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstReplayList = false;
                         break;
                     }
-                    rect<s32> lstReplayListpos = mainGame->lstReplayList->getRelativePosition();
+                    irr::core::rect<irr::s32> lstReplayListpos = mainGame->lstReplayList->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstReplayList->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2343,7 +2343,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstSinglePlayList = false;
                         break;
                     }
-                    rect<s32> lstSinglePlayListpos = mainGame->lstSinglePlayList->getRelativePosition();
+                    irr::core::rect<irr::s32> lstSinglePlayListpos = mainGame->lstSinglePlayList->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstSinglePlayList->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2356,7 +2356,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstBotList = false;
                         break;
                     }
-                    rect<s32> lstBotListpos = mainGame->lstBotList->getRelativePosition();
+                    irr::core::rect<irr::s32> lstBotListpos = mainGame->lstBotList->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstBotList->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2369,7 +2369,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstDecks = false;
                         break;
                     }
-                    rect<s32> lstDeckspos = mainGame->lstDecks->getRelativePosition();
+                    irr::core::rect<irr::s32> lstDeckspos = mainGame->lstDecks->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstDecks->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2382,7 +2382,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         is_dragging_lstANCard = false;
                         break;
                     }
-                    rect<s32> lstANCardpos = mainGame->lstANCard->getRelativePosition();
+                    irr::core::rect<irr::s32> lstANCardpos = mainGame->lstANCard->getRelativePosition();
                     int pos = dragging_tab_start_pos + ((dragging_tab_start_y - event.MouseInput.Y));
                     int max = mainGame->lstANCard->getVerticalScrollBar()->getMax();
                     if(pos < 0) pos = 0;
@@ -2806,17 +2806,17 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 	}
 	if(str.length() > 0) {
 		parent->addChild(mainGame->stCardListTip);
-		irr::core::rect<s32> ePos = element->getRelativePosition();
-		s32 x = (ePos.UpperLeftCorner.X + ePos.LowerRightCorner.X) / 2;
-		s32 y = ePos.LowerRightCorner.Y;
+		irr::core::rect<irr::s32> ePos = element->getRelativePosition();
+		irr::s32 x = (ePos.UpperLeftCorner.X + ePos.LowerRightCorner.X) / 2;
+		irr::s32 y = ePos.LowerRightCorner.Y;
 		mainGame->SetStaticText(mainGame->stCardListTip, 320 * mainGame->xScale, mainGame->guiFont, str.c_str());
 		irr::core::dimension2d<unsigned int> dTip = mainGame->guiFont->getDimension(mainGame->stCardListTip->getText()) + irr::core::dimension2d<unsigned int>(10, 10);
-		s32 w = dTip.Width / 2;
+		irr::s32 w = dTip.Width / 2;
 		if(x - w < 10 * mainGame->xScale)
 			x = w + 10 * mainGame->xScale;
 		if(x + w > 670 * mainGame->xScale)
 			x = 670 * mainGame->xScale - w;
-		mainGame->stCardListTip->setRelativePosition(recti(x - dTip.Width / 2, y - 10 * mainGame->yScale, x + dTip.Width / 2, y - 10 * mainGame->yScale + dTip.Height));
+		mainGame->stCardListTip->setRelativePosition(irr::core::recti(x - dTip.Width / 2, y - 10 * mainGame->yScale, x + dTip.Width / 2, y - 10 * mainGame->yScale + dTip.Height));
 		mainGame->stCardListTip->setVisible(true);
 	}
 }

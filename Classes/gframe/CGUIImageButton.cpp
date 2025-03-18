@@ -52,8 +52,8 @@ void Draw2DImageRotation(video::IVideoDriver* driver, video::ITexture* image, co
 	material.TextureLayer[0].Texture = image;
 #if defined(_IRR_ANDROID_PLATFORM_)
 	if (!ygo::mainGame->isNPOTSupported) {
-		material.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		material.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
+		material.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		material.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 	}
 	if (useAlphaChannel)
 			material.MaterialType = (video::E_MATERIAL_TYPE)ygo::mainGame->ogles2TrasparentAlpha;
@@ -102,8 +102,8 @@ void Draw2DImageQuad(video::IVideoDriver* driver, video::ITexture* image, core::
 	material.TextureLayer[0].Texture = image;
 #if defined(_IRR_ANDROID_PLATFORM_)
 	if (!ygo::mainGame->isNPOTSupported) {
-		material.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		material.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
+		material.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		material.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 	}
 	if (useAlphaChannel)
 			material.MaterialType = (video::E_MATERIAL_TYPE)ygo::mainGame->ogles2TrasparentAlpha;
@@ -136,8 +136,8 @@ void CGUIImageButton::draw() {
 		return;
 	IGUISkin* skin = Environment->getSkin();
 	video::IVideoDriver* driver = Environment->getVideoDriver();
-	core::vector2di center = AbsoluteRect.getCenter();
-	core::vector2di pos = center;
+	irr::core::vector2di center = AbsoluteRect.getCenter();
+	irr::core::vector2di pos = center;
 	pos.X -= (s32)(ImageRect.getWidth() * imageScale.X * 0.5f);
 	pos.Y -= (s32)(ImageRect.getHeight() * imageScale.Y * 0.5f);
 	if(Pressed) {

@@ -44,7 +44,7 @@ public:
 	static char deckBuffer[0x10000];
 
 	void LoadLFListSingle(const char* path);
-	void LoadLFList(android::InitOptions *options);
+	void LoadLFList(irr::android::InitOptions *options);
 	const wchar_t* GetLFListName(unsigned int lfhash);
 	const LFList* GetLFList(unsigned int lfhash);
 	unsigned int CheckDeck(Deck& deck, int lfhash, int rule);

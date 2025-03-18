@@ -384,7 +384,7 @@ namespace ygo {
 		auto list = archive->getFileList();
 		std::vector<path_string> list_full;
 		folderindexes[TEXT(".")] = { { -1, -1 }, { -1, -1 } };
-		for(u32 i = 0; i < list->getFileCount(); ++i) {
+		for(irr::u32 i = 0; i < list->getFileCount(); ++i) {
 			list_full.push_back(list->getFullFileName(i).c_str());
 			if(list->isDirectory(i)) {
 				folderindexes[list->getFullFileName(i).c_str()] = { { -1, -1 }, { -1, -1 } };

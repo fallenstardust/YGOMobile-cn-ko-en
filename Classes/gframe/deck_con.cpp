@@ -150,13 +150,13 @@ void DeckBuilder::Terminate() {
 	if (catesel >= 0)
 		BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
 	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-		android::setLastCategory(mainGame->appMain, linebuf);
+		irr::android::setLastCategory(mainGame->appMain, linebuf);
 		//irr:os::Printer::log("setLastCategory", linebuf);
 	int decksel = mainGame->cbDBDecks->getSelected();
 	if (decksel >= 0)
 		BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
 		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-		android::setLastDeck(mainGame->appMain, linebuf);
+		irr::android::setLastDeck(mainGame->appMain, linebuf);
 		//os::Printer::log("setLastDeck", linebuf);
 	mainGame->SaveConfig();
 	if(exit_on_return)
@@ -173,7 +173,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		return false;
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
-		s32 id = event.GUIEvent.Caller->getID();
+		irr::s32 id = event.GUIEvent.Caller->getID();
 		if(((mainGame->wCategories->isVisible() && id != BUTTON_CATEGORY_OK) ||
 			(mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) ||
 			(mainGame->wLinkMarks->isVisible() && id != BUTTON_MARKERS_OK) ||

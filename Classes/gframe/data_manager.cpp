@@ -87,10 +87,10 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 	if(reader == nullptr)
 		return false;
 	spmemvfs_db_t db;
-	spmembuffer_t* mem = (spmembuffer_t*)calloc(sizeof(spmembuffer_t), 1);
+	spmembuffer_t* mem = (spmembuffer_t*)std::calloc(sizeof(spmembuffer_t), 1);
 	spmemvfs_env_init();
 	mem->total = mem->used = reader->getSize();
-	mem->data = (char*)malloc(mem->total + 1);
+	mem->data = (char*)std::malloc(mem->total + 1);
 	reader->read(mem->data, mem->total);
 	reader->drop();
 	(mem->data)[mem->total] = '\0';
@@ -411,7 +411,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 	return nullptr;
 }
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
-	IReadFile* reader = FileSystem->createAndOpenFile(script_name);
+	auto reader = FileSystem->createAndOpenFile(script_name);
 	if (!reader)
 		return nullptr;
 	int size = reader->read(scriptBuffer, sizeof scriptBuffer);

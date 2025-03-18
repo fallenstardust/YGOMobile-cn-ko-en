@@ -123,11 +123,11 @@ struct DuelInfo {
 	int card_count[2];
 	int total_attack[2];
 	wchar_t str_time_left[2][16];
-	video::SColor time_color[2];
+	irr::video::SColor time_color[2];
 	wchar_t str_card_count[2][16];
 	wchar_t str_total_attack[2][16];
-	video::SColor card_count_color[2];
-	video::SColor total_attack_color[2];
+	irr::video::SColor card_count_color[2];
+	irr::video::SColor total_attack_color[2];
 };
 
 struct BotInfo {
@@ -152,19 +152,19 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game :IProcessEventReceiver{
+class Game :irr::IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
 	void stopBGM();
 	void playBGM();
-	bool Initialize(ANDROID_APP app, android::InitOptions *options);
+	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
 #endif
 	void MainLoop();
 	void RefreshTimeDisplay();
-	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
-	void InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
-	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
+	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
+	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
+	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
@@ -216,7 +216,7 @@ public:
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
 
-	bool HasFocus(EGUI_ELEMENT_TYPE type) const {
+	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
 		irr::gui::IGUIElement* focus = env->getFocus();
 		return focus && focus->hasType(type);
 	}
@@ -228,19 +228,19 @@ public:
 	}
 
 	void ResizeChatInputWindow();
-	recti Resize(s32 x, s32 y, s32 x2, s32 y2);
-	recti Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy2);
-	irr::core::vector2di Resize(s32 x, s32 y);
-	irr::core::vector2di ResizeReverse(s32 x, s32 y);
-	recti ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width);
-	recti ResizeWin(s32 x, s32 y, s32 x2, s32 y2);
-    recti Resize_Y(s32 x, s32 y, s32 x2, s32 y2);
-    irr::core::vector2di Resize_Y(s32 x, s32 y);
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
+	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
+	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
+	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
     template<typename T>
     static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
-	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const core::rect<s32>& position, const core::rect<s32>& padding,
-		video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = nullptr);
+	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
+		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
 
 	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
@@ -258,38 +258,40 @@ public:
 	std::wstring chatMsg[8];
 	std::vector<BotInfo> botInfo;
 
-	int hideChatTimer;
-	bool hideChat;
+	int hideChatTimer{};
+	bool hideChat{};
 	int chatTiming[8]{};
 	int chatType[8]{};
-	unsigned short linePatternD3D;
-	unsigned short linePatternGL;
-	int waitFrame;
-	int signalFrame;
-	int actionParam;
-	const wchar_t* showingtext;
-	int showcard;
-	int showcardcode;
-	int showcarddif;
-	int showcardp;
-	int is_attacking;
-	int attack_sv;
+	unsigned short linePatternD3D{};
+	unsigned short linePatternGL{ 0x0f0f };
+	int waitFrame{};
+	int signalFrame{};
+	int actionParam{};
+	const wchar_t* showingtext{};
+	int showcard{};
+	int showcardcode{};
+	int showcarddif{};
+	int showcardp{};
+	int is_attacking{};
+	int attack_sv{};
 	irr::core::vector3df atk_r;
 	irr::core::vector3df atk_t;
-	float atkdy;
-	int lpframe;
-	int lpd;
-	int lpplayer;
-	int lpccolor;
+	float atkdy{};
+	int lpframe{};
+	int lpd{};
+	int lpplayer{};
+	int lpccolor{};
 	std::wstring lpcstring;
-	bool always_chain;
-	bool ignore_chain;
-	bool chain_when_avail;
+	bool always_chain{};
+	bool ignore_chain{};
+	bool chain_when_avail{};
 
-	bool is_building;
-	bool is_siding;
+	bool is_building{};
+	bool is_siding{};
 
 	irr::core::dimension2d<irr::u32> window_size;
+	float xScale{ 1.0f };
+	float yScale{ 1.0f };
 
 	ClientField dField;
 	DeckBuilder deckBuilder;
@@ -524,8 +526,8 @@ public:
 	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::IGUIStaticText* stCardDisplay;
 	irr::gui::CGUIImageButton* btnCardDisplay[5];
-	irr::gui::IGUIStaticText* stDisplayPos[5];
-	irr::gui::IGUIScrollBar* scrDisplayList;
+	irr::gui::IGUIStaticText *stDisplayPos[5];
+	irr::gui::IGUIScrollBar *scrDisplayList;
 	irr::gui::IGUIButton* btnDisplayOK;
 	//announce number
 	irr::gui::IGUIWindow* wANNumber;
@@ -687,22 +689,19 @@ public:
 	irr::gui::IGUIButton* btnBigCardZoomIn;
 	irr::gui::IGUIButton* btnBigCardZoomOut;
 	irr::gui::IGUIButton* btnBigCardClose;
-	float xScale;
-    float yScale;
-
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
 	int glversion;
 	bool isPSEnabled;
 	bool isNPOTSupported;
-	s32 ogles2Solid;
-	s32 ogles2TrasparentAlpha;
-	s32 ogles2BlendTexture;
+	irr::s32 ogles2Solid;
+	irr::s32 ogles2TrasparentAlpha;
+	irr::s32 ogles2BlendTexture;
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
 	static void onHandleAndroidCommand(ANDROID_APP app, int32_t cmd);
 #endif
-	void setPositionFix(core::position2di fix){
+	void setPositionFix(irr::core::position2di fix){
 		InputFix = fix;
 	}
 	float optX(float x) {
@@ -722,7 +721,7 @@ public:
 	}
     void process(irr::SEvent &event);
 private:
-	core::position2di InputFix;
+	irr::core::position2di InputFix;
     };
 
 extern Game* mainGame;

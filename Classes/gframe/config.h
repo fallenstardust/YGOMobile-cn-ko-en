@@ -49,7 +49,7 @@
 #define mystrncasecmp strncasecmp
 
 #include <cstdio>
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -70,13 +70,8 @@ inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
 }
 
 #include <irrlicht.h>
-using namespace irr;
-using namespace core;
-using namespace scene;
-using namespace video;
-using namespace io;
-using namespace gui;
-using namespace os;
+using namespace irr::io;
+using namespace irr::os;
 
 extern const unsigned short PRO_VERSION;
 extern unsigned int enable_log;
