@@ -867,7 +867,7 @@ void ClientField::GetCardLocation(ClientCard* pcard, irr::core::vector3df* t, ir
 	int sequence = pcard->sequence;
 	int location = pcard->location;
 	int rule = (mainGame->dInfo.duel_rule >= 4) ? 1 : 0;
-	const float overlay_buttom = 0.01f;
+	const float overlay_buttom = 0.001f;
 	const float material_height = 0.003f;
 	const float mzone_buttom = 0.020f;
 	switch (location) {
