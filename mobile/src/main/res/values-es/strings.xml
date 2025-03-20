@@ -111,8 +111,8 @@
     <string name="save">Guardar</string>
     <string name="must_info">Campo obligatorio</string>
     <string name="optional_info">Campo opcional</string>
-    <string name="server_is_exist">¡Debe completar los campos obligatorios!</string>
-    <string name="server_info_error">La información del servidor se completó incorrectamente</string>
+    <string name="server_is_exist">¡Debe completar los campos obligatorios para agregar el servidor!</string>
+    <string name="server_info_error">Los campos obligatorios no se llenaron correctamente</string>
     <string name="card_search">Buscar</string>
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Gestionar categorías</string>
@@ -367,7 +367,7 @@
     <string name="tip_ypk_is_deleted">Actualice las cartas pre-lanzadas de inmediato</string>
     <string name="tip_superpre_desc">Actualización más rápida. Descargar expansiones</string>
     <string name="replay_list">lista de reproducción</string>
-    <string name="user_privacy_policy">Política de Privacidad del Usuario</string>
+    <string name="user_privacy_policy">Política de Privacidad</string>
     <string name="about_user_privacy_policy">Explicación de los permisos utilizados por YGOMobile</string>
     <string name="open">Abrir el Deck</string>
     <string name="web_warn_save_deck">Abrir el Deck cerrará la página web que estás viendo actualmente. ¿Deseas cerrar la página web y abrir el Deck?</string>
