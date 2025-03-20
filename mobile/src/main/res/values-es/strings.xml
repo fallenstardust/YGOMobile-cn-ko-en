@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <!--string name="app_name">YGOMobile</string-->
     <string name="action_settings">Configuración</string>
-    <string name="action_game">Partida individual</string>
+    <string name="action_game">Duelo</string>
     <string name="action_about">Acerca de</string>
     <string name="action_add_server">Añadir servidor</string>
     <string name="dont_start_game">No se puede iniciar el juego</string>
@@ -98,10 +98,10 @@
         <item>15</item>
     </string-array>
     <!-- settings -->
-    <string name="server_list">Servidores de duelo</string>
+    <string name="server_list">Servidores</string>
     <string name="server_name">Nombre:</string>
     <string name="server_desc">Nota:</string>
-    <string name="server_ip">Host:</string>
+    <string name="server_ip">HostIP:</string>
     <string name="server_user">Usuario:</string>
     <string name="server_room_name">Nombre de la sala:</string>
     <string name="server_port">Port:</string>
@@ -109,9 +109,9 @@
     <string name="server_user_pwd">PSW:</string>
     <string name="server_info_edit">Editar info del servidor</string>
     <string name="save">Guardar</string>
-    <string name="must_info">Información requerida</string>
-    <string name="optional_info">Información opcional</string>
-    <string name="server_is_exist">¡La información del servidor ya existe!</string>
+    <string name="must_info">Campo obligatorio</string>
+    <string name="optional_info">Campo opcional</string>
+    <string name="server_is_exist">¡Debe completar los campos obligatorios!</string>
     <string name="server_info_error">La información del servidor se completó incorrectamente</string>
     <string name="card_search">Buscar</string>
     <string name="deck_manager">Deck</string>
@@ -156,7 +156,7 @@
     <string name="sort">Ordenar deck</string>
     <string name="loading">Cargando...</string>
     <string name="loading_failed">Carga fallida</string>
-    <string name="question">Pregunta</string>
+    <string name="question">Aviso de Interés</string>
     <string name="question_delete_deck">¿Eliminar este deck?</string>
     <string name="noname">Sin nombre</string>
     <string name="menu">Opciones</string>
@@ -168,10 +168,10 @@
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
-    <string name="intput_room_name">Ingresar nombre de la sala</string>
+    <string name="intput_room_name">Ingresar la sala</string>
     <string name="join">Unirse</string>
-    <string name="quick_join">Únete al juego</string>
-    <string name="join_game">Únete al juego</string>
+    <string name="quick_join">Únete al duelo</string>
+    <string name="join_game">Únete al duelo</string>
     <string name="settings_game_sensor_refresh">Sensor de Actualización del Juego</string>
     <string name="label_pendulum">Escala de Péndulo</string>
     <string name="all">Todo</string>
@@ -186,7 +186,7 @@
     <string name="delete_card" formatted="false">¿Eliminar carta %s?</string>
     <string name="clear_deck">Limpiar deck</string>
     <string name="question_clear_deck">¿Limpiar este deck?</string>
-    <string name="delete_server_info">¿Eliminar la información de este servidor?</string>
+    <string name="delete_server_info">¿Eliminar este servidor?</string>
     <string name="exit_edit_mode">Salir del Modo de Edición</string>
     <string name="logo_text">¡Gracias por apoyarnos!</string>
     <string name="start_game_error">No se pudo unir al juego</string>
@@ -296,7 +296,7 @@
     <string name="about_pref_settings_keep_scale">Resolución de Pantalla: Escala Original</string>
     <string name="already_top">Primera carta de la lista</string>
     <string name="already_end">Última carta de la lista</string>
-    <string name="tip_redownload">Re-descargar</string>
+    <string name="tip_redownload">Descargar</string>
     <string name="tip_expansions_image">No hay imágenes para cartas pre-lanzamiento</string>
     <string name="tip_return_to_duel">¡Haz regresado al juego actual!</string>
     <string name="my_favorites">myFav★</string>
