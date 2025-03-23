@@ -83,7 +83,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 bool DataManager::LoadDB(const wchar_t* wfile) {
 	char file[256];
 	BufferIO::EncodeUTF8(wfile, file);
-	IReadFile* reader = FileSystem->createAndOpenFile(file);
+	auto reader = FileSystem->createAndOpenFile(file);
 	if(reader == nullptr)
 		return false;
 	spmemvfs_db_t db;
