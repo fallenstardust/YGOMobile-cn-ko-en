@@ -688,7 +688,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		irr::core::recti pos = mainGame->wOptions->getRelativePosition();
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 180 * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
-		mainGame->bgOptions->setRelativePosition(mainGame->wOptions->getRelativePosition());
+		mainGame->bgOptions->setRelativePosition(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()));
 	}
 	if(select_hint)
 		myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
