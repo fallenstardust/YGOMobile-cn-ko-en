@@ -516,7 +516,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 
 	//img always use *yScale to keep proportion
 	wCardImg = env->addStaticText(L"",Resize_Y(1, 1, 2 + CARD_IMG_WIDTH, 2 + CARD_IMG_HEIGHT), true, false, 0, -1, true);
-    wCardImg->setBackgroundColor(0xc0c0c0c0);
+	wCardImg->setBackgroundColor(0xc0c0c0c0);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(Resize_Y(2, 2, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
@@ -792,23 +792,23 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
 	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD->setImage(imageManager.tCover[2]);
+	btnPSAD->setImage(imageManager.tCover[0]);//show cover of player1
 	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
 	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDU->setImageRotation(270);
 	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
 	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[2]);
+	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
 #ifdef _IRR_ANDROID_PLATFORM_
-    //card select
+	//card select
 	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
 	wCardSelect->setVisible(false);
         ChangeToIGUIImageWindow(wCardSelect, &bgCardSelect, imageManager.tDialog_L);
     stCardSelect = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardSelect, -1, false);
 	stCardSelect->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-    for(int i = 0; i < 5; ++i) {
+	for(int i = 0; i < 5; ++i) {
 		stCardPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardSelect, -1, true);
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
@@ -825,7 +825,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         ChangeToIGUIImageWindow(wCardDisplay, &bgCardDisplay, imageManager.tDialog_L);
     stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardDisplay, -1, false);
     stCardDisplay->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-    for(int i = 0; i < 5; ++i) {
+	for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
 		stDisplayPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
