@@ -464,7 +464,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t warg1[512];
 				if(mainGame->botInfo[sel].select_deckfile) {
 					wchar_t botdeck[256];
-					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					DeckManager::GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 					myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
 				}
 				else
