@@ -21,6 +21,14 @@ class AboutActivity : BaseActivity() {
     private val updateList by lazy {
         arrayListOf(
             UpdateLog.toUpdateLog(
+                "1.2.10",
+                """
+                更新ygo内核
+                更新卡包DBJH+VX05+VJ
+                OCG禁卡表更新至2025.4
+                """.trimIndent()
+            ),
+            UpdateLog.toUpdateLog(
                 "1.2.9",
                 """
                 更新ygo内核

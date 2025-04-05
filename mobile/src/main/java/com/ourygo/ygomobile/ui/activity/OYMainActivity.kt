@@ -301,7 +301,7 @@ class OYMainActivity : BaseActivity(), OnDuelAssistantListener {
         if (SharedPreferenceUtil.isFristStart) {
             val views = dialogUtils!!.dialogt(
                 null,
-                """欢迎使用YGO-OY,本软件为YGOMobile原版的简约探索版，这里有正在探索的功能，但相对没有原版稳定，你可以选择下载原版使用，下载地址：https://www.pgyer.com/ygomobilecn
+                """欢迎使用YGO-OY,本软件为YGOMobile原版的简约探索版，这里有正在探索的功能，但相对没有原版稳定，你可以选择下载原版使用，下载地址：https://ygom.top
 
 如果你觉得好用，可以对我们进行支持，每一份支持都将帮助我们更好的建设平台"""
             )
