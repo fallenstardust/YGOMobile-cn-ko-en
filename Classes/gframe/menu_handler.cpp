@@ -16,11 +16,11 @@ void UpdateDeck() {
     char linebuf[256];
 	BufferIO::CopyWStr(mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), mainGame->gameConf.lastcategory, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-    android::setLastCategory(mainGame->appMain, linebuf);
+    irr::android::setLastCategory(mainGame->appMain, linebuf);
 
 	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()), mainGame->gameConf.lastdeck, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-	android::setLastDeck(mainGame->appMain, linebuf);
+    irr::android::setLastDeck(mainGame->appMain, linebuf);
 		
 	unsigned char deckbuf[1024]{};
 	auto pdeck = deckbuf;
@@ -79,7 +79,7 @@ void ChangeHostPrepareDeckCategory(int catesel) {
     mainGame->deckBuilder.prev_deck = 0;
 }
 
-void reSetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, wchar_t* string){
+void reSetCategoryDeckNameOnButton(irr::gui::IGUIButton* button, const wchar_t* string){
     wchar_t cate[256];
     wchar_t cate_deck[256];
     myswprintf(cate, L"%ls%ls", (mainGame->lstCategories->getSelected())==1 ? L"" : mainGame->lstCategories->getListItem(mainGame->lstCategories->getSelected()), (mainGame->lstCategories->getSelected())==1 ? L"" : string);
@@ -103,7 +103,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		irr::gui::IGUIElement* caller = event.GUIEvent.Caller;
-		s32 id = caller->getID();
+		irr::s32 id = caller->getID();
 		if(mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) {
 			mainGame->wQuery->getParent()->bringToFront(mainGame->wQuery);
 			break;
@@ -369,23 +369,23 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				prev_sel = sel;
 				break;
 			}
-				case BUTTON_SHARE_REPLAY: {
-					int sel = mainGame->lstReplayList->getSelected();
-					if(sel == -1)
-						break;
-					mainGame->gMutex.lock();
-                    char name[1024];
-					BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
-					mainGame->gMutex.unlock();
-					prev_operation = id;
-					prev_sel = sel;
-#ifdef _IRR_ANDROID_PLATFORM_
-					ALOGD("cc menu_handler: 1share replay file=%s", name);
-					android::OnShareFile(mainGame->appMain, "yrp", name);
-					ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
-#endif
+			case BUTTON_SHARE_REPLAY: {
+				int sel = mainGame->lstReplayList->getSelected();
+				if(sel == -1)
 					break;
-				}
+				mainGame->gMutex.lock();
+                char name[1024];
+				BufferIO::EncodeUTF8(mainGame->lstReplayList->getListItem(sel), name);
+				mainGame->gMutex.unlock();
+				prev_operation = id;
+				prev_sel = sel;
+#ifdef _IRR_ANDROID_PLATFORM_
+				ALOGD("cc menu_handler: 1share replay file=%s", name);
+                irr::android::OnShareFile(mainGame->appMain, "yrp", name);
+				ALOGD("cc menu_handler: 2after share replay file:index=%d", sel);
+#endif
+				break;
+			}
 			case BUTTON_RENAME_REPLAY: {
 				int sel = mainGame->lstReplayList->getSelected();
 				if(sel == -1)
@@ -464,7 +464,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t warg1[512];
 				if(mainGame->botInfo[sel].select_deckfile) {
 					wchar_t botdeck[256];
-					deckManager.GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
+					DeckManager::GetDeckFile(botdeck, mainGame->cbBotDeckCategory, mainGame->cbBotDeck);
 					myswprintf(warg1, L"%ls DeckFile='%ls'", mainGame->botInfo[sel].command, botdeck);
 				}
 				else
@@ -478,7 +478,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				char arg3[32];
 				snprintf(arg3, sizeof arg3, " Port=%d", mainGame->gameConf.serverport);
 				snprintf(args, sizeof args, "%s%s%s", arg1, arg2, arg3);
-				android::runWindbot(mainGame->appMain, args);
+                irr::android::runWindbot(mainGame->appMain, args);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1402));	
@@ -542,7 +542,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(prev_operation == BUTTON_RENAME_REPLAY) {
 					wchar_t newname[256];
 					BufferIO::CopyWideString(mainGame->ebRSName->getText(), newname);
-					if(wcsncasecmp(newname + std::wcslen(newname) - 4, L".yrp", 4)) {
+					if(mywcsncasecmp(newname + std::wcslen(newname) - 4, L".yrp", 4)) {
 						myswprintf(newname, L"%ls.yrp", mainGame->ebRSName->getText());
 					}
 					if(Replay::RenameReplay(mainGame->lstReplayList->getListItem(prev_sel), newname)) {
@@ -651,8 +651,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					curtime = ReplayMode::cur_replay.pheader.start_time;
 				else
 					curtime = ReplayMode::cur_replay.pheader.seed;
-				tm* st = localtime(&curtime);
-				std::wcsftime(infobuf, 256, L"%Y/%m/%d %H:%M:%S\n", st);
+				std::wcsftime(infobuf, sizeof infobuf / sizeof infobuf[0], L"%Y/%m/%d %H:%M:%S\n", std::localtime(&curtime));
 				repinfo.append(infobuf);
 				wchar_t namebuf[4][20]{};
 				ReplayMode::cur_replay.ReadName(namebuf[0]);
@@ -667,7 +666,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					myswprintf(infobuf, L"%ls\n===VS===\n%ls\n", namebuf[0], namebuf[1]);
 				repinfo.append(infobuf);
 				mainGame->ebRepStartTurn->setText(L"1");
-				mainGame->SetStaticText(mainGame->stReplayInfo, 180 * mainGame->xScale, mainGame->guiFont, (wchar_t*)repinfo.c_str());
+				mainGame->SetStaticText(mainGame->stReplayInfo, 180 * mainGame->xScale, mainGame->guiFont, repinfo.c_str());
 				break;
 			}
 			case LISTBOX_SINGLEPLAY_LIST: {
@@ -677,7 +676,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				const wchar_t* name = mainGame->lstSinglePlayList->getListItem(sel);
 				wchar_t fname[256];
 				myswprintf(fname, L"./single/%ls", name);
-				FILE* fp = myfopen(fname, "rb");
+				FILE* fp = mywfopen(fname, "rb");
 				if(!fp) {
 					mainGame->stSinglePlayInfo->setText(L"");
 					break;
@@ -686,7 +685,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				wchar_t wlinebuf[1024];
 				std::wstring message = L"";
 				bool in_message = false;
-				while(fgets(linebuf, 1024, fp)) {
+				while(std::fgets(linebuf, 1024, fp)) {
 					if(!std::strncmp(linebuf, "--[[message", 11)) {
 						size_t len = std::strlen(linebuf);
 						char* msgend = std::strrchr(linebuf, ']');
@@ -709,7 +708,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 						message.append(wlinebuf);
 					}
 				}
-				fclose(fp);
+				std::fclose(fp);
 				mainGame->SetStaticText(mainGame->stSinglePlayInfo, 200 * mainGame->xScale, mainGame->guiFont, message.c_str());
 				break;
 			}

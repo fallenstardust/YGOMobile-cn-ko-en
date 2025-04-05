@@ -61,7 +61,7 @@ int SingleMode::SinglePlayThread() {
 	wchar_t fname[256]{};
 	myswprintf(fname, L"./single/%ls", name);
 	slen = BufferIO::EncodeUTF8(fname, filename);
-		if(!preload_script(pduel, filename))
+	if(!preload_script(pduel, filename))
 		slen = 0;
 	if(slen == 0) {
 		end_duel(pduel);
@@ -72,7 +72,7 @@ int SingleMode::SinglePlayThread() {
 	rh.version = PRO_VERSION;
 	rh.flag = REPLAY_UNIFORM | REPLAY_SINGLE_MODE;
 	rh.seed = seed;
-	rh.start_time = (unsigned int)time(nullptr);
+	rh.start_time = (unsigned int)std::time(nullptr);
 	mainGame->gMutex.lock();
 	mainGame->HideElement(mainGame->wSinglePlay);
 	mainGame->ClearCardInfo();
@@ -124,10 +124,9 @@ int SingleMode::SinglePlayThread() {
 	}
 	last_replay.EndRecord();
 	mainGame->gMutex.lock();
-	time_t nowtime = time(nullptr);
-	tm* localedtime = localtime(&nowtime);
+	time_t nowtime = std::time(nullptr);
 	wchar_t timetext[40];
-	std::wcsftime(timetext, 40, L"%Y-%m-%d %H-%M-%S", localedtime);
+	std::wcsftime(timetext, sizeof timetext / sizeof timetext[0], L"%Y-%m-%d %H-%M-%S", std::localtime(&nowtime));
 	mainGame->ebRSName->setText(timetext);
 	if(!mainGame->chkAutoSaveReplay->isChecked()) {
 		mainGame->wReplaySave->setText(dataManager.GetSysString(1340));

@@ -10,6 +10,8 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
+#include <string>
+#include <regex>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
@@ -64,13 +66,13 @@ bool IsExtension(const wchar_t* filename, const wchar_t* extension) {
 	auto elen = std::wcslen(extension);
 	if (!elen || flen < elen)
 		return false;
-	return !wcsncasecmp(filename + (flen - elen), extension, elen);
+	return !mywcsncasecmp(filename + (flen - elen), extension, elen);
 }
 
 void Game::process(irr::SEvent &event) {
-	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
-		s32 x = event.MouseInput.X;
-		s32 y = event.MouseInput.Y;
+	if (event.EventType == irr::EET_MOUSE_INPUT_EVENT) {
+        irr::s32 x = event.MouseInput.X;
+        irr::s32 y = event.MouseInput.Y;
 		event.MouseInput.X = optX(x);
 		event.MouseInput.Y = optY(y);
 	}
@@ -133,10 +135,19 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
             break;
     }
 }
-bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
+
+bool IsExtension(const char* filename, const char* extension) {
+	auto flen = std::strlen(filename);
+	auto elen = std::strlen(extension);
+	if (!elen || flen < elen)
+		return false;
+	return !mystrncasecmp(filename + (flen - elen), extension, elen);
+}
+
+bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	this->appMain = app;
 	srand(time(0));
-	irr::SIrrlichtCreationParameters params = irr::SIrrlichtCreationParameters();
+	irr::SIrrlichtCreationParameters params{};
 	glversion = options->getOpenglVersion();
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
@@ -147,45 +158,47 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	params.Bits = 24;
 	params.ZBufferBits = 16;
 	params.AntiAlias  = 0;
-	params.WindowSize = irr::core::dimension2d<u32>(0, 0);
+	params.WindowSize = irr::core::dimension2d<irr::u32>(0, 0);
 
 	device = irr::createDeviceEx(params);
-	if(!device)
-		return false;
-	if (!android::perfromTrick(app)) {
+	if(!device) {
+		ErrorLog("Failed to create Irrlicht Engine device!");
 		return false;
 	}
-	core::position2di appPosition = android::initJavaBridge(app, device);
+	if (!irr::android::perfromTrick(app)) {
+		return false;
+	}
+	irr::core::vector2di appPosition = irr::android::initJavaBridge(app, device);
 	setPositionFix(appPosition);
 	device->setProcessReceiver(this);
 
-	app->onInputEvent = android::handleInput;
-	ILogger* logger = device->getLogger();
+	app->onInputEvent = irr::android::handleInput;
+    irr::ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
 	isPSEnabled = options->isPendulumScaleEnabled();
 
 	dataManager.FileSystem = device->getFileSystem();
-    ((CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
+    ((irr::CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
-	xScale = android::getXScale(app);
-	yScale = android::getYScale(app);
+	xScale = irr::android::getXScale(app);
+	yScale = irr::android::getYScale(app);
 
 	ALOGD("cc game: xScale = %f, yScale = %f", xScale, yScale);
 
     SetCardS3DVertex();//reset cardfront cardback S3DVertex size
 	//io::path databaseDir = options->getDBDir();
-	io::path workingDir = options->getWorkDir();
+    irr::io::path workingDir = options->getWorkDir();
     ALOGD("cc game: workingDir= %s", workingDir.c_str());
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
 	 This example copies the media in the Android.mk makefile. */
-	stringc mediaPath = "media/";
+    irr::core::stringc mediaPath = "media/";
 
 	// The Android assets file-system does not know which sub-directories it has (blame google).
 	// So we have to add all sub-directories in assets manually. Otherwise we could still open the files,
 	// but existFile checks will fail (which are for example needed by getFont).
-	for ( u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
+	for ( irr::u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
 	{
 		IFileArchive* archive = dataManager.FileSystem->getFileArchive(i);
 		if ( archive->getType() == EFAT_ANDROID_ASSET )
@@ -195,10 +208,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		}
 	}
 	//pics.zip, scripts.zip, ...zip
-	io::path* zips = options->getArchiveFiles();
+	irr::io::path* zips = options->getArchiveFiles();
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
-		io::path zip_path = zips[i];
+		irr::io::path zip_path = zips[i];
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
 		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
 	    }else{
@@ -224,10 +237,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
 	int quality = options->getCardQualityOp();
-	if (driver->getDriverType() == EDT_OGLES2) {
-		isNPOTSupported = ((COGLES2Driver *) driver)->queryOpenGLFeature(COGLES2ExtensionHandler::IRR_OES_texture_npot);
+	if (driver->getDriverType() == irr::video::EDT_OGLES2) {
+		isNPOTSupported = ((irr::video::COGLES2Driver *) driver)->queryOpenGLFeature(irr::video::COGLES2ExtensionHandler::IRR_OES_texture_npot);
 	} else {
-		isNPOTSupported = ((COGLES1Driver *) driver)->queryOpenGLFeature(COGLES1ExtensionHandler::IRR_OES_texture_npot);
+		isNPOTSupported = ((irr::video::COGLES1Driver *) driver)->queryOpenGLFeature(irr::video::COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
 	ALOGD("cc game: isNPOTSupported = %d", isNPOTSupported);
 	if (isNPOTSupported) {
@@ -242,7 +255,6 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	}
 #endif
 	driver->setTextureCreationFlag(irr::video::ETCF_OPTIMIZED_FOR_QUALITY, true);
-
 	imageManager.SetDevice(device);
 	imageManager.ClearTexture();
 	if(!imageManager.Initial(workingDir)) {
@@ -250,11 +262,11 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		return false;
 	}
 	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
-	io::path* cdbs = options->getDBFiles();
+	irr::io::path* cdbs = options->getDBFiles();
 	len = options->getDbCount();
 	//os::Printer::log("load cdbs count %d", len);
 	for(int i=0;i<len;i++){
-		io::path cdb_path = cdbs[i];
+		irr::io::path cdb_path = cdbs[i];
 		wchar_t wpath[1024];
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
 		if(dataManager.LoadDB(wpath)) {
@@ -287,73 +299,88 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	smgr = device->getSceneManager();
 	device->setWindowCaption(L"[---]");
 	device->setResizable(false);
-	gui::IGUISkin* newskin = CAndroidGUISkin::createAndroidSkin(gui::EGST_BURNING_SKIN, driver, env, xScale, yScale);
+	irr::gui::IGUISkin* newskin = irr::gui::CAndroidGUISkin::createAndroidSkin(irr::gui::EGST_BURNING_SKIN, driver, env, xScale, yScale);
 	newskin->setFont(guiFont);
 	env->setSkin(newskin);
 	newskin->drop();
 #ifdef _IRR_ANDROID_PLATFORM_
 	//main menu
-	wchar_t strbuf[256];
-	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
-	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, strbuf);
+	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, L"");
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDrawBackground(false);
+    //button Lan Mode
 	btnLanMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 30, 350, 106), wMainMenu, BUTTON_LAN_MODE);
-	btnLanMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+	btnLanMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnLanMode->setDrawBorder(false);
 	btnLanMode->setImage(imageManager.tTitleBar);
+    textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(15, 25, 350, 60), false, false, btnLanMode);
+    textLanMode->setOverrideFont(titleFont);
+    textLanMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //version code
+	wchar_t strbuf[256];
+	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
 	env->addStaticText(strbuf, Resize(55, 2, 280, 35), false, false, btnLanMode);
-	textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(115, 25, 300, 65), false, false, btnLanMode);
-	textLanMode->setOverrideFont(titleFont);
+    //button Single Mode
 	btnSingleMode = irr::gui::CGUIImageButton::addImageButton(env,  Resize(15, 110, 350, 186), wMainMenu, BUTTON_SINGLE_MODE);
-	btnSingleMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+	btnSingleMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnSingleMode->setDrawBorder(false);
     btnSingleMode->setImage(imageManager.tTitleBar);
-	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(115, 25, 300, 65), false, false, btnSingleMode);
+	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(15, 25, 350, 60), false, false, btnSingleMode);
 	textSingleMode->setOverrideFont(titleFont);
+    textSingleMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Replay Mode
 	btnReplayMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 190, 350, 266), wMainMenu, BUTTON_REPLAY_MODE);
-    btnReplayMode->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+    btnReplayMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
     btnReplayMode->setDrawBorder(false);
     btnReplayMode->setImage(imageManager.tTitleBar);
-	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(115, 25, 300, 65), false, false, btnReplayMode);
+	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(15, 25, 350, 60), false, false, btnReplayMode);
 	textReplayMode->setOverrideFont(titleFont);
+	textReplayMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Deck Edit
 	btnDeckEdit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 270, 350, 346), wMainMenu, BUTTON_DECK_EDIT);
-    btnDeckEdit->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+    btnDeckEdit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
     btnDeckEdit->setDrawBorder(false);
     btnDeckEdit->setImage(imageManager.tTitleBar);
-	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(115, 25, 300, 65), false, false, btnDeckEdit);
+	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(15, 25, 350, 60), false, false, btnDeckEdit);
 	textDeckEdit->setOverrideFont(titleFont);
+	textDeckEdit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Settings
     btnSettings = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 350, 350, 426), wMainMenu, BUTTON_SETTINGS);
-    btnSettings->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+    btnSettings->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnSettings->setDrawBorder(false);
 	btnSettings->setImage(imageManager.tTitleBar);
-	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(115, 25, 300, 65), false, false, btnSettings);
+	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(15, 25, 350, 60), false, false, btnSettings);
 	textSettings->setOverrideFont(titleFont);
+	textSettings->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    //button Exit
     btnModeExit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 430, 350, 506), wMainMenu, BUTTON_MODE_EXIT);
-    btnModeExit->setImageSize(core::dimension2di(400 * yScale, 76 * yScale));
+    btnModeExit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnModeExit->setDrawBorder(false);
 	btnModeExit->setImage(imageManager.tTitleBar);
-	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(145, 25, 300, 65), false, false, btnModeExit);
+	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(15, 25, 350, 65), false, false, btnModeExit);
 	textModeExit->setOverrideFont(titleFont);
+	textModeExit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+
+    //---------------------game windows---------------------
     //lan mode
 	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);
 	wLanWindow->setVisible(false);
     ChangeToIGUIImageWindow(wLanWindow, &bgLanWindow, imageManager.tWindow);
 	env->addStaticText(dataManager.GetSysString(1220), Resize(30, 30, 70, 70), false, false, wLanWindow);
-	ebNickName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.nickname, true, env, Resize(110, 25, 420, 65), wLanWindow);
+	ebNickName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.nickname, true, env, Resize(110, 25, 420, 65), wLanWindow);
 	ebNickName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	lstHostList = env->addListBox(Resize(30, 75, 540, 240), wLanWindow, LISTBOX_LAN_HOST, true);
 	lstHostList->setItemHeight(30 * yScale);
 	btnLanRefresh = env->addButton(Resize(205, 250, 315, 290), wLanWindow, BUTTON_LAN_REFRESH, dataManager.GetSysString(1217));
 		ChangeToIGUIImageButton(btnLanRefresh, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	env->addStaticText(dataManager.GetSysString(1221), Resize(30, 305, 100, 340), false, false, wLanWindow);
-	ebJoinHost = CAndroidGUIEditBox::addAndroidEditBox(gameConf.lasthost, true, env, Resize(110, 300, 270, 340), wLanWindow);
+	ebJoinHost = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lasthost, true, env, Resize(110, 300, 270, 340), wLanWindow);
 	ebJoinHost->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	ebJoinPort = CAndroidGUIEditBox::addAndroidEditBox(gameConf.lastport, true, env, Resize(280, 300, 340, 340), wLanWindow);
+	ebJoinPort = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lastport, true, env, Resize(280, 300, 340, 340), wLanWindow);
 	ebJoinPort->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1222), Resize(30, 355, 100, 390), false, false, wLanWindow);
-	ebJoinPass = CAndroidGUIEditBox::addAndroidEditBox(gameConf.roompass, true, env, Resize(110, 350, 340, 390), wLanWindow);
+	ebJoinPass = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.roompass, true, env, Resize(110, 350, 340, 390), wLanWindow);
 	ebJoinPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnJoinHost = env->addButton(Resize(430, 300, 540, 340), wLanWindow, BUTTON_JOIN_HOST, dataManager.GetSysString(1223));
 		ChangeToIGUIImageButton(btnJoinHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -368,12 +395,12 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wCreateHost->setVisible(false);
         ChangeToIGUIImageWindow(wCreateHost, &bgCreateHost, imageManager.tWindow);
     env->addStaticText(dataManager.GetSysString(1226), Resize(20, 30, 90, 65), false, false, wCreateHost);
-	cbHostLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
+	cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
 		cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
 	cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);
 	env->addStaticText(dataManager.GetSysString(1225), Resize(20, 75, 100, 110), false, false, wCreateHost);
-	cbRule = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 75, 260, 115), wCreateHost);
+	cbRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 75, 260, 115), wCreateHost);
 	cbRule->setMaxSelectionRows(10);
 	cbRule->addItem(dataManager.GetSysString(1481));
 	cbRule->addItem(dataManager.GetSysString(1482));
@@ -399,16 +426,16 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		break;
 	}	
 	env->addStaticText(dataManager.GetSysString(1227), Resize(20, 130, 100, 165), false, false, wCreateHost);
-	cbMatchMode = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 125, 260, 165), wCreateHost);
+	cbMatchMode = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 125, 260, 165), wCreateHost);
 	cbMatchMode->addItem(dataManager.GetSysString(1244));
 	cbMatchMode->addItem(dataManager.GetSysString(1245));
 	cbMatchMode->addItem(dataManager.GetSysString(1246));
 	env->addStaticText(dataManager.GetSysString(1237), Resize(20, 180, 100, 215), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 180);
-	ebTimeLimit = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(110, 175, 260, 215), wCreateHost);
+	ebTimeLimit = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(110, 175, 260, 215), wCreateHost);
 	ebTimeLimit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1236), Resize(270, 30, 350, 65), false, false, wCreateHost);
-	cbDuelRule = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(360, 25, 510, 65), wCreateHost);
+	cbDuelRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(360, 25, 510, 65), wCreateHost);
 	cbDuelRule->addItem(dataManager.GetSysString(1260));
 	cbDuelRule->addItem(dataManager.GetSysString(1261));
 	cbDuelRule->addItem(dataManager.GetSysString(1262));
@@ -419,21 +446,21 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	chkNoShuffleDeck = env->addCheckBox(false, Resize(360, 235, 460, 275), wCreateHost, -1, dataManager.GetSysString(1230));
 	env->addStaticText(dataManager.GetSysString(1231), Resize(270, 80, 350, 310), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 8000);
-	ebStartLP = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 75, 510, 115), wCreateHost);
+	ebStartLP = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 75, 510, 115), wCreateHost);
 	ebStartLP->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1232), Resize(270, 130, 350, 165), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 5);
-	ebStartHand = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 125, 510, 165), wCreateHost);
+	ebStartHand = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 125, 510, 165), wCreateHost);
 	ebStartHand->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1233), Resize(270, 180, 350, 215), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 1);
-	ebDrawCount = CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 175, 510, 215), wCreateHost);
+	ebDrawCount = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(360, 175, 510, 215), wCreateHost);
 	ebDrawCount->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1234), Resize(20, 305, 100, 340), false, false, wCreateHost);
-	ebServerName = CAndroidGUIEditBox::addAndroidEditBox(gameConf.gamename, true, env, Resize(110, 300, 340, 340), wCreateHost);
+	ebServerName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.gamename, true, env, Resize(110, 300, 340, 340), wCreateHost);
 	ebServerName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1235), Resize(20, 355, 100, 390), false, false, wCreateHost);
-	ebServerPass = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(110, 350, 340, 390), wCreateHost);
+	ebServerPass = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(110, 350, 340, 390), wCreateHost);
 	ebServerPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnHostConfirm = env->addButton(Resize(430, 300, 540, 340), wCreateHost, BUTTON_HOST_CONFIRM, dataManager.GetSysString(1211));
 		ChangeToIGUIImageButton(btnHostConfirm, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -450,9 +477,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnHostPrepDuelist, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	for(int i = 0; i < 2; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 80 + i * 45, 260, 120 + i * 45), true, false, wHostPrepare);
-		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
+		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(10, 80 + i * 45, 50, 120 + i * 45), wHostPrepare, BUTTON_HP_KICK);
-        btnHostPrepKick[i]->setImageSize(core::dimension2di(40 * yScale, 40 * yScale));
+        btnHostPrepKick[i]->setImageSize(irr::core::dimension2di(40 * yScale, 40 * yScale));
         btnHostPrepKick[i]->setDrawBorder(false);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 80 + i * 45, 310, 120 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
@@ -460,9 +487,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	}
 	for(int i = 2; i < 4; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 135 + i * 45, 260, 175 + i * 45), true, false, wHostPrepare);
-		stHostPrepDuelist[i]->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
+		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
         btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env,Resize(10, 135 + i * 45, 50, 175 + i * 45), wHostPrepare, BUTTON_HP_KICK);
-        btnHostPrepKick[i]->setImageSize(core::dimension2di(40 * yScale, 40 * yScale));
+        btnHostPrepKick[i]->setImageSize(irr::core::dimension2di(40 * yScale, 40 * yScale));
         btnHostPrepKick[i]->setDrawBorder(false);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 135 + i * 45, 310, 175 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
@@ -489,7 +516,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 
 	//img always use *yScale to keep proportion
 	wCardImg = env->addStaticText(L"",Resize_Y(1, 1, 2 + CARD_IMG_WIDTH, 2 + CARD_IMG_HEIGHT), true, false, 0, -1, true);
-    wCardImg->setBackgroundColor(0xc0c0c0c0);
+	wCardImg->setBackgroundColor(0xc0c0c0c0);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(Resize_Y(2, 2, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), wCardImg);
 	imgCard->setImage(imageManager.tCover[0]);
@@ -523,13 +550,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	//info
 	stName = env->addStaticText(L"", Resize(10, 10, 250, 32), true, false, wInfos, -1, false);
 	stName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-    stInfo = env->addStaticText(L"", Resize(10, 37, 260, 60), false, true, wInfos, -1, false);
-    stInfo->setOverrideColor(SColor(255, 0, 128, 255));//255, 0, 0, 255 todo ygocolor 卡片类型/种族颜色	stDataInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 60 * yScale, 260 * xScale, 83 * yScale), false, true, wInfos, -1, false);
-    stDataInfo = env->addStaticText(L"", Resize(10, 60, 260, 83), false, true, wInfos, -1, false);
-    stDataInfo->setOverrideColor(SColor(255, 190, 0, 0));//255, 0, 0, 255 todo ygocolor 等级/攻击力颜色
-    stSetName = env->addStaticText(L"", Resize(10, 83, 260, 106), false, true, wInfos, -1, false);
-    stSetName->setOverrideColor(SColor(255, 208, 104, 0));//255, 0, 0, 255 todo ygocolor 字段
-    stText = env->addStaticText(L"", Resize(10, 106, 250, 340), false, true, wInfos, -1, false);
+	stInfo = env->addStaticText(L"", Resize(10, 37, 260, 60), false, true, wInfos, -1, false);
+	stInfo->setOverrideColor(irr::video::SColor(255, 0, 128, 255));//255, 0, 0, 255 todo ygocolor 卡片类型/种族颜色	stDataInfo = env->addStaticText(L"", rect<s32>(10 * xScale, 60 * yScale, 260 * xScale, 83 * yScale), false, true, wInfos, -1, false);
+	stDataInfo = env->addStaticText(L"", Resize(10, 60, 260, 83), false, true, wInfos, -1, false);
+	stDataInfo->setOverrideColor(irr::video::SColor(255, 190, 0, 0));//255, 0, 0, 255 todo ygocolor 等级/攻击力颜色
+	stSetName = env->addStaticText(L"", Resize(10, 83, 260, 106), false, true, wInfos, -1, false);
+	stSetName->setOverrideColor(irr::video::SColor(255, 208, 104, 0));//255, 0, 0, 255 todo ygocolor 字段
+	stText = env->addStaticText(L"", Resize(10, 106, 250, 340), false, true, wInfos, -1, false);
     stText->setOverrideFont(textFont);
 	scrCardText = env->addScrollBar(false, Resize(250, 106, 258, 639), wInfos, SCROLL_CARDTEXT);
 	scrCardText->setLargeStep(1);
@@ -544,7 +571,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     wPallet->setVisible(false);
     //Logs
     imgLog = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 55, 45, 100), wPallet, BUTTON_SHOW_LOG);
-	imgLog->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+	imgLog->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
 	imgLog->setImage(imageManager.tLogs);
 	imgLog->setIsPushButton(true);
 	wLogs = env->addWindow(Resize(720, 1, 1020, 501), false, dataManager.GetSysString(1271));
@@ -559,7 +586,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnCloseLog, imageManager.tButton_S, imageManager.tButton_S_pressed);
     //vol play/mute
 	imgVol = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 110, 45, 155), wPallet, BUTTON_BGM);
-    imgVol->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+    imgVol->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
 	if (gameConf.enable_music) {
 		imgVol->setImage(imageManager.tPlay);
 	} else {
@@ -567,7 +594,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	}
     //shift quick animation
     imgQuickAnimation = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 165, 45, 210), wPallet, BUTTON_QUICK_ANIMIATION);
-    imgQuickAnimation->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+    imgQuickAnimation->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
     if (gameConf.quick_animation) {
         imgQuickAnimation->setImage(imageManager.tDoubleX);
     } else {
@@ -575,7 +602,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     }
     //Settings
 	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 0, 45, 45), wPallet, BUTTON_SETTINGS);
-	imgSettings->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+	imgSettings->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setIsPushButton(true);
     wSettings = env->addWindow(Resize(220, 80, 800, 540), false, dataManager.GetSysString(1273));
@@ -615,7 +642,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	posY = 40;
     chkLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
     chkLFlist->setChecked(gameConf.use_lflist);
-    cbLFlist = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
+    cbLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
     cbLFlist->setMaxSelectionRows(6);
     for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
         cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
@@ -648,7 +675,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     scrSoundVolume->setPos(gameConf.sound_volume);
     scrSoundVolume->setLargeStep(1);
     scrSoundVolume->setSmallStep(1);
-    posY += 40 * yScale;
+    posY += 40;
     chkEnableMusic = env->addCheckBox(gameConf.enable_music, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_ENABLE_MUSIC, dataManager.GetSysString(1280));
     chkEnableMusic->setChecked(gameConf.enable_music);
     scrMusicVolume = env->addScrollBar(true, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, SCROLL_VOLUME);
@@ -659,7 +686,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
     scrMusicVolume->setSmallStep(1);
     elmTabSystemLast = chkEnableMusic;
 	btnCloseSettings =irr::gui::CGUIImageButton::addImageButton(env,Resize(500, 30, 550, 80), wSettings, BUTTON_CLOSE_SETTINGS);
-	btnCloseSettings->setImageSize(core::dimension2di(50 * yScale, 50 * yScale));
+	btnCloseSettings->setImageSize(irr::core::dimension2di(50 * yScale, 50 * yScale));
 	btnCloseSettings->setDrawBorder(false);
     btnCloseSettings->setImage(imageManager.tClose);
     //
@@ -671,7 +698,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	for(int i = 0; i < 3; ++i) {
 		btnHand[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(10 + 105 * i, 10, 105 + 105 * i, 144), wHand, BUTTON_HAND1 + i);
 		btnHand[i]->setImage(imageManager.tHand[i]);
-		btnHand[i]->setImageScale(core::vector2df(xScale, yScale));
+		btnHand[i]->setImageScale(irr::core::vector2df(xScale, yScale));
 	}
 
 	//first or second to go
@@ -732,7 +759,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	btnSurrenderNo = env->addButton(Resize(200, 120, 310, 170), wSurrender, BUTTON_SURRENDER_NO, dataManager.GetSysString(1214));
         ChangeToIGUIImageButton(btnSurrenderNo, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//options (350)
-	wOptions = env->addWindow(Resize(470, 180, 860, 360), false, L"");
+	wOptions = env->addWindow(Resize(470, 180, 860, 390), false, L"");
 	wOptions->getCloseButton()->setVisible(false);
 	wOptions->setVisible(false);
     wOptions->setDrawBackground(false);
@@ -751,59 +778,59 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		btnOption[i] = env->addButton(Resize(20, 20 + 60 * i, 370, 70 + 60 * i), wOptions, BUTTON_OPTION_0 + i, L"");
 			ChangeToIGUIImageButton(btnOption[i], imageManager.tButton_L, imageManager.tButton_L_pressed);
 	}
-	scrOption = env->addScrollBar(false, Resize(0, 0, 0, 0), wOptions, SCROLL_OPTION_SELECT);
+	scrOption = env->addScrollBar(false, Resize(380, 20, 410, 310), wOptions, SCROLL_OPTION_SELECT);
 	scrOption->setLargeStep(1);
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
 #endif
-	//pos
-	wPosSelect = env->addWindow(recti(660 * xScale - 223 * yScale, 160 * yScale, 660 * xScale + 223 * yScale, (160 + 228) * yScale), false, dataManager.GetSysString(561));
+	//pos select
+	wPosSelect = env->addWindow(irr::core::recti(660 * xScale - 223 * yScale, 160 * yScale, 660 * xScale + 223 * yScale, (160 + 228) * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
         ChangeToIGUIImageWindow(wPosSelect, &bgPosSelect, imageManager.tDialog_L);
 	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_AU);
-	btnPSAU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
-	btnPSAD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD->setImage(imageManager.tCover[0]);
+	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+	btnPSAD->setImage(imageManager.tCover[0]);//show cover of player1
 	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
-	btnPSDU->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDU->setImageRotation(270);
 	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
-	btnPSDD->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[0]);
+	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
 #ifdef _IRR_ANDROID_PLATFORM_
-    //card select
-	wCardSelect = env->addWindow(recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
+	//card select
+	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
 	wCardSelect->setVisible(false);
         ChangeToIGUIImageWindow(wCardSelect, &bgCardSelect, imageManager.tDialog_L);
     stCardSelect = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardSelect, -1, false);
-	stCardSelect->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-    for(int i = 0; i < 5; ++i) {
+	stCardSelect->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	for(int i = 0; i < 5; ++i) {
 		stCardPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardSelect, -1, true);
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardSelect, BUTTON_CARD_0 + i);
-		btnCardSelect[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardSelect[i]->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrCardList = env->addScrollBar(true, Resize_Y(30, 245, 650, 285), wCardSelect, SCROLL_CARD_SELECT);
 	btnSelectOK = env->addButton(Resize_Y(340 - 55, 295, 340 + 55, 295 + 40), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnSelectOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//card display
-	wCardDisplay = env->addWindow(recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
+	wCardDisplay = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardDisplay->getCloseButton()->setVisible(false);
 	wCardDisplay->setVisible(false);
         ChangeToIGUIImageWindow(wCardDisplay, &bgCardDisplay, imageManager.tDialog_L);
-    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660 * yScale, 40 * yScale), false, false, wCardDisplay, -1, false);
-    stCardDisplay->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-    for(int i = 0; i < 5; ++i) {
+    stCardDisplay = env->addStaticText(L"", Resize_Y(20, 10, 660, 40), false, false, wCardDisplay, -1, false);
+    stCardDisplay->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	for(int i = 0; i < 5; ++i) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
 		stDisplayPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardDisplay, BUTTON_DISPLAY_0 + i);
-		btnCardDisplay[i]->setImageSize(core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardDisplay[i]->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	}
 	scrDisplayList = env->addScrollBar(true, Resize_Y(30, 245, 30 + 620, 285), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(Resize_Y(340 - 55, 295, 340 + 55, 335), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
@@ -814,10 +841,10 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wANNumber->getCloseButton()->setVisible(false);
 	wANNumber->setVisible(false);
         ChangeToIGUIImageWindow(wANNumber, &bgANNumber, imageManager.tWindow_V);
-	cbANNumber = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(30, 180, 270, 240), wANNumber, -1);
+	cbANNumber = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(30, 180, 270, 240), wANNumber, -1);
 	cbANNumber->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     stANNumber = env->addStaticText(L"", Resize(20, 10, 280, 40), false, false, wANNumber, -1, false);
-    stANNumber->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
+    stANNumber->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	for(int i = 0; i < 12; ++i) {
 		myswprintf(strbuf, L"%d", i + 1);
 		btnANNumber[i] = env->addButton(Resize(50 + 70 * (i % 3), 60 + 70 * (i / 3), 110 + 70 * (i % 3), 120 + 70 * (i / 3)), wANNumber, BUTTON_ANNUMBER_1 + i, strbuf);
@@ -832,8 +859,8 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wANCard->setVisible(false);
         ChangeToIGUIImageWindow(wANCard, &bgANCard, imageManager.tDialog_S);
 	stANCard = env->addStaticText(L"", Resize(20, 10, 280, 40), false, false, wANCard, -1, false);
-	stANCard->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
-    ebANCard = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(10, 50, 290, 90), wANCard, EDITBOX_ANCARD);
+	stANCard->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    ebANCard = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(10, 50, 290, 90), wANCard, EDITBOX_ANCARD);
 	ebANCard->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	lstANCard = env->addListBox(Resize(10, 100, 290, 430), wANCard, LISTBOX_ANCARD, true);
 	btnANCardOK = env->addButton(Resize(95, 440, 205, 490), wANCard, BUTTON_ANCARD_OK, dataManager.GetSysString(1211));
@@ -844,7 +871,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wANAttribute->setVisible(false);
 	    ChangeToIGUIImageWindow(wANAttribute, &bgANAttribute, imageManager.tDialog_L);
 	stANAttribute = env->addStaticText(L"", Resize(20, 10, 370, 40), false, false, wANAttribute, -1, false);
-    stANAttribute->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
+    stANAttribute->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
 		chkAttribute[i] = env->addCheckBox(false, Resize(50 + (i % 4) * 80, 60 + (i / 4) * 55, 130 + (i % 4) * 80, 90 + (i / 4) * 55),wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter).c_str());
 	//announce race
@@ -853,7 +880,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wANRace->setVisible(false);
 	    ChangeToIGUIImageWindow(wANRace, &bgANRace, imageManager.tDialog_S);
     stANRace = env->addStaticText(L"", Resize(20, 10, 280, 40), false, false, wANRace, -1, false);
-    stANRace->setTextAlignment(EGUIA_CENTER, EGUIA_CENTER);
+    stANRace->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	for(int filter = 0x1, i = 0; i < RACES_COUNT; filter <<= 1, ++i)
 		chkRace[i] = env->addCheckBox(false, Resize(30 + (i % 3) * 90, 60 + (i / 3) * 50, 100 + (i % 3) * 90, 110 + (i / 3) * 50),
 		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter).c_str());
@@ -937,9 +964,9 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	stDMMessage = env->addStaticText(L"", Resize(20, 25, 290, 45), false, false, wDMQuery);
 	stDMMessage2 = env->addStaticText(L"", Resize(20, 50, 330, 90), false, false, wDMQuery, -1, true);
 	stDMMessage2->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	ebDMName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(20, 50, 330, 90), wDMQuery, -1);
+	ebDMName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(20, 50, 330, 90), wDMQuery, -1);
 	ebDMName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	cbDMCategory = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(20, 50, 330, 90), wDMQuery, -1);
+	cbDMCategory = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(20, 50, 330, 90), wDMQuery, -1);
 	stDMMessage2->setVisible(false);
 	ebDMName->setVisible(false);
 	cbDMCategory->setVisible(false);
@@ -953,13 +980,13 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	scrPackCards->setVisible(false);
         ChangeToIGUIImageButton(btnDMCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	stDBCategory = env->addStaticText(dataManager.GetSysString(1300), Resize(10, 10, 60, 50), false, false, wDeckEdit);
-	cbDBCategory = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBCATEGORY);
+	cbDBCategory = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBCATEGORY);
 	cbDBCategory->setMaxSelectionRows(15);
-	cbDBDecks = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBDECKS);
+	cbDBDecks = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(0, 0, 0, 0), wDeckEdit, COMBOBOX_DBDECKS);
 	cbDBDecks->setMaxSelectionRows(15);
 	btnSaveDeck = env->addButton(Resize(225, 35, 280, 75), wDeckEdit, BUTTON_SAVE_DECK, dataManager.GetSysString(1302));
         ChangeToIGUIImageButton(btnSaveDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	ebDeckname = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(10, 80, 220, 120), wDeckEdit, -1);
+	ebDeckname = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(10, 80, 220, 120), wDeckEdit, -1);
 	ebDeckname->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnSaveDeckAs = env->addButton(Resize(225, 80, 280, 120), wDeckEdit, BUTTON_SAVE_DECK_AS, dataManager.GetSysString(1303));
         ChangeToIGUIImageButton(btnSaveDeckAs, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1005,15 +1032,15 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wFilter->setVisible(false);
 	    ChangeToIGUIImageWindow(wFilter, &bgFilter, imageManager.tDialog_L);
 	env->addStaticText(dataManager.GetSysString(1311), Resize(10, 5, 70, 25), false, false, wFilter);
-	cbCardType = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 3, 120, 23), wFilter, COMBOBOX_MAINTYPE);
+	cbCardType = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 3, 120, 23), wFilter, COMBOBOX_MAINTYPE);
 	cbCardType->addItem(dataManager.GetSysString(1310));
 	cbCardType->addItem(dataManager.GetSysString(1312));
 	cbCardType->addItem(dataManager.GetSysString(1313));
 	cbCardType->addItem(dataManager.GetSysString(1314));
-	cbCardType2 = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(125, 3, 200, 23), wFilter, COMBOBOX_SECONDTYPE);
+	cbCardType2 = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(125, 3, 200, 23), wFilter, COMBOBOX_SECONDTYPE);
 	cbCardType2->addItem(dataManager.GetSysString(1310), 0);
 	env->addStaticText(dataManager.GetSysString(1315), Resize(205, 5, 280, 25), false, false, wFilter);
-	cbLimit = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(260, 3, 390, 23), wFilter, COMBOBOX_LIMIT);
+	cbLimit = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(260, 3, 390, 23), wFilter, COMBOBOX_LIMIT);
 	cbLimit->addItem(dataManager.GetSysString(1310));
 	cbLimit->addItem(dataManager.GetSysString(1316));
 	cbLimit->addItem(dataManager.GetSysString(1317));
@@ -1024,31 +1051,31 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	cbLimit->addItem(dataManager.GetSysString(1484));
 	cbLimit->addItem(dataManager.GetSysString(1485));
 	env->addStaticText(dataManager.GetSysString(1319), Resize(10, 28, 70, 48), false, false, wFilter);
-	cbAttribute = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 26, 190, 46), wFilter, COMBOBOX_ATTRIBUTE);
+	cbAttribute = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 26, 190, 46), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter != 0x80; filter <<= 1)
 		cbAttribute->addItem(dataManager.FormatAttribute(filter).c_str(), filter);
 	env->addStaticText(dataManager.GetSysString(1321), Resize(10, 51, 70, 71), false, false, wFilter);
-	cbRace = CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 40 + 75 / 6, 190, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
+	cbRace = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 40 + 75 / 6, 190, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
 	cbRace->addItem(dataManager.GetSysString(1310), 0);
 	for(int filter = 0x1; filter < (1 << RACES_COUNT); filter <<= 1)
 		cbRace->addItem(dataManager.FormatRace(filter).c_str(), filter);
 	env->addStaticText(dataManager.GetSysString(1322), Resize(205, 28, 280, 48), false, false, wFilter);
-	ebAttack = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 26, 340, 46), wFilter, EDITBOX_INPUTS);
+	ebAttack = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 26, 340, 46), wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1323), Resize(205, 51, 280, 71), false, false, wFilter);
-	ebDefense = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 49, 340, 69), wFilter, EDITBOX_INPUTS);
+	ebDefense = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 49, 340, 69), wFilter, EDITBOX_INPUTS);
 	ebDefense->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1324), Resize(10, 74, 80, 94), false, false, wFilter);
-	ebStar = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(60, 60 + 100 / 6, 100, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
+	ebStar = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(60, 60 + 100 / 6, 100, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebStar->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1336), Resize(101, 60 + 100 / 6, 150 * xScale, 82 + 100 / 6), false, false, wFilter);
-	ebScale = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(150, 60 + 100 / 6, 190, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
+	ebScale = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(150, 60 + 100 / 6, 190, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebScale->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	env->addStaticText(dataManager.GetSysString(1325), Resize(205, 60 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
-	ebCardName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 72, 390, 92), wFilter, EDITBOX_KEYWORD);
+	ebCardName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 72, 390, 92), wFilter, EDITBOX_KEYWORD);
 	ebCardName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnEffectFilter = env->addButton(Resize(345, 28, 390, 69), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326));
 		ChangeToIGUIImageButton(btnEffectFilter, imageManager.tButton_C, imageManager.tButton_C_pressed);
@@ -1126,7 +1153,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	env->addStaticText(dataManager.GetSysString(1349), Resize(320, 30, 550, 50), false, true, wReplay);
 	stReplayInfo = env->addStaticText(L"", Resize(320, 60, 570, 315), false, true, wReplay);
 	env->addStaticText(dataManager.GetSysString(1353), Resize(320, 180, 550, 200), false, true, wReplay);
-	ebRepStartTurn = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(320, 210, 430, 250), wReplay, -1);
+	ebRepStartTurn = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(320, 210, 430, 250), wReplay, -1);
 	ebRepStartTurn->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnExportDeck = env->addButton(Resize(440, 260, 550, 300), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1369));
         ChangeToIGUIImageButton(btnExportDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1159,7 +1186,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 		cbBotDeck->setVisible(false);
         btnBotDeckSelect = env->addButton(Resize(310, 110, 530, 150), tabBot, BUTTON_BOT_DECK_SELECT, L"");
 		btnBotDeckSelect->setVisible(false);
-		cbBotRule =  CAndroidGUIComboBox::addAndroidComboBox(env, Resize(310, 160, 530, 200), tabBot, COMBOBOX_BOT_RULE);
+		cbBotRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(310, 160, 530, 200), tabBot, COMBOBOX_BOT_RULE);
 		cbBotRule->addItem(dataManager.GetSysString(1262));
 		cbBotRule->addItem(dataManager.GetSysString(1263));
 		cbBotRule->addItem(dataManager.GetSysString(1264));
@@ -1191,7 +1218,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wReplaySave->setVisible(false);
         ChangeToIGUIImageWindow(wReplaySave, &bgReplaySave, imageManager.tDialog_L);
 	env->addStaticText(dataManager.GetSysString(1342), Resize(20, 25, 290, 45), false, false, wReplaySave);
-	ebRSName = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(20, 50, 370, 90), wReplaySave, -1);
+	ebRSName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(20, 50, 370, 90), wReplaySave, -1);
 	ebRSName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	btnRSYes = env->addButton(Resize(70, 120, 180, 170), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
         ChangeToIGUIImageButton(btnRSYes, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1217,7 +1244,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
         ChangeToIGUIImageButton(btnReplayExit, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//chat
     imgChat = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
-    imgChat->setImageSize(core::dimension2di(28 * yScale, 28 * yScale));
+    imgChat->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
     if (gameConf.chkIgnore1) {
         imgChat->setImage(imageManager.tShut);
     } else {
@@ -1228,7 +1255,7 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
-	ebChatInput = CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
+	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
 	//swap
 	btnSpectatorSwap = env->addButton(Resize_Y(3 + CARD_IMG_WIDTH, 70, 310, 70 + 40), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
         ChangeToIGUIImageButton(btnSpectatorSwap, imageManager.tButton_S, imageManager.tButton_S_pressed);
@@ -1304,15 +1331,15 @@ bool Game::Initialize(ANDROID_APP app, android::InitOptions *options) {
 	device->setEventReceiver(&menuHandler);
 	LoadConfig();
 	env->getSkin()->setFont(guiFont);
-	env->getSkin()->setSize(EGDS_CHECK_BOX_WIDTH, (gameConf.textfontsize + 10) * yScale);
+	env->getSkin()->setSize(irr::gui::EGDS_CHECK_BOX_WIDTH, (gameConf.textfontsize + 10) * yScale);
 	env->setFocus(wMainMenu);
-	for (u32 i = 0; i < EGDC_COUNT; ++i) {
-		SColor col = env->getSkin()->getColor((EGUI_DEFAULT_COLOR)i);
+	for (int i = 0; i < irr::gui::EGDC_COUNT; ++i) {
+		auto col = env->getSkin()->getColor((irr::gui::EGUI_DEFAULT_COLOR)i);
 		col.setAlpha(200);
-		env->getSkin()->setColor((EGUI_DEFAULT_COLOR)i, col);
+		env->getSkin()->setColor((irr::gui::EGUI_DEFAULT_COLOR)i, col);
 	}
 #ifdef _IRR_ANDROID_PLATFORM_
-IGUIStaticText *text = env->addStaticText(L"", rect<s32>(1,1,100,45), false, false, 0, GUI_INFO_FPS);
+irr::gui::IGUIStaticText *text = env->addStaticText(L"", Resize(1,1,100,45), false, false, 0, GUI_INFO_FPS);
 #endif
 	hideChat = false;
 	hideChatTimer = 0;
@@ -1326,14 +1353,14 @@ void Game::MainLoop() {
 	BuildProjectionMatrix(mProjection, -0.90f, 0.45f, -0.42f, 0.42f, 1.0f, 100.0f);
 	camera->setProjectionMatrix(mProjection);
 
-	mProjection.buildCameraLookAtMatrixLH(vector3df(4.2f, 8.0f, 7.8f), vector3df(4.2f, 0, 0), vector3df(0, 0, 1));
+	mProjection.buildCameraLookAtMatrixLH(irr::core::vector3df(4.2f, 8.0f, 7.8f), irr::core::vector3df(4.2f, 0, 0), irr::core::vector3df(0, 0, 1));
 	camera->setViewMatrixAffector(mProjection);
-	smgr->setAmbientLight(SColorf(1.0f, 1.0f, 1.0f));
+	smgr->setAmbientLight(irr::video::SColorf(1.0f, 1.0f, 1.0f));
 	float atkframe = 0.1f;
 	irr::ITimer* timer = device->getTimer();
 	timer->setTime(0);
     // get FPS
-	IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId ( GUI_INFO_FPS );
+	irr::gui::IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId ( GUI_INFO_FPS );
 	int fps = 0;
 	int cur_time = 0;
 #if defined(_IRR_ANDROID_PLATFORM_)
@@ -1341,23 +1368,23 @@ void Game::MainLoop() {
 	ogles2TrasparentAlpha = 0;
 	ogles2BlendTexture = 0;
 	if (glversion == 0 || glversion == 2) {
-		ogles2Solid = video::EMT_SOLID;
-		ogles2TrasparentAlpha = video::EMT_TRANSPARENT_ALPHA_CHANNEL;
-		ogles2BlendTexture = video::EMT_ONETEXTURE_BLEND;
+		ogles2Solid = irr::video::EMT_SOLID;
+		ogles2TrasparentAlpha = irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL;
+		ogles2BlendTexture = irr::video::EMT_ONETEXTURE_BLEND;
 	} else {
-		io::path solidvsFileName = "media/ogles2customsolid.frag";
-		io::path TACvsFileName = "media/ogles2customTAC.frag";
-		io::path blendvsFileName = "media/ogles2customblend.frag";
-		io::path psFileName = "media/ogles2custom.vert";
-		if (!driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
-				!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1))
+        irr::io::path solidvsFileName = "media/ogles2customsolid.frag";
+        irr::io::path TACvsFileName = "media/ogles2customTAC.frag";
+        irr::io::path blendvsFileName = "media/ogles2customblend.frag";
+        irr::io::path psFileName = "media/ogles2custom.vert";
+		if (!driver->queryFeature(irr::video::EVDF_PIXEL_SHADER_1_1) &&
+				!driver->queryFeature(irr::video::EVDF_ARB_FRAGMENT_PROGRAM_1))
 		{
 			ALOGD("cc game: WARNING: Pixel shaders disabled "
 					"because of missing driver/hardware support.");
 			psFileName = "";
 		}
-		if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
-				!driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
+		if (!driver->queryFeature(irr::video::EVDF_VERTEX_SHADER_1_1) &&
+				!driver->queryFeature(irr::video::EVDF_ARB_VERTEX_PROGRAM_1))
 		{
 			ALOGD("cc game: WARNING: Vertex shaders disabled "
 					"because of missing driver/hardware support.");
@@ -1365,48 +1392,48 @@ void Game::MainLoop() {
 			TACvsFileName = "";
 			blendvsFileName = "";
 		}
-		video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
+        irr::video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
 		if (gpu) {
-			const video::E_GPU_SHADING_LANGUAGE shadingLanguage = video::EGSL_DEFAULT;
+			const irr::video::E_GPU_SHADING_LANGUAGE shadingLanguage = irr::video::EGSL_DEFAULT;
 			ogles2Solid = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", video::EVST_VS_1_1,
-					solidvsFileName, "pixelMain", video::EPST_PS_1_1,
-					&customShadersCallback, video::EMT_SOLID, 0, shadingLanguage);
+					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+					solidvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+					&customShadersCallback, irr::video::EMT_SOLID, 0, shadingLanguage);
 			ogles2TrasparentAlpha = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", video::EVST_VS_1_1,
-					TACvsFileName, "pixelMain", video::EPST_PS_1_1,
-					&customShadersCallback, video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0 , shadingLanguage);
+					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+					TACvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+					&customShadersCallback, irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0 , shadingLanguage);
 			ogles2BlendTexture = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", video::EVST_VS_1_1,
-					blendvsFileName, "pixelMain", video::EPST_PS_1_1,
-					&customShadersCallback, video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
+					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+					blendvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+					&customShadersCallback, irr::video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
 			ALOGD("cc game:ogles2Sold = %d", ogles2Solid);
 			ALOGD("cc game:ogles2BlendTexture = %d", ogles2BlendTexture);
 			ALOGD("cc game:ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
-	matManager.mCard.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mTexture.MaterialType = (video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mBackLine.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mSelField.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mOutLine.MaterialType = (video::E_MATERIAL_TYPE)ogles2Solid;
-	matManager.mTRTexture.MaterialType = (video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mATK.MaterialType = (video::E_MATERIAL_TYPE)ogles2BlendTexture;
+	matManager.mCard.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+	matManager.mTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+	matManager.mBackLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+	matManager.mSelField.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+	matManager.mOutLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
+	matManager.mTRTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+	matManager.mATK.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
 	if (!isNPOTSupported) {
-		matManager.mCard.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mCard.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
+		matManager.mCard.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mCard.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mBackLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mBackLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mSelField.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mSelField.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mOutLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mOutLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mTRTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mTRTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mATK.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+		matManager.mATK.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 	}
 #endif
 	while(device->run()) {
@@ -1415,26 +1442,25 @@ void Game::MainLoop() {
 		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
 		atkframe += 0.1f;
 		atkdy = (float)sin(atkframe);
-		driver->beginScene(true, true, SColor(0, 0, 0, 0));
+		driver->beginScene(true, true, irr::video::SColor(0, 0, 0, 0));
 #ifdef _IRR_ANDROID_PLATFORM_
-		driver->getMaterial2D().MaterialType = (video::E_MATERIAL_TYPE)ogles2Solid;
+		driver->getMaterial2D().MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
 		if (!isNPOTSupported) {
-			driver->getMaterial2D().TextureLayer[0].TextureWrapU = ETC_CLAMP_TO_EDGE;
-			driver->getMaterial2D().TextureLayer[0].TextureWrapV = ETC_CLAMP_TO_EDGE;
+			driver->getMaterial2D().TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+			driver->getMaterial2D().TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 		}
 		driver->enableMaterial2D(true);
-		driver->getMaterial2D().ZBuffer = ECFN_NEVER;
+		driver->getMaterial2D().ZBuffer = irr::video::ECFN_NEVER;
 		if(imageManager.tBackGround) {
-			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
 		}
 		if(imageManager.tBackGround_menu) {
-			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
 		}
 		if(imageManager.tBackGround_deck) {
-			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
 		}
 		driver->enableMaterial2D(false);
-#endif
 		gMutex.lock();
 		if(dInfo.isStarted) {
 			DrawBackImage(imageManager.tBackGround);
@@ -1446,7 +1472,6 @@ void Game::MainLoop() {
 			driver->clearZBuffer();
 		} else if(is_building) {
 			DrawBackImage(imageManager.tBackGround_deck);
-#ifdef _IRR_ANDROID_PLATFORM_
 			driver->enableMaterial2D(true);
 			DrawDeckBd();
 			driver->enableMaterial2D(false);
@@ -1457,11 +1482,8 @@ void Game::MainLoop() {
 		DrawGUI();
 		DrawSpec();
 		driver->enableMaterial2D(false);
-#endif
 		gMutex.unlock();
-#ifdef _IRR_ANDROID_PLATFORM_
 		playBGM();
-#endif
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
@@ -1485,14 +1507,11 @@ void Game::MainLoop() {
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		if(cur_time >= 1000) {
-
-#ifdef _IRR_ANDROID_PLATFORM_
 			if ( stat ) {
-				stringw str = L"FPS: ";
-				str += (s32)device->getVideoDriver()->getFPS();
+				irr::core::stringw str = L"FPS: ";
+				str += (irr::s32)device->getVideoDriver()->getFPS();
 				stat->setText ( str.c_str() );
 			}
-#endif
 			fps = 0;
 			cur_time -= 1000;
 			timer->setTime(0);
@@ -1502,10 +1521,9 @@ void Game::MainLoop() {
 					RefreshTimeDisplay();
 				}
 		}
-#ifdef _IRR_ANDROID_PLATFORM_
 		device->yield(); // probably nicer to the battery
 #endif
-}
+	}
 	DuelClient::StopClient(true);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
@@ -1532,7 +1550,7 @@ void Game::RefreshTimeDisplay() {
 	myswprintf(dInfo.str_time_left[0], L"%d", dInfo.time_left[0]);
 	myswprintf(dInfo.str_time_left[1], L"%d", dInfo.time_left[1]);
 }
-void Game::BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar) {
+void Game::BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar) {
 	for(int i = 0; i < 16; ++i)
 		mProjection[i] = 0;
 	mProjection[0] = 2.0f * znear / (right - left);
@@ -1543,7 +1561,7 @@ void Game::BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 
 	mProjection[11] = 1.0f;
 	mProjection[14] = znear * zfar / (znear - zfar);
 }
-void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text) {
+void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text) {
 	std::wstring format_text;
 	format_text = SetStaticText(pControl, cWidth, font, text);
 	if(font->getDimension(format_text.c_str()).Height <= cHeight) {
@@ -1553,23 +1571,23 @@ void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cH
 		return;
 	}
 	format_text = SetStaticText(pControl, cWidth, font, text);
-	u32 fontheight = font->getDimension(L"A").Height + font->getKerningHeight();
-	u32 step = (font->getDimension(format_text.c_str()).Height - cHeight) / fontheight + 1;
+	irr::u32 fontheight = font->getDimension(L"A").Height + font->getKerningHeight();
+	irr::u32 step = (font->getDimension(format_text.c_str()).Height - cHeight) / fontheight + 1;
 	scrCardText->setVisible(true);
 	scrCardText->setMin(0);
 	scrCardText->setMax(step);
 	scrCardText->setPos(0);
 }
-std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos) {
+std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos) {
 	int pbuffer = 0;
-	u32 _width = 0, _height = 0;
+	irr::u32 _width = 0, _height = 0;
 	wchar_t prev = 0;
 	wchar_t strBuffer[4096];
 	std::wstring ret;
 
 	for(size_t i = 0; text[i] != 0 && i < std::wcslen(text); ++i) {
 		wchar_t c = text[i];
-		u32 w = font->getCharDimension(c).Width + font->getKerningWidth(c, prev);
+		irr::u32 w = font->getCharDimension(c).Width + font->getKerningWidth(c, prev);
 		prev = c;
 		if(text[i] == L'\r') {
 			continue;
@@ -1614,9 +1632,9 @@ void Game::LoadExpansions() {
 	}
 	closedir(dir);
 #endif
-	for(u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
-		const IFileList* archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
-		for(u32 j = 0; j < archive->getFileCount(); ++j) {
+	for(irr::u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
+		auto archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
+		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
 			wchar_t fname[1024];
 			const char* uname = archive->getFullFileName(j).c_str();
 			BufferIO::DecodeUTF8(uname, fname);
@@ -1629,7 +1647,7 @@ void Game::LoadExpansions() {
 				dataManager.LoadStrings(reader);
 				continue;
 			}
-			if (!wcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}
@@ -1681,12 +1699,12 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBo
         }
     }
 	wchar_t catepath[256];
-	deckManager.GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText(), cbCategory == mainGame->cbDBCategory);
+	DeckManager::GetCategoryPath(catepath, cbCategory->getSelected(), cbCategory->getText(), cbCategory == mainGame->cbDBCategory);
 	cbDeck->clear();
 	RefreshDeck(catepath, [cbDeck](const wchar_t* item) { cbDeck->addItem(item); });
 }
 void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
-	if(!wcsncasecmp(deckpath, L"./pack", 6)) {
+	if(!mywcsncasecmp(deckpath, L"./pack", 6)) {
 		for(auto& pack : deckBuilder.expansionPacks) {
 			// add pack/xxx.ydk
 			additem(pack.substr(5, pack.size() - 9).c_str());
@@ -1722,29 +1740,29 @@ void Game::RefreshBot() {
 	if(!gameConf.enable_bot_mode)
 		return;
 	botInfo.clear();
-	FILE* fp = fopen("bot.conf", "r");
+	FILE* fp = std::fopen("bot.conf", "r");
 	char linebuf[256]{};
 	char strbuf[256]{};
 	if(fp) {
-		while(fgets(linebuf, 256, fp)) {
+		while(std::fgets(linebuf, 256, fp)) {
 			if(linebuf[0] == '#')
 				continue;
 			if(linebuf[0] == '!') {
 				BotInfo newinfo;
-				if (sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "!%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.name);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
-				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.command);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
-				if (sscanf(linebuf, "%240[^\n]", strbuf) != 1)
+				if (std::sscanf(linebuf, "%240[^\n]", strbuf) != 1)
 					continue;
 				BufferIO::DecodeUTF8(strbuf, newinfo.desc);
-				if (!fgets(linebuf, 256, fp))
+				if (!std::fgets(linebuf, 256, fp))
 					break;
 				newinfo.support_master_rule_3 = !!std::strstr(linebuf, "SUPPORT_MASTER_RULE_3");
 				newinfo.support_new_master_rule = !!std::strstr(linebuf, "SUPPORT_NEW_MASTER_RULE");
@@ -1758,7 +1776,7 @@ void Game::RefreshBot() {
 				continue;
 			}
 		}
-		fclose(fp);
+		std::fclose(fp);
 	}
 	lstBotList->clear();
 	stBotInfo->setText(L"");
@@ -1789,44 +1807,44 @@ void Game::LoadConfig() {
 	wchar_t wstr[256];
 	gameConf.antialias = 1;
 	gameConf.serverport = 7911;
-	gameConf.textfontsize = android::getIntSetting(appMain, "textfontsize", 18);;
+	gameConf.textfontsize = irr::android::getIntSetting(appMain, "textfontsize", 18);;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
-    BufferIO::DecodeUTF8(android::getLastCategory(appMain).c_str(), wstr);;
+    BufferIO::DecodeUTF8(irr::android::getLastCategory(appMain).c_str(), wstr);;
     BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
 
-	BufferIO::DecodeUTF8(android::getLastDeck(appMain).c_str(), wstr);
+	BufferIO::DecodeUTF8(irr::android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
 
-	BufferIO::DecodeUTF8(android::getFontPath(appMain).c_str(), wstr);
+	BufferIO::DecodeUTF8(irr::android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
 	gameConf.lasthost[0] = 0;
 	gameConf.lastport[0] = 0;
 	gameConf.roompass[0] = 0;
 	//helper
-	gameConf.chkMAutoPos = android::getIntSetting(appMain, "chkMAutoPos", 0);
-	gameConf.chkSTAutoPos = android::getIntSetting(appMain, "chkSTAutoPos", 0);
-	gameConf.chkRandomPos = android::getIntSetting(appMain, "chkRandomPos", 0);
-	gameConf.chkAutoChain = android::getIntSetting(appMain, "chkAutoChain", 0);
-	gameConf.chkWaitChain = android::getIntSetting(appMain, "chkWaitChain", 0);
+	gameConf.chkMAutoPos = irr::android::getIntSetting(appMain, "chkMAutoPos", 0);
+	gameConf.chkSTAutoPos = irr::android::getIntSetting(appMain, "chkSTAutoPos", 0);
+	gameConf.chkRandomPos = irr::android::getIntSetting(appMain, "chkRandomPos", 0);
+	gameConf.chkAutoChain = irr::android::getIntSetting(appMain, "chkAutoChain", 0);
+	gameConf.chkWaitChain = irr::android::getIntSetting(appMain, "chkWaitChain", 0);
 	//system
-	gameConf.chkIgnore1 = android::getIntSetting(appMain, "chkIgnore1", 0);
-	gameConf.chkIgnore2 = android::getIntSetting(appMain, "chkIgnore2", 0);
-	gameConf.control_mode = android::getIntSetting(appMain, "control_mode", 0);
-	gameConf.draw_field_spell = android::getIntSetting(appMain, "draw_field_spell", 1);
-	gameConf.chkIgnoreDeckChanges = android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
-	gameConf.auto_save_replay = android::getIntSetting(appMain, "auto_save_replay", 0);
-	gameConf.quick_animation = android::getIntSetting(appMain, "quick_animation", 0);
-	gameConf.draw_single_chain = android::getIntSetting(appMain, "draw_single_chain", 0);
-	gameConf.enable_sound = android::getIntSetting(appMain, "enable_sound", 1);
-	gameConf.sound_volume = android::getIntSetting(appMain, "sound_volume", 50);
-	gameConf.enable_music = android::getIntSetting(appMain, "enable_music", 1);
-	gameConf.music_volume = android::getIntSetting(appMain, "music_volume", 50);
-	gameConf.music_mode = android::getIntSetting(appMain, "music_mode", 1);
-	gameConf.use_lflist = android::getIntSetting(appMain, "use_lflist", 1);
-	gameConf.chkDefaultShowChain = android::getIntSetting(appMain, "chkDefaultShowChain", 0);
-	gameConf.hide_player_name = android::getIntSetting(appMain, "chkHidePlayerName", 0);
+	gameConf.chkIgnore1 = irr::android::getIntSetting(appMain, "chkIgnore1", 0);
+	gameConf.chkIgnore2 = irr::android::getIntSetting(appMain, "chkIgnore2", 0);
+	gameConf.control_mode = irr::android::getIntSetting(appMain, "control_mode", 0);
+	gameConf.draw_field_spell = irr::android::getIntSetting(appMain, "draw_field_spell", 1);
+	gameConf.chkIgnoreDeckChanges = irr::android::getIntSetting(appMain, "chkIgnoreDeckChanges", 0);
+	gameConf.auto_save_replay = irr::android::getIntSetting(appMain, "auto_save_replay", 0);
+	gameConf.quick_animation = irr::android::getIntSetting(appMain, "quick_animation", 0);
+	gameConf.draw_single_chain = irr::android::getIntSetting(appMain, "draw_single_chain", 0);
+	gameConf.enable_sound = irr::android::getIntSetting(appMain, "enable_sound", 1);
+	gameConf.sound_volume = irr::android::getIntSetting(appMain, "sound_volume", 50);
+	gameConf.enable_music = irr::android::getIntSetting(appMain, "enable_music", 1);
+	gameConf.music_volume = irr::android::getIntSetting(appMain, "music_volume", 50);
+	gameConf.music_mode = irr::android::getIntSetting(appMain, "music_mode", 1);
+	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_lflist", 1);
+	gameConf.chkDefaultShowChain = irr::android::getIntSetting(appMain, "chkDefaultShowChain", 0);
+	gameConf.hide_player_name = irr::android::getIntSetting(appMain, "chkHidePlayerName", 0);
 	//defult Setting without checked
 	gameConf.default_rule = DEFAULT_DUEL_RULE;
     gameConf.hide_setname = 0;
@@ -1841,50 +1859,50 @@ void Game::LoadConfig() {
 }
 
 void Game::SaveConfig() {
-    android::saveIntSetting(appMain, "textfontsize", gameConf.textfontsize);
+    irr::android::saveIntSetting(appMain, "textfontsize", gameConf.textfontsize);
 	//helper
 	gameConf.chkMAutoPos = chkMAutoPos->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "chkMAutoPos", gameConf.chkMAutoPos);
+    irr::android::saveIntSetting(appMain, "chkMAutoPos", gameConf.chkMAutoPos);
 	gameConf.chkSTAutoPos = chkSTAutoPos->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkSTAutoPos", gameConf.chkSTAutoPos);
+    irr::android::saveIntSetting(appMain, "chkSTAutoPos", gameConf.chkSTAutoPos);
 	gameConf.chkRandomPos = chkRandomPos->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkRandomPos", gameConf.chkRandomPos);
+    irr::android::saveIntSetting(appMain, "chkRandomPos", gameConf.chkRandomPos);
 	gameConf.chkAutoChain = chkAutoChain->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkAutoChain", gameConf.chkAutoChain);
+    irr::android::saveIntSetting(appMain, "chkAutoChain", gameConf.chkAutoChain);
     gameConf.chkWaitChain = chkWaitChain->isChecked() ? 1 : 0;
-    	android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
+    irr::android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
 
 	//system
 	gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
+    irr::android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
 	gameConf.chkIgnore2 = chkIgnore2->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
+    irr::android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
 	gameConf.chkIgnoreDeckChanges = chkIgnoreDeckChanges->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
+    irr::android::saveIntSetting(appMain, "chkIgnoreDeckChanges", gameConf.chkIgnoreDeckChanges);
 	gameConf.auto_save_replay = chkAutoSaveReplay->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "auto_save_replay", gameConf.auto_save_replay);
+    irr::android::saveIntSetting(appMain, "auto_save_replay", gameConf.auto_save_replay);
 	gameConf.draw_field_spell = chkDrawFieldSpell->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
+    irr::android::saveIntSetting(appMain, "draw_field_spell", gameConf.draw_field_spell);
     gameConf.quick_animation = chkQuickAnimation->isChecked() ? 1 : 0;
-        android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
+    irr::android::saveIntSetting(appMain, "quick_animation", gameConf.quick_animation);
 	gameConf.draw_single_chain = chkDrawSingleChain->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "draw_single_chain", gameConf.draw_single_chain);
+    irr::android::saveIntSetting(appMain, "draw_single_chain", gameConf.draw_single_chain);
 	gameConf.enable_sound = chkEnableSound->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "enable_sound", gameConf.enable_sound);
+    irr::android::saveIntSetting(appMain, "enable_sound", gameConf.enable_sound);
 	gameConf.enable_music = chkEnableMusic->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
+    irr::android::saveIntSetting(appMain, "enable_music", gameConf.enable_music);
 	gameConf.music_mode = chkMusicMode->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "music_mode", gameConf.music_mode);
+    irr::android::saveIntSetting(appMain, "music_mode", gameConf.music_mode);
 	gameConf.sound_volume = (double)scrSoundVolume->getPos();
-	    android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
+    irr::android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
-	    android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
+    irr::android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
 	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
+    irr::android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
 	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
-	    android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
+    irr::android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
 	gameConf.hide_player_name  = chkHidePlayerName->isChecked() ? 1 : 0;
-		android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.hide_player_name);
+    irr::android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.hide_player_name);
 //gameConf.control_mode = control_mode->isChecked()?1:0;
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
@@ -2043,28 +2061,59 @@ void Game::ClearChatMsg() {
 		chatTiming[i] = 0;
 	}
 }
+
+std::string WCharToUTF8(const wchar_t* input) {
+    std::string output;
+    if(input == nullptr) return output;
+    char buffer[1024];
+    wcstombs(buffer, input, 1024);
+    output = buffer;
+    return output;
+}
+
 void Game::AddDebugMsg(const char* msg) {
-	if (enable_log & 0x1) {
-		wchar_t wbuf[1024];
-		BufferIO::DecodeUTF8(msg, wbuf);
-		AddChatMsg(wbuf, 9);
-	}
-	if (enable_log & 0x2) {
-		char msgbuf[1040];
-		snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
-		ErrorLog(msgbuf);
-	}
+    std::string message(msg);
+    unsigned int cardID = 0;
+    std::regex cardIdPattern(R"((\d{8}))");
+    auto words_begin = std::sregex_iterator(message.begin(), message.end(), cardIdPattern);
+    auto words_end = std::sregex_iterator();
+    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+        std::smatch match = *i;
+        cardID = std::stoul(match.str());
+        break;
+    }
+    std::string cardName = "Unknown";
+    if(cardID != 0) {
+        cardName = WCharToUTF8(dataManager.GetName(cardID));
+    }
+    std::string fullMsg;
+    if(cardID != 0 && cardName != "???") {
+        fullMsg += cardName;
+        fullMsg += ":";
+    } else {
+        fullMsg += "";
+    }
+    fullMsg += message;
+    if (enable_log & 0x1) {
+        wchar_t wbuf[1024];
+        BufferIO::DecodeUTF8(fullMsg.c_str(), wbuf);
+        AddChatMsg(wbuf, 9);
+    }
+    if (enable_log & 0x2) {
+        char msgbuf[1040];
+        std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", fullMsg.c_str());
+        ErrorLog(msgbuf);
+    }
 }
 void Game::ErrorLog(const char* msg) {
-	FILE* fp = fopen("error.log", "at");
+	FILE* fp = std::fopen("error.log", "at");
 	if(!fp)
 		return;
-	time_t nowtime = time(nullptr);
-	tm* localedtime = localtime(&nowtime);
+	time_t nowtime = std::time(nullptr);
 	char timebuf[40];
-	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
-	fprintf(fp, "[%s]%s\n", timebuf, msg);
-	fclose(fp);
+	std::strftime(timebuf, sizeof timebuf, "%Y-%m-%d %H:%M:%S", std::localtime(&nowtime));
+	std::fprintf(fp, "[%s]%s\n", timebuf, msg);
+	std::fclose(fp);
 }
 void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 	SetStaticText(stSysMessage, 370 * xScale, guiFont, text);
@@ -2186,67 +2235,67 @@ const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
 }
 void Game::ResizeChatInputWindow() {
-	s32 x = 305;
+	irr::s32 x = 305;
 	if(is_building) x = 802;
 	wChat->setRelativePosition(Resize(x, GAME_HEIGHT - 35, GAME_WIDTH - 4, GAME_HEIGHT));
-	ebChatInput->setRelativePosition(recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
+	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
 }
-recti Game::Resize(s32 x, s32 y, s32 x2, s32 y2) {
+irr::core::recti Game::Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
 	x = x * xScale;
 	y = y * yScale;
 	x2 = x2 * xScale;
 	y2 = y2 * yScale;
-	return recti(x, y, x2, y2);
+	return irr::core::recti(x, y, x2, y2);
 }
-recti Game::Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy2) {
+irr::core::recti Game::Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2) {
 	x = x * xScale + dx;
 	y = y * yScale + dy;
 	x2 = x2 * xScale + dx2;
 	y2 = y2 * yScale + dy2;
-	return recti(x, y, x2, y2);
+	return irr::core::recti(x, y, x2, y2);
 }
-position2di Game::Resize(s32 x, s32 y) {
+irr::core::vector2di Game::Resize(irr::s32 x, irr::s32 y) {
 	x = x * xScale;
 	y = y * yScale;
-	return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
-position2di Game::ResizeReverse(s32 x, s32 y) {
+irr::core::vector2di Game::ResizeReverse(irr::s32 x, irr::s32 y) {
 	x = x / xScale;
 	y = y / yScale;
-	return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
-recti Game::ResizeWin(s32 x, s32 y, s32 x2, s32 y2) {
-	s32 w = x2 - x;
-	s32 h = y2 - y;
+irr::core::recti Game::ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
+	irr::s32 w = x2 - x;
+	irr::s32 h = y2 - y;
 	x = (x + w / 2) * xScale - w / 2;
 	y = (y + h / 2) * yScale - h / 2;
 	x2 = w + x;
 	y2 = h + y;
-	return recti(x, y, x2, y2);
+	return irr::core::recti(x, y, x2, y2);
 }
-recti Game::ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width) {
+irr::core::recti Game::ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width) {
 	x = x * xScale - width / 2;
 	y = y * yScale;
 	x2 = x2 * xScale;
 	y2 = y2 * yScale;
-	return recti(x, y, x2, y2);
+	return irr::core::recti(x, y, x2, y2);
 }
-recti Game::Resize_Y(s32 x, s32 y, s32 x2, s32 y2) {
+irr::core::recti Game::Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
     x = x * yScale;
-    y = y * yScale;
+	y = y * yScale;
     x2 = x2 * yScale;
     y2 = y2 * yScale;
-    return recti(x, y, x2, y2);
+	return irr::core::recti(x, y, x2, y2);
 }
-position2di Game::Resize_Y(s32 x, s32 y) {
+irr::core::vector2di Game::Resize_Y(irr::s32 x, irr::s32 y) {
     x = x * yScale;
     y = y * yScale;
-    return position2di(x, y);
+	return irr::core::vector2di(x, y);
 }
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);
-    recti pos = window->getRelativePosition();
-	*pWindowBackground = env->addImage(rect<s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
+    irr::core::recti pos = window->getRelativePosition();
+	*pWindowBackground = env->addImage(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
 	irr::gui::IGUIImage* bgwindow = *pWindowBackground;
 	bgwindow->setImage(image);
 	bgwindow->setScaleImage(true);
@@ -2261,7 +2310,7 @@ void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITe
 }
 
 void Game::OnGameClose() {
-	android::onGameExit(appMain);
+	irr::android::onGameExit(appMain);
     this->device->closeDevice();
 }
 }

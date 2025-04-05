@@ -17,13 +17,14 @@ namespace irr {
 namespace ygo {
 constexpr int MAX_STRING_ID = 0x7ff;
 constexpr unsigned int MIN_CARD_ID = (unsigned int)(MAX_STRING_ID + 1) >> 4;
+constexpr unsigned int MAX_CARD_ID = 0x0fffffffU;
 	
 using CardData = card_data;
 struct CardDataC : card_data {
 	uint32_t ot{};
 	uint32_t category{};
 
-	bool is_setcodes(std::vector <uint32_t> values) const {
+	bool is_setcodes(const std::vector<unsigned int>& values) const {
 		for (auto& value : values) {
 			if (is_setcode(value))
 				return true;

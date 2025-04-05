@@ -245,7 +245,7 @@ void SingleDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 		unsigned int deckerror = 0;
 		if(!host_info.no_check_deck) {
 			if(deck_error[dp->type]) {
-				deckerror = (DECKERROR_UNKNOWNCARD << 28) + deck_error[dp->type];
+				deckerror = (DECKERROR_UNKNOWNCARD << 28) | deck_error[dp->type];
 			} else {
 				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
 			}
@@ -297,9 +297,9 @@ void SingleDuel::UpdateDeck(DuelPlayer* dp, unsigned char* pdata, int len) {
 		return;
 	}
 	if(duel_count == 0) {
-		deck_error[dp->type] = deckManager.LoadDeck(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec);
+		deck_error[dp->type] = DeckManager::LoadDeck(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec);
 	} else {
-		if(deckManager.LoadSide(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec)) {
+		if(DeckManager::LoadSide(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec)) {
 			ready[dp->type] = true;
 			NetServer::SendPacketToPlayer(dp, STOC_DUEL_START);
 			if(ready[0] && ready[1]) {
@@ -419,7 +419,7 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	rh.version = PRO_VERSION;
 	rh.flag = REPLAY_UNIFORM;
 	rh.seed = seed;
-	rh.start_time = (unsigned int)time(nullptr);
+	rh.start_time = (unsigned int)std::time(nullptr);
 	last_replay.BeginRecord();
 	last_replay.WriteHeader(rh);
 	last_replay.WriteData(players[0]->name, 40, false);

@@ -2,7 +2,7 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
-#include <locale.h>
+#include <clocale>
 #include <memory>
 
 unsigned int enable_log = 0x3;
@@ -32,7 +32,7 @@ char* sub_string(const char* str, int start, int count = -1){
 	return tmp;
 }
 #ifdef _IRR_ANDROID_PLATFORM_
-int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
+int GetListBoxIndex(irr::gui::IGUIListBox* listbox, const wchar_t * target){
 	int count = listbox->getItemCount();
     ALOGD("open deck file:for count=%d",count);
 	for(int i = 0; i < count; i++){
@@ -45,7 +45,7 @@ int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
 	return -1;
 }
 void android_main(ANDROID_APP app) {
-	app->inputPollSource.process = android::process_input;
+	app->inputPollSource.process = irr::android::process_input;
 #else
 int main(int argc, char* argv[]) {
 #endif
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	ygo::Game _game;
 	ygo::mainGame = &_game;
 #ifdef _IRR_ANDROID_PLATFORM_
-    android::InitOptions *options = android::getInitOptions(app);
+    irr::android::InitOptions *options = irr::android::getInitOptions(app);
 	if(!ygo::mainGame->Initialize(app, options)){
 		delete options;
 		return;

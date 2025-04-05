@@ -54,10 +54,10 @@ struct card_state {
 	uint8_t sequence{ 0 };
 	uint8_t position{ 0 };
 	uint32_t reason{ 0 };
-	bool pzone{ false };
 	card* reason_card{ nullptr };
-	uint8_t reason_player{ PLAYER_NONE };
 	effect* reason_effect{ nullptr };
+	uint8_t reason_player{ PLAYER_NONE };
+	bool pzone{ false };
 
 	bool is_location(uint32_t loc) const;
 	bool is_main_mzone() const {
@@ -168,9 +168,10 @@ public:
 	uint8_t attacked_count{};
 	uint8_t attack_all_target{};
 	uint8_t attack_controler{};
-	uint16_t cardid{};
+	uint64_t cardid{};
 	uint32_t fieldid{};
-	uint32_t fieldid_r{};
+	uint32_t fieldid_r{};	//real field id, updated when moving to new location
+	uint32_t activate_count_id{};	//updated when moving to new location or flipping
 	uint16_t turnid{};
 	uint16_t turn_counter{};
 	uint8_t unique_pos[2]{};
@@ -243,6 +244,8 @@ public:
 	uint32_t get_level();
 	uint32_t get_rank();
 	uint32_t get_link();
+	uint32_t get_mat_level_from_effect(card* pcard, uint32_t effect_code);
+	uint32_t get_mat_level(card* pcard, uint32_t level_effect_code, uint32_t allow_effect_code = 0);
 	uint32_t get_synchro_level(card* pcard);
 	uint32_t get_ritual_level(card* pcard);
 	uint32_t check_xyz_level(card* pcard, uint32_t lv);

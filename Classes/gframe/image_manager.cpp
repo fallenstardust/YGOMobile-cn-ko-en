@@ -9,10 +9,10 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
-	tBigPicture = nullptr;
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
+	tBigPicture = nullptr;
 	tAct = driver->getTexture((dir + path("/textures/act.png")).c_str());
 	tAttack = driver->getTexture((dir + path("/textures/attack.png")).c_str());
 	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
@@ -191,10 +191,10 @@ irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	}
 	irr::video::ITexture* texture;
 	char file[256];
-	snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
+	std::snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 	irr::video::IImage* srcimg = driver->createImageFromFile(file);
 	if(srcimg == nullptr) {
-		snprintf(file, sizeof file, "pics/%d.jpg", code);
+		std::snprintf(file, sizeof file, "pics/%d.jpg", code);
 		srcimg = driver->createImageFromFile(file);
 	}
 	if(srcimg == nullptr) {
@@ -204,7 +204,7 @@ irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 		texture = driver->addTexture(file, srcimg);
 	} else {
 		auto origsize = srcimg->getDimension();
-		video::IImage* destimg = driver->createImage(srcimg->getColorFormat(), irr::core::dimension2d<u32>(origsize.Width * zoom, origsize.Height * zoom));
+		irr::video::IImage* destimg = driver->createImage(srcimg->getColorFormat(), irr::core::dimension2d<irr::u32>(origsize.Width * zoom, origsize.Height * zoom));
 		//imageScaleNNAA(srcimg, destimg);
 		texture = driver->addTexture(file, destimg);
 		destimg->drop();
@@ -222,18 +222,18 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	auto tit = tFields.find(code);
 	if(tit == tFields.end()) {
 		char file[256];
-		snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+		std::snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 		irr::video::ITexture* img = driver->getTexture(file);
 		if(img == nullptr) {
-			snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+			std::snprintf(file, sizeof file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
 		if(img == nullptr) {
-			snprintf(file, sizeof file, "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
+			std::snprintf(file, sizeof file, "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
 			img = driver->getTexture(file);
 		}
 		if(img == nullptr) {
-			snprintf(file, sizeof file, "pics/field/%d.jpg", code);
+			std::snprintf(file, sizeof file, "pics/field/%d.jpg", code);
 			img = driver->getTexture(file);
 			if(img == nullptr) {
 				tFields[code] = nullptr;

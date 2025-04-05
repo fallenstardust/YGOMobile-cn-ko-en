@@ -18,8 +18,6 @@ class duel;
 class group;
 class effect;
 struct tevent;
-struct effect_set;
-struct effect_set_v;
 enum effect_flag : uint64_t;
 enum effect_flag2 : uint64_t;
 enum effect_category :uint64_t;
@@ -42,8 +40,8 @@ public:
 	uint16_t range{ 0 };
 	uint16_t s_range{ 0 };
 	uint16_t o_range{ 0 };
-	uint8_t count_limit{ 0 };
-	uint8_t count_limit_max{ 0 };
+	uint8_t count_limit{ 0 };	//left count of activation
+	uint8_t count_limit_max{ 0 };	//max count of activation
 	uint16_t status{ 0 };
 	int32_t reset_count{ 0 };
 	uint32_t reset_flag{ 0 };
@@ -131,10 +129,10 @@ public:
 //#define EFFECT_STATUS_ACTIVATED	0x0002
 #define EFFECT_STATUS_SPSELF	0x0004
 
-#define EFFECT_COUNT_CODE_OATH	0x10000000
-#define EFFECT_COUNT_CODE_DUEL	0x20000000
-#define EFFECT_COUNT_CODE_CHAIN	0x40000000
-#define EFFECT_COUNT_CODE_SINGLE	0x1
+#define EFFECT_COUNT_CODE_OATH	0x10000000U
+#define EFFECT_COUNT_CODE_DUEL	0x20000000U
+#define EFFECT_COUNT_CODE_CHAIN	0x40000000U
+#define EFFECT_COUNT_CODE_SINGLE	0x1U
 
 //========== Reset ==========
 #define RESET_SELF_TURN		0x10000000
@@ -529,6 +527,9 @@ const std::map<uint64_t, uint64_t> category_checklist{
 #define EFFECT_TUNER					369
 #define EFFECT_KAISER_COLOSSEUM			370
 #define EFFECT_REPLACE_DAMAGE			371
+#define EFFECT_XYZ_MIN_COUNT			372
+#define EFFECT_SYNCHRO_LEVEL_EX		373
+#define EFFECT_RITUAL_LEVEL_EX		374
 
 //#define EVENT_STARTUP		1000
 #define EVENT_FLIP			1001
@@ -606,12 +607,15 @@ const std::map<uint64_t, uint64_t> category_checklist{
 #define EVENT_REMOVE_COUNTER		0x20000
 #define EVENT_CUSTOM				0x10000000
 
-constexpr int32_t DOUBLE_DAMAGE = 0x80000000;
-constexpr int32_t HALF_DAMAGE = 0x80000001;
+constexpr int32_t DOUBLE_DAMAGE = INT32_MIN;
+constexpr int32_t HALF_DAMAGE = INT32_MIN + 1;
+
+constexpr uint32_t MAX_PARAMETER = 0xffffU;
+constexpr uint32_t MAX_XYZ_LEVEL = 0x0fffU;
 
 // flag effect
-#define EFFECT_FLAG_EFFECT	0x20000000
-#define MAX_CARD_ID			0xfffffff
+#define EFFECT_FLAG_EFFECT	0x20000000U
+#define MAX_CARD_ID			0x0fffffffU
 
 // The type of effect code
 enum code_type : int32_t {

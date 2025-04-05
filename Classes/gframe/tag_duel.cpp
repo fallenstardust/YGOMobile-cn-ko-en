@@ -279,7 +279,7 @@ void TagDuel::UpdateDeck(DuelPlayer* dp, unsigned char* pdata, int len) {
 		NetServer::SendPacketToPlayer(dp, STOC_ERROR_MSG, scem);
 		return;
 	}
-	deck_error[dp->type] = deckManager.LoadDeck(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec);
+	deck_error[dp->type] = DeckManager::LoadDeck(pdeck[dp->type], deckbuf.list, deckbuf.mainc, deckbuf.sidec);
 }
 void TagDuel::StartDuel(DuelPlayer* dp) {
 	if(dp != host_player)
@@ -392,7 +392,7 @@ void TagDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	rh.version = PRO_VERSION;
 	rh.flag = REPLAY_UNIFORM | REPLAY_TAG;
 	rh.seed = seed;
-	rh.start_time = (unsigned int)time(nullptr);
+	rh.start_time = (unsigned int)std::time(nullptr);
 	last_replay.BeginRecord();
 	last_replay.WriteHeader(rh);
 	last_replay.WriteData(players[0]->name, 40, false);
