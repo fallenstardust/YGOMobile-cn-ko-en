@@ -1,0 +1,76 @@
+{
+  "welcome": [
+    "Você me encontrou!!!",
+    "Vamos nos enfrentar em um duelo."
+  ],
+  "deckerror": [
+    "Ah, talvez o FallenStardust tenha consertado o CBD novamente e {0} desapareceu."
+  ],
+  "duelstart": [
+    "Este é apenas um duelo contra a IA, não fique muito feliz se ganhar.",
+    "Muito obrigado ao servidor 233 por permitir que tenhamos jogos para duelar, não se esqueça de nos visitar.",
+    "Para cursos anti-convencionais, entre em contato com a NOVA."
+  ],
+  "newturn": [
+    "É meu turno, eu rogo uma carta!",
+    "Meu turno, rogo uma carta!",
+    "Tirei uma carta."
+  ],
+  "endturn": [
+    "A rodada terminou.",
+    "Meu turno terminou.",
+    "Isso é considerado um desenvolvimento bem-sucedido...?",
+    "É seu turno. Sua próxima frase é... Quero ativar Gray Flow Rei, certo?"
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque o oponente diretamente!",
+    "{0}, está indefeso, ataque!",
+    "{0}, ataque os Pontos de Vida do oponente!",
+    "{0}, ataque diretamente os Pontos de Vida do oponente!",
+    "{0}, derrote seu oponente com ataques diretos!",
+    "{0}, use ataques diretos para derrotar seus oponentes!",
+    "{0}, ataque diretamente para liberar seu poder!",
+    "Meu {0} esmagará seus Pontos de Vida!",
+    "Mostre sua força aos seus oponentes, {0}!",
+    "Você não pode mais me parar. {0}, ataque!"
+  ],
+  "attack": [
+    "¡{0}, ataca ao {1}!",
+    "¡{0}, destrua o {1}!",
+    "¡{0}, derrote o {1}!",
+    "¡{0}, destrua o {1}!",
+    "{0}, libere seu poder sobre o {1}!"
+  ],
+  "ondirectattack": [
+    "Eu te odeio....",
+    "É só {0}!",
+    "De fato, ainda estou muito fraco..."
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Lancei {0}.",
+    "Uso o efeito de {0}.",
+    "Uso o poder de {0}."
+  ],
+  "summon": [
+    "É realmente uma bênção que você possa se deliciar com sua grandeza! Salve {0}.",
+    "Salve, {0}!",
+    "Apresente-se, {0}!",
+    "Convoquei o poderoso {0}!",
+    "Chamo {0} para se juntar à batalha!",
+    "Chamei {0}.",
+    "Convoquei {0}."
+  ],
+  "setmonster": [
+    "Coloquei um monstro, quem será?",
+    "Coloquei um monstro, aposte que você não vai atacá-lo."
+  ],
+  "chaining": [
+    "Surpresa! Ativo {0}!",
+    "Uso o poder de {0}.",
+    "Muito boa tática... Mas não vou ceder tão facilmente! Ativo {0}!",
+    "Parece que você esqueceu do meu {0}!",
+    "Você considerou que eu tenho {0}?"
+  ]
+}

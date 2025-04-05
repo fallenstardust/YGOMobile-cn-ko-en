@@ -1,0 +1,54 @@
+{
+  "welcome": [
+    "Ah~~ quero dormir~",
+    "Você quer entrar em um guilda?",
+    "Atualmente estamos testando a IA. Se encontrar algum problema, informe."
+  ],
+  "deckerror": [
+    "{0} não é adequado para o seu Deck atual. Troque-o!"
+  ],
+  "duelstart": [
+    "Estou com sono... ...",
+    "Ai, parece que você consegue ver muito bem o outro lado."
+  ],
+  "newturn": [
+    "É meu turno, compro!",
+    "Repus o poder mágico!"
+  ],
+  "endturn": [
+    "E se eu não quiser trabalhar...?",
+    "Vamos fazer isso, sua vez."
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "Isso é isso e isso é isso. Ataque direto!",
+    "Vamos, preciso voltar a dormir."
+  ],
+  "attack": [
+    "¡{0}! Ataque {1}!",
+    "¡{0}! Derrote {1}!"
+  ],
+  "ondirectattack": [
+    "Café gelado...",
+    "Ahhh...",
+    "{0}, é terrível...",
+    "Estou cansado..."
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "{0} Efeito ativado!"
+  ],
+  "summon": [
+    "{0} Invocado!",
+    "Sai, {0}!",
+    "{0}, saia e me ajude."
+  ],
+  "setmonster": [
+    "......"
+  ],
+  "chaining": [
+    "{0} Ativado!",
+    "Espera um minuto, vou ativar {0}!",
+    "Se {0} não estivesse lá, quase teria dormido."
+  ]
+}

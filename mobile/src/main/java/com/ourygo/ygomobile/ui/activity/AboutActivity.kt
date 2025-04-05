@@ -3,9 +3,6 @@ package com.ourygo.ygomobile.ui.activity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import cn.garymb.ygomobile.lite.R
 import cn.garymb.ygomobile.lite.databinding.AboutActivityBinding
 import cn.garymb.ygomobile.ui.activities.BaseActivity
@@ -16,15 +13,11 @@ import com.ourygo.ygomobile.util.OYUtil
 import com.ourygo.ygomobile.util.Record
 
 class AboutActivity : BaseActivity() {
-    private lateinit var tv_check_update: TextView
-    private lateinit var tv_version: TextView
-    private lateinit var tv_qq_group: TextView
-    private lateinit var ll_version: LinearLayout
-    private lateinit var iv_icon: ImageView
     private lateinit var binding: AboutActivityBinding
     private val du by lazy {
         DialogUtils.getInstance(this)
     }
+
     private val updateList by lazy {
         arrayListOf(
             UpdateLog.toUpdateLog(
@@ -192,43 +185,6 @@ class AboutActivity : BaseActivity() {
         )
     }
 
-//    @SuppressLint("HandlerLeak")
-//    var han: Handler = object : Handler(Looper.getMainLooper()) {
-//        override fun handleMessage(msg: Message) {
-//            super.handleMessage(msg)
-//            when (msg.what) {
-//                TYPE_NO_UPDATE -> OYUtil.snackShow(tv_check_update, OYUtil.s(R.string.no_update))
-//                TYPE_CHECK_UPDATE_EXCEPTION -> OYUtil.snackExceptionToast(
-//                    this@AboutActivity, tv_check_update, OYUtil.s(
-//                        R.string.exception
-//                    ), msg.obj.toString()
-//                )
-//
-//                TYPE_YES_UPDATE -> {}
-//                DOWNLOAD_OK -> {
-//                    du!!.dis()
-//                    startActivity(
-//                        IntentUtil.getApkFileIntent(
-//                            this@AboutActivity,
-//                            (msg.obj as File).path
-//                        )
-//                    )
-//                }
-//
-//                DOWNLOAD_PROGRESS -> du!!.setMessage(OYUtil.s(R.string.downloading) + "(" + msg.arg1 + ")")
-//                DOWNLOAD_EXCEPTION -> {
-//                    du!!.dis()
-//                    OYUtil.snackExceptionToast(
-//                        this@AboutActivity,
-//                        tv_check_update,
-//                        OYUtil.s(R.string.download_exception),
-//                        msg.obj.toString()
-//                    )
-//                }
-//            }
-//        }
-//    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = AboutActivityBinding.inflate(layoutInflater)
@@ -237,13 +193,10 @@ class AboutActivity : BaseActivity() {
     }
 
     private fun initView() {
-        tv_check_update = findViewById(R.id.tv_check_update)
-        tv_qq_group = findViewById(R.id.tv_qq_group)
-        tv_version = findViewById(R.id.tv_version)
-        iv_icon = findViewById(R.id.iv_icon)
-        ll_version = findViewById(R.id.ll_version)
         initToolbar(OYUtil.s(R.string.about))
-        iv_icon.setOnClickListener(object : View.OnClickListener {
+
+        // 使用 View Binding 初始化视图
+        binding.ivIcon.setOnClickListener(object : View.OnClickListener {
             private var clickFirstTime: Long = 0
             private var clickNum = 0
             override fun onClick(v: View) {
@@ -262,105 +215,25 @@ class AboutActivity : BaseActivity() {
                 }
             }
         })
-        tv_check_update.setOnClickListener { checkUpdate() }
-        tv_qq_group.setOnClickListener {
+
+        binding.tvCheckUpdate.setOnClickListener { checkUpdate() }
+        binding.tvQqGroup.setOnClickListener {
             OYUtil.joinQQGroup(
                 this@AboutActivity,
                 Record.ARG_QQ_GROUP_KEY
             )
         }
-        ll_version.setOnClickListener {
+        binding.llVersion.setOnClickListener {
             val v = du.dialogUpdateLog(OYUtil.s(R.string.update_log), updateList)
             v[1].setOnClickListener { du.dis() }
         }
         binding.tvRecord.setOnClickListener {
             startActivity(IntentUtil.getUrlIntent("https://beian.miit.gov.cn/"))
         }
-        initUpdateLog()
     }
 
-    private fun initUpdateLog() {
-
-    }
-
-    //    private void downloadApp(final App app) {
-    //        View[] v = du.dialogAppUpdate(app.getVersion_name(), app.getMessage());
-    //        Button bt1, bt2;
-    //        bt1 = (Button) v[0];
-    //        bt2 = (Button) v[1];
-    //        bt1.setText(SCUtil.s(R.string.cancel));
-    //        bt2.setText(SCUtil.s(R.string.download));
-    //        bt1.setOnClickListener(p1 -> du.dis());
-    //        du.setCanceledOnTouchOutside(true);
-    //        bt2.setOnClickListener(p1 -> {
-    //            du.dialogj1(null, SCUtil.s(R.string.downloading));
-    //            DownloadUtil.get().download(app.getPath()
-    //                    , Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-    //                    , SCUtil.s(R.string.app_name) + "_" + app.getVersion_name() + ".apk"
-    //                    , new DownloadUtil.OnDownloadListener() {
-    //
-    //                        @Override
-    //                        public void onDownloadSuccess(File file) {
-    //                            Message me = new Message();
-    //                            me.obj = file;
-    //                            me.what = DOWNLOAD_OK;
-    //                            han.sendMessage(me);
-    //
-    //                        }
-    //
-    //                        @Override
-    //                        public void onDownloading(int progress) {
-    //                            Message me = new Message();
-    //                            me.arg1 = progress;
-    //                            me.what = DOWNLOAD_PROGRESS;
-    //                            han.sendMessage(me);
-    //
-    //                        }
-    //
-    //                        @Override
-    //                        public void onDownloadFailed(Exception e) {
-    //                            Message me = new Message();
-    //                            me.obj = e.toString();
-    //                            me.what = DOWNLOAD_EXCEPTION;
-    //                            han.sendMessage(me);
-    //
-    //                        }
-    //                    });
-    //
-    //        });
-    //
-    //
-    //    }
     private fun checkUpdate() {
         OYUtil.checkUpdate(this, true)
-        //		QueryUtil.checkUpdate(new OnCheckUpdateListener(){
-//
-//				@Override
-//				public void onCheckUpdate(App app, String exception) {
-//					Message me=new Message();
-//					if(TextUtils.isEmpty(exception)){
-//						if(app==null){
-//							me.what=TYPE_NO_UPDATE;
-//						}else{
-//							me.what=TYPE_YES_UPDATE;
-//							me.obj=app;
-//						}
-//					}else{
-//						me.what=TYPE_CHECK_UPDATE_EXCEPTION;
-//						me.obj=exception;
-//					}
-//					han.sendMessage(me);
-//
-//				}
-//			});
     }
 
-//    companion object {
-//        private const val TYPE_NO_UPDATE = 0
-//        private const val TYPE_YES_UPDATE = 1
-//        private const val TYPE_CHECK_UPDATE_EXCEPTION = 2
-//        private const val DOWNLOAD_OK = 3
-//        private const val DOWNLOAD_PROGRESS = 4
-//        private const val DOWNLOAD_EXCEPTION = 5
-//    }
 }
