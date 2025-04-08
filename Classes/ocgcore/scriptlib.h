@@ -29,9 +29,10 @@ public:
 	static int32_t check_param_count(lua_State* L, int32_t count);
 	static int32_t check_action_permission(lua_State* L);
 
-	//For DIY
+	#ifdef _IRR_ANDROID_PLATFORM_
 	static int32_t duel_load_script(lua_State *L);
-
+	#endif
+	
 	//card lib
 	static int32_t card_get_code(lua_State *L);
 	static int32_t card_get_origin_code(lua_State *L);

@@ -13,6 +13,8 @@
 #include "group.h"
 #include "ocgapi.h"
 
+#ifdef _IRR_ANDROID_PLATFORM_
+
 int32_t scriptlib::duel_load_script(lua_State *L) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_STRING, 1);
@@ -23,6 +25,10 @@ int32_t scriptlib::duel_load_script(lua_State *L) {
 	lua_pushboolean(L, pduel->lua->load_script(filename));
 	return 1;
 }
+
+#endif
+
+
 
 int32_t scriptlib::duel_enable_global_flag(lua_State *L) {
 	check_param_count(L, 1);
@@ -4850,9 +4856,9 @@ int32_t scriptlib::duel_majestic_copy(lua_State *L) {
 }
 
 static const struct luaL_Reg duellib[] = {
-	//For DIY
+	#ifdef _IRR_ANDROID_PLATFORM_
 	{ "LoadScript", scriptlib::duel_load_script },
-	//
+	#endif
 	
 	{ "EnableGlobalFlag", scriptlib::duel_enable_global_flag },
 	{ "GetLP", scriptlib::duel_get_lp },
