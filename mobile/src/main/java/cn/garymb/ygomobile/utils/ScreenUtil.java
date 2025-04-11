@@ -190,7 +190,7 @@ public class ScreenUtil {
                 ClassLoader classLoader = activity.getClassLoader();
                 @SuppressWarnings("rawtypes")
                 Class SystemProperties = classLoader.loadClass("android.os.SystemProperties");
-//参数类型
+                //参数类型
                 @SuppressWarnings("rawtypes")
                 Class[] paramTypes = new Class[2];
                 paramTypes[0] = String.class;
@@ -240,7 +240,7 @@ public class ScreenUtil {
     public static int getNotchHeightOPPO(Context context) {
         if (isNotchVivo(context)) {
             //oppo刘海区域则都是宽度为324px, 高度为80px
-            return (int) DensityUtils.px2dp(context, 80);
+            return (int) YGOUtil.px2dp(80);
         }
         return 0;
     }

@@ -35,6 +35,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MainActivity extends HomeActivity implements BottomNavigationBar.OnTabSelectedListener {
     private final String[] PERMISSIONS = {
@@ -64,7 +65,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 //        for(int i=0;i<permissions.length;i++){
 //            if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-//                showToast(getString(R.string.tip_no_permission,permissions[i]));
+//                YGOUtil.showTextToast(getString(R.string.tip_no_permission,permissions[i]));
 //                break;
 //            }
 //        }
@@ -85,24 +86,31 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                     dialog.showTitleBar();
                     dialog.setTitle(getString(R.string.settings_about_change_log));
                     dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
-                    dialog.setLeftButtonText(R.string.help);
+                    dialog.setLeftButtonText(R.string.user_privacy_policy);
                     dialog.setLeftButtonListener((dlg, i) -> {
-                        dialog.setContentView(R.layout.dialog_help);
-                        dialog.setTitle(R.string.question);
-                        dialog.hideButton();
-                        dialog.show();
-                        View viewDialog = dialog.getContentView();
-                        Button btnMasterRule = viewDialog.findViewById(R.id.masterrule);
-                        Button btnTutorial = viewDialog.findViewById(R.id.tutorial);
-
-                        btnMasterRule.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.masterrule), Constants.URL_MASTER_RULE_CN);
-                            dialog.dismiss();
-                        });
-                        btnTutorial.setOnClickListener((v) -> {
-                            WebActivity.open(this, getString(R.string.help), Constants.URL_HELP);
-                            dialog.dismiss();
-                        });
+                        dialog.dismiss();
+                        final DialogPlus dialogPlus = new DialogPlus(this);
+                        dialogPlus.setTitle(R.string.user_privacy_policy);
+                        //根据系统语言复制特定资料文件
+                        String language = getContext().getResources().getConfiguration().locale.getLanguage();
+                        String fileaddr = "";
+                        if (!language.isEmpty()) {
+                            if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+                            } else if (language.equals(AppsSettings.languageEnum.Portuguese)) {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_PT.html";
+                            } else {
+                                fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+                            }
+                        }
+                        dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+                        dialogPlus.show();
                     });
                     dialog.setRightButtonText(R.string.OK);
                     dialog.setRightButtonListener((dlg, i) -> {
@@ -116,7 +124,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                     });
                     dialog.setOnDismissListener(dialogInterface -> {
                         DialogPlus dialogplus = new DialogPlus(this);
-                        File oldypk = new File(AppsSettings.get().getExpansionsPath() + "/" + officialExCardPackageName + ".ypk");
+                        File oldypk = new File(AppsSettings.get().getExpansionsPath() + "/" + officialExCardPackageName + Constants.YPK_FILE_EX);
                         if (oldypk.exists()) {
                             FileUtils.deleteFile(oldypk);
                             dialogplus.setMessage(R.string.tip_ypk_is_deleted);
@@ -148,9 +156,9 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             try {
                 FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
             } catch (Throwable e) {
-                Toast.makeText(MainActivity.this, e + "", Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
             }
-            Toast.makeText(MainActivity.this, R.string.done, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.done);
         }
     }
 
@@ -203,7 +211,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
         if (enableStart) {
             YGOStarter.startGame(this, null);
         } else {
-            VUiKit.show(this, R.string.dont_start_game);
+            YGOUtil.showTextToast(R.string.dont_start_game);
         }
     }
 

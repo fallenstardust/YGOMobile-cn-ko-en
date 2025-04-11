@@ -35,7 +35,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -78,6 +77,7 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
@@ -102,7 +102,9 @@ import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.CardManager;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
@@ -116,7 +118,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
-    protected CardSearcher mCardSelector;
+    protected CardSearcher mCardSearcher;
+    protected CardManager mCardManager;
+    protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private HomeActivity activity;
@@ -168,10 +172,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mListView.setAdapter(mCardListAdapter);
         setListeners();
 
+        mPackManager = DataManager.get().getPackManager();
+        mCardManager = DataManager.get().getCardManager();
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
-        mCardSelector.setCallBack(this);
+        mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        mCardSearcher.setCallBack(this);
 
         tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
@@ -422,7 +428,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }).done((rs) -> {
             isLoad = true;
             dlg.dismiss();
-            mCardSelector.initItems();
+            mCardSearcher.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             //设置当前卡组
             if (rs.source != null) {
@@ -431,7 +437,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 setCurDeck(rs, false);
             }
             //设置收藏夹
-            mCardSelector.showFavorites(false);
+            mCardSearcher.showFavorites(false);
         });
     }
 
@@ -549,7 +555,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (isShowCard()) return;
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
-                mCardDetail.setOnCardClickListener(new CardDetail.OnCardClickListener() {
+                mCardDetail.setOnCardClickListener(new CardDetail.OnDeckManagerCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
@@ -559,6 +565,16 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     public void onImageUpdate(Card cardInfo) {
                         mDeckAdapater.notifyItemChanged(cardInfo);
                         mCardListAdapter.notifyItemChanged(cardInfo);
+                    }
+
+                    @Override
+                    public void onSearchKeyWord(String keyword) {
+                        showSearchKeyWord(keyword);//根据关键词搜索
+                    }
+
+                    @Override
+                    public void onShowCardList(List<Card> cardList, boolean sort) {
+                        showCardList(cardList, sort);//卡包展示不排序，其他情况排序
                     }
 
                     @Override
@@ -577,8 +593,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
                 });
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSelector.isShowFavorite()) {
-                        mCardSelector.showFavorites(false);
+                    if (mCardSearcher.isShowFavorite()) {
+                        mCardSearcher.showFavorites(false);
                     }
                 });
             }
@@ -609,13 +625,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
+    private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡名置顶显示，并同时搜索字段和效果文本
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        mCardLoader.search(searchInfo);
+    }
+
+    private void showCardList(List<Card> cardList, boolean sort) {
+        if (!cardList.isEmpty()) {
+            onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+        } else {
+            Log.w("cc", "No card found");
+        }
+    }
+
     private boolean addSideCard(Card cardInfo) {
         if (checkLimit(cardInfo)) {
             boolean rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.SideCard);
             if (rs) {
-                activity.showToast(R.string.add_card_tip_ok);
+                YGOUtil.showTextToast(R.string.add_card_tip_ok);
             } else {
-                activity.showToast(R.string.add_card_tip_fail);
+                YGOUtil.showTextToast(R.string.add_card_tip_fail);
             }
             return rs;
         }
@@ -631,9 +660,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.MainCard);
             }
             if (rs) {
-                activity.showToast(R.string.add_card_tip_ok);
+                YGOUtil.showTextToast(R.string.add_card_tip_ok);
             } else {
-                activity.showToast(R.string.add_card_tip_fail);
+                YGOUtil.showTextToast(R.string.add_card_tip_fail);
             }
             return rs;
         }
@@ -672,7 +701,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 return false;
             } else {
                 exitLasttime = System.currentTimeMillis();
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.back_tip);
             }
         }
         return true;
@@ -687,22 +716,22 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return count != null && count <= 3;
         }
         if (limitList.check(cardInfo, LimitType.Forbidden)) {
-            Toast.makeText(getContext(), getString(R.string.tip_card_max, 0), Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(getString(R.string.tip_card_max, 0));
             return false;
         }
         if (count != null) {
             if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
-                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 1), Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(getString(R.string.tip_card_max, 1));
                     return false;
                 }
             } else if (limitList.check(cardInfo, LimitType.SemiLimit)) {
                 if (count >= 2) {
-                    Toast.makeText(getContext(), getString(R.string.tip_card_max, 2), Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(getString(R.string.tip_card_max, 2));
                     return false;
                 }
             } else if (count >= Constants.CARD_MAX_COUNT) {
-                Toast.makeText(getContext(), getString(R.string.tip_card_max, 3), Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
                 return false;
             }
         }
@@ -747,7 +776,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 break;
             case R.id.action_share_deck:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 shareDeck();
@@ -762,7 +791,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     } else {
                         if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                                 TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                            Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                            YGOUtil.showTextToast(R.string.donot_edit_Deck);
                         } else {
                             save(mDeckAdapater.getYdkFile());
                         }
@@ -771,12 +800,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 break;
             case R.id.action_rename:
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                         TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
                 }
@@ -799,12 +828,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             break;
             case R.id.action_delete_deck: {
                 if (mDeckAdapater.getYdkFile() == null) {
-                    Toast.makeText(getContext(), R.string.unable_to_edit_empty_deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
                 if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
                         TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
-                    Toast.makeText(getContext(), R.string.donot_edit_Deck, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     builder.setTitle(R.string.question);
                     builder.setMessage(R.string.question_delete_deck);
@@ -937,8 +966,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             du.dis();
             YGOUtil.copyMessage(getContext(), tv_code.getText().toString().trim());
             DuelAssistantManagement.getInstance().setLastMessage(tv_code.getText().toString().trim());
-            Toast.makeText(getContext(), getString(R.string.deck_text_copyed), Toast.LENGTH_SHORT).show();
-
+            YGOUtil.showTextToast(R.string.deck_text_copyed);
         });
 
         bt_image_share.setOnClickListener(v -> {
@@ -958,7 +986,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             try {
                 startActivity(intent);
             } catch (Throwable e) {
-                Toast.makeText(getContext(), "dev error:not found activity.", Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast("dev error:not found activity." + e);
             }
         });
 
@@ -982,7 +1010,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         } else {
             clipboardManager.setText(uri);
         }
-        Toast.makeText(getContext(), R.string.copy_to_clipbroad, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.copy_to_clipbroad);
     }
 
     private File getSelectDeck(Spinner spinner) {
@@ -1090,7 +1118,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 else
                     ydk = new File(savePath, filename);
                 if (ydk.exists()) {
-                    Toast.makeText(getContext(), R.string.file_exist, Toast.LENGTH_SHORT).show();
+                    YGOUtil.showTextToast(R.string.file_exist);
                     return;
                 }
                 if (!keepOld && oldYdk != null && oldYdk.exists()) {
@@ -1119,9 +1147,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private void save(File ydk) {
         if (mDeckAdapater.save(ydk)) {
-            Toast.makeText(getContext(), R.string.save_tip_ok, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.save_tip_ok);
         } else {
-            Toast.makeText(getContext(), R.string.save_tip_fail, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.save_tip_fail);
         }
     }
 
@@ -1168,6 +1196,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     private void doBackUpDeck() {
+        FileUtils.delFile(ORI_DECK);//备份前删除原备份
         try {
             FileUtils.copyDir(mSettings.getDeckDir(), ORI_DECK, true);
             File ydks = new File(ORI_DECK);
@@ -1177,18 +1206,18 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     files.delete();
             }
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(e + "");
         }
-        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.done);
     }
 
     private void doRestoreDeck() {
         try {
             FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
         } catch (Throwable e) {
-            Toast.makeText(getContext(), e + "", Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(e + "");
         }
-        Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+        YGOUtil.showTextToast(R.string.done);
     }
 
     @Override

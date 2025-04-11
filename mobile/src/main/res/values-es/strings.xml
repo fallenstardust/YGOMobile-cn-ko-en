@@ -11,7 +11,7 @@
     <string name="check_things">Consultando %s ...</string>
     <string name="core_config">Configuración principal</string>
     <string name="tip_new_deck">Nuevo deck</string>
-    <string name="cards_cdb">base de datos</string>
+    <string name="cards_cdb">cards.cdb</string>
     <string name="scripts">scripts</string>
     <string name="images">imágenes</string>
     <string name="single_lua">archivos individuales</string>
@@ -39,17 +39,17 @@
     <string name="create_folder">Nueva carpeta</string>
     <string name="intpu_name">Ingresar nombre del deck</string>
     <string name="tab_search">Buscar</string>
-    <string name="tab_result">Result</string>
+    <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
     <string name="the_name_is_folder">El nombre de la carpeta</string>
-    <string name="back_tip">Presione la tecla "Atrás" nuevamente para salir del juego.</string>
+    <string name="back_tip">Presione la tecla \"Atrás\" nuevamente para salir del juego.</string>
     <string name="string_help_text">La aplicación actual carece de los permisos necesarios. \n
          Toque en Configuración -> Permisos -> Habilite los permisos requeridos.</string>
-    <string name="fetch_ex_card">Obteniendo cartas pre-lanzamiento desde la web, espere por favor...</string>
-    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzamiento</string>
+    <string name="fetch_ex_card">Obteniendo cartas pre-lanzadas desde la web, espere por favor...</string>
+    <string name="ex_card_list_title">Lista de Cartas Pre-Lanzadas</string>
     <string name="ex_card_log_title">Registro de actualización</string>
     <string name="ex_card_report_title">Reporte</string>
-    <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que "Usar Expansiones" esté habilitado en la configuración</string>
+    <string name="ex_card_check_toast_message">Antes de unirte a este servidor, primero chequee que \"Usar Expansiones\" esté habilitado en la configuración</string>
     <string name="ex_card_check_toast_message_ii">Antes de unirte a este servidor, descarga las expansiones</string>
     <string name="ex_card_check_toast_message_iii">Error al obtener la expansión de las cartas, abriendo el sitio web 233 para descargarlas.</string>
     <!-- settings -->
@@ -75,13 +75,12 @@
     <string name="settings_game_diy_card_back">Cubierta de Carta</string>
     <string name="settings_game_diy_card_db">Usar base de datos personalizada</string>
     <string name="settings_test_options">Opciones Experimentales</string>
-    <string name="settings_test_replace_kernel">Remplazar Kernel (Necesita Root)</string>
+    <string name="settings_test_replace_kernel">Reemplazar Kernel (Necesita Root)</string>
     <string name="settings_game_immersive_mode">Optimizar si su resolución no es 16:9</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Imagen de Perfil</string>
-     <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A\nTraductor ES: Dark Zane
-</string>
-    <string name="restart_app">"¡Por favor, reinicie la aplicación!"</string>
+    <string name="tip_download_ex">¡Nuevas Pre-lanzadas!</string>
+    <string name="restart_app">¡Por favor, reinicie la aplicación!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
         <item>OpenGL ES 2.0 sombreadores corregidos</item>
@@ -91,13 +90,6 @@
         <item>Velocidad</item>
         <item>Calidad</item>
     </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>Chino</item>
-        <item>Koreano</item>
-        <item>Inglés</item>
-        <item>Español</item>
-        <item>Japonés</item>
-    </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Deshabilitado</item>
         <item>5</item>
@@ -106,7 +98,6 @@
         <item>15</item>
     </string-array>
     <!-- settings -->
-
     <string name="server_list">Servidores de duelo</string>
     <string name="server_name">Nombre:</string>
     <string name="server_desc">Nota:</string>
@@ -140,10 +131,11 @@
     <string name="label_set">Arquetipo</string>
     <string name="label_level">Nvl/Rng/Lnk</string>
     <string name="label_attr">Atributo</string>
-    <string name="linkmarker">◀F.Enlace▶</string>>
+    <string name="linkmarker">◀F.Enlace▶</string>
     <string name="label_category">Categoría</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
+    <string name="card_related">Relacionadas</string>
     <string name="no_webbrowser">Ningún navegador web instalado</string>
     <string name="load_game">Cargando juego</string>
     <string name="new_deck">Nuevo</string>
@@ -173,7 +165,6 @@
     <string name="add_card_tip_ok">Carta añadida con éxito</string>
     <string name="add_card_tip_fail">Fallo al añadir carta</string>
     <string name="tip_card_max" formatted="false">Número máximo de cartas permitidas: %d</string>
-
     <string name="file_exist">El archivo ya existe</string>
     <string name="share_deck">Compartir deck</string>
     <string name="no_share_app">No se encontró ninguna app para compartir</string>
@@ -232,9 +223,9 @@
     <string name="tip_network_image">El servidor de imágenes está cerrado</string>
     <string name="game_version">Versión del Juego</string>
     <string name="tip">Información</string>
-    <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, como por ejemplo: 0x1360 (muestra 1.036.0)</string>
+    <string name="error_game_ver">¡Versión equivocada! Debe comenzar con 0x, por ejemplo: 0x1360 (muestra 1.036.0)</string>
     <string name="tip_no_netwrok">Por favor, verifique su conexión a Internet</string>
-    <string name="message">"Copiando paquete de datos..."</string>
+    <string name="message">Copiando paquete de datos...</string>
     <string name="ex_pack">Paquete de cartas de expansión</string>
     <string name="deck_manager_v2">Editor de Decks V2</string>
     <string name="reset_game_ver_fail">Fallo al intentar restablecer la versión del juego</string>
@@ -250,7 +241,7 @@
     <string name="SYSTEM_ALERT_WINDOW">Debes habilitar el permiso de ventana flotante\nHabilita el permiso para usar la función Asistente de Duelo normalmente</string>
     <string name="OpenTIP">Cómo utilizar la adición rápida de salas</string>
     <string name="Open_Alert_Window">Ir a abrir la ventana flotante</string>
-    <string name="Function_Menu">MENU</string>
+    <string name="Function_Menu">MENÚ</string>
     <string name="Join_QQ">Grupo QQ</string>
     <string name="about_Join_QQ">Únete al grupo QQ para informar problemas</string>
     <string name="donatefor">Su donación se utilizará para mantener las tarifas de actualización automática, recopilar datos de actualización, retocar imágenes posteriores y comprar modelos adaptados, etc.</string>
@@ -310,7 +301,7 @@
     <string name="tip_return_to_duel">¡Haz regresado al juego actual!</string>
     <string name="my_favorites">myFav★</string>
     <string name="ypk_installed">¡Archivo de expansión descargado e instalado!</string>
-    <string name="ypk_go_setting">Para usarlo, le recomendamos que consulte \"Usar Expansiones\" a menos que haya instalado los pre-lanzamientos de otra manera</string>
+    <string name="ypk_go_setting">Para usarlo, le recomendamos que consulte \"Usar Expansiones\" a menos que haya instalado las cartas pre-lanzadas de otra manera</string>
     <string name="ypk_delete">Mantenga presionado el nombre para eliminar</string>
     <string name="install_failed_bcos">La instalación falló debido a: </string>
     <string name="deck_back_up">Respaldar</string>
@@ -319,10 +310,10 @@
     <string name="deck_explain">Respaldar: hacer una copia de seguridad de todos los decks en Sdcard/ygocore.
         \nRestaurar: restaurar los decks respaldados</string>
     <string name="restore_deck">Se encontraron decks respaldados en su dispositivo, ¿desea restaurarlos?</string>
-    <string name="explain_permission">
-         El uso de estas funciones requiere los siguientes permisos:
+    <string name="explain_permission">El uso de estas funciones requiere los siguientes permisos:
+        \nPermiso del portapapeles: Necesario para leer códigos de mazo y códigos de partido
          \nPermiso de Almacenamiento: necesario para respaldar y restaurar decks; para personalizar fuentes, fondos, avatares y cubiertas de cartas
-</string>
+    </string>
     <string name="guide_menu">Menú:\nFunciones principales como: </string>
     <string name="guide_mycard">MyCard: Clasificar récord de duelo, observar juegos, sala de chat, etc.</string>
     <string name="guide_serverlist">Lista de Servidores: Toque un servidor para unirse al juego en línea</string>
@@ -353,6 +344,8 @@
     <string name="settings_screen_padding">Altura Reservada (Para Pantalla Curva)</string>
     <string name="tip_load_cdb_error">Error al intentar cargar la base de datos</string>
     <string name="action_download_expansions">Descargar \nexpansiones</string>
+    <string name="tip_download_failed">Fallo al guardar</string>
+    <string name="tip_download_OK">guardado en</string>
     <string name="replay">Repeticiones</string>
     <string name="bot_mode">Jugar vs IA</string>
     <string name="personal">My</string>
@@ -363,6 +356,7 @@
     <string name="login_succeed">Inicio de sesión exitoso</string>
     <string name="reChatJoining">Volver a iniciar sesión...</string>
     <string name="settings_data_language">Elegir Idioma</string>
+    <string name="settings_key_words_split">Búsqueda con múltiples palabras clave (separadas por espacios)</string>
     <string name="settings_data_language_about">Cambiar el idioma de la interfaz de usuario de YGOMobile y la base de datos de las cartas</string>
     <string name="find_in_page">Buscar: </string>
     <string name="tip_card_info_diff">Esta carta no está incluida en YGOMobile. Intente actualizar YGOMobile o verifique si la carta está disponible en el paquete de cartas de expansión.</string>
@@ -372,5 +366,10 @@
     <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
     <string name="tip_ypk_is_deleted">Actualice las cartas pre-lanzadas de inmediato</string>
     <string name="tip_superpre_desc">Actualización más rápida. Descargar expansiones</string>
+    <string name="replay_list">lista de reproducción</string>
+    <string name="user_privacy_policy">Política de Privacidad del Usuario</string>
+    <string name="about_user_privacy_policy">Explicación de los permisos utilizados por YGOMobile</string>
+    <string name="open">Abrir el Deck</string>
+    <string name="web_warn_save_deck">Abrir el Deck cerrará la página web que estás viendo actualmente. ¿Deseas cerrar la página web y abrir el Deck?</string>
 </resources>
 

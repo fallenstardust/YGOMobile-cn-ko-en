@@ -13,6 +13,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -20,6 +21,7 @@ import ocgcore.enums.CardType;
 public class CardDetailRandom {
     private final View viewCardDetail;
     private final ImageView cardImage;
+    private final TextView pack_name;
     private final TextView name;
     private final TextView desc;
     private final TextView level;
@@ -32,6 +34,7 @@ public class CardDetailRandom {
     private final View atkdefView;
     private final View textdefView;
     private final StringManager mStringManager;
+    private final PackManager mPackManager;
     private final Context mContext;
 
     private static CardDetailRandom sCardDetailRandom = null;
@@ -40,6 +43,7 @@ public class CardDetailRandom {
         mContext = context;
         viewCardDetail = inflate(context, R.layout.dialog_cardinfo_small, null);
         cardImage = viewCardDetail.findViewById(R.id.card_image_toast);
+        pack_name = viewCardDetail.findViewById(R.id.pack_name);
         name = viewCardDetail.findViewById(R.id.card_name_toast);
         monsterlayout = viewCardDetail.findViewById(R.id.star_attr_race_toast);
         level = viewCardDetail.findViewById(R.id.card_level_toast);
@@ -53,12 +57,15 @@ public class CardDetailRandom {
         desc = viewCardDetail.findViewById(R.id.text_desc_toast);
 
         mStringManager = DataManager.get().getStringManager();
+        mPackManager = DataManager.get().getPackManager();
+
+        pack_name.setText(mPackManager.findPackNameById(cardInfo.Alias != 0 ? cardInfo.Alias :cardInfo.Code));
         name.setText(cardInfo.Name);
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
         if (cardInfo.Desc.length() >= 100) desc.setTextSize(10);
-        if (cardInfo.Desc.length() >= 160) desc.setTextSize(9);
-        if (cardInfo.Desc.length() >= 220) desc.setTextSize(8);
+        if (cardInfo.Desc.length() >= 160) desc.setTextSize(8);
+        if (cardInfo.Desc.length() >= 220) desc.setTextSize(6);
         desc.setText(cardInfo.Desc);
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);

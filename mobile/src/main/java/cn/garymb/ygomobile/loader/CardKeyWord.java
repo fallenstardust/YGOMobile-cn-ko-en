@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.loader;
 
+import cn.garymb.ygomobile.AppsSettings;
+
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -26,6 +28,9 @@ public class CardKeyWord {
                 filterList.add(new CodeFilter(Long.parseLong(word)));
             } else {
                 String[] ws = word.split(" ");
+                if (AppsSettings.get().getKeyWordsSplit() == AppsSettings.keyWordsSplitEnum.Percent.code) {
+                    ws = word.split("%%");
+                }
                 for (String w : ws) {
                     if (TextUtils.isEmpty(w)) {
                         continue;
@@ -76,7 +81,7 @@ public class CardKeyWord {
 
         //包含系列，或者包含名字、描述
         public NameFilter(@NonNull String word, boolean exclude, boolean onlyText) {
-            this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word);
+            this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word, true);
             this.exclude = exclude;
             this.word = word.toLowerCase(Locale.US);
             if(this.setcode > 0){

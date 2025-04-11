@@ -61,7 +61,7 @@ public class StringManager implements Closeable {
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk"))) {
+                    if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX))) {
                         Log.e("StringManager", "读取压缩包");
                         try {
                             ZipFile zipFile = new ZipFile(file.getAbsoluteFile(), "GBK");
@@ -202,13 +202,20 @@ public class StringManager implements Closeable {
         return String.format("0x%x", key);
     }
 
-    public long getSetCode(String key) {
+    public long getSetCode(String key, boolean fuzzy) {
         for (int i = 0; i < mCardSets.size(); i++) {
             CardSet cardSet = mCardSets.get(i);
             String[] setNames = cardSet.getName().split("\\|");
-            if (setNames[0].equalsIgnoreCase(key)) {
-                return cardSet.getCode();
+            if (fuzzy) {
+                if (setNames[0].contains(key)) {
+                    return cardSet.getCode();
+                }
+            } else {
+                if (setNames[0].equalsIgnoreCase(key)) {
+                    return cardSet.getCode();
+                }
             }
+
         }
         return 0;
     }

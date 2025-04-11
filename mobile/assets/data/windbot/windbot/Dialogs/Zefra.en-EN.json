@@ -1,0 +1,59 @@
+{
+"welcome": [
+"Hello, card player",
+"Hello, welcome to play cards with me"
+],
+"deckerror": [
+"Sorry, my deck needs {0} to play"
+],
+"duelstart": [
+"Hey, I'm going to use my second brother to beat you.",
+"My deck is not bad, just a few banned cards",
+"I can only play simple decks, don't use banned cards to fight me"
+],
+"newturn": [
+"It's my turn, draw a card! (secretly take out from the crotch)",
+"I draw a card"
+],
+"endturn": [
+"I'm done, it's your turn",
+"It's your turn, it's not a multi-threaded duel, is it?"
+],
+"directattack": [
+"{0}, attack the opponent!",
+"{0}, smash it!",
+"{0}, punch it!"
+],
+"attack": [
+"{0}, knock down {1}!",
+"Hey, {0}, attack {1}!"
+],
+"ondirectattack": [
+"Ah, don't hit me, I'll put a banned card for you to play with",
+"Yeah, too strong, can you help me?",
+"It hurts... I want to unplug the power"
+],
+"facedownmonstername": "Monster",
+"activate": [
+"Hey, I activate {0}",
+"Ha ha, I use the power of {0}"
+],
+"summon": [
+"I summon (take out) {0}!",
+"Come out, my little monster {0}!"
+],
+"setmonster": [
+"I place an unknown monster."
+],
+"chaining": [
+"Hey, can I use a banned card?",
+"Huh, I activate {0}!",
+"Sorry, I have {0}",
+"Ha ha, activate the effect of {0}!"
+],
+"custom": [
+"Gua! The main body is going to fight!",
+"I can't play if my hand is stuck!!!",
+"Hey, don't panic, there is still a place to play (￣y▽￣)╭"
+]
+}

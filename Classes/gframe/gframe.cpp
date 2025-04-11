@@ -2,7 +2,7 @@
 #include "game.h"
 #include "data_manager.h"
 #include <event2/thread.h>
-#include <locale.h>
+#include <clocale>
 #include <memory>
 
 unsigned int enable_log = 0x3;
@@ -30,18 +30,18 @@ char* sub_string(const char* str, int start, int count = -1){
 	return tmp;
 }
 #ifdef _IRR_ANDROID_PLATFORM_
-int GetListBoxIndex(IGUIListBox* listbox, const wchar_t * target){
+int GetListBoxIndex(irr::gui::IGUIListBox* listbox, const wchar_t * target){
 	int count = listbox->getItemCount();
 	for(int i = 0; i < count; i++){
 		auto item = listbox->getListItem(i);
-		if(wcscmp(item, target) == 0){
+		if(std::wcscmp(item, target) == 0){
 			return i;
 		}
 	}
 	return -1;
 }
 void android_main(ANDROID_APP app) {
-	app->inputPollSource.process = android::process_input;
+	app->inputPollSource.process = irr::android::process_input;
 #else
 int main(int argc, char* argv[]) {
 #endif
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 	ygo::Game _game;
 	ygo::mainGame = &_game;
 #ifdef _IRR_ANDROID_PLATFORM_
-    android::InitOptions *options = android::getInitOptions(app);
+    irr::android::InitOptions *options = irr::android::getInitOptions(app);
 	if(!ygo::mainGame->Initialize(app, options)){
 		delete options;
 		return;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
  */
     bool keep_on_return = false;
 #ifdef _IRR_ANDROID_PLATFORM_
-	ALOGD("handle args %d", argc);
+	ALOGD("cc gframe: handle args %d", argc);
     //android
     for(int i = 0; i < argc; ++i) {
 		const char* arg = argv[i].c_str();
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
                 wchar_t fname[1024];
                 BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstReplayList, fname);
-				ALOGD("open replay file:index=%d, name=%s", index, name);
+				ALOGD("cc gframe: open replay file:index=%d, name=%s", index, name);
 			}
             ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
             ClickButton(ygo::mainGame->btnReplayMode);
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
                 wchar_t fname[1024];
                 BufferIO::DecodeUTF8(name, fname);
                 index = GetListBoxIndex(ygo::mainGame->lstSinglePlayList, fname);
-				ALOGD("open single file:index=%d, name=%s", index, name);
+				ALOGD("cc gframe: open single file:index=%d, name=%s", index, name);
 			}
 			if(index >= 0){
 				ygo::mainGame->lstSinglePlayList->setSelected(index);

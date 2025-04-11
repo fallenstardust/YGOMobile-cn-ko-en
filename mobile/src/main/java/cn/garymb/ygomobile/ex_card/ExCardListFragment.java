@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.ex_card;
 
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.utils.DownloadUtil.TYPE_DOWNLOAD_EXCEPTION;
 import static cn.garymb.ygomobile.utils.ServerUtil.AddServer;
 
@@ -92,7 +90,7 @@ public class ExCardListFragment extends Fragment {
                 LogUtil.i(TAG, "start download");
                 if (downloadState != DownloadState.DOWNLOAD_ING) {
                     downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(URL_YGO233_FILE);
+                    downloadfromWeb(ServerUtil.downloadUrl());
                 }
             }
         });
@@ -135,7 +133,7 @@ public class ExCardListFragment extends Fragment {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
         String path = AppsSettings.get().getExpansionsPath().getAbsolutePath();
         String fileName = Constants.officialExCardPackageName;
-        File file = new File(path + "/" + fileName + ".ypk");
+        File file = new File(path + "/" + fileName + Constants.YPK_FILE_EX);
         /* 删除旧的先行卡包 */
         File[] files = AppsSettings.get().getExpansionsPath().listFiles();
         if (files != null) {
@@ -153,7 +151,6 @@ public class ExCardListFragment extends Fragment {
         DownloadUtil.get().download(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
-
                 Message message = new Message();
                 message.what = DownloadUtil.TYPE_DOWNLOAD_OK;
                 handler.sendMessage(message);
@@ -170,7 +167,6 @@ public class ExCardListFragment extends Fragment {
 
             @Override
             public void onDownloadFailed(Exception e) {
-
                 //下载失败后删除下载的文件
                 FileUtils.deleteFile(file);
                 Message message = new Message();
@@ -204,7 +200,7 @@ public class ExCardListFragment extends Fragment {
                     ++FailedCount;
                     if (FailedCount <= 2) {
                         YGOUtil.showTextToast(getString(R.string.Ask_to_Change_Other_Way));
-                        downloadfromWeb(URL_YGO233_FILE_ALT);
+                        downloadfromWeb(ServerUtil.downloadUrl());
                     }
                     YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
                     break;

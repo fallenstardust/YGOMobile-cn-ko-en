@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.cards.deck.LabelInfo;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
@@ -501,13 +502,13 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
             if (EditMode.None != getEditMode()) {
                 if (getEditMode() == EditMode.Main2Side) {
                     if (type == Type.Side) {
-                        Toast.makeText(getContext(), "不能选择side的", Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast("不能选择side的");
                         return;
                     }
                 }
                 if (getEditMode() == EditMode.Side2Main) {
                     if (type == Type.Main || type == Type.Extra) {
-                        Toast.makeText(getContext(), "只能选择side的", Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast("只能选择side的");
                         return;
                     }
                 }

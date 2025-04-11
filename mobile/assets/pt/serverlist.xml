@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<servers>
+    <version>2</version>
+
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Mycard_Superpre☆Necessita de baixar expansões</name>
+        <desc>Servidor mycard dentro das cartas de expansões</desc>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Mycard_Superpre(2)☆Necessita de baixar expansões</name>
+        <desc>Servidor mycard dentro das cartas de expansões</desc>
+        <ip>mygo.superpre.pro</ip>
+        <port>888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Servidor Evolution TCG</name>
+        <desc>Ambientes TCG</desc>
+        <ip>server.evolutionygo.com</ip>
+        <port>7711</port>
+        <keep>true</keep>
+    </server>
+     <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Servidor Koishi TCG</name>
+        <desc>TCG</desc>
+        <ip>koishi.momobako.com</ip>
+        <port>1311</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Servidor Koishi OCG</name>
+        <desc>OCG</desc>
+        <ip>koishi.momobako.com</ip>
+        <port>7210</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Mercury233 OCG</name>
+        <desc>Tempo de atualização desconhecido</desc>
+        <ip>s1.ygo233.com</ip>
+        <port>233</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>Crônicas do Duelo</name>
+        <desc>Usar deck aleatório para duelar</desc>
+        <ip>2333.duelstart.com</ip>
+        <port>2333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Cavaleiro de Hanoi</player-name>
+        <name>2Pick</name>
+        <desc>Construir novo deck para duelar</desc>
+        <ip>2pick.moecube.com</ip>
+        <port>765</port>
+        <keep>true</keep>
+    </server>
+</servers>

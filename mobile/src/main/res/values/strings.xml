@@ -97,6 +97,7 @@
         <item>English</item>
         <item>Español</item>
         <item>日本語</item>
+        <item>Português</item>
     </string-array>
     <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Disable</item>
@@ -323,6 +324,7 @@
     <string name="restore_deck">found backed up decks in your Device\, restore\?</string>
     <string name="explain_permission">
         Very necessary permissions will be applied\:
+        \nClipboard permission: Required for reading deck codes and match codes
         \nStorage Access\:backup\/restore deck\,set custom background\/avatars\/cardback</string>
     <string name="guide_menu">Menu\:\nincluding most of functions, for Example</string>
     <string name="guide_mycard">Mycard\: rank duel record, observe games, chating room, etc. </string>
@@ -364,6 +366,7 @@
     <string name="login_succeed">Chatroom logined</string>
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
+    <string name="settings_key_words_split">Multi-keyword search (separated by spaces)</string>
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
     <string name="find_in_page">find:</string>
     <string name="tip_card_info_diff">Released and Pre-released Cards are different,pls note after patch them</string>
@@ -371,4 +374,13 @@
     <string name="tip_ygopro_is_running">ygopro is running now. unable to create a new duel before it is closed. \nthe room password has been recorded in record list.\npls close ygopro and rejoin room through the record of room password</string>
     <string name="tip_ypk_is_deleted">Please upgrade pre-released cards at once</string>
     <string name="tip_superpre_desc">fastest upgrade. download expansions</string>
+    <string name="tip_download_ex">New cards available!</string>
+    <string name="tip_download_failed">Save Failed!</string>
+    <string name="tip_download_OK">Saved to</string>
+    <string name="replay_list">Replay List</string>
+    <string name="card_related">Related</string>
+    <string name="user_privacy_policy">User Privacy Policy</string>
+    <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
+    <string name="open">Open the deck</string>
+    <string name="web_warn_save_deck">Opening the deck will close the webpage you are currently viewing. Do you want to close the webpage and open the deck</string>
 </resources>

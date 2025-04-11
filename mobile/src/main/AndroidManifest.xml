@@ -161,11 +161,6 @@
             android:theme="@style/AppTheme.Mycard"
             android:launchMode="singleTop"
             />
-        <!-- 为防止Service被系统回收，可以尝试通过提高服务的优先级解决，1000是最高优先级，数字越小，优先级越低 -->
-        <!--android:priority="1000"-->
-        <service
-            android:name="com.ourygo.assistant.service.DuelAssistantService"
-            android:priority="1000" />
         <service
             android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
             android:label="dexopt"
@@ -193,12 +188,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission
-        android:name="android.permission.WRITE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" /><!--导入文件必需权限-->
 
     <uses-sdk tools:overrideLibrary="com.toptoche.searchablespinnerlibrary" />
 </manifest>

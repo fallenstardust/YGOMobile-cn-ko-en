@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -29,6 +30,7 @@ import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -36,6 +38,7 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
+import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
@@ -43,8 +46,11 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import ocgcore.CardManager;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
@@ -55,7 +61,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private HomeActivity activity;
     protected CardLoader mCardLoader;
     protected DrawerLayout mDrawerlayout;
-    protected CardSearcher mCardSelector;
+    protected CardSearcher mCardSearcher;
+    protected PackManager mPackManager;
+    protected CardManager mCardManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private RecyclerView mListView;
@@ -91,10 +99,12 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mListView.setAdapter(mCardListAdapter);
         Button btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
+        mPackManager = DataManager.get().getPackManager();
+        mCardManager = DataManager.get().getCardManager();
         mCardLoader = new CardLoader(getContext());
         mCardLoader.setCallBack(this);
-        mCardSelector = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
-        mCardSelector.setCallBack(this);
+        mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        mCardSearcher.setCallBack(this);
         setListeners();
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
@@ -103,13 +113,13 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
             }
         }).fail((e) -> {
-            Toast.makeText(getContext(), R.string.tip_load_cdb_error, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(getString(R.string.tip_load_cdb_error), Toast.LENGTH_SHORT);
             Log.e(IrrlichtBridge.TAG, "load cdb", e);
         }).done((rs) -> {
             dlg.dismiss();
             isLoad = true;
             mCardLoader.loadData();
-            mCardSelector.initItems();
+            mCardSearcher.initItems();
             //数据库初始化完毕后搜索被传入的关键字
             intentSearch(intentSearchMessage);
             isInitCdbOk = true;
@@ -146,7 +156,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         //卡查关键字为空不卡查
         if (TextUtils.isEmpty(currentCardSearchMessage))
             return;
-        mCardSelector.search(currentCardSearchMessage);
+        mCardSearcher.search(currentCardSearchMessage);
     }
 
     protected void setListeners() {
@@ -259,7 +269,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 return false;
             } else {
                 exitLasttime = System.currentTimeMillis();
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+                YGOUtil.showTextToast(R.string.back_tip, Toast.LENGTH_SHORT);
             }
         }
         return true;
@@ -283,14 +293,24 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
                 mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSelector.isShowFavorite()) {
-                        mCardSelector.showFavorites(false);
+                    if (mCardSearcher.isShowFavorite()) {
+                        mCardSearcher.showFavorites(false);
                     }
                 });
-                mCardDetail.setOnCardClickListener(new CardDetail.DefaultOnCardClickListener() {
+                mCardDetail.setOnCardClickListener(new CardDetail.OnCardSearcherCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {
                         WebActivity.openFAQ(getContext(), cardInfo);
+                    }
+
+                    @Override
+                    public void onSearchKeyWord(String keyword) {
+                        showSearchKeyWord(keyword);//根据关键词搜索
+                    }
+
+                    @Override
+                    public void onShowCardList(List<Card> cardList, boolean sort) {
+                        showCardList(cardList, sort);//卡包展示不排序，关联卡片排序
                     }
 
                     @Override
@@ -327,6 +347,19 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 mDialog.show();
             }
             mCardDetail.bind(cardInfo, position, provider);
+        }
+    }
+
+    private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡置顶显示，并同时搜索字段和效果文本
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        mCardLoader.search(searchInfo);
+    }
+
+    private void showCardList(List<Card> cardList, boolean sort) {
+        if (!cardList.isEmpty()) {
+            onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+        } else {
+            Log.w("cc", "No card found");
         }
     }
 

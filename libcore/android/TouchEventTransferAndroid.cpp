@@ -44,7 +44,7 @@ bool TouchEventTransferAndroid::OnTransferDeckEdit(const SEvent& event) {
 		if (event.TouchInput.Event == ETIE_PRESSED_DOWN) {
 
 			if (!(ygo::mainGame->scrFilter->isVisible()
-							&& ygo::mainGame->scrFilter->isPointInside(position2d<s32>(s_current_x, s_current_y)))) {
+							&& ygo::mainGame->scrFilter->isPointInside(irr::core::position2d<irr::s32>(s_current_x, s_current_y)))) {
 				SEvent hoverEvent;
 				hoverEvent.EventType = EET_MOUSE_INPUT_EVENT;
 				hoverEvent.MouseInput.Event = EMIE_MOUSE_MOVED;

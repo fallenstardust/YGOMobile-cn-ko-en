@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 class FileAdapter extends BaseAdapterPlus<File> {
@@ -236,15 +237,15 @@ class FileAdapter extends BaseAdapterPlus<File> {
 
         public ViewHolder(Context context) {
             icon = new ImageView(context);
-            icon.setPadding(VUiKit.dpToPx(4), 0, 0, 0);
+            icon.setPadding(YGOUtil.dp2px(4), 0, 0, 0);
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             name = new TextView(context);
-            name.setPadding(VUiKit.dpToPx(8), 0, 0, 0);
+            name.setPadding(YGOUtil.dp2px(8), 0, 0, 0);
             name.setSingleLine();
             name.setGravity(Gravity.CENTER_VERTICAL);
             checkBox = new CheckBox(context);
             checkBox.setGravity(Gravity.CENTER_VERTICAL);
-            checkBox.setPadding(VUiKit.dpToPx(4), 0, 0, 0);
+            checkBox.setPadding(YGOUtil.dp2px(4), 0, 0, 0);
         }
     }
 }

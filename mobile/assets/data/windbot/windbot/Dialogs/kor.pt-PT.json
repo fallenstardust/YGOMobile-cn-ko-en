@@ -1,0 +1,76 @@
+{
+  "welcome": [
+    "Olá. Sou um robô.",
+    "Atualmente estamos testando a IA. Se houver algum problema, por favor, informe."
+  ],
+  "deckerror": [
+    "Desculpe. {0} não está correto."
+  ],
+  "duelstart": [
+    "Começa o verdadeiro duelo!",
+    "Vamos ter um bom duelo!",
+    "Se eu te derrotar, você terá que me chamar de MESTRE por uma semana!"
+  ],
+  "newturn": [
+    "É meu turno, eu rogo!",
+    "Meu turno, eu rogo!",
+    "Vou tirar uma carta!"
+  ],
+  "endturn": [
+    "O turno acabou.",
+    "Meu turno terminou.",
+    "E com isso, termino meu turno."
+  ],
+  "directattack": [
+    "{0}, ataque direto!",
+    "{0}, ataque direto no oponente!",
+    "{0}, derrote seu oponente!",
+    "{0}, reduza os Pontos de Vida do seu oponente com ataques!",
+    "{0}, ataque direto!",
+    "{0}, golpeie o oponente!",
+    "{0}, reduza os Pontos de Vida do seu oponente!",
+    "{0}, reduza os Pontos de Vida do seu oponente a 0 com um ataque direto!",
+    "{0}, é um ataque direto!",
+    "{0}! O oponente está indefeso, ataque direto!",
+    "{0}! Ataque!"
+  ],
+  "attack": [
+    "¡{0}, ataque a {1}!",
+    "¡{0}, elimine a {1}!",
+    "¡{0}, derrote seu {1}!",
+    "¡{0}, derrube a {1}!",
+    "¡{0}, concentre o ataque em {1}!"
+  ],
+  "ondirectattack": [
+    "Arg......",
+    "{0} Você vai se arrepender disso...",
+    "Até este ponto, é impossível."
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "{0} ativado!",
+    "Vou ativar o efeito de {0}!",
+    "A carta que quero ativar é {0}."
+  ],
+  "summon": [
+    "{0} invocado com sucesso!",
+    "Salve, {0}!",
+    "Deleite-se com a grandeza de {0}!",
+    "Apresento meu monstro mais forte, {0}!",
+    "Vou invocar {0}!",
+    "É o seu fim, invoco {0}!",
+    "O monstro que invocarei é {0}."
+  ],
+  "setmonster": [
+    "Colocarei um monstro.",
+    "Coloquei esse monstro em modo de defesa virado para baixo."
+  ],
+  "chaining": [
+    "Você me pegou! {0} ativado!",
+    "A carta que quero ativar é {0}.",
+    "Agora é a hora! {0} ativado!",
+    "A carta que usarei é {0}.",
+    "{0} ativado!",
+    "Você não esperava o {0}."
+  ]
+}

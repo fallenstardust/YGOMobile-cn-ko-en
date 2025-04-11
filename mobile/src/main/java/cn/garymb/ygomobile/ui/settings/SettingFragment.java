@@ -13,6 +13,7 @@ import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
+import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
@@ -32,13 +33,13 @@ import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_RESET_GAME_RES;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
+import static cn.garymb.ygomobile.Constants.PREF_USER_PRIVACY_POLICY;
 import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
-import static cn.garymb.ygomobile.Constants.URL_YGO233_FILE_ALT;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
@@ -63,6 +64,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -83,6 +85,8 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.adapter.DialogImageAdapter;
+import cn.garymb.ygomobile.bean.ImageItem;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
@@ -96,6 +100,7 @@ import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import okhttp3.Call;
@@ -130,7 +135,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
-        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getActivity()) + "(" + SystemUtils.getVersion(getActivity()) + ")");
+        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
         bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
         bind(PREF_RESET_GAME_RES, getString(R.string.guide_reset));
         bind(PREF_JOIN_QQ, getString(R.string.about_Join_QQ));
@@ -147,6 +152,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
+        bind(PREF_KEY_WORDS_SPLIT, mSettings.getKeyWordsSplit());
         bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
         if (preference != null) {
@@ -160,6 +166,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
+        bind(PREF_USER_PRIVACY_POLICY,getString(R.string.about_user_privacy_policy));
         isInit = false;
     }
 
@@ -214,36 +221,50 @@ public class SettingFragment extends PreferenceFragmentPlus {
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
                 if (preference.getKey().equals(PREF_DATA_LANGUAGE)) {
-                    if (listPreference.getValue().equals("0")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Chinese.code)) {
                         try {
                             mSettings.copyCnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("1")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Korean.code)) {
                         try {
                             mSettings.copyKorData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("2")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.English.code)) {
                         try {
                             mSettings.copyEnData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if (listPreference.getValue().equals("3")) {
+                    if (listPreference.equals(AppsSettings.languageEnum.Spanish.code)) {
                         try {
                             mSettings.copyEsData();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
+                    if (listPreference.equals(AppsSettings.languageEnum.Japanese.code)) {
+                        try {
+                            mSettings.copyJpData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (listPreference.equals(AppsSettings.languageEnum.Portuguese.code)) {
+                        try {
+                            mSettings.copyPtData();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
-                    Toast.makeText(getContext(), R.string.restart_app, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
                     DataManager.get().load(true);
                 }
                 mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
@@ -269,8 +290,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
-                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getActivity());
+                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                            DialogPlus dialog = new DialogPlus(getContext());
                             dialog.setMessage(R.string.Found_Update);
                             dialog.setLeftButtonText(R.string.download_home);
                             dialog.setLeftButtonListener((dlg, s) -> {
@@ -281,18 +302,18 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             });
                             dialog.show();
                         } else {
-                            Toast.makeText(getContext(), R.string.Already_Lastest, Toast.LENGTH_SHORT).show();
+                            YGOUtil.showTextToast(R.string.Already_Lastest);
                         }
                     } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed), Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(R.string.Checking_Update_Failed);
                     }
                     break;
                 case TYPE_SETTING_GET_VERSION_FAILED:
                     ++FailedCount;
                     if (FailedCount <= 2) {
-                        checkUpgrade(URL_YGO233_FILE_ALT);
+                        checkUpgrade(URL_HOME_VERSION);
                     } else {
-                        Toast.makeText(getContext(), getString(R.string.Checking_Update_Failed) + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+                        YGOUtil.showTextToast(getString(R.string.Checking_Update_Failed) + msg.obj.toString());
                     }
                     break;
             }
@@ -304,10 +325,32 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         if (PREF_CHANGE_LOG.equals(key)) {
-            new DialogPlus(getActivity())
+            new DialogPlus(getContext())
                     .setTitleText(getString(R.string.settings_about_change_log))
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
+        }
+        if (PREF_USER_PRIVACY_POLICY.equals(key)) {
+            DialogPlus dialogPlus = new DialogPlus(getContext())
+                    .setTitleText(getString(R.string.user_privacy_policy));
+            //根据系统语言复制特定资料文件
+            String language = getContext().getResources().getConfiguration().locale.getLanguage();
+            String fileaddr = "";
+            if (!language.isEmpty()) {
+                if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
+                } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
+                } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
+                } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+                } else {
+                    fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+                }
+            }
+            dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+            dialogPlus.show();
         }
         if (PREF_RESET_GAME_RES.equals(key)) {
             updateImages();
@@ -344,7 +387,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     simpleListAdapter.notifyDataSetChanged();
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
                     DataManager.get().load(true);
-                    Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.done, Toast.LENGTH_LONG);
                     if (name.contains(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
                         SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
                         ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
@@ -381,19 +424,17 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView avatar1 = viewDialog.findViewById(R.id.me);
             ImageView avatar2 = viewDialog.findViewById(R.id.opponent);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
             avatar1.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, avatar1, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
             });
             avatar2.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.settings_game_avatar), outFile, true, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, avatar2, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
             });
         } else if (SETTINGS_COVER.equals(key)) {
             //显示卡背图片对话框
@@ -404,23 +445,15 @@ public class SettingFragment extends PreferenceFragmentPlus {
             View viewDialog = dialog.getContentView();
             ImageView cover1 = viewDialog.findViewById(R.id.cover1);
             ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
             cover1.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.card_cover),
-                        outFile,
-                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, cover1, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
             });
             cover2.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.card_cover),
-                        outFile,
-                        true, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, cover2, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
             });
         } else if (SETTINGS_CARD_BG.equals(key)) {
             //显示背景图片对话框
@@ -432,32 +465,21 @@ public class SettingFragment extends PreferenceFragmentPlus {
             ImageView bg = viewDialog.findViewById(R.id.bg);
             ImageView bg_menu = viewDialog.findViewById(R.id.bg_menu);
             ImageView bg_deck = viewDialog.findViewById(R.id.bg_deck);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
-            setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
+            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
             bg.setOnClickListener((v) -> {
                 //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg),
-                        outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_menu.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg_menu),
-                        outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg_menu, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
             bg_deck.setOnClickListener((v) -> {
-                //打开系统文件相册
                 String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-                showImageDialog(preference, getString(R.string.bg_deck),
-                        outFile,
-                        true, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1]);
-                dialog.dismiss();
+                DialogloadImages(preference, bg_deck, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
             });
         } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
@@ -500,7 +522,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         } else if (PREF_GAME_PATH.equalsIgnoreCase(preference.getKey())) {
             if (!TextUtils.equals(mSettings.getResourcePath(), file)) {
 //                Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(getActivity(), MainActivity.class).setAction(ACTION_RELOAD));
+                startActivity(new Intent(getContext(), MainActivity.class).setAction(ACTION_RELOAD));
                 getActivity().finish();
             }
             mSettings.setResourcePath(file);
@@ -515,38 +537,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
     }
 
-    private void showImageDialog(Preference preference, String title, String outFile, boolean isJpeg, int outWidth, int outHeight) {
-        int width = getResources().getDisplayMetrics().widthPixels;
-        final ImageView imageView = new ImageView(getActivity());
-        FrameLayout frameLayout = new FrameLayout(getActivity());
-        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
-        frameLayout.addView(imageView, layoutParams);
-        showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, isJpeg, outWidth, outHeight);
-        File img = new File(outFile);
-        if (img.exists()) {
-            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .override(outWidth, outHeight)
-                    .into(imageView);
-        }
-    }
-
-    public void setImage(String outFile, int outWidth, int outHeight, ImageView imageView) {
-        File img = new File(outFile);
-        if (img.exists()) {
-            GlideCompat.with(this).load(img).signature(new MediaStoreSignature("image/*", img.lastModified(), 0))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .override(outWidth, outHeight)
-                    .into(imageView);
-        }
-    }
-
     private void copyDataBase(Preference preference, String file) {
         CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-        Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.copy_databse));
+        Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.copy_databse));
         VUiKit.defer().when(() -> {
             File db = new File(mSettings.getResourcePath(), Constants.DATABASE_NAME);
             InputStream in = null;
@@ -572,12 +565,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
             dlg.dismiss();
             mSettings.setUseExtraCards(false);
             checkBoxPreference.setChecked(false);
-            Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.restart_app);
         }).done((ok) -> {
             dlg.dismiss();
             checkBoxPreference.setChecked(ok);
             mSettings.setUseExtraCards(ok);
-            Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.restart_app);
         });
     }
 
@@ -587,11 +580,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
         File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
         if (ok) {
             //rename
-            Dialog dlg = DialogPlus.show(getActivity(), null, getString(R.string.coping_pendulum_image));
+            Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.coping_pendulum_image));
             VUiKit.defer().when(() -> {
                 try {
                     IOUtils.createFolder(dir);
-                    IOUtils.copyFilesFromAssets(getActivity(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
+                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
                             dir.getAbsolutePath(), false);
                 } catch (IOException e) {
                 }
@@ -639,6 +632,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                             mSettings.copyEsData();
                         } else if (language.equals(AppsSettings.languageEnum.Japanese.name)) {
                             mSettings.copyJpData();
+                        } else if (language.equals(AppsSettings.languageEnum.Portuguese.name)) {
+                            mSettings.copyPtData();
                         } else {
                             mSettings.copyEnData();
                         }
@@ -652,6 +647,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         mSettings.copyEnData();
                     if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Spanish.code)
                         mSettings.copyEsData();
+                    if (mSettings.getDataLanguage() == AppsSettings.languageEnum.Portuguese.code)
+                        mSettings.copyPtData();
                 }
 
                 /*
@@ -670,7 +667,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 Log.e("SettingFragment", "错误" + e);
             }
         }).done((rs) -> {
-            Toast.makeText(getContext(), R.string.done, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.done);
             dialog.dismiss();
         });
     }
@@ -725,5 +722,43 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
         }
     }
+
+    private void DialogloadImages(Preference preference, ImageView imageView, String imagePath, int[] itemWidth_itemHeight, String outFile) {
+        final DialogPlus dlg = new DialogPlus(getContext());
+        dlg.setContentView(R.layout.dialog_image_select);
+        dlg.setTitle(R.string.dialog_select_image);
+        dlg.show();
+        GridView vImgSel = dlg.findViewById(R.id.gridView);
+        ArrayList<ImageItem> items = new ArrayList<>();
+        // 添加相册选择item
+        items.add(new ImageItem("album_item", true));
+        File directory = new File(imagePath);
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            for (File file : files) {
+                if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
+                    items.add(new ImageItem(file.getAbsolutePath(), false));
+                }
+            }
+        }
+
+        // 从Intent中获取传递的图片路径
+        if (imagePath != null) {
+            // 设置适配器
+            DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, new DialogImageAdapter.OnImageSelectedListener() {
+                @Override
+                public void onImageSelected(String outFilePath, String title, int width, int height) {
+                    showImageCropChooser(preference, title, outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
+                }
+            });
+            vImgSel.setAdapter(dialogImageAdapter);
+
+        } else {
+            dlg.dismiss();
+            showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
+        }
+
+    }
+
 }
 

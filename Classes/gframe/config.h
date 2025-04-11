@@ -1,39 +1,34 @@
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef YGOPRO_CONFIG_H
+#define YGOPRO_CONFIG_H
 
-#pragma once
-#ifndef __GAME_CONFIG
 #define _IRR_STATIC_LIB_
 #define IRR_COMPILE_WITH_DX9_DEV_PACK
+
+#include <cerrno>
+
 #define _IRR_ANDROID_PLATFORM_
 
 #ifdef _IRR_ANDROID_PLATFORM_
-
 #include <android_native_app_glue.h>
 #include <android/android_tools.h>
-#endif
-#ifdef _WIN32
+#include <android/xstring.h>
 
-#define NOMINMAX
-#include <WinSock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
-
-#ifdef _MSC_VER
-#define myswprintf _swprintf
-#define mywcsncasecmp _wcsnicmp
-#define mystrncasecmp _strnicmp
-#else
-#define myswprintf swprintf
-#define mywcsncasecmp wcsncasecmp
-#define mystrncasecmp strncasecmp
+#define mywcscat wcscat_x
+#include "os.h"
+#include <android/bufferio_android.h>
+#include <android/CustomShaderConstantSetCallBack.h>
 #endif
 
 #define socklen_t int
 
-#else //_WIN32
+#ifndef TEXT
+#ifdef UNICODE
+#define TEXT(x) L##x
+#else
+#define TEXT(x) x
+#endif // UNICODE
+#endif
 
-#include <errno.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -50,78 +45,37 @@
 #define SOCKADDR sockaddr
 #define SOCKET_ERRNO() (errno)
 
-#include <wchar.h>
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <android/xstring.h>
-#define myswprintf(buf, fmt, ...) swprintf_x(buf, 4096, fmt, ##__VA_ARGS__)
-#define _wtoi wtoi_x
-#define mywcscat wcscat_x
-#else
-#define myswprintf(buf, fmt, ...) swprintf(buf, 4096, fmt, ##__VA_ARGS__)
 #define mywcsncasecmp wcsncasecmp
 #define mystrncasecmp strncasecmp
-inline int _wtoi(const wchar_t * s) {
-	wchar_t * endptr;
-	return (int)wcstol(s, &endptr, 10);
-}
-#endif
-#endif
 
-#ifndef TEXT
-#ifdef UNICODE
-#define TEXT(x) L##x
-#else
-#define TEXT(x) x
-#endif // UNICODE
-#endif
-
-#include <irrlicht.h>
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#include <GLES/glplatform.h>
-#else
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif
-#include "CGUITTFont.h"
-#include "CGUIImageButton.h"
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <thread>
-#include <mutex>
 #include <algorithm>
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <android/bufferio_android.h>
-#else
-#include "bufferio.h"
-#endif
-#include "myfilesystem.h"
+#include <string>
 #include "mysignal.h"
 #include "../ocgcore/ocgapi.h"
-#include "../ocgcore/common.h"
 
-#ifdef _IRR_ANDROID_PLATFORM_
-#include "os.h"
-#endif
+template<size_t N, typename... TR>
+inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
+	return std::swprintf(buf, N, fmt, args...);
+}
 
-#if defined(_IRR_ANDROID_PLATFORM_)
-#include <android/CustomShaderConstantSetCallBack.h>
-#endif
+inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
+	FILE* fp{};
+	char fname[1024]{};
+	BufferIO::EncodeUTF8(filename, fname);
+	fp = std::fopen(fname, mode);
+	return fp;
+}
 
-using namespace irr;
-using namespace core;
-using namespace scene;
-using namespace video;
-using namespace io;
-using namespace gui;
-using namespace os;
+#include <irrlicht.h>
+using namespace irr::io;
+using namespace irr::os;
 
 extern const unsigned short PRO_VERSION;
 extern unsigned int enable_log;
 extern bool exit_on_return;
 extern bool bot_mode;
-#endif
+
 #endif

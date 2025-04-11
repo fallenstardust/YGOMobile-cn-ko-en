@@ -9,6 +9,7 @@ import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -17,7 +18,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -53,6 +53,8 @@ import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -106,6 +108,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         initBottomNavigationBar();
         onNewIntent(getIntent());
         ServerUtil.initExCardState();//检查扩展卡版本
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {//TODO 需要适配Api35
+            SharedPreferenceUtil.setImmersiveMode(true);
+        }
     }
 
     @Override
@@ -141,7 +146,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         bottomNavigationBar = findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.home, R.string.mc_home))
-                .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.search))
+                .addItem(new BottomNavigationItem(R.drawable.searcher, R.string.card_search))
                 .addItem(new BottomNavigationItem(R.drawable.deck, R.string.deck_manager))
                 .addItem(new BottomNavigationItem(R.drawable.mycard, R.string.mycard).setBadgeItem(mTextBadgeItem))
                 .addItem(new BottomNavigationItem(R.drawable.my, R.string.personal))
@@ -190,7 +195,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                         if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
-                        if (!Version.equals(BuildConfig.VERSION_NAME) && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
                             DialogPlus dialog = new DialogPlus(getActivity());
                             dialog.setMessage(R.string.Found_Update);
                             dialog.setLeftButtonText(R.string.download_home);
@@ -392,8 +397,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             super.onBackPressed();
         } else {
             exitLasttime = System.currentTimeMillis();
-            if (fragment_home.isVisible() || fragment_settings.isVisible())
-                Toast.makeText(getContext(), R.string.back_tip, Toast.LENGTH_SHORT).show();
+            if (fragment_home.isVisible() || fragment_settings.isVisible()) YGOUtil.showTextToast(R.string.back_tip);
         }
     }
 

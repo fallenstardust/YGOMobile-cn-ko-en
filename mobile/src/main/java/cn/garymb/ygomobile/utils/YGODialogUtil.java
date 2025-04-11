@@ -333,7 +333,7 @@ public class YGODialogUtil {
                                 break;
                             case 1:
                                 dialog.dismiss();
-                                onDeckMenuListener.onDeckNew(typeList.get(typeAdp.getSelectPosition()));
+                                onDeckMenuListener.onDeckNew((typeAdp.getSelectPosition() > 1 ? typeList.get(typeAdp.getSelectPosition()) : typeList.get(2)));//如果选中卡包展示和人机卡组的场合创建卡组则在未分类下创建这个新卡组
                                 break;
                         }
                     });

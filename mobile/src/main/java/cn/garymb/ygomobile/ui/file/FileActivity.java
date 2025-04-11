@@ -21,6 +21,7 @@ import java.io.File;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 
 public class FileActivity extends BaseActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener
@@ -126,7 +127,7 @@ public class FileActivity extends BaseActivity implements AdapterView.OnItemClic
                         if (!file.isDirectory()) {
                             selectFile(file);
                         } else {
-                            Toast.makeText(this, R.string.the_name_is_folder, Toast.LENGTH_SHORT).show();
+                            YGOUtil.showTextToast(R.string.the_name_is_folder);
                             return;
                         }
                     }

@@ -72,6 +72,7 @@ import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
+import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
@@ -131,6 +132,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
     private Bundle mBundle;
     private View layoutView;
 
+    private boolean isShouldSaveAndOpenDeck = false;
+    private Uri pendingUri;
+    private List<Integer> pendingMainList;
+    private List<Integer> pendingExList;
+    private List<Integer> pendingSideList;
+    private boolean pendingIsCompleteDeck;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -154,7 +162,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         try {
             ServerUtil.refreshServer(activity);
         } catch (IOException e) {
-            Log.e("seesee",e+"");
+            Log.e(TAG,e+"");
         }
         //showNewbieGuide("homePage");
         return layoutView;
@@ -301,7 +309,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE) {
             ll_new_notice.setVisibility(View.VISIBLE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.ERROR) {
-            Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_iii, Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast(R.string.ex_card_check_toast_message_iii);
             ll_new_notice.setVisibility(View.GONE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
             //do nothing
@@ -407,9 +415,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         builder.setLeftButtonListener((dlg, i) -> {
             dlg.dismiss();
             if (Build.VERSION.SDK_INT >= 23 && YGOStarter.isGameRunning(getActivity())) {
-                Toast toast = Toast.makeText(App.get().getApplicationContext(), R.string.tip_return_to_duel, Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
+                YGOUtil.showTextToast(Gravity.CENTER, R.string.tip_return_to_duel);
                 openGame();
             } else {
                 //保存名字
@@ -523,7 +529,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             String[] tipsList = this.getResources().getStringArray(R.array.tips);
             int x = (int) (Math.random() * tipsList.length);
             String tips = tipsList[x];
-            Toast.makeText(getActivity(), tips, Toast.LENGTH_LONG).show();
+            YGOUtil.showTextToast(tips, Toast.LENGTH_LONG);
         }
     }
 
@@ -567,11 +573,12 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Override
     public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
-        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception);
+        activity.startPermissionsActivity();
+        saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception, id != DefWebViewClient.CHECK_ID_WEB_VIEW_NEW_ACTIVITY);
     }
 
-    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception) {
-        if (!TextUtils.isEmpty(exception)) {
+    public void saveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, boolean isShowDialog) {
+        if (isShowDialog && !TextUtils.isEmpty(exception)) {
             YGOUtil.showTextToast("卡组解析失败，原因为：" + exception);
             return;
         }
@@ -600,36 +607,54 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 sideList.set(sideList.indexOf(id), ArrayUtil.get(newIDsArray, ArrayUtil.indexOf(oldIDsArray, id)));
             }
         }
-        DialogPlus dialog = new DialogPlus(getContext());
-        dialog.setTitle(R.string.question);
-        dialog.setMessage(R.string.find_deck_text);
-        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonText(R.string.Cancel);
-        dialog.setRightButtonText(R.string.save_n_open);
-        dialog.show();
-        dialog.setLeftButtonListener((dlg, s) -> {
-            dialog.dismiss();
-        });
-        dialog.setRightButtonListener((dlg, s) -> {
-            dialog.dismiss();
-            Deck deck;
-            //如果是卡组url
-            if (uri != null) {
-                deck = new Deck(uri, mainList, exList, sideList);
+
+        if (isShowDialog) {
+            DialogPlus dialog = new DialogPlus(getContext());
+            dialog.setTitle(R.string.question);
+            dialog.setMessage(R.string.find_deck_text);
+            dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+            dialog.setLeftButtonText(R.string.Cancel);
+            dialog.setRightButtonText(R.string.save_n_open);
+            dialog.show();
+            dialog.setLeftButtonListener((dlg, s) -> {
+                dialog.dismiss();
+            });
+            dialog.setRightButtonListener((dlg, s) -> {
+                dialog.dismiss();
+                saveAndOpenDeck(uri, mainList, exList, sideList, isCompleteDeck);
+            });
+        } else {
+            if (isAdded() && isResumed()) {
+                saveAndOpenDeck(uri, mainList, exList, sideList, isCompleteDeck);
             } else {
-                deck = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+                isShouldSaveAndOpenDeck = true;
+                pendingUri = uri;
+                pendingMainList = mainList;
+                pendingExList = exList;
+                pendingSideList = sideList;
+                pendingIsCompleteDeck = isCompleteDeck;
             }
-            deck.setCompleteDeck(isCompleteDeck);
-            File file = deck.saveTemp(AppsSettings.get().getDeckDir());
-            if (!deck.isCompleteDeck()) {
-                YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
-            }
-            if (!file.getAbsolutePath().isEmpty()) {
-                mBundle.putString("setDeck", file.getAbsolutePath());
-                activity.fragment_deck_cards.setArguments(mBundle);
-            }
-            activity.switchFragment(activity.fragment_deck_cards, 2, true);
-        });
+        }
+    }
+
+    private void saveAndOpenDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck) {
+        Deck deck;
+        //如果是卡组url
+        if (uri != null) {
+            deck = new Deck(uri, mainList, exList, sideList);
+        } else {
+            deck = new Deck(getString(R.string.rename_deck) + System.currentTimeMillis(), mainList, exList, sideList);
+        }
+        deck.setCompleteDeck(isCompleteDeck);
+        File file = deck.saveTemp(AppsSettings.get().getDeckDir());
+        if (!deck.isCompleteDeck()) {
+            YGOUtil.showTextToast(activity.getString(R.string.tip_deckInfo_isNot_completeDeck));
+        }
+        if (!file.getAbsolutePath().isEmpty()) {
+            mBundle.putString("setDeck", file.getAbsolutePath());
+            activity.fragment_deck_cards.setArguments(mBundle);
+        }
+        activity.switchFragment(activity.fragment_deck_cards, 2, true);
     }
 
     @Override
@@ -669,10 +694,10 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
                 //如果是先行卡服务器，并且未开启先行卡设置，则通过toast提示
                 if (!AppsSettings.get().isReadExpansions()) {
-                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.ex_card_check_toast_message, Toast.LENGTH_LONG);
                 } else if (ServerUtil.exCardState != ServerUtil.ExCardState.UPDATED) {
                     //如果是先行卡服务器，并且未开启下载先行卡，则通过toast提示
-                    Toast.makeText(getActivity(), R.string.ex_card_check_toast_message_ii, Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(R.string.ex_card_check_toast_message_ii, Toast.LENGTH_LONG);
                 }
             }
             joinRoom(event.position);
@@ -718,7 +743,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         duelAssistantManagement = DuelAssistantManagement.getInstance();
         duelAssistantManagement.init(getActivity());
         duelAssistantManagement.addDuelAssistantListener(this);
-//        YGOUtil.startDuelService(this);
     }
 
     @Override
@@ -728,6 +752,19 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         BacktoDuel();
         //server list
         mServerListManager.syncLoadData();
+        if (isShouldSaveAndOpenDeck
+                && pendingMainList != null
+                && pendingExList != null
+                && pendingSideList != null
+        ) {
+            saveAndOpenDeck(pendingUri, pendingMainList, pendingExList, pendingSideList, pendingIsCompleteDeck);
+            isShouldSaveAndOpenDeck = false;
+            pendingUri = null;
+            pendingMainList = null;
+            pendingExList = null;
+            pendingSideList = null;
+            pendingIsCompleteDeck = false;
+        }
     }
 
     @Override
@@ -827,7 +864,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
             case R.id.nav_webpage: {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(Constants.URL_DONATE));
-                Toast.makeText(getActivity(), R.string.donatefor, Toast.LENGTH_LONG).show();
+                YGOUtil.showTextToast(R.string.donatefor, Toast.LENGTH_LONG);
                 startActivity(intent);
             }
             break;

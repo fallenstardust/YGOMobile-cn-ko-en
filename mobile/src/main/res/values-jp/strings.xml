@@ -82,13 +82,6 @@
         <item>低い</item>
         <item>高い</item>
     </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>简体中文</item>
-        <item>조선말</item>
-        <item>English</item>
-        <item>Español</item>
-        <item>日本語</item>
-    </string-array>
     <!-- settings -->
     <string name="server_list">ヂュエル</string>
     <string name="server_name">サーバー名:</string>
@@ -133,7 +126,8 @@
     <string name="label_category">効果分類</string>
     <string name="linkmarker">◀リンクマーカー▶</string>>
     <string name="searching">ロード中</string>
-    <string name="card_faq">オンラインで判定をチェック</string>
+    <string name="card_faq">Q&amp;A</string>
+    <string name="card_related">関連カード</string>
     <string name="no_webbrowser">ブラウザはインストールしていません</string>
     <string name="load_game">ゲーム起動中</string>
 
@@ -323,6 +317,7 @@
     <string name="restore_deck">復元記録を発見しました，復元をしますか？</string>
     <string name="explain_permission">
         このソート使用する為に以下の権限を許してください：
+        \nクリップボードの権限：デッキコードや対戦コードの読み取りに必要
         \nセーブ権限：バックアップ、復元デッキ，壁紙カスタマイズ、アバタ、プロテクター必須</string>
     <string name="guide_menu">機能メニュー：\n主の機能は"</string>
     <string name="guide_mycard">MYCARDプラットホーム：\n対戦サーバーを提供します\nランキング，観戦，チャット</string>
@@ -347,6 +342,7 @@
     <string name="file_installed">ファイル導入成功</string>
     <string name="settings_screen_padding">窓の預入高さ</string>
     <string name="tip_load_cdb_error">データロードエー</string>
+    <string name="tip_download_failed">保存失敗</string>
     <string name="replay">リプレイを見る</string>
     <string name="bot_mode">AIモード</string>
     <string name="personal">自分の</string>
@@ -355,10 +351,18 @@
     <string name="login_succeed">登録成功</string>
     <string name="reChatJoining">接続は切断された,最接続中……</string>
     <string name="settings_data_language">言語を変更します</string>
+    <string name="settings_key_words_split">複数キーワード検索（スペースで区切る）</string>
     <string name="settings_data_language_about">YGOPROのUI、説明文やテキストを切り替えます</string>
     <string name="tip_card_info_diff">未確認カードです。ソフトを更新してくださいまたは非公式データを更新してください。</string>
     <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常，オフィシャルパスコードに変更してください</string>
     <string name="tip_ygopro_is_running">YGOPROは既に運行している，新しいデュエル開始できません，ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
     <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
+    <string name="tip_download_ex">新しいカードがあるよ、遊びに来て！</string>
+    <string name="tip_download_OK">に保存されました</string>
+    <string name="replay_list">リプレイ</string>
+    <string name="user_privacy_policy">ユーザーのプライバシーポリシー</string>
+    <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
+    <string name="open">デッキを開く</string>
+    <string name="web_warn_save_deck">デッキを開くと、現在閲覧しているウェブページが閉じられます。ウェブページを閉じてデッキを開きますか？</string>
 </resources>

@@ -10,6 +10,8 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView.OnEditorActionListener;
@@ -43,11 +45,8 @@ import ocgcore.enums.LimitType;
 public class CardSearcher implements View.OnClickListener {
     private static final String TAG = "CardSearcher";
     final String[] BtnVals = new String[9];
-    protected StringManager mStringManager;
-    protected LimitManager mLimitManager;
-    protected AppsSettings mSettings;
-    private int lineKey;
     private final EditText keyWord;
+    private final CheckBox chk_multi_keyword;
     private final Spinner otSpinner;
     private final Spinner limitSpinner;
     private final Spinner limitListSpinner;
@@ -69,31 +68,25 @@ public class CardSearcher implements View.OnClickListener {
     private final Button resetButton;
     private final View view;
     private final View layout_monster;
-    private final ICardSearcher dataLoader;
+    private final ICardSearcher mICardSearcher;
     private final Context mContext;
     private final Button myFavButton;
+    protected StringManager mStringManager;
+    protected LimitManager mLimitManager;
+    protected AppsSettings mSettings;
+    private int lineKey;
     private CallBack mCallBack;
     private boolean mShowFavorite;
-    private final ICardSearcher mCardLoader;
 
-    public interface CallBack {
-        void onSearchStart();
-
-        void onSearchResult(List<Card> Cards, boolean isHide);
-    }
-
-    public void setCallBack(CallBack callBack) {
-        mCallBack = callBack;
-    }
-
-    public CardSearcher(View view, ICardSearcher dataLoader) {
+    public CardSearcher(View view, ICardSearcher iCardSearcher) {
         this.view = view;
         this.mContext = view.getContext();
-        this.dataLoader = dataLoader;
+        this.mICardSearcher = iCardSearcher;
         this.mSettings = AppsSettings.get();
         mStringManager = DataManager.get().getStringManager();
         mLimitManager = DataManager.get().getLimitManager();
         keyWord = findViewById(R.id.edt_word1);
+        chk_multi_keyword = findViewById(R.id.chk_multi_keyword);
         otSpinner = findViewById(R.id.sp_ot);
         limitSpinner = findViewById(R.id.sp_limit);
         limitListSpinner = findViewById(R.id.sp_limit_list);
@@ -119,7 +112,6 @@ public class CardSearcher implements View.OnClickListener {
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
-        mCardLoader = dataLoader;
 
         //输入即时搜索
         OnEditorActionListener searchListener = (v, actionId, event) -> {
@@ -133,9 +125,16 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         keyWord.setOnEditorActionListener(searchListener);
+        chk_multi_keyword.setChecked(mSettings.getKeyWordsSplit() == 0 ? false : true);
+        chk_multi_keyword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSettings.setKeyWordsSplit(isChecked ? 1 : 0);
+            }
+        });
 
         myFavButton.setOnClickListener(v -> {
-            if(isShowFavorite()){
+            if (isShowFavorite()) {
                 hideFavorites(true);
             } else {
                 showFavorites(true);
@@ -274,6 +273,10 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
+    public void setCallBack(CallBack callBack) {
+        mCallBack = callBack;
+    }
+
     public void showFavorites(boolean showList) {
         mShowFavorite = true;
         myFavButton.setSelected(true);
@@ -282,12 +285,12 @@ public class CardSearcher implements View.OnClickListener {
         }
         if (mCallBack != null) {
             VUiKit.post(() -> {
-                mCallBack.onSearchResult(CardFavorites.get().getCards(mCardLoader), !showList);
+                mCallBack.onSearchResult(CardFavorites.get().getCards(mICardSearcher), !showList);
             });
         }
     }
 
-    public void hideFavorites(boolean reload){
+    public void hideFavorites(boolean reload) {
         mShowFavorite = false;
         myFavButton.setSelected(false);
         if (mCallBack != null) {
@@ -338,10 +341,6 @@ public class CardSearcher implements View.OnClickListener {
         return v;
     }
 
-    /*public void showDeckList() {
-        findViewById(R.id.layout_deck_list).setVisibility(View.VISIBLE);
-    }*/
-
     private void initOtSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         for (CardOt item : CardOt.values()) {
@@ -387,8 +386,8 @@ public class CardSearcher implements View.OnClickListener {
         int index = -1;
         int count = mLimitManager.getCount();
         LimitList cur = null;
-        if (dataLoader != null) {
-            cur = dataLoader.getLimitList();
+        if (mICardSearcher != null) {
+            cur = mICardSearcher.getLimitList();
         }
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         for (int i = 0; i < count; i++) {
@@ -526,7 +525,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private int getIntSelect(Spinner spinner) {
-        return (int)getSelect(spinner);
+        return (int) getSelect(spinner);
     }
 
     private long getSelect(Spinner spinner) {
@@ -563,7 +562,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void search() {
-        if (dataLoader != null) {
+        if (mICardSearcher != null) {
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .keyword(text(keyWord))
                     .attribute(getIntSelect(attributeSpinner))
@@ -586,15 +585,14 @@ public class CardSearcher implements View.OnClickListener {
                     })
                     .linkKey(lineKey)
                     .build();
-            Log.i(TAG,searchInfo.toString());
-            dataLoader.search(searchInfo);
-            lineKey = 0;
+            Log.i(TAG, searchInfo.toString());
+            mICardSearcher.search(searchInfo);
         }
     }
 
     private void resetAll() {
-        if (dataLoader != null) {
-            dataLoader.onReset();
+        if (mICardSearcher != null) {
+            mICardSearcher.onReset();
         }
         keyWord.setText(null);
         reset(otSpinner);
@@ -621,5 +619,12 @@ public class CardSearcher implements View.OnClickListener {
         reset(attributeSpinner);
         atkText.setText(null);
         defText.setText(null);
+        lineKey = 0;
+    }
+
+    public interface CallBack {
+        void onSearchStart();
+
+        void onSearchResult(List<Card> Cards, boolean isHide);
     }
 }

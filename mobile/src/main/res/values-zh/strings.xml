@@ -82,15 +82,8 @@
         <item>低</item>
         <item>高</item>
     </string-array>
-    <string-array name="data_language" translatable="false">
-        <item>简体中文</item>
-        <item>조선말</item>
-        <item>English</item>
-        <item>Español</item>
-        <item>日本語</item>
-    </string-array>
     <!-- settings -->
-    <string name="server_list">直连决斗</string>
+    <string name="server_list">联机对战</string>
     <string name="server_name">名称:</string>
     <string name="server_desc">备注:</string>
     <string name="server_ip">主机信息:</string>
@@ -106,7 +99,7 @@
     <string name="server_is_exist">服务器信息已经存在！</string>
     <string name="server_info_error">服务器信息填写错误</string>
     <string name="card_search">卡片搜索</string>
-    <string name="deck_manager">卡组</string>
+    <string name="deck_manager">编辑卡组</string>
     <string name="category_manager">卡组分类选择</string>
     <string name="search">搜索</string>
     <string name="find_in_page">输入要查找的词：</string>
@@ -133,7 +126,8 @@
     <string name="label_category">效果分类</string>
     <string name="linkmarker">◀连接标记▶</string>>
     <string name="searching">读取中</string>
-    <string name="card_faq">在线裁定查询</string>
+    <string name="card_faq">裁定查询</string>
+    <string name="card_related">关联卡片</string>
     <string name="no_webbrowser">没有安装浏览器</string>
     <string name="load_game">启动游戏中</string>
 
@@ -215,7 +209,7 @@
     <string name="tip_istunning">游戏已运行</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
-    <string name="mycard">萌卡</string>
+    <string name="mycard">萌卡决斗</string>
     <string name="arena">决斗数据库</string>
     <string name="mc_chat">聊天室</string>
     <string name="noting_to_send">发送内容不能为空</string>
@@ -227,7 +221,7 @@
     <string name="failed_reason">登录失败，原因是</string>
     <string name="notice_verify_email">请验证账号邮箱后重登方可进入聊天室</string>
     <string name="send">发送</string>
-    <string name="mc_home">大厅</string>
+    <string name="mc_home">直连决斗</string>
     <string name="bbs">社区</string>
     <string name="McNews">公告</string>
     <string name="settings_pref_settings_only_game">直接启动游戏</string>
@@ -270,7 +264,7 @@
     <string name="OK">确定</string>
     <string name="Cancel">取消</string>
     <string name="Checking_Update">检查更新中，请稍候</string>
-    <string name="Found_Update">发现新版本，前往下载？</string>
+    <string name="Found_Update">有重要更新！为不影响后续使用，请尽快下载安装新版本！</string>
     <string name="Checking_Update_Failed">检查更新失败</string>
     <string name="Download_Precard_Failed">先行卡下载失败</string>
     <string name="Pre_Server_Name">萌卡超先行服</string>
@@ -323,6 +317,7 @@
     <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
     <string name="explain_permission">
         使用本软件此类功能将申请以下必要权限：
+        \n剪贴板权限：读取卡组码、约战码必需
         \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
     <string name="guide_menu">功能菜单：\n主要功能如"</string>
     <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
@@ -348,17 +343,26 @@
     <string name="settings_screen_padding">瀑布屏预留高度</string>
     <string name="tip_load_cdb_error">加载数据出错</string>
     <string name="replay">查看录像</string>
+    <string name="replay_list">录像列表</string>
     <string name="bot_mode">人机练习</string>
-    <string name="personal">我的</string>
+    <string name="personal">我的设置</string>
     <string name="back_to_mycard_home">返回萌卡首页</string>
     <string name="edit_your_message">输入聊天内容</string>
     <string name="login_succeed">登录成功</string>
     <string name="reChatJoining">连接断开,重新登陆中……</string>
     <string name="settings_data_language">切换资料语言</string>
+    <string name="settings_key_words_split">多关键词搜索（空格隔开）</string>
     <string name="settings_data_language_about">切换ygopro界面和效果说明文字等的语言</string>
     <string name="tip_card_info_diff">软件未收录此卡。请尝试更新软件，或查看扩展卡包中是否有此卡。</string>
     <string name="tip_deckInfo_isNot_completeDeck">当前卡组解析异常，将尽量转换为已有卡片</string>
     <string name="tip_ygopro_is_running">当前有游戏正在运行，无法开启新的决斗，已将房间密码存入历史记录，请结束当前游戏后再选择该历史记录以加入房间</string>
     <string name="tip_ypk_is_deleted">正式卡更新会让旧先行卡失效，请及时重新下载先行卡补丁</string>
     <string name="tip_superpre_desc">与本应用正式卡同步更新并提供超先行卡尝鲜</string>
+    <string name="tip_download_ex">新卡下载！</string>
+    <string name="tip_download_failed">保存失败，请检查网络并重试</string>
+    <string name="tip_download_OK">已保存至</string>
+    <string name="user_privacy_policy">用户隐私政策</string>
+    <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
 </resources>

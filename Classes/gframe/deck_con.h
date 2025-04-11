@@ -1,10 +1,11 @@
 #ifndef DECK_CON_H
 #define DECK_CON_H
 
-#include "config.h"
 #include <unordered_map>
 #include <vector>
-#include "client_card.h"
+#include <irrlicht.h>
+#include "data_manager.h"
+#include "deck_manager.h"
 #include "../ocgcore/mtrandom.h"
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
@@ -15,7 +16,7 @@ namespace ygo {
 
 class DeckBuilder: public irr::IEventReceiver {
 public:
-	virtual bool OnEvent(const irr::SEvent& event);
+	bool OnEvent(const irr::SEvent& event) override;
 	void Initialize();
 	void Terminate();
 	void GetHoveredCard();
@@ -42,7 +43,7 @@ public:
 	void pop_side(int seq);
 	bool check_limit(code_pointer pointer);
 
-	long long filter_effect{};
+	unsigned long long filter_effect{};
 	unsigned int filter_type{};
 	unsigned int filter_type2{};
 	unsigned int filter_attrib{};
@@ -57,7 +58,7 @@ public:
 	unsigned int filter_scl{};
 	unsigned int filter_marks{};
 	int filter_lm{};
-	position2di mouse_pos;
+	irr::core::vector2di mouse_pos;
 	int hovered_code{};
 	int hovered_pos{};
 	int hovered_seq{ -1 };
@@ -75,14 +76,14 @@ public:
 	code_pointer draging_pointer;
 	int prev_category{};
 	int prev_deck{};
-	s32 prev_operation{};
+	irr::s32 prev_operation{};
 	int prev_sel{ -1 };
 	bool is_modified{};
 	bool readonly{};
 	bool showing_pack{};
 	mt19937 rnd;
 
-	const std::unordered_map<int, int>* filterList;
+	const LFList* filterList{};
 	std::vector<code_pointer> results;
 	wchar_t result_string[8]{};
 	std::vector<std::wstring> expansionPacks;

@@ -2,17 +2,33 @@
 #define GAME_H
 
 #include "config.h"
+#ifdef _IRR_ANDROID_PLATFORM_
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#include <GLES/glplatform.h>
+#endif
+#include "CGUIImageButton.h"
+#include "CGUITTFont.h"
+#include "mysignal.h"
 #include "client_field.h"
 #include "deck_con.h"
 #include "menu_handler.h"
-#include "sound_manager.h"
+#include <ctime>
 #include <unordered_map>
 #include <vector>
 #include <list>
+#include <mutex>
+#include <functional>
+#include "sound_manager.h"
 
-#define DEFAULT_DUEL_RULE 5
+constexpr int DEFAULT_DUEL_RULE = 5;
+constexpr int CONFIG_LINE_SIZE = 1024;
+constexpr int TEXT_LINE_SIZE = 256;
 
 namespace ygo {
+
+bool IsExtension(const wchar_t* filename, const wchar_t* extension);
+bool IsExtension(const char* filename, const char* extension);
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define LOG_TAG "ygo-jni"
@@ -32,12 +48,13 @@ struct Config {
 	wchar_t lastport[10]{};
 	wchar_t nickname[20]{};
 	wchar_t gamename[20]{};
-	wchar_t lastcategory[64]{};
-	wchar_t lastdeck[64]{};
+	wchar_t roompass[20]{};
+	//path
+	wchar_t lastcategory[256]{};
+	wchar_t lastdeck[256]{};
 	wchar_t textfont[256]{};
 	wchar_t numfont[256]{};
-	wchar_t roompass[20]{};
-	wchar_t bot_deck_path[64]{};
+	wchar_t bot_deck_path[256]{};
 	//settings
 	int chkMAutoPos{ 0 };
 	int chkSTAutoPos{ 0 };
@@ -95,22 +112,22 @@ struct DuelInfo {
 	wchar_t hostname_tag[20]{};
 	wchar_t clientname_tag[20]{};
 	wchar_t strLP[2][16]{};
-	wchar_t* vic_string{ nullptr };
+	std::wstring vic_string;
 	unsigned char player_type{ 0 };
 	unsigned char time_player{ 0 };
 	unsigned short time_limit{ 0 };
 	unsigned short time_left[2]{};
 
 	void Clear();
-	
+
 	int card_count[2];
 	int total_attack[2];
 	wchar_t str_time_left[2][16];
-	video::SColor time_color[2];
+	irr::video::SColor time_color[2];
 	wchar_t str_card_count[2][16];
 	wchar_t str_total_attack[2][16];
-	video::SColor card_count_color[2];
-	video::SColor total_attack_color[2];
+	irr::video::SColor card_count_color[2];
+	irr::video::SColor total_attack_color[2];
 };
 
 struct BotInfo {
@@ -135,19 +152,19 @@ struct FadingUnit {
 	irr::core::vector2di fadingDiff;
 };
 
-class Game :IProcessEventReceiver{
+class Game :irr::IProcessEventReceiver{
 
 public:
 #ifdef _IRR_ANDROID_PLATFORM_
 	void stopBGM();
 	void playBGM();
-	bool Initialize(ANDROID_APP app, android::InitOptions *options);
+	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
 #endif
 	void MainLoop();
 	void RefreshTimeDisplay();
-	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
-	void InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
-	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
+	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
+	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
+	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
@@ -155,6 +172,7 @@ public:
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
+    void SetCardS3DVertex();
 	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
@@ -163,7 +181,6 @@ public:
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
-	void DrawShadowText(irr::gui::CGUITTFont* font, const core::stringw& text, const core::rect<s32>& position, const core::rect<s32>& padding, video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = 0);
 	void DrawMisc();
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
 	void DrawGUI();
@@ -173,7 +190,7 @@ public:
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
 	void WaitFrameSignal(int frame);
-	void DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<int,int>* lflist, bool drag = false);
+	void DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
 	void LoadConfig();
 	void SaveConfig();
@@ -199,7 +216,7 @@ public:
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
 
-	bool HasFocus(EGUI_ELEMENT_TYPE type) const {
+	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
 		irr::gui::IGUIElement* focus = env->getFocus();
 		return focus && focus->hasType(type);
 	}
@@ -211,10 +228,20 @@ public:
 	}
 
 	void ResizeChatInputWindow();
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
+	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
+	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
+	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
+    template<typename T>
+    static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
-	static std::vector<T> TokenizeString(T input, const T& token);
+	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
+		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
 
-// don't merge
 	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
 	Signal frameSignal;
@@ -231,38 +258,40 @@ public:
 	std::wstring chatMsg[8];
 	std::vector<BotInfo> botInfo;
 
-	int hideChatTimer;
-	bool hideChat;
+	int hideChatTimer{};
+	bool hideChat{};
 	int chatTiming[8]{};
 	int chatType[8]{};
-	unsigned short linePatternD3D;
-	unsigned short linePatternGL;
-	int waitFrame;
-	int signalFrame;
-	int actionParam;
-	const wchar_t* showingtext;
-	int showcard;
-	int showcardcode;
-	int showcarddif;
-	int showcardp;
-	int is_attacking;
-	int attack_sv;
+	unsigned short linePatternD3D{};
+	unsigned short linePatternGL{ 0x0f0f };
+	int waitFrame{};
+	int signalFrame{};
+	int actionParam{};
+	const wchar_t* showingtext{};
+	int showcard{};
+	int showcardcode{};
+	int showcarddif{};
+	int showcardp{};
+	int is_attacking{};
+	int attack_sv{};
 	irr::core::vector3df atk_r;
 	irr::core::vector3df atk_t;
-	float atkdy;
-	int lpframe;
-	int lpd;
-	int lpplayer;
-	int lpccolor;
-	wchar_t* lpcstring;
-	bool always_chain;
-	bool ignore_chain;
-	bool chain_when_avail;
+	float atkdy{};
+	int lpframe{};
+	int lpd{};
+	int lpplayer{};
+	int lpccolor{};
+	std::wstring lpcstring;
+	bool always_chain{};
+	bool ignore_chain{};
+	bool chain_when_avail{};
 
-	bool is_building;
-	bool is_siding;
+	bool is_building{};
+	bool is_siding{};
 
 	irr::core::dimension2d<irr::u32> window_size;
+	float xScale{ 1.0f };
+	float yScale{ 1.0f };
 
 	ClientField dField;
 	DeckBuilder deckBuilder;
@@ -660,22 +689,19 @@ public:
 	irr::gui::IGUIButton* btnBigCardZoomIn;
 	irr::gui::IGUIButton* btnBigCardZoomOut;
 	irr::gui::IGUIButton* btnBigCardClose;
-	float xScale;
-    float yScale;
-
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
 	int glversion;
 	bool isPSEnabled;
 	bool isNPOTSupported;
-	s32 ogles2Solid;
-	s32 ogles2TrasparentAlpha;
-	s32 ogles2BlendTexture;
+	irr::s32 ogles2Solid;
+	irr::s32 ogles2TrasparentAlpha;
+	irr::s32 ogles2BlendTexture;
 	irr::android::CustomShaderConstantSetCallBack customShadersCallback;
 	Signal externalSignal;
 	static void onHandleAndroidCommand(ANDROID_APP app, int32_t cmd);
 #endif
-	void setPositionFix(core::position2di fix){
+	void setPositionFix(irr::core::position2di fix){
 		InputFix = fix;
 	}
 	float optX(float x) {
@@ -695,30 +721,31 @@ public:
 	}
     void process(irr::SEvent &event);
 private:
-	core::position2di InputFix;
+	irr::core::position2di InputFix;
     };
 
 extern Game* mainGame;
-	template<typename T>
-	inline std::vector<T> Game::TokenizeString(T input, const T & token) {
-		std::vector<T> res;
-		std::size_t pos;
-		while((pos = input.find(token)) != T::npos) {
-			if(pos != 0)
-				res.push_back(input.substr(0, pos));
-			input = input.substr(pos + 1);
-		}
-		if(input.size())
-			res.push_back(input);
-		return res;
+template<typename T>
+inline std::vector<T> Game::TokenizeString(T input, const T & token) {
+	std::vector<T> res;
+	std::size_t pos;
+	while((pos = input.find(token)) != T::npos) {
+		if(pos != 0)
+			res.push_back(input.substr(0, pos));
+		input = input.substr(pos + 1);
 	}
+	if(input.size())
+		res.push_back(input);
+	return res;
+}
 
 }
+
 #define SIZE_QUERY_BUFFER	0x4000
 
 #define CARD_IMG_WIDTH		200
-#define CARD_IMG_HEIGHT		290
-#define CARD_THUMB_WIDTH	44
+#define CARD_IMG_HEIGHT		287
+#define CARD_THUMB_WIDTH	45
 #define CARD_THUMB_HEIGHT	64
 
 #define UEVENT_EXIT			0x1
@@ -932,19 +959,6 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 
-//STOC_GAME_MSG messages
-#define MSG_WAITING				3
-#define MSG_START				4
-#define MSG_UPDATE_DATA			6	// flag=0: clear
-#define MSG_UPDATE_CARD			7	// flag=QUERY_CODE, code=0: clear
-#define MSG_REQUEST_DECK		8
-#define MSG_REFRESH_DECK		34
-#define MSG_CARD_SELECTED		80
-#define MSG_UNEQUIP				95
-#define MSG_BE_CHAIN_TARGET		121
-#define MSG_CREATE_RELATION		122
-#define MSG_RELEASE_RELATION	123
-
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4
@@ -956,12 +970,6 @@ extern Game* mainGame;
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GAME_WIDTH 1024
 #define GAME_HEIGHT 640
-#else
-#define GAME_WIDTH 1280
-#define GAME_HEIGHT 720
-#endif
-
-#ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000
 #endif
 #endif // GAME_H

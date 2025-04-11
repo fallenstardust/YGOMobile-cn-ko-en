@@ -144,16 +144,9 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     public void unSort() {
         if (mMainCount == 0) return;
-        for (int i = 0; i < Constants.UNSORT_TIMES; i++) {
-            int index1 = mRandom.nextInt(mMainCount);
-            int index2 = mRandom.nextInt(mMainCount);
-            if (index1 != index2) {
-                int sp = (mMainCount - Math.max(index1, index2));
-                int count = sp > 1 ? mRandom.nextInt(sp - 1) : 1;
-                for (int j = 0; j < count; j++) {
-                    Collections.swap(mItems, DeckItem.MainStart + index1 + j, DeckItem.MainStart + index2 + j);
-                }
-            }
+        for (int i = 0; i < mMainCount; i++) {
+            int index = mRandom.nextInt(mMainCount - i);
+            Collections.swap(mItems, DeckItem.MainStart + i, DeckItem.MainStart + i + index);
         }
         notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainStart + getMainCount());
     }

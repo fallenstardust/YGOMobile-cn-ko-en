@@ -131,7 +131,7 @@ public class CardLoader implements ICardSearcher {
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
-        Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
+        //Dialog wait = DialogPlus.show(context, null, context.getString(R.string.searching));
         VUiKit.defer().when(() -> {
             SparseArray<Card> cards = mCardManager.getAllCards();
             List<Card> list = new ArrayList<>();
@@ -158,13 +158,13 @@ public class CardLoader implements ICardSearcher {
                 ArrayList<Card> noting = new ArrayList<Card>();
                 mCallBack.onSearchResult(noting, false);
             }
-            LogUtil.e("kk", "search", e);
-            wait.dismiss();
+            LogUtil.e("cc", "search", e);
+            //wait.dismiss();
         }).done((tmp) -> {
             if (mCallBack != null) {
                 mCallBack.onSearchResult(tmp, false);
             }
-            wait.dismiss();
+            //wait.dismiss();
         });
     }
 

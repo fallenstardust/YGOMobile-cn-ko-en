@@ -41,28 +41,28 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/deck_name"
-                        android:textStyle="bold"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"
-                        android:textColor="@color/holo_blue_light" />
+                        android:text="@string/deck_name"
+                        android:textColor="@color/holo_blue_light"
+                        android:textStyle="bold" />
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_deck"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="@string/select_deck"
-                        android:textColor="@color/white"
-                        android:textSize="18sp"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"
+                        android:text="@string/select_deck"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -70,7 +70,7 @@
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/toolbar_list"
                     android:layout_width="0dp"
-                    android:layout_height="@dimen/item_height"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:visibility="gone" />
 
@@ -85,20 +85,21 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_gravity="center"
-                        android:gravity="center"
                         android:src="@drawable/listicon" />
 
                     <TextView
-                        android:layout_width="60dp"
-                        android:layout_height="20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/searchresult"
-                        android:textColor="@color/white"
-                        android:textStyle="bold"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
-                        android:shadowRadius="2"/>
+                        android:shadowRadius="2"
+                        android:text="@string/searchresult"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -112,20 +113,21 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_gravity="center"
-                        android:gravity="center"
                         android:src="@drawable/search" />
 
                     <TextView
-                        android:layout_width="60dp"
-                        android:layout_height="20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/card_search"
-                        android:textColor="@color/white"
-                        android:textStyle="bold"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
-                        android:shadowRadius="2"/>
+                        android:shadowRadius="2"
+                        android:text="@string/card_search"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -157,16 +159,18 @@
                     </com.nightonke.boommenu.BoomMenuButton>
 
                     <TextView
-                        android:layout_width="60dp"
-                        android:layout_height="20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
-                        android:text="@string/Function_Menu"
-                        android:textColor="@color/white"
-                        android:textStyle="bold"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
-                        android:shadowRadius="2"/>
+                        android:shadowRadius="2"
+                        android:text="@string/Function_Menu"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>

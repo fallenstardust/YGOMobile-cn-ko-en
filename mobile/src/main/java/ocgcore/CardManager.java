@@ -26,6 +26,7 @@ import java.util.zip.ZipInputStream;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;
 
@@ -151,7 +152,7 @@ public class CardManager {
                         @Override
                         public boolean accept(File dir, String name) {
                             File file = new File(dir, name);
-                            return file.isFile() && ((name.endsWith(".cdb") || (name.endsWith(".zip") || name.endsWith(".ypk"))));
+                            return file.isFile() && ((name.endsWith(".cdb") || (name.endsWith(".zip") || name.endsWith(Constants.YPK_FILE_EX))));
                         }
                     });
                     //读取全部卡片
@@ -159,7 +160,7 @@ public class CardManager {
                         for (File file : files) {
                             if (file.getName().endsWith(".cdb")) {
                                 count = readAllCards(file, cardDataHashMap);
-                            } else if (file.getName().endsWith(".zip") || file.getName().endsWith(".ypk")) {
+                            } else if (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX)) {
                                 Log.e("CardManager", "读取压缩包");
                                 try {
                                     for (File file1 : readZipCdb(file.getAbsolutePath())) {

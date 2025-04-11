@@ -27,6 +27,7 @@ import cn.garymb.ygomobile.ui.file.FileActivity;
 import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.utils.CurImageInfo;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
     private Preference curPreference;
@@ -54,18 +55,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         curPreference = preference;
         Intent intent = FileActivity.getIntent(getActivity(), title, type, defPath, false, FileOpenType.SelectFile);
         startActivityForResult(intent, REQUEST_CHOOSE_FILE);
-//
-//        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-////        intent.addCategory(Intent.CATEGORY_OPENABLE);
-//        intent.setType(type);
-//        try {
-//            startActivityForResult(intent,
-//                    REQUEST_CHOOSE_FILE);
-//        } catch (android.content.ActivityNotFoundException ex) {
-//            Toast.makeText(getActivity(), R.string.no_find_file_selectotr, Toast.LENGTH_SHORT)
-//                    .show();
-//            onChooseFileFail(preference);
-//        }
     }
 
     public Context getContext() {
@@ -87,11 +76,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         mCurImageInfo.mCurTitle = title;
         curPreference = preference;
         String defPath = new File(outFile).getParent();
-//        Intent intent = FileActivity.getIntent(getActivity(), title, "*.[jpg|png|bmp]", defPath, false, FileOpenType.SelectFile);
-//        startActivityForResult(intent, REQUEST_CHOOSE_IMG);
-
-//      intent.addCategory(Intent.CATEGORY_OPENABLE);
-//      intent.setType("image/*");
         ISListConfig config = new ISListConfig.Builder()
                 // 是否多选, 默认true
                 .multiSelect(false)
@@ -111,9 +95,9 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 .titleColor(Color.WHITE)
                 // TitleBar背景色
                 .titleBgColor(Color.parseColor("#11113d"))
+                .needCrop(true)
                 // 裁剪大小。needCrop为true的时候配置
                 .cropSize(mCurImageInfo.width, mCurImageInfo.height, mCurImageInfo.width, mCurImageInfo.height)
-                .needCrop(true)
                 // 第一个是否显示相机，默认true
                 .needCamera(false)
                 // 最大选择图片数量，默认9
@@ -123,46 +107,6 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
         // 跳转到图片选择器
         ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
     }
-
-    //已弃用裁剪
-    /*
-    protected void openPhotoCut(Preference preference, Uri srcfile, CurImageInfo info) {
-        // 裁剪图片
-        if (srcfile == null || info == null) {
-            onChooseFileFail(preference);
-            return;
-        }
-        Log.i("我是srcfile", srcfile + "");
-        File file = new File(info.mOutFile);
-        Intent intent = new Intent("com.android.camera.action.CROP");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            saveimgUri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fallenstardust", file);
-        } else {
-            saveimgUri = Uri.fromFile(file);
-        }
-        intent.setDataAndType(srcfile, "image/*");
-        // 下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
-        intent.putExtra("crop", "true");
-        // aspectX aspectY 是宽高的比例
-        intent.putExtra("aspectX", info.width);
-        intent.putExtra("aspectY", info.height);
-        // outputX outputY 是裁剪图片宽高
-        intent.putExtra("outputX", info.width);
-        intent.putExtra("outputY", info.height);
-        intent.putExtra("scale", true);// 黑边
-        intent.putExtra("scaleUpIfNeeded", true);// 黑边
-        intent.putExtra("return-data", false);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, saveimgUri);
-        intent.putExtra("outputFormat", info.mJpeg ? Bitmap.CompressFormat.JPEG.toString() : Bitmap.CompressFormat.PNG.toString());
-
-        try {
-            startActivityForResult(Intent.createChooser(intent, info.mCurTitle), Constants.REQUEST_CUT_IMG);
-        } catch (Exception e) {
-            Log.i("我是e", e + "");
-            Toast.makeText(getActivity(), R.string.no_find_image_cutor, Toast.LENGTH_SHORT).show();
-        }
-    }*/
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -175,7 +119,7 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 try {
                     FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile);
                 } catch (IOException e) {
-                    Toast.makeText(getContext(), e + "", Toast.LENGTH_LONG).show();
+                    YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
                     onChooseFileFail(curPreference);
                 }
                 onChooseFileOk(curPreference, mCurImageInfo.mOutFile);

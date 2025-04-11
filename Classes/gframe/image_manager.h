@@ -4,6 +4,8 @@
 #include "config.h"
 #include "data_manager.h"
 #include <unordered_map>
+#include <queue>
+#include <mutex>
 #include <list>
 #include <string>
 
@@ -20,7 +22,6 @@ public:
 	irr::video::ITexture* GetBigPicture(int code, float zoom);
 	irr::video::ITexture* GetTextureThumb(int code);
 	irr::video::ITexture* GetTextureField(int code);
-	
 	path image_work_path;
 
 	std::unordered_map<int, irr::video::ITexture*> tMap;
@@ -28,7 +29,7 @@ public:
 	std::unordered_map<int, irr::video::ITexture*> tFields;
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
-	irr::video::ITexture* tCover[2];
+	irr::video::ITexture* tCover[4];
 	irr::video::ITexture* tBigPicture;
 	irr::video::ITexture* tUnknown;
 	irr::video::ITexture* tAct;
