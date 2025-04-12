@@ -39,12 +39,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatSpinner;
-import androidx.recyclerview.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerViewItemListener;
 
 import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
@@ -75,6 +75,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.deck_square.DeckSquareActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -111,7 +112,7 @@ import ocgcore.enums.LimitType;
 
 /**
  * 注意，卡组编辑页面中的长按事件回调在ItemTouchHelperPlus中实现，而非在
- *  RecyclerViewItemListener.OnItemListener中
+ * RecyclerViewItemListener.OnItemListener中
  */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "DeckManagerFragment";
@@ -200,6 +201,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
+        layoutView.findViewById(R.id.open_deck_square).setOnClickListener((v) -> doMenu(R.id.open_deck_square));
         tv_deck.setOnClickListener(v ->
                 YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
@@ -310,6 +312,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 在此处处理卡组中卡片的长按删除
+     *
      * @param pos
      */
     @Override
@@ -849,6 +852,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     });
                     builder.show();
                 }
+            }
+            break;
+            case R.id.open_deck_square: {
+                Intent exCardIntent = new Intent(getActivity(), DeckSquareActivity.class);
+                startActivity(exCardIntent);
             }
             break;
             case R.id.action_unsort:

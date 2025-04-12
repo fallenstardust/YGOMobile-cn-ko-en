@@ -543,6 +543,8 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     @Override
     public void onBindViewHolder(DeckViewHolder holder, int position) {
         //Populating data into the item through holder
+        //根据data的内容调整view的样式
+
         DeckItem item = mItems.get(position);
         holder.setItemType(item.getType());
         if (item.getType() == DeckItemType.MainLabel || item.getType() == DeckItemType.SideLabel

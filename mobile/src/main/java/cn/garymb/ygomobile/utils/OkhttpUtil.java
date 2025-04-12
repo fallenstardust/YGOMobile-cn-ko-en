@@ -26,13 +26,13 @@ public class OkhttpUtil {
 
     private static OkHttpClient okHttpClient;
 
-    public static void post(String address, Map<String, Object> map, Callback callback) {
-        post(address, map, null, null, 0, callback);
-    }
-
-    public static void post(String address, Map<String, Object> map, Header oyHeader, String tag, int timeout, Callback callback) {
-        post(address, map, null, oyHeader, tag, timeout, callback);
-    }
+//    public static void post(String address, Map<String, Object> map, Callback callback) {
+//        post(address, map, null, null, 0, callback);
+//    }
+//
+//    public static void post(String address, Map<String, Object> map, Header oyHeader, String tag, int timeout, Callback callback) {
+//        post(address, map, null, oyHeader, tag, timeout, callback);
+//    }
 
     public static void post(String address, Map<String, Object> map, String cookie, Header oyHeader, String tag, int timeout, Callback callback) {
         okHttpClient = new OkHttpClient();
@@ -198,7 +198,7 @@ public class OkhttpUtil {
         client.newCall(request.build()).enqueue(callback);
     }
 
-    public static Response synchronousGet(String address, Map<String, Object> map, String cookie) throws IOException {
+    public static Response synchronousGet(String address, Map<String, Object> map, Map<String, String> headers) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         HttpUrl.Builder httpBuilder = HttpUrl.parse(address).newBuilder();
@@ -210,10 +210,15 @@ public class OkhttpUtil {
 
         Request.Builder request = new Request.Builder()
                 .url(httpBuilder.build());
-        Log.e("OkhttpUtil", "为" + httpBuilder.build());
-        if (!TextUtils.isEmpty(cookie)) {
-            request.addHeader("cookie", cookie);
+        Log.e("OkhttpUtil", "get " + httpBuilder.build());
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                request.addHeader(header.getKey(), header.getValue().toString());
+            }
         }
+//        if (!TextUtils.isEmpty(cookie)) {
+//            request.addHeader("cookie", cookie);
+//        }
         return client.newCall(request.build()).execute();
     }
 
