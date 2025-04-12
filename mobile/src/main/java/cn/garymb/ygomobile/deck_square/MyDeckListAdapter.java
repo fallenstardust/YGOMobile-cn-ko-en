@@ -7,25 +7,20 @@ import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
-import com.google.gson.Gson;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import okhttp3.Response;
 
 //提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
-public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckResponse.MyDeckData, BaseViewHolder> {
+public class MyDeckListAdapter extends BaseQuickAdapter<DeckDetail, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
 
@@ -39,37 +34,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckResponse.MyDeckDat
         // final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
         String serverToken = SharedPreferenceUtil.getServerToken();
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
-        if (serverToken == null) {
-            YGOUtil.showTextToast("Login first", Toast.LENGTH_LONG);
 
-            return;
-        }
 
         VUiKit.defer().when(() -> {
 
             LogUtil.d(TAG, "start fetch" + serverToken + " " + serverUserId);
-            MyDeckResponse result = null;
-            try {
-                String url = "http://rarnu.xyz:38383/api/mdpro3/sync/" + serverUserId + "/nodel";
-
-                Map<String, String> headers = new HashMap<>();
-
-                headers.put("ReqSource", "MDPro3");
-                headers.put("token", serverToken);
-
-                Response response = OkhttpUtil.synchronousGet(url, null, headers);
-                String responseBodyString = response.body().string();
-//                Type listType = new TypeToken<List<DeckInfo>>() {
-//                }.getType();
-                Gson gson = new Gson();
-                // Convert JSON to Java object using Gson
-                result = gson.fromJson(responseBodyString, MyDeckResponse.class);
-                LogUtil.i(TAG, responseBodyString);
-                int a = 0;
-            } catch (IOException e) {
-                Log.e(TAG, "Error occured when fetching data from pre-card server");
-                return null;
-            }
+            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(serverUserId, serverToken);
 
             if (result == null) {
                 return null;
@@ -86,11 +56,11 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckResponse.MyDeckDat
 //
 //                }
 //            }
-            LogUtil.i(TAG, "webCrawler fail");
+            LogUtil.i(TAG, "load mycard from server fail");
 
         }).done((exCardDataList) -> {
             if (exCardDataList != null) {
-                LogUtil.i(TAG, "webCrawler done");
+                LogUtil.i(TAG, "load mycard from server done");
                 getData().clear();
                 addData(exCardDataList);
                 notifyDataSetChanged();
@@ -115,7 +85,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckResponse.MyDeckDat
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, MyDeckResponse.MyDeckData item) {
+    protected void convert(BaseViewHolder helper, DeckDetail item) {
         helper.setText(R.id.deck_info_name, item.getDeckName());
         helper.setText(R.id.deck_contributor, item.getDeckContributor());
         ImageView cardImage = helper.getView(R.id.deck_info_image);
@@ -124,6 +94,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckResponse.MyDeckDat
         if (code != 0) {
             imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
         }
+
+
         // ImageView imageview = helper.getView(R.id.ex_card_image);
         //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)
         //cn.garymb.ygomobile.loader.ImageLoader.setDefaults(...)

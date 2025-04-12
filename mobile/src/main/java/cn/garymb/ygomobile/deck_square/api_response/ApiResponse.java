@@ -3,11 +3,11 @@ package cn.garymb.ygomobile.deck_square.api_response;
 import java.util.List;
 
 public class ApiResponse {
-    private int code;
+    private Integer code;
     private String message;
     private ApiData data;
 
-    public static class ApiData{
+    public static class ApiData {
         private int current;
         private int size;
         private int total;

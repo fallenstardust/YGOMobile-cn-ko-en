@@ -21,13 +21,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
+
             <TextView
                 android:id="@+id/open_deck_square"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_gravity="bottom|right"
                 android:layout_marginBottom="100dp"
-                android:text="deck store" />
+                android:background="@drawable/ic_deck_square"
+                android:text="卡组广场"
+                android:textAlignment="center" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -181,6 +184,8 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
+
+
         </FrameLayout>
 
         <LinearLayout

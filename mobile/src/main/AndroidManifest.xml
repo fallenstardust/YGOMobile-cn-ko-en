@@ -23,6 +23,10 @@
             android:theme="@style/TranslucentTheme">
 
 
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <!--meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" /-->
@@ -161,10 +165,10 @@
             android:name="cn.garymb.ygomobile.deck_square.DeckSquareActivity"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Mycard">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
         </activity>
 
         <service

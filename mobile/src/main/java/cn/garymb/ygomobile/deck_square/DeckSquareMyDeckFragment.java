@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentUserOnlineDeckBinding;
 
@@ -36,6 +37,28 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 deckListAdapter.loadData();
             }
         });
+
+        binding.uploadDeck.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //todo 打开一个dialog
+
+            }
+        });
+
+        deckListAdapter.setOnItemClickListener(
+                (adapter, view, position) -> {
+                    // Handle item click
+                    ApiDeckRecord item = (ApiDeckRecord) adapter.getItem(position);
+
+
+                    // Show the dialog
+                    //todo 询问是否删除？
+                    //   SquareDeckDetailDialog dialog = new SquareDeckDetailDialog(getContext(), item);
+
+                    // dialog.show();
+                }
+        );
 
         return binding.getRoot();
 

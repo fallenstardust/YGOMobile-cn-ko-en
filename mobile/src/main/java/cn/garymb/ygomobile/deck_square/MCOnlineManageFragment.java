@@ -38,6 +38,7 @@ public class MCOnlineManageFragment extends Fragment {
                         if (success) {
 
                             LogUtil.i(TAG, "login success" + SharedPreferenceUtil.getServerToken());
+                            refreshBtn();
                             //response.token;
                         }
 
@@ -52,10 +53,13 @@ public class MCOnlineManageFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 SharedPreferenceUtil.deleteServerToken();
+                refreshBtn();
 
             }
         });
 
+
+        refreshBtn();
         return binding.getRoot();
 
     }
@@ -71,4 +75,12 @@ public class MCOnlineManageFragment extends Fragment {
         binding = null;
     }
 
+    public void refreshBtn() {
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            binding.mcLoginBtn.setText("已登录");
+        } else {
+
+            binding.mcLoginBtn.setText("登录");
+        }
+    }
 }

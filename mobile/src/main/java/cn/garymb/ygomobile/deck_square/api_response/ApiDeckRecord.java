@@ -145,8 +145,8 @@ public class ApiDeckRecord implements Parcelable {
         this.lastDate = lastDate;
     }
 
-    public String getUserId() {
-        return Integer.toString(userId);
+    public Integer getUserId() {
+        return userId;
     }
 
     public void setUserId(int userId) {
