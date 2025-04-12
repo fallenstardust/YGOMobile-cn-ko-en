@@ -39,6 +39,9 @@ public class Deck implements Parcelable {
     private final ArrayList<Integer> extraList;
     private final ArrayList<Integer> sideList;
     private String name;
+    /**
+     * 是否是完整卡组，部分卡组码可能保存出来是不完整的卡组
+     */
     private boolean isCompleteDeck = true;
 
     public Deck() {
