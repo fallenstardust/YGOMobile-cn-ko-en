@@ -22,7 +22,7 @@ public class DeckDetail implements Parcelable {
     public String deckProtector;
     public String deckMainSerial;
     public String deckYdk;
-    public String userId;
+    public Integer userId;
     public String isPublic;
     public String isDelete;
 
@@ -41,7 +41,7 @@ public class DeckDetail implements Parcelable {
         deckProtector = in.readString();
         deckMainSerial = in.readString();
         deckYdk = in.readString();
-        userId = in.readString();
+        userId = in.readInt();
         isPublic = in.readString();
         isDelete = in.readString();
     }
@@ -79,7 +79,7 @@ public class DeckDetail implements Parcelable {
         dest.writeString(deckProtector);
         dest.writeString(deckMainSerial);
         dest.writeString(deckYdk);
-        dest.writeString(userId);
+        dest.writeInt(userId);
         dest.writeString(isPublic);
         dest.writeString(isDelete);
 
@@ -197,11 +197,11 @@ public class DeckDetail implements Parcelable {
         this.deckYdk = deckYdk;
     }
 
-    public String getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 
