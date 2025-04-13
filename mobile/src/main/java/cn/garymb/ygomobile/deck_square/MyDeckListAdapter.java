@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.deck_square;
 
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
@@ -17,10 +16,9 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
-import cn.garymb.ygomobile.utils.YGOUtil;
 
 //提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
-public class MyDeckListAdapter extends BaseQuickAdapter<DeckDetail, BaseViewHolder> {
+public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
 
@@ -31,6 +29,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<DeckDetail, BaseViewHold
     }
 
     public void loadData() {
+        List<MyDeckItem> localDecks = DeckSquareFileUtil.getMyDeckItem();
+
         // final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
         String serverToken = SharedPreferenceUtil.getServerToken();
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
@@ -57,14 +57,32 @@ public class MyDeckListAdapter extends BaseQuickAdapter<DeckDetail, BaseViewHold
 //                }
 //            }
             LogUtil.i(TAG, "load mycard from server fail");
+            //只展示本地卡组
+            getData().clear();
+            addData(localDecks);
+            notifyDataSetChanged();
+        }).done((serverDecks) -> {
+            //  List<MyDeckItem> serverItems = new ArrayList<>();
 
-        }).done((exCardDataList) -> {
-            if (exCardDataList != null) {
-                LogUtil.i(TAG, "load mycard from server done");
-                getData().clear();
-                addData(exCardDataList);
-                notifyDataSetChanged();
+            if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
+                for (DeckDetail detail : serverDecks) {
+                    MyDeckItem item = new MyDeckItem();
+                    item.setDeckName(detail.getDeckName());
+                    item.setDeckSouce(1);
+                    item.setDeckId(detail.getDeckId());
+                    item.setUserId(detail.getUserId());
+                    item.setUpdateDate(detail.getDeckUpdateDate());
+                    localDecks.add(item);
+                }
             }
+
+            LogUtil.i(TAG, "load mycard from server done");
+
+            //展示本地卡组和服务器上的卡组
+            getData().clear();
+            addData(localDecks);
+            notifyDataSetChanged();
+
 //            if (dialog_read_ex.isShowing()) {
 //                try {
 //                    dialog_read_ex.dismiss();
@@ -85,16 +103,28 @@ public class MyDeckListAdapter extends BaseQuickAdapter<DeckDetail, BaseViewHold
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, DeckDetail item) {
-        helper.setText(R.id.deck_info_name, item.getDeckName());
-        helper.setText(R.id.deck_contributor, item.getDeckContributor());
-        ImageView cardImage = helper.getView(R.id.deck_info_image);
-        long code = item.getDeckCoverCard1();
-        LogUtil.i(TAG, code + " " + item.getDeckName());
-        if (code != 0) {
-            imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
+    protected void convert(BaseViewHolder helper, MyDeckItem item) {
+        helper.setText(R.id.my_deck_name, item.getDeckName());
+        //helper.setText(R.id.deck_upload_date, item.getDeckUploadDate());
+        ImageView imageView = helper.getView(R.id.deck_upload_state_img);
+        if (item.getDeckSouce() == 0) {//本地
+            helper.setText(R.id.my_deck_id, "本地卡组");
+            imageView.setImageResource(R.drawable.ic_server_push);
+            helper.setVisible(R.id.deck_update_date, false);
+            helper.setVisible(R.id.deck_upload_date, false);
+        } else if (item.getDeckSouce() == 1) {
+            helper.setText(R.id.my_deck_id, item.getDeckId());
+            imageView.setImageResource(R.drawable.ic_server_download);
+            helper.setText(R.id.deck_update_date, item.getUpdateDate());
         }
 
+
+//        long code = item.getDeckCoverCard1();
+//        LogUtil.i(TAG, code + " " + item.getDeckName());
+//        if (code != 0) {
+//            imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
+//        }
+//
 
         // ImageView imageview = helper.getView(R.id.ex_card_image);
         //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)

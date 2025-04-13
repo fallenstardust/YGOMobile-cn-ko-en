@@ -427,4 +427,5 @@
     </string>
 
     <string name="down_complete">download complete</string>
+    <string name="upload">upload</string>
 </resources>

@@ -588,7 +588,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 //                        else
 //                            Toast.makeText(context,"空点击"+position,Toast.LENGTH_SHORT).show();
 //                    }
-//                });
+//                });//将cardInfo在LimitList中检查，根据结果（限制、准限制、禁止）对应显示卡图
                 if (cardInfo != null) {
                     holder.setCardType(cardInfo.Type);
                     if (mImageTop == null) {

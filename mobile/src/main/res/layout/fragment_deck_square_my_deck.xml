@@ -31,12 +31,12 @@
             android:layout_gravity="right|bottom"
             android:text="刷新"></Button>
 
-        <Button
+   <!--     <Button
             android:id="@+id/upload_deck"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="center|bottom"
-            android:text="上传卡组"></Button>
+            android:text="上传卡组"></Button>-->
     </FrameLayout>
 
     <!--<com.google.android.material.floatingactionbutton.FloatingActionButton

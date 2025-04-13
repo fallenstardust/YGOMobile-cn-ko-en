@@ -15,15 +15,44 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/btnDownload"
-        style="@style/Widget.AppCompat.Button.Borderless"
+    <LinearLayout
+        android:id="@+id/server_download_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:drawableStart="@drawable/ic_download"
-        android:drawablePadding="8dp"
-        android:text="Upload" />
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_server_download" />
+
+        <Button
+            android:id="@+id/dialog_my_deck_btn_download"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/Download" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/server_upload_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_server_push" />
+
+        <Button
+            android:id="@+id/dialog_my_deck_btn_push"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/upload" />
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnLike"

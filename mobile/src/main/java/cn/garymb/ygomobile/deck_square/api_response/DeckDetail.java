@@ -26,6 +26,7 @@ public class DeckDetail implements Parcelable {
     public String isPublic;
     public String isDelete;
 
+
     protected DeckDetail(Parcel in) {
         deckId = in.readString();
         deckContributor = in.readString();
@@ -220,4 +221,6 @@ public class DeckDetail implements Parcelable {
     public void setIsDelete(String isDelete) {
         this.isDelete = isDelete;
     }
+
+
 }

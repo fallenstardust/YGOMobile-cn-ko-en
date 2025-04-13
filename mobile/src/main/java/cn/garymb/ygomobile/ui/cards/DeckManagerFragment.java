@@ -1029,6 +1029,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return null;
     }
 
+    //从存储卡组的文件夹中获取所有名字以.ydk结尾的文件，并将mPreLoadFile也加入到返回结果中
     private List<File> getYdkFiles() {
         File dir = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH);
         File[] files = dir.listFiles((file, s) -> s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX));

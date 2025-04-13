@@ -12,14 +12,14 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
 import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.lite.databinding.FragmentUserOnlineDeckBinding;
+import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
 public class DeckSquareMyDeckFragment extends Fragment {
 
-    private FragmentUserOnlineDeckBinding binding;
+    private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
 
     @Override
@@ -28,13 +28,15 @@ public class DeckSquareMyDeckFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentUserOnlineDeckBinding.inflate(inflater, container, false);
+        binding = FragmentDeckSquareMyDeckBinding.inflate(inflater, container, false);
 
-        deckListAdapter = new MyDeckListAdapter(R.layout.item_deck_info);
+        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck);
         GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 2);
         binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);
         deckListAdapter.loadData();
+
+
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -42,18 +44,11 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
         });
 
-        binding.uploadDeck.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //todo 打开一个dialog
-
-            }
-        });
 
         deckListAdapter.setOnItemClickListener(
                 (adapter, view, position) -> {
                     // Handle item click
-                    DeckDetail item = (DeckDetail) adapter.getItem(position);
+                    MyDeckItem item = (MyDeckItem) adapter.getItem(position);
 
                     MyDeckDetailDialog dialog = new MyDeckDetailDialog(getContext(), item);
 
