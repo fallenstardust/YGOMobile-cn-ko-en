@@ -242,6 +242,12 @@ public interface Constants {
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
+    /**
+     * 打开卡组的路径，参数可以是以下两种形式:
+     * <br/>1、青眼白龙.ydk
+     * <br/> 2、/sdcard/ygocore/deck/青眼白龙.ydk
+     */
+    String ARG_OPEN_DECK_PATH = "openDeckPath";
     String PATH_ROOM = "/room";
     String QUERY_HOST = "host";
     String QUERY_PORT = "port";
