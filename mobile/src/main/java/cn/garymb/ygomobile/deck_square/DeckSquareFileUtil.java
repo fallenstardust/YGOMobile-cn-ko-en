@@ -34,6 +34,8 @@ public class DeckSquareFileUtil {
     // 使用示例
 //    Path logPath = Paths.get(context.getFilesDir().getAbsolutePath(), "log.txt");
 //    List<String> lastTwo = readLastLinesWithNIO(logPath, 2);
+
+    //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getId(File file) {
         String deckId = null;
         Integer userId;
@@ -68,6 +70,7 @@ public class DeckSquareFileUtil {
         return deckId;
     }
 
+    //查询卡组目录下的所有ydk文件，返回File[]
     public static File[] getAllYdk() {
         File dir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
         File[] files = dir.listFiles((file, s) -> s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX));
@@ -75,6 +78,7 @@ public class DeckSquareFileUtil {
         return files;
     }
 
+    //读取卡组目录下的所有ydk文件，解析ydk文件，生成List<MyDeckItem>解析结果
     public static List<MyDeckItem> getMyDeckItem() {
         List<MyDeckItem> result = new ArrayList<>();
         File[] files = getAllYdk();
@@ -95,11 +99,14 @@ public class DeckSquareFileUtil {
         return result;
     }
 
-    //将卡组id、用户id设置到卡组文件上
-    //下载卡组后，保存之前将其原有id清除
-    //上传卡组前，填入新的卡组id、用户id
+    // 读取deckPath对应的卡组文件到string，将卡组id、用户id设置到string中
+    //注意，不更改ydk文件内容
+    //下载卡组后，保存卡组之前
+    //上传卡组前，对于未存在卡组id的卡组，自动填入新的卡组id、用户id
     public static String setDeckId(String deckPath, Integer userId, String deckId) {
         StringBuilder contentBuilder = new StringBuilder();
+        boolean userIdFlag = false;
+        boolean deckIdFlag = false;
 
         FileInputStream inputStream = null;
         try {
@@ -111,9 +118,17 @@ public class DeckSquareFileUtil {
 
             String line = null;
             while ((line = reader.readLine()) != null) {
+                /* 如果文件中已经存在deckId，则将其替换 */
+                if (line.contains("##") && !line.contains("###")) {
+                    deckIdFlag = true;
+                    line = "##" + deckId;
+                } else if (line.contains("###")) {//存在userId，将其替换
+                    userIdFlag = true;
+                    line = "###" + userId;
+                }
                 contentBuilder.append(line);
+                contentBuilder.append('\n'); // Add line break
             }
-            String content = contentBuilder.toString();
 
         } catch (Exception e) {
             LogUtil.e(TAG, "read 1", e);
@@ -121,16 +136,17 @@ public class DeckSquareFileUtil {
             IOUtils.close(inputStream);
         }
 
+
+        if (!userIdFlag) {//原始ydk中不存在userId，添加userId行
+            contentBuilder.append("\n");
+            contentBuilder.append("##" + userId);
+        }
+        if (!deckIdFlag) {//原始ydk中不存在deckId，添加deckId行
+            contentBuilder.append("\n");
+            contentBuilder.append("###" + deckId);
+        }
+
         String content = contentBuilder.toString();
-
-
-        //先替换XXX用户id
-        //后替换XX卡组id
-        String original = "这是##测试1\r\n的内容，还有##测试2\r\n等其他部分";
-        String modified = original.replaceAll("##(.*?)\r\n", "##替换后的内容\r\n");
-
-        System.out.println("修改前: " + original);
-        System.out.println("修改后: " + modified);
 
         return content;
     }

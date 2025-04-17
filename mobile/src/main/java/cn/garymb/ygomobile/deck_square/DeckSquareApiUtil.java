@@ -11,6 +11,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -85,7 +86,7 @@ public class DeckSquareApiUtil {
     }
 
     //首先获取卡组id，之后将卡组id设置到ydk中，之后将其上传
-    public static void pushDeck(String deckPath, Integer userId) {
+    public static void pushDeck(String deckPath, String deckName, Integer userId) {
         String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
         String getDeckIdUrl = "http://rarnu.xyz:38383/api/mdpro3/deck/deckId";
 
@@ -101,15 +102,30 @@ public class DeckSquareApiUtil {
                 Gson gson = new Gson();
                 // Convert JSON to Java object using Gson
                 deckIdResult = gson.fromJson(responseBodyString, DeckIdResponse.class);
+                LogUtil.i(TAG, "deck id result:" + deckIdResult.toString());
             }
 
 
             String deckId = deckIdResult.getDeckId();//从服务器获取
 
-            DeckSquareFileUtil.setDeckId(deckPath, userId, deckId);
+            String deckContent = DeckSquareFileUtil.setDeckId(deckPath, userId, deckId);
+
+            PushCardJson pushCardJson = new PushCardJson();
+            pushCardJson.setDeckContributor(userId.toString());
+            pushCardJson.setUserId(userId);
+            PushCardJson.DeckData deckData = new PushCardJson.DeckData();
+
+            deckData.setDeckId(deckId);
+            deckData.setDeckName(deckName);
+            deckData.setDelete(false);
+            deckData.setDeckYdk(deckContent);
+            pushCardJson.setDeck(deckData);
+
+            Gson gson = new Gson();
+            String json = gson.toJson(pushCardJson);
 
             //todo 构造卡组的json
-            OkhttpUtil.postJson(url, null, headers, 1000, new Callback() {
+            OkhttpUtil.postJson(url, json, headers, 1000, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
 
@@ -124,8 +140,6 @@ public class DeckSquareApiUtil {
             });
 
 
-            Gson gson = new Gson();
-            // Convert JSON to Java object using Gson
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

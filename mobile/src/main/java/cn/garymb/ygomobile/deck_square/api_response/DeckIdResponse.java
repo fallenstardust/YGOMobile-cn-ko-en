@@ -38,4 +38,13 @@ public class DeckIdResponse {
     public void setDeckId(String deckId) {
         this.deckId = deckId;
     }
+
+    @Override
+    public String toString() {
+        return "DeckIdResponse{" +
+                "code=" + code +
+                ", message='" + message + '\'' +
+                ", deckId='" + deckId + '\'' +
+                '}';
+    }
 }

@@ -45,6 +45,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         });
 
 
+        //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
         deckListAdapter.setOnItemClickListener(
                 (adapter, view, position) -> {
                     // Handle item click

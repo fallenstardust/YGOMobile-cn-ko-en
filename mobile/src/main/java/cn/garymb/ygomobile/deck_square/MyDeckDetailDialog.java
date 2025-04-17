@@ -66,7 +66,7 @@ public class MyDeckDetailDialog extends Dialog {
         } else if (item.getDeckSouce() == 1) {//来自服务器
             downloadLayout.setVisibility(View.VISIBLE);
             uploadLayout.setVisibility(View.GONE);
-        } else if (item.getDeckSouce() == 2) {//来自服务器
+        } else if (item.getDeckSouce() == 2) {//本地、服务器均存在
             downloadLayout.setVisibility(View.VISIBLE);
             uploadLayout.setVisibility(View.VISIBLE);
         }
@@ -75,13 +75,23 @@ public class MyDeckDetailDialog extends Dialog {
 
             Integer userId = SharedPreferenceUtil.getServerUserId();
 
+            if (userId == null) {
+                YGOUtil.showTextToast("Please login first!");
+                return;
+            }
             VUiKit.defer().when(() -> {
-                DeckSquareApiUtil.pushDeck(item.getDeckPath(),userId);
+                DeckSquareApiUtil.pushDeck(item.getDeckPath(),item.getDeckName(), userId);
             });//.done();
         });
 
 
         btnDownload.setOnClickListener(v -> {
+
+            Integer userId = SharedPreferenceUtil.getServerUserId();
+            if (userId == null) {
+                YGOUtil.showTextToast("Please login first!");
+                return;
+            }
             VUiKit.defer().when(() -> {
 
                 DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(item.getDeckId());
