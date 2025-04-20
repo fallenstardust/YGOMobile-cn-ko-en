@@ -1,10 +1,10 @@
 package cn.garymb.ygomobile.deck_square;
 
-import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -15,6 +15,9 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
+import ocgcore.CardManager;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
@@ -38,7 +41,7 @@ public class DeckSquareFileUtil {
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getId(File file) {
         String deckId = null;
-        Integer userId;
+        Integer userId = null;
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
@@ -49,22 +52,31 @@ public class DeckSquareFileUtil {
 
             String line = null;
             while ((line = reader.readLine()) != null) {
-                //  LogUtil.i(TAG, line);
+                LogUtil.i(TAG, line);
                 if (line.startsWith("###")) {//注意，先判断###，后判断##。因为###会包括##的情况
-                    line = line.replace("#", "");
-                    userId = Integer.parseInt(line);
-                    // userId = Integer.parseInt(line.replaceAll("###", ""));
+                    try {
+                        String data = line.replace("#", "");
+                        if (!data.isEmpty()) {
+                            userId = Integer.parseInt(data);
+                        }
+                        // userId = Integer.parseInt(line.replaceAll("###", ""));
+                    } catch (NumberFormatException e) {
+                        LogUtil.e(TAG, "integer" + line + "parse error" + e.toString());
+                    }
 
                 } else if (line.startsWith("##")) {
                     line = line.replace("#", "");
                     deckId = line;
 
                 }
+
             }
 
-        } catch (Exception e) {
-            Log.e(TAG, "read 1", e);
+        } catch (IOException e) {
+
+            LogUtil.e(TAG, "read 1", e);
         } finally {
+
             IOUtils.close(inputStream);
         }
         return deckId;
@@ -149,5 +161,49 @@ public class DeckSquareFileUtil {
         String content = contentBuilder.toString();
 
         return content;
+    }
+
+    public static boolean saveFileToPath(String path, String fileName, String content) {
+        try {
+            // Create file object
+            File file = new File(path, fileName);
+
+            // Create file output stream
+            FileOutputStream fos = new FileOutputStream(file);
+
+            // Write content
+            fos.write(content.getBytes());
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+
+    public static List<Card> convertTempDeckYdk(String deckYdk) {
+        String[] deckLine = deckYdk.split("\r\n|\r|\n");
+
+        List<Integer> tempDeck = new ArrayList<>();//存储当前卡组的基本内容
+        List<Card> cardList = new ArrayList<>();
+
+        CardManager mCardManager = DataManager.get().getCardManager();
+        for (String line : deckLine) {
+            if (!line.contains("#") && !line.contains("!")) {
+                //line.to
+                try {
+                    Integer cardId = Integer.parseInt(line);
+                    tempDeck.add(cardId);
+                    Card card = mCardManager.getCard(cardId);
+                    cardList.add(card);
+                } catch (NumberFormatException e) {
+                    LogUtil.i(TAG, "cannot parse Interget" + line + e.getMessage());
+                }
+
+            }
+        }
+        return cardList;
     }
 }

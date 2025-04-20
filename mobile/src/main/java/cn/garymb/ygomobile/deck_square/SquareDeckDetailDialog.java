@@ -3,50 +3,41 @@ package cn.garymb.ygomobile.deck_square;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Window;
 import android.widget.Button;
 
-import com.google.gson.Gson;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
+import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
+import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.DeckPreviewListAdapter;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import okhttp3.Response;
+import ocgcore.data.Card;
 
 public class SquareDeckDetailDialog extends Dialog {
 
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
-    private String deckId;
-    private String deckName;
-    private Integer userId;
 
-    public interface ActionListener {
-        void onDownloadClicked();
+    DeckPreviewListAdapter mListAdapter;
+    private RecyclerView mListView;
+    private DeckDetail mDeckDetail = null;
 
-        void onLikeClicked();
-    }
-
-    private ActionListener listener;
+    private ApiDeckRecord mItem = null;
 
     public SquareDeckDetailDialog(Context context, ApiDeckRecord item) {
         super(context);
-        deckId = item.getDeckId();
-        deckName = item.getDeckName();
-        userId = item.getUserId();
+        mItem = item;
+
     }
 
     @Override
@@ -55,88 +46,83 @@ public class SquareDeckDetailDialog extends Dialog {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.dialog_square_deck_detail);
 
-        Button btnDownload = findViewById(R.id.btnDownload);
+        Button btnDownload = findViewById(R.id.dialog_square_deck_btn_download);
         Button btnLike = findViewById(R.id.btnLike);
 
+        previewDeckCard();
+
+        mListAdapter = new DeckPreviewListAdapter(R.layout.item_square_deck_card_preview);
+
+        mListView = findViewById(R.id.dialog_square_deck_detail_list);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+        mListView.setLayoutManager(linearLayoutManager);
+        mListView.setAdapter(mListAdapter);
+
+        //下载卡组广场的卡组
         btnDownload.setOnClickListener(v -> {
-            VUiKit.defer().when(() -> {
+            if (mDeckDetail != null) {
+                String path = AppsSettings.get().getDeckDir();
+                boolean result = DeckSquareFileUtil.saveFileToPath(path, mDeckDetail.getDeckName() + ".ydk", mDeckDetail.getDeckYdk());
+                if (result) {
 
-                DownloadDeckResponse result = null;
-                String url = "http://rarnu.xyz:38383/api/mdpro3/deck/" + deckId;
-
-                Map<String, String> headers = new HashMap<>();
-
-                headers.put("ReqSource", "MDPro3");
-
-                Response response = null;
-                try {
-                    response = OkhttpUtil.synchronousGet(url, null, headers);
-                    String responseBodyString = response.body().string();
-
-
-                    Gson gson = new Gson();
-                    // Convert JSON to Java object using Gson
-                    result = gson.fromJson(responseBodyString, DownloadDeckResponse.class);
-                    LogUtil.i(TAG, responseBodyString);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                if (result == null) {
-                    return null;
+                    YGOUtil.showTextToast("Download deck success!");
                 } else {
-                    return result.getData();
+
+                    YGOUtil.showTextToast("Download deck fail!");
                 }
-
-            }).fail((e) -> {
-                Log.e(TAG, e + "");
-//            if (dialog_read_ex.isShowing()) {//关闭异常
-//                try {
-//                    dialog_read_ex.dismiss();
-//                } catch (Exception ex) {
-//
-//                }
-//            }
-                LogUtil.i(TAG, "square deck detail fail");
-
-            }).done((deckData) -> {
-                if (deckData != null) {
-                    String path = AppsSettings.get().getDeckDir();
-                    saveFileToPath(path, deckName + ".ydk", deckData.deckYdk);
-                    LogUtil.i(TAG, "square deck detail done");
-
-                    YGOUtil.showTextToast(R.string.down_complete);
-                }
-//            if (dialog_read_ex.isShowing()) {
-//                try {
-//                    dialog_read_ex.dismiss();
-//                } catch (Exception ex) {
-//                }
-//            }
-            });
-            dismiss();
+            }
         });
 
+        //给卡组点赞
         btnLike.setOnClickListener(v -> {
+            VUiKit.defer().when(() -> {
+                BasicResponse result = DeckSquareApiUtil.likeDeck(mItem.getDeckId());
+                return result;
+            }).fail(e -> {
 
-            dismiss();
+                LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+            }).done(data -> {
+                if (data.getMessage().equals("true")) {
+                    YGOUtil.showTextToast("Like deck success!");
+                } else {
+                    YGOUtil.showTextToast(data.getMessage());
+                }
+            });
         });
 
     }
 
-    public void saveFileToPath(String path, String fileName, String content) {
-        try {
-            // Create file object
-            File file = new File(path, fileName);
-
-            // Create file output stream
-            FileOutputStream fos = new FileOutputStream(file);
-
-            // Write content
-            fos.write(content.getBytes());
-            fos.flush();
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void previewDeckCard() {
+        Integer userId = SharedPreferenceUtil.getServerUserId();
+        if (userId == null) {
+            YGOUtil.showTextToast("Please login first!");
+            return;
         }
+        VUiKit.defer().when(() -> {
+
+            DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(mItem.getDeckId());
+            if (response != null) {
+                return response.getData();
+            } else {
+                return null;
+            }
+
+        }).fail((e) -> {
+
+            LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+
+        }).done((deckData) -> {
+            if (deckData != null) {
+                mDeckDetail = deckData;
+
+                LogUtil.i(TAG, "square deck detail done");
+
+                List<Card> cardList = DeckSquareFileUtil.convertTempDeckYdk(deckData.getDeckYdk());
+                mListAdapter.updateData(cardList);
+            }
+        });
+
     }
+
+
 }

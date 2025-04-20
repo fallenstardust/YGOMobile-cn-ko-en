@@ -5,34 +5,50 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tvTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Choose Action"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btnDownload"
-        style="@style/Widget.AppCompat.Button.Borderless"
+        <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_server_download" />
+
+        <Button
+            android:id="@+id/dialog_square_deck_btn_download"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/Download" />
+    </LinearLayout>
+
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:drawableStart="@drawable/ic_download"
-        android:drawablePadding="8dp"
-        android:text="Download" />
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btnLike"
-        style="@style/Widget.AppCompat.Button.Borderless"
+        <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_like" />
+
+        <Button
+            android:id="@+id/btnLike"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="8dp"
+            android:text="Like" />
+    </LinearLayout>
+
+
+    <com.tubb.smrv.SwipeMenuRecyclerView
+        android:id="@+id/dialog_square_deck_detail_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:drawableStart="@drawable/ic_like"
-        android:drawablePadding="8dp"
-        android:text="Like" />
-
+        android:divider="@android:color/transparent"
+        android:dividerHeight="4dp"
+        android:padding="5dp"
+        android:scrollbars="vertical" />
 
 </LinearLayout>

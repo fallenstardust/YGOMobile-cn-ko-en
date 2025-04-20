@@ -8,23 +8,23 @@ import androidx.annotation.NonNull;
 
 public class DeckDetail implements Parcelable {
 
-    public String deckId;
-    public String deckContributor;
-    public String deckName;
-    public String deckRank;
-    public String deckLike;
-    public String deckUploadDate;
-    public String deckUpdateDate;
-    public int deckCoverCard1;
-    public int deckCoverCard2;
-    public int deckCoverCard3;
-    public String deckCase;
-    public String deckProtector;
-    public String deckMainSerial;
-    public String deckYdk;
-    public Integer userId;
-    public String isPublic;
-    public String isDelete;
+    private String deckId;
+    private String deckContributor;
+    private String deckName;
+    private String deckRank;
+    private String deckLike;
+    private String deckUploadDate;
+    private String deckUpdateDate;
+    private int deckCoverCard1;
+    private int deckCoverCard2;
+    private int deckCoverCard3;
+    private String deckCase;
+    private String deckProtector;
+    private String deckMainSerial;
+    private String deckYdk;
+    private Integer userId;
+    private String isPublic;
+    private String isDelete;
 
 
     protected DeckDetail(Parcel in) {

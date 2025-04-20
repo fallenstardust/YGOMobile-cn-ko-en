@@ -257,10 +257,8 @@ public class OkhttpUtil {
 
     public static void post(String url, String json, String cookie, Callback callback) {
         OkHttpClient okHttpClient = new OkHttpClient();
-        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , json);
-        Request.Builder request = new Request.Builder()
-                .url(url);//请求的url
+        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+        Request.Builder request = new Request.Builder().url(url);//请求的url
         if (TextUtils.isEmpty(json))
             request.post(okhttp3.internal.Util.EMPTY_REQUEST);
         else
@@ -284,8 +282,13 @@ public class OkhttpUtil {
         }
     }
 
-
-    public static void postJson(String url, String json, Map<String, String> headers, int timeout, Callback callback) {
+    /**
+     * @param url
+     * @param json     可以传入null或空字符串，均代表不需要发送json
+     * @param headers  可以传入null
+     * @param timeout  可以为0，为0代表使用默认值
+     */
+    public static Response postJson(String url, String json, Map<String, String> headers, int timeout) throws IOException {
         okHttpClient = new OkHttpClient();
 
         if (timeout != 0)
@@ -294,14 +297,14 @@ public class OkhttpUtil {
                     .build();
 
 
-        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , json);
-        Request.Builder request = new Request.Builder()
-                .url(url);//请求的url
-        if (TextUtils.isEmpty(json))
+        Request.Builder request = new Request.Builder().url(url);//请求的url
+        if (json == null || TextUtils.isEmpty(json)) {
             request.post(okhttp3.internal.Util.EMPTY_REQUEST);
-        else
+        } else {
+            RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
             request.post(requestBody);
+
+        }
 
         if (headers != null) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -310,7 +313,8 @@ public class OkhttpUtil {
         }
 
         Log.e("OkhttpUtil", json + " 状态 " + request.build());
-        okHttpClient.newCall(request.build()).enqueue(callback);
+        return okHttpClient.newCall(request.build()).execute();
+        //okHttpClient.newCall(request.build()).enqueue(callback);
     }
 
     /**
