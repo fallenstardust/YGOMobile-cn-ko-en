@@ -17,8 +17,27 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
-public class DeckManageDialog extends DialogFragment {
+public class DeckManageDialog extends DialogFragment implements YGODeckDialogUtil.OnDeckDialogListener {
+
+
+    public void onDismiss() {
+        dismiss();
+    }
+
+    public void onShow() {
+        //todo
+
+    }
+
+    private YGODeckDialogUtil.OnDeckMenuListener mOnDeckMenuListener;
+
+    public DeckManageDialog(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener) {
+        super();
+        mOnDeckMenuListener = onDeckMenuListener;
+
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -26,6 +45,7 @@ public class DeckManageDialog extends DialogFragment {
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dialog_deck_manager, container, false);
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -35,7 +55,7 @@ public class DeckManageDialog extends DialogFragment {
         TabLayout tabLayout = view.findViewById(R.id.deck_manager_tab_layout);
 
         // Setup adapter
-        ViewPagerAdapter adapter = new ViewPagerAdapter(this);
+        ViewPagerAdapter adapter = new ViewPagerAdapter(this, mOnDeckMenuListener, this);
         viewPager.setAdapter(adapter);
 
         // Connect TabLayout with ViewPager
@@ -63,8 +83,13 @@ public class DeckManageDialog extends DialogFragment {
 
     private static class ViewPagerAdapter extends FragmentStateAdapter {
 
-        public ViewPagerAdapter(@NonNull Fragment fragment) {
+        private YGODeckDialogUtil.OnDeckMenuListener mOnDeckMenuListener;
+        private YGODeckDialogUtil.OnDeckDialogListener onDeckDialogListener;
+
+        public ViewPagerAdapter(@NonNull Fragment fragment, YGODeckDialogUtil.OnDeckMenuListener listener, YGODeckDialogUtil.OnDeckDialogListener dialogListener) {
             super(fragment);
+            mOnDeckMenuListener = listener;
+            onDeckDialogListener = dialogListener;
         }
 
         @NonNull
@@ -72,11 +97,13 @@ public class DeckManageDialog extends DialogFragment {
         public Fragment createFragment(int position) {
             switch (position) {
                 case 0:
-                    return new DeckSelectFragment();
+                    return new DeckSelectFragment(mOnDeckMenuListener, onDeckDialogListener);
                 case 1:
                     return new DeckSquareFragment();
                 case 2:
                     return new DeckSquareMyDeckFragment();
+                case 3:
+                    return new MCOnlineManageFragment();
                 default:
                     throw new IllegalArgumentException();
             }
@@ -84,7 +111,7 @@ public class DeckManageDialog extends DialogFragment {
 
         @Override
         public int getItemCount() {
-            return 3;
+            return 4;
         }
 
     }

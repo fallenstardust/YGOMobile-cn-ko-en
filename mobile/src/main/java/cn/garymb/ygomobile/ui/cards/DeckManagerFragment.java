@@ -209,19 +209,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView.findViewById(R.id.open_deck_square).setOnClickListener((v) -> doMenu(R.id.open_deck_square));
         tv_deck.setOnClickListener(v ->
                 {
-                    new DeckManageDialog().show(
+                    new DeckManageDialog(this).show(
                             getActivity().getSupportFragmentManager(),
                             "pagerDialog"
                     );
                 }
         );
-              //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
     }
 
 
     /**
-     *通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
+     * 通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
      * 将mPreLoadFile设置为对应的File
      */
     public void preLoadFile() {

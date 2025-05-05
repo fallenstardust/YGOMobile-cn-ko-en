@@ -1,49 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
 
-    <com.tubb.smrv.SwipeMenuRecyclerView
-        android:id="@+id/list_my_deck_info"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="4dp"
-        android:padding="5dp"
-        android:scrollbars="vertical"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="16dp" />
+        android:layout_weight="0.8">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_gravity="bottom|right"
-        android:layout_marginLeft="10dp"
-        android:orientation="horizontal"
-        android:weightSum="1">
-
-        <LinearLayout
+        <com.tubb.smrv.SwipeMenuRecyclerView
+            android:id="@+id/list_my_deck_info"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:divider="@android:color/transparent"
+            android:dividerHeight="4dp"
+            android:padding="5dp"
+            android:scrollbars="vertical"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="16dp" />
+    </LinearLayout>
 
-            <Button
-                android:id="@+id/refresh_data"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="right|bottom"
-                android:text="刷新"></Button>
-        </LinearLayout>
-        <!--     <Button
-                 android:id="@+id/upload_deck"
-                 android:layout_width="wrap_content"
-                 android:layout_height="match_parent"
-                 android:layout_gravity="center|bottom"
-                 android:text="上传卡组"></Button>-->
-    </FrameLayout>
+    <!--     <Button
+             android:id="@+id/upload_deck"
+             android:layout_width="wrap_content"
+             android:layout_height="match_parent"
+             android:layout_gravity="center|bottom"
+             android:text="上传卡组"></Button>-->
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/refresh_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|bottom"
+            android:text="刷新"></Button>
+    </LinearLayout>
     <!--<com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -51,4 +50,4 @@
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
         android:tooltipText="刷新" />-->
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>
