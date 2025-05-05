@@ -24,19 +24,24 @@
         android:orientation="horizontal"
         android:weightSum="1">
 
-        <Button
-            android:id="@+id/refresh_data"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="right|bottom"
-            android:text="刷新"></Button>
+            android:orientation="horizontal">
 
-   <!--     <Button
-            android:id="@+id/upload_deck"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center|bottom"
-            android:text="上传卡组"></Button>-->
+            <Button
+                android:id="@+id/refresh_data"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right|bottom"
+                android:text="刷新"></Button>
+        </LinearLayout>
+        <!--     <Button
+                 android:id="@+id/upload_deck"
+                 android:layout_width="wrap_content"
+                 android:layout_height="match_parent"
+                 android:layout_gravity="center|bottom"
+                 android:text="上传卡组"></Button>-->
     </FrameLayout>
 
     <!--<com.google.android.material.floatingactionbutton.FloatingActionButton

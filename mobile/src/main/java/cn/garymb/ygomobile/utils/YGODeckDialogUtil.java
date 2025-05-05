@@ -38,10 +38,12 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.deck_square.DeckSquareTabAdapter;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
+import cn.garymb.ygomobile.ex_card.ExPackageTabAdapter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -98,8 +100,8 @@ public class YGODeckDialogUtil {
         ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);
         viewHolder.show();
     }
-
-
+    private DeckSquareTabAdapter adapter;
+     //注册listener，发生点击卡组事件后，通知主界面进行对应的显示更新
     public interface OnDeckMenuListener {
         void onDeckSelect(DeckFile deckFile);
 
@@ -154,7 +156,7 @@ public class YGODeckDialogUtil {
          */
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
             ygoDialog = new DialogPlus(context);
-            ygoDialog.setContentView(R.layout.dialog_deck_select);
+            ygoDialog.setContentView(R.layout.fragment_deck_select);
             ygoDialog.setTitle(R.string.category_manager);
 
             allDeckList = new ArrayList<>();

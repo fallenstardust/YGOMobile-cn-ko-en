@@ -75,6 +75,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.deck_square.DeckManageDialog;
 import cn.garymb.ygomobile.deck_square.DeckSquareActivity;
 import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
@@ -207,7 +208,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
         layoutView.findViewById(R.id.open_deck_square).setOnClickListener((v) -> doMenu(R.id.open_deck_square));
         tv_deck.setOnClickListener(v ->
-                YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+                {
+                    new DeckManageDialog().show(
+                            getActivity().getSupportFragmentManager(),
+                            "pagerDialog"
+                    );
+                }
+        );
+              //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
     }
 
