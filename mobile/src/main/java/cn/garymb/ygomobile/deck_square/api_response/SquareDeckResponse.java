@@ -2,7 +2,7 @@ package cn.garymb.ygomobile.deck_square.api_response;
 
 import java.util.List;
 
-public class ApiResponse {
+public class SquareDeckResponse {
     private Integer code;
     private String message;
     private ApiData data;
@@ -12,7 +12,7 @@ public class ApiResponse {
         private int size;
         private int total;
         private int pages;
-        private List<ApiDeckRecord> records;
+        private List<OnlineDeckDetail> records;
 
         // Getters and setters
         public int getCurrent() {
@@ -31,7 +31,7 @@ public class ApiResponse {
             return pages;
         }
 
-        public List<ApiDeckRecord> getRecords() {
+        public List<OnlineDeckDetail> getRecords() {
             return records;
         }
     }

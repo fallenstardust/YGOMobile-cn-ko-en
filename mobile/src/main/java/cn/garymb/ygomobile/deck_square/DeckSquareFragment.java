@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
+import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareBinding;
 
@@ -36,7 +36,7 @@ public class DeckSquareFragment extends Fragment {
 // Set click listener in your adapter
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             // Handle item click
-            ApiDeckRecord item = (ApiDeckRecord) adapter.getItem(position);
+            OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
 
 
             // Show the dialog

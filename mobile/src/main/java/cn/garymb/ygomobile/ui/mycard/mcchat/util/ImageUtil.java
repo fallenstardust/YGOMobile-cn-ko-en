@@ -52,6 +52,11 @@ public class ImageUtil {
         show(context, url, im, null);
     }
 
+    /**
+     * 将图片变换为灰度图（变成灰白色）
+     * @param key
+     * @param imageView
+     */
     public static void setGrayImage(int key, ImageView imageView) {
         ColorMatrix matrix = new ColorMatrix();
         matrix.setSaturation(0);

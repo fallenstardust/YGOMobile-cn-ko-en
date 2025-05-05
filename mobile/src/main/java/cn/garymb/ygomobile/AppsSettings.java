@@ -19,9 +19,9 @@ import static cn.garymb.ygomobile.Constants.DEF_PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.DEF_PREF_READ_EX;
-import static cn.garymb.ygomobile.Constants.PREF_DEF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_IMMERSIVE_MODE;
+import static cn.garymb.ygomobile.Constants.PREF_DEF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
@@ -499,6 +499,7 @@ public class AppsSettings {
     public String getCoreSkinPath() {
         return new File(getResourcePath(), Constants.CORE_SKIN_PATH).getAbsolutePath();
     }
+
     public String getAvatarPath() {
         return new File(getResourcePath(), Constants.CORE_AVATAR_PATH).getAbsolutePath();
     }
@@ -510,6 +511,7 @@ public class AppsSettings {
     public String getBgPath() {
         return new File(getResourcePath(), Constants.CORE_BG_PATH).getAbsolutePath();
     }
+
     /***
      * 字体路径
      */
@@ -613,7 +615,12 @@ public class AppsSettings {
         return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
     }
 
-    //获得最后卡组绝对路径
+    /**
+     * 获得（最后）上次打开的卡组的绝对路径
+     * setCurDeck()方法负责设置上次打开的卡组的路径
+     *
+     * @return
+     */
     public @Nullable
     String getLastDeckPath() {
         String path;
@@ -804,7 +811,7 @@ public class AppsSettings {
         Korean(1, "ko"),
         English(2, "en"),
         Spanish(3, "es"),
-        Japanese(4,"jp"),
+        Japanese(4, "jp"),
         Portuguese(5, "pt");
 
         public Integer code;
@@ -913,7 +920,7 @@ public class AppsSettings {
         setDataLanguage(languageEnum.Portuguese.code);
     }
 
-    private void replaceLineFeed(){
+    private void replaceLineFeed() {
         //替换换行符
         String stringConfPath = new File(getResourcePath(), CORE_STRING_PATH).getAbsolutePath();
         String botConfPath = new File(getResourcePath(), BOT_CONF).getAbsolutePath();

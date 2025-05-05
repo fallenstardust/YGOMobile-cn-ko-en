@@ -9,8 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
-import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 

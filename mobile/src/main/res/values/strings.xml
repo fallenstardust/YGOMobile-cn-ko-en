@@ -293,6 +293,8 @@
     <string name="category_pack">Pack</string>
     <string name="category_windbot_deck">AI Decks</string>
     <string name="category_Uncategorized">Uncategorized</string>
+    <string name="category_online_deck">Online Deck</string>
+    <string name="category_my_online_deck">My Online Deck</string>
     <string name="please_input_category_name">please input category name</string>
     <string name="invalid_category_name">invalid category name</string>
     <string name="please_select_target_category">please select target category</string>

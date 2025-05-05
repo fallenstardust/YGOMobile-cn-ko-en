@@ -5,7 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-public class ApiDeckRecord implements Parcelable {
+public class OnlineDeckDetail implements Parcelable {
 
     private String deckId;
     private String deckContributor;
@@ -20,7 +20,7 @@ public class ApiDeckRecord implements Parcelable {
     private int userId;
 
 
-    protected ApiDeckRecord(Parcel in) {
+    protected OnlineDeckDetail(Parcel in) {
         deckId = in.readString();
         deckContributor = in.readString();
         deckName = in.readString();
@@ -34,15 +34,15 @@ public class ApiDeckRecord implements Parcelable {
         userId = in.readInt();
     }
 
-    public static final Creator<ApiDeckRecord> CREATOR = new Creator<ApiDeckRecord>() {
+    public static final Creator<OnlineDeckDetail> CREATOR = new Creator<OnlineDeckDetail>() {
         @Override
-        public ApiDeckRecord createFromParcel(Parcel in) {
-            return new ApiDeckRecord(in);
+        public OnlineDeckDetail createFromParcel(Parcel in) {
+            return new OnlineDeckDetail(in);
         }
 
         @Override
-        public ApiDeckRecord[] newArray(int size) {
-            return new ApiDeckRecord[size];
+        public OnlineDeckDetail[] newArray(int size) {
+            return new OnlineDeckDetail[size];
         }
     };
 
@@ -65,7 +65,8 @@ public class ApiDeckRecord implements Parcelable {
         dest.writeString(lastDate);
         dest.writeInt(userId);
     }
-      public String getDeckId() {
+
+    public String getDeckId() {
         return deckId;
     }
 

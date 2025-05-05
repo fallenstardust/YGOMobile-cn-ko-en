@@ -9,7 +9,7 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.List;
 
-import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -65,7 +65,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             //  List<MyDeckItem> serverItems = new ArrayList<>();
 
             if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
-                for (DeckDetail detail : serverDecks) {
+                for (MyOnlineDeckDetail detail : serverDecks) {
                     MyDeckItem item = new MyDeckItem();
                     item.setDeckName(detail.getDeckName());
                     item.setDeckSouce(1);

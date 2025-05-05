@@ -5,7 +5,7 @@ import java.util.List;
 public class MyDeckResponse {
     public Integer code;
     public String message;
-    public List<DeckDetail> data;
+    public List<MyOnlineDeckDetail> data;
 
     public Integer getCode() {
         return code;
@@ -23,11 +23,11 @@ public class MyDeckResponse {
         this.message = message;
     }
 
-    public List<DeckDetail> getData() {
+    public List<MyOnlineDeckDetail> getData() {
         return data;
     }
 
-    public void setData(List<DeckDetail> data) {
+    public void setData(List<MyOnlineDeckDetail> data) {
         this.data = data;
     }
 

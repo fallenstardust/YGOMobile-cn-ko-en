@@ -12,9 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
+import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
-import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.DeckPreviewListAdapter;
@@ -30,11 +30,11 @@ public class SquareDeckDetailDialog extends Dialog {
 
     DeckPreviewListAdapter mListAdapter;
     private RecyclerView mListView;
-    private DeckDetail mDeckDetail = null;
+    private MyOnlineDeckDetail mMyOnlineDeckDetail = null;
 
-    private ApiDeckRecord mItem = null;
+    private OnlineDeckDetail mItem = null;
 
-    public SquareDeckDetailDialog(Context context, ApiDeckRecord item) {
+    public SquareDeckDetailDialog(Context context, OnlineDeckDetail item) {
         super(context);
         mItem = item;
 
@@ -60,9 +60,9 @@ public class SquareDeckDetailDialog extends Dialog {
 
         //下载卡组广场的卡组
         btnDownload.setOnClickListener(v -> {
-            if (mDeckDetail != null) {
+            if (mMyOnlineDeckDetail != null) {
                 String path = AppsSettings.get().getDeckDir();
-                boolean result = DeckSquareFileUtil.saveFileToPath(path, mDeckDetail.getDeckName() + ".ydk", mDeckDetail.getDeckYdk());
+                boolean result = DeckSquareFileUtil.saveFileToPath(path, mMyOnlineDeckDetail.getDeckName() + ".ydk", mMyOnlineDeckDetail.getDeckYdk());
                 if (result) {
 
                     YGOUtil.showTextToast("Download deck success!");
@@ -113,7 +113,7 @@ public class SquareDeckDetailDialog extends Dialog {
 
         }).done((deckData) -> {
             if (deckData != null) {
-                mDeckDetail = deckData;
+                mMyOnlineDeckDetail = deckData;
 
                 LogUtil.i(TAG, "square deck detail done");
 

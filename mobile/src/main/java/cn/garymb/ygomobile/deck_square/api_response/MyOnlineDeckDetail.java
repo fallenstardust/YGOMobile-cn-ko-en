@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
 
-public class DeckDetail implements Parcelable {
+public class MyOnlineDeckDetail implements Parcelable {
 
     private String deckId;
     private String deckContributor;
@@ -27,7 +27,7 @@ public class DeckDetail implements Parcelable {
     private String isDelete;
 
 
-    protected DeckDetail(Parcel in) {
+    protected MyOnlineDeckDetail(Parcel in) {
         deckId = in.readString();
         deckContributor = in.readString();
         deckName = in.readString();
@@ -47,15 +47,15 @@ public class DeckDetail implements Parcelable {
         isDelete = in.readString();
     }
 
-    public static final Creator<DeckDetail> CREATOR = new Creator<DeckDetail>() {
+    public static final Creator<MyOnlineDeckDetail> CREATOR = new Creator<MyOnlineDeckDetail>() {
         @Override
-        public DeckDetail createFromParcel(Parcel in) {
-            return new DeckDetail(in);
+        public MyOnlineDeckDetail createFromParcel(Parcel in) {
+            return new MyOnlineDeckDetail(in);
         }
 
         @Override
-        public DeckDetail[] newArray(int size) {
-            return new DeckDetail[size];
+        public MyOnlineDeckDetail[] newArray(int size) {
+            return new MyOnlineDeckDetail[size];
         }
     };
 

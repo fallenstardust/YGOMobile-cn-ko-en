@@ -3,7 +3,7 @@ package cn.garymb.ygomobile.deck_square.api_response;
 public class DownloadDeckResponse {
     private Integer code;
     private String message;
-    private DeckDetail data;
+    private MyOnlineDeckDetail data;
 
     public Integer getCode() {
         return code;
@@ -22,11 +22,11 @@ public class DownloadDeckResponse {
         this.message = message;
     }
 
-    public DeckDetail getData() {
+    public MyOnlineDeckDetail getData() {
         return data;
     }
 
-    public void setData(DeckDetail data) {
+    public void setData(MyOnlineDeckDetail data) {
         this.data = data;
     }
 }

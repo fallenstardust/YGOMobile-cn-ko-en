@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.deck_square.api_response.DeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
@@ -30,7 +30,7 @@ public class MyDeckDetailDialog extends Dialog {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     DeckPreviewListAdapter mListAdapter;
     private RecyclerView mListView;
-    private DeckDetail mDeckDetail = null;
+    private MyOnlineDeckDetail mMyOnlineDeckDetail = null;
 
     MyDeckItem mItem = null;//存储触发本dialog的卡组的基本信息
 
@@ -104,9 +104,9 @@ public class MyDeckDetailDialog extends Dialog {
         //下载用户在平台上的卡组
         btnDownload.setOnClickListener(v -> {
 
-            if (mDeckDetail != null) {
+            if (mMyOnlineDeckDetail != null) {
                 String path = AppsSettings.get().getDeckDir();
-                DeckSquareFileUtil.saveFileToPath(path, mDeckDetail.getDeckName() + ".ydk", mDeckDetail.getDeckYdk());
+                DeckSquareFileUtil.saveFileToPath(path, mMyOnlineDeckDetail.getDeckName() + ".ydk", mMyOnlineDeckDetail.getDeckYdk());
             }
         });
 
@@ -134,7 +134,7 @@ public class MyDeckDetailDialog extends Dialog {
 
         }).done((deckData) -> {
             if (deckData != null) {
-                mDeckDetail = deckData;
+                mMyOnlineDeckDetail = deckData;
 
                 LogUtil.i(TAG, "square deck detail done");
 
