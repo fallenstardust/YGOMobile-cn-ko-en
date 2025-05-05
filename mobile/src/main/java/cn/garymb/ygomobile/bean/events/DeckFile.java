@@ -37,6 +37,9 @@ public class DeckFile extends TextSelect {
     }
 
     public DeckFile(File file) {
+        this.onServer = DeckType.ServerType.LOCAL;
+        this.deckId = null;
+
         path = file;
         fileFullName = file.getName();
         String name = fileFullName;

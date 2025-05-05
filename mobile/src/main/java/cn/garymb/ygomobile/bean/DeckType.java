@@ -2,9 +2,9 @@ package cn.garymb.ygomobile.bean;
 
 public class DeckType extends TextSelect {
     public enum ServerType {
-        LOCAL,
-        SQUARE,
-        MY_SQUARE,
+        LOCAL,//本地卡组
+        SQUARE_DECK,//卡组广场上的卡组
+        MY_SQUARE,//本用户在云上的卡组
     }
 
     private String name;

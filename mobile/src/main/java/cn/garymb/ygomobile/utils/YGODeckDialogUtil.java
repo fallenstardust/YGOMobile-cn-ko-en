@@ -240,7 +240,7 @@ public class YGODeckDialogUtil {
                 public void onItemSelect(int position, DeckType item) {
                     clearDeckSelect();
                     deckList.clear();
-                    if (item.getOnServer() == DeckType.ServerType.SQUARE) {
+                    if (item.getOnServer() == DeckType.ServerType.SQUARE_DECK) {
                         VUiKit.defer().when(() -> {
                             SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
 
@@ -255,7 +255,7 @@ public class YGODeckDialogUtil {
                             if (exCardDataList != null) {
                                 LogUtil.i(TAG, "Get square deck success");
                                 for (OnlineDeckDetail deckRecord : exCardDataList) {
-                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.SQUARE, deckRecord.getDeckId());
+                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.SQUARE_DECK, deckRecord.getDeckId());
                                     deckList.add(deckFile);
                                 }
 
@@ -322,10 +322,13 @@ public class YGODeckDialogUtil {
                     }
                 }
             });
+            //对话框中长点击某一卡组名称后，触发该事件
             deckAdp.setOnItemLongClickListener(new OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
-                    if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
+                    DeckFile item = (DeckFile) adapter.getItem(position);
+                    //即使为local，也有可能为卡包预览，因此过滤掉selectposition==0
+                    if (deckAdp.isSelect() || !item.isLocal() || typeAdp.getSelectPosition() == 0)
                         return true;
 
                     deckAdp.setManySelect(true);
