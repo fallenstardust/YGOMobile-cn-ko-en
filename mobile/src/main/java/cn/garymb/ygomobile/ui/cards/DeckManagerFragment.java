@@ -139,7 +139,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private BaseActivity mContext;
     long exitLasttime = 0;
 
-    private File mPreLoadFile;
+    private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private TextView tv_deck;
     private TextView tv_result_count;
@@ -211,16 +211,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
     }
 
-    //通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
+
+    /**
+     *通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
+     * 将mPreLoadFile设置为对应的File
+     */
     public void preLoadFile() {
-        String preLoadFile = "";
+        String preLoadFilePath = "";
         if (getArguments() != null) {
-            preLoadFile = getArguments().getString("setDeck");
+            preLoadFilePath = getArguments().getString("setDeck");
             getArguments().clear();
         }
+        preLoadFile(preLoadFilePath);
+
+    }
+
+    public void preLoadFile(String preLoadFilePath) {
+
         final File _file;
         //打开指定卡组
-        if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
+        if (!TextUtils.isEmpty(preLoadFilePath) && (mPreLoadFile = new File(preLoadFilePath)).exists()) {
             //外面卡组
             _file = mPreLoadFile;
         } else {
@@ -389,6 +399,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
 
     //region load deck
+    //从文件file中读取deck
     private void loadDeckFromFile(File file) {
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
             setCurDeck(new DeckInfo(), false);
@@ -791,8 +802,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 }
                 shareDeck();
                 break;
-            case R.id.action_save:
-                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
+            case R.id.action_save://如果是通过“预加载”打开ydk，则将ydk保存到
+                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {//代表通过预加载功能打开的ydk
                     //需要保存到deck文件夹
                     inputDeckName(mPreLoadFile, null, true);
                 } else {
@@ -1258,14 +1269,16 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     deckData.getDeckYdk();
 
                     String fileFullName = deckData.getDeckName() + ".ydk";
-                    String path = AppsSettings.get().getDeckDir();
+                    // String path = AppsSettings.get().getDeckDir();
 
-                    //File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
-                    boolean result = DeckSquareFileUtil.saveFileToPath(path, fileFullName, deckData.getDeckYdk());
-                    if (result) {
+                    File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
+                    //将卡组存到cache缓存目录中
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
+
+                    if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
-                        File file = new File(path, fileFullName);
-                        loadDeckFromFile(file);
+                        //File file = new File(dir, fileFullName);
+                        preLoadFile(dir.getPath() + "/" + fileFullName);
                     }
 
                 }
