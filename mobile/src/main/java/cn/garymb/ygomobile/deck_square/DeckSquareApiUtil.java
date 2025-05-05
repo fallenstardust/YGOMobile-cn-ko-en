@@ -16,6 +16,7 @@ import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -29,9 +30,25 @@ public class DeckSquareApiUtil {
 
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
+    public static SquareDeckResponse getSquareDecks() throws IOException {
+        SquareDeckResponse result = null;
+        String url = "http://rarnu.xyz:38383/api/mdpro3/deck/list";
+        Map<String, String> headers = new HashMap<>();
+
+        headers.put("ReqSource", "MDPro3");
+        Response response = OkhttpUtil.synchronousGet(url, null, headers);
+        String responseBodyString = response.body().string();
+//                Type listType = new TypeToken<List<DeckInfo>>() {
+//                }.getType();
+        Gson gson = new Gson();
+        // Convert JSON to Java object using Gson
+        result = gson.fromJson(responseBodyString, SquareDeckResponse.class);
+        return result;
+    }
+
     /**
      * 阻塞方法
-     * 获取指定用户的卡组列表
+     * 获取指定用户的卡组列表（只能用于获取登录用户本人的卡组）
      *
      * @param serverUserId
      * @param serverToken
@@ -219,7 +236,6 @@ public class DeckSquareApiUtil {
             // Error response
             LogUtil.e(TAG, "Request failed: " + responseBody);
         }
-
 
 
         return result;

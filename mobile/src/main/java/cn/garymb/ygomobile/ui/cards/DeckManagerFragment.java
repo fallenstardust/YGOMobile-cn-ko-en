@@ -76,6 +76,9 @@ import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.deck_square.DeckSquareActivity;
+import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
+import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -99,6 +102,7 @@ import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ShareUtil;
 import cn.garymb.ygomobile.utils.YGODialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -207,6 +211,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
     }
 
+    //通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
     public void preLoadFile() {
         String preLoadFile = "";
         if (getArguments() != null) {
@@ -382,6 +387,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
+
     //region load deck
     private void loadDeckFromFile(File file) {
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
@@ -397,7 +403,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
+            //setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
+            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()));
         });
     }
 
@@ -445,7 +452,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     /**
-     * 设置当前卡组
+     * 用户选中某个卡组后，更新当前界面，显示已选中的卡组。包括更新界面显示（tv_deck）、更新AppsSettings、通知DeckAdapter
      */
     private void setCurDeck(DeckInfo deckInfo, boolean isPack) {
         if (deckInfo == null) {
@@ -1231,7 +1238,42 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void onDeckSelect(DeckFile deckFile) {
-        loadDeckFromFile(deckFile.getPathFile());
+        if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
+
+            VUiKit.defer().when(() -> {
+
+                DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(deckFile.getDeckId());
+                if (response != null) {
+                    return response.getData();
+                } else {
+                    return null;
+                }
+
+            }).fail((e) -> {
+
+                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+
+            }).done((deckData) -> {
+                if (deckData != null) {
+                    deckData.getDeckYdk();
+
+                    String fileFullName = deckData.getDeckName() + ".ydk";
+                    String path = AppsSettings.get().getCacheDeckDir();
+
+                    File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
+                    if (result) {
+                        LogUtil.i(TAG, "square deck detail done");
+                        File file = new File(dir, fileFullName);
+                        loadDeckFromFile(file);
+                    }
+
+                }
+            });
+
+        } else {
+            loadDeckFromFile(deckFile.getPathFile());
+        }
     }
 
     @Override

@@ -6,25 +6,19 @@ import android.widget.ImageView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
-import com.google.gson.Gson;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import cn.garymb.ygomobile.deck_square.api_response.ApiDeckRecord;
-import cn.garymb.ygomobile.deck_square.api_response.ApiResponse;
+import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.OkhttpUtil;
-import okhttp3.Response;
 
 //提供recyclerview的数据
-public class DeckSquareListAdapter extends BaseQuickAdapter<ApiDeckRecord, BaseViewHolder> {
+public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
 
@@ -37,27 +31,7 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<ApiDeckRecord, BaseV
     public void loadData() {
         final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
         VUiKit.defer().when(() -> {
-            LogUtil.d(TAG, "start fetch");
-            ApiResponse result = null;
-            try {
-                String url = "http://rarnu.xyz:38383/api/mdpro3/deck/list";
-                Map<String, String> headers = new HashMap<>();
-
-                headers.put("ReqSource", "MDPro3");
-                Response response = OkhttpUtil.synchronousGet(url, null, headers);
-                String responseBodyString = response.body().string();
-//                Type listType = new TypeToken<List<DeckInfo>>() {
-//                }.getType();
-                Gson gson = new Gson();
-                // Convert JSON to Java object using Gson
-                result = gson.fromJson(responseBodyString, ApiResponse.class);
-                LogUtil.i(TAG, responseBodyString);
-                int a = 0;
-            } catch (IOException e) {
-                Log.e(TAG, "Error occured when fetching data from pre-card server");
-                return null;
-            }
-
+            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
             if (result == null) {
                 return null;
             } else {
@@ -73,11 +47,11 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<ApiDeckRecord, BaseV
 
                 }
             }
-            LogUtil.i(TAG, "webCrawler fail");
+            LogUtil.i(TAG, "Get square deck fail");
 
         }).done((exCardDataList) -> {
             if (exCardDataList != null) {
-                LogUtil.i(TAG, "webCrawler done");
+                LogUtil.i(TAG, "Get square deck success");
                 getData().clear();
                 addData(exCardDataList);
                 notifyDataSetChanged();
@@ -102,7 +76,7 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<ApiDeckRecord, BaseV
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, ApiDeckRecord item) {
+    protected void convert(BaseViewHolder helper, OnlineDeckDetail item) {
         helper.setText(R.id.deck_info_name, item.getDeckName());
         helper.setText(R.id.deck_contributor, item.getDeckContributor());
         helper.setText(R.id.deck_last_date, item.getLastDate());
