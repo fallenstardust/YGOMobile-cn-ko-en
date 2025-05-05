@@ -104,7 +104,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ShareUtil;
-import cn.garymb.ygomobile.utils.YGODialogUtil;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.CardManager;
@@ -118,7 +118,7 @@ import ocgcore.enums.LimitType;
  * 注意，卡组编辑页面中的长按事件回调在ItemTouchHelperPlus中实现，而非在
  * RecyclerViewItemListener.OnItemListener中
  */
-public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
+public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
@@ -207,7 +207,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
         layoutView.findViewById(R.id.open_deck_square).setOnClickListener((v) -> doMenu(R.id.open_deck_square));
         tv_deck.setOnClickListener(v ->
-                YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+                YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
     }
 
@@ -1258,13 +1258,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     deckData.getDeckYdk();
 
                     String fileFullName = deckData.getDeckName() + ".ydk";
-                    String path = AppsSettings.get().getCacheDeckDir();
+                    String path = AppsSettings.get().getDeckDir();
 
-                    File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
+                    //File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
+                    boolean result = DeckSquareFileUtil.saveFileToPath(path, fileFullName, deckData.getDeckYdk());
                     if (result) {
                         LogUtil.i(TAG, "square deck detail done");
-                        File file = new File(dir, fileFullName);
+                        File file = new File(path, fileFullName);
                         loadDeckFromFile(file);
                     }
 

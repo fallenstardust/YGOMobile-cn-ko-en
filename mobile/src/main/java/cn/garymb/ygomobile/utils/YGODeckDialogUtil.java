@@ -51,7 +51,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
-public class YGODialogUtil {
+public class YGODeckDialogUtil {
     /*  public enum DeckTypeEnum {
           CARD_PACK(0, "PACK"),
           WINDBOT(1, "WINDBOT"),
@@ -87,7 +87,7 @@ public class YGODialogUtil {
           }
      }
    */
-    private static final String TAG = "YGODialogUtil";
+    private static final String TAG = "YGODeckDialogUtil";
 
     /**
      * @param context
