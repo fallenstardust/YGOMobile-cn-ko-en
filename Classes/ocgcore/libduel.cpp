@@ -13,6 +13,23 @@
 #include "group.h"
 #include "ocgapi.h"
 
+#ifdef _IRR_ANDROID_PLATFORM_
+
+int32_t scriptlib::duel_load_script(lua_State *L) {
+	check_param_count(L, 1);
+	check_param(L, PARAM_TYPE_STRING, 1);
+	duel* pduel = interpreter::get_duel_info(L); 
+	const char* pstr = lua_tostring(L, 1);
+	char filename[64];
+	sprintf(filename, "./script/%s", pstr);
+	lua_pushboolean(L, pduel->lua->load_script(filename));
+	return 1;
+}
+
+#endif
+
+
+
 int32_t scriptlib::duel_enable_global_flag(lua_State *L) {
 	check_param_count(L, 1);
 	int32_t flag = (int32_t)lua_tointeger(L, 1);
@@ -4839,6 +4856,10 @@ int32_t scriptlib::duel_majestic_copy(lua_State *L) {
 }
 
 static const struct luaL_Reg duellib[] = {
+	#ifdef _IRR_ANDROID_PLATFORM_
+	{ "LoadScript", scriptlib::duel_load_script },
+	#endif
+	
 	{ "EnableGlobalFlag", scriptlib::duel_enable_global_flag },
 	{ "GetLP", scriptlib::duel_get_lp },
 	{ "SetLP", scriptlib::duel_set_lp },

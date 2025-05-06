@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.plus;
 
+import android.content.Intent;
+import android.net.Uri;
+
 import com.ourygo.lib.duelassistant.util.DARecord;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 import com.tencent.smtt.sdk.WebView;
@@ -24,6 +27,13 @@ public class DefWebViewClient extends WebViewClient {
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         if (url.startsWith(DARecord.DECK_URL_PREFIX)) {
             DuelAssistantManagement.getInstance().deckCheck(url, daCheckId);
+            return true;
+        }
+        if (!url.startsWith("http://")
+                && !url.startsWith("https://")) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(url));
+            view.getContext().startActivity(intent);
             return true;
         }
         return false;
