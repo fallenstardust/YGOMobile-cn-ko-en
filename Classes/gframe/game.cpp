@@ -2070,7 +2070,7 @@ std::string WCharToUTF8(const wchar_t* input) {
 void Game::AddDebugMsg(const char* msg) {
     std::string message(msg);
     unsigned int cardID = 0;
-    std::regex cardIdPattern(R"((\d{4,9}))");
+    std::regex cardIdPattern(R"((\d{3,9}))");
     auto words_begin = std::sregex_iterator(message.begin(), message.end(), cardIdPattern);
     auto words_end = std::sregex_iterator();
     for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
@@ -2102,7 +2102,8 @@ void Game::AddDebugMsg(const char* msg) {
     }
 }
 void Game::ErrorLog(const char* msg) {
-	FILE* fp = std::fopen("error.log", "at");
+	std::fprintf(stderr, "%s\n", msg);
+	FILE* fp = myfopen("error.log", "a");
 	if(!fp)
 		return;
 	time_t nowtime = std::time(nullptr);
