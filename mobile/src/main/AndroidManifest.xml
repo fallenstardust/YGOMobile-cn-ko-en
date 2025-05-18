@@ -161,15 +161,7 @@
             android:name="cn.garymb.ygomobile.ex_card.ExCardActivity"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Mycard" />
-        <activity
-            android:name="cn.garymb.ygomobile.deck_square.DeckSquareActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Mycard">
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-        </activity>
+
 
         <service
             android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
