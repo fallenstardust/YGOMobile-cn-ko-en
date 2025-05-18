@@ -29,7 +29,7 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
     }
 
     public void loadData() {
-        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
+        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
         VUiKit.defer().when(() -> {
             SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
             if (result == null) {

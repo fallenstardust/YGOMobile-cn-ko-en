@@ -50,19 +50,19 @@ public class MyDeckDetailDialog extends Dialog {
         Button deleteMyOnlineDeckBtn = findViewById(R.id.delete_my_online_deck_btn);
         Button btnPush = findViewById(R.id.dialog_my_deck_btn_push);
 
-        LinearLayout downloadLayout = findViewById(R.id.server_download_layout);
+        LinearLayout deleteMyDeck = findViewById(R.id.delete_my_deck);
         LinearLayout uploadLayout = findViewById(R.id.server_upload_layout);
         if (mItem.getDeckSouce() == 0) {//来自本地
 
-            downloadLayout.setVisibility(View.GONE);
+            deleteMyDeck.setVisibility(View.GONE);
             uploadLayout.setVisibility(View.VISIBLE);
             //btnDownload.setBackground(R.id.ic);
         } else if (mItem.getDeckSouce() == 1) {//来自服务器
-            downloadLayout.setVisibility(View.VISIBLE);
+            deleteMyDeck.setVisibility(View.VISIBLE);
             uploadLayout.setVisibility(View.GONE);
             previewDeckCard();
         } else if (mItem.getDeckSouce() == 2) {//本地、服务器均存在
-            downloadLayout.setVisibility(View.VISIBLE);
+            deleteMyDeck.setVisibility(View.VISIBLE);
             uploadLayout.setVisibility(View.VISIBLE);
             previewDeckCard();
         }
@@ -118,7 +118,11 @@ public class MyDeckDetailDialog extends Dialog {
                     LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
                 }).done(data -> {
                     if (data.isData()) {
-                        YGOUtil.showTextToast("delete success!");
+                        //服务器的api有问题：获取指定用户的卡组列表(无已删卡组)
+                        //删除成功后，通过http://rarnu.xyz:38383/api/mdpro3/sync/795610/nodel接口查询用户卡组时
+                        //要等待2~3秒api响应内容才会对应更新
+                        YGOUtil.showTextToast("删除成功，3秒后服务器将完成同步");
+                        dismiss();
                     } else {
 
                         YGOUtil.showTextToast("delete fail " + data.getMessage());

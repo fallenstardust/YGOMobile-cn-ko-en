@@ -6,7 +6,7 @@
     android:padding="16dp">
 
     <LinearLayout
-        android:id="@+id/server_download_layout"
+        android:id="@+id/delete_my_deck"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -14,13 +14,13 @@
         <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:src="@drawable/ic_server_download" />
+            android:src="@drawable/delete" />
 
         <Button
             android:id="@+id/delete_my_online_deck_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/Download" />
+            android:text="@string/delete" />
 
 
     </LinearLayout>

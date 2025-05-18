@@ -15,9 +15,9 @@ import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 
 //提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
 public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
@@ -31,13 +31,13 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
     }
 
     public void loadData() {
-        List<MyDeckItem> localDecks = new ArrayList<>();
+        List<MyDeckItem> myOnlieDecks = new ArrayList<>();
 
-        // final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
 
+        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
 
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
-        if(loginToken==null){
+        if (loginToken == null) {
             return;
         }
 
@@ -53,21 +53,16 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
 
         }).fail((e) -> {
             Log.e(TAG, e + "");
-//            if (dialog_read_ex.isShowing()) {//关闭异常
-//                try {
-//                    dialog_read_ex.dismiss();
-//                } catch (Exception ex) {
-//
-//                }
-//            }
-            LogUtil.i(TAG, "load mycard from server fail");
-            //只展示本地卡组
-            getData().clear();
-            addData(localDecks);
-            notifyDataSetChanged();
-        }).done((serverDecks) -> {
-            //  List<MyDeckItem> serverItems = new ArrayList<>();
+            if (dialog_read_ex.isShowing()) {//关闭异常
+                try {
+                    dialog_read_ex.dismiss();
+                } catch (Exception ex) {
 
+                }
+            }
+            LogUtil.i(TAG, "load mycard from server fail");
+
+        }).done((serverDecks) -> {
             if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
                 for (MyOnlineDeckDetail detail : serverDecks) {
                     MyDeckItem item = new MyDeckItem();
@@ -76,23 +71,21 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
                     item.setDeckId(detail.getDeckId());
                     item.setUserId(detail.getUserId());
                     item.setUpdateDate(detail.getDeckUpdateDate());
-                    localDecks.add(item);
+                    myOnlieDecks.add(item);
                 }
             }
 
             LogUtil.i(TAG, "load mycard from server done");
-
-            //展示本地卡组和服务器上的卡组
             getData().clear();
-            addData(localDecks);
+            addData(myOnlieDecks);
             notifyDataSetChanged();
 
-//            if (dialog_read_ex.isShowing()) {
-//                try {
-//                    dialog_read_ex.dismiss();
-//                } catch (Exception ex) {
-//                }
-//            }
+            if (dialog_read_ex.isShowing()) {
+                try {
+                    dialog_read_ex.dismiss();
+                } catch (Exception ex) {
+                }
+            }
         });
 
     }

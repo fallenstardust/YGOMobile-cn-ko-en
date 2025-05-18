@@ -45,6 +45,9 @@
     <string name="back_tip">Press back key again to exit.</string>
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
+
+
+    <string name="fetch_online_deck">Fetching online decks via web</string>
     <string name="fetch_ex_card">Fetching pre-cards via web</string>
     <string name="ex_card_list_title">Card List</string>
     <string name="ex_card_log_title">update log</string>

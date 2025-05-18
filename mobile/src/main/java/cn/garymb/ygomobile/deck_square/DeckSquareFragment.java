@@ -42,7 +42,12 @@ public class DeckSquareFragment extends Fragment {
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
 
-
+        binding.refreshData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deckSquareListAdapter.loadData();
+            }
+        });
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
 
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
