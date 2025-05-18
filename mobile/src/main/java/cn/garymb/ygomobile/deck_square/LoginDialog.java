@@ -12,6 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -69,7 +70,7 @@ public class LoginDialog extends Dialog {
         VUiKit.defer().when(() -> {
             LogUtil.d(TAG, "start fetch");
 
-            LoginResponse result = DeckSquareApiUtil.login("", "");
+            LoginResponse result = DeckSquareApiUtil.login(1, "");
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
             return result;
@@ -96,4 +97,5 @@ public class LoginDialog extends Dialog {
 
         });
     }
+
 }

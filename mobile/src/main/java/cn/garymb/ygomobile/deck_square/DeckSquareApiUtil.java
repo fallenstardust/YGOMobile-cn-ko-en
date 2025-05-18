@@ -13,12 +13,14 @@ import cn.garymb.ygomobile.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginRequest;
 import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -29,6 +31,34 @@ import okhttp3.Response;
 public class DeckSquareApiUtil {
 
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+
+
+    public static LoginToken getLoginData() {
+        String serverToken = SharedPreferenceUtil.getServerToken();
+        Integer serverUserId = SharedPreferenceUtil.getServerUserId();
+
+        if (serverToken == null || serverUserId == -1) {
+            YGOUtil.showTextToast("Please login first!");
+            return null;
+        }
+        return new LoginToken(serverUserId, serverToken);
+
+    }
+
+    /**
+     * 如果未登录（不存在token），显示toast提示用户。如果已登录，返回token
+     *
+     * @return
+     */
+    public static String getServerToken() {
+        String serverToken = SharedPreferenceUtil.getServerToken();//todo serverToken要外部传入还是此处获取？考虑
+        if (serverToken == null) {
+            YGOUtil.showTextToast("Please login first!");
+            return null;
+        } else {
+            return serverToken;
+        }
+    }
 
     public static SquareDeckResponse getSquareDecks() throws IOException {
         SquareDeckResponse result = null;
@@ -50,24 +80,23 @@ public class DeckSquareApiUtil {
      * 阻塞方法
      * 获取指定用户的卡组列表（只能用于获取登录用户本人的卡组）
      *
-     * @param serverUserId
-     * @param serverToken
+     * @param loginToken
      * @return
      */
-    public static MyDeckResponse getUserDecks(Integer serverUserId, String serverToken) throws IOException {
+    public static MyDeckResponse getUserDecks(LoginToken loginToken) throws IOException {
 
-        if (serverToken == null) {
+        if (loginToken == null) {
             YGOUtil.showTextToast("Login first", Toast.LENGTH_LONG);
 
             return null;
         }
         MyDeckResponse result = null;
-        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/" + serverUserId + "/nodel";
+        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/" + loginToken.getUserId() + "/nodel";
 
         Map<String, String> headers = new HashMap<>();
 
         headers.put("ReqSource", "MDPro3");
-        headers.put("token", serverToken);
+        headers.put("token", loginToken.getServerToken());
 
         Response response = OkhttpUtil.synchronousGet(url, null, headers);
         String responseBodyString = response.body().string();
@@ -83,7 +112,7 @@ public class DeckSquareApiUtil {
 
     /**
      * 阻塞方法
-     * 根据卡组ID查询一个卡组
+     * 根据卡组ID查询一个卡组，不需要传入token，可以查询已登录用户或其它未登录用户的卡组
      *
      * @param deckId
      * @return
@@ -111,26 +140,23 @@ public class DeckSquareApiUtil {
 
 
     /**
-     * 阻塞方法
-     * 先同步推送，之后异步推送。首先获取卡组id，之后将卡组id设置到ydk中，之后将其上传
+     * 阻塞方法，用于推送新卡组。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
+     * 先同步推送，之后异步推送。首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
      *
      * @param deckPath
      * @param deckName
-     * @param userId
      */
-    public static PushDeckResponse pushDeck(String deckPath, String deckName, Integer userId, String serverToken) throws IOException {
-        PushDeckResponse result = null;
+    public static PushDeckResponse requestIdAndPushDeck(String deckPath, String deckName, LoginToken loginToken) throws IOException {
 
-        if (serverToken == null) {
+        if (loginToken == null) {
             return null;
         }
 
-        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
         String getDeckIdUrl = "http://rarnu.xyz:38383/api/mdpro3/deck/deckId";
 
         Map<String, String> headers = new HashMap<>();
         headers.put("ReqSource", "MDPro3");
-        headers.put("token", serverToken);
+        headers.put("token", loginToken.getServerToken());
 
         Gson gson = new Gson();
 
@@ -143,14 +169,45 @@ public class DeckSquareApiUtil {
             LogUtil.i(TAG, "deck id result:" + deckIdResult.toString());
         }
 
-
+        if (deckIdResult == null) {
+            return null;
+        }
         String deckId = deckIdResult.getDeckId();//从服务器获取
+        if (deckId == null) {
+            return null;
+        }
 
-        String deckContent = DeckSquareFileUtil.setDeckId(deckPath, userId, deckId);
+        return pushDeck(deckPath, deckName, loginToken, deckId);
 
+    }
+
+    /**
+     * 将对应于deckId、deckName的卡组内容json推送到服务器。
+     * 如果在服务器上不存在deckId、deckName对应的记录，则创建新卡组
+     * 如果在服务器存在deckId相同的记录，则更新卡组，deckName会覆盖服务器上的卡组名
+     * 如果在服务器存在deckName相同、deckId不同的记录，则更新失败
+     *
+     * @param deckPath
+     * @param deckName
+     * @param loginToken
+     * @param deckId
+     * @return
+     * @throws IOException
+     */
+    public static PushDeckResponse pushDeck(String deckPath, String deckName, LoginToken loginToken, String deckId) throws IOException {
+        String deckContent = DeckSquareFileUtil.setDeckId(deckPath, loginToken.getUserId(), deckId);
+
+        PushDeckResponse result = null;
+        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("ReqSource", "MDPro3");
+        headers.put("token", loginToken.getServerToken());
+
+
+        Gson gson = new Gson();
         PushCardJson pushCardJson = new PushCardJson();
-        pushCardJson.setDeckContributor(userId.toString());
-        pushCardJson.setUserId(userId);
+        pushCardJson.setDeckContributor(loginToken.getUserId().toString());
+        pushCardJson.setUserId(loginToken.getUserId());
         PushCardJson.DeckData deckData = new PushCardJson.DeckData();
 
         deckData.setDeckId(deckId);
@@ -171,7 +228,6 @@ public class DeckSquareApiUtil {
 
 
         return result;
-
     }
 
     /**
@@ -198,14 +254,14 @@ public class DeckSquareApiUtil {
 
     }
 
-    public static LoginResponse login(String userId, String password) throws IOException {
+    public static LoginResponse login(Integer userId, String password) throws IOException {
         LoginResponse result = null;
 
         String url = "https://sapi.moecube.com:444/accounts/signin";
         String baseUrl = "https://sapi.moecube.com:444/accounts/signin";
         // Create request body using Gson
         Gson gson = new Gson();
-        userId = "1076306278@qq.com";
+        userId = 107630627;
         password = "Qbz95qbz96";
         LoginRequest loginRequest = new LoginRequest(userId, password);
 
@@ -240,6 +296,46 @@ public class DeckSquareApiUtil {
 
         return result;
 
+    }
+
+    public static PushDeckResponse deleteDeck(String deckId, LoginToken loginToken) throws IOException {
+        PushDeckResponse result = null;
+        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("ReqSource", "MDPro3");
+        headers.put("token", loginToken.getServerToken());
+
+
+        Gson gson = new Gson();
+
+        PushCardJson pushCardJson = new PushCardJson();
+        PushCardJson.DeckData deckData = new PushCardJson.DeckData();
+
+        deckData.setDeckId(deckId);
+        deckData.setDelete(true);
+        pushCardJson.setDeck(deckData);
+        pushCardJson.setUserId(loginToken.getUserId());
+
+
+        String json = gson.toJson(pushCardJson);
+
+        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        String responseBodyString = response.body().string();
+
+        // Convert JSON to Java object using Gson
+        result = gson.fromJson(responseBodyString, PushDeckResponse.class);
+        LogUtil.i(TAG, "push deck response:" + responseBodyString);
+
+
+        return result;
+    }
+
+    /**
+     * 管理员使用，删除某卡组（听说可以删除别人的卡组，没试过）
+     * 该api没有权限校验，慎用
+     */
+    public static void adminDelete(String deckId) {
+        String url = "http://rarnu.xyz:38383/api/mdpro3/deck/" + deckId;
     }
 
 }

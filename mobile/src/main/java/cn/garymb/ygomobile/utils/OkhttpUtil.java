@@ -283,6 +283,7 @@ public class OkhttpUtil {
     }
 
     /**
+     * 阻塞方法，POST推送json
      * @param url
      * @param json     可以传入null或空字符串，均代表不需要发送json
      * @param headers  可以传入null
@@ -314,7 +315,6 @@ public class OkhttpUtil {
 
         Log.e("OkhttpUtil", json + " 状态 " + request.build());
         return okHttpClient.newCall(request.build()).execute();
-        //okHttpClient.newCall(request.build()).enqueue(callback);
     }
 
     /**

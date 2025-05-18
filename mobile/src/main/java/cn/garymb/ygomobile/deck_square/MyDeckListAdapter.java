@@ -7,10 +7,12 @@ import android.widget.ImageView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -29,17 +31,19 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
     }
 
     public void loadData() {
-        List<MyDeckItem> localDecks = DeckSquareFileUtil.getMyDeckItem();
+        List<MyDeckItem> localDecks = new ArrayList<>();
 
         // final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
-        String serverToken = SharedPreferenceUtil.getServerToken();
-        Integer serverUserId = SharedPreferenceUtil.getServerUserId();
 
+
+        LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+        if(loginToken==null){
+            return;
+        }
 
         VUiKit.defer().when(() -> {
 
-            LogUtil.d(TAG, "start fetch" + serverToken + " " + serverUserId);
-            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(serverUserId, serverToken);
+            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
 
             if (result == null) {
                 return null;
