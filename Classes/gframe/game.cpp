@@ -1920,6 +1920,10 @@ void Game::ShowCardInfo(int code) {
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	}
 	stName->setText(formatBuffer);
+	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+		stName->setToolTipText(formatBuffer);
+	else
+		stName->setToolTipText(nullptr);
 	int offset = 0;
 	if (is_valid && !gameConf.hide_setname) {
 		auto& cd = cit->second;
@@ -1942,6 +1946,10 @@ void Game::ShowCardInfo(int code) {
 		auto& cd = cit->second;
 		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type).c_str(), dataManager.FormatRace(cd.race).c_str(), dataManager.FormatAttribute(cd.attribute).c_str());
 		stInfo->setText(formatBuffer);
+		int offset_info = 0;
+		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
+		if(dtxt.Width > (300 * xScale - 13) - 15)
+			offset_info = 15;
 		const wchar_t* form = L"\u2605";
 		wchar_t adBuffer[64]{};
 		wchar_t scaleBuffer[16]{};
