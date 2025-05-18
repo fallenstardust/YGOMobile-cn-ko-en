@@ -4,6 +4,7 @@ import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
+import static cn.garymb.ygomobile.Constants.ARG_OPEN_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
 import static cn.garymb.ygomobile.Constants.QUERY_NAME;
@@ -274,7 +275,7 @@ public class GameUriManager {
 //                return;
 //            }
             if (Constants.URI_DECK.equals(host)) {
-                String name = uri.getQueryParameter(QUERY_NAME);
+                String name = uri.getQueryParameter(ARG_OPEN_DECK_PATH);
                 if (!TextUtils.isEmpty(name)) {
                     doOpenPath(name);
                 } else {

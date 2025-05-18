@@ -169,7 +169,7 @@ public interface Constants {
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
-    String URL_HOME_VERSION_ALT = "https://ygomobile.top/ver_code.txt";
+    String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String ID1 = "[versionname]";
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";
@@ -242,6 +242,12 @@ public interface Constants {
 
     String QUERY_YDK = "ydk";
     String QUERY_NAME = "name";
+    /**
+     * 打开卡组的路径，参数可以是以下两种形式:
+     * <br/>1、青眼白龙.ydk
+     * <br/> 2、/sdcard/ygocore/deck/青眼白龙.ydk
+     */
+    String ARG_OPEN_DECK_PATH = "openDeckPath";
     String PATH_ROOM = "/room";
     String QUERY_HOST = "host";
     String QUERY_PORT = "port";
