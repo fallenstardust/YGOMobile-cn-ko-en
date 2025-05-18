@@ -37,19 +37,12 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
-import cn.garymb.ygomobile.deck_square.DeckSquareTabAdapter;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
 public class YGODeckDialogUtil {
@@ -100,9 +93,8 @@ public class YGODeckDialogUtil {
         viewHolder.show();
     }
 
-    private DeckSquareTabAdapter adapter;
 
-    //注册listener，发生点击卡组事件后，通知主界面进行对应的显示更新
+    //注册listener，发生点击卡组事件后，通知外部的activity进行对应的显示更新
     public interface OnDeckMenuListener {
         void onDeckSelect(DeckFile deckFile);
 
@@ -115,12 +107,14 @@ public class YGODeckDialogUtil {
         void onDeckNew(DeckType currentDeckType);
 
     }
+
     public interface OnDeckDialogListener {
 
         void onDismiss();
 
         void onShow();
     }
+
     public interface OnDeckTypeListener {
         void onDeckTypeListener(int position);
     }
@@ -248,71 +242,20 @@ public class YGODeckDialogUtil {
                 public void onItemSelect(int position, DeckType item) {
                     clearDeckSelect();
                     deckList.clear();
-                    if (item.getOnServer() == DeckType.ServerType.SQUARE_DECK) {
-                        VUiKit.defer().when(() -> {
-                            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
-
-                            if (result == null) {
-                                return null;
-                            } else {
-                                return result.getData().getRecords();
-                            }
-                        }).fail(e -> {
-                            YGOUtil.showTextToast("Fetch square deck fail");
-                        }).done(exCardDataList -> {
-                            if (exCardDataList != null) {
-                                LogUtil.i(TAG, "Get square deck success");
-                                for (OnlineDeckDetail deckRecord : exCardDataList) {
-                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.SQUARE_DECK, deckRecord.getDeckId());
-                                    deckList.add(deckFile);
+                    deckList.addAll(DeckUtil.getDeckList(item.getPath()));
+                    if (position == 0) {
+                        if (AppsSettings.get().isReadExpansions()) {
+                            try {
+                                if (!DeckUtil.getExpansionsDeckList().isEmpty()) {
+                                    deckList.addAll(0, DeckUtil.getExpansionsDeckList());
                                 }
-
-                                deckAdp.notifyDataSetChanged();
-                            }
-
-                        });
-
-                    } else if (item.getOnServer() == DeckType.ServerType.MY_SQUARE) {
-                        VUiKit.defer().when(() -> {
-                            String serverToken = SharedPreferenceUtil.getServerToken();
-                            Integer serverUserId = SharedPreferenceUtil.getServerUserId();
-
-                            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(serverUserId, serverToken);
-
-                            if (result == null) {
-                                return null;
-                            } else {
-                                return result.getData();
-                            }
-                        }).fail(e -> {
-                            YGOUtil.showTextToast("Fetch square deck fail");
-                        }).done(exCardDataList -> {
-                            if (exCardDataList != null) {
-                                LogUtil.i(TAG, "Get square deck success");
-                                for (MyOnlineDeckDetail deckRecord : exCardDataList) {
-                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.MY_SQUARE, deckRecord.getDeckId());
-                                    deckList.add(deckFile);
-                                }
-
-                                deckAdp.notifyDataSetChanged();
-                            }
-
-                        });
-                    } else {
-                        deckList.addAll(DeckUtil.getDeckList(item.getPath()));
-                        if (position == 0) {
-                            if (AppsSettings.get().isReadExpansions()) {
-                                try {
-                                    if (!DeckUtil.getExpansionsDeckList().isEmpty()) {
-                                        deckList.addAll(0, DeckUtil.getExpansionsDeckList());
-                                    }
-                                } catch (IOException e) {
-                                    YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
-                                }
+                            } catch (IOException e) {
+                                YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
                             }
                         }
-                        deckAdp.notifyDataSetChanged();
                     }
+                    deckAdp.notifyDataSetChanged();
+
                 }
             });
             deckAdp.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {

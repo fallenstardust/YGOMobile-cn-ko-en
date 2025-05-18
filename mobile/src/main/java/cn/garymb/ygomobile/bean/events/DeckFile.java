@@ -21,6 +21,11 @@ public class DeckFile extends TextSelect {
 //        this.onServer = onServer;
 //    }
 
+    public DeckFile(String deckId, DeckType.ServerType onServer) {
+        this.deckId = deckId;
+        this.onServer = onServer;
+    }
+
     public DeckFile(String name, String typeName, DeckType.ServerType onServer, String deckId) {
         this.typeName = typeName;
         this.onServer = onServer;
@@ -107,5 +112,17 @@ public class DeckFile extends TextSelect {
 
     public void setDeckId(String deckId) {
         this.deckId = deckId;
+    }
+
+    @Override
+    public String toString() {
+        return "DeckFile{" +
+                "path=" + path +
+                ", fileFullName='" + fileFullName + '\'' +
+                ", typeName='" + typeName + '\'' +
+                ", firstCode=" + firstCode +
+                ", onServer=" + onServer +
+                ", deckId='" + deckId + '\'' +
+                '}';
     }
 }

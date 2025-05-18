@@ -90,7 +90,7 @@ public class DeckSquareFileUtil {
         return files;
     }
 
-    //读取卡组目录下的所有ydk文件，解析ydk文件，生成List<MyDeckItem>解析结果
+    //读取卡组目录下的所有ydk文件，解析ydk文件（包括从ydk文件内容中读取deckId），生成List<MyDeckItem>解析结果
     public static List<MyDeckItem> getMyDeckItem() {
         List<MyDeckItem> result = new ArrayList<>();
         File[] files = getAllYdk();

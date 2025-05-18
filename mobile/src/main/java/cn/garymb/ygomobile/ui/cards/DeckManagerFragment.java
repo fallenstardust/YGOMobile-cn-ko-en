@@ -76,7 +76,6 @@ import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.deck_square.DeckManageDialog;
-import cn.garymb.ygomobile.deck_square.DeckSquareActivity;
 import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
@@ -116,6 +115,7 @@ import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 /**
+ * 卡组编辑页面，在本页面中显示某个卡组的内容
  * 注意，卡组编辑页面中的长按事件回调在ItemTouchHelperPlus中实现，而非在
  * RecyclerViewItemListener.OnItemListener中
  */
@@ -159,6 +159,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         initView(layoutView);
+        //检查外部调用方是否传入了ydk文件路径，如果传入，则打开外部ydk文件
         preLoadFile();
         //event
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
@@ -206,7 +207,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
-        layoutView.findViewById(R.id.open_deck_square).setOnClickListener((v) -> doMenu(R.id.open_deck_square));
         tv_deck.setOnClickListener(v ->
                 {
                     new DeckManageDialog(this).show(
@@ -221,7 +221,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
 
     /**
-     * 通过本文件，外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开它
+     * 外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开该ydk文件
      * 将mPreLoadFile设置为对应的File
      */
     public void preLoadFile() {
@@ -234,6 +234,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     }
 
+    /**
+     * 传入外部ydk文件的路径，临时在本页面中打开该ydk的内容，用于后续的保存
+     * @param preLoadFilePath 外部ydk文件的路径
+     */
     public void preLoadFile(String preLoadFilePath) {
 
         final File _file;
@@ -880,11 +884,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 }
             }
             break;
-            case R.id.open_deck_square: {
-                Intent exCardIntent = new Intent(getActivity(), DeckSquareActivity.class);
-                startActivity(exCardIntent);
-            }
-            break;
             case R.id.action_unsort:
                 //打乱
                 mDeckAdapater.unSort();
@@ -1255,6 +1254,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         YGOUtil.showTextToast(R.string.done);
     }
 
+    //在卡组选择的dialog中点击某个卡组（来自本地或服务器）后，dialog通过本回调函数通知本页面。
+    //在本页面中根据卡组来源（本地或服务器）显示卡组内容
     @Override
     public void onDeckSelect(DeckFile deckFile) {
         if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
