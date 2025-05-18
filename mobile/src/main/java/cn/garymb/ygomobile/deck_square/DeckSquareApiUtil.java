@@ -33,6 +33,11 @@ public class DeckSquareApiUtil {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
 
+    /**
+     *
+     * 如果未登录（不存在token），显示toast提示用户。如果已登录，返回token
+     * @return
+     */
     public static LoginToken getLoginData() {
         String serverToken = SharedPreferenceUtil.getServerToken();
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
@@ -45,20 +50,6 @@ public class DeckSquareApiUtil {
 
     }
 
-    /**
-     * 如果未登录（不存在token），显示toast提示用户。如果已登录，返回token
-     *
-     * @return
-     */
-    public static String getServerToken() {
-        String serverToken = SharedPreferenceUtil.getServerToken();//todo serverToken要外部传入还是此处获取？考虑
-        if (serverToken == null) {
-            YGOUtil.showTextToast("Please login first!");
-            return null;
-        } else {
-            return serverToken;
-        }
-    }
 
     public static SquareDeckResponse getSquareDecks() throws IOException {
         SquareDeckResponse result = null;
