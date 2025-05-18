@@ -114,12 +114,12 @@ public class OkhttpUtil {
         client.newCall(request.build()).enqueue(callback);
     }
 
-    public static Response synchronousGet(String address, Map<String, Object> map, Map<String, String> headers) throws IOException {
+    public static Response synchronousGet(String address, Map<String, Object> paramMap, Map<String, String> headers) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         HttpUrl.Builder httpBuilder = HttpUrl.parse(address).newBuilder();
-        if (map != null) {
-            for (Map.Entry<String, Object> param : map.entrySet()) {
+        if (paramMap != null) {
+            for (Map.Entry<String, Object> param : paramMap.entrySet()) {
                 httpBuilder.addQueryParameter(param.getKey(), param.getValue().toString());
             }
         }
@@ -202,10 +202,11 @@ public class OkhttpUtil {
 
     /**
      * 阻塞方法，POST推送json
+     *
      * @param url
-     * @param json     可以传入null或空字符串，均代表不需要发送json
-     * @param headers  可以传入null
-     * @param timeout  可以为0，为0代表使用默认值
+     * @param json    可以传入null或空字符串，均代表不需要发送json
+     * @param headers 可以传入null
+     * @param timeout 可以为0，为0代表使用默认值
      */
     public static Response postJson(String url, String json, Map<String, String> headers, int timeout) throws IOException {
         okHttpClient = new OkHttpClient();

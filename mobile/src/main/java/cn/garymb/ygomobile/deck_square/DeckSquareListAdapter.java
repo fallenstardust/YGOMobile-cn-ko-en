@@ -9,6 +9,7 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.List;
 
+import cn.garymb.ygomobile.deck_square.api_response.GetSquareDeckCondition;
 import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
@@ -29,9 +30,13 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
     }
 
     public void loadData() {
+        loadData(1, 30);
+    }
+
+    public void loadData(int page, int size) {
         final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
         VUiKit.defer().when(() -> {
-            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
+            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size));
             if (result == null) {
                 return null;
             } else {
@@ -85,6 +90,9 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
         LogUtil.i(TAG, code + " " + item.getDeckName());
         if (code != 0) {
             imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
+        } else {
+
+            imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
         }
         // ImageView imageview = helper.getView(R.id.ex_card_image);
         //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)

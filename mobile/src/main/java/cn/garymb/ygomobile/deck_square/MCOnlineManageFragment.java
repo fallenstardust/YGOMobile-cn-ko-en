@@ -13,13 +13,16 @@ import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.lite.databinding.FragmentMcOnlineManageBinding;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 //管理用户的登录状态、缓存状态
-public class MCOnlineManageFragment extends Fragment {
+public class MCOnlineManageFragment extends Fragment implements PrivacyDialogFragment.PrivacyAgreementListener {
 
     private FragmentMcOnlineManageBinding binding;
 
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    boolean privacAgree = false;
+    LoginDialog loginDialog = null;
 
     @Override
     public View onCreateView(
@@ -31,21 +34,37 @@ public class MCOnlineManageFragment extends Fragment {
         binding.mcLoginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LoginDialog loginDialog = new LoginDialog(getContext(), new LoginDialog.LoginListener() {
-                    @Override
-                    public void notifyResult(boolean success, LoginResponse response) {
-                        // Handle login logic
-                        if (success) {
 
-                            LogUtil.i(TAG, "login success" + SharedPreferenceUtil.getServerToken());
-                            refreshBtn();
-                            //response.token;
+                if (!DeckSquareApiUtil.needLogin()) {
+                    return;
+                }
+
+                if (privacAgree) {//如果不同意隐私协议，log提示用户，
+                    loginDialog = new LoginDialog(getContext(), new LoginDialog.LoginListener() {
+                        @Override
+                        public void notifyResult(boolean success, LoginResponse response) {
+                            // Handle login logic
+                            if (success) {
+
+                                LogUtil.i(TAG, "login success" + SharedPreferenceUtil.getServerToken());
+                                refreshBtn();
+                                //response.token;
+                            }else{
+
+                                YGOUtil.showTextToast("登录失败：");
+                            }
+
                         }
+                    });
+                    loginDialog.show();
 
-                    }
-                });
+                } else {
+                    YGOUtil.showTextToast("登录内容需要用户同意协议");
 
-                loginDialog.show();
+                    showPrivacyDialog();
+                }
+
+
             }
         });
         //其实仅仅是清除掉本机的token
@@ -76,11 +95,27 @@ public class MCOnlineManageFragment extends Fragment {
     }
 
     public void refreshBtn() {
-        if (SharedPreferenceUtil.getServerToken() != null) {
+        if (DeckSquareApiUtil.getLoginData() != null) {
             binding.mcLoginBtn.setText("已登录");
         } else {
 
             binding.mcLoginBtn.setText("登录");
         }
+    }
+
+    private void showPrivacyDialog() {
+        PrivacyDialogFragment dialog = new PrivacyDialogFragment();
+        dialog.setPrivacyAgreementListener(this);
+        dialog.show(getChildFragmentManager(), "PrivacyDialog");
+    }
+
+    @Override
+    public void onAgree() {
+        privacAgree = true;
+    }
+
+    @Override
+    public void onDisagree() {
+        privacAgree = false;
     }
 }

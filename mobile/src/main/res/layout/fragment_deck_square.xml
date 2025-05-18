@@ -32,6 +32,18 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="下一页"></Button>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="页"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_page_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/former_page_btn"
@@ -39,6 +51,21 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="上一页"></Button>
+
+        <!--        <Spinner-->
+        <!--            android:id="@+id/spinner_items_per_page"-->
+        <!--            android:layout_width="80dp"-->
+        <!--            android:layout_height="32dp" />-->
+        <EditText
+            android:id="@+id/et_go_to_page"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Go to"
+            android:inputType="number"
+            android:maxLines="1"
+            android:textSize="14sp"
+
+            />
 
         <Button
             android:id="@+id/refresh_data"

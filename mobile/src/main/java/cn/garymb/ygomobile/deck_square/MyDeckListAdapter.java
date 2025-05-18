@@ -34,13 +34,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         List<MyDeckItem> myOnlieDecks = new ArrayList<>();
 
 
-        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
-
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
         if (loginToken == null) {
             return;
         }
 
+        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
         VUiKit.defer().when(() -> {
 
             MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
@@ -103,17 +102,22 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
     protected void convert(BaseViewHolder helper, MyDeckItem item) {
         helper.setText(R.id.my_deck_name, item.getDeckName());
         //helper.setText(R.id.deck_upload_date, item.getDeckUploadDate());
-        ImageView imageView = helper.getView(R.id.deck_upload_state_img);
-        if (item.getDeckSouce() == 0) {//本地
-            helper.setText(R.id.my_deck_id, "本地卡组");
-            imageView.setImageResource(R.drawable.ic_server_push);
-            helper.setVisible(R.id.deck_update_date, false);
-            helper.setVisible(R.id.deck_upload_date, false);
-        } else if (item.getDeckSouce() == 1) {
-            helper.setText(R.id.my_deck_id, item.getDeckId());
-            imageView.setImageResource(R.drawable.ic_server_download);
-            helper.setText(R.id.deck_update_date, item.getUpdateDate());
+        //ImageView imageView = helper.getView(R.id.deck_upload_state_img);
+
+        helper.setText(R.id.deck_update_date, item.getUpdateDate());
+        ImageView cardImage = helper.getView(R.id.deck_info_image);
+        long code = item.getDeckCoverCard1();
+        LogUtil.i(TAG, code + " " + item.getDeckName());
+        if (code != 0) {
+            imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
+        } else {
+
+            imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
         }
+//        else if (item.getDeckSouce() == 1) {
+//            helper.setText(R.id.my_deck_id, item.getDeckId());
+//            imageView.setImageResource(R.drawable.ic_server_download);
+//        }
 
 
 //        long code = item.getDeckCoverCard1();

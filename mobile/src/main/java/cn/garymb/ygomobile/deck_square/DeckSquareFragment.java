@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -41,11 +42,68 @@ public class DeckSquareFragment extends Fragment {
         binding.listDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
+// 设置页码跳转监听
+        binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(v.getText().toString());
+                } catch (NumberFormatException e) {
 
+                }
+
+
+                binding.tvPageInfo.setText(Integer.toString(targetPage));
+                deckSquareListAdapter.loadData(targetPage, 30);
+                return true;
+            }
+            return false;
+        });
+        binding.nextPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                int newPage = targetPage + 1;
+
+                deckSquareListAdapter.loadData(newPage, 30);
+                binding.tvPageInfo.setText(Integer.toString(newPage));
+
+            }
+        });
+        binding.formerPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                int newPage = targetPage - 1;
+                if (newPage < 1) {
+                    newPage = 1;
+                }
+                deckSquareListAdapter.loadData(newPage, 30);
+                binding.tvPageInfo.setText(Integer.toString(newPage));
+
+
+            }
+        });
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deckSquareListAdapter.loadData();
+                int targetPage = 1;
+                try {
+                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                deckSquareListAdapter.loadData(targetPage, 30);
             }
         });
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {

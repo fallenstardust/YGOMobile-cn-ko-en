@@ -2,21 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/holo_blue_bright"
     android:orientation="vertical">
 
-    <!--  <ImageView
-          android:id="@+id/deck_info_image"
-          android:layout_width="@dimen/card_width_middle"
-          android:layout_height="@dimen/card_height_middle" />-->
+    <ImageView
+        android:id="@+id/deck_info_image"
+        android:layout_width="@dimen/card_width_middle"
+        android:layout_height="@dimen/card_height_middle" />
 
     <TextView
         android:id="@+id/my_deck_id"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:id="@+id/deck_type_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -32,76 +26,57 @@
 
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="更新时间" />
 
         <TextView
             android:id="@+id/deck_update_date"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="上传时间" />
-
-        <TextView
-            android:id="@+id/deck_upload_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_gravity="left"
+            android:text="更新" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+    <!--   <LinearLayout
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/deck_upload_state_img"
-            android:layout_width="40dp"
-            android:layout_height="40dp" />
+           <TextView
+               android:layout_width="wrap_content"
+               android:layout_height="match_parent"
+               android:text="上传时间" />
 
-        <TextView
-            android:id="@+id/upload_state"
+           <TextView
+               android:id="@+id/deck_upload_date"
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:layout_weight="1" />
+       </LinearLayout>-->
+    <!--
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
-    </LinearLayout>
+            android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/deck_upload_state_img"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
 
-<!--        <TextView-->
-<!--            android:id="@+id/text_download_precard"-->
-<!--            android:layout_width="30dp"-->
-<!--            android:layout_height="30dp"-->
-<!--            android:clickable="false"-->
-<!--            android:gravity="center"-->
-<!--            android:textAlignment="center"-->
-<!--            android:textColor="@color/gold"-->
-<!--            android:text="点赞数"-->
-<!--            android:textSize="10sp" />-->
+            <TextView
+                android:id="@+id/upload_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+        </LinearLayout>-->
 
-        <TextView
-            android:id="@+id/deck_like"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-    </LinearLayout>
+
 </LinearLayout>

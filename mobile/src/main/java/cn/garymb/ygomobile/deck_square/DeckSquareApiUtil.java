@@ -11,6 +11,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.GetSquareDeckCondition;
 import cn.garymb.ygomobile.deck_square.api_response.LoginRequest;
 import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
@@ -33,9 +34,19 @@ public class DeckSquareApiUtil {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
 
+    public static boolean needLogin() {
+        String serverToken = SharedPreferenceUtil.getServerToken();
+        Integer serverUserId = SharedPreferenceUtil.getServerUserId();
+
+        if (serverToken == null || serverUserId == -1) {
+            return true;
+        }
+        return false;
+    }
+
     /**
-     *
      * 如果未登录（不存在token），显示toast提示用户。如果已登录，返回token
+     *
      * @return
      */
     public static LoginToken getLoginData() {
@@ -51,18 +62,22 @@ public class DeckSquareApiUtil {
     }
 
 
-    public static SquareDeckResponse getSquareDecks() throws IOException {
+    public static SquareDeckResponse getSquareDecks(GetSquareDeckCondition condition) throws IOException {
+
         SquareDeckResponse result = null;
         String url = "http://rarnu.xyz:38383/api/mdpro3/deck/list";
         Map<String, String> headers = new HashMap<>();
 
         headers.put("ReqSource", "MDPro3");
-        Response response = OkhttpUtil.synchronousGet(url, null, headers);
+
+        Map<String, Object> paramMap = new HashMap<>();
+
+        paramMap.put("page", condition.getPage());
+        paramMap.put("size", condition.getSize());
+        Response response = OkhttpUtil.synchronousGet(url, paramMap, headers);
         String responseBodyString = response.body().string();
-//                Type listType = new TypeToken<List<DeckInfo>>() {
-//                }.getType();
+
         Gson gson = new Gson();
-        // Convert JSON to Java object using Gson
         result = gson.fromJson(responseBodyString, SquareDeckResponse.class);
         return result;
     }
@@ -213,7 +228,6 @@ public class DeckSquareApiUtil {
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
         String responseBodyString = response.body().string();
 
-        // Convert JSON to Java object using Gson
         result = gson.fromJson(responseBodyString, PushDeckResponse.class);
         LogUtil.i(TAG, "push deck response:" + responseBodyString);
 
@@ -245,16 +259,15 @@ public class DeckSquareApiUtil {
 
     }
 
-    public static LoginResponse login(Integer userId, String password) throws IOException {
+    public static LoginResponse login(String username, String password) throws IOException {
         LoginResponse result = null;
 
         String url = "https://sapi.moecube.com:444/accounts/signin";
-        String baseUrl = "https://sapi.moecube.com:444/accounts/signin";
         // Create request body using Gson
         Gson gson = new Gson();
-        userId = 107630627;
-        password = "Qbz95qbz96";
-        LoginRequest loginRequest = new LoginRequest(userId, password);
+//        userId = 107630627;
+//        password = "Qbz95qbz96";
+        LoginRequest loginRequest = new LoginRequest(username, password);
 
         String json = gson.toJson(loginRequest);//"{\"id\":1,\"name\":\"John\"}";
 
