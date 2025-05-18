@@ -79,8 +79,7 @@ public class DeckUtil {
         deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_pack), AppsSettings.get().getPackDeckDir(), DeckType.ServerType.LOCAL));
         deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_windbot_deck), AppsSettings.get().getAiDeckDir(), DeckType.ServerType.LOCAL));
         deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_Uncategorized), AppsSettings.get().getDeckDir(), DeckType.ServerType.LOCAL));
-        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_online_deck), "", DeckType.ServerType.SQUARE_DECK));
-        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_my_online_deck), "", DeckType.ServerType.MY_SQUARE));
+
 
         File[] files = new File(AppsSettings.get().getDeckDir()).listFiles();
         if (files != null) {

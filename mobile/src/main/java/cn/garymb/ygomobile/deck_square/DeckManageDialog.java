@@ -64,6 +64,22 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                     @Override
                     public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
                         tab.setText("Tab " + (position + 1));
+                        switch (position) {
+                            case 0:
+                                tab.setText("本地卡组");
+                                break;
+                            case 1:
+                                tab.setText("卡组广场");
+                                break;
+                            case 2:
+                                tab.setText("我的在线卡组");
+                                break;
+                            case 3:
+                                tab.setText("登录");
+                                break;
+
+                        }
+
                     }
                 }).attach();
     }
@@ -99,9 +115,9 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                 case 0:
                     return new DeckSelectFragment(mOnDeckMenuListener, onDeckDialogListener);
                 case 1:
-                    return new DeckSquareFragment();
+                    return new DeckSquareFragment(mOnDeckMenuListener, onDeckDialogListener);
                 case 2:
-                    return new DeckSquareMyDeckFragment();
+                    return new DeckSquareMyDeckFragment(mOnDeckMenuListener, onDeckDialogListener);
                 case 3:
                     return new MCOnlineManageFragment();
                 default:

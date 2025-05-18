@@ -9,14 +9,24 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import cn.garymb.ygomobile.bean.DeckType;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareBinding;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckSquareFragment extends Fragment {
 
     private FragmentDeckSquareBinding binding;
     private DeckSquareListAdapter deckSquareListAdapter;
+    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
+    private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
+
+    public DeckSquareFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
+        this.onDeckMenuListener = onDeckMenuListener;
+        this.mDialogListener = mDialogListener;
+    }
 
     @Override
     public View onCreateView(
@@ -33,16 +43,25 @@ public class DeckSquareFragment extends Fragment {
         deckSquareListAdapter.loadData();
 
 
-// Set click listener in your adapter
-        deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
-            // Handle item click
-            OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
+        deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
 
+            OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
 
             // Show the dialog
             SquareDeckDetailDialog dialog = new SquareDeckDetailDialog(getContext(), item);
 
             dialog.show();
+            return true;
+        });
+// Set click listener in your adapter
+        deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
+            OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
+            //调用
+            mDialogListener.onDismiss();
+            DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.SQUARE_DECK);
+            onDeckMenuListener.onDeckSelect(deckFile);
+
+
         });
         return binding.getRoot();
 

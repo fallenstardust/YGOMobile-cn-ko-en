@@ -27,52 +27,27 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginLeft="10dp"
-        android:orientation="vertical">
-
-        <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
-            android:id="@+id/deck_name"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:textColor="@color/white"
-            tools:text="Deck Name" />
-
-        <TextView
-            android:id="@+id/onlie_deck_id"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/holo_blue_bright"
-            android:textSize="10sp"
-            tools:text="40" />
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:id="@+id/deck_info"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:orientation="horizontal">
+            android:layout_gravity="center"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="4"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/prerelease_star"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/ic_expansions"
-                android:visibility="visible" />
-
-            <ImageView
-                android:id="@+id/banned_mark"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:layout_marginRight="@dimen/dp_10"
-                android:background="@drawable/ic_banned"
-                android:visibility="visible" />
+            <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
+                android:id="@+id/deck_name"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="@color/white"
+                tools:text="Deck Name" />
 
             <TextView
-                android:id="@+id/count_main"
+                android:id="@+id/onlie_deck_id"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/holo_blue_bright"
@@ -80,45 +55,85 @@
                 tools:text="40" />
 
             <LinearLayout
-                android:id="@+id/ll_extra_n_side"
+                android:id="@+id/deck_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/TextExtra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="/"
-                    android:textColor="@android:color/holo_green_light"
-                    android:textSize="10sp" />
+                <ImageView
+                    android:id="@+id/prerelease_star"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginRight="5dp"
+                    android:background="@drawable/ic_expansions"
+                    android:visibility="visible" />
+
+                <ImageView
+                    android:id="@+id/banned_mark"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginRight="@dimen/dp_10"
+                    android:background="@drawable/ic_banned"
+                    android:visibility="visible" />
 
                 <TextView
-                    android:id="@+id/count_ex"
+                    android:id="@+id/count_main"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/holo_blue_bright"
                     android:textSize="10sp"
-                    tools:text="15" />
+                    tools:text="40" />
 
-                <TextView
-                    android:id="@+id/TextSide"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/ll_extra_n_side"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="/"
-                    android:textColor="@android:color/holo_green_light"
-                    android:textSize="10sp" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/count_side"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColor="@color/holo_blue_bright"
-                    android:textSize="10sp"
-                    tools:text="15" />
+                    <TextView
+                        android:id="@+id/TextExtra"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="/"
+                        android:textColor="@android:color/holo_green_light"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/count_ex"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/holo_blue_bright"
+                        android:textSize="10sp"
+                        tools:text="15" />
+
+                    <TextView
+                        android:id="@+id/TextSide"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="/"
+                        android:textColor="@android:color/holo_green_light"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/count_side"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="@color/holo_blue_bright"
+                        android:textSize="10sp"
+                        tools:text="15" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <Button
+            android:id="@+id/local_deck_upload_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="上传" />
     </LinearLayout>
+
 </LinearLayout>

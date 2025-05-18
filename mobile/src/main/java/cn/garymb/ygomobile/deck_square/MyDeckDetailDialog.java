@@ -13,9 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.DeckPreviewListAdapter;
@@ -47,7 +47,7 @@ public class MyDeckDetailDialog extends Dialog {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.dialog_square_my_deck_detail);
 
-        Button btnDownload = findViewById(R.id.dialog_my_deck_btn_download);
+        Button deleteMyOnlineDeckBtn = findViewById(R.id.delete_my_online_deck_btn);
         Button btnPush = findViewById(R.id.dialog_my_deck_btn_push);
 
         LinearLayout downloadLayout = findViewById(R.id.server_download_layout);
@@ -77,15 +77,13 @@ public class MyDeckDetailDialog extends Dialog {
         //上传卡组
         btnPush.setOnClickListener(v -> {
 
-            Integer userId = SharedPreferenceUtil.getServerUserId();
-            String serverToken = SharedPreferenceUtil.getServerToken();//todo serverToken要外部传入还是此处获取？考虑
-            if (userId == null || serverToken == null) {
-                YGOUtil.showTextToast("Please login first!");
+            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+            if (loginToken == null) {
                 return;
             }
 
             VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.pushDeck(mItem.getDeckPath(), mItem.getDeckName(), userId, serverToken);
+                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(mItem.getDeckPath(), mItem.getDeckName(), loginToken);
                 return result;
             }).fail(e -> {
 
@@ -102,11 +100,30 @@ public class MyDeckDetailDialog extends Dialog {
         });
 
         //下载用户在平台上的卡组
-        btnDownload.setOnClickListener(v -> {
+        deleteMyOnlineDeckBtn.setOnClickListener(v -> {
 
-            if (mMyOnlineDeckDetail != null) {
-                String path = AppsSettings.get().getDeckDir();
-                DeckSquareFileUtil.saveFileToPath(path, mMyOnlineDeckDetail.getDeckName() + ".ydk", mMyOnlineDeckDetail.getDeckYdk());
+            if (mItem != null) {
+                mItem.getDeckId();
+                LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+                if (loginToken == null) {
+                    return;
+
+                }
+
+                VUiKit.defer().when(() -> {
+                    PushDeckResponse result = DeckSquareApiUtil.deleteDeck(mItem.getDeckId(), loginToken);
+                    return result;
+                }).fail(e -> {
+
+                    LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+                }).done(data -> {
+                    if (data.isData()) {
+                        YGOUtil.showTextToast("delete success!");
+                    } else {
+
+                        YGOUtil.showTextToast("delete fail " + data.getMessage());
+                    }
+                });
             }
         });
 

@@ -19,10 +19,17 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
@@ -40,6 +47,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private final boolean isSelect;
     private boolean isManySelect;//标志位，是否选中多个卡组
     private final List<T> selectList;
+
+    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -66,7 +75,39 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         deckInfo = new DeckInfo();
         mLimitList = DataManager.get().getLimitManager().getTopLimit();
         mContext = context;
+
+        addChildClickViewIds(R.id.local_deck_upload_btn);
+        LogUtil.i(TAG, "DeckListAdapter constructor");
+        setOnItemChildClickListener((adapter, view, position) -> {
+
+            //判断是否登录，如果未登录，直接返回
+            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+            if (loginToken == null) {
+                return;
+            }
+
+
+            //获得点击的卡组
+            DeckFile deckFile = (DeckFile) adapter.getData().get(position);
+            LogUtil.i(TAG, "deckFile " + deckFile.toString());
+            //上传卡组
+            VUiKit.defer().when(() -> {
+                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile.getPath(), deckFile.getName(),loginToken);
+                return result;
+            }).fail(e -> {
+
+                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+            }).done(pushDeckResponse -> {
+                if (pushDeckResponse.isData()) {
+                    YGOUtil.showTextToast("push success!");
+                } else {
+
+                    YGOUtil.showTextToast("卡组上传失败！");
+                }
+            });
+        });
     }
+
 
     @SuppressLint("ResourceType")
     @Override
@@ -74,123 +115,110 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         int position = holder.getAdapterPosition();
         //item是deckFile类型
         this.deckFile = (DeckFile) item;
-        if (!deckFile.isLocal()) {
-            //卡组位于服务器上
-            holder.deckId.setVisibility(View.VISIBLE);
-            holder.deck_info.setVisibility(View.GONE);
-
-            holder.deckName.setText(item.getName());
-            holder.deckId.setText(((DeckFile) item).getDeckId());
-
-
+        holder.deckName.setText(item.getName());
+        //预读卡组信息
+        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        //加载卡组第一张卡的图
+        holder.cardImage.setVisibility(View.VISIBLE);
+        imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
+        //填入内容
+        if (deckInfo != null) {
+            holder.main.setText(String.valueOf(deckInfo.getMainCount()));
+            if (deckInfo.getMainCount() < 40) {
+                holder.main.setTextColor(Color.YELLOW);
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    holder.main.setTextColor(mContext.getColor(R.color.holo_blue_bright));
+                }
+            }
         } else {
-            //卡组位于本地
-            holder.deckId.setVisibility(View.GONE);
-            holder.deck_info.setVisibility(View.VISIBLE);
-            holder.deckName.setText(item.getName());
-            //预读卡组信息
-            this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
-            //加载卡组第一张卡的图
-            holder.cardImage.setVisibility(View.VISIBLE);
-            imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
-            //填入内容
-            if (deckInfo != null) {
-                holder.main.setText(String.valueOf(deckInfo.getMainCount()));
-                if (deckInfo.getMainCount() < 40) {
-                    holder.main.setTextColor(Color.YELLOW);
+            holder.main.setText("-");
+            holder.main.setTextColor(Color.RED);
+        }
+        if (deckInfo != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
+            holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
+        } else {
+            holder.extra.setText("-");
+            holder.extra.setTextColor(Color.RED);
+        }
+        if (deckInfo != null) {
+            holder.side.setText(String.valueOf(deckInfo.getSideCount()));
+        } else {
+            holder.side.setText("-");
+            holder.side.setTextColor(Color.RED);
+        }
+        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
+            //卡包展示时不显示额外和副卡组数量文本
+            holder.ll_extra_n_side.setVisibility(View.GONE);
+        } else {
+            holder.ll_extra_n_side.setVisibility(View.VISIBLE);
+        }
+        if (deckInfo != null) {
+            //判断是否含有先行卡
+            Deck deck = this.deckInfo.toDeck();
+            List<String> strList = new ArrayList<>();
+            for (int i = 0; i < deck.getDeckCount(); i++) {
+                strList.add(deck.getAlllist().get(i).toString());
+            }
+            for (int i = 0; i < deck.getDeckCount(); i++) {
+                if (strList.get(i).length() > 8) {
+                    holder.prerelease_star.setVisibility(View.VISIBLE);
+                    break;
                 } else {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        holder.main.setTextColor(mContext.getColor(R.color.holo_blue_bright));
-                    }
+                    holder.prerelease_star.setVisibility(View.GONE);
+                    continue;
                 }
-            } else {
-                holder.main.setText("-");
-                holder.main.setTextColor(Color.RED);
             }
-            if (deckInfo != null) {//有时候主卡数量是空指，原因待查，暂且空指时显示红色“-”
-                holder.extra.setText(String.valueOf(deckInfo.getExtraCount()));
-            } else {
-                holder.extra.setText("-");
-                holder.extra.setTextColor(Color.RED);
-            }
-            if (deckInfo != null) {
-                holder.side.setText(String.valueOf(deckInfo.getSideCount()));
-            } else {
-                holder.side.setText("-");
-                holder.side.setTextColor(Color.RED);
-            }
-            if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
-                holder.ll_extra_n_side.setVisibility(View.GONE);
-            } else {
-                holder.ll_extra_n_side.setVisibility(View.VISIBLE);
-            }
-            if (deckInfo != null) {
-                //判断是否含有先行卡
-                Deck deck = this.deckInfo.toDeck();
-                List<String> strList = new ArrayList<>();
+            //判断是否符合默认禁卡表以显示标识
+            if (mLimitList != null) {
                 for (int i = 0; i < deck.getDeckCount(); i++) {
-                    strList.add(deck.getAlllist().get(i).toString());
-                }
-                for (int i = 0; i < deck.getDeckCount(); i++) {
-                    if (strList.get(i).length() > 8) {
-                        holder.prerelease_star.setVisibility(View.VISIBLE);
+                    if (mLimitList.getStringForbidden().contains(strList.get(i))) {
+                        holder.banned_mark.setVisibility(View.VISIBLE);
                         break;
+                    } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
+                        int limitcount = 0;
+                        for (int j = 0; j < deck.getDeckCount(); j++) {
+                            if (strList.get(i).equals(strList.get(j))) {
+                                limitcount++;
+                            }
+                        }
+                        if (limitcount > 1) {
+                            holder.banned_mark.setVisibility(View.VISIBLE);
+                            break;
+                        }
+                    } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
+                        int semicount = 0;
+                        for (int k = 0; k < deck.getDeckCount(); k++) {
+                            if (strList.get(i).equals(strList.get(k))) {
+                                semicount++;
+                            }
+
+                        }
+                        if (semicount > 2) {
+                            holder.banned_mark.setVisibility(View.VISIBLE);
+                            break;
+                        }
                     } else {
-                        holder.prerelease_star.setVisibility(View.GONE);
+                        holder.banned_mark.setVisibility(View.GONE);
                         continue;
                     }
                 }
-                //判断是否符合默认禁卡表以显示标识
-                if (mLimitList != null) {
-                    for (int i = 0; i < deck.getDeckCount(); i++) {
-                        if (mLimitList.getStringForbidden().contains(strList.get(i))) {
-                            holder.banned_mark.setVisibility(View.VISIBLE);
-                            break;
-                        } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
-                            int limitcount = 0;
-                            for (int j = 0; j < deck.getDeckCount(); j++) {
-                                if (strList.get(i).equals(strList.get(j))) {
-                                    limitcount++;
-                                }
-                            }
-                            if (limitcount > 1) {
-                                holder.banned_mark.setVisibility(View.VISIBLE);
-                                break;
-                            }
-                        } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
-                            int semicount = 0;
-                            for (int k = 0; k < deck.getDeckCount(); k++) {
-                                if (strList.get(i).equals(strList.get(k))) {
-                                    semicount++;
-                                }
-
-                            }
-                            if (semicount > 2) {
-                                holder.banned_mark.setVisibility(View.VISIBLE);
-                                break;
-                            }
-                        } else {
-                            holder.banned_mark.setVisibility(View.GONE);
-                            continue;
-                        }
-                    }
-                }
             }
-            //多选
-            if (isManySelect) {
-                if (selectList.contains(item))
-                    holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
-                else
-                    holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
-            } else if (isSelect) {
-                if (position == selectPosition) {
-                    holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
-                } else {
-                    holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
-                }
+        }
+        //多选
+        if (isManySelect) {
+            if (selectList.contains(item))
+                holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
+            else
+                holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
+        } else if (isSelect) {
+            if (position == selectPosition) {
+                holder.item_deck_list.setBackgroundColor(YGOUtil.c(R.color.colorMain));
             } else {
                 holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
             }
+        } else {
+            holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
     }
 
@@ -242,6 +270,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
     }
+
+
 }
 
 class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {

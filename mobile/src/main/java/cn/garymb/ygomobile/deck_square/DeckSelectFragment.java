@@ -34,10 +34,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
@@ -45,16 +41,13 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
-//卡组选择的Fragment，选择后在卡组编辑页面中显示卡片
+//在dialog中卡组选择的Fragment，选中页面中某项后，在卡组编辑页面中显示卡片
 public class DeckSelectFragment extends Fragment {
 
     private FragmentDeckSelectBinding binding;
@@ -70,9 +63,14 @@ public class DeckSelectFragment extends Fragment {
 
     List<DeckType> typeList = null;
     List<DeckFile> deckList = null;     //存储当前卡组分类下的所有卡组
-    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;
+    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
 
+    /**
+     *
+     * @param onDeckMenuListener 通知容纳dialog的外部页面，已选中了某项卡组
+     * @param dialogListener 通知容纳本fragment的dialog，调用dismiss()方法，关闭dialog显示
+     */
     DeckSelectFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener dialogListener) {
         super();
         this.onDeckMenuListener = onDeckMenuListener;
@@ -102,71 +100,21 @@ public class DeckSelectFragment extends Fragment {
                 public void onItemSelect(int position, DeckType item) {
                     clearDeckSelect();
                     deckList.clear();
-                    if (item.getOnServer() == DeckType.ServerType.SQUARE_DECK) {
-                        VUiKit.defer().when(() -> {
-                            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks();
 
-                            if (result == null) {
-                                return null;
-                            } else {
-                                return result.getData().getRecords();
-                            }
-                        }).fail(e -> {
-                            YGOUtil.showTextToast("Fetch square deck fail");
-                        }).done(exCardDataList -> {
-                            if (exCardDataList != null) {
-                                LogUtil.i(TAG, "Get square deck success");
-                                for (OnlineDeckDetail deckRecord : exCardDataList) {
-                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.SQUARE_DECK, deckRecord.getDeckId());
-                                    deckList.add(deckFile);
+                    deckList.addAll(DeckUtil.getDeckList(item.getPath()));
+                    if (position == 0) {
+                        if (AppsSettings.get().isReadExpansions()) {
+                            try {
+                                if (!DeckUtil.getExpansionsDeckList().isEmpty()) {
+                                    deckList.addAll(0, DeckUtil.getExpansionsDeckList());
                                 }
-
-                                deckAdp.notifyDataSetChanged();
-                            }
-
-                        });
-
-                    } else if (item.getOnServer() == DeckType.ServerType.MY_SQUARE) {
-                        VUiKit.defer().when(() -> {
-                            String serverToken = SharedPreferenceUtil.getServerToken();
-                            Integer serverUserId = SharedPreferenceUtil.getServerUserId();
-
-                            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(serverUserId, serverToken);
-
-                            if (result == null) {
-                                return null;
-                            } else {
-                                return result.getData();
-                            }
-                        }).fail(e -> {
-                            YGOUtil.showTextToast("Fetch square deck fail");
-                        }).done(exCardDataList -> {
-                            if (exCardDataList != null) {
-                                LogUtil.i(TAG, "Get square deck success");
-                                for (MyOnlineDeckDetail deckRecord : exCardDataList) {
-                                    DeckFile deckFile = new DeckFile(deckRecord.getDeckName(), "", DeckType.ServerType.MY_SQUARE, deckRecord.getDeckId());
-                                    deckList.add(deckFile);
-                                }
-
-                                deckAdp.notifyDataSetChanged();
-                            }
-
-                        });
-                    } else {
-                        deckList.addAll(DeckUtil.getDeckList(item.getPath()));
-                        if (position == 0) {
-                            if (AppsSettings.get().isReadExpansions()) {
-                                try {
-                                    if (!DeckUtil.getExpansionsDeckList().isEmpty()) {
-                                        deckList.addAll(0, DeckUtil.getExpansionsDeckList());
-                                    }
-                                } catch (IOException e) {
-                                    YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
-                                }
+                            } catch (IOException e) {
+                                YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
                             }
                         }
-                        deckAdp.notifyDataSetChanged();
                     }
+                    deckAdp.notifyDataSetChanged();
+
                 }
             });
             deckAdp.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
@@ -186,13 +134,15 @@ public class DeckSelectFragment extends Fragment {
                     }
                 }
             });
+
+
             //对话框中长点击某一卡组名称后，触发该事件
             deckAdp.setOnItemLongClickListener(new OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
                     DeckFile item = (DeckFile) adapter.getItem(position);
                     //即使为local，也有可能为卡包预览，因此过滤掉selectposition==0
-                    if (deckAdp.isSelect() || !item.isLocal() || typeAdp.getSelectPosition() == 0)
+                    if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
                         return true;
 
                     deckAdp.setManySelect(true);

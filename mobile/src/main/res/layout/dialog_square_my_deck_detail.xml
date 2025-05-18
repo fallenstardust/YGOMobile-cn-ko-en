@@ -17,7 +17,7 @@
             android:src="@drawable/ic_server_download" />
 
         <Button
-            android:id="@+id/dialog_my_deck_btn_download"
+            android:id="@+id/delete_my_online_deck_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/Download" />

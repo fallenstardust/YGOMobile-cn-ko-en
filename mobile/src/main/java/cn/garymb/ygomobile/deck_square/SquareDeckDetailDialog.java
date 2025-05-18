@@ -46,7 +46,7 @@ public class SquareDeckDetailDialog extends Dialog {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.dialog_square_deck_detail);
 
-        Button btnDownload = findViewById(R.id.dialog_square_deck_btn_download);
+        //Button btnDownload = findViewById(R.id.dialog_square_deck_btn_download);
         Button btnLike = findViewById(R.id.btnLike);
 
         previewDeckCard();
@@ -59,19 +59,20 @@ public class SquareDeckDetailDialog extends Dialog {
         mListView.setAdapter(mListAdapter);
 
         //下载卡组广场的卡组
-        btnDownload.setOnClickListener(v -> {
-            if (mMyOnlineDeckDetail != null) {
-                String path = AppsSettings.get().getDeckDir();
-                boolean result = DeckSquareFileUtil.saveFileToPath(path, mMyOnlineDeckDetail.getDeckName() + ".ydk", mMyOnlineDeckDetail.getDeckYdk());
-                if (result) {
-
-                    YGOUtil.showTextToast("Download deck success!");
-                } else {
-
-                    YGOUtil.showTextToast("Download deck fail!");
-                }
-            }
-        });
+//        btnDownload.setOnClickListener(v -> {
+//            if (mMyOnlineDeckDetail != null) {
+//                //todo 删除云上的卡组
+//                String path = AppsSettings.get().getDeckDir();
+//                boolean result = DeckSquareFileUtil.saveFileToPath(path, mMyOnlineDeckDetail.getDeckName() + ".ydk", mMyOnlineDeckDetail.getDeckYdk());
+//                if (result) {
+//
+//                    YGOUtil.showTextToast("Download deck success!");
+//                } else {
+//
+//                    YGOUtil.showTextToast("Download deck fail!");
+//                }
+//            }
+//        });
 
         //给卡组点赞
         btnLike.setOnClickListener(v -> {

@@ -22,15 +22,6 @@
                 android:layout_height="match_parent" />
 
 
-            <TextView
-                android:id="@+id/open_deck_square"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_gravity="bottom|right"
-                android:layout_marginBottom="100dp"
-                android:background="@drawable/ic_deck_square"
-                android:text="卡组广场"
-                android:textAlignment="center" />
 
             <LinearLayout
                 android:layout_width="match_parent"
