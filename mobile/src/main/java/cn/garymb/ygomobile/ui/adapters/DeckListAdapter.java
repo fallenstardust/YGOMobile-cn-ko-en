@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -220,6 +221,12 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
+        //卡包展示、人机卡组不显示上传按钮图标
+        if (deckFile.getPathFile().getParent().endsWith("pack") || deckFile.getPathFile().getParent().endsWith("Decks")) {
+            holder.local_deck_upload_btn.setVisibility(View.GONE);
+        } else {
+            holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setSelectPosition(int selectPosition) {
@@ -286,6 +293,7 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
+    Button local_deck_upload_btn;
 
     public DeckViewHolder(View view) {
         super(view);
@@ -301,5 +309,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
         deck_info = findView(R.id.deck_info);
+        local_deck_upload_btn = findView(R.id.local_deck_upload_btn);
     }
 }
