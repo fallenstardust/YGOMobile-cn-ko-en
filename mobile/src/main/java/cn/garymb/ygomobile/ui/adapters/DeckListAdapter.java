@@ -16,6 +16,7 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
@@ -222,7 +223,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
         //卡包展示、人机卡组不显示上传按钮图标
-        if (deckFile.getPathFile().getParent().endsWith("pack") || deckFile.getPathFile().getParent().endsWith("Decks")) {
+        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH) || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)) {
             holder.local_deck_upload_btn.setVisibility(View.GONE);
         } else {
             holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
