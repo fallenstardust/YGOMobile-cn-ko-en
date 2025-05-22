@@ -11,7 +11,7 @@
     <string name="check_things">Consultando %s ...</string>
     <string name="core_config">Configuración principal</string>
     <string name="tip_new_deck">Nuevo deck</string>
-    <string name="cards_cdb">cards.cdb</string>
+    <string name="cards_cdb">base de datos</string>
     <string name="scripts">scripts</string>
     <string name="images">imágenes</string>
     <string name="single_lua">archivos individuales</string>
