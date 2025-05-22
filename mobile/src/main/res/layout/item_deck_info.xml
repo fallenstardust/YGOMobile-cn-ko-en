@@ -1,75 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="16dp">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
 
-    <!-- 封面卡片图片 -->
     <ImageView
         android:id="@+id/deck_info_image"
-        android:layout_width="279dp"
-        android:layout_height="465dp"
-        android:layout_marginStart="76dp"
-        android:adjustViewBounds="true"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@id/deck_background"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/deck_background"
-        app:layout_constraintVertical_bias="0.701" />
+        android:layout_width="80dp"
+        android:layout_height="115dp"
+        android:layout_marginLeft="14dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/unknown" />
 
-    <!-- 背景图片 -->
     <ImageView
         android:id="@+id/deck_background"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
-        android:src="@drawable/box"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:src="@drawable/box"/>
 
-    <!--TextView
+    <!-- <TextView
         android:id="@+id/deck_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ID: 12345"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/deck_info_image"
-        android:layout_marginStart="16dp"/-->
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />-->
 
     <LinearLayout
-        android:layout_width="216dp"
-        android:layout_height="110dp"
-        android:orientation="vertical"
-        tools:layout_editor_absoluteX="109dp"
-        tools:layout_editor_absoluteY="353dp">
-        <!-- 卡组名称 -->
+        android:layout_width="30dp"
+        android:layout_height="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/chat_message_background"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginLeft="1dp"
+            android:src="@drawable/baseline_thumb_up_24"/>
+
         <TextView
-            android:id="@+id/deck_info_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <!-- 贡献者 -->
+            android:id="@+id/like_count"
+            android:layout_width="20dp"
+            android:layout_height="10dp"
+            android:text="23333"
+            android:lines="1"
+            android:gravity="center"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:textSize="5sp"/>
+    </LinearLayout>
+    <TextView
+        android:id="@+id/deck_info_name"
+        android:layout_width="57dp"
+        android:layout_height="27dp"
+        android:layout_marginLeft="28dp"
+        android:layout_marginTop="93dp"
+        android:text="deck_name"
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:textSize="8sp"/>
+
         <TextView
             android:id="@+id/deck_contributor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:layout_constraintBottom_toTopOf="@+id/deck_background"
-            app:layout_constraintStart_toStartOf="@+id/deck_background" />
-        <!-- 最后修改时间 -->
+            android:layout_width="72dp"
+            android:layout_height="15dp"
+            android:layout_marginLeft="21dp"
+            android:layout_marginTop="15dp"
+            android:text="contributor_name"
+            android:lines="1"
+            android:gravity="center"
+            android:textSize="6sp"/>
+
         <TextView
             android:id="@+id/deck_last_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            tools:layout_editor_absoluteX="130dp"
-            tools:layout_editor_absoluteY="372dp" />
-
-    </LinearLayout>
-
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_width="72dp"
+            android:layout_height="15dp"
+            android:layout_marginLeft="21dp"
+            android:layout_marginTop="122dp"
+            android:text="1900-02-03"
+            android:lines="1"
+            android:gravity="center"
+            android:textSize="6sp"/>
+</FrameLayout>

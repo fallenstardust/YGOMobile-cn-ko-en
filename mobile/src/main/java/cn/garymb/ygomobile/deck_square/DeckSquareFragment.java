@@ -38,7 +38,7 @@ public class DeckSquareFragment extends Fragment {
         binding = FragmentDeckSquareBinding.inflate(inflater, container, false);
 
         deckSquareListAdapter = new DeckSquareListAdapter(R.layout.item_deck_info);
-        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 2);
+        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
         binding.listDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
