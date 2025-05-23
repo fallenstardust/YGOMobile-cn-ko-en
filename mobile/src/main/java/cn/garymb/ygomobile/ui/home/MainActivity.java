@@ -184,7 +184,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                 enableStart = error >= 0;
                 getGameUriManager().doIntent(getIntent());
             });
-        } else {
+        } else {//外部选择通过本应用打开ydk文件，会执行到这里
             getGameUriManager().doIntent(intent);
         }
     }
