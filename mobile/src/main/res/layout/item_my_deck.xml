@@ -52,7 +52,7 @@
             android:textSize="5sp"/>
     </LinearLayout>
     <TextView
-        android:id="@+id/deck_info_name"
+        android:id="@+id/my_deck_name"
         android:layout_width="57dp"
         android:layout_height="27dp"
         android:layout_marginLeft="28dp"
@@ -63,7 +63,7 @@
         android:textSize="8sp"/>
 
     <TextView
-        android:id="@+id/my_deck_name"
+        android:id="@+id/my_deck_id"
         android:layout_width="72dp"
         android:layout_height="15dp"
         android:layout_marginLeft="21dp"
