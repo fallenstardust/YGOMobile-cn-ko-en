@@ -5,10 +5,10 @@
 
     <ImageView
         android:id="@+id/deck_info_image"
-        android:layout_width="80dp"
-        android:layout_height="115dp"
-        android:layout_marginLeft="14dp"
-        android:layout_marginTop="14dp"
+        android:layout_width="75dp"
+        android:layout_height="107dp"
+        android:layout_marginLeft="19dp"
+        android:layout_marginTop="13dp"
         android:src="@drawable/unknown" />
 
     <ImageView
@@ -51,9 +51,9 @@
     <TextView
         android:id="@+id/deck_info_name"
         android:layout_width="57dp"
-        android:layout_height="27dp"
+        android:layout_height="18dp"
         android:layout_marginLeft="28dp"
-        android:layout_marginTop="93dp"
+        android:layout_marginTop="98dp"
         android:text="deck_name"
         android:textColor="@color/white"
         android:gravity="center"
@@ -72,10 +72,10 @@
 
         <TextView
             android:id="@+id/deck_last_date"
-            android:layout_width="72dp"
-            android:layout_height="15dp"
-            android:layout_marginLeft="21dp"
-            android:layout_marginTop="122dp"
+            android:layout_width="74dp"
+            android:layout_height="10dp"
+            android:layout_marginLeft="18dp"
+            android:layout_marginTop="117dp"
             android:text="1900-02-03"
             android:lines="1"
             android:gravity="center"
