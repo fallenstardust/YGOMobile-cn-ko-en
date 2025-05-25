@@ -57,7 +57,7 @@
         android:text="deck_name"
         android:textColor="@color/white"
         android:gravity="center"
-        android:textSize="8sp"/>
+        android:textSize="7sp"/>
 
         <TextView
             android:id="@+id/deck_contributor"
