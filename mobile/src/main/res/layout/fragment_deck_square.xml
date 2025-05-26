@@ -64,7 +64,7 @@
                 android:layout_weight="1"
                 android:hint="@string/go_to"
                 android:inputType="number"
-                android:imeOptions="actionSearch"
+                android:imeOptions="actionDone"
                 android:background="@drawable/veil2"
                 android:singleLine="true"
                 android:textSize="14sp" />
