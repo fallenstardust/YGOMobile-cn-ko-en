@@ -13,15 +13,21 @@
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp">
 
-
         <ImageView
             android:id="@+id/card_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center_vertical"
+            android:layout_width="24dp"
+            android:layout_height="32dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginTop="4dp"
             android:scaleType="fitXY"
             tools:src="@drawable/unknown" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/box"/>
     </RelativeLayout>
 
     <LinearLayout
