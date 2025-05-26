@@ -42,7 +42,8 @@ public class DeckSquareFragment extends Fragment {
         binding.listDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
-// 设置页码跳转监听
+        binding.etGoToPage.setText("1");
+        // 设置页码跳转监听
         binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 int targetPage = 0;
@@ -53,7 +54,7 @@ public class DeckSquareFragment extends Fragment {
                 }
 
 
-                binding.tvPageInfo.setText(Integer.toString(targetPage));
+                binding.etGoToPage.setText(Integer.toString(targetPage));
                 deckSquareListAdapter.loadData(targetPage, 30);
                 return true;
             }
@@ -64,14 +65,14 @@ public class DeckSquareFragment extends Fragment {
             public void onClick(View v) {
                 int targetPage = 0;
                 try {
-                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
                 } catch (NumberFormatException e) {
 
                 }
                 int newPage = targetPage + 1;
 
                 deckSquareListAdapter.loadData(newPage, 30);
-                binding.tvPageInfo.setText(Integer.toString(newPage));
+                binding.etGoToPage.setText(Integer.toString(newPage));
 
             }
         });
@@ -80,7 +81,7 @@ public class DeckSquareFragment extends Fragment {
             public void onClick(View v) {
                 int targetPage = 0;
                 try {
-                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
                 } catch (NumberFormatException e) {
 
                 }
@@ -89,7 +90,7 @@ public class DeckSquareFragment extends Fragment {
                     newPage = 1;
                 }
                 deckSquareListAdapter.loadData(newPage, 30);
-                binding.tvPageInfo.setText(Integer.toString(newPage));
+                binding.etGoToPage.setText(Integer.toString(newPage));
 
 
             }
@@ -99,7 +100,7 @@ public class DeckSquareFragment extends Fragment {
             public void onClick(View v) {
                 int targetPage = 1;
                 try {
-                    targetPage = Integer.parseInt(binding.tvPageInfo.getText().toString());
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
                 } catch (NumberFormatException e) {
 
                 }

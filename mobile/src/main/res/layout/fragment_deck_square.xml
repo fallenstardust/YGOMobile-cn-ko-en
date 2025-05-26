@@ -2,32 +2,35 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:weightSum="14"
     android:orientation="vertical">
-
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_weight="0.8">
+        android:layout_height="0dp"
+        android:layout_weight="12.5"
+        android:weightSum="10"
+        android:orientation="vertical">
 
         <EditText
             android:id="@+id/et_deck_square_input_deck_name"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:gravity="center"
             android:hint="@string/intpu_name"
             android:imeOptions="actionSearch"
             android:inputType="textNoSuggestions"
             android:singleLine="true"
-            android:textSize="15sp"
             android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray" />
+            android:textColorHint="@color/gray"
+            android:textSize="15sp" />
 
         <com.tubb.smrv.SwipeMenuRecyclerView
             android:id="@+id/list_deck_info"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="9"
             android:divider="@android:color/transparent"
             android:dividerHeight="4dp"
             android:padding="5dp"
@@ -36,59 +39,75 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0.2"
-        android:orientation="horizontal">
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:orientation="vertical"
+        android:weightSum="2">
 
-        <Button
-            android:id="@+id/former_page_btn"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/button_bg"
-            android:text="◀"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="页"
-            android:textSize="14sp" />
+            android:layout_height="0dp"
+            android:layout_weight="0.5"
+            android:weightSum="3">
 
-        <TextView
-            android:id="@+id/tv_page_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1"
-            android:textSize="14sp" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/holo_blue_light" />
 
-        <Button
-            android:id="@+id/next_page_btn"
+            <EditText
+                android:id="@+id/et_go_to_page"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_weight="1"
+                android:hint="@string/go_to"
+                android:inputType="number"
+                android:imeOptions="actionSearch"
+                android:background="@drawable/veil2"
+                android:singleLine="true"
+                android:textSize="14sp" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/holo_blue_light" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@drawable/button_bg"
-            android:text="▶"/>
+            android:layout_gravity="bottom"
+            android:layout_margin="5dp">
 
-        <!--        <Spinner-->
-        <!--            android:id="@+id/spinner_items_per_page"-->
-        <!--            android:layout_width="80dp"-->
-        <!--            android:layout_height="32dp" />-->
-        <EditText
-            android:id="@+id/et_go_to_page"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="Go to"
-            android:inputType="number"
-            android:maxLines="1"
-            android:textSize="14sp"
+            <ImageButton
+                android:id="@+id/former_page_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:background="@drawable/ic_radius_bg"
+                android:src="@drawable/baseline_arrow_left_24" />
 
-            />
+            <ImageButton
+                android:id="@+id/next_page_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:background="@drawable/ic_radius_bg"
+                android:src="@drawable/baseline_arrow_right_24" />
 
-        <Button
-            android:id="@+id/refresh_data"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/button_bg"
-            android:text="↑↓"></Button>
+            <ImageButton
+                android:id="@+id/refresh_data"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:background="@drawable/ic_radius_bg"
+                android:src="@drawable/ic_refresh" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

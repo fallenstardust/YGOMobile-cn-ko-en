@@ -3,14 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:weightSum="10"
     android:orientation="vertical">
-
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_weight="0.8">
+        android:layout_height="0dp"
+        android:layout_weight="9.5"
+        android:orientation="vertical">
 
         <EditText
             android:id="@+id/et_my_deck_input_deck_name"
@@ -21,9 +21,9 @@
             android:imeOptions="actionSearch"
             android:inputType="textNoSuggestions"
             android:singleLine="true"
-            android:textSize="15sp"
             android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray" />
+            android:textColorHint="@color/gray"
+            android:textSize="15sp" />
 
         <com.tubb.smrv.SwipeMenuRecyclerView
             android:id="@+id/list_my_deck_info"
@@ -37,32 +37,12 @@
             tools:layout_editor_absoluteY="16dp" />
     </LinearLayout>
 
-    <!--     <Button
-             android:id="@+id/upload_deck"
-             android:layout_width="wrap_content"
-             android:layout_height="match_parent"
-             android:layout_gravity="center|bottom"
-             android:text="上传卡组"></Button>-->
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0.2"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/refresh_data"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|bottom"
-            android:background="@drawable/button_bg"
-            android:text="@string/refresh"/>
-    </LinearLayout>
-    <!--<com.google.android.material.floatingactionbutton.FloatingActionButton
+    <ImageButton
+        android:id="@+id/refresh_data"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:layout_marginEnd="@dimen/fab_margin"
-        android:layout_marginBottom="16dp"
-        android:tooltipText="刷新" />-->
+        android:layout_height="0dp"
+        android:layout_weight="0.5"
+        android:layout_gravity="center"
+        android:background="@drawable/ic_radius_bg"
+        android:src="@drawable/ic_refresh" />
 </LinearLayout>

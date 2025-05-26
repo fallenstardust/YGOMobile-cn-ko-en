@@ -72,7 +72,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                                 tab.setText("卡组广场");
                                 break;
                             case 2:
-                                tab.setText("我的在线卡组");
+                                tab.setText("云备份卡组");
                                 break;
                             case 3:
                                 tab.setText("登录");

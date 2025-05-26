@@ -366,4 +366,5 @@
     <string name="about_user_privacy_policy">이 앱에서 사용하는 권한에 대한 설명</string>
     <string name="open">덱을 열기</string>
     <string name="web_warn_save_deck">덱을 열면 현재 보고 있는 웹 페이지가 닫힙니다. 웹 페이지를 닫고 덱을 열까요?</string>
+    <string name="go_to">이동하다 로</string>
 </resources>

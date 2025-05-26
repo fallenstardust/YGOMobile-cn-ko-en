@@ -91,7 +91,6 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
         if (code != 0) {
             imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
         } else {
-
             imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
         }
         // ImageView imageview = helper.getView(R.id.ex_card_image);
