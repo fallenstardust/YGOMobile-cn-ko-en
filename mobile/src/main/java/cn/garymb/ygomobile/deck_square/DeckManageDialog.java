@@ -64,16 +64,16 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                         //tab.setText("Tab " + (position + 1));
                         switch (position) {
                             case 0:
-                                tab.setIcon(R.drawable.deck);
+                                tab.setIcon(R.drawable.ic_local_deck);
                                 break;
                             case 1:
-                                tab.setIcon(R.drawable.ic_send_black_24dp);
+                                tab.setIcon(R.drawable.ic_deck_square);
                                 break;
                             case 2:
                                 tab.setIcon(R.drawable.my_deck_square);
                                 break;
                             case 3:
-                                tab.setIcon(R.drawable.mycard);
+                                tab.setIcon(R.drawable.baseline_login_24);
                                 break;
 
                         }
