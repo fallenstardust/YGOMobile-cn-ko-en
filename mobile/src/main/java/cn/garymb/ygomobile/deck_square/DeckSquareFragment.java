@@ -56,6 +56,7 @@ public class DeckSquareFragment extends Fragment {
 
                 binding.etGoToPage.setText(Integer.toString(targetPage));
                 deckSquareListAdapter.loadData(targetPage, 30);
+                binding.listDeckInfo.scrollToPosition(0);
                 return true;
             }
             return false;
@@ -73,6 +74,7 @@ public class DeckSquareFragment extends Fragment {
 
                 deckSquareListAdapter.loadData(newPage, 30);
                 binding.etGoToPage.setText(Integer.toString(newPage));
+                binding.listDeckInfo.scrollToPosition(0);
 
             }
         });
@@ -91,7 +93,7 @@ public class DeckSquareFragment extends Fragment {
                 }
                 deckSquareListAdapter.loadData(newPage, 30);
                 binding.etGoToPage.setText(Integer.toString(newPage));
-
+                binding.listDeckInfo.scrollToPosition(0);
 
             }
         });
