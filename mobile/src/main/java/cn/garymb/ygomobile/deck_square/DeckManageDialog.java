@@ -40,9 +40,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dialog_deck_manager, container, false);
     }
 
@@ -63,19 +61,19 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                 new TabLayoutMediator.TabConfigurationStrategy() {
                     @Override
                     public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-                        tab.setText("Tab " + (position + 1));
+                        //tab.setText("Tab " + (position + 1));
                         switch (position) {
                             case 0:
-                                tab.setText("本地卡组");
+                                tab.setIcon(R.drawable.deck);
                                 break;
                             case 1:
-                                tab.setText("卡组广场");
+                                tab.setIcon(R.drawable.ic_send_black_24dp);
                                 break;
                             case 2:
-                                tab.setText("云备份卡组");
+                                tab.setIcon(R.drawable.my_deck_square);
                                 break;
                             case 3:
-                                tab.setText("登录");
+                                tab.setIcon(R.drawable.mycard);
                                 break;
 
                         }
