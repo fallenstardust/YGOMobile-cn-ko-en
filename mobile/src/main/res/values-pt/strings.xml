@@ -356,5 +356,6 @@
     <string name="user_privacy_policy">Política de Privacidade do Usuário</string>
     <string name="about_user_privacy_policy">Explicação das permissões utilizadas pelo YGOMobile</string>
     <string name="go_to">pasar a</string>
+    <string name="local_deck">meus decks</string>
 </resources>
 

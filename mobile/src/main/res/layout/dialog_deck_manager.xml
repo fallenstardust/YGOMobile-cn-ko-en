@@ -15,11 +15,9 @@
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/deck_manager_tab_layout"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:tabTextAppearance="@style/wallet_third_tab_layout"
-            app:tabPaddingStart="20dp"
-            app:tabPaddingEnd="20dp"
             android:layout_gravity="center_horizontal" />
     </com.google.android.material.appbar.AppBarLayout>
 

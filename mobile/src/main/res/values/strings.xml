@@ -436,4 +436,5 @@
     <string name="down_complete">download complete</string>
     <string name="upload">upload</string>
     <string name="go_to">go to</string>
+    <string name="local_deck">my decks</string>
 </resources>

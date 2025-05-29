@@ -369,6 +369,7 @@
     <string name="open">打开</string>
     <string name="go_to">转到</string>
     <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
+    <string name="local_deck">我的卡组</string>
 
 
     <string name="down_complete">下载完成</string>

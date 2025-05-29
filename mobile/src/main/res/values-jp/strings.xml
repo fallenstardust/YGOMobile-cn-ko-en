@@ -366,4 +366,5 @@
     <string name="open">デッキを開く</string>
     <string name="web_warn_save_deck">デッキを開くと、現在閲覧しているウェブページが閉じられます。ウェブページを閉じてデッキを開きますか？</string>
     <string name="go_to">移る</string>
+    <string name="local_deck">私のデッキ</string>
 </resources>
