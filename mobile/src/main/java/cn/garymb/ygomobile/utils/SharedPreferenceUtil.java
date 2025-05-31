@@ -194,6 +194,31 @@ public class SharedPreferenceUtil {
         getShareType().edit().putInt("deckEditType", type).apply();
     }
 
+    public static String getServerToken() {
+        return getShareRecord().getString("server_token", null);
+    }
+
+    public static boolean setServerToken(String token) {
+        return getShareRecord().edit().putString("server_token", token).commit();
+    }
+
+    public static Integer getServerUserId() {
+        return getShareType().getInt("server_user_id", -1);
+    }
+
+    public static void setServerUserId(int userId) {
+        getShareType().edit().putInt("server_user_id", userId).apply();
+    }
+
+    public static boolean deleteServerToken() {
+        // Get SharedPreferences instance
+        SharedPreferences sharedPreferences = getShareRecord();
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("server_token");  // Replace "key_name" with your actual key
+        return editor.commit();  // Or editor.commit() if you need immediate results
+    }
+
     public static String[] getArray(int id) {
         return App.get().getResources().getStringArray(id);
     }

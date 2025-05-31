@@ -37,7 +37,7 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
                 selectPosition = position;
                 notifyDataSetChanged();
                 if (onItemSelectListener != null)
-                    onItemSelectListener.onItemSelect(position, data.get(position).getObject());
+                    onItemSelectListener.onItemSelect(position, data.get(position));
             }
         });
     }
@@ -59,7 +59,7 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
             } else {
                 helper.setBackgroundResource(R.id.ll_layout, Color.TRANSPARENT);
             }
-        }else {
+        } else {
             helper.setBackgroundResource(R.id.ll_layout, Color.TRANSPARENT);
         }
 

@@ -38,6 +38,9 @@
     <string name="quit_tip">退出游戏?</string>
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
+
+
+    <string name="fetch_online_deck">通过网络获取在线卡组</string>
     <string name="fetch_ex_card">通过网络获取先行卡</string>
     <string name="ex_card_list_title">超先行服☆专用☆</string>
     <string name="ex_card_log_title">更新日志</string>
@@ -364,5 +367,11 @@
     <string name="user_privacy_policy">用户隐私政策</string>
     <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
     <string name="open">打开</string>
+    <string name="go_to">转到</string>
     <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
+    <string name="local_deck">我的卡组</string>
+
+
+    <string name="down_complete">下载完成</string>
+    <string name="upload">上传</string>
 </resources>

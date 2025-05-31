@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import cn.garymb.ygomobile.bean.Header;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -25,89 +24,6 @@ import okhttp3.Response;
 public class OkhttpUtil {
 
     private static OkHttpClient okHttpClient;
-
-    public static void post(String address, Map<String, Object> map, Callback callback) {
-        post(address, map, null, null, 0, callback);
-    }
-
-    public static void post(String address, Map<String, Object> map, Header oyHeader, String tag, int timeout, Callback callback) {
-        post(address, map, null, oyHeader, tag, timeout, callback);
-    }
-
-    public static void post(String address, Map<String, Object> map, String cookie, Header oyHeader, String tag, int timeout, Callback callback) {
-        okHttpClient = new OkHttpClient();
-
-        if (timeout != 0)
-            okHttpClient = okHttpClient.newBuilder().connectTimeout(timeout, TimeUnit.SECONDS)//设置连接超时时间
-                    .readTimeout(timeout, TimeUnit.SECONDS)//设置读取超时时间
-                    .build();
-
-        MultipartBody.Builder builder1 = new MultipartBody.Builder();
-        if (map != null) {
-            builder1.setType(MultipartBody.FORM);
-            for (Map.Entry<String, Object> stringObjectEntry : map.entrySet()) {
-                String key = stringObjectEntry.getKey();
-                Object value = stringObjectEntry.getValue();
-                if (value instanceof List) {
-                    List list = (List) value;
-                    for (Object object : list) {
-                        if (object instanceof File) {
-                            File file = (File) object;
-                            builder1.addFormDataPart(key
-                                    , file.getName(),
-                                    RequestBody.create(MediaType.parse("multipart/form-data"), file));
-                        } else {
-                            builder1.addFormDataPart(key, value.toString());
-                        }
-                    }
-                } else if (value instanceof File) {//如果请求的值是文件
-                    File file = (File) value;
-                    //MediaType.parse("application/octet-stream")以二进制的形式上传文件
-                    builder1.addFormDataPart(key, file.getName(),
-                            RequestBody.create(MediaType.parse("multipart/form-data"), file));
-                } else if (value instanceof String[]) {
-
-                    String[] list = (String[]) value;
-                    for (Object object : list) {
-                        if (object instanceof File) {
-                            File file = (File) object;
-                            builder1.addFormDataPart(key
-                                    , file.getName(),
-                                    RequestBody.create(MediaType.parse("multipart/form-data"), file));
-                        } else {
-                            Log.e("OkHttpUtil", key + "添加数组" + object.toString());
-                            builder1.addFormDataPart(key, object.toString());
-                        }
-                    }
-//                    Log.e("OkhttpUtil","添加数组"+new Gson().toJson(value));
-                } else {
-                    //如果请求的值是string类型
-                    builder1.addFormDataPart(key, value.toString());
-                }
-            }
-        }
-        Request.Builder request = new Request.Builder()
-                .url(address);
-        if (oyHeader != null)
-            request = request.header(oyHeader.getName(), oyHeader.getValue());
-
-//        request.addHeader("Connection", "keep-alive");
-
-        if (!TextUtils.isEmpty(tag))
-            request = request.tag(tag);
-        if (map != null)
-            request.post(builder1.build());
-        else
-            request.post(okhttp3.internal.Util.EMPTY_REQUEST);
-
-
-//        Log.e("OkhttpUtil","post请求："+builder1.build().toString());
-        if (!TextUtils.isEmpty(cookie)) {
-            request.addHeader("cookie", cookie);
-        }
-        okHttpClient.newCall(request.build()).enqueue(callback);
-    }
-
 
     public static void put(String address, Map<String, Object> map, String cookie, Callback callback) {
         OkHttpClient.Builder client = new OkHttpClient.Builder();
@@ -198,22 +114,27 @@ public class OkhttpUtil {
         client.newCall(request.build()).enqueue(callback);
     }
 
-    public static Response synchronousGet(String address, Map<String, Object> map, String cookie) throws IOException {
+    public static Response synchronousGet(String address, Map<String, Object> paramMap, Map<String, String> headers) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         HttpUrl.Builder httpBuilder = HttpUrl.parse(address).newBuilder();
-        if (map != null) {
-            for (Map.Entry<String, Object> param : map.entrySet()) {
+        if (paramMap != null) {
+            for (Map.Entry<String, Object> param : paramMap.entrySet()) {
                 httpBuilder.addQueryParameter(param.getKey(), param.getValue().toString());
             }
         }
 
         Request.Builder request = new Request.Builder()
                 .url(httpBuilder.build());
-        Log.e("OkhttpUtil", "为" + httpBuilder.build());
-        if (!TextUtils.isEmpty(cookie)) {
-            request.addHeader("cookie", cookie);
+        Log.e("OkhttpUtil", "get " + httpBuilder.build());
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                request.addHeader(header.getKey(), header.getValue().toString());
+            }
         }
+//        if (!TextUtils.isEmpty(cookie)) {
+//            request.addHeader("cookie", cookie);
+//        }
         return client.newCall(request.build()).execute();
     }
 
@@ -254,10 +175,8 @@ public class OkhttpUtil {
 
     public static void post(String url, String json, String cookie, Callback callback) {
         OkHttpClient okHttpClient = new OkHttpClient();
-        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , json);
-        Request.Builder request = new Request.Builder()
-                .url(url);//请求的url
+        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+        Request.Builder request = new Request.Builder().url(url);//请求的url
         if (TextUtils.isEmpty(json))
             request.post(okhttp3.internal.Util.EMPTY_REQUEST);
         else
@@ -281,11 +200,15 @@ public class OkhttpUtil {
         }
     }
 
-    public static void postJson(String url, String json, Callback callback) {
-        postJson(url, json, null, null, null, 0, callback);
-    }
-
-    public static void postJson(String url, String json, String cookie, Header oyHeader, String tag, int timeout, Callback callback) {
+    /**
+     * 阻塞方法，POST推送json
+     *
+     * @param url
+     * @param json    可以传入null或空字符串，均代表不需要发送json
+     * @param headers 可以传入null
+     * @param timeout 可以为0，为0代表使用默认值
+     */
+    public static Response postJson(String url, String json, Map<String, String> headers, int timeout) throws IOException {
         okHttpClient = new OkHttpClient();
 
         if (timeout != 0)
@@ -294,26 +217,23 @@ public class OkhttpUtil {
                     .build();
 
 
-        RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , json);
-        Request.Builder request = new Request.Builder()
-                .url(url);//请求的url
-        if (TextUtils.isEmpty(json))
+        Request.Builder request = new Request.Builder().url(url);//请求的url
+        if (json == null || TextUtils.isEmpty(json)) {
             request.post(okhttp3.internal.Util.EMPTY_REQUEST);
-        else
+        } else {
+            RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
             request.post(requestBody);
 
-        if (oyHeader != null)
-            request = request.header(oyHeader.getName(), oyHeader.getValue());
-
-        if (!TextUtils.isEmpty(tag))
-            request = request.tag(tag);
-
-        if (!TextUtils.isEmpty(cookie)) {
-            request.addHeader("cookie", cookie);
         }
+
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                request.addHeader(header.getKey(), header.getValue().toString());
+            }
+        }
+
         Log.e("OkhttpUtil", json + " 状态 " + request.build());
-        okHttpClient.newCall(request.build()).enqueue(callback);
+        return okHttpClient.newCall(request.build()).execute();
     }
 
     /**

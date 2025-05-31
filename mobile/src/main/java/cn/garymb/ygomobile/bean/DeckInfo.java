@@ -25,7 +25,7 @@ public class DeckInfo {
     private final List<Card> sideCards;
     private final List<Card> allCards;
 
-    public File source;
+    public File source;//当前打开的ydk文件的file
 
     private int mainCount, extraCount, sideCount;
 

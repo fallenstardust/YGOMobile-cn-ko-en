@@ -21,11 +21,12 @@
             android:name="cn.garymb.ygomobile.ui.activities.LogoActivity"
             android:excludeFromRecents="false"
             android:theme="@style/TranslucentTheme">
+
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <!--meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" /-->
@@ -158,14 +159,14 @@
         <!--   android:screenOrientation="landscape"-->
         <activity
             android:name="cn.garymb.ygomobile.ex_card.ExCardActivity"
-            android:theme="@style/AppTheme.Mycard"
             android:launchMode="singleTop"
-            />
+            android:theme="@style/AppTheme.Mycard" />
+
+
         <service
             android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
             android:label="dexopt"
-            android:process=":dexopt" >
-        </service>
+            android:process=":dexopt"></service>
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
             android:name="cn.garymb.ygomobile.ui.settings.YGOPreferencesProvider"

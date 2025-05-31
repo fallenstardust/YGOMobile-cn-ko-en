@@ -12,7 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
+// Provide a direct reference to each of the views within a data item
+// Used to cache the views within the item layout for fast access
 class DeckViewHolder extends RecyclerView.ViewHolder {
+    // Your holder should contain a member variable
+    // for any view that will be set as you render a row
     private final View view;
     private final View headView;
     private final View textlayout;
@@ -22,8 +26,11 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
 
     private long mCardType;
     private DeckItemType mItemType;
-
+    // Create a constructor that accepts the entire item row
+    // and does the view lookups to find each subview
     public DeckViewHolder(View view) {
+        // Stores the view in a public final member variable that can be used
+        // to access the context from any ViewHolder instance.
         super(view);
         this.view = view;
         view.setTag(view.getId(), this);
@@ -88,6 +95,10 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
 //        imageLoader.$(outFile, cardImage, outFile.getName().endsWith(Constants.BPG), 0, null);
     }
 
+    /**
+     * 只展示分隔标签（例如“主卡组：60怪兽：21“），隐藏掉卡图ImageView
+     * @param text
+     */
     public void setText(String text) {
         labelText.setText(text);
         textlayout.setVisibility(View.VISIBLE);
@@ -95,6 +106,9 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         rightImage.setVisibility(View.GONE);
     }
 
+    /**
+     * 展示卡图，隐藏分隔标签
+     */
     public void showImage() {
         textlayout.setVisibility(View.GONE);
         cardImage.setVisibility(View.VISIBLE);

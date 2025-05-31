@@ -29,7 +29,6 @@ import okhttp3.Response;
 
 public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHolder> {
     private static final String TAG = ExCardListAdapter.class.getSimpleName();
-    private ImageLoader imageLoader;
 
     public ExCardListAdapter(int layoutResId) {
         super(layoutResId);
