@@ -16,75 +16,101 @@
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
-        android:src="@drawable/box"/>
-
-    <!-- <TextView
-        android:id="@+id/my_deck_id"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />-->
+        android:src="@drawable/box" />
 
     <LinearLayout
-        android:layout_width="35dp"
-        android:layout_height="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="5dp"
-        android:background="@drawable/chat_message_background"
+        android:id="@+id/btn_download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:layout_gravity="start"
+        android:background="@drawable/button_radius_n"
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/show_on_deck_square"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_marginLeft="1dp"
-            android:src="@drawable/baseline_remove_red_eye_24"/>
+            android:layout_width="12dp"
+            android:layout_height="11dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="2dp"
+            android:src="@drawable/ic_file_download_black_24dp" />
 
         <TextView
-            android:id="@+id/change_show_or_hide"
-            android:layout_width="20dp"
-            android:layout_height="10dp"
-            android:text="公开中"
-            android:lines="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginRight="5dp"
             android:gravity="center"
-            android:layout_marginLeft="1dp"
-            android:layout_marginRight="1dp"
-            android:textSize="5sp"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="35dp"
-        android:layout_height="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="5dp"
-        android:background="@drawable/chat_message_background"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/btn_download"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_marginLeft="1dp"
-            android:src="@drawable/ic_server_download"/>
-
-        <TextView
-            android:layout_width="20dp"
-            android:layout_height="10dp"
+            android:lines="1"
             android:text="@string/Download"
-            android:lines="1"
-            android:gravity="center"
-            android:layout_marginLeft="1dp"
-            android:layout_marginRight="1dp"
-            android:textSize="5sp"/>
+            android:textColor="@color/white"
+            android:textSize="8sp" />
     </LinearLayout>
-    <TextView
-        android:id="@+id/my_deck_name"
-        android:layout_width="57dp"
-        android:layout_height="18dp"
-        android:layout_marginLeft="28dp"
-        android:layout_marginTop="99dp"
-        android:text="deck_name"
-        android:textColor="@color/white"
-        android:gravity="center"
-        android:textSize="7sp"/>
+
+    <ImageView
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:layout_gravity="end"
+        android:layout_margin="5dp"
+        android:background="@drawable/button_radius_red"
+        android:rotation="48"
+        android:src="@drawable/ic_add_white" />
+
+    <LinearLayout
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="18dp"
+        android:layout_marginTop="15dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="75dp"
+            android:background="@drawable/button_radius_red"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/show_on_deck_square"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginLeft="5dp"
+                android:src="@drawable/baseline_remove_red_eye_24" />
+
+            <TextView
+                android:id="@+id/change_show_or_hide"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="1dp"
+                android:layout_marginRight="5dp"
+                android:lines="1"
+                android:text="@string/in_public"
+                android:textSize="5sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/my_deck_name"
+            android:layout_width="57dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="deck_name"
+            android:textColor="@color/white"
+            android:textSize="7sp" />
+
+        <TextView
+            android:id="@+id/deck_update_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:lines="1"
+            android:text="1900-02-03"
+            android:textSize="6sp" />
+    </LinearLayout>
 
     <!--<TextView
         android:id="@+id/my_deck_id"
@@ -96,15 +122,4 @@
         android:lines="1"
         android:gravity="center"
         android:textSize="6sp"/> -->
-
-    <TextView
-        android:id="@+id/deck_update_date"
-        android:layout_width="74dp"
-        android:layout_height="10dp"
-        android:layout_marginLeft="18dp"
-        android:layout_marginTop="117dp"
-        android:text="1900-02-03"
-        android:lines="1"
-        android:gravity="center"
-        android:textSize="6sp"/>
 </FrameLayout>

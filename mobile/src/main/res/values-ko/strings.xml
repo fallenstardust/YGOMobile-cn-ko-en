@@ -368,4 +368,6 @@
     <string name="web_warn_save_deck">덱을 열면 현재 보고 있는 웹 페이지가 닫힙니다. 웹 페이지를 닫고 덱을 열까요?</string>
     <string name="go_to">이동하다 로</string>
     <string name="local_deck">내 덱들</string>
+    <string name="in_public">공개 중</string>
+    <string name="in_personal_use">개인 사용 중</string>
 </resources>

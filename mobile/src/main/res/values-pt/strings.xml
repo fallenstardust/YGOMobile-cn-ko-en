@@ -357,5 +357,7 @@
     <string name="about_user_privacy_policy">Explicação das permissões utilizadas pelo YGOMobile</string>
     <string name="go_to">pasar a</string>
     <string name="local_deck">meus decks</string>
+    <string name="in_public">Público</string>
+    <string name="in_personal_use">Em Uso Personal</string>
 </resources>
 
