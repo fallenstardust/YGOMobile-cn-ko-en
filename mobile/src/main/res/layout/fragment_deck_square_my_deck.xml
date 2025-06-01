@@ -3,48 +3,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:weightSum="12"
     android:orientation="vertical">
 
-    <LinearLayout
+    <EditText
+        android:id="@+id/et_my_deck_input_deck_name"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="11"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:gravity="center"
+        android:hint="@string/intpu_name"
+        android:imeOptions="actionSearch"
+        android:inputType="textNoSuggestions"
+        android:singleLine="true"
+        android:textColor="@color/holo_blue_bright"
+        android:textColorHint="@color/gray"
+        android:textSize="15sp" />
 
-        <EditText
-            android:id="@+id/et_my_deck_input_deck_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:hint="@string/intpu_name"
-            android:imeOptions="actionSearch"
-            android:inputType="textNoSuggestions"
-            android:singleLine="true"
-            android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray"
-            android:textSize="15sp" />
-
-        <com.tubb.smrv.SwipeMenuRecyclerView
-            android:id="@+id/list_my_deck_info"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="4dp"
-            android:padding="5dp"
-            android:scrollbars="vertical"
-            tools:layout_editor_absoluteX="16dp"
-            tools:layout_editor_absoluteY="16dp" />
-    </LinearLayout>
-
-    <LinearLayout
+    <com.tubb.smrv.SwipeMenuRecyclerView
+        android:id="@+id/list_my_deck_info"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="4dp"
+        android:padding="5dp"
+        android:scrollbars="vertical"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:layout_margin="5dp"
-        android:weightSum="3">
+        android:orientation="horizontal">
 
         <View
             android:layout_width="0dp"
@@ -54,13 +47,13 @@
 
         <ImageButton
             android:id="@+id/refresh_data"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:layout_gravity="center|bottom"
             android:background="@drawable/ic_radius_bg"
             android:src="@drawable/ic_refresh" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"

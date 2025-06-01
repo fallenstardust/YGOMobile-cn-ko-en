@@ -54,7 +54,7 @@
         android:layout_gravity="end"
         android:layout_margin="5dp"
         android:background="@drawable/button_radius_red"
-        android:rotation="48"
+        android:rotation="45"
         android:src="@drawable/ic_add_white" />
 
     <LinearLayout
@@ -65,6 +65,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:id="@+id/ll_switch_show"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

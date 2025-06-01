@@ -223,7 +223,9 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
         //卡包展示、人机卡组不显示上传按钮图标
-        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH) || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)) {
+        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH)
+                || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)
+                ||deckFile.getPathFile().getParent().endsWith("cacheDeck")) {
             holder.local_deck_upload_btn.setVisibility(View.GONE);
         } else {
             holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
