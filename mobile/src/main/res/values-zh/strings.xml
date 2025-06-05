@@ -376,6 +376,6 @@
     <string name="upload">上传</string>
     <string name="input_user_name">输入用户名</string>
     <string name="input_pwd">输入密码</string>
-    <string name="register">注册</string>
-    <string name="sign_out">注销</string>
+    <string name="register">注册萌卡</string>
+    <string name="sign_out">切换账号</string>
 </resources>

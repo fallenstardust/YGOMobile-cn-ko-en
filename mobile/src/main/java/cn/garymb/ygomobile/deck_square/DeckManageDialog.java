@@ -90,7 +90,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         if (window != null) {
             window.setLayout(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.MATCH_PARENT
             );
         }
     }
