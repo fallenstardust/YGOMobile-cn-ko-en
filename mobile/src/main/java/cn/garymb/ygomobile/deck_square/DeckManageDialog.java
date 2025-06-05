@@ -75,9 +75,6 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                                 tab.setIcon(R.drawable.my_deck_square);
                                 tab.setText(R.string.deck_back_up);
                                 break;
-                            case 3:
-                                tab.setIcon(R.drawable.baseline_login_24);
-                                break;
 
                         }
 
@@ -119,8 +116,6 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                     return new DeckSquareFragment(mOnDeckMenuListener, onDeckDialogListener);
                 case 2:
                     return new DeckSquareMyDeckFragment(mOnDeckMenuListener, onDeckDialogListener);
-                case 3:
-                    return new MCOnlineManageFragment();
                 default:
                     throw new IllegalArgumentException();
             }
@@ -128,7 +123,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
 
         @Override
         public int getItemCount() {
-            return 4;
+            return 3;
         }
 
     }
