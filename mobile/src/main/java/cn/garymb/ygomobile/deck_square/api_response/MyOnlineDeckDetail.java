@@ -23,8 +23,8 @@ public class MyOnlineDeckDetail implements Parcelable {
     private String deckMainSerial;
     private String deckYdk;
     private Integer userId;
-    private String isPublic;
-    private String isDelete;
+    private boolean isPublic;
+    private boolean isDelete;
 
 
     protected MyOnlineDeckDetail(Parcel in) {
@@ -43,8 +43,8 @@ public class MyOnlineDeckDetail implements Parcelable {
         deckMainSerial = in.readString();
         deckYdk = in.readString();
         userId = in.readInt();
-        isPublic = in.readString();
-        isDelete = in.readString();
+        isPublic = (in.readByte() != 0);
+        isDelete = (in.readByte() != 0);
     }
 
     public static final Creator<MyOnlineDeckDetail> CREATOR = new Creator<MyOnlineDeckDetail>() {
@@ -81,8 +81,8 @@ public class MyOnlineDeckDetail implements Parcelable {
         dest.writeString(deckMainSerial);
         dest.writeString(deckYdk);
         dest.writeInt(userId);
-        dest.writeString(isPublic);
-        dest.writeString(isDelete);
+        dest.writeByte((byte) (isPublic ? 1 : 0));
+        dest.writeByte((byte) (isDelete ? 1 : 0));
 
     }
 
@@ -206,21 +206,19 @@ public class MyOnlineDeckDetail implements Parcelable {
         this.userId = userId;
     }
 
-    public String getIsPublic() {
+    public boolean isPublic() {
         return isPublic;
     }
 
-    public void setIsPublic(String isPublic) {
-        this.isPublic = isPublic;
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
     }
 
-    public String getIsDelete() {
+    public boolean isDelete() {
         return isDelete;
     }
 
-    public void setIsDelete(String isDelete) {
-        this.isDelete = isDelete;
+    public void setDelete(boolean delete) {
+        isDelete = delete;
     }
-
-
 }

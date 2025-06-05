@@ -17,6 +17,8 @@ public class MyDeckItem {
 
     public int deckCoverCard1;
 
+    public Boolean isPublic;
+
     public int getIdUploaded() {
         return idUploaded;
     }
@@ -80,5 +82,28 @@ public class MyDeckItem {
 
     public void setDeckPath(String deckPath) {
         this.deckPath = deckPath;
+    }
+
+    public Boolean getPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(Boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    @Override
+    public String toString() {
+        return "MyDeckItem{" +
+                "idUploaded=" + idUploaded +
+                ", userId=" + userId +
+                ", deckName='" + deckName + '\'' +
+                ", deckId='" + deckId + '\'' +
+                ", updateDate='" + updateDate + '\'' +
+                ", deckSouce=" + deckSouce +
+                ", deckPath='" + deckPath + '\'' +
+                ", deckCoverCard1=" + deckCoverCard1 +
+                ", isPublic=" + isPublic +
+                '}';
     }
 }

@@ -17,6 +17,7 @@ import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckPublicState;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -200,7 +201,7 @@ public class DeckSquareApiUtil {
      * @return
      * @throws IOException
      */
-    public static PushDeckResponse pushDeck(String deckPath, String deckName, LoginToken loginToken, String deckId) throws IOException {
+    private static PushDeckResponse pushDeck(String deckPath, String deckName, LoginToken loginToken, String deckId) throws IOException {
         String deckContent = DeckSquareFileUtil.setDeckId(deckPath, loginToken.getUserId(), deckId);
 
         PushDeckResponse result = null;
@@ -236,7 +237,7 @@ public class DeckSquareApiUtil {
     }
 
     /**
-     * 异步方法，给卡组点赞
+     * 阻塞方法，给卡组点赞
      *
      * @param deckId
      */
@@ -251,6 +252,40 @@ public class DeckSquareApiUtil {
         String responseBodyString = response.body().string();
 
         Gson gson = new Gson();
+        result = gson.fromJson(responseBodyString, BasicResponse.class);
+        LogUtil.i(TAG, responseBodyString);
+
+        return result;
+
+
+    }
+
+    /**
+     * 阻塞方法，给卡组点赞
+     *
+     * @param deckId
+     */
+    public static BasicResponse setDeckPublic(String deckId, LoginToken loginToken, boolean publicState) throws IOException {
+
+        BasicResponse result = null;
+
+        String url = "http://rarnu.xyz:38383/api/mdpro3/deck/public";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("ReqSource", "MDPro3");
+        headers.put("token", loginToken.getServerToken());
+
+        Gson gson = new Gson();
+        PushDeckPublicState pushData = new PushDeckPublicState();
+        pushData.setPublic(publicState);
+        pushData.setDeckId(deckId);
+        pushData.setUserId(loginToken.getUserId());
+
+        String json = gson.toJson(pushData);
+
+
+        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        String responseBodyString = response.body().string();
+
         result = gson.fromJson(responseBodyString, BasicResponse.class);
         LogUtil.i(TAG, responseBodyString);
 

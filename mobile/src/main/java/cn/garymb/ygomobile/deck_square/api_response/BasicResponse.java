@@ -20,4 +20,13 @@ public class BasicResponse {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    /**
+     * 后端设计的有点怪，接口成功时，message的内容为“true”
+     * @return
+     */
+    public boolean isMessageTrue(){
+        return message.equals("true");
+
+    }
 }
