@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.deck_square;
 
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +11,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
@@ -25,7 +30,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
-public class DeckSquareMyDeckFragment extends Fragment {
+public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdapter.OnDeckDeleteListener{
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
@@ -92,7 +97,8 @@ public class DeckSquareMyDeckFragment extends Fragment {
                     onDeckMenuListener.onDeckSelect(deckFile);
                 }
         );
-
+        // 设置删除监听器
+        deckListAdapter.setOnDeckDeleteListener(this);
         return binding.getRoot();
 
     }
@@ -148,4 +154,24 @@ public class DeckSquareMyDeckFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onDeckDeleteStarted() {
+        binding.refreshData.setEnabled(false);
+        // 设置灰色滤镜
+        binding.refreshData.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN);
+    }
+
+    @Override
+    public void onDeckDeleteProgress(int secondsRemaining) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            binding.refreshData.setTooltipText(secondsRemaining+"s waiting");
+        }
+    }
+
+    @Override
+    public void onDeckDeleteFinished() {
+        binding.refreshData.setEnabled(true);
+        // 移除滤镜，恢复原颜色
+        binding.refreshData.clearColorFilter();
+    }
 }

@@ -49,6 +49,7 @@
     </LinearLayout>
 
     <ImageView
+        android:id="@+id/delete_my_online_deck_btn"
         android:layout_width="15dp"
         android:layout_height="15dp"
         android:layout_gravity="end"
