@@ -29,7 +29,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
-public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogFragment.PrivacyAgreementListener{
+public class DeckSquareMyDeckFragment extends Fragment {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
@@ -39,8 +39,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
     private ProgressBar progressBar;
     private EditText etUsername, etPassword;
     private Button btnLogin;
-    boolean privacAgree = false;
-    LoginDialog loginDialog = null;
 
     public DeckSquareMyDeckFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         this.onDeckMenuListener = onDeckMenuListener;
@@ -65,30 +63,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
                     return;
                 }
 
-                if (privacAgree) {//如果不同意隐私协议，log提示用户，
-                    loginDialog = new LoginDialog(getContext(), new LoginDialog.LoginListener() {
-                        @Override
-                        public void notifyResult(boolean success, LoginResponse response) {
-                            // Handle login logic
-                            if (success) {
-                                binding.llMainUi.setVisibility(View.VISIBLE);
-                                LogUtil.i(TAG, "login success" + SharedPreferenceUtil.getServerToken());
-                                refreshBtn();
-                                //response.token;
-                            }else{
-
-                                YGOUtil.showTextToast("登录失败：");
-                            }
-
-                        }
-                    });
-                    loginDialog.show();
-
-                } else {
-                    YGOUtil.showTextToast("登录内容需要用户同意协议");
-                    showPrivacyDialog();
-                }
-
             }
         });
         //其实仅仅是清除掉本机的token
@@ -97,6 +71,7 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
             public void onClick(View v) {
                 SharedPreferenceUtil.deleteServerToken();
                 binding.llMainUi.setVisibility(View.GONE);
+                binding.llDialogLogin.setVisibility(View.VISIBLE);
                 refreshBtn();
 
             }
@@ -112,7 +87,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
         binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);
         deckListAdapter.loadData();
-
 
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -133,12 +107,10 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
         //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
         deckListAdapter.setOnItemClickListener(
                 (adapter, view, position) -> {
-
                     MyDeckItem item = (MyDeckItem) adapter.getItem(position);
                     mDialogListener.onDismiss();
                     DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
                     onDeckMenuListener.onDeckSelect(deckFile);
-
                 }
         );
 
@@ -171,8 +143,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
 
         VUiKit.defer().when(() -> {
             LogUtil.d(TAG, "start fetch");
-
-
             LoginResponse result = DeckSquareApiUtil.login(username, password);
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
@@ -187,9 +157,9 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
             if (result != null) {
                 LogUtil.i(TAG, "login done");
                 binding.llMainUi.setVisibility(View.VISIBLE);
+                deckListAdapter.loadData();
                 binding.llDialogLogin.setVisibility(View.GONE);
                 YGOUtil.showTextToast("Login success!");
-
             } else {
                 LogUtil.i(TAG, "login fail2");
             }
@@ -206,19 +176,4 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
         }
     }
 
-    private void showPrivacyDialog() {
-        PrivacyDialogFragment dialog = new PrivacyDialogFragment();
-        dialog.setPrivacyAgreementListener(this);
-        dialog.show(getChildFragmentManager(), "PrivacyDialog");
-    }
-
-    @Override
-    public void onAgree() {
-        privacAgree = true;
-    }
-
-    @Override
-    public void onDisagree() {
-        privacAgree = false;
-    }
 }
