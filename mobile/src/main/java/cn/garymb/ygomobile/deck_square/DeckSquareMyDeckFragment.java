@@ -1,14 +1,9 @@
 package cn.garymb.ygomobile.deck_square;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -19,6 +14,8 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -35,9 +32,6 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
-    private ProgressBar progressBar;
-    private EditText etUsername, etPassword;
-    private Button btnLogin;
 
     public DeckSquareMyDeckFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         this.onDeckMenuListener = onDeckMenuListener;
@@ -54,11 +48,8 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.llDialogLogin.setVisibility(View.GONE);
         }
-        etUsername = binding.etUsername;
-        etPassword = binding.etPassword;
-        btnLogin = binding.btnLogin;
-        btnLogin.setOnClickListener(v -> attemptLogin());
-        progressBar = binding.progressBar;
+        binding.btnLogin.setOnClickListener(v -> attemptLogin());
+        binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
         deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck);
         GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
         binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
@@ -118,16 +109,16 @@ public class DeckSquareMyDeckFragment extends Fragment {
     }
 
     private void attemptLogin() {
-        String username = etUsername.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        String username = binding.etUsername.getText().toString().trim();
+        String password = binding.etPassword.getText().toString().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
             YGOUtil.showTextToast("Please enter both username and password");
             return;
         }
 
-        progressBar.setVisibility(View.VISIBLE);
-        btnLogin.setEnabled(false);
+        binding.progressBar.setVisibility(View.VISIBLE);
+        binding.btnLogin.setEnabled(false);
 
         VUiKit.defer().when(() -> {
             LoginResponse result = DeckSquareApiUtil.login(username, password);
@@ -137,18 +128,21 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         }).fail((e) -> {
             binding.llMainUi.setVisibility(View.GONE);
-            progressBar.setVisibility(View.GONE);
-            btnLogin.setEnabled(true);
+            binding.progressBar.setVisibility(View.GONE);
+            binding.btnLogin.setEnabled(true);
         }).done((result) -> {
             if (result != null) {
                 binding.llMainUi.setVisibility(View.VISIBLE);
                 deckListAdapter.loadData();
                 binding.llDialogLogin.setVisibility(View.GONE);
-                progressBar.setVisibility(View.GONE);
-                btnLogin.setEnabled(true);
+                binding.progressBar.setVisibility(View.GONE);
+                binding.btnLogin.setEnabled(true);
                 YGOUtil.showTextToast(R.string.login_succeed);
             } else {
                 LogUtil.i(TAG, "login fail2");
+                binding.llMainUi.setVisibility(View.GONE);
+                binding.progressBar.setVisibility(View.GONE);
+                binding.btnLogin.setEnabled(true);
             }
 
         });

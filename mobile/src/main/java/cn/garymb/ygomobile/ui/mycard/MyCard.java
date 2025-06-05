@@ -67,6 +67,7 @@ public class MyCard {
     public static final String ARG_UPDATE_AT = "updated_at";
     public static final String ARG_URL = "url";
     public static final String ARG_NEWS = "news";
+    public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
     private final DefWebViewClient mDefWebViewClient = new DefWebViewClient() {
         @Override
