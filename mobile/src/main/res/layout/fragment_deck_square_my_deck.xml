@@ -44,12 +44,13 @@
             android:weightSum="2">
 
             <Button
-                android:id="@+id/btn_cancel"
+                android:id="@+id/btn_register"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="Cancel" />
+                android:background="@drawable/ic_radius_bg"
+                android:text="Register" />
 
             <Button
                 android:id="@+id/btn_login"
@@ -57,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:backgroundTint="@color/colorPrimary"
+                android:background="@drawable/ic_radius_bg"
                 android:text="Login" />
         </LinearLayout>
 
@@ -112,25 +113,20 @@
             <Button
                 android:id="@+id/mc_logout_btn"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@drawable/ic_radius_bg"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:text="注销" />
-
-            <Button
-                android:id="@+id/mc_login_btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="登录" />
 
             <ImageButton
                 android:id="@+id/refresh_data"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:layout_margin="5dp"
                 android:background="@drawable/ic_radius_bg"
+                android:layout_marginEnd="4dp"
                 android:src="@drawable/ic_refresh" />
 
         </LinearLayout>

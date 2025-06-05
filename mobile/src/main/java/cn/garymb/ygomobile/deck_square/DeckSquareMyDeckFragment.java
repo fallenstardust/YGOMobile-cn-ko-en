@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.deck_square;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,16 +54,17 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.llDialogLogin.setVisibility(View.GONE);
         }
-        binding.mcLoginBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        etUsername = binding.etUsername;
+        etPassword = binding.etPassword;
+        btnLogin = binding.btnLogin;
+        btnLogin.setOnClickListener(v -> attemptLogin());
+        progressBar = binding.progressBar;
+        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck);
+        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
+        binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
+        binding.listMyDeckInfo.setAdapter(deckListAdapter);
+        deckListAdapter.loadData();
 
-                if (!DeckSquareApiUtil.needLogin()) {
-                    return;
-                }
-
-            }
-        });
         //其实仅仅是清除掉本机的token
         binding.mcLogoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,21 +72,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 SharedPreferenceUtil.deleteServerToken();
                 binding.llMainUi.setVisibility(View.GONE);
                 binding.llDialogLogin.setVisibility(View.VISIBLE);
-                refreshBtn();
 
             }
         });
-        etUsername = binding.etUsername;
-        etPassword = binding.etPassword;
-        btnLogin = binding.btnLogin;
-        btnLogin.setOnClickListener(v -> attemptLogin());
-        progressBar = binding.progressBar;
-        refreshBtn();
-        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck);
-        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
-        binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
-        binding.listMyDeckInfo.setAdapter(deckListAdapter);
-        deckListAdapter.loadData();
 
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -159,21 +147,14 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 binding.llMainUi.setVisibility(View.VISIBLE);
                 deckListAdapter.loadData();
                 binding.llDialogLogin.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
+                btnLogin.setEnabled(true);
                 YGOUtil.showTextToast("Login success!");
             } else {
                 LogUtil.i(TAG, "login fail2");
             }
 
         });
-    }
-
-    public void refreshBtn() {
-        if (DeckSquareApiUtil.getLoginData() != null) {
-            binding.mcLoginBtn.setText("已登录");
-        } else {
-
-            binding.mcLoginBtn.setText("登录");
-        }
     }
 
 }
