@@ -140,7 +140,8 @@ public class DeckSquareMyDeckFragment extends Fragment {
             Log.e(TAG, e + "");
             LogUtil.i(TAG, "login fail");
             binding.llMainUi.setVisibility(View.GONE);
-
+            progressBar.setVisibility(View.GONE);
+            btnLogin.setEnabled(true);
         }).done((result) -> {
             if (result != null) {
                 LogUtil.i(TAG, "login done");
