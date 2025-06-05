@@ -443,4 +443,6 @@
     <string name="sign_out">Sign out</string>
     <string name="input_user_name">Enter Username</string>
     <string name="input_pwd">Enter Password</string>
+    <string name="deck_square">Deck Plaza</string>
+    <string name="my_deck_online">Cloud Backup</string>
 </resources>

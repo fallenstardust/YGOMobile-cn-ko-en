@@ -69,11 +69,11 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                                 break;
                             case 1:
                                 tab.setIcon(R.drawable.ic_deck_square);
-                                tab.setText(R.string.share_deck);
+                                tab.setText(R.string.deck_square);
                                 break;
                             case 2:
                                 tab.setIcon(R.drawable.my_deck_square);
-                                tab.setText(R.string.deck_back_up);
+                                tab.setText(R.string.my_deck_online);
                                 break;
 
                         }

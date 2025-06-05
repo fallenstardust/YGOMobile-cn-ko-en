@@ -122,7 +122,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         String password = etPassword.getText().toString().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            Toast.makeText(getContext(), "Please enter both username and password", Toast.LENGTH_SHORT).show();
+            YGOUtil.showTextToast("Please enter both username and password");
             return;
         }
 
@@ -130,27 +130,23 @@ public class DeckSquareMyDeckFragment extends Fragment {
         btnLogin.setEnabled(false);
 
         VUiKit.defer().when(() -> {
-            LogUtil.d(TAG, "start fetch");
             LoginResponse result = DeckSquareApiUtil.login(username, password);
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
             return result;
 
         }).fail((e) -> {
-            Log.e(TAG, e + "");
-            LogUtil.i(TAG, "login fail");
             binding.llMainUi.setVisibility(View.GONE);
             progressBar.setVisibility(View.GONE);
             btnLogin.setEnabled(true);
         }).done((result) -> {
             if (result != null) {
-                LogUtil.i(TAG, "login done");
                 binding.llMainUi.setVisibility(View.VISIBLE);
                 deckListAdapter.loadData();
                 binding.llDialogLogin.setVisibility(View.GONE);
                 progressBar.setVisibility(View.GONE);
                 btnLogin.setEnabled(true);
-                YGOUtil.showTextToast("Login success!");
+                YGOUtil.showTextToast(R.string.login_succeed);
             } else {
                 LogUtil.i(TAG, "login fail2");
             }

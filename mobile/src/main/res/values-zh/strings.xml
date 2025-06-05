@@ -378,4 +378,6 @@
     <string name="input_pwd">输入密码</string>
     <string name="register">注册萌卡</string>
     <string name="sign_out">切换账号</string>
+    <string name="deck_square">卡组广场</string>
+    <string name="my_deck_online">云备份</string>
 </resources>

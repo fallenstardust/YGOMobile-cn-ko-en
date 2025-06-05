@@ -379,5 +379,7 @@
     <string name="sign_out">Sair</string>
     <string name="input_user_name">Introduce el Nombre de Usuario</string>
     <string name="input_pwd">Introduce la Contraseña</string>
+    <string name="deck_square">Plaza de Decks</string>
+    <string name="my_deck_online">Copia en la Nube</string>
 </resources>
 
