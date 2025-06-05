@@ -38,7 +38,7 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ProgressBar progressBar;
     private EditText etUsername, etPassword;
-    private Button btnLogin, btnCancel;
+    private Button btnLogin;
     boolean privacAgree = false;
     LoginDialog loginDialog = null;
 
@@ -50,7 +50,13 @@ public class DeckSquareMyDeckFragment extends Fragment implements PrivacyDialogF
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentDeckSquareMyDeckBinding.inflate(inflater, container, false);
-        binding.llMainUi.setVisibility(View.GONE);
+        if (SharedPreferenceUtil.getServerToken() == null) {
+            binding.llMainUi.setVisibility(View.GONE);
+            binding.llDialogLogin.setVisibility(View.VISIBLE);
+        } else {
+            binding.llMainUi.setVisibility(View.VISIBLE);
+            binding.llDialogLogin.setVisibility(View.GONE);
+        }
         binding.mcLoginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
