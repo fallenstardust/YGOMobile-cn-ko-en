@@ -370,4 +370,8 @@
     <string name="local_deck">내 덱들</string>
     <string name="in_public">공개 중</string>
     <string name="in_personal_use">개인 사용 중</string>
+    <string name="register">등록하다</string>
+    <string name="sign_out">로그아웃</string>
+    <string name="input_user_name">사용자 이름을 입력하세요</string>
+    <string name="input_pwd">비밀번호를 입력하세요</string>
 </resources>

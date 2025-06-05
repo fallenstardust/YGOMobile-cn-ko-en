@@ -369,4 +369,8 @@
     <string name="local_deck">私のデッキ</string>
     <string name="in_public">公開中</string>
     <string name="in_personal_use">私用中</string>
+    <string name="register">登録する</string>
+    <string name="sign_out">ログアウト</string>
+    <string name="input_user_name">ユーザー名を入力してください</string>
+    <string name="input_pwd">パスワードを入力してください</string>
 </resources>

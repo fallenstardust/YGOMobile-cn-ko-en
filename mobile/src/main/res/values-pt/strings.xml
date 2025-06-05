@@ -359,5 +359,9 @@
     <string name="local_deck">meus decks</string>
     <string name="in_public">Público</string>
     <string name="in_personal_use">Em Uso Personal</string>
+    <string name="register">Registro</string>
+    <string name="sign_out">Sair</string>
+    <string name="input_user_name">Insira o Nome de Usuário</string>
+    <string name="input_pwd">Insira a Senha</string>
 </resources>
 

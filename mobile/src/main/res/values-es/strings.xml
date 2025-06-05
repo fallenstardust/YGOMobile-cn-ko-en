@@ -375,5 +375,9 @@
     <string name="local_deck">mis mazos</string>
     <string name="in_public">Público</string>
     <string name="in_personal_use">En Uso Personal</string>
+    <string name="register">Registro</string>
+    <string name="sign_out">Sair</string>
+    <string name="input_user_name">Introduce el Nombre de Usuario</string>
+    <string name="input_pwd">Introduce la Contraseña</string>
 </resources>
 
