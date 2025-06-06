@@ -76,8 +76,8 @@
 
             <ImageView
                 android:id="@+id/show_on_deck_square"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
                 android:layout_marginLeft="5dp"
                 android:src="@drawable/baseline_remove_red_eye_24" />
 

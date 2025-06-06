@@ -131,16 +131,6 @@
                 android:layout_weight="1"
                 android:text="注销" />
 
-            <ImageButton
-                android:id="@+id/refresh_data"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:background="@drawable/ic_radius_bg"
-                android:layout_marginStart="4dp"
-                android:src="@drawable/ic_refresh" />
-
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

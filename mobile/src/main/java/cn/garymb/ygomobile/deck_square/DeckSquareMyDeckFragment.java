@@ -30,7 +30,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
-public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdapter.OnDeckDeleteListener{
+public class DeckSquareMyDeckFragment extends Fragment {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
@@ -72,13 +72,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdap
             }
         });
 
-        binding.refreshData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deckListAdapter.loadData();
-            }
-        });
-
         deckListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
 
             MyDeckItem item = (MyDeckItem) adapter.getItem(position);
@@ -97,8 +90,6 @@ public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdap
                     onDeckMenuListener.onDeckSelect(deckFile);
                 }
         );
-        // 设置删除监听器
-        deckListAdapter.setOnDeckDeleteListener(this);
         return binding.getRoot();
 
     }
@@ -133,6 +124,7 @@ public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdap
             return result;
 
         }).fail((e) -> {
+            YGOUtil.showTextToast(R.string.logining_failed);
             binding.llMainUi.setVisibility(View.GONE);
             binding.progressBar.setVisibility(View.GONE);
             binding.btnLogin.setEnabled(true);
@@ -145,33 +137,12 @@ public class DeckSquareMyDeckFragment extends Fragment implements MyDeckListAdap
                 binding.btnLogin.setEnabled(true);
                 YGOUtil.showTextToast(R.string.login_succeed);
             } else {
-                LogUtil.i(TAG, "login fail2");
+                YGOUtil.showTextToast(R.string.logining_failed);
                 binding.llMainUi.setVisibility(View.GONE);
                 binding.progressBar.setVisibility(View.GONE);
                 binding.btnLogin.setEnabled(true);
             }
 
         });
-    }
-
-    @Override
-    public void onDeckDeleteStarted() {
-        binding.refreshData.setEnabled(false);
-        // 设置灰色滤镜
-        binding.refreshData.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN);
-    }
-
-    @Override
-    public void onDeckDeleteProgress(int secondsRemaining) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.refreshData.setTooltipText(secondsRemaining+"s waiting");
-        }
-    }
-
-    @Override
-    public void onDeckDeleteFinished() {
-        binding.refreshData.setEnabled(true);
-        // 移除滤镜，恢复原颜色
-        binding.refreshData.clearColorFilter();
     }
 }

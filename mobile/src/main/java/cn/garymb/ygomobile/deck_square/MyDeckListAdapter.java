@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.deck_square;
 
-
-import android.os.CountDownTimer;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -27,57 +25,11 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
-    // 添加监听器变量
-    private OnDeckDeleteListener deleteListener;
-    private OnDeckManipulateListener manipulateListener;
 
     public MyDeckListAdapter(int layoutResId) {
         super(layoutResId);
 
         imageLoader = new ImageLoader();
-    }
-
-    public interface OnDeckManipulateListener {
-        void onDeckHide();
-
-        void onDeckCancelHide();
-
-        void onDeckDeleteFinished();
-    }
-
-    // 在MyDeckListAdapter中添加接口
-    public interface OnDeckDeleteListener {
-        void onDeckDeleteStarted();
-
-        void onDeckDeleteProgress(int secondsRemaining);
-
-        void onDeckDeleteFinished();
-    }
-
-    // 添加设置监听器的方法
-    public void setOnDeckDeleteListener(OnDeckDeleteListener listener) {
-        this.deleteListener = listener;
-    }
-
-    private void startButtonCountdown() {
-        final int countdownSeconds = 3;
-
-        new CountDownTimer(countdownSeconds * 1000, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                int secondsLeft = (int) (millisUntilFinished / 1000);
-                if (deleteListener != null) {
-                    deleteListener.onDeckDeleteProgress(secondsLeft);
-                }
-            }
-
-            @Override
-            public void onFinish() {
-                if (deleteListener != null) {
-                    deleteListener.onDeckDeleteFinished();
-                }
-            }
-        }.start();
     }
 
     public void loadData() {
@@ -139,42 +91,21 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
     }
 
     private void deleteMyDeckOnLine(MyDeckItem item) {
-
         if (item != null) {
-
-
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
             if (loginToken == null) {
                 return;
 
             }
-            //放在登录检查后面，否则：如果未通过登录检查，本函数return后将无法调用onDeckDeleteFinished()
-            if (deleteListener != null) {
-                deleteListener.onDeckDeleteStarted();
-            }
             VUiKit.defer().when(() -> {
                 PushDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
                 return result;
             }).fail(e -> {
-                if (deleteListener != null) {
-                    deleteListener.onDeckDeleteFinished();
-                }
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
             }).done(data -> {
                 if (data.isData()) {
-                    /*
-                     *服务器的api有问题：获取指定用户的卡组列表(无已删卡组)
-                     *删除成功后，通过http://rarnu.xyz:38383/api/mdpro3/sync/795610/nodel接口查询用户卡组时
-                     *要等待2~3秒api响应内容才会对应更新
-                     */
-                    YGOUtil.showTextToast("删除成功，3秒后服务器将完成同步");
                     remove(item);
-                    // 开始倒计时
-                    startButtonCountdown();
                 } else {
-                    if (deleteListener != null) {
-                        deleteListener.onDeckDeleteFinished();
-                    }
                     YGOUtil.showTextToast("delete fail " + data.getMessage());
                 }
             });
@@ -187,42 +118,17 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
      */
     private void changeDeckPublicState(MyDeckItem item) {
         if (item != null) {
-
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
             if (loginToken == null) {
                 return;
             }
-
-            //放在登录检查后面，否则：如果未通过登录检查，本函数return后将无法调用onDeckDeleteFinished()
-            if (deleteListener != null) {
-                deleteListener.onDeckDeleteStarted();
-            }
-
             VUiKit.defer().when(() -> {
                 BasicResponse result = DeckSquareApiUtil.setDeckPublic(item.getDeckId(), loginToken, !item.getPublic());
                 return result;
             }).fail(e -> {
-                if (deleteListener != null) {
-                    deleteListener.onDeckDeleteFinished();
-                }
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
             }).done(data -> {
-                if (data.isMessageTrue()) {
-                    /*
-                     *服务器的api有问题：获取指定用户的卡组列表(无已删卡组)
-                     *删除成功后，通过http://rarnu.xyz:38383/api/mdpro3/sync/795610/nodel接口查询用户卡组时
-                     *要等待2~3秒api响应内容才会对应更新
-                     */
-                    if (item.getPublic()) {//注意，item是修改前的值，因此item.isPublic为true代表修改前为公开卡组
-                        YGOUtil.showTextToast("已将卡组设为私有");
-                    } else {
 
-                        YGOUtil.showTextToast("已将卡组公开");
-                    }
-                    startButtonCountdown();
-                } else {
-                    YGOUtil.showTextToast("操作失败");
-                }
             });
         }
     }
@@ -237,21 +143,25 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         if (item.getPublic()) {
             helper.setText(R.id.change_show_or_hide, R.string.in_public);
         } else {
-
             helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
         }
         LogUtil.i(TAG, code + " " + item.getDeckName());
         if (code != 0) {
             imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
         } else {
-
             imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
         }
         helper.getView(R.id.delete_my_online_deck_btn).setOnClickListener(view -> {
             deleteMyDeckOnLine(item);
         });
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
-
+            if (item.getPublic()) {
+                helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
+                helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
+            } else {
+                helper.setText(R.id.change_show_or_hide, R.string.in_public);
+                helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
+            }
             LogUtil.i(TAG, "current " + item.toString());
             changeDeckPublicState(item);
         });
