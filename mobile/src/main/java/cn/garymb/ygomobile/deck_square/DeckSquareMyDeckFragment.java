@@ -80,7 +80,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             dialog.show();
             return true;
         });
-
+/*
         //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
         deckListAdapter.setOnItemClickListener(
                 (adapter, view, position) -> {
@@ -89,7 +89,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
                     DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
                     onDeckMenuListener.onDeckSelect(deckFile);
                 }
-        );
+        );*/
         return binding.getRoot();
 
     }
