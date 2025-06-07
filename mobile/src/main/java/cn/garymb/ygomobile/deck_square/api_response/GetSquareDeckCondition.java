@@ -11,9 +11,13 @@ public class GetSquareDeckCondition {
     public GetSquareDeckCondition() {
     }
 
-    public GetSquareDeckCondition(Integer page, Integer size) {
+    public GetSquareDeckCondition(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributer) {
         this.page = page;
         this.size = size;
+        this.keyWord = keyWord;
+        this.sortLike = sortLike;
+        this.sortRank = sortRank;
+        this.contributer = contributer;
     }
 
     public Integer getPage() {

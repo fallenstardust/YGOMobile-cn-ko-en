@@ -75,6 +75,10 @@ public class DeckSquareApiUtil {
 
         paramMap.put("page", condition.getPage());
         paramMap.put("size", condition.getSize());
+        paramMap.put("keyWord", condition.getKeyWord());
+        paramMap.put("sortLike", condition.getSortLike());
+        paramMap.put("sortRank", condition.getSortRank());
+        paramMap.put("contributer", condition.getContributer());
         Response response = OkhttpUtil.synchronousGet(url, paramMap, headers);
         String responseBodyString = response.body().string();
 

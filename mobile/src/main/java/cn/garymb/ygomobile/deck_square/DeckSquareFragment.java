@@ -23,6 +23,10 @@ public class DeckSquareFragment extends Fragment {
     private DeckSquareListAdapter deckSquareListAdapter;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
+    private String keyWord;
+    private Boolean sortLike;
+    private Boolean sortRank;
+    private String contributer;
 
     public DeckSquareFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         this.onDeckMenuListener = onDeckMenuListener;
@@ -53,9 +57,8 @@ public class DeckSquareFragment extends Fragment {
 
                 }
 
-
                 binding.etGoToPage.setText(Integer.toString(targetPage));
-                deckSquareListAdapter.loadData(targetPage, 30);
+                deckSquareListAdapter.loadData(targetPage, 30, "", false, false, "");
                 binding.listDeckInfo.scrollToPosition(0);
                 return true;
             }
@@ -71,8 +74,7 @@ public class DeckSquareFragment extends Fragment {
 
                 }
                 int newPage = targetPage + 1;
-
-                deckSquareListAdapter.loadData(newPage, 30);
+                deckSquareListAdapter.loadData(newPage, 30, "", false, false, "");
                 binding.etGoToPage.setText(Integer.toString(newPage));
                 binding.listDeckInfo.scrollToPosition(0);
 
@@ -91,7 +93,7 @@ public class DeckSquareFragment extends Fragment {
                 if (newPage < 1) {
                     newPage = 1;
                 }
-                deckSquareListAdapter.loadData(newPage, 30);
+                deckSquareListAdapter.loadData(newPage, 30, "", false, false, "");
                 binding.etGoToPage.setText(Integer.toString(newPage));
                 binding.listDeckInfo.scrollToPosition(0);
 
@@ -106,7 +108,7 @@ public class DeckSquareFragment extends Fragment {
                 } catch (NumberFormatException e) {
 
                 }
-                deckSquareListAdapter.loadData(targetPage, 30);
+                deckSquareListAdapter.loadData(targetPage, 30, "", false, false, "");
             }
         });
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {

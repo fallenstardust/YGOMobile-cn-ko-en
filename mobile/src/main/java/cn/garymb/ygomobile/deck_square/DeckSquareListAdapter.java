@@ -30,13 +30,13 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
     }
 
     public void loadData() {
-        loadData(1, 30);
+        loadData(1, 30, "", false, false, "");
     }
 
-    public void loadData(int page, int size) {
+    public void loadData(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributer) {
         final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
         VUiKit.defer().when(() -> {
-            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size));
+            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size, keyWord, sortLike, sortRank, contributer));
             if (result == null) {
                 return null;
             } else {
