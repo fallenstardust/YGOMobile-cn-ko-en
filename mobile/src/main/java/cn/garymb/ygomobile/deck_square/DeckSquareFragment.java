@@ -48,7 +48,7 @@ public class DeckSquareFragment extends Fragment {
         deckSquareListAdapter.loadData();
         binding.etGoToPage.setText("1");
         sortLike = false;
-        Drawable icon_like = getContext().getDrawable(R.drawable.baseline_thumb_up_24);
+        Drawable icon_like = getContext().getDrawable(R.drawable.ic_recommendation_order);
         Drawable icon_new = getContext().getDrawable(R.drawable.upload_time);
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
