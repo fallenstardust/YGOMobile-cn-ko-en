@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.deck_square;
 
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -78,7 +79,7 @@ public class DeckSquareApiUtil {
         paramMap.put("keyWord", condition.getKeyWord());
         paramMap.put("sortLike", condition.getSortLike());
         paramMap.put("sortRank", condition.getSortRank());
-        paramMap.put("contributer", condition.getContributer());
+        paramMap.put("contributor", condition.getContributor());
         Response response = OkhttpUtil.synchronousGet(url, paramMap, headers);
         String responseBodyString = response.body().string();
 

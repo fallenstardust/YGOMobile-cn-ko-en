@@ -33,10 +33,10 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
         loadData(1, 30, "", false, false, "");
     }
 
-    public void loadData(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributer) {
+    public void loadData(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributor) {
         final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
         VUiKit.defer().when(() -> {
-            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size, keyWord, sortLike, sortRank, contributer));
+            SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size, keyWord, sortLike, sortRank, contributor));
             if (result == null) {
                 return null;
             } else {
@@ -54,11 +54,11 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
             }
             LogUtil.i(TAG, "Get square deck fail");
 
-        }).done((exCardDataList) -> {
-            if (exCardDataList != null) {
+        }).done((result) -> {
+            if (result != null) {
                 LogUtil.i(TAG, "Get square deck success");
                 getData().clear();
-                addData(exCardDataList);
+                addData(result);
                 notifyDataSetChanged();
             }
             if (dialog_read_ex.isShowing()) {

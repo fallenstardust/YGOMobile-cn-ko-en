@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.deck_square;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +29,7 @@ public class DeckSquareFragment extends Fragment {
     private String keyWord;
     private Boolean sortLike;
     private Boolean sortRank;
-    private String contributer;
+    private String contributor;
 
     public DeckSquareFragment(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         this.onDeckMenuListener = onDeckMenuListener;
@@ -48,7 +49,7 @@ public class DeckSquareFragment extends Fragment {
         //查询卡组名称
         binding.etDeckSquareInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                Editable contributerName = binding.etInputContributerName.getText();
+                Editable contributerName = binding.etInputContributorName.getText();
                 if (contributerName != null) contributerName.clear();
                 keyWord = v.getText().toString();
                 binding.etGoToPage.setText("1");
@@ -98,30 +99,30 @@ public class DeckSquareFragment extends Fragment {
             }
         });
         //添加贡献者查询
-        binding.etInputContributerName.setOnEditorActionListener((v, actionId, event) -> {
+        binding.etInputContributorName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 //清除卡组名称输入的内容
                 Editable deckName = binding.etDeckSquareInputDeckName.getText();
                 if (deckName != null) deckName.clear();
                 //获取输入内容
-                contributer = v.getText().toString();
+                contributor = v.getText().toString();
                 binding.etGoToPage.setText("1");
                 binding.etGoToPage.setEnabled(false);
 
-                deckSquareListAdapter.loadData(1, 1000, null, true, false, contributer);
+                deckSquareListAdapter.loadData(1, 1000, "", true, false, contributor);
                 binding.listDeckInfo.scrollToPosition(0);
                 return true;
             }
             return false;
         });
         // 添加文本变化监听器
-        binding.etInputContributerName.addTextChangedListener(new TextWatcher() {
+        binding.etInputContributorName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                binding.btnClearContributerName.setVisibility(View.VISIBLE);
+                binding.btnClearContributorName.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -155,7 +156,7 @@ public class DeckSquareFragment extends Fragment {
         });
         //设置清空按钮点击清除输入内容
         binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
-        binding.btnClearContributerName.setOnClickListener(view -> binding.etInputContributerName.getText().clear());
+        binding.btnClearContributorName.setOnClickListener(view -> binding.etInputContributorName.getText().clear());
         // 设置页码跳转监听
         binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {

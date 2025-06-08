@@ -6,18 +6,18 @@ public class GetSquareDeckCondition {
     String keyWord;
     Boolean sortLike;
     Boolean sortRank;
-    String contributer;
+    String contributor;
 
     public GetSquareDeckCondition() {
     }
 
-    public GetSquareDeckCondition(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributer) {
+    public GetSquareDeckCondition(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributor) {
         this.page = page;
         this.size = size;
         this.keyWord = keyWord;
         this.sortLike = sortLike;
         this.sortRank = sortRank;
-        this.contributer = contributer;
+        this.contributor = contributor;
     }
 
     public Integer getPage() {
@@ -60,11 +60,11 @@ public class GetSquareDeckCondition {
         this.sortRank = sortRank;
     }
 
-    public String getContributer() {
-        return contributer;
+    public String getContributor() {
+        return contributor;
     }
 
-    public void setContributer(String contributer) {
-        this.contributer = contributer;
+    public void setContributor(String contributor) {
+        this.contributor = contributor;
     }
 }
