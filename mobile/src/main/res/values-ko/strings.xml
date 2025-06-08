@@ -376,4 +376,5 @@
     <string name="input_pwd">비밀번호를 입력하세요</string>
     <string name="deck_square">덱 공유 광장</string>
     <string name="my_deck_online">클라우드 백업</string>
+    <string name="input_contributor_name">공유자의 이름을 입력하세요</string>
 </resources>

@@ -375,4 +375,5 @@
     <string name="input_pwd">パスワードを入力してください</string>
     <string name="deck_square">デッキ広場</string>
     <string name="my_deck_online">クラウド バックアップ</string>
+    <string name="input_contributor_name">共有者の名前を入力してください</string>
 </resources>

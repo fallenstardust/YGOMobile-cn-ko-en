@@ -365,5 +365,6 @@
     <string name="input_pwd">Insira a Senha</string>
     <string name="deck_square">Praça de Decks</string>
     <string name="my_deck_online">Backup na Nuvem</string>
+    <string name="input_contributor_name">Insira o Nome do Compartilhador</string>
 </resources>
 

@@ -54,14 +54,16 @@
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_deck"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_marginTop="2dp"
+                        android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"
+                        android:gravity="center|left"
                         android:text="@string/select_deck"
                         android:textColor="@color/white"
                         android:textSize="18sp"
@@ -92,7 +94,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
@@ -120,7 +121,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
@@ -163,7 +163,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
@@ -175,8 +174,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
-
-
         </FrameLayout>
 
         <LinearLayout

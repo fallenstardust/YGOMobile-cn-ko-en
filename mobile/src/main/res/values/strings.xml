@@ -445,4 +445,5 @@
     <string name="input_pwd">Enter Password</string>
     <string name="deck_square">Deck Plaza</string>
     <string name="my_deck_online">Cloud Backup</string>
+    <string name="input_contributor_name">Enter the Sharer\'s Name</string>
 </resources>

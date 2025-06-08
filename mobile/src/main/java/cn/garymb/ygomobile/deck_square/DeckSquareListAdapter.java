@@ -71,15 +71,6 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
 
     }
 
-    private static Boolean isMonster(List<String> list) {
-        for (String data : list) {
-            if (data.equals("怪兽")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     protected void convert(BaseViewHolder helper, OnlineDeckDetail item) {
         helper.setText(R.id.deck_info_name, item.getDeckName());

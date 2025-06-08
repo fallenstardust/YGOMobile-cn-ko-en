@@ -1,60 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:weightSum="14"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
+    <!-- 顶部输入框区域 -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="12.5"
-        android:weightSum="10"
-        android:orientation="vertical">
+        android:id="@+id/top_input_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <EditText
-            android:id="@+id/et_deck_square_input_deck_name"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:gravity="center"
-            android:hint="@string/intpu_name"
-            android:imeOptions="actionSearch"
-            android:inputType="textNoSuggestions"
-            android:singleLine="true"
-            android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray"
-            android:textSize="15sp" />
+        <!-- 第一个输入框及清空按钮 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_radius_black_transparents"
+            android:layout_marginEnd="2.5dp"
+            android:layout_weight="1">
 
-        <com.tubb.smrv.SwipeMenuRecyclerView
-            android:id="@+id/list_deck_info"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="9"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="4dp"
-            android:padding="5dp"
-            android:scrollbars="vertical" />
+            <EditText
+                android:id="@+id/et_deck_square_input_deck_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:hint="@string/intpu_name"
+                android:imeOptions="actionSearch"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:textColor="@color/holo_blue_bright"
+                android:textColorHint="@color/gray"
+                android:textSize="15sp"
+                app:layout_constraintEnd_toStartOf="@id/btn_clear_deck_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/btn_clear_deck_name"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close_black_24dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- 第二个输入框及清空按钮 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2.5dp"
+            android:background="@drawable/button_radius_black_transparents"
+            android:layout_weight="1">
+
+            <EditText
+                android:id="@+id/et_input_contributer_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:hint="@string/input_contributor_name"
+                android:imeOptions="actionSearch"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:textColor="@color/holo_blue_bright"
+                android:textColorHint="@color/gray"
+                android:textSize="15sp"
+                app:layout_constraintEnd_toStartOf="@id/btn_clear_contributer_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/btn_clear_contributer_name"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close_black_24dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- 列表区域 - 设置底部边距为控制栏留出空间 -->
+    <com.tubb.smrv.SwipeMenuRecyclerView
+        android:id="@+id/list_deck_info"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="2"
-        android:orientation="vertical"
-        android:weightSum="2">
+        android:layout_marginBottom="80dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="4dp"
+        android:padding="5dp"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_input_container" />
 
+    <!-- 底部控制栏 - 固定在底部 -->
+    <LinearLayout
+        android:id="@+id/ll_page_ctrl"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- 页码输入区域 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
             android:weightSum="3">
 
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
+                android:layout_gravity="center_vertical"
                 android:layout_weight="1"
                 android:background="@color/holo_blue_light" />
 
@@ -62,34 +135,35 @@
                 android:id="@+id/et_go_to_page"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:layout_weight="1"
-                android:hint="@string/go_to"
-                android:inputType="number"
-                android:imeOptions="actionDone"
                 android:background="@drawable/veil2"
+                android:gravity="center"
+                android:hint="@string/go_to"
+                android:imeOptions="actionDone"
+                android:inputType="number"
                 android:singleLine="true"
                 android:textSize="14sp" />
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
+                android:layout_gravity="center_vertical"
                 android:layout_weight="1"
                 android:background="@color/holo_blue_light" />
         </LinearLayout>
 
+        <!-- 按钮控制区域 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_gravity="bottom"
+            android:layout_height="wrap_content"
             android:layout_margin="5dp">
 
             <ImageButton
                 android:id="@+id/former_page_btn"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_margin="5dp"
+                android:layout_weight="1"
                 android:background="@drawable/ic_radius_bg"
                 android:src="@drawable/baseline_arrow_left_24" />
 
@@ -97,8 +171,8 @@
                 android:id="@+id/next_page_btn"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_margin="5dp"
+                android:layout_weight="1"
                 android:background="@drawable/ic_radius_bg"
                 android:src="@drawable/baseline_arrow_right_24" />
 
@@ -106,10 +180,10 @@
                 android:id="@+id/refresh_data"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_margin="5dp"
+                android:layout_weight="1"
                 android:background="@drawable/ic_radius_bg"
                 android:src="@drawable/ic_refresh" />
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

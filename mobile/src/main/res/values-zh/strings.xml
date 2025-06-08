@@ -136,7 +136,7 @@
 
     <string name="last_path">上一级目录</string>
     <string name="create_folder">新建文件夹</string>
-    <string name="intpu_name">输入卡组名</string>
+    <string name="intpu_name">输入卡组名称</string>
     <string name="the_name_is_folder">当前文件名是个文件夹</string>
     <string name="tab_search">搜索</string>
     <string name="tab_result">列表</string>
@@ -380,4 +380,5 @@
     <string name="sign_out">切换账号</string>
     <string name="deck_square">卡组广场</string>
     <string name="my_deck_online">云备份</string>
+    <string name="input_contributor_name">输入共享者名称</string>
 </resources>

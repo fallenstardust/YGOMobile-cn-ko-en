@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.deck_square;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,11 +36,7 @@ public class DeckSquareFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentDeckSquareBinding.inflate(inflater, container, false);
 
         deckSquareListAdapter = new DeckSquareListAdapter(R.layout.item_deck_info);
@@ -47,6 +45,109 @@ public class DeckSquareFragment extends Fragment {
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
         binding.etGoToPage.setText("1");
+        binding.etDeckSquareInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                Editable contributerName = binding.etInputContributerName.getText();
+                if (contributerName != null) contributerName.clear();
+                keyWord = v.getText().toString();
+                binding.etGoToPage.setText("1");
+                binding.etGoToPage.setEnabled(false);
+                // 底部按钮不可用状态
+                binding.formerPageBtn.setEnabled(false);
+                binding.formerPageBtn.setColorFilter(R.color.navigator_dir_text_color);
+                binding.nextPageBtn.setEnabled(false);
+                binding.nextPageBtn.setColorFilter(R.color.navigator_dir_text_color);
+                binding.refreshData.setEnabled(false);
+                binding.refreshData.setColorFilter(R.color.navigator_dir_text_color);
+                deckSquareListAdapter.loadData(1, 1000, keyWord, true, false, "");
+                binding.listDeckInfo.scrollToPosition(0);
+                return true;
+            }
+            return false;
+        });
+        // 添加文本变化监听器
+        binding.etDeckSquareInputDeckName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                binding.btnClearDeckName.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // 当输入框内容为空时
+                if (s.toString().isEmpty()) {
+                    binding.btnClearDeckName.setVisibility(View.GONE);
+                    // 恢复底部按钮可用状态
+                    binding.formerPageBtn.setEnabled(true);
+                    binding.formerPageBtn.setColorFilter(R.color.selector_text_color_white_gold);
+                    binding.nextPageBtn.setEnabled(true);
+                    binding.nextPageBtn.setColorFilter(R.color.selector_text_color_white_gold);
+                    binding.refreshData.setEnabled(true);
+                    binding.refreshData.setColorFilter(R.color.selector_text_color_white_gold);
+                    // 重置页码为1
+                    binding.etGoToPage.setText("1");
+                    binding.etGoToPage.setEnabled(true);
+                    deckSquareListAdapter.loadData();
+                    binding.listDeckInfo.scrollToPosition(0);
+                }
+            }
+        });
+        binding.etInputContributerName.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                Editable deckName = binding.etDeckSquareInputDeckName.getText();
+                if (deckName != null) deckName.clear();
+                contributer = v.getText().toString();
+                binding.etGoToPage.setText("1");
+                binding.etGoToPage.setEnabled(false);
+                // 底部按钮不可用状态
+                binding.formerPageBtn.setEnabled(false);
+                binding.formerPageBtn.setColorFilter(R.color.navigator_dir_text_color);
+                binding.nextPageBtn.setEnabled(false);
+                binding.nextPageBtn.setColorFilter(R.color.navigator_dir_text_color);
+                binding.refreshData.setEnabled(false);
+                binding.refreshData.setColorFilter(R.color.navigator_dir_text_color);
+                deckSquareListAdapter.loadData(1, 1000, null, true, false, contributer);
+                binding.listDeckInfo.scrollToPosition(0);
+                return true;
+            }
+            return false;
+        });
+        // 添加文本变化监听器
+        binding.etInputContributerName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                binding.btnClearContributerName.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // 当输入框内容为空时
+                if (s.toString().isEmpty()) {
+                    binding.btnClearDeckName.setVisibility(View.GONE);
+                    // 恢复底部按钮可用状态
+                    binding.formerPageBtn.setEnabled(true);
+                    binding.formerPageBtn.setColorFilter(R.color.selector_text_color_white_gold);
+                    binding.nextPageBtn.setEnabled(true);
+                    binding.nextPageBtn.setColorFilter(R.color.selector_text_color_white_gold);
+                    binding.refreshData.setEnabled(true);
+                    binding.refreshData.setColorFilter(R.color.selector_text_color_white_gold);
+                    // 重置页码为1
+                    binding.etGoToPage.setText("1");
+                    binding.etGoToPage.setEnabled(true);
+                    deckSquareListAdapter.loadData();
+                    binding.listDeckInfo.scrollToPosition(0);
+                }
+            }
+        });
+        //设置清空按钮点击清除输入内容
+        binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
+        binding.btnClearContributerName.setOnClickListener(view -> binding.etInputContributerName.getText().clear());
         // 设置页码跳转监听
         binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
