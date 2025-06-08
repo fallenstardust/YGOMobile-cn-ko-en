@@ -49,8 +49,8 @@ public class DeckSquareFragment extends Fragment {
         //查询卡组名称
         binding.etDeckSquareInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                Editable contributerName = binding.etInputContributorName.getText();
-                if (contributerName != null) contributerName.clear();
+                Editable contributorName = binding.etInputContributorName.getText();
+                if (contributorName != null) contributorName.clear();
                 keyWord = v.getText().toString();
                 binding.etGoToPage.setText("1");
                 binding.etGoToPage.setEnabled(false);
@@ -67,7 +67,10 @@ public class DeckSquareFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                binding.btnClearDeckName.setVisibility(View.VISIBLE);
+                if (s.toString().isEmpty())
+                    binding.btnClearDeckName.setVisibility(View.GONE);
+                else
+                    binding.btnClearDeckName.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -122,7 +125,12 @@ public class DeckSquareFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                binding.btnClearContributorName.setVisibility(View.VISIBLE);
+                if (s.toString().isEmpty()) {
+                    binding.btnClearContributorName.setVisibility(View.GONE);
+                } else {
+                    binding.btnClearContributorName.setVisibility(View.VISIBLE);
+                }
+
             }
 
             @Override
