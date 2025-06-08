@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.deck_square;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -46,6 +47,29 @@ public class DeckSquareFragment extends Fragment {
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
         deckSquareListAdapter.loadData();
         binding.etGoToPage.setText("1");
+        sortLike = false;
+        Drawable icon_like = getContext().getDrawable(R.drawable.baseline_thumb_up_24);
+        Drawable icon_new = getContext().getDrawable(R.drawable.upload_time);
+        binding.refreshData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //根据按钮使用的图标决定是否是按赞排序还是按上传时间排序
+                sortLike = binding.refreshData.getDrawable() == icon_like;
+                int targetPage = 1;
+                try {
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
+                //切换成另一种图标
+                if (sortLike) {
+                    binding.refreshData.setImageDrawable(icon_new);
+                } else {
+                    binding.refreshData.setImageDrawable(icon_like);
+                }
+            }
+        });
         //查询卡组名称
         binding.etDeckSquareInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -176,7 +200,7 @@ public class DeckSquareFragment extends Fragment {
                 }
 
                 binding.etGoToPage.setText(Integer.toString(targetPage));
-                deckSquareListAdapter.loadData(targetPage, 30, "", false, false, "");
+                deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
                 binding.listDeckInfo.scrollToPosition(0);
                 return true;
             }
@@ -192,7 +216,7 @@ public class DeckSquareFragment extends Fragment {
 
                 }
                 int newPage = targetPage + 1;
-                deckSquareListAdapter.loadData(newPage, 30, "", false, false, "");
+                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
                 binding.etGoToPage.setText(Integer.toString(newPage));
                 binding.listDeckInfo.scrollToPosition(0);
 
@@ -211,22 +235,10 @@ public class DeckSquareFragment extends Fragment {
                 if (newPage < 1) {
                     newPage = 1;
                 }
-                deckSquareListAdapter.loadData(newPage, 30, "", false, false, "");
+                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
                 binding.etGoToPage.setText(Integer.toString(newPage));
                 binding.listDeckInfo.scrollToPosition(0);
 
-            }
-        });
-        binding.refreshData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int targetPage = 1;
-                try {
-                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
-                } catch (NumberFormatException e) {
-
-                }
-                deckSquareListAdapter.loadData(targetPage, 30, "", false, false, "");
             }
         });
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
