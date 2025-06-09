@@ -53,21 +53,76 @@ public class DeckSquareFragment extends Fragment {
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //根据按钮使用的图标决定是否是按赞排序还是按上传时间排序
-                sortLike = binding.refreshData.getDrawable() == icon_like;
+                //根据按钮使用的图标决定是否是按赞排序还是按上传时间排序, 切换成另一种图标
+                if (sortLike == false) {
+                    sortLike = true;
+                    binding.tvSortMode.setText(R.string.sort_by_thumb);//当按时间顺序时，点击应切换为按点赞顺序
+                    binding.refreshData.setImageDrawable(icon_new);//因为点击后会变成按点赞顺序，就需要图标显示为按时间顺序，告诉用户点它可变回时间顺序
+                } else {
+                    sortLike = false;
+                    binding.tvSortMode.setText(R.string.sort_by_time);//当按点赞顺序时，点击应切换为按时间顺序
+                    binding.refreshData.setImageDrawable(icon_like);//因为点击后会变成按时间顺序，就需要图标显示为按时间顺序，告诉用户点它可变回时间顺序
+                }
                 int targetPage = 1;
                 try {
                     targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
                 } catch (NumberFormatException e) {
 
                 }
+                Log.d("seesee sortlike", sortLike.toString());
                 deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
-                //切换成另一种图标
-                if (sortLike) {
-                    binding.refreshData.setImageDrawable(icon_new);
-                } else {
-                    binding.refreshData.setImageDrawable(icon_like);
+            }
+        });
+        // 设置页码跳转监听
+        binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(v.getText().toString());
+                } catch (NumberFormatException e) {
+
                 }
+
+                binding.etGoToPage.setText(Integer.toString(targetPage));
+                deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
+                binding.listDeckInfo.scrollToPosition(0);
+                return true;
+            }
+            return false;
+        });
+        binding.nextPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                int newPage = targetPage + 1;
+                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
+                binding.etGoToPage.setText(Integer.toString(newPage));
+                binding.listDeckInfo.scrollToPosition(0);
+
+            }
+        });
+        binding.formerPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int targetPage = 0;
+                try {
+                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
+                } catch (NumberFormatException e) {
+
+                }
+                int newPage = targetPage - 1;
+                if (newPage < 1) {
+                    newPage = 1;
+                }
+                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
+                binding.etGoToPage.setText(Integer.toString(newPage));
+                binding.listDeckInfo.scrollToPosition(0);
+
             }
         });
         //查询卡组名称
@@ -189,58 +244,6 @@ public class DeckSquareFragment extends Fragment {
         //设置清空按钮点击清除输入内容
         binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
         binding.btnClearContributorName.setOnClickListener(view -> binding.etInputContributorName.getText().clear());
-        // 设置页码跳转监听
-        binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                int targetPage = 0;
-                try {
-                    targetPage = Integer.parseInt(v.getText().toString());
-                } catch (NumberFormatException e) {
-
-                }
-
-                binding.etGoToPage.setText(Integer.toString(targetPage));
-                deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
-                binding.listDeckInfo.scrollToPosition(0);
-                return true;
-            }
-            return false;
-        });
-        binding.nextPageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int targetPage = 0;
-                try {
-                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
-                } catch (NumberFormatException e) {
-
-                }
-                int newPage = targetPage + 1;
-                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
-                binding.etGoToPage.setText(Integer.toString(newPage));
-                binding.listDeckInfo.scrollToPosition(0);
-
-            }
-        });
-        binding.formerPageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int targetPage = 0;
-                try {
-                    targetPage = Integer.parseInt(binding.etGoToPage.getText().toString());
-                } catch (NumberFormatException e) {
-
-                }
-                int newPage = targetPage - 1;
-                if (newPage < 1) {
-                    newPage = 1;
-                }
-                deckSquareListAdapter.loadData(newPage, 30, "", sortLike, false, "");
-                binding.etGoToPage.setText(Integer.toString(newPage));
-                binding.listDeckInfo.scrollToPosition(0);
-
-            }
-        });
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
 
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);

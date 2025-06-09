@@ -377,4 +377,6 @@
     <string name="deck_square">덱 공유 광장</string>
     <string name="my_deck_online">클라우드 백업</string>
     <string name="input_contributor_name">공유자의 이름을 입력하세요</string>
+    <string name="sort_by_time">시간 순서대로</string>
+    <string name="sort_by_thumb">추천 순서대로</string>
 </resources>

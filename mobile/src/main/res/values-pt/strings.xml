@@ -366,5 +366,7 @@
     <string name="deck_square">Praça de Decks</string>
     <string name="my_deck_online">Backup na Nuvem</string>
     <string name="input_contributor_name">Insira o Nome do Compartilhador</string>
+    <string name="sort_by_time">Ordenar por Tempo</string>
+    <string name="sort_by_thumb">Na ordem recomendada</string>
 </resources>
 

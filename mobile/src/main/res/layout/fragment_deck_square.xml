@@ -125,7 +125,7 @@
             android:weightSum="3">
 
             <View
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
@@ -133,7 +133,7 @@
 
             <EditText
                 android:id="@+id/et_go_to_page"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/veil2"
@@ -144,12 +144,39 @@
                 android:singleLine="true"
                 android:textSize="14sp" />
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:background="@color/holo_blue_light" />
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:background="@color/holo_blue_light" />
+
+                <TextView
+                    android:id="@+id/tv_sort_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textColor="@color/holo_blue_light"
+                    android:gravity="center"
+                    android:textSize="5sp"
+                    android:text="@string/sort_by_time"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:background="@color/holo_blue_light" />
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- 按钮控制区域 -->

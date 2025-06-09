@@ -382,5 +382,7 @@
     <string name="deck_square">Plaza de Decks</string>
     <string name="my_deck_online">Copia en la Nube</string>
     <string name="input_contributor_name">Introduce el Nombre del Compartidor</string>
+    <string name="sort_by_time">Ordenar por Tiempo</string>
+    <string name="sort_by_thumb">En el orden recomendado</string>
 </resources>
 

@@ -446,4 +446,6 @@
     <string name="deck_square">Deck Plaza</string>
     <string name="my_deck_online">Cloud Backup</string>
     <string name="input_contributor_name">Enter the Sharer\'s Name</string>
+    <string name="sort_by_time">Sort by Time</string>
+    <string name="sort_by_thumb">Sort by Thumb</string>
 </resources>
