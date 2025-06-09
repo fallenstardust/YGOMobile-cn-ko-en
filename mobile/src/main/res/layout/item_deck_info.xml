@@ -39,9 +39,10 @@
             android:text="23333"
             android:lines="1"
             android:gravity="center"
+            android:textColor="@color/brightgreen"
             android:layout_marginLeft="1dp"
             android:layout_marginRight="5dp"
-            android:textSize="5sp"/>
+            android:textSize="6sp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -56,6 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="15dp"
             android:layout_gravity="center"
+            android:textColor="@color/white"
             android:gravity="center"
             android:lines="1"
             android:text="contributor_name"
@@ -64,8 +66,9 @@
         <TextView
             android:id="@+id/deck_info_name"
             android:layout_width="57dp"
-            android:layout_height="18dp"
+            android:layout_height="17dp"
             android:layout_marginTop="70dp"
+            android:layout_marginLeft="1dp"
             android:layout_gravity="center"
             android:gravity="center"
             android:text="deck_name"
@@ -77,6 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center|bottom"
+            android:textColor="@color/white"
             android:gravity="center"
             android:lines="1"
             android:text="1900-02-03"
