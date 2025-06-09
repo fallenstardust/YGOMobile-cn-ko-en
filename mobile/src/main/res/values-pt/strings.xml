@@ -368,5 +368,7 @@
     <string name="input_contributor_name">Insira o Nome do Compartilhador</string>
     <string name="sort_by_time">Ordenar por Tempo</string>
     <string name="sort_by_thumb">Na ordem recomendada</string>
+    <string name="account_warning">Por favor, preencha seu e - mail ou nome de usuário!</string>
+    <string name="pwd_warning">Por favor, insira sua senha!</string>
 </resources>
 

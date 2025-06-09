@@ -109,16 +109,25 @@ public class DeckSquareMyDeckFragment extends Fragment {
         String username = binding.etUsername.getText().toString().trim();
         String password = binding.etPassword.getText().toString().trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            YGOUtil.showTextToast("Please enter both username and password");
+        if (username.isEmpty()) {
+            binding.tvAccountWarning.setVisibility(View.VISIBLE);
             return;
+        } else {
+            binding.tvAccountWarning.setVisibility(View.GONE);
+        }
+
+        if (password.isEmpty()) {
+            binding.tvPwdWarning.setVisibility(View.VISIBLE);
+            return;
+        } else {
+            binding.tvPwdWarning.setVisibility(View.GONE);
         }
 
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.btnLogin.setEnabled(false);
 
         VUiKit.defer().when(() -> {
-            LoginResponse result = DeckSquareApiUtil.login(username, password);
+            LoginResponse result = DeckSquareApiUtil.login(username, password);//执行登录
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
             return result;

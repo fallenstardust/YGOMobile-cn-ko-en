@@ -61,7 +61,7 @@ public class DeckSquareFragment extends Fragment {
                 } else {
                     sortLike = false;
                     binding.tvSortMode.setText(R.string.sort_by_time);//当按点赞顺序时，点击应切换为按时间顺序
-                    binding.refreshData.setImageDrawable(icon_like);//因为点击后会变成按时间顺序，就需要图标显示为按时间顺序，告诉用户点它可变回时间顺序
+                    binding.refreshData.setImageDrawable(icon_like);//因为点击后会变成按时间顺序，就需要图标切换为按点赞顺序，告诉用户点它可变成点赞顺序
                 }
                 int targetPage = 1;
                 try {

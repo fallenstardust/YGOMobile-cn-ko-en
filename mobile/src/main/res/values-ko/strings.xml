@@ -379,4 +379,6 @@
     <string name="input_contributor_name">공유자의 이름을 입력하세요</string>
     <string name="sort_by_time">시간 순서대로</string>
     <string name="sort_by_thumb">추천 순서대로</string>
+    <string name="account_warning">이메일이나 사용자 이름을 입력해 주세요!</string>
+    <string name="pwd_warning">비밀번호를 입력해 주세요!</string>
 </resources>

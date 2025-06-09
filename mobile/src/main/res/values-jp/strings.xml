@@ -378,4 +378,6 @@
     <string name="input_contributor_name">共有者の名前を入力してください</string>
     <string name="sort_by_time">時間順に</string>
     <string name="sort_by_thumb">推薦順に</string>
+    <string name="account_warning">メールアドレスまたはユーザー名を入力してください！</string>
+    <string name="pwd_warning">パスワードを入力してください！</string>
 </resources>

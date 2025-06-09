@@ -383,4 +383,6 @@
     <string name="input_contributor_name">输入共享者名称</string>
     <string name="sort_by_time">按时间顺序</string>
     <string name="sort_by_thumb">按点赞顺序</string>
+    <string name="account_warning">请填写你的邮箱或用户名！</string>
+    <string name="pwd_warning">请填写你的密码！</string>
 </resources>

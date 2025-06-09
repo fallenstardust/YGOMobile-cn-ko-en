@@ -448,4 +448,6 @@
     <string name="input_contributor_name">Enter the Sharer\'s Name</string>
     <string name="sort_by_time">Sort by Time</string>
     <string name="sort_by_thumb">Sort by Thumb</string>
+    <string name="account_warning">Please fill in your email or username!</string>
+    <string name="pwd_warning">Please enter your password!</string>
 </resources>
