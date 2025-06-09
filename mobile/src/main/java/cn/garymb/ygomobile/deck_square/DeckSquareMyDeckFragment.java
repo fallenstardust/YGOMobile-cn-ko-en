@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -21,11 +22,15 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
+import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
@@ -145,6 +150,12 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 binding.progressBar.setVisibility(View.GONE);
                 binding.btnLogin.setEnabled(true);
                 YGOUtil.showTextToast(R.string.login_succeed);
+                McUser mcUser = new McUser();
+                mcUser.setUsername(result.user.username);
+                mcUser.setExternal_id(result.user.id);
+                mcUser.setAvatar_url(ChatMessage.getAvatarUrl(result.user.username));
+                GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(binding.myDeckAvatar);//刷新头像图片
+                UserManagement.getDx().setMcUser(mcUser);
             } else {
                 YGOUtil.showTextToast(R.string.logining_failed);
                 binding.llMainUi.setVisibility(View.GONE);

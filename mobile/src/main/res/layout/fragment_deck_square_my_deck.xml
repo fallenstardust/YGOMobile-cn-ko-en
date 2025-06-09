@@ -144,19 +144,24 @@
             tools:layout_editor_absoluteY="16dp" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
+            android:layout_gravity="center"
             android:orientation="horizontal"
             android:padding="16dp">
 
+            <cn.garymb.ygomobile.ui.mycard.mcchat.view.YuanImage
+                android:id="@+id/my_deck_avatar"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/avatar"/>
+
             <Button
                 android:id="@+id/mc_logout_btn"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/ic_radius_bg"
+                android:background="@drawable/button_radius_black_transparents"
                 android:text="注销" />
 
         </LinearLayout>

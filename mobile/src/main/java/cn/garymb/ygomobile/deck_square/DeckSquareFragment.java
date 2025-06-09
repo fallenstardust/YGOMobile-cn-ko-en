@@ -69,7 +69,6 @@ public class DeckSquareFragment extends Fragment {
                 } catch (NumberFormatException e) {
 
                 }
-                Log.d("seesee sortlike", sortLike.toString());
                 deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
             }
         });
