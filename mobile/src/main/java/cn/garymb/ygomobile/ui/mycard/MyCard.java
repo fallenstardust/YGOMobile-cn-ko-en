@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -338,6 +339,9 @@ public class MyCard {
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
                 UserManagement.getDx().setMcUser(mcUser);
+                Log.i("seesee", userInfo.substring(userInfo.lastIndexOf(":")+2,userInfo.lastIndexOf("\"")));
+                SharedPreferenceUtil.setServerToken(userInfo.substring(userInfo.lastIndexOf(":")+2,userInfo.lastIndexOf("\"")));
+                SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
             }
             if (mListener!=null)
                 mListener.onLogin(mcUser,exception);

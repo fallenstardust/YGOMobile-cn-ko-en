@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -133,6 +134,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         VUiKit.defer().when(() -> {
             LoginResponse result = DeckSquareApiUtil.login(username, password);//执行登录
+            Log.w("seesee result", result.user.username+"//"+result.user.id+"//"+result.token);
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
             return result;
