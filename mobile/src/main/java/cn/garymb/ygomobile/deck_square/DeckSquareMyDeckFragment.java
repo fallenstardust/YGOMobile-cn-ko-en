@@ -5,6 +5,7 @@ import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,7 @@ import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -73,10 +75,19 @@ public class DeckSquareMyDeckFragment extends Fragment {
         binding.llMcLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferenceUtil.deleteServerToken();
-                binding.llMainUi.setVisibility(View.GONE);
-                binding.llDialogLogin.setVisibility(View.VISIBLE);
-
+                DialogPlus dialogPlus = new DialogPlus(getContext());
+                dialogPlus.setMessage(R.string.logout_mycard);
+                dialogPlus.setMessageGravity(Gravity.CENTER);
+                dialogPlus.setLeftButtonListener((dlg, s)-> {
+                    SharedPreferenceUtil.deleteServerToken();
+                    binding.llMainUi.setVisibility(View.GONE);
+                    binding.llDialogLogin.setVisibility(View.VISIBLE);
+                    dialogPlus.dismiss();
+                });
+                dialogPlus.setRightButtonListener((dlg, s)-> {
+                    dialogPlus.dismiss();
+                });
+                dialogPlus.show();
             }
         });
 
