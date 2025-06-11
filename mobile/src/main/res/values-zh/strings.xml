@@ -385,4 +385,5 @@
     <string name="sort_by_thumb">按点赞顺序</string>
     <string name="account_warning">请填写你的邮箱或用户名！</string>
     <string name="pwd_warning">请填写你的密码！</string>
+    <string name="like_deck_thumb">为卡组点赞</string>
 </resources>

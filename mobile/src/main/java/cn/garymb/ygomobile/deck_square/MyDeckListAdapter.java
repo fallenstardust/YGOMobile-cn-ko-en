@@ -9,6 +9,8 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.bean.DeckType;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
@@ -172,6 +174,13 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             }
             LogUtil.i(TAG, "current " + item.toString());
             changeDeckPublicState(item);
+        });
+        helper.getView(R.id.ll_download).setOnClickListener(view -> {
+            //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
+            DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
+
+
+
         });
 //        else if (item.getDeckSouce() == 1) {
 //            helper.setText(R.id.my_deck_id, item.getDeckId());

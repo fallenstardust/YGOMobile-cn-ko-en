@@ -22,7 +22,6 @@
                 android:layout_height="match_parent" />
 
 
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="70dp"
@@ -40,16 +39,44 @@
                     android:orientation="vertical"
                     android:padding="5dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="1"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        android:text="@string/deck_name"
-                        android:textColor="@color/holo_blue_light"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"
+                            android:text="@string/deck_name"
+                            android:textColor="@color/holo_blue_light"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:id="@+id/ll_click_like"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/button_radius_red"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="5dp"
+                                android:src="@drawable/baseline_thumb_up_24"/>
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:textColor="@color/white"
+                                android:text="@string/like_deck_thumb"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_deck"
@@ -58,12 +85,14 @@
                         android:layout_marginTop="2dp"
                         android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
+                        android:gravity="center|left"
                         android:maxLines="1"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"
-                        android:gravity="center|left"
                         android:text="@string/select_deck"
                         android:textColor="@color/white"
                         android:textSize="18sp"

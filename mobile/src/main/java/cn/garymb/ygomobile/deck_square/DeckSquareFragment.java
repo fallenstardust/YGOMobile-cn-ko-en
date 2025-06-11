@@ -244,7 +244,6 @@ public class DeckSquareFragment extends Fragment {
         binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
         binding.btnClearContributorName.setOnClickListener(view -> binding.etInputContributorName.getText().clear());
         deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
-
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
 
             // Show the dialog
@@ -253,18 +252,15 @@ public class DeckSquareFragment extends Fragment {
             dialog.show();
             return true;
         });
-// Set click listener in your adapter
+        // Set click listener in your adapter
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
             //调用
             mDialogListener.onDismiss();
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.SQUARE_DECK);
             onDeckMenuListener.onDeckSelect(deckFile);
-
-
         });
         return binding.getRoot();
-
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {

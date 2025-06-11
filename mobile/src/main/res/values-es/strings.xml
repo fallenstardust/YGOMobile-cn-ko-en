@@ -386,5 +386,6 @@
     <string name="sort_by_thumb">En el orden recomendado</string>
     <string name="account_warning">Por favor, complete su correo electrónico o nombre de usuario!</string>
     <string name="pwd_warning">Por favor, introduzca su contraseña!</string>
+    <string name="like_deck_thumb">Dar un me gusta al deck</string>
 </resources>
 
