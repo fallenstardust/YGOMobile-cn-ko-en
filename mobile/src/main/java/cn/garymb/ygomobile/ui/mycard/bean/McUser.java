@@ -10,8 +10,8 @@ public class McUser implements Serializable {
     private int id;
     private int external_id;
     private String username;
-    //不要用
-    private String name;
+
+    private String token;
     private String email;
     private String avatar_url;
     private boolean admin;
@@ -57,17 +57,12 @@ public class McUser implements Serializable {
         this.username = username;
     }
 
-    /**
-     * 不要用这个，用getUserName
-     * @return
-     */
-    @Deprecated
-    public String getName() {
-        return name;
+    public String getToken() {
+        return token;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setName(String token) {
+        this.token = token;
     }
 
     public String getEmail() {

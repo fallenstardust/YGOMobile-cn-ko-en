@@ -340,21 +340,10 @@ public class MyCard {
             McUser mcUser = null;
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
+                Log.i("seesee mcuser.token",mcUser.getToken());
                 UserManagement.getDx().setMcUser(mcUser);
-                try {
-                    // 使用Gson解析整个JSON对象
-                    JsonObject jsonObject = new Gson().fromJson(userInfo, JsonObject.class);
-                    // 安全地获取token字段
-                    if (jsonObject.has("token")) {
-                        String token = jsonObject.get("token").getAsString();
-                        SharedPreferenceUtil.setServerToken(token);
-                    } else {
-                    }
-                    // 存储用户ID
-                    SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
-                } catch (Exception e) {
-                    Log.e("Mycard loginUser", "解析JSON失败: " + e.getMessage());
-                }
+                SharedPreferenceUtil.setServerToken(mcUser.getToken());
+                SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
             }
             if (mListener!=null)
                 mListener.onLogin(mcUser,exception);
