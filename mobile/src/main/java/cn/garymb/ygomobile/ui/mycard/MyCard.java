@@ -14,6 +14,8 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
@@ -339,9 +341,20 @@ public class MyCard {
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
                 UserManagement.getDx().setMcUser(mcUser);
-                Log.i("seesee", userInfo.substring(userInfo.lastIndexOf(":")+2,userInfo.lastIndexOf("\"")));
-                SharedPreferenceUtil.setServerToken(userInfo.substring(userInfo.lastIndexOf(":")+2,userInfo.lastIndexOf("\"")));
-                SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
+                try {
+                    // 使用Gson解析整个JSON对象
+                    JsonObject jsonObject = new Gson().fromJson(userInfo, JsonObject.class);
+                    // 安全地获取token字段
+                    if (jsonObject.has("token")) {
+                        String token = jsonObject.get("token").getAsString();
+                        SharedPreferenceUtil.setServerToken(token);
+                    } else {
+                    }
+                    // 存储用户ID
+                    SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
+                } catch (Exception e) {
+                    Log.e("Mycard loginUser", "解析JSON失败: " + e.getMessage());
+                }
             }
             if (mListener!=null)
                 mListener.onLogin(mcUser,exception);
