@@ -58,8 +58,8 @@ public class DeckSquareMyDeckFragment extends Fragment {
         } else {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.llDialogLogin.setVisibility(View.GONE);
-            McUser mcUser = new McUser();
-            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getUserName())).into(binding.myDeckAvatar);//刷新头像图片
+            binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
+            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
         }
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
@@ -70,7 +70,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         deckListAdapter.loadData();
 
         //其实仅仅是清除掉本机的token
-        binding.mcLogoutBtn.setOnClickListener(new View.OnClickListener() {
+        binding.llMcLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 SharedPreferenceUtil.deleteServerToken();
@@ -138,6 +138,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             LoginResponse result = DeckSquareApiUtil.login(username, password);//执行登录
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
+            SharedPreferenceUtil.setMyCardUserName(result.user.username);
             return result;
 
         }).fail((e) -> {
@@ -152,13 +153,18 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 binding.llDialogLogin.setVisibility(View.GONE);
                 binding.progressBar.setVisibility(View.GONE);
                 binding.btnLogin.setEnabled(true);
-                YGOUtil.showTextToast(R.string.login_succeed);
+                //储存信息
+                String userName = result.user.username;
+                binding.tvMycardUserName.setText(userName);
                 McUser mcUser = new McUser();
-                mcUser.setUsername(result.user.username);
+                mcUser.setUsername(userName);
                 mcUser.setExternal_id(result.user.id);
-                mcUser.setAvatar_url(ChatMessage.getAvatarUrl(result.user.username));
+                mcUser.setAvatar_url(ChatMessage.getAvatarUrl(userName));
+                mcUser.setToken(result.token);
+
                 GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(binding.myDeckAvatar);//刷新头像图片
                 UserManagement.getDx().setMcUser(mcUser);
+                YGOUtil.showTextToast(R.string.login_succeed);
             } else {
                 YGOUtil.showTextToast(R.string.logining_failed);
                 binding.llMainUi.setVisibility(View.GONE);

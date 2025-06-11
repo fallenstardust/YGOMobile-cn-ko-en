@@ -144,6 +144,7 @@
             tools:layout_editor_absoluteY="16dp" />
 
         <LinearLayout
+            android:id="@+id/ll_mc_logout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -158,13 +159,22 @@
                 android:layout_marginStart="5dp"
                 android:src="@drawable/avatar"/>
 
-            <Button
-                android:id="@+id/mc_logout_btn"
+            <TextView
+                android:id="@+id/tv_mycard_user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textColor="@color/holo_green_bright"
+                android:text="mycardUserName"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_marginEnd="5dp"/>
+
+            <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="5dp"
-                android:background="@color/transparent"
-                android:text="注销" />
+                android:src="@drawable/baseline_login_24"
+                android:background="@color/transparent" />
 
         </LinearLayout>
     </LinearLayout>

@@ -61,7 +61,7 @@ public class McUser implements Serializable {
         return token;
     }
 
-    public void setName(String token) {
+    public void setToken(String token) {
         this.token = token;
     }
 

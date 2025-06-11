@@ -340,10 +340,11 @@ public class MyCard {
             McUser mcUser = null;
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
-                Log.i("seesee mcuser.token",mcUser.getToken());
-                UserManagement.getDx().setMcUser(mcUser);
+                UserManagement.getDx().setMcUser(mcUser);//登录后，mcUser信息存在此
+                //另外保存一份token和id信息作为其他登录验证场景调用
                 SharedPreferenceUtil.setServerToken(mcUser.getToken());
                 SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
+                SharedPreferenceUtil.setMyCardUserName(mcUser.getUsername());
             }
             if (mListener!=null)
                 mListener.onLogin(mcUser,exception);
