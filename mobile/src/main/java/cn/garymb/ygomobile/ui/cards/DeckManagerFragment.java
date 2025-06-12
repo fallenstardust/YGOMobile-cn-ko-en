@@ -33,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -130,6 +131,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private HomeActivity activity;
+    private String mDeckId;
+    private LinearLayout ll_click_like;
 
     protected int screenWidth;
 
@@ -207,14 +210,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
-        tv_deck.setOnClickListener(v ->
-                {
-                    new DeckManageDialog(this).show(
-                            getActivity().getSupportFragmentManager(),
-                            "pagerDialog"
-                    );
-                }
-        );
+        ll_click_like = layoutView.findViewById(R.id.ll_click_like);
+        ll_click_like.setOnClickListener(v -> {
+            ll_click_like.setVisibility(View.GONE);
+        });
+        tv_deck.setOnClickListener(v -> {
+            new DeckManageDialog(this).show(
+                    getActivity().getSupportFragmentManager(), "pagerDialog");
+        });
         //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
     }
@@ -1259,31 +1262,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public void onDeckSelect(DeckFile deckFile) {
         if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
-
             VUiKit.defer().when(() -> {
-
                 DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(deckFile.getDeckId());
                 if (response != null) {
                     return response.getData();
                 } else {
                     return null;
                 }
-
             }).fail((e) -> {
-
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
-
             }).done((deckData) -> {
                 if (deckData != null) {
+                    mDeckId = deckData.getDeckId();
+                    Log.w("seesee mDeckId", mDeckId);
+                    if(mDeckId != null ) ll_click_like.setVisibility(View.VISIBLE);
                     deckData.getDeckYdk();
-
                     String fileFullName = deckData.getDeckName() + ".ydk";
                     // String path = AppsSettings.get().getDeckDir();
-
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
-
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);
