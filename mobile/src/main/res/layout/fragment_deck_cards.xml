@@ -24,7 +24,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 android:layout_marginLeft="10dp"
                 android:orientation="horizontal"
@@ -32,8 +32,9 @@
 
                 <LinearLayout
                     android:id="@+id/tv_deckmanger"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/item_and_text_height"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dialogshort"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical"
@@ -57,9 +58,9 @@
 
                         <LinearLayout
                             android:id="@+id/ll_click_like"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/button_radius_red"
+                            android:background="@drawable/veil2"
                             android:visibility="gone"
                             android:orientation="horizontal">
 
@@ -67,11 +68,17 @@
                                 android:layout_width="20dp"
                                 android:layout_height="20dp"
                                 android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
                                 android:src="@drawable/baseline_thumb_up_24"/>
 
                             <TextView
-                                android:layout_width="match_parent"
+                                android:id="@+id/tv_add_1"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:gravity="center"
+                                android:layout_weight="1"
+                                android:layout_marginStart="5dp"
                                 android:layout_marginEnd="5dp"
                                 android:textColor="@color/white"
                                 android:text="@string/like_deck_thumb"/>
@@ -84,13 +91,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_marginTop="2dp"
-                        android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
                         android:gravity="center|left"
                         android:maxLines="1"
                         android:paddingStart="5dp"
                         android:paddingEnd="5dp"
                         android:shadowColor="@color/black"
+                        android:background="@drawable/button_radius_black_transparents"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"

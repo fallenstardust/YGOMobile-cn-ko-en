@@ -79,6 +79,7 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.deck_square.DeckManageDialog;
 import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
+import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -133,6 +134,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private HomeActivity activity;
     private String mDeckId;
     private LinearLayout ll_click_like;
+    private TextView tv_add_1;
 
     protected int screenWidth;
 
@@ -210,9 +212,28 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
+        //只有当加载的是具有id的deck时才显示点赞按钮
+        tv_add_1 = layoutView.findViewById(R.id.tv_add_1);
         ll_click_like = layoutView.findViewById(R.id.ll_click_like);
         ll_click_like.setOnClickListener(v -> {
-            ll_click_like.setVisibility(View.GONE);
+            if (mDeckId != null) {
+                VUiKit.defer().when(() -> {
+                    BasicResponse result = DeckSquareApiUtil.likeDeck(mDeckId);
+                    return result;
+                }).fail(e -> {
+                    LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+                    YGOUtil.showTextToast("点赞失败");
+                }).done(data -> {
+                    if (data != null && data.getMessage() != null && data.getMessage().equals("true")) {
+                        // 显示点赞动画
+                        tv_add_1.setText("+1");
+                        ll_click_like.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out));
+                        ll_click_like.setVisibility(View.GONE);
+                    } else {
+                        YGOUtil.showTextToast(data != null ? data.getMessage() : "点赞失败");
+                    }
+                });
+            }
         });
         tv_deck.setOnClickListener(v -> {
             new DeckManageDialog(this).show(
@@ -1275,10 +1296,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
                     Log.w("seesee mDeckId", mDeckId);
-                    if(mDeckId != null ) ll_click_like.setVisibility(View.VISIBLE);
                     deckData.getDeckYdk();
                     String fileFullName = deckData.getDeckName() + ".ydk";
-                    // String path = AppsSettings.get().getDeckDir();
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
@@ -1286,8 +1305,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);
                         preLoadFile(dir.getPath() + "/" + fileFullName);
+                        tv_add_1.setText(R.string.like_deck_thumb);
+                        ll_click_like.setVisibility(View.VISIBLE);
                     }
-
                 }
             });
 
