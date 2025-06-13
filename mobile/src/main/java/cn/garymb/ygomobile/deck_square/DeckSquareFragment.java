@@ -243,15 +243,6 @@ public class DeckSquareFragment extends Fragment {
         //设置清空按钮点击清除输入内容
         binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
         binding.btnClearContributorName.setOnClickListener(view -> binding.etInputContributorName.getText().clear());
-        deckSquareListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
-            OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
-
-            // Show the dialog
-            SquareDeckDetailDialog dialog = new SquareDeckDetailDialog(getContext(), item);
-
-            dialog.show();
-            return true;
-        });
         // Set click listener in your adapter
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
