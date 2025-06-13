@@ -4,14 +4,14 @@
 
     <!-- 位移动画：从当前位置向上移动150dp -->
     <translate
-        android:duration="1000"
+        android:duration="1500"
         android:fromYDelta="0"
-        android:toYDelta="-150dp"
+        android:toYDelta="-30dp"
         android:interpolator="@android:anim/decelerate_interpolator" />
 
     <!-- 透明度动画：从完全可见到完全透明 -->
     <alpha
-        android:duration="1000"
+        android:duration="1500"
         android:fromAlpha="1.0"
         android:toAlpha="0.0"
         android:interpolator="@android:anim/accelerate_interpolator" />
