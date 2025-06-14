@@ -91,14 +91,6 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
         });
 
-        deckListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
-
-            MyDeckItem item = (MyDeckItem) adapter.getItem(position);
-
-            MyDeckDetailDialog dialog = new MyDeckDetailDialog(getContext(), item);
-            dialog.show();
-            return true;
-        });
         return binding.getRoot();
 
     }
