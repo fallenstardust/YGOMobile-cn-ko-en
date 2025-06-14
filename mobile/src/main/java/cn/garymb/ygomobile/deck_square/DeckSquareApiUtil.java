@@ -224,14 +224,12 @@ public class DeckSquareApiUtil {
 
         deckData.setDeckId(deckId);
         deckData.setDeckName(deckfile.getName());
-        deckData.getDeckCoverCard1(deckfile.getFirstCode());
+        deckData.setDeckCoverCard1(deckfile.getFirstCode());
         deckData.setDelete(false);
         deckData.setDeckYdk(deckContent);
         pushCardJson.setDeck(deckData);
 
         String json = gson.toJson(pushCardJson);
-
-
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
         String responseBodyString = response.body().string();
 
