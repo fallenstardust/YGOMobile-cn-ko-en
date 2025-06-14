@@ -57,7 +57,7 @@ public class PushCardJson {
             this.deckName = deckName;
         }
 
-        public Integer getDeckCoverCard1() {
+        public Integer getDeckCoverCard1(Integer firstCode) {
             return deckCoverCard1;
         }
 

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
@@ -155,10 +156,10 @@ public class DeckSquareApiUtil {
      * 阻塞方法，用于推送新卡组。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
      * 先同步推送，之后异步推送。首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
      *
-     * @param deckPath
-     * @param deckName
+     * @param deckfile
+     * @param loginToken
      */
-    public static PushDeckResponse requestIdAndPushDeck(String deckPath, String deckName, LoginToken loginToken) throws IOException {
+    public static PushDeckResponse requestIdAndPushDeck(DeckFile deckFile, LoginToken loginToken) throws IOException {
 
         if (loginToken == null) {
             return null;
@@ -189,7 +190,7 @@ public class DeckSquareApiUtil {
             return null;
         }
 
-        return pushDeck(deckPath, deckName, loginToken, deckId);
+        return pushDeck(deckFile, loginToken, deckId);
 
     }
 
@@ -199,15 +200,14 @@ public class DeckSquareApiUtil {
      * 如果在服务器存在deckId相同的记录，则更新卡组，deckName会覆盖服务器上的卡组名
      * 如果在服务器存在deckName相同、deckId不同的记录，则更新失败
      *
-     * @param deckPath
-     * @param deckName
+     * @param deckfile
      * @param loginToken
      * @param deckId
      * @return
      * @throws IOException
      */
-    private static PushDeckResponse pushDeck(String deckPath, String deckName, LoginToken loginToken, String deckId) throws IOException {
-        String deckContent = DeckSquareFileUtil.setDeckId(deckPath, loginToken.getUserId(), deckId);
+    private static PushDeckResponse pushDeck(DeckFile deckfile, LoginToken loginToken, String deckId) throws IOException {
+        String deckContent = DeckSquareFileUtil.setDeckId(deckfile.getPath(), loginToken.getUserId(), deckId);
 
         PushDeckResponse result = null;
         String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
@@ -223,7 +223,8 @@ public class DeckSquareApiUtil {
         PushCardJson.DeckData deckData = new PushCardJson.DeckData();
 
         deckData.setDeckId(deckId);
-        deckData.setDeckName(deckName);
+        deckData.setDeckName(deckfile.getName());
+        deckData.getDeckCoverCard1(deckfile.getFirstCode());
         deckData.setDelete(false);
         deckData.setDeckYdk(deckContent);
         pushCardJson.setDeck(deckData);

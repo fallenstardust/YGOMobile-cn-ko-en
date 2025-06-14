@@ -688,7 +688,10 @@ public class YGODeckDialogUtil {
                 ygoDialog.dismiss();
         }
 
-
+        public void hide() {
+            if (ygoDialog != null && ygoDialog.isShowing())
+                ygoDialog.hide();
+        }
     }
 
 }

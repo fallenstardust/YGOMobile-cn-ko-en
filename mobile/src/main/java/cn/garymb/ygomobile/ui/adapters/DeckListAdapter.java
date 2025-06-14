@@ -94,7 +94,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             LogUtil.i(TAG, "deckFile " + deckFile.toString());
             //上传卡组
             VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile.getPath(), deckFile.getName(),loginToken);
+                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile,loginToken);
                 return result;
             }).fail(e -> {
 

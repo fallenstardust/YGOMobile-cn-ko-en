@@ -59,7 +59,7 @@ public class DeckFile extends TextSelect {
     }
 
 
-    public int getFirstCode() {
+    public Integer getFirstCode() {
         return firstCode;
     }
 

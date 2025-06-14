@@ -71,6 +71,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
                     item.setDeckSouce(1);
                     item.setDeckId(detail.getDeckId());
                     item.setUserId(detail.getUserId());
+                    item.setDeckCoverCard1(detail.getDeckCoverCard1());
                     item.setUpdateDate(detail.getDeckUpdateDate());
                     item.setPublic(detail.isPublic());
                     myOnlineDecks.add(item);
