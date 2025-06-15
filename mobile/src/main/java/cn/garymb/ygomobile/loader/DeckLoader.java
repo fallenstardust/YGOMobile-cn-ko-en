@@ -32,7 +32,7 @@ import ocgcore.data.LimitList;
 public class DeckLoader {
     private static Boolean isChanged;
 
-    public static DeckInfo readDeck(CardLoader cardLoader, File file, LimitList limitList) {
+    public static DeckInfo readDeck(CardLoader cardLoader, File file) {
         DeckInfo deckInfo = null;
         FileInputStream fileinputStream = null;
         try {

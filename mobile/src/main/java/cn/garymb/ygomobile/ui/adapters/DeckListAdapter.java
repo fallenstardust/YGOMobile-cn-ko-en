@@ -119,7 +119,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         this.deckFile = (DeckFile) item;
         holder.deckName.setText(item.getName());
         //预读卡组信息
-        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile());
         //加载卡组第一张卡的图
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);

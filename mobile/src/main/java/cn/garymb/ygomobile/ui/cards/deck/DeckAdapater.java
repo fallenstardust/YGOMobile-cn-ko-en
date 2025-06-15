@@ -406,7 +406,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         if (limitList != null) {
             setLimitList(limitList);
         }
-        return DeckLoader.readDeck(cardLoader, file, limitList);
+        return DeckLoader.readDeck(cardLoader, file);
     }
 
     public boolean save(File file) {
