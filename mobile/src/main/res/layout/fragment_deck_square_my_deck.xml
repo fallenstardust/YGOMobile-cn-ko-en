@@ -29,6 +29,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/login_mycard"
+                android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -128,7 +129,7 @@
             android:inputType="textNoSuggestions"
             android:singleLine="true"
             android:textColor="@color/holo_blue_bright"
-            android:textColorHint="@color/gray"
+            android:textColorHint="@color/star_rank"
             android:textSize="15sp" />
 
         <com.tubb.smrv.SwipeMenuRecyclerView

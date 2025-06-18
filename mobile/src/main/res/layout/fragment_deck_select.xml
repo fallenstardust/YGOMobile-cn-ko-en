@@ -26,12 +26,12 @@
                 android:layout_weight="9"
                 android:gravity="center"
                 android:hint="@string/intpu_name"
+                android:textColorHint="@color/star_rank"
                 android:imeOptions="actionSearch"
                 android:inputType="textNoSuggestions"
                 android:singleLine="true"
                 android:textSize="15sp"
-                android:textColor="@color/holo_blue_bright"
-                android:textColorHint="@color/gray" />
+                android:textColor="@color/holo_blue_bright" />
 
             <ImageView
                 android:id="@+id/iv_search_deck_name"

@@ -1,24 +1,18 @@
 package cn.garymb.ygomobile.deck_square;
 
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.view.inputmethod.EditorInfo;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import cn.garymb.ygomobile.bean.DeckType;
-import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
@@ -29,7 +23,6 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -42,7 +35,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
-
+    private String keyWord;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
 
@@ -78,19 +71,50 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 DialogPlus dialogPlus = new DialogPlus(getContext());
                 dialogPlus.setMessage(R.string.logout_mycard);
                 dialogPlus.setMessageGravity(Gravity.CENTER);
-                dialogPlus.setLeftButtonListener((dlg, s)-> {
+                dialogPlus.setLeftButtonListener((dlg, s) -> {
                     SharedPreferenceUtil.deleteServerToken();
                     binding.llMainUi.setVisibility(View.GONE);
                     binding.llDialogLogin.setVisibility(View.VISIBLE);
                     dialogPlus.dismiss();
                 });
-                dialogPlus.setRightButtonListener((dlg, s)-> {
+                dialogPlus.setRightButtonListener((dlg, s) -> {
                     dialogPlus.dismiss();
                 });
                 dialogPlus.show();
             }
         });
+        //查询卡组名称
+        binding.etMyDeckInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                keyWord = v.getText().toString();
+                //直接过滤列表中的item名称，而不是像卡组广场那样重新查询
+                deckListAdapter.filter(keyWord);
 
+                return true;
+            }
+            return false;
+        });
+        // 添加文本变化监听器
+        binding.etMyDeckInputDeckName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                deckListAdapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // 当输入框内容为空时
+                if (s.toString().isEmpty()) {
+                    deckListAdapter.loadData();//悄悄留一个刷新我的云备份的方式，方便
+                } else {
+                    deckListAdapter.filter(s.toString());
+                }
+            }
+        });
         return binding.getRoot();
 
     }

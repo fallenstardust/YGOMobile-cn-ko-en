@@ -27,10 +27,11 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
+    private List<MyDeckItem> originalData; // 保存原始数据
 
     public MyDeckListAdapter(int layoutResId) {
         super(layoutResId);
-
+        originalData = new ArrayList<>();
         imageLoader = new ImageLoader();
     }
 
@@ -79,6 +80,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             }
 
             LogUtil.i(TAG, "load mycard from server done");
+            originalData.clear();
+            originalData.addAll(myOnlineDecks); // 保存原始数据
             getData().clear();
             addData(myOnlineDecks);
             notifyDataSetChanged();
@@ -91,6 +94,26 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             }
         });
 
+    }
+
+    // 筛选函数
+    public void filter(String keyword) {
+        List<MyDeckItem> filteredList = new ArrayList<>();
+        if (keyword.isEmpty()) {
+            // 如果关键词为空，则显示所有数据
+            filteredList.addAll(originalData);
+        } else {
+            // 遍历原始数据，筛选出包含关键词的item
+            for (MyDeckItem item : originalData) {
+                if (item.getDeckName().contains(keyword)) {
+                    filteredList.add(item);
+                }
+            }
+        }
+        // 更新显示的数据
+        getData().clear();
+        addData(filteredList);
+        notifyDataSetChanged();
     }
 
     private void deleteMyDeckOnLine(MyDeckItem item) {
@@ -177,32 +200,11 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             changeDeckPublicState(item);
         });
         helper.getView(R.id.ll_download).setOnClickListener(view -> {
+            //TODO
             //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
 
-
-
         });
-//        else if (item.getDeckSouce() == 1) {
-//            helper.setText(R.id.my_deck_id, item.getDeckId());
-//            imageView.setImageResource(R.drawable.ic_server_download);
-//        }
-
-
-//        long code = item.getDeckCoverCard1();
-//        LogUtil.i(TAG, code + " " + item.getDeckName());
-//        if (code != 0) {
-//            imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
-//        }
-//
-
-        // ImageView imageview = helper.getView(R.id.ex_card_image);
-        //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)
-        //cn.garymb.ygomobile.loader.ImageLoader.setDefaults(...)
-        //is a private function,so I copied the content of it to here
-        /* 如果查不到版本号，则不显示图片 */
-        /* 如果能查到版本号，则显示图片，利用glide的signature，将版本号和url作为signature，由glide判断是否使用缓存 */
-
 
     }
 
