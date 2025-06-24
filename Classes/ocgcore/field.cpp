@@ -957,10 +957,7 @@ void field::shuffle(uint8_t playerid, uint8_t location) {
 		if(location == LOCATION_EXTRA)
 			s = s - (int32_t)player[playerid].extra_p_count;
 		if(s > 1) {
-			if (core.duel_options & DUEL_OLD_REPLAY)
-				pduel->random.shuffle_vector_old(svector, 0, s - 1);
-			else
-				pduel->random.shuffle_vector(svector, 0, s - 1);
+			pduel->random.shuffle_vector(svector, 0, s, pduel->rng_version);
 			reset_sequence(playerid, location);
 		}
 	}
@@ -3370,7 +3367,9 @@ int32_t field::is_player_can_send_to_deck(uint8_t playerid, card * pcard) {
 	}
 	return TRUE;
 }
-int32_t field::is_player_can_remove(uint8_t playerid, card * pcard, uint32_t reason) {
+int32_t field::is_player_can_remove(uint8_t playerid, card* pcard, uint32_t reason, effect* reason_effect) {
+	if(!reason_effect)
+		reason_effect = core.reason_effect;
 	effect_set eset;
 	filter_player_effect(playerid, EFFECT_CANNOT_REMOVE, &eset);
 	for(effect_set::size_type i = 0; i < eset.size(); ++i) {
@@ -3380,7 +3379,7 @@ int32_t field::is_player_can_remove(uint8_t playerid, card * pcard, uint32_t rea
 		pduel->lua->add_param(pcard, PARAM_TYPE_CARD);
 		pduel->lua->add_param(playerid, PARAM_TYPE_INT);
 		pduel->lua->add_param(reason, PARAM_TYPE_INT);
-		pduel->lua->add_param(core.reason_effect, PARAM_TYPE_EFFECT);
+		pduel->lua->add_param(reason_effect, PARAM_TYPE_EFFECT);
 		if(pduel->lua->check_condition(eset[i]->target, 5))
 			return FALSE;
 	}
