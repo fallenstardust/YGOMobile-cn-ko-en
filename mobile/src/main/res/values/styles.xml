@@ -117,5 +117,9 @@
     <style name="itemSpinnerStyle" parent="Widget.AppCompat.DropDownItem.Spinner">
 
     </style>
-
+    <style name="wallet_third_tab_layout">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/selector_text_color_white_gold</item>
+    </style>
 </resources>

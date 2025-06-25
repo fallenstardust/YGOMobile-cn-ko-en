@@ -68,11 +68,18 @@ public class DeckUtil {
         }
     };
 
+    /**
+     * 生成卡组类型的list
+     *
+     * @param context
+     * @return
+     */
     public static List<DeckType> getDeckTypeList(Context context) {
         List<DeckType> deckTypeList = new ArrayList<>();
-        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_pack), AppsSettings.get().getPackDeckDir()));
-        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_windbot_deck), AppsSettings.get().getAiDeckDir()));
-        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_Uncategorized), AppsSettings.get().getDeckDir()));
+        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_pack), AppsSettings.get().getPackDeckDir(), DeckType.ServerType.LOCAL));
+        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_windbot_deck), AppsSettings.get().getAiDeckDir(), DeckType.ServerType.LOCAL));
+        deckTypeList.add(new DeckType(YGOUtil.s(R.string.category_Uncategorized), AppsSettings.get().getDeckDir(), DeckType.ServerType.LOCAL));
+
 
         File[] files = new File(AppsSettings.get().getDeckDir()).listFiles();
         if (files != null) {
@@ -138,6 +145,7 @@ public class DeckUtil {
 
     /**
      * 根据卡组绝对路径获取卡组分类名称
+     *
      * @param deckPath
      * @return
      */
@@ -149,19 +157,20 @@ public class DeckUtil {
             if (name.equals("pack") || name.equals("cacheDeck")) {
                 //卡包
                 return YGOUtil.s(R.string.category_pack);
-            } else if (name.equals("Decks")&&lastName.equals(Constants.WINDBOT_PATH)) {
+            } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
                 //ai卡组
                 return YGOUtil.s(R.string.category_windbot_deck);
             } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
                 //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
                 return YGOUtil.s(R.string.category_Uncategorized);
             } else {
-               return name;
+                return name;
             }
         }
         return null;
     }
 
+    //获取扩展卡的列表
     public static List<DeckFile> getExpansionsDeckList() throws IOException {
         AppsSettings appsSettings = AppsSettings.get();
         List<DeckFile> deckList = new ArrayList<>();

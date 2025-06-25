@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
+
+    <string name="privacy_policy_content">privacy content</string>
     <!--string name="app_name">YGOMobile</string-->
     <string name="action_settings">Settings</string>
     <string name="action_game">Single Game</string>
@@ -45,6 +47,9 @@
     <string name="back_tip">Press back key again to exit.</string>
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
+
+
+    <string name="fetch_online_deck">Fetching online decks via web</string>
     <string name="fetch_ex_card">Fetching pre-cards via web</string>
     <string name="ex_card_list_title">Card List</string>
     <string name="ex_card_log_title">update log</string>
@@ -293,6 +298,8 @@
     <string name="category_pack">Pack</string>
     <string name="category_windbot_deck">AI Decks</string>
     <string name="category_Uncategorized">Uncategorized</string>
+    <string name="category_online_deck">Online Deck</string>
+    <string name="category_my_online_deck">My Online Deck</string>
     <string name="please_input_category_name">please input category name</string>
     <string name="invalid_category_name">invalid category name</string>
     <string name="please_select_target_category">please select target category</string>
@@ -383,4 +390,27 @@
     <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
     <string name="open">Open the deck</string>
     <string name="web_warn_save_deck">Opening the deck will close the webpage you are currently viewing. Do you want to close the webpage and open the deck</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="down_complete">download complete</string>
+    <string name="upload">upload</string>
+    <string name="go_to">go to</string>
+    <string name="local_deck">my decks</string>
+    <string name="in_public">in Public</string>
+    <string name="in_personal_use">in Personal Use</string>
+    <string name="register">Register</string>
+    <string name="sign_out">Sign out</string>
+    <string name="input_user_name">Enter Username</string>
+    <string name="input_pwd">Enter Password</string>
+    <string name="deck_square">Deck Plaza</string>
+    <string name="my_deck_online">Cloud Backup</string>
+    <string name="input_contributor_name">Enter the Sharer\'s Name</string>
+    <string name="sort_by_time">Sort by Time</string>
+    <string name="sort_by_thumb">Sort by Thumb</string>
+    <string name="account_warning">Please fill in your email or username!</string>
+    <string name="pwd_warning">Please enter your password!</string>
+    <string name="like_deck_thumb">Like the deck</string>
 </resources>

@@ -21,41 +21,86 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
+
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="100dp"
                 android:layout_gravity="bottom"
                 android:layout_marginLeft="10dp"
-                android:orientation="horizontal"
-                android:weightSum="1">
+                android:orientation="horizontal">
 
                 <LinearLayout
                     android:id="@+id/tv_deckmanger"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/item_and_text_height"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical"
                     android:padding="5dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="1"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        android:text="@string/deck_name"
-                        android:textColor="@color/holo_blue_light"
-                        android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_gravity="bottom"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"
+                            android:text="@string/deck_name"
+                            android:textColor="@color/holo_blue_light"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:id="@+id/ll_click_like"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom"
+                            android:background="@drawable/veil2"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:src="@drawable/baseline_thumb_up_24" />
+
+                            <TextView
+                                android:id="@+id/tv_add_1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:text="@string/like_deck_thumb"
+                                android:textColor="@color/white" />
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_deck"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="bottom"
+                        android:layout_weight="1"
                         android:layout_marginTop="2dp"
+                        android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
+                        android:gravity="center|left"
                         android:maxLines="1"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
                         android:shadowDy="1"
@@ -77,7 +122,8 @@
                 <LinearLayout
                     android:id="@+id/nav_list"
                     android:layout_width="60dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
                     android:orientation="vertical">
 
                     <ImageView
@@ -90,7 +136,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
@@ -105,7 +150,8 @@
                 <LinearLayout
                     android:id="@+id/nav_search"
                     android:layout_width="60dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
                     android:orientation="vertical">
 
                     <ImageView
@@ -118,7 +164,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"
@@ -133,7 +178,8 @@
                 <LinearLayout
                     android:id="@+id/deck_menu"
                     android:layout_width="60dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
                     android:layout_marginLeft="2dp"
                     android:layout_marginRight="2dp"
                     android:orientation="vertical">
@@ -161,7 +207,6 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:gravity="bottom|center_horizontal"
                         android:shadowColor="@color/black"
                         android:shadowDx="1"

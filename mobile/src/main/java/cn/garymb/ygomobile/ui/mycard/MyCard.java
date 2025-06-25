@@ -14,6 +14,8 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
@@ -40,6 +42,7 @@ import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -67,6 +70,7 @@ public class MyCard {
     public static final String ARG_UPDATE_AT = "updated_at";
     public static final String ARG_URL = "url";
     public static final String ARG_NEWS = "news";
+    public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
     private final DefWebViewClient mDefWebViewClient = new DefWebViewClient() {
         @Override
@@ -336,7 +340,11 @@ public class MyCard {
             McUser mcUser = null;
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
-                UserManagement.getDx().setMcUser(mcUser);
+                UserManagement.getDx().setMcUser(mcUser);//登录后，mcUser信息存在此
+                //另外保存一份token和id信息作为其他登录验证场景调用
+                SharedPreferenceUtil.setServerToken(mcUser.getToken());
+                SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
+                SharedPreferenceUtil.setMyCardUserName(mcUser.getUsername());
             }
             if (mListener!=null)
                 mListener.onLogin(mcUser,exception);

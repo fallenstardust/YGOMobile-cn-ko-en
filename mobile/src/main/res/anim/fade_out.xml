@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="false">
+
+    <!-- 位移动画：从当前位置向上移动150dp -->
+    <translate
+        android:duration="1500"
+        android:fromYDelta="0"
+        android:toYDelta="-30dp"
+        android:interpolator="@android:anim/decelerate_interpolator" />
+
+    <!-- 透明度动画：从完全可见到完全透明 -->
+    <alpha
+        android:duration="1500"
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:interpolator="@android:anim/accelerate_interpolator" />
+
+    <!-- 缩放动画：稍微缩小一点 -->
+    <scale
+        android:duration="1000"
+        android:fromXScale="1.0"
+        android:fromYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toXScale="0.8"
+        android:toYScale="0.8"
+        android:interpolator="@android:anim/decelerate_interpolator" />
+</set>

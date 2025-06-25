@@ -365,4 +365,20 @@
     <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
     <string name="open">デッキを開く</string>
     <string name="web_warn_save_deck">デッキを開くと、現在閲覧しているウェブページが閉じられます。ウェブページを閉じてデッキを開きますか？</string>
+    <string name="go_to">移る</string>
+    <string name="local_deck">私のデッキ</string>
+    <string name="in_public">公開中</string>
+    <string name="in_personal_use">私用中</string>
+    <string name="register">登録する</string>
+    <string name="sign_out">ログアウト</string>
+    <string name="input_user_name">ユーザー名を入力してください</string>
+    <string name="input_pwd">パスワードを入力してください</string>
+    <string name="deck_square">デッキ広場</string>
+    <string name="my_deck_online">クラウド バックアップ</string>
+    <string name="input_contributor_name">共有者の名前を入力してください</string>
+    <string name="sort_by_time">時間順に</string>
+    <string name="sort_by_thumb">推薦順に</string>
+    <string name="account_warning">メールアドレスまたはユーザー名を入力してください！</string>
+    <string name="pwd_warning">パスワードを入力してください！</string>
+    <string name="like_deck_thumb">デッキに「いいね」をつける</string>
 </resources>

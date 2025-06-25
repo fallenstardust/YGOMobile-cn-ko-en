@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.management;
 
 import android.annotation.SuppressLint;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -20,7 +22,9 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
@@ -45,142 +49,121 @@ public class ServiceManagement {
     public static final int CHAT_USER_NULL = 8;
 
     private static final ServiceManagement su = new ServiceManagement();
-    private XMPPTCPConnection con;
-    private MultiUserChat muc;
-    private boolean isConnected = false;
-    private boolean isListener = false;
-    private boolean isStartLoading=false;
-
     private final List<ChatMessage> chatMessageList;
-    private final List<ChatListener> chatListenerList;
-    private final List<OnJoinChatListener> joinChatListenerList;
-
+    private final ConcurrentHashMap<Integer, ChatListener> chatListenerList;
+    private final ConcurrentHashMap<Integer, OnJoinChatListener> joinChatListenerList;
+    private int chatListenerId = 0;
+    private int joinChatListenerId = 0;
 
     @SuppressLint("HandlerLeak")
-    Handler han = new Handler() {
-
+    private final Handler han = new Handler(Looper.getMainLooper()) {
         @Override
-        public void handleMessage(android.os.Message msg) {
-            // TODO: Implement this method
-            super.handleMessage(msg);
-            int i = 0;
+        public void handleMessage(Message msg) {
             switch (msg.what) {
                 case TYPE_ADD_MESSAGE:
-                    while (i < chatListenerList.size()) {
-                        ChatListener chatListener = chatListenerList.get(i);
-                        if (chatListener.isListenerEffective()) {
-                            chatListener.addChatMessage((ChatMessage) msg.obj);
-                            i++;
-                        } else {
-                            chatListenerList.remove(i);
-                        }
-                    }
+                    broadcastChatMessage((ChatMessage) msg.obj);
                     break;
                 case TYPE_RE_LOGIN:
-                    while (i < chatListenerList.size()) {
-                        ChatListener chatListener = chatListenerList.get(i);
-                        if (chatListener.isListenerEffective()) {
-                            chatListener.reChatLogin((boolean) msg.obj);
-                            i++;
-                        } else {
-                            chatListenerList.remove(i);
-                        }
-                    }
+                    broadcastReLogin((boolean) msg.obj);
                     break;
                 case TYPE_RE_JOIN:
-
-                    while (i < chatListenerList.size()) {
-                        ChatListener chatListener = chatListenerList.get(i);
-                        if (chatListener.isListenerEffective()) {
-                            chatListener.reChatJoin((boolean) msg.obj);
-                            i++;
-                        } else {
-                            chatListenerList.remove(i);
-                        }
-                    }
+                    broadcastReJoin((boolean) msg.obj);
                     break;
                 case CHAT_LOGIN_EXCEPTION_RE:
-//                    while (i < joinChatListenerList.size()) {
-//                        OnJoinChatListener ou = joinChatListenerList.get(i);
-//                        if (ou.isListenerEffective()) {
-//                            ou.onLoginExceptionClickRe();
-//                            i++;
-//                        } else {
-//                            joinChatListenerList.remove(i);
-//                        }
-//                    }
-//                    break;
+                    // 处理重新登录异常的逻辑
+                    //for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                    //    if (listener != null && listener.isListenerEffective()) {
+                    //        listener.onLoginExceptionClickRe();
+                    //    }
+                    //}
+                    //break;
                 case CHAT_LOGIN_OK:
-                    while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
-                        if (onJoinChatListener.isListenerEffective()) {
-                            onJoinChatListener.onChatLogin(null);
-                            i++;
-                        } else {
-                            joinChatListenerList.remove(i);
+                    for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                        if (listener != null && listener.isListenerEffective()) {
+                            listener.onChatLogin(null);
                         }
                     }
                     break;
                 case CHAT_LOGIN_EXCEPTION:
-                    while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
-                        if (onJoinChatListener.isListenerEffective()) {
-                            onJoinChatListener.onChatLogin(msg.obj + "");
-                            i++;
-                        } else {
-                            joinChatListenerList.remove(i);
+                    for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                        if (listener != null && listener.isListenerEffective()) {
+                            listener.onChatLogin(msg.obj + "");
                         }
                     }
                     break;
                 case CHAT_LOGIN_LOADING:
-                    while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
-                        if (onJoinChatListener.isListenerEffective()) {
-                            onJoinChatListener.onChatLoginLoading();
-                            i++;
-                        } else {
-                            joinChatListenerList.remove(i);
+                    for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                        if (listener != null && listener.isListenerEffective()) {
+                            listener.onChatLoginLoading();
                         }
                     }
                     break;
                 case CHAT_JOIN_ROOM_LOADING:
-                    while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
-                        if (onJoinChatListener.isListenerEffective()) {
-                            onJoinChatListener.onJoinRoomLoading();
-                            i++;
-                        } else {
-                            joinChatListenerList.remove(i);
+                    for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                        if (listener != null && listener.isListenerEffective()) {
+                            listener.onJoinRoomLoading();
                         }
                     }
                     break;
                 case CHAT_USER_NULL:
-                    while (i < joinChatListenerList.size()) {
-                        OnJoinChatListener onJoinChatListener = joinChatListenerList.get(i);
-                        if (onJoinChatListener.isListenerEffective()) {
-                            onJoinChatListener.onChatUserNull();
-                            i++;
-                        } else {
-                            joinChatListenerList.remove(i);
+                    for (OnJoinChatListener listener : joinChatListenerList.values()) {
+                        if (listener != null && listener.isListenerEffective()) {
+                            listener.onChatUserNull();
                         }
                     }
                     break;
             }
         }
+
+        private void broadcastChatMessage(ChatMessage message) {
+            for (ChatListener listener : chatListenerList.values()) {
+                if (listener != null && listener.isListenerEffective()) {
+                    listener.addChatMessage(message);
+                }
+            }
+        }
+
+        private void broadcastReLogin(boolean state) {
+            for (ChatListener listener : chatListenerList.values()) {
+                if (listener != null && listener.isListenerEffective()) {
+                    listener.reChatLogin(state);
+                }
+            }
+        }
+
+        private void broadcastReJoin(boolean state) {
+            for (ChatListener listener : chatListenerList.values()) {
+                if (listener != null && listener.isListenerEffective()) {
+                    listener.reChatJoin(state);
+                }
+            }
+        }
     };
 
+    private XMPPTCPConnection con;
+    private MultiUserChat muc;
+    private boolean isConnected = false;
+    private boolean isListener = false;
+    private boolean isStartLoading = false;
+
     private ServiceManagement() {
-        chatMessageList = new ArrayList<>();
-        chatListenerList = new ArrayList<>();
-        joinChatListenerList = new ArrayList<>();
+        chatMessageList = Collections.synchronizedList(new ArrayList<>());
+        chatListenerList = new ConcurrentHashMap<>();
+        joinChatListenerList = new ConcurrentHashMap<>();
     }
 
     public static ServiceManagement getDx() {
         return su;
     }
 
-    public void addListener(ChatListener c) {
-        chatListenerList.add(c);
+    public int addListener(ChatListener c) {
+        int id = ++chatListenerId;
+        chatListenerList.put(id, c);
+        return id;
+    }
+
+    public void removeListener(int id) {
+        chatListenerList.remove(id);
     }
 
     public List<ChatMessage> getData() {
@@ -233,28 +216,36 @@ public class ServiceManagement {
     }
 
     public void sendMessage(String message) throws SmackException.NotConnectedException, InterruptedException {
-        muc.sendMessage(message);
+        if (muc != null && isListener) {
+            muc.sendMessage(message);
+        }
     }
 
-    public int getMemberNum(){
-        if (!isListener)
+    public int getMemberNum() {
+        if (!isListener || muc == null)
             return 0;
         return muc.getOccupantsCount();
     }
 
-    public void joinChat() throws SmackException.NoResponseException, XMPPException.XMPPErrorException, MultiUserChatException.NotAMucServiceException, SmackException.NotConnectedException, XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, InterruptedException {
+    public void joinChat() throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
+            MultiUserChatException.NotAMucServiceException, SmackException.NotConnectedException,
+            XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, InterruptedException {
         if (!isListener) {
+            McUser mcUser = UserManagement.getDx().getMcUser();
+            if (mcUser == null || TextUtils.isEmpty(mcUser.getUsername())) {
+                throw new IllegalStateException("User not logged in");
+            }
+
             MultiUserChatManager multiUserChatManager = MultiUserChatManager.getInstanceFor(getCon());
             muc = multiUserChatManager.getMultiUserChat(JidCreate.entityBareFrom(GROUP_ADDRESS));
-            muc.createOrJoin(Resourcepart.from(UserManagement.getDx().getMcUser().getUsername()));
+            muc.createOrJoin(Resourcepart.from(mcUser.getUsername()));
             chatMessageList.clear();
             muc.addMessageListener(message -> {
-
                 Log.e("接收消息", "接收" + message);
                 ChatMessage cm = ChatMessage.toChatMessage(message);
                 if (cm != null) {
                     chatMessageList.add(cm);
-                    HandlerUtil.sendMessage(han,TYPE_ADD_MESSAGE,cm);
+                    HandlerUtil.sendMessage(han, TYPE_ADD_MESSAGE, cm);
                 }
             });
             setIsListener(true);
@@ -262,23 +253,36 @@ public class ServiceManagement {
     }
 
     public void setReLogin(boolean state) {
-        android.os.Message me = new android.os.Message();
+        Message me = new Message();
         me.what = TYPE_RE_LOGIN;
         me.obj = state;
         han.sendMessage(me);
     }
 
     public void setReJoin(boolean state) {
-        android.os.Message me = new android.os.Message();
+        Message me = new Message();
         me.what = TYPE_RE_JOIN;
         me.obj = state;
         han.sendMessage(me);
     }
 
     public void disSerVice() {
+        if (muc != null) {
+            try {
+                if (isListener) {
+                    muc.leave();
+                }
+            } catch (SmackException.NotConnectedException | InterruptedException e) {
+                Log.e("ServiceManagement", "Error leaving MUC", e);
+            }
+            muc = null;
+        }
+
         if (con != null) {
             con.disconnect();
+            con = null;
         }
+
         setIsConnected(false);
         setIsListener(false);
     }
@@ -290,27 +294,31 @@ public class ServiceManagement {
         joinChatListenerList.clear();
     }
 
-    public void addJoinRoomListener(OnJoinChatListener onJoinChatListener) {
-        joinChatListenerList.add(onJoinChatListener);
+    public int addJoinRoomListener(OnJoinChatListener onJoinChatListener) {
+        int id = ++joinChatListenerId;
+        joinChatListenerList.put(id, onJoinChatListener);
+        return id;
     }
 
-    public void removeJoinRoomListener(OnJoinChatListener onJoinChatListener) {
-        joinChatListenerList.remove(onJoinChatListener);
+    public void removeJoinRoomListener(int id) {
+        joinChatListenerList.remove(id);
     }
 
     public void start() {
         if (isStartLoading)
             return;
-        isStartLoading=true;
+        isStartLoading = true;
         String name, password;
-        McUser mcUser=UserManagement.getDx().getMcUser();
-        name=mcUser.getUsername();
-        password=mcUser.getPassword();
-        if (TextUtils.isEmpty(name) || TextUtils.isEmpty(password)) {
+        McUser mcUser = UserManagement.getDx().getMcUser();
+
+        if (mcUser == null || TextUtils.isEmpty(mcUser.getUsername()) || TextUtils.isEmpty(mcUser.getPassword())) {
             isStartLoading = false;
             han.sendEmptyMessage(CHAT_USER_NULL);
             return;
         }
+
+        name = mcUser.getUsername();
+        password = mcUser.getPassword();
 
         if (su.isListener()) {
             isStartLoading = false;
@@ -321,52 +329,51 @@ public class ServiceManagement {
         new Thread(() -> {
             if (!su.isConnected()) {
                 han.sendEmptyMessage(CHAT_LOGIN_LOADING);
-                android.os.Message me = new android.os.Message();
+                Message me = new Message();
                 me.what = CHAT_LOGIN_EXCEPTION;
 
                 try {
                     su.login(name, password);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "Login interrupted", e);
+                    isStartLoading = false;
                     me.obj = "InterruptedException：" + e;
                     han.sendMessage(me);
                 } catch (IOException e) {
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "IO error during login", e);
+                    isStartLoading = false;
                     me.obj = "IOException：" + e;
-                    e.printStackTrace();
                     han.sendMessage(me);
                 } catch (SmackException e) {
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "Smack error during login", e);
+                    isStartLoading = false;
                     me.obj = "SmackException：" + e;
-                    e.printStackTrace();
                     han.sendMessage(me);
                 } catch (XMPPException e) {
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "XMPP error during login", e);
+                    isStartLoading = false;
                     me.obj = "XMPPException：" + e;
-                    e.printStackTrace();
                     han.sendMessage(me);
                 } catch (Exception e) {
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "Other error during login", e);
+                    isStartLoading = false;
                     me.obj = "otherException：" + e;
-                    e.printStackTrace();
                     han.sendMessage(me);
                 }
             }
+
             if (su.isConnected()) {
                 han.sendEmptyMessage(CHAT_JOIN_ROOM_LOADING);
                 try {
                     su.joinChat();
-                    isStartLoading=false;
+                    isStartLoading = false;
                     han.sendEmptyMessage(CHAT_LOGIN_OK);
                 } catch (Exception e) {
-                    isStartLoading=false;
+                    Log.e("ServiceManagement", "Error joining chat", e);
+                    isStartLoading = false;
                     HandlerUtil.sendMessage(han, CHAT_LOGIN_EXCEPTION, e);
                 }
             }
-            // TODO: Implement this method
         }).start();
-
     }
-
 }

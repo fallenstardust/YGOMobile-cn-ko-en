@@ -45,15 +45,56 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
-public class YGODialogUtil {
-    private static final String TAG = "YGODialogUtil";
+public class YGODeckDialogUtil {
+    /*  public enum DeckTypeEnum {
+          CARD_PACK(0, "PACK"),
+          WINDBOT(1, "WINDBOT"),
+          Uncategorized(2, "Uncategorized"),
+          ONLINE(3, "Online");
 
+          private final int code;
+          private final String description;
+
+          // Constructor
+          DeckTypeEnum(int code, String description) {
+              this.code = code;
+              this.description = description;
+          }
+
+          // Getter methods
+          public int getCode() {
+              return code;
+          }
+
+          public String getDescription() {
+              return description;
+          }
+
+          // Lookup by code
+          public static DeckTypeEnum fromCode(int code) {
+              for (DeckTypeEnum status : DeckTypeEnum.values()) {
+                  if (status.code == code) {
+                      return status;
+                  }
+              }
+              throw new IllegalArgumentException("No DeckTypeEnum found for code: " + code);
+          }
+     }
+   */
+    private static final String TAG = "YGODeckDialogUtil";
+
+    /**
+     * @param context
+     * @param selectDeckPath     卡组路径。由调用方传入，本dialog根据selectDeckPath的值来确定“默认选中的卡组分类”。
+     * @param onDeckMenuListener
+     */
     public static void dialogDeckSelect(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
         ViewHolder viewHolder = new ViewHolder(context, selectDeckPath, onDeckMenuListener);
         viewHolder.show();
     }
 
 
+    //注册listener，发生点击卡组事件后，通知外部的activity进行对应的显示更新
     public interface OnDeckMenuListener {
         void onDeckSelect(DeckFile deckFile);
 
@@ -67,10 +108,20 @@ public class YGODialogUtil {
 
     }
 
+    public interface OnDeckDialogListener {
+
+        void onDismiss();
+
+        void onShow();
+    }
+
     public interface OnDeckTypeListener {
         void onDeckTypeListener(int position);
     }
 
+    /**
+     * 封装DialogPlus，在本类中调用DialogPlus.setContentView()
+     */
     private static class ViewHolder {
 
         private final int IMAGE_MOVE = 0;
@@ -89,18 +140,23 @@ public class YGODialogUtil {
         private final TextView tv_move;
         private final TextView tv_copy;
         private final TextView tv_del;
-        private final TextSelectAdapter<DeckType> typeAdp;
-        private final DeckListAdapter<DeckFile> deckAdp;
+        private final TextSelectAdapter<DeckType> typeAdp;//卡组dialog中，左列的adapter
+        private final DeckListAdapter<DeckFile> deckAdp;//卡组dialog中，右列的adapter
         private final DeckListAdapter<DeckFile> resultListAdapter;
-        private final List<DeckFile> allDeckList;
+        private final List<DeckFile> allDeckList;//存储所有卡组DeckFile，用于支持“根据关键词搜索卡组”功能
         private final RecyclerView rv_type, rv_deck, rv_result_list;
 
-        private final List<DeckFile> resultList;
+        private final List<DeckFile> resultList;//存储卡组“根据关键词搜索”的结果
         private final DialogPlus ygoDialog;
 
+        /**
+         * @param context
+         * @param selectDeckPath     外部传入当前选中的卡组路径
+         * @param onDeckMenuListener
+         */
         public ViewHolder(Context context, String selectDeckPath, OnDeckMenuListener onDeckMenuListener) {
             ygoDialog = new DialogPlus(context);
-            ygoDialog.setContentView(R.layout.dialog_deck_select);
+            ygoDialog.setContentView(R.layout.fragment_deck_select);
             ygoDialog.setTitle(R.string.category_manager);
 
             allDeckList = new ArrayList<>();
@@ -131,9 +187,10 @@ public class YGODialogUtil {
 
             List<DeckType> typeList = DeckUtil.getDeckTypeList(context);
 
-            int typeSelectPosition = 2;
+            int typeSelectPosition = 2;//卡组分类选择，默认值为2（未分类卡组）。0代表“卡包展示”，1代表“人机卡组”
             int deckSelectPosition = -1;
-            List<DeckFile> deckList;
+            List<DeckFile> deckList;     //存储当前卡组分类下的所有卡组
+            //根据卡组路径得到该卡组所属分类
             if (!TextUtils.isEmpty(selectDeckPath)) {
                 File file = new File(selectDeckPath);
                 if (file.exists()) {
@@ -147,6 +204,7 @@ public class YGODialogUtil {
                         typeSelectPosition = 1;
                     } else if (cateName.equals("deck") && parentName.equals(Constants.PREF_DEF_GAME_DIR)) {
                         //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
+                        typeSelectPosition = 2;
                     } else {
                         //其他卡包
                         for (int i = 3; i < typeList.size(); i++) {
@@ -159,11 +217,14 @@ public class YGODialogUtil {
                     }
                 }
             }
+            //根据卡组分类查出属于该分类下的所有卡组
             deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
             for (int i = 0; i < typeList.size(); i++) {
-                allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));//把所有分类里的卡组全部纳入，用于关键词查询目标
+                if (typeList.get(i).isLocal()) {
+                    allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));//把所有分类里的卡组全部纳入，用于关键词查询目标
+                }//在线卡组对应的项的path是空字符串
             }
-            if (typeSelectPosition == 0) {
+            if (typeSelectPosition == 0) {//如果选中卡包，判断是否开启了先行卡，是的话加载先行卡
                 if (AppsSettings.get().isReadExpansions()) {
                     try {
                         deckList.addAll(0, DeckUtil.getExpansionsDeckList());//置顶ypk缓存的cacheDeck下的先行卡ydk
@@ -194,6 +255,7 @@ public class YGODialogUtil {
                         }
                     }
                     deckAdp.notifyDataSetChanged();
+
                 }
             });
             deckAdp.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
@@ -211,10 +273,13 @@ public class YGODialogUtil {
                     }
                 }
             });
+            //对话框中长点击某一卡组名称后，触发该事件
             deckAdp.setOnItemLongClickListener(new OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
-                    if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
+                    DeckFile item = (DeckFile) adapter.getItem(position);
+                    //即使为local，也有可能为卡包预览，因此过滤掉selectposition==0
+                    if (deckAdp.isSelect() || !item.isLocal() || typeAdp.getSelectPosition() == 0)
                         return true;
 
                     deckAdp.setManySelect(true);
@@ -503,6 +568,9 @@ public class YGODialogUtil {
             }
         }
 
+        /**
+         * 根据et_input_deck_name的当前值，在allDeckList中搜索卡组
+         */
         private void searchDeck() {
             resultList.clear();
             et_input_deck_name.clearFocus();
@@ -526,6 +594,13 @@ public class YGODialogUtil {
             return types;
         }
 
+        /**
+         * 从deckList中检索包含keyword的卡组
+         *
+         * @param keyword
+         * @param deckList
+         * @return
+         */
         private List<DeckFile> getResultList(String keyword, List<DeckFile> deckList) {
             List<DeckFile> resultList = new ArrayList<>();
             for (int i = 0; i < deckList.size(); i++) {
@@ -557,6 +632,7 @@ public class YGODialogUtil {
             return moveTypeList;
         }
 
+        //将界面上的iv_move、iv_del、iv_copy等图标颜色恢复，启用其点击事件
         private void showAllDeckUtil() {
             ImageUtil.reImageColor(IMAGE_MOVE, iv_move);//可用时用原图标色
             ImageUtil.reImageColor(IMAGE_DEL, iv_del);
@@ -569,6 +645,7 @@ public class YGODialogUtil {
             ll_move.setEnabled(true);
         }
 
+        //将界面上的iv_move、iv_del、iv_copy等图标颜色改为灰色，禁用其点击事件
         private void hideAllDeckUtil() {
             ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
             ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
@@ -581,6 +658,7 @@ public class YGODialogUtil {
             ll_move.setEnabled(false);
         }
 
+        //将界面上的iv_copy图标颜色恢复，启用其点击事件
         private void showCopyDeckUtil() {
             ImageUtil.setGrayImage(IMAGE_MOVE, iv_move);
             ImageUtil.setGrayImage(IMAGE_DEL, iv_del);
@@ -593,6 +671,7 @@ public class YGODialogUtil {
             ll_move.setEnabled(false);
         }
 
+        //清除选中卡组的记录，隐藏对卡组进行复制、移动、删除的控件
         private void clearDeckSelect() {
             deckAdp.setManySelect(false);
             hideAllDeckUtil();
@@ -609,6 +688,10 @@ public class YGODialogUtil {
                 ygoDialog.dismiss();
         }
 
+        public void hide() {
+            if (ygoDialog != null && ygoDialog.isShowing())
+                ygoDialog.hide();
+        }
     }
 
 }

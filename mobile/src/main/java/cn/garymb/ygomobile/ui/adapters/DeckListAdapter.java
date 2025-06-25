@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,14 +16,22 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
@@ -38,8 +47,10 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
     private final boolean isSelect;
-    private boolean isManySelect;
+    private boolean isManySelect;//标志位，是否选中多个卡组
     private final List<T> selectList;
+
+    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -66,7 +77,39 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         deckInfo = new DeckInfo();
         mLimitList = DataManager.get().getLimitManager().getTopLimit();
         mContext = context;
+
+        addChildClickViewIds(R.id.local_deck_upload_btn);
+        LogUtil.i(TAG, "DeckListAdapter constructor");
+        setOnItemChildClickListener((adapter, view, position) -> {
+
+            //判断是否登录，如果未登录，直接返回
+            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+            if (loginToken == null) {
+                return;
+            }
+
+
+            //获得点击的卡组
+            DeckFile deckFile = (DeckFile) adapter.getData().get(position);
+            LogUtil.i(TAG, "deckFile " + deckFile.toString());
+            //上传卡组
+            VUiKit.defer().when(() -> {
+                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile,loginToken);
+                return result;
+            }).fail(e -> {
+
+                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+            }).done(pushDeckResponse -> {
+                if (pushDeckResponse.isData()) {
+                    YGOUtil.showTextToast("push success!");
+                } else {
+
+                    YGOUtil.showTextToast("卡组上传失败！");
+                }
+            });
+        });
     }
+
 
     @SuppressLint("ResourceType")
     @Override
@@ -76,7 +119,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         this.deckFile = (DeckFile) item;
         holder.deckName.setText(item.getName());
         //预读卡组信息
-        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile());
         //加载卡组第一张卡的图
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
@@ -106,7 +149,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
+        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
+            //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
@@ -178,6 +222,14 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
+        //卡包展示、人机卡组不显示上传按钮图标
+        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH)
+                || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)
+                ||deckFile.getPathFile().getParent().endsWith("cacheDeck")) {
+            holder.local_deck_upload_btn.setVisibility(View.GONE);
+        } else {
+            holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setSelectPosition(int selectPosition) {
@@ -199,6 +251,12 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             selectList.add(t);
     }
 
+    /**
+     * 内部维护了selectList，用于存储当前选中的卡组
+     * DeckListAdapter支持多选，传入false清除已选中的卡组，并更新adapter。传入true将标志位置1
+     *
+     * @param manySelect
+     */
     public void setManySelect(boolean manySelect) {
         isManySelect = manySelect;
         if (!isManySelect) {
@@ -222,6 +280,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
     }
+
+
 }
 
 class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {
@@ -229,12 +289,14 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     ImageView prerelease_star;
     ImageView banned_mark;
     TextView deckName;
+    TextView deckId;
     TextView main;
     TextView extra;
     TextView side;
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
+    Button local_deck_upload_btn;
 
     public DeckViewHolder(View view) {
         super(view);
@@ -242,6 +304,7 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         item_deck_list = findView(R.id.item_deck_list);
         cardImage = findView(R.id.card_image);
         deckName = findView(R.id.deck_name);
+        deckId = findView(R.id.onlie_deck_id);
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
@@ -249,5 +312,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
         deck_info = findView(R.id.deck_info);
+        local_deck_upload_btn = findView(R.id.local_deck_upload_btn);
     }
 }

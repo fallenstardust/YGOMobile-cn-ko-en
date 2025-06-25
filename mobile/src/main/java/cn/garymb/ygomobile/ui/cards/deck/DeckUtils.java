@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;
 
 public class DeckUtils {
+    //将Deck通过ByteArrayOutputStream）转为String
     public static String getDeckString(Deck deck) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         save(deck, outputStream);
@@ -28,6 +29,7 @@ public class DeckUtils {
         return str;
     }
 
+    //将DeckInfo（通过ByteArrayOutputStream）转为String
     public static String getDeckString(DeckInfo deck) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         save(deck, outputStream);
@@ -36,6 +38,13 @@ public class DeckUtils {
         return str;
     }
 
+    /**
+     * 将DeckInfo对象以ydk文件的格式存入到outputStream对应的文件中
+     *
+     * @param deck
+     * @param outputStream
+     * @return
+     */
     private static boolean save(DeckInfo deck, OutputStream outputStream) {
         OutputStreamWriter writer = null;
         try {
@@ -64,6 +73,8 @@ public class DeckUtils {
         return true;
     }
 
+
+    //将Deck对象以ydk文件的格式存入到outputStream对应的文件中
     private static boolean save(Deck deck, OutputStream outputStream) {
         OutputStreamWriter writer = null;
         try {
@@ -92,6 +103,7 @@ public class DeckUtils {
         return true;
     }
 
+    //将deck对象以ydk文件的格式存入到file对应的文件中
     public static boolean save(DeckInfo deck, File file) {
         if (deck == null) return false;
         FileOutputStream outputStream = null;
@@ -113,6 +125,7 @@ public class DeckUtils {
         return true;
     }
 
+    //将Deck对象以ydk文件的格式存入到File对应的文件中
     public static boolean save(Deck deck, File file) {
         if (deck == null) return false;
         FileOutputStream outputStream = null;
@@ -127,7 +140,7 @@ public class DeckUtils {
             outputStream = new FileOutputStream(file);
             save(deck, outputStream);
         } catch (Exception e) {
-            Log.e("DeckUtil","保存出错"+e);
+            Log.e("DeckUtil", "保存出错" + e);
             //ignore
         } finally {
             IOUtils.close(outputStream);
@@ -135,11 +148,12 @@ public class DeckUtils {
         return true;
     }
 
-    public static File save(String name,String deckMessage) throws IOException {
+    @Deprecated
+    public static File save(String name, String deckMessage) throws IOException {
         FileWriter fw = null;
 
         //如果文件存在，则重写内容；如果文件不存在，则创建文件
-        File f = new File(AppsSettings.get().getDeckDir(),name + Constants.YDK_FILE_EX);
+        File f = new File(AppsSettings.get().getDeckDir(), name + Constants.YDK_FILE_EX);
         fw = new FileWriter(f, false);
 
         PrintWriter pw = new PrintWriter(fw);

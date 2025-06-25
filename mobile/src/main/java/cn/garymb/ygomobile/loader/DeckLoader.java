@@ -20,9 +20,11 @@ import java.nio.charset.StandardCharsets;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
+import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -30,12 +32,12 @@ import ocgcore.data.LimitList;
 public class DeckLoader {
     private static Boolean isChanged;
 
-    public static DeckInfo readDeck(CardLoader cardLoader, File file, LimitList limitList) {
+    public static DeckInfo readDeck(CardLoader cardLoader, File file) {
         DeckInfo deckInfo = null;
         FileInputStream fileinputStream = null;
         try {
             fileinputStream = new FileInputStream(file);
-            deckInfo = readDeck(cardLoader, fileinputStream, limitList);
+            deckInfo = readDeck(cardLoader, fileinputStream);
             if (deckInfo != null) {
                 deckInfo.source = file;
                 if (isChanged) {
@@ -51,7 +53,7 @@ public class DeckLoader {
         return deckInfo;
     }
 
-    private static DeckInfo readDeck(CardLoader cardLoader, InputStream inputStream, LimitList limitList) {
+    private static DeckInfo readDeck(CardLoader cardLoader, InputStream inputStream) {
         Deck deck = new Deck();
         SparseArray<Integer> mIds = new SparseArray<>();
         InputStreamReader in = null;
@@ -60,6 +62,7 @@ public class DeckLoader {
             in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
             String line = null;
+            //按行读取ydk文件
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("!side")) {
                     type = DeckItemType.SideCard;

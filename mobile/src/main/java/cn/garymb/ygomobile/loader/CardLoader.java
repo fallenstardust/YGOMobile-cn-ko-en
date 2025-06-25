@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.loader;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.SparseArray;
@@ -13,8 +12,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.CardSort;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -27,9 +24,9 @@ import ocgcore.enums.LimitType;
 
 /**
  * 包括LimitManager、CardManager、LimitList
+ * <p>
  * LimitList负责判断禁止卡等
- * field包括LimitManager、CardManager
- * 未封装成单例，使用时要构造实例
+ * LimitManager、CardManager已封装成单例，使用时不需要构造实例
  */
 public class CardLoader implements ICardSearcher {
     private final LimitManager mLimitManager;

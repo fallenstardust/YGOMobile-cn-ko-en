@@ -38,6 +38,9 @@
     <string name="quit_tip">退出游戏?</string>
     <string name="back_tip">请再按一次返回键退出</string>
     <string name="string_help_text">当前应用缺少必要权限。\n请点击 设置-权限 打开所需权限。</string>
+
+
+    <string name="fetch_online_deck">通过网络获取在线卡组</string>
     <string name="fetch_ex_card">通过网络获取先行卡</string>
     <string name="ex_card_list_title">超先行服☆专用☆</string>
     <string name="ex_card_log_title">更新日志</string>
@@ -106,7 +109,7 @@
     <string name="search_open">过滤</string>
     <string name="search_close">关闭</string>
     <string name="reset">重置</string>
-    <string name="hit_keyword1">关键词(空格隔开)</string>
+    <string name="hit_keyword1">关键词</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">种族</string>
@@ -133,7 +136,7 @@
 
     <string name="last_path">上一级目录</string>
     <string name="create_folder">新建文件夹</string>
-    <string name="intpu_name">输入卡组名</string>
+    <string name="intpu_name">输入卡组名称</string>
     <string name="the_name_is_folder">当前文件名是个文件夹</string>
     <string name="tab_search">搜索</string>
     <string name="tab_result">列表</string>
@@ -364,5 +367,23 @@
     <string name="user_privacy_policy">用户隐私政策</string>
     <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
     <string name="open">打开</string>
+    <string name="go_to">转到</string>
     <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
+    <string name="local_deck">我的卡组</string>
+    <string name="in_public">公开中</string>
+    <string name="in_personal_use">自用中</string>
+    <string name="down_complete">下载完成</string>
+    <string name="upload">上传</string>
+    <string name="input_user_name">输入用户名</string>
+    <string name="input_pwd">输入密码</string>
+    <string name="register">注册萌卡</string>
+    <string name="sign_out">切换账号</string>
+    <string name="deck_square">卡组广场</string>
+    <string name="my_deck_online">云备份</string>
+    <string name="input_contributor_name">输入共享者名称</string>
+    <string name="sort_by_time">按时间顺序</string>
+    <string name="sort_by_thumb">按点赞顺序</string>
+    <string name="account_warning">请填写你的邮箱或用户名！</string>
+    <string name="pwd_warning">请填写你的密码！</string>
+    <string name="like_deck_thumb">为卡组点赞</string>
 </resources>
