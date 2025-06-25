@@ -58,7 +58,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         }
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
-        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck);
+        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
         GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
         binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);

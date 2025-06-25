@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.deck_square;
 
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -156,7 +155,7 @@ public class DeckSquareApiUtil {
      * 阻塞方法，用于推送新卡组。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
      * 先同步推送，之后异步推送。首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
      *
-     * @param deckfile
+     * @param deckFile
      * @param loginToken
      */
     public static PushDeckResponse requestIdAndPushDeck(DeckFile deckFile, LoginToken loginToken) throws IOException {
@@ -174,13 +173,13 @@ public class DeckSquareApiUtil {
         Gson gson = new Gson();
 
         DeckIdResponse deckIdResult = null;
-        {
-            Response response = OkhttpUtil.synchronousGet(getDeckIdUrl, null, headers);
-            String responseBodyString = response.body().string();
-            // Convert JSON to Java object using Gson
-            deckIdResult = gson.fromJson(responseBodyString, DeckIdResponse.class);
-            LogUtil.i(TAG, "deck id result:" + deckIdResult.toString());
-        }
+
+        Response response = OkhttpUtil.synchronousGet(getDeckIdUrl, null, headers);
+        String responseBodyString = response.body().string();
+        // Convert JSON to Java object using Gson
+        deckIdResult = gson.fromJson(responseBodyString, DeckIdResponse.class);
+        LogUtil.i(TAG, "deck id result:" + deckIdResult.toString());
+
 
         if (deckIdResult == null) {
             return null;

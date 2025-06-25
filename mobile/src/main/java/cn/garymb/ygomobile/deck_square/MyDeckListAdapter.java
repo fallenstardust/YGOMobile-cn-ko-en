@@ -21,18 +21,23 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 //提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
 public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
+    private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ImageLoader imageLoader;
     private List<MyDeckItem> originalData; // 保存原始数据
 
-    public MyDeckListAdapter(int layoutResId) {
+    public MyDeckListAdapter(int layoutResId, YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         super(layoutResId);
         originalData = new ArrayList<>();
         imageLoader = new ImageLoader();
+        this.onDeckMenuListener = onDeckMenuListener;
+        this.mDialogListener = mDialogListener;
     }
 
     public void loadData() {
@@ -203,7 +208,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             //TODO
             //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
-
+            mDialogListener.onDismiss();
+            onDeckMenuListener.onDeckSelect(deckFile);
         });
 
     }
