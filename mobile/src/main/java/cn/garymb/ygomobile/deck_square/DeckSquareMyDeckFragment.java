@@ -56,6 +56,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
             GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
         }
+        DeckSquareApiUtil.synchronizeDecks();
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
         deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
@@ -190,5 +191,6 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
 
         });
+        DeckSquareApiUtil.synchronizeDecks();
     }
 }
