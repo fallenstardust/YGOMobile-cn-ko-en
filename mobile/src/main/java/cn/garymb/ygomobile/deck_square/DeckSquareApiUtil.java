@@ -27,6 +27,8 @@ import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckPublicState;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.SyncDeckReq;
+import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
@@ -242,6 +244,27 @@ public class DeckSquareApiUtil {
         result = gson.fromJson(responseBodyString, PushDeckResponse.class);
         LogUtil.i(TAG, "push deck response:" + responseBodyString);
 
+        return result;
+    }
+ 
+    public static SyncDecksResponse syncDecks(List<PushCardJson.DeckData> deckDataList, LoginToken loginToken) throws IOException {
+        SyncDecksResponse result = null;
+        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/multi";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("ReqSource", "MDPro3");
+        headers.put("token", loginToken.getServerToken());
+        Gson gson = new Gson();
+        SyncDeckReq syncDeckReq = new SyncDeckReq();
+        syncDeckReq.setDeckContributor(loginToken.getUserId().toString());
+        syncDeckReq.setUserId(loginToken.getUserId());
+        syncDeckReq.setDeckDataList(deckDataList);
+
+        String json = gson.toJson(syncDeckReq);
+        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        String responseBodyString = response.body().string();
+
+        result = gson.fromJson(responseBodyString, SyncDecksResponse.class);
+        LogUtil.i(TAG, "push deck response:" + responseBodyString);
 
         return result;
     }

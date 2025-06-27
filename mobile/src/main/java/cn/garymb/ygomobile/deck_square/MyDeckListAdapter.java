@@ -121,6 +121,9 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         notifyDataSetChanged();
     }
 
+    public List<MyDeckItem> getOriginalData(){
+        return this.originalData;
+    }
     private void deleteMyDeckOnLine(MyDeckItem item) {
         if (item != null) {
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
