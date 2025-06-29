@@ -474,6 +474,7 @@ public:
 	int32_t check_tuner_material(lua_State* L, card* pcard, card* tuner, int32_t findex1, int32_t findex2, int32_t min, int32_t max, card* smat, group* mg);
 	int32_t check_other_synchro_material(const card_vector& nsyn, int32_t lv, int32_t min, int32_t max, int32_t mcount);
 	int32_t check_tribute(card* pcard, int32_t min, int32_t max, group* mg, uint8_t toplayer, uint32_t zone = 0x1f, uint32_t releasable = 0xff00ff, uint32_t pos = 0x1);
+	static void get_sum_params(uint32_t sum_param, int32_t& op1, int32_t& op2);
 	static int32_t check_with_sum_limit(const card_vector& mats, int32_t acc, int32_t index, int32_t count, int32_t min, int32_t max, int32_t opmin);
 	static int32_t check_with_sum_limit_m(const card_vector& mats, int32_t acc, int32_t index, int32_t min, int32_t max, int32_t opmin, int32_t must_count);
 	static int32_t check_with_sum_greater_limit(const card_vector& mats, int32_t acc, int32_t index, int32_t opmin);
@@ -630,7 +631,7 @@ public:
 	int32_t select_option(uint16_t step, uint8_t playerid);
 	int32_t select_card(uint16_t step, uint8_t playerid, uint8_t cancelable, uint8_t min, uint8_t max);
 	int32_t select_unselect_card(uint16_t step, uint8_t playerid, uint8_t cancelable, uint8_t min, uint8_t max, uint8_t finishable);
-	int32_t select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count, uint8_t forced);
+	int32_t select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count);
 	int32_t select_place(uint16_t step, uint8_t playerid, uint32_t flag, uint8_t count);
 	int32_t select_position(uint16_t step, uint8_t playerid, uint32_t code, uint8_t positions);
 	int32_t select_tribute(uint16_t step, uint8_t playerid, uint8_t cancelable, uint8_t min, uint8_t max);
@@ -653,7 +654,7 @@ public:
 #define CHAIN_CONTINUOUS_CARD	0x08
 #define CHAIN_ACTIVATING		0x10
 #define CHAIN_HAND_TRIGGER		0x20
-//#define CHAIN_DECK_EFFECT		0x40
+#define CHAIN_FORCED			0x40
 #define CHAININFO_CHAIN_COUNT			0x01
 #define CHAININFO_TRIGGERING_EFFECT		0x02
 #define CHAININFO_TRIGGERING_PLAYER		0x04
