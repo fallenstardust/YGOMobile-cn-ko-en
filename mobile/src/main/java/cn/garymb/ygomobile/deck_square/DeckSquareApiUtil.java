@@ -23,11 +23,11 @@ import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.PushCardJson;
+import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckPublicState;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.SyncDeckReq;
+import cn.garymb.ygomobile.deck_square.api_response.PushMultiDeck;
 import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -73,6 +73,12 @@ public class DeckSquareApiUtil {
     }
 
 
+    /**
+     * 根据条件，分页查询卡组的列表（不查询卡组的内容，只查询卡组名、卡组id等概括性信息）
+     * @param condition
+     * @return
+     * @throws IOException
+     */
     public static SquareDeckResponse getSquareDecks(GetSquareDeckCondition condition) throws IOException {
 
         SquareDeckResponse result = null;
@@ -133,7 +139,7 @@ public class DeckSquareApiUtil {
 
     /**
      * 阻塞方法
-     * 根据卡组ID查询一个卡组，不需要传入token，可以查询已登录用户或其它未登录用户的卡组
+     * 根据卡组ID查询一个卡组的内容，不需要传入token，可以查询已登录用户或其它未登录用户的卡组
      *
      * @param deckId
      * @return
@@ -161,8 +167,8 @@ public class DeckSquareApiUtil {
 
 
     /**
-     * 阻塞方法，用于推送新卡组。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
-     * 先同步推送，之后异步推送。首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
+     * 阻塞方法，推送新卡组的内容时使用。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
+     * 首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
      *
      * @param deckFile
      * @param loginToken
@@ -203,7 +209,7 @@ public class DeckSquareApiUtil {
     }
 
     /**
-     * 将对应于deckId、deckName的卡组内容json推送到服务器。
+     * 阻塞方法，将对应于deckId、deckName的卡组内容json推送到服务器。
      * 如果在服务器上不存在deckId、deckName对应的记录，则创建新卡组
      * 如果在服务器存在deckId相同的记录，则更新卡组，deckName会覆盖服务器上的卡组名
      * 如果在服务器存在deckName相同、deckId不同的记录，则更新失败
@@ -225,19 +231,19 @@ public class DeckSquareApiUtil {
 
 
         Gson gson = new Gson();
-        PushCardJson pushCardJson = new PushCardJson();
-        pushCardJson.setDeckContributor(loginToken.getUserId().toString());
-        pushCardJson.setUserId(loginToken.getUserId());
-        PushCardJson.DeckData deckData = new PushCardJson.DeckData();
+        PushSingleDeck pushSingleDeck = new PushSingleDeck();
+        pushSingleDeck.setDeckContributor(loginToken.getUserId().toString());
+        pushSingleDeck.setUserId(loginToken.getUserId());
+        PushSingleDeck.DeckData deckData = new PushSingleDeck.DeckData();
 
         deckData.setDeckId(deckId);
         deckData.setDeckName(deckfile.getName());
         deckData.setDeckCoverCard1(deckfile.getFirstCode());
         deckData.setDelete(false);
         deckData.setDeckYdk(deckContent);
-        pushCardJson.setDeck(deckData);
+        pushSingleDeck.setDeck(deckData);
 
-        String json = gson.toJson(pushCardJson);
+        String json = gson.toJson(pushSingleDeck);
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
         String responseBodyString = response.body().string();
 
@@ -246,20 +252,27 @@ public class DeckSquareApiUtil {
 
         return result;
     }
- 
-    public static SyncDecksResponse syncDecks(List<PushCardJson.DeckData> deckDataList, LoginToken loginToken) throws IOException {
+
+    /**
+     *
+     * @param deckDataList
+     * @param loginToken
+     * @return
+     * @throws IOException
+     */
+    public static SyncDecksResponse syncDecks(List<PushSingleDeck.DeckData> deckDataList, LoginToken loginToken) throws IOException {
         SyncDecksResponse result = null;
         String url = "http://rarnu.xyz:38383/api/mdpro3/sync/multi";
         Map<String, String> headers = new HashMap<>();
         headers.put("ReqSource", "MDPro3");
         headers.put("token", loginToken.getServerToken());
         Gson gson = new Gson();
-        SyncDeckReq syncDeckReq = new SyncDeckReq();
-        syncDeckReq.setDeckContributor(loginToken.getUserId().toString());
-        syncDeckReq.setUserId(loginToken.getUserId());
-        syncDeckReq.setDeckDataList(deckDataList);
+        PushMultiDeck pushMultiDeck = new PushMultiDeck();
+        pushMultiDeck.setDeckContributor(loginToken.getUserId().toString());
+        pushMultiDeck.setUserId(loginToken.getUserId());
+        pushMultiDeck.setDecks(deckDataList);
 
-        String json = gson.toJson(syncDeckReq);
+        String json = gson.toJson(pushMultiDeck);
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
         String responseBodyString = response.body().string();
 
@@ -380,16 +393,16 @@ public class DeckSquareApiUtil {
 
         Gson gson = new Gson();
 
-        PushCardJson pushCardJson = new PushCardJson();
-        PushCardJson.DeckData deckData = new PushCardJson.DeckData();
+        PushSingleDeck pushSingleDeck = new PushSingleDeck();
+        PushSingleDeck.DeckData deckData = new PushSingleDeck.DeckData();
 
         deckData.setDeckId(deckId);
         deckData.setDelete(true);
-        pushCardJson.setDeck(deckData);
-        pushCardJson.setUserId(loginToken.getUserId());
+        pushSingleDeck.setDeck(deckData);
+        pushSingleDeck.setUserId(loginToken.getUserId());
 
 
-        String json = gson.toJson(pushCardJson);
+        String json = gson.toJson(pushSingleDeck);
 
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
         String responseBodyString = response.body().string();

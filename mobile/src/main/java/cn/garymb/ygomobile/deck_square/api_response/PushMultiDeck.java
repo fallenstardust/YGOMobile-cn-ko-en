@@ -1,15 +1,14 @@
 package cn.garymb.ygomobile.deck_square.api_response;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.deck_square.api_response.PushCardJson.DeckData;
+import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck.DeckData;
 
 /*卡组同步请求类*/
-public class SyncDeckReq {
+public class PushMultiDeck {
     private String deckContributor;
     private Integer userId;
-    private List<DeckData> deckDataList;
+    private List<DeckData> decks;
 
     public String getDeckContributor() {
         return deckContributor;
@@ -27,11 +26,11 @@ public class SyncDeckReq {
         this.userId = userId;
     }
 
-    public List<DeckData> getDeckDataList() {
-        return deckDataList;
+    public List<DeckData> getDecks() {
+        return decks;
     }
 
-    public void setDeckDataList(List<DeckData> _deckDataList) {
-        this.deckDataList = _deckDataList;
+    public void setDecks(List<DeckData> _deckDataList) {
+        this.decks = _deckDataList;
     }
 }
