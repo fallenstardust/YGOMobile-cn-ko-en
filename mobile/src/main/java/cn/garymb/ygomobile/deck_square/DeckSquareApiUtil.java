@@ -23,11 +23,11 @@ import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckPublicState;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.PushMultiDeck;
+import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
+import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -75,6 +75,7 @@ public class DeckSquareApiUtil {
 
     /**
      * 根据条件，分页查询卡组的列表（不查询卡组的内容，只查询卡组名、卡组id等概括性信息）
+     *
      * @param condition
      * @return
      * @throws IOException
@@ -253,14 +254,14 @@ public class DeckSquareApiUtil {
         return result;
     }
 
+
     /**
-     *
      * @param deckDataList
      * @param loginToken
      * @return
      * @throws IOException
      */
-    public static SyncDecksResponse syncDecks(List<PushSingleDeck.DeckData> deckDataList, LoginToken loginToken) throws IOException {
+    public static SyncDecksResponse syncDecks(List<PushMultiDeck.DeckData> deckDataList, LoginToken loginToken) throws IOException {
         SyncDecksResponse result = null;
         String url = "http://rarnu.xyz:38383/api/mdpro3/sync/multi";
         Map<String, String> headers = new HashMap<>();
@@ -421,6 +422,67 @@ public class DeckSquareApiUtil {
      */
     public static void adminDelete(String deckId) {
         String url = "http://rarnu.xyz:38383/api/mdpro3/deck/" + deckId;
+    }
+
+
+    public static boolean synchronizeDecksV2() throws IOException {
+        // 检查用户是否登录
+        LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+        if (loginToken == null) {
+            return false;
+        }
+
+        // 获取本地卡组列表
+        List<MyDeckItem> localDecks = DeckSquareFileUtil.getMyDeckItem();
+        // 获取在线卡组列表
+        MyDeckResponse onlineDecksResponse = DeckSquareApiUtil.getUserDecks(loginToken);
+        if (onlineDecksResponse == null || onlineDecksResponse.getData() == null) {
+            return false;
+        }
+        List<MyOnlineDeckDetail> onlineDecks = onlineDecksResponse.getData();
+
+
+        // 用于标记在线卡组是否在本地有对应
+        Map<String, Boolean> onlineDeckProcessed = new HashMap<>();
+        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+            onlineDeckProcessed.put(onlineDeck.getDeckName(), false);
+        }
+
+        // 遍历本地卡组，处理同名卡组的情况
+        for (MyDeckItem localDeck : localDecks) {
+            String localDeckName = localDeck.getDeckName();
+            localDeckName = localDeckName.replace(".ydk", "");
+
+            for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+
+                if (localDeckName.equals(onlineDeck.getDeckName())) {
+                    // 标记该在线卡组已处理
+                    onlineDeckProcessed.put(onlineDeck.getDeckName(), true);
+
+                    // 比对更新时间
+                    String localUpdateDate = localDeck.getUpdateDate();
+                    String onlineUpdateDate = String.valueOf(0);//todo 这里应该把2025-05-19T06:11:17转成毫秒，onlineDeck.getDeckUpdateDate();
+                    if (onlineUpdateDate != null && (localUpdateDate == null || onlineUpdateDate.compareTo(localUpdateDate) > 0)) {
+                        // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
+                        downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
+                    } else {
+                        // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
+                        uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 处理只存在于在线的卡组（即本地没有同名卡组）
+        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+            if (!onlineDeckProcessed.get(onlineDeck.getDeckName())) {
+                downloadMissingDeckToLocal(onlineDeck);
+            }
+        }
+
+        return true;
+
     }
 
     public static void synchronizeDecks() {
