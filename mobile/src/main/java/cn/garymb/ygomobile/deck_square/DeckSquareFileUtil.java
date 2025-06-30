@@ -98,6 +98,10 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.deckName = file.getName();
+
+
+
+            item.setUpdateDate(String.valueOf(file.lastModified()));
             item.setDeckSouce(0);
             item.setDeckPath(file.getPath());
             if (deckId != null) {

@@ -1,6 +1,6 @@
 package cn.garymb.ygomobile.deck_square.api_response;
 
-public class PushCardJson {
+public class PushSingleDeck {
 
     private String deckContributor;
     private Integer userId;

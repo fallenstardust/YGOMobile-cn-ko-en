@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -56,7 +57,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
             GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
         }
-        DeckSquareApiUtil.synchronizeDecks();
+        //DeckSquareApiUtil.synchronizeDecks();
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
         deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
@@ -115,6 +116,17 @@ public class DeckSquareMyDeckFragment extends Fragment {
                     deckListAdapter.filter(s.toString());
                 }
             }
+        });
+
+        /** 自动同步 */
+        VUiKit.defer().when(() -> {
+            return DeckSquareApiUtil.synchronizeDecksV2();
+        }).fail((e) -> {
+
+            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+        }).done((result) -> {
+
+
         });
         return binding.getRoot();
 
@@ -191,6 +203,17 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
 
         });
-        DeckSquareApiUtil.synchronizeDecks();
+        /** 自动同步 */
+        VUiKit.defer().when(() -> {
+
+            return DeckSquareApiUtil.synchronizeDecksV2();
+        }).fail((e) -> {
+
+            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+        }).done((result) -> {
+
+
+        });
+        //DeckSquareApiUtil.synchronizeDecks();
     }
 }
