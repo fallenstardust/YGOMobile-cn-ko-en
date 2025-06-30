@@ -120,7 +120,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         /** 自动同步 */
         VUiKit.defer().when(() -> {
-            return DeckSquareApiUtil.synchronizeDecksV2();
+            return DeckSquareApiUtil.synchronizeDecks();
         }).fail((e) -> {
 
             LogUtil.i(TAG, "Like deck fail" + e.getMessage());
@@ -206,7 +206,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         /** 自动同步 */
         VUiKit.defer().when(() -> {
 
-            return DeckSquareApiUtil.synchronizeDecksV2();
+            return DeckSquareApiUtil.synchronizeDecks();
         }).fail((e) -> {
 
             LogUtil.i(TAG, "Like deck fail" + e.getMessage());
