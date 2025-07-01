@@ -31,6 +31,7 @@ import cn.garymb.ygomobile.deck_square.api_response.PushMultiDeck;
 import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
@@ -67,7 +68,7 @@ public class DeckSquareApiUtil {
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
 
         if (serverToken == null || serverUserId == -1) {
-            YGOUtil.showTextToast("Please login first!");
+            YGOUtil.showTextToast(R.string.login_mycard);
             return null;
         }
         return new LoginToken(serverUserId, serverToken);
@@ -468,13 +469,16 @@ public class DeckSquareApiUtil {
                         onlineUpdateDate = String.valueOf(dateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
                     }
                     LogUtil.d("seesee", localUpdateDate +"//"+ onlineUpdateDate);
-                    LogUtil.w("seesee lockdeck.getDeckPath", localDeck.getDeckPath());
-                    if (onlineUpdateDate != null && (localUpdateDate == null || onlineUpdateDate.compareTo(localUpdateDate) > 0)) {
-                        // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
-                        downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
+                    if (onlineUpdateDate != null) {
+                        if (onlineUpdateDate.compareTo(localUpdateDate) > 0) {
+                            // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
+                            downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
+                        } else {
+                            // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
+                            uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
+                        }
                     } else {
-                        // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
-                        uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
+                        downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
                     }
                     break;
                 }
