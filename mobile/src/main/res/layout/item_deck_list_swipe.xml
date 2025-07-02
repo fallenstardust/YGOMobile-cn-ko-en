@@ -34,11 +34,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:weightSum="5">
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginLeft="10dp"
@@ -136,20 +135,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_weight="1">
-
-            <Button
-                android:id="@+id/local_deck_upload_btn"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginLeft="@dimen/dp_10"
-                android:background="@drawable/btn_cloud_upload_bg"
-                android:gravity="center" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

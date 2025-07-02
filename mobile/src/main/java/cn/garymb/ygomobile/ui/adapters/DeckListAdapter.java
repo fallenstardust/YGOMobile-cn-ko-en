@@ -77,37 +77,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         deckInfo = new DeckInfo();
         mLimitList = DataManager.get().getLimitManager().getTopLimit();
         mContext = context;
-
-        addChildClickViewIds(R.id.local_deck_upload_btn);
-        LogUtil.i(TAG, "DeckListAdapter constructor");
-        setOnItemChildClickListener((adapter, view, position) -> {
-
-            //判断是否登录，如果未登录，直接返回
-            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
-            if (loginToken == null) {
-                return;
-            }
-
-
-            //获得点击的卡组
-            DeckFile deckFile = (DeckFile) adapter.getData().get(position);
-            LogUtil.i(TAG, "deckFile " + deckFile.toString());
-            //上传卡组
-            VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile,loginToken);
-                return result;
-            }).fail(e -> {
-
-                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
-            }).done(pushDeckResponse -> {
-                if (pushDeckResponse.isData()) {
-                    YGOUtil.showTextToast("push success!");
-                } else {
-
-                    YGOUtil.showTextToast("卡组上传失败！");
-                }
-            });
-        });
     }
 
 
@@ -222,14 +191,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
-        //卡包展示、人机卡组不显示上传按钮图标
-        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH)
-                || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)
-                ||deckFile.getPathFile().getParent().endsWith("cacheDeck")) {
-            holder.local_deck_upload_btn.setVisibility(View.GONE);
-        } else {
-            holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
-        }
     }
 
     public void setSelectPosition(int selectPosition) {
@@ -296,7 +257,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
-    Button local_deck_upload_btn;
 
     public DeckViewHolder(View view) {
         super(view);
@@ -312,6 +272,5 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
         deck_info = findView(R.id.deck_info);
-        local_deck_upload_btn = findView(R.id.local_deck_upload_btn);
     }
 }
