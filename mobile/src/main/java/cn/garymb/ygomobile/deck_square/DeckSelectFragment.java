@@ -394,6 +394,7 @@ public class DeckSelectFragment extends Fragment {
                                                         LogUtil.i(TAG, "Online deck deleted successfully");
                                                     }
                                                 });
+                                                break;
                                             }
                                         }
                                     });

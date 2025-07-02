@@ -944,6 +944,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                                     YGOUtil.showTextToast(getContext().getString(R.string.done));
                                                 }
                                             });
+                                            break;
                                         }
                                     }
                                 });
@@ -1345,7 +1346,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }).done((deckData) -> {
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
-                    Log.w("seesee mDeckId", mDeckId);
                     deckData.getDeckYdk();
                     String fileFullName = deckData.getDeckName() + ".ydk";
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");

@@ -225,7 +225,7 @@ public class DeckSquareApiUtil {
      * @return
      * @throws IOException
      */
-    private static PushDeckResponse pushDeck(DeckFile deckfile, LoginToken loginToken, String deckId) throws IOException {
+    public static PushDeckResponse pushDeck(DeckFile deckfile, LoginToken loginToken, String deckId) throws IOException {
         String deckContent = DeckSquareFileUtil.setDeckId(deckfile.getPath(), loginToken.getUserId(), deckId);
 
         PushDeckResponse result = null;
