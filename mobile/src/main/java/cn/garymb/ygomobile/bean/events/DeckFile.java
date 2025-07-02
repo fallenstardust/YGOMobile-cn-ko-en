@@ -26,13 +26,12 @@ public class DeckFile extends TextSelect {
         this.onServer = onServer;
     }
 
-    public DeckFile(String name, String typeName, DeckType.ServerType onServer, String deckId) {
-        this.typeName = typeName;
+    public DeckFile(String name, File path, DeckType.ServerType onServer, String deckId) {
         this.onServer = onServer;
         this.deckId = deckId;
         this.setName(name);
         this.fileFullName = null;
-        this.path = null;
+        this.path = path;
         this.firstCode = -1;
         setObject(this);
     }

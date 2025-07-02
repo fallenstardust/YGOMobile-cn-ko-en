@@ -381,4 +381,5 @@
     <string name="account_warning">メールアドレスまたはユーザー名を入力してください！</string>
     <string name="pwd_warning">パスワードを入力してください！</string>
     <string name="like_deck_thumb">デッキに「いいね」をつける</string>
+    <string name="pre_view">プレビュー</string>
 </resources>

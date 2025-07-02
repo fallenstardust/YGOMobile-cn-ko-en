@@ -371,5 +371,6 @@
     <string name="account_warning">Por favor, preencha seu e - mail ou nome de usuário!</string>
     <string name="pwd_warning">Por favor, insira sua senha!</string>
     <string name="like_deck_thumb">Curtir o deck</string>
+    <string name="pre_view">Prévia</string>
 </resources>
 

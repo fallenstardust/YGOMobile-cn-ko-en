@@ -577,10 +577,9 @@ public class DeckSquareApiUtil {
 
     private static boolean uploadLocalDeck(MyDeckItem localDeck, String onlineDeckId, LoginToken loginToken) {
         try {
-            DeckFile deckFile = new DeckFile(localDeck.getDeckPath(), DeckType.ServerType.MY_SQUARE);
+            DeckFile deckFile = new DeckFile(localDeck.getDeckName(), new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
             deckFile.setName(localDeck.getDeckName());
             deckFile.setFirstCode(localDeck.getDeckCoverCard1());
-
             // 上传本地卡组，使用在线卡组的deckId
             PushDeckResponse response = DeckSquareApiUtil.pushDeck(deckFile, loginToken, onlineDeckId);
             if (response == null || !response.isData()) {

@@ -90,7 +90,7 @@
                 android:layout_marginLeft="1dp"
                 android:layout_marginRight="5dp"
                 android:lines="1"
-                android:text="@string/Download"
+                android:text="@string/pre_view"
                 android:textSize="5sp" />
         </LinearLayout>
 

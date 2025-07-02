@@ -382,4 +382,5 @@
     <string name="account_warning">이메일이나 사용자 이름을 입력해 주세요!</string>
     <string name="pwd_warning">비밀번호를 입력해 주세요!</string>
     <string name="like_deck_thumb">데ッ크에 좋아요를 누르다</string>
+    <string name="pre_view">미리 보기</string>
 </resources>
