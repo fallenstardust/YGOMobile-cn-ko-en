@@ -33,6 +33,7 @@ import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -444,44 +445,57 @@ public class DeckSquareApiUtil {
         }
         List<MyOnlineDeckDetail> onlineDecks = onlineDecksResponse.getData();
 
-
         // 用于标记在线卡组是否在本地有对应
         Map<String, Boolean> onlineDeckProcessed = new HashMap<>();
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
             onlineDeckProcessed.put(onlineDeck.getDeckName(), false);
         }
 
+        // 用于标记本地卡组是否在在线有对应
+        Map<String, Boolean> localDeckProcessed = new HashMap<>();
+        for (MyDeckItem localDeck : localDecks) {
+            String deckName = localDeck.getDeckName().replace(".ydk", "");
+            localDeckProcessed.put(deckName, false);
+        }
+
         // 遍历本地卡组，处理同名卡组的情况
         for (MyDeckItem localDeck : localDecks) {
-            String localDeckName = localDeck.getDeckName();
-            localDeckName = localDeckName.replace(".ydk", "");
+            String localDeckName = localDeck.getDeckName().replace(".ydk", "");
 
+            boolean foundOnlineDeck = false;
             for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
                 if (localDeckName.equals(onlineDeck.getDeckName())) {
                     // 标记该在线卡组已处理
                     onlineDeckProcessed.put(onlineDeck.getDeckName(), true);
+                    // 标记该本地卡组已处理
+                    localDeckProcessed.put(localDeckName, true);
+                    foundOnlineDeck = true;
 
                     // 比对更新时间
                     String localUpdateDate = localDeck.getUpdateDate();
-                    String onlineUpdateDate ="";
+                    String onlineUpdateDate = "";
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                         LocalDateTime dateTime = LocalDateTime.parse(onlineDeck.getDeckUpdateDate());
                         onlineUpdateDate = String.valueOf(dateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
                     }
-                    LogUtil.d("seesee", localUpdateDate +"//"+ onlineUpdateDate);
-                    if (onlineUpdateDate != null) {
-                        if (onlineUpdateDate.compareTo(localUpdateDate) > 0) {
-                            // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
-                            downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
-                        } else {
-                            // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
-                            uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
-                        }
-                    } else {
+
+                    if (onlineUpdateDate != null && onlineUpdateDate.compareTo(localUpdateDate) > 0) {
+                        // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
+                    } else {
+                        // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
+                        uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
                     }
                     break;
                 }
+            }
+
+            // 本地卡组在在线列表中不存在，直接上传
+            if (!foundOnlineDeck) {
+                DeckFile deckFile = new DeckFile(localDeck.getDeckName(), new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
+                deckFile.setName(localDeck.getDeckName());
+                deckFile.setFirstCode(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
+                requestIdAndPushDeck(deckFile, loginToken);
             }
         }
 
@@ -493,7 +507,6 @@ public class DeckSquareApiUtil {
         }
 
         return true;
-
     }
 
     private static boolean downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck) {
@@ -579,7 +592,7 @@ public class DeckSquareApiUtil {
         try {
             DeckFile deckFile = new DeckFile(localDeck.getDeckName(), new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
             deckFile.setName(localDeck.getDeckName());
-            deckFile.setFirstCode(localDeck.getDeckCoverCard1());
+            deckFile.setFirstCode(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             // 上传本地卡组，使用在线卡组的deckId
             PushDeckResponse response = DeckSquareApiUtil.pushDeck(deckFile, loginToken, onlineDeckId);
             if (response == null || !response.isData()) {
