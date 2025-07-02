@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.TAG;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -85,6 +86,7 @@ import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -246,6 +248,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         });
         //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
+        /** 自动同步 */
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+                LogUtil.i(TAG, "sync deck fail" + e.getMessage());
+            }).done((result) -> {
+            });
+        }
     }
 
 
@@ -925,13 +934,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                         if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
                                             // 删除在线卡组（异步处理）
                                             VUiKit.defer().when(() -> {
-                                                DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                return true;
+                                                PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                return deckResponse;
                                             }).fail((deleteError) -> {
                                                 LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
                                             }).done((deleteSuccess) -> {
-                                                if (deleteSuccess) {
+                                                if (deleteSuccess.isData()) {
                                                     LogUtil.i(TAG, "Online deck deleted successfully");
+                                                    YGOUtil.showTextToast(getContext().getString(R.string.done));
                                                 }
                                             });
                                         }

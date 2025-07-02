@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -16,41 +15,33 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
-import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
+    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private final ImageLoader imageLoader;
     private final Context mContext;
-    private LimitList mLimitList;
     private final CardLoader mCardLoader;
     private final DeckLoader mDeckLoader;
+    private final boolean isSelect;
+    private final List<T> selectList;
+    private LimitList mLimitList;
     private DeckInfo deckInfo;
     private DeckFile deckFile;
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
-    private final boolean isSelect;
     private boolean isManySelect;//标志位，是否选中多个卡组
-    private final List<T> selectList;
-
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -193,23 +184,12 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
     }
 
-    public void setSelectPosition(int selectPosition) {
-        this.selectPosition = selectPosition;
-    }
-
     public boolean isSelect() {
         return isSelect;
     }
 
     public boolean isManySelect() {
         return isManySelect;
-    }
-
-    public void addManySelect(T t) {
-        if (selectList.contains(t))
-            selectList.remove(t);
-        else
-            selectList.add(t);
     }
 
     /**
@@ -226,12 +206,23 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
     }
 
+    public void addManySelect(T t) {
+        if (selectList.contains(t))
+            selectList.remove(t);
+        else
+            selectList.add(t);
+    }
+
     public List<T> getSelectList() {
         return selectList;
     }
 
     public int getSelectPosition() {
         return selectPosition;
+    }
+
+    public void setSelectPosition(int selectPosition) {
+        this.selectPosition = selectPosition;
     }
 
     public void setOnItemSelectListener(OnItemSelectListener onItemSelectListener) {

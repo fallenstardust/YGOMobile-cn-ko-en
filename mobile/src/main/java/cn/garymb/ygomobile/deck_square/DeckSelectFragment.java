@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
@@ -383,12 +384,13 @@ public class DeckSelectFragment extends Fragment {
                                             if (onlineDeck.getDeckName().equals(deckFile.getName())) {
                                                 // 删除在线卡组（异步处理）
                                                 VUiKit.defer().when(() -> {
-                                                    DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                    return true;
+                                                    PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                    return deckResponse;
                                                 }).fail((deleteError) -> {
                                                     LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
                                                 }).done((deleteSuccess) -> {
-                                                    if (deleteSuccess) {
+                                                    if (deleteSuccess.isData()) {
+                                                        YGOUtil.showTextToast(getContext().getString(R.string.done));
                                                         LogUtil.i(TAG, "Online deck deleted successfully");
                                                     }
                                                 });
@@ -398,7 +400,6 @@ public class DeckSelectFragment extends Fragment {
                                 }
 
                             }
-                            YGOUtil.showTextToast(getContext().getString(R.string.done));
                             dialogPlus.dismiss();
                             onDeckMenuListener.onDeckDel(selectDeckList);
                             clearDeckSelect();

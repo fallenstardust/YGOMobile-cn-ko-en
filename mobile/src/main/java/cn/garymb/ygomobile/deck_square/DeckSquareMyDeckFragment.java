@@ -118,16 +118,6 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
         });
 
-        /** 自动同步 */
-        VUiKit.defer().when(() -> {
-            return DeckSquareApiUtil.synchronizeDecks();
-        }).fail((e) -> {
-
-            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
-        }).done((result) -> {
-
-
-        });
         return binding.getRoot();
 
     }
@@ -204,16 +194,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         });
         /** 自动同步 */
-        VUiKit.defer().when(() -> {
-
-            return DeckSquareApiUtil.synchronizeDecks();
-        }).fail((e) -> {
-
-            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
-        }).done((result) -> {
-
-
-        });
+        VUiKit.defer().when(() -> {return DeckSquareApiUtil.synchronizeDecks();}).fail((e) -> {
+            LogUtil.i(TAG, "Sync deck fail" + e.getMessage());
+        }).done((result) -> {});
         //DeckSquareApiUtil.synchronizeDecks();
     }
 }

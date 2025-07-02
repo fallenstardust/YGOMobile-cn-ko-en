@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.deck_square;
 
 
+import static cn.garymb.ygomobile.Constants.TAG;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +19,8 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckManageDialog extends DialogFragment implements YGODeckDialogUtil.OnDeckDialogListener {
