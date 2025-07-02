@@ -34,6 +34,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
@@ -41,9 +43,12 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -359,6 +364,39 @@ public class DeckSelectFragment extends Fragment {
                             for (DeckFile deckFile : selectDeckList) {
                                 deckFile.getPathFile().delete();
                                 deckList.remove(deckFile);
+
+                                if (SharedPreferenceUtil.getServerToken() != null) {
+                                    LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
+
+                                    // 获取在线卡组列表（异步处理）
+                                    VUiKit.defer().when(() -> {
+                                        return DeckSquareApiUtil.getUserDecks(loginToken);
+                                    }).fail((e) -> {
+                                        LogUtil.e(TAG, "getUserDecks failed: " + e);
+                                    }).done((result) -> {
+                                        if (result == null || result.getData() == null) {
+                                            return;
+                                        }
+
+                                        List<MyOnlineDeckDetail> onlineDecks = result.getData();
+                                        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+                                            if (onlineDeck.getDeckName().equals(deckFile.getName())) {
+                                                // 删除在线卡组（异步处理）
+                                                VUiKit.defer().when(() -> {
+                                                    DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                    return true;
+                                                }).fail((deleteError) -> {
+                                                    LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
+                                                }).done((deleteSuccess) -> {
+                                                    if (deleteSuccess) {
+                                                        LogUtil.i(TAG, "Online deck deleted successfully");
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+
                             }
                             YGOUtil.showTextToast(getContext().getString(R.string.done));
                             dialogPlus.dismiss();

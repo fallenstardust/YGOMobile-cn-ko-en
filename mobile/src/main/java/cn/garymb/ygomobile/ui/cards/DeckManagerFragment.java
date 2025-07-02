@@ -62,6 +62,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +82,9 @@ import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -106,6 +110,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ShareUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -896,9 +901,44 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setMessage(R.string.question_delete_deck);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
-
                         if (mDeckAdapater.getYdkFile() != null) {
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
+
+                            if (SharedPreferenceUtil.getServerToken() != null) {
+                                LoginToken loginToken = new LoginToken(
+                                        SharedPreferenceUtil.getServerUserId(),
+                                        SharedPreferenceUtil.getServerToken()
+                                );
+
+                                // 获取在线卡组列表（异步处理）
+                                VUiKit.defer().when(() -> {
+                                    return DeckSquareApiUtil.getUserDecks(loginToken);
+                                }).fail((e) -> {
+                                    LogUtil.e(TAG, "getUserDecks failed: " + e);
+                                }).done((result) -> {
+                                    if (result == null || result.getData() == null) {
+                                        return;
+                                    }
+
+                                    List<MyOnlineDeckDetail> onlineDecks = result.getData();
+                                    for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+                                        if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
+                                            // 删除在线卡组（异步处理）
+                                            VUiKit.defer().when(() -> {
+                                                DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                return true;
+                                            }).fail((deleteError) -> {
+                                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
+                                            }).done((deleteSuccess) -> {
+                                                if (deleteSuccess) {
+                                                    LogUtil.i(TAG, "Online deck deleted successfully");
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+
                             dlg.dismiss();
                             File file = getFirstYdk();
                             loadDeckFromFile(file);
