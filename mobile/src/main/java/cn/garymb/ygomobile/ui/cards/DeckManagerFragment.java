@@ -239,7 +239,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     } else {
                         YGOUtil.showTextToast(data != null ? data.getMessage() : "点赞失败");
                     }
+                    mDeckId = null;
                 });
+            } else {
+                ll_click_like.setVisibility(View.GONE);
             }
         });
         tv_deck.setOnClickListener(v -> {
@@ -1363,6 +1366,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         } else {
             loadDeckFromFile(deckFile.getPathFile());
+            ll_click_like.setVisibility(View.GONE);
         }
     }
 
