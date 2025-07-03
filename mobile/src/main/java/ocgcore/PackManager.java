@@ -145,7 +145,7 @@ public class PackManager implements Closeable {
     public List<Integer> getAllIdsById(Integer id) {
         String packName = findPackNameById(id);
         if (packName == null) {
-            Log.w("seesee", "No pack found for ID: " + id);
+            Log.w(TAG, "No pack found for ID: " + id);
             return new ArrayList<>();
         }
         return findIdsByPackName(packName);
