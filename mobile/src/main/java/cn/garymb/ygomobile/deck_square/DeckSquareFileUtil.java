@@ -201,23 +201,37 @@ public class DeckSquareFileUtil {
         return content;
     }
 
-    public static boolean saveFileToPath(String path, String fileName, String content) {
+    /**
+     * 保存文件到指定路径，并设置指定的最后修改时间
+     * @param path 保存路径
+     * @param fileName 文件名
+     * @param content 文件内容
+     * @param modificationTime 期望的最后修改时间（毫秒时间戳）
+     * @return 保存是否成功
+     */
+    public static boolean saveFileToPath(String path, String fileName, String content, long modificationTime) {
         try {
-            // Create file object
+            // 创建文件对象
             File file = new File(path, fileName);
 
-            // Create file output stream
-            FileOutputStream fos = new FileOutputStream(file);
+            // 创建文件输出流
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                // 写入内容
+                fos.write(content.getBytes());
+                fos.flush();
+            }
 
-            // Write content
-            fos.write(content.getBytes());
-            fos.flush();
-            fos.close();
+            // 设置指定的最后修改时间
+            boolean timeSet = file.setLastModified(modificationTime);
+            if (!timeSet) {
+                LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
+            }
+
+            return true;
         } catch (IOException e) {
             LogUtil.e(TAG, "保存文件失败", e);
             return false;
         }
-        return true;
     }
 
 

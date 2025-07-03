@@ -1,16 +1,23 @@
 package cn.garymb.ygomobile.deck_square;
 
+import android.annotation.SuppressLint;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -461,7 +468,7 @@ public class DeckSquareApiUtil {
         // 遍历本地卡组，处理同名卡组的情况
         for (MyDeckItem localDeck : localDecks) {
             String localDeckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
-
+            localDeck.setDeckName(localDeckName);//移除.ydk扩展名后需要修改lockDeck记录的卡组名，以防上传时候把.ydk带进去
             boolean foundOnlineDeck = false;
             for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
                 String onlineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
@@ -483,10 +490,10 @@ public class DeckSquareApiUtil {
                     if (onlineUpdateDate != null && onlineUpdateDate.compareTo(localUpdateDate) > 0) {
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
                         LogUtil.w("seesee下载", localDeckName+"//"+onlineDeckName);
-                        onlineDeck.setDeckName(onlineDeckName);
-                        downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
+                        String localPath = localDeck.getDeckPath().replace(localDeckName + Constants.YDK_FILE_EX, "");//直接传入localDeck.getDeckPath()会包含卡组名.ydk，会导致和onlinedeck.getDeckName重复拼接文件路径
+                        downloadOnlineDeck(onlineDeck, localPath, Long.valueOf(onlineDeck.getDeckUpdateDate()));
                     } else {
-                        LogUtil.w("seesee上传", localDeckName+"//"+onlineDeckName);
+                        LogUtil.w("seesee上传", localDeckName + "//" + onlineDeckName);
                         // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
                         uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
                     }
@@ -494,7 +501,7 @@ public class DeckSquareApiUtil {
                 }
             }
 
-            // 本地卡组在在线列表中不存在，直接上传
+            // 本地卡组在在线列表中不存在，则需要获取新的deckid来直接上传
             if (!foundOnlineDeck) {
                 DeckFile deckFile = new DeckFile(localDeckName, new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
                 deckFile.setName(localDeckName);
@@ -506,14 +513,14 @@ public class DeckSquareApiUtil {
         // 处理只存在于在线的卡组（即本地没有同名卡组）
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
             if (!onlineDeckProcessed.get(onlineDeck.getDeckName())) {
-                downloadMissingDeckToLocal(onlineDeck);
+                downloadMissingDeckToLocal(onlineDeck, Long.valueOf(onlineDeck.getDeckUploadDate()));
             }
         }
 
         return true;
     }
 
-    private static boolean downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck) {
+    private static boolean downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck, Long onlineUpdateDate) {
         try {
             // 根据卡组ID查询在线卡组详情
             DownloadDeckResponse deckResponse = DeckSquareApiUtil.getDeckById(onlineDeck.getDeckId());
@@ -542,7 +549,7 @@ public class DeckSquareApiUtil {
             String filePath = deckDirectory + "/" + fileName;
 
             // 保存在线卡组到本地
-            boolean saved = DeckSquareFileUtil.saveFileToPath(deckDirectory, fileName, deckResponse.getData().getDeckYdk());
+            boolean saved = DeckSquareFileUtil.saveFileToPath(deckDirectory, fileName, deckResponse.getData().getDeckYdk(), onlineUpdateDate);
             if (!saved) {
                 LogUtil.e(TAG, "downloadMissingDeckToLocal-Failed to save deck file: " + filePath);
                 return false;
@@ -566,7 +573,7 @@ public class DeckSquareApiUtil {
         }
     }
 
-    private static boolean downloadOnlineDeck(MyOnlineDeckDetail onlineDeck, String localPath) {
+    private static boolean downloadOnlineDeck(MyOnlineDeckDetail onlineDeck, String localPath, Long onlineUpdateDate) {
         try {
             // 根据卡组ID查询在线卡组详情
             DownloadDeckResponse deckResponse = DeckSquareApiUtil.getDeckById(onlineDeck.getDeckId());
@@ -577,13 +584,14 @@ public class DeckSquareApiUtil {
 
 
             // 保存在线卡组到本地
-            boolean saved = DeckSquareFileUtil.saveFileToPath(localPath, onlineDeck.getDeckName(), deckResponse.getData().getDeckYdk());
+            String fileName = onlineDeck.getDeckName() + Constants.YDK_FILE_EX;
+            boolean saved = DeckSquareFileUtil.saveFileToPath(localPath, fileName, deckResponse.getData().getDeckYdk(), onlineUpdateDate);
             if (!saved) {
-                LogUtil.e(TAG, "downloadOnlineDeck-Failed to save deck file: " + localPath);
+                LogUtil.e(TAG, "downloadOnlineDeck-Failed to save deck file: " + fileName);
                 return false;
             }
 
-            LogUtil.i(TAG, "Deck updated: " + localPath);
+            LogUtil.i(TAG, "Deck updated: " + fileName);
             return true;
         } catch (Exception e) {
             LogUtil.e(TAG, "Error downloading deck: " + e.getMessage());
