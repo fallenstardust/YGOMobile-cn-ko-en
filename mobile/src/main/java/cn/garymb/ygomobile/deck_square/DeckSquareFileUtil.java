@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.deck_square;
 
+import androidx.annotation.Nullable;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -82,12 +84,47 @@ public class DeckSquareFileUtil {
         return deckId;
     }
 
-    //查询卡组目录下的所有ydk文件，返回File[]
+    /**
+     * 查询卡组目录下的所有ydk文件（包含子文件夹）
+     * @return 包含所有ydk文件的File数组
+     */
     public static File[] getAllYdk() {
         File dir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
-        File[] files = dir.listFiles((file, s) -> s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX));
+        if (!dir.exists() || !dir.isDirectory()) {
+            return new File[0];
+        }
+        // 使用ArrayList存储结果，方便动态添加
+        ArrayList<File> ydkFiles = new ArrayList<>();
+        // 递归遍历目录和子目录
+        findYdkFiles(dir, ydkFiles);
+        // 将ArrayList转换为File数组
+        return ydkFiles.toArray(new File[0]);
+    }
 
-        return files;
+    /**
+     * 递归查找指定目录下的所有YDK文件
+     * @param dir 当前查找的目录
+     * @param ydkFiles 存储找到的YDK文件
+     */
+    private static void findYdkFiles(File dir, ArrayList<File> ydkFiles) {
+        // 获取目录下的所有文件和子目录
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return; // 目录不可访问或为空
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // 如果是子目录，递归查找
+                findYdkFiles(file, ydkFiles);
+            } else {
+                // 如果是文件，检查是否为YDK文件
+                String fileName = file.getName().toLowerCase(Locale.US);
+                if (fileName.endsWith(Constants.YDK_FILE_EX)) {
+                    ydkFiles.add(file);
+                }
+            }
+        }
     }
 
     //读取卡组目录下的所有ydk文件，解析ydk文件（包括从ydk文件内容中读取deckId），生成List<MyDeckItem>解析结果
@@ -98,9 +135,6 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.deckName = file.getName();
-
-
-
             item.setUpdateDate(String.valueOf(file.lastModified()));
             item.setDeckSouce(0);
             item.setDeckPath(file.getPath());
@@ -180,7 +214,7 @@ public class DeckSquareFileUtil {
             fos.flush();
             fos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogUtil.e(TAG, "保存文件失败", e);
             return false;
         }
         return true;
