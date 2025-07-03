@@ -454,17 +454,18 @@ public class DeckSquareApiUtil {
         // 用于标记本地卡组是否在在线有对应
         Map<String, Boolean> localDeckProcessed = new HashMap<>();
         for (MyDeckItem localDeck : localDecks) {
-            String deckName = localDeck.getDeckName().replace(".ydk", "");
+            String deckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
             localDeckProcessed.put(deckName, false);
         }
 
         // 遍历本地卡组，处理同名卡组的情况
         for (MyDeckItem localDeck : localDecks) {
-            String localDeckName = localDeck.getDeckName().replace(".ydk", "");
+            String localDeckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
 
             boolean foundOnlineDeck = false;
             for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                if (localDeckName.equals(onlineDeck.getDeckName())) {
+                String onlineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
+                if (localDeckName.equals(onlineDeckName)) {
                     // 标记该在线卡组已处理
                     onlineDeckProcessed.put(onlineDeck.getDeckName(), true);
                     // 标记该本地卡组已处理
@@ -481,8 +482,11 @@ public class DeckSquareApiUtil {
 
                     if (onlineUpdateDate != null && onlineUpdateDate.compareTo(localUpdateDate) > 0) {
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
+                        LogUtil.w("seesee下载", localDeckName+"//"+onlineDeckName);
+                        onlineDeck.setDeckName(onlineDeckName);
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
                     } else {
+                        LogUtil.w("seesee上传", localDeckName+"//"+onlineDeckName);
                         // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
                         uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
                     }
@@ -492,8 +496,8 @@ public class DeckSquareApiUtil {
 
             // 本地卡组在在线列表中不存在，直接上传
             if (!foundOnlineDeck) {
-                DeckFile deckFile = new DeckFile(localDeck.getDeckName(), new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
-                deckFile.setName(localDeck.getDeckName());
+                DeckFile deckFile = new DeckFile(localDeckName, new File(localDeck.getDeckPath()), DeckType.ServerType.MY_SQUARE, localDeck.getDeckId());
+                deckFile.setName(localDeckName);
                 deckFile.setFirstCode(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
                 requestIdAndPushDeck(deckFile, loginToken);
             }
