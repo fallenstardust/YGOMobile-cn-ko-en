@@ -9,6 +9,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -308,4 +311,24 @@ public class DeckSquareFileUtil {
 
         return 0;
     }
+
+    /**
+     * 将 Unix 时间戳转换为 GMT 格式的日期字符串
+     * @param timestamp 时间戳（毫秒）
+     * @return GMT 格式的日期字符串（例如：Thu, 04 Jul 2025 08:00:55 GMT）
+     */
+    public static String convertToGMTDate(long timestamp) {
+        try {
+            // 创建格式化器并设置时区为 GMT
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+            // 格式化时间戳
+            return sdf.format(new Date(timestamp));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

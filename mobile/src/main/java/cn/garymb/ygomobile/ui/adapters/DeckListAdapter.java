@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import static cn.garymb.ygomobile.deck_square.DeckSquareFileUtil.convertToGMTDate;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
@@ -12,12 +14,8 @@ import android.widget.TextView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
@@ -74,16 +72,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         mContext = context;
     }
 
-    /**
-     * 将时间戳转换为 ISO 8601 格式的时间字符串
-     */
-    @SuppressLint("SimpleDateFormat")
-    public static String convertMillisToIsoString(long timeMillis) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CHINA);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.format(new Date(timeMillis));
-    }
-
     @SuppressLint("ResourceType")
     @Override
     protected void convert(DeckViewHolder holder, T item) {
@@ -122,7 +110,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        holder.file_time.setText(convertMillisToIsoString(deckFile.getDate()));
+        holder.file_time.setText(convertToGMTDate(deckFile.getDate()));
         if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
             //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
@@ -274,7 +262,7 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
-        file_time =findView(R.id.file_time);
+        file_time = findView(R.id.file_time);
         ll_extra_n_side = findView(R.id.ll_extra_n_side);
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
