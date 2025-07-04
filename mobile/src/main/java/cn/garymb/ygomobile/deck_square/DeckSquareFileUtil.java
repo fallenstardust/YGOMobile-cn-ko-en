@@ -220,7 +220,7 @@ public class DeckSquareFileUtil {
         FileOutputStream fos = null;
         try {
             // 创建文件对象
-            File file = new File(path);
+            File file = new File(path, fileName);
             fos = new FileOutputStream(file);
             // 创建文件输出流
             // 写入内容
