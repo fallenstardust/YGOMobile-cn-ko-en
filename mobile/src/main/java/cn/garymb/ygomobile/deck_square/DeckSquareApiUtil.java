@@ -35,6 +35,7 @@ import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.deck_square.bo.SyncMutliDeckResult;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -47,7 +48,7 @@ import okhttp3.Response;
 
 public class DeckSquareApiUtil {
 
-    private static final String TAG = "seesee decksquareApiUtil";
+    private static final String TAG = "decksquareApiUtil";
 
 
     public static boolean needLogin() {
@@ -239,6 +240,7 @@ public class DeckSquareApiUtil {
             PushMultiDeck.DeckData data = new PushMultiDeck.DeckData();
             data.setDeckYdk(deckContent);
             data.setDeckName(myDeckItem.getDeckName());
+            data.setDeckCoverCard1(myDeckItem.getDeckCoverCard1());
             data.setDeckId(deckIdList.get(i));
 
 
@@ -525,7 +527,7 @@ public class DeckSquareApiUtil {
     }
 
 
-    public static SyncMutliDeckResult synchronizeDecksV2() throws IOException, ParseException {
+    public static SyncMutliDeckResult synchronizeDecksV2() throws IOException {
         SyncMutliDeckResult autoSyncResult = new SyncMutliDeckResult();
         // 检查用户是否登录
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
@@ -582,20 +584,19 @@ public class DeckSquareApiUtil {
 
                     if (onlineUpdateDate > localUpdateDate) {
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
-
                         LogUtil.w(TAG, "sync-download deck: " + localDeck.getDeckName());
                         autoSyncResult.syncDownload.add(localDeck);
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath(), onlineUpdateDate);
-                    } else if (onlineUpdateDate == localUpdateDate) {
-
-                        LogUtil.w(TAG, "no need to sync deck: " + localDeck.getDeckName());
-                        //时间戳相同，不需要更新
-                    } else if (onlineUpdateDate < localUpdateDate) {
+                    //} else if (onlineUpdateDate == localUpdateDate) {
+                    //    LogUtil.w(TAG, "no need to sync deck: " + localDeck.getDeckName());
+                    //    //时间戳相同，不需要更新
+                    } else {
                         // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
-                        // uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
-
-                        LogUtil.w(TAG, "sync-upload deck: " + localDeck.getDeckName());
+                        localDeck.setDeckName(localDeck.getDeckName().replace(Constants.YDK_FILE_EX,""));//TODO 上版本很多人已经传了带.ydk的云备份，姑且只在这次再次上传时去掉.ydk
+                        localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
                         localDeck.setDeckId(onlineDeck.getDeckId());
+                        LogUtil.w(TAG, "seesee sync-upload deck: " + localDeck.getDeckName() + "、封面id："+ localDeck.getDeckCoverCard1());
+
                         syncUploadDecks.add(localDeck);
                         autoSyncResult.syncUpload.add(localDeck);
                     }
@@ -605,6 +606,9 @@ public class DeckSquareApiUtil {
 
             // 本地卡组在在线列表中不存在，则需要获取新的deckid来直接上传
             if (!foundOnlineDeck) {
+                localDeck.setDeckName(localDeck.getDeckName().replace(Constants.YDK_FILE_EX,""));
+                localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
+                LogUtil.w(TAG, "seesee upload deck new: " + localDeck.getDeckName() + "、封面id："+ localDeck.getDeckCoverCard1());
                 newPushDecks.add(localDeck);
                 autoSyncResult.newUpload.add(localDeck);
             }

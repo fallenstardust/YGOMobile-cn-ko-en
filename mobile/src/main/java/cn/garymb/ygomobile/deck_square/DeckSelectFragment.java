@@ -390,7 +390,7 @@ public class DeckSelectFragment extends Fragment {
                                                     LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
                                                 }).done((deleteSuccess) -> {
                                                     if (deleteSuccess.isData()) {
-                                                        YGOUtil.showTextToast(getContext().getString(R.string.done));
+                                                        YGOUtil.showTextToast(R.string.done);
                                                         LogUtil.i(TAG, "Online deck deleted successfully");
                                                     }
                                                 });
