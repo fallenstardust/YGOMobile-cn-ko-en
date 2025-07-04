@@ -119,19 +119,6 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
         });
 
-        /** 自动同步 */
-        VUiKit.defer().when(() -> {
-            return DeckSquareApiUtil.synchronizeDecksV2();
-        }).fail((e) -> {
-
-            YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
-            LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
-        }).done((result) -> {
-
-            String info = "sync decks: upload " + result.syncUpload.size() + ", download " + result.newDownload.size();
-            YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
-
-        });
         return binding.getRoot();
 
     }
