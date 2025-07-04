@@ -1,11 +1,15 @@
 package cn.garymb.ygomobile.deck_square;
 
+import static cn.garymb.ygomobile.deck_square.DeckSquareFileUtil.convertToUnixTimestamp;
+
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,8 @@ import cn.garymb.ygomobile.deck_square.api_response.PushMultiDeck;
 import cn.garymb.ygomobile.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
+import cn.garymb.ygomobile.deck_square.bo.MyDeckItem;
+import cn.garymb.ygomobile.deck_square.bo.SyncMutliDeckResult;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
@@ -256,6 +262,8 @@ public class DeckSquareApiUtil {
 
 
     /**
+     * 批量同步卡组到云，入参为DeckData
+     *
      * @param deckDataList
      * @param loginToken
      * @return
@@ -272,6 +280,51 @@ public class DeckSquareApiUtil {
         pushMultiDeck.setDeckContributor(loginToken.getUserId().toString());
         pushMultiDeck.setUserId(loginToken.getUserId());
         pushMultiDeck.setDecks(deckDataList);
+
+        String json = gson.toJson(pushMultiDeck);
+        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        String responseBodyString = response.body().string();
+
+        result = gson.fromJson(responseBodyString, SyncDecksResponse.class);
+        LogUtil.i(TAG, "push deck response:" + responseBodyString);
+
+        return result;
+    }
+
+    /**
+     * 批量同步卡组到云，入参为MyDeckItem
+     *
+     * @param deckDataList
+     * @param loginToken
+     * @return
+     * @throws IOException
+     */
+    public static SyncDecksResponse syncMyDecks(List<MyDeckItem> deckDataList, LoginToken loginToken) throws IOException {
+        SyncDecksResponse result = null;
+        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/multi";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("ReqSource", "MDPro3");
+        headers.put("token", loginToken.getServerToken());
+
+        /* 构造json */
+        List<PushMultiDeck.DeckData> dataList = new ArrayList<>();
+        for (MyDeckItem item : deckDataList) {
+            PushMultiDeck.DeckData data = new PushMultiDeck.DeckData();
+            data.setDeckId(item.getDeckId());
+            data.setDeckName(item.getDeckName());
+            data.setDeckCoverCard1(item.getDeckCoverCard1());
+
+            String deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
+
+            data.setDeckYdk(deckContent);
+            dataList.add(data);
+        }
+
+        Gson gson = new Gson();
+        PushMultiDeck pushMultiDeck = new PushMultiDeck();
+        pushMultiDeck.setDeckContributor(loginToken.getUserId().toString());
+        pushMultiDeck.setUserId(loginToken.getUserId());
+        pushMultiDeck.setDecks(dataList);
 
         String json = gson.toJson(pushMultiDeck);
         Response response = OkhttpUtil.postJson(url, json, headers, 1000);
@@ -425,11 +478,14 @@ public class DeckSquareApiUtil {
     }
 
 
-    public static boolean synchronizeDecksV2() throws IOException {
+    public static SyncMutliDeckResult synchronizeDecksV2() throws IOException, ParseException {
+        SyncMutliDeckResult result = new SyncMutliDeckResult();
         // 检查用户是否登录
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
         if (loginToken == null) {
-            return false;
+            result.setFlag(false);
+            result.setInfo("need login");
+            return result;
         }
 
         // 获取本地卡组列表
@@ -437,7 +493,9 @@ public class DeckSquareApiUtil {
         // 获取在线卡组列表
         MyDeckResponse onlineDecksResponse = DeckSquareApiUtil.getUserDecks(loginToken);
         if (onlineDecksResponse == null || onlineDecksResponse.getData() == null) {
-            return false;
+            result.setFlag(false);
+            result.setInfo("no online decks");
+            return result;
         }
         List<MyOnlineDeckDetail> onlineDecks = onlineDecksResponse.getData();
 
@@ -448,10 +506,11 @@ public class DeckSquareApiUtil {
             onlineDeckProcessed.put(onlineDeck.getDeckName(), false);
         }
 
+        List<MyDeckItem> toUploadDecks = new ArrayList<>();
         // 遍历本地卡组，处理同名卡组的情况
         for (MyDeckItem localDeck : localDecks) {
             String localDeckName = localDeck.getDeckName();
-            localDeckName = localDeckName.replace(".ydk", "");
+            // localDeckName = localDeckName.replace(".ydk", "");
 
             for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
 
@@ -460,28 +519,38 @@ public class DeckSquareApiUtil {
                     onlineDeckProcessed.put(onlineDeck.getDeckName(), true);
 
                     // 比对更新时间
-                    String localUpdateDate = localDeck.getUpdateDate();
-                    String onlineUpdateDate = String.valueOf(0);//todo 这里应该把2025-05-19T06:11:17转成毫秒，onlineDeck.getDeckUpdateDate();
-                    if (onlineUpdateDate != null && (localUpdateDate == null || onlineUpdateDate.compareTo(localUpdateDate) > 0)) {
+                    long localUpdateDate = localDeck.getUpdateTimestamp();
+
+                    long onlineUpdateDate = convertToUnixTimestamp(onlineDeck.getDeckUpdateDate());//todo 这里应该把2025-05-19T06:11:17转成毫秒，onlineDeck.getDeckUpdateDate();
+
+                    if (onlineUpdateDate > localUpdateDate){
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath());
-                    } else {
+                    } else{
                         // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
-                        uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
+                        // uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
+
+                        localDeck.setDeckId(onlineDeck.getDeckId());
+                        toUploadDecks.add(localDeck);
+                        result.toUpload.add(localDeck);
                     }
                     break;
                 }
             }
         }
+        SyncDecksResponse response = syncMyDecks(toUploadDecks, loginToken);
+        result.pushResponse = response;
 
         // 处理只存在于在线的卡组（即本地没有同名卡组）
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+            result.download.add(onlineDeck);
             if (!onlineDeckProcessed.get(onlineDeck.getDeckName())) {
-                downloadMissingDeckToLocal(onlineDeck);
+                SyncMutliDeckResult.DownloadResult downloadResult = downloadMissingDeckToLocal(onlineDeck);
+                result.downloadResponse.add(downloadResult);
             }
         }
 
-        return true;
+        return result;
 
     }
 
@@ -573,13 +642,13 @@ public class DeckSquareApiUtil {
         List<MyOnlineDeckDetail> onlineDecks;
     }
 
-    private static boolean downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck) {
+    private static SyncMutliDeckResult.DownloadResult downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck) {
         try {
             // 根据卡组ID查询在线卡组详情
             DownloadDeckResponse deckResponse = DeckSquareApiUtil.getDeckById(onlineDeck.getDeckId());
             if (deckResponse == null || deckResponse.getData() == null) {
                 LogUtil.e(TAG, "Failed to get deck details for: " + onlineDeck.getDeckName());
-                return false;
+                return new SyncMutliDeckResult.DownloadResult(false, onlineDeck.getDeckId(), "Failed to get deck details for: " + onlineDeck.getDeckName());
             }
 
             MyOnlineDeckDetail deckDetail = deckResponse.getData();
@@ -592,7 +661,7 @@ public class DeckSquareApiUtil {
                 boolean created = dir.mkdirs();
                 if (!created) {
                     LogUtil.e(TAG, "Failed to create directory: " + deckDirectory);
-                    return false;
+                    return new SyncMutliDeckResult.DownloadResult(false, onlineDeck.getDeckId(), "Failed to create directory: " + deckDirectory);
                 }
             }
 
@@ -608,7 +677,7 @@ public class DeckSquareApiUtil {
             boolean saved = DeckSquareFileUtil.saveFileToPath(filePath, onlineDeck.getDeckName(), deckContent);
             if (!saved) {
                 LogUtil.e(TAG, "Failed to save deck file: " + filePath);
-                return false;
+                return new SyncMutliDeckResult.DownloadResult(false, onlineDeck.getDeckId(), "Failed to save deck file: " + filePath);
             }
 
             LogUtil.i(TAG, "Deck saved to: " + filePath);
@@ -621,11 +690,11 @@ public class DeckSquareApiUtil {
             newLocalDeck.setIdUploaded(2); // 已上传状态
             newLocalDeck.setUpdateDate(onlineDeck.getDeckUpdateDate());
 
-            return true;
+            return new SyncMutliDeckResult.DownloadResult(true, onlineDeck.getDeckId());
         } catch (Exception e) {
             LogUtil.e(TAG, "Error downloading missing deck: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return new SyncMutliDeckResult.DownloadResult(false, onlineDeck.getDeckId(), "Error downloading missing deck: " + e.getMessage());
         }
     }
 
@@ -657,6 +726,14 @@ public class DeckSquareApiUtil {
         }
     }
 
+    /**
+     * 将MyDeckItem调用单卡组同步接口推送到服务器
+     *
+     * @param localDeck
+     * @param onlineDeckId
+     * @param loginToken
+     * @return
+     */
     private static boolean uploadLocalDeck(MyDeckItem localDeck, String onlineDeckId, LoginToken loginToken) {
         try {
             DeckFile deckFile = new DeckFile(localDeck.getDeckPath(), DeckType.ServerType.MY_SQUARE);

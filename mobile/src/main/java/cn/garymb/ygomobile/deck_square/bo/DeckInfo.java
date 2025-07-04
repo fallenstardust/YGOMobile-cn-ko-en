@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.deck_square.bo;
 
 import android.os.Parcel;
 import android.os.Parcelable;

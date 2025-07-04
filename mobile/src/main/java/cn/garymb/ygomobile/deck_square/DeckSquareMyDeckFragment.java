@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -123,9 +124,12 @@ public class DeckSquareMyDeckFragment extends Fragment {
             return DeckSquareApiUtil.synchronizeDecksV2();
         }).fail((e) -> {
 
-            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+            YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
+            LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
         }).done((result) -> {
 
+            String info = "sync decks: upload " + result.toUpload.size() + ", download " + result.download.size();
+            YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
 
         });
         return binding.getRoot();
@@ -209,9 +213,11 @@ public class DeckSquareMyDeckFragment extends Fragment {
             return DeckSquareApiUtil.synchronizeDecksV2();
         }).fail((e) -> {
 
-            LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+            YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
+            LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
         }).done((result) -> {
-
+            String info = "sync decks: upload " + result.toUpload.size() + ", download " + result.download.size();
+            YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
 
         });
         //DeckSquareApiUtil.synchronizeDecks();

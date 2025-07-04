@@ -7,12 +7,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import ocgcore.CardManager;
@@ -97,18 +102,16 @@ public class DeckSquareFileUtil {
         for (File file : files) {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
-            item.deckName = file.getName();
+            item.setDeckName(file.getName());
 
 
-
-            item.setUpdateDate(String.valueOf(file.lastModified()));
-            item.setDeckSouce(0);
+            item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {
-                item.deckId = deckId;
-                item.idUploaded = 2;
+                item.setDeckId(deckId);
+                item.setIdUploaded(2);
             } else {
-                item.idUploaded = 0;
+                item.setIdUploaded(0);
             }
             result.add(item);
         }
@@ -168,20 +171,32 @@ public class DeckSquareFileUtil {
     }
 
     public static boolean saveFileToPath(String path, String fileName, String content) {
+        FileOutputStream fos = null;
         try {
             // Create file object
             File file = new File(path, fileName);
 
             // Create file output stream
-            FileOutputStream fos = new FileOutputStream(file);
+            fos = new FileOutputStream(file);
 
             // Write content
             fos.write(content.getBytes());
             fos.flush();
-            fos.close();
-        } catch (IOException e) {
+
+            // Update timestamp (works on all Android versions)
+            if (!file.setLastModified(System.currentTimeMillis())) {
+                LogUtil.w(TAG, "Timestamp update failed for: " + file);
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                }
+            }
         }
         return true;
     }
@@ -209,5 +224,16 @@ public class DeckSquareFileUtil {
             }
         }
         return cardList;
+    }
+
+
+    public static long convertToUnixTimestamp(String dateTimeStr) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sdf.setLenient(false);
+        Date date = sdf.parse(dateTimeStr);
+        return date.getTime();
+
+
     }
 }
