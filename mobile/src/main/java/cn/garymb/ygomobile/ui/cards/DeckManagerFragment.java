@@ -4,6 +4,7 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
+import static cn.garymb.ygomobile.deck_square.DeckSquareFileUtil.convertToUnixTimestamp;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -1351,7 +1352,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     String fileFullName = deckData.getDeckName() + ".ydk";
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), Long.valueOf(deckData.getDeckUpdateDate()));
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), convertToUnixTimestamp(deckData.getDeckUpdateDate()));
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);

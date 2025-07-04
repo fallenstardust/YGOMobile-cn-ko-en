@@ -26,7 +26,8 @@ import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private static final String TAG = "seesee decksquareApiUtil";
+    //private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     //    public static List<String> readLastLinesWithNIO(File file, int numLines) {
 //        try {
@@ -57,7 +58,7 @@ public class DeckSquareFileUtil {
 
             String line = null;
             while ((line = reader.readLine()) != null) {
-                LogUtil.i(TAG, line);
+               // LogUtil.i(TAG, line);
                 if (line.startsWith("###")) {//注意，先判断###，后判断##。因为###会包括##的情况
                     try {
                         String data = line.replace("#", "");
@@ -207,20 +208,10 @@ public class DeckSquareFileUtil {
         return content;
     }
 
-    /**
-     * 保存文件到指定路径，并设置指定的最后修改时间
-     *
-     * @param path             保存路径
-     * @param fileName         文件名
-     * @param content          文件内容
-     * @param modificationTime 期望的最后修改时间（毫秒时间戳）
-     * @return 保存是否成功
-     */
-    public static boolean saveFileToPath(String path, String fileName, String content, long modificationTime) {
+    public static boolean saveFile(File file, String content, long modificationTime) {
         FileOutputStream fos = null;
         try {
             // 创建文件对象
-            File file = new File(path, fileName);
             fos = new FileOutputStream(file);
             // 创建文件输出流
             // 写入内容
@@ -251,6 +242,33 @@ public class DeckSquareFileUtil {
         return true;
     }
 
+    /**
+     *
+     * @param fileFullPath 文件的完整路径
+     * @param content
+     * @param modificationTime
+     * @return
+     */
+    public static boolean saveFileToPath(String fileFullPath, String content, long modificationTime) {
+        File file = new File(fileFullPath);
+        return saveFile(file, content, modificationTime);
+    }
+
+    /**
+     * 保存文件到指定路径，并设置指定的最后修改时间
+     *
+     * @param fileParentPath   保存文件的父目录路径
+     * @param fileName         文件名
+     * @param content          文件内容
+     * @param modificationTime 最后修改时间（毫秒时间戳）
+     * @return 保存是否成功
+     */
+    public static boolean saveFileToPath(String fileParentPath, String fileName, String content, long modificationTime) {
+
+        File file = new File(fileParentPath, fileName);
+        return saveFile(file, content, modificationTime);
+    }
+
 
     public static List<Card> convertTempDeckYdk(String deckYdk) {
         String[] deckLine = deckYdk.split("\r\n|\r|\n");
@@ -277,13 +295,17 @@ public class DeckSquareFileUtil {
     }
 
 
-    public static long convertToUnixTimestamp(String dateTimeStr) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        sdf.setLenient(false);
-        Date date = sdf.parse(dateTimeStr);
-        return date.getTime();
+    public static long convertToUnixTimestamp(String dateTimeStr) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            sdf.setLenient(false);
+            Date date = sdf.parse(dateTimeStr);
+            return date.getTime();
+        }catch(ParseException e){
+            e.printStackTrace();
+        }
 
-
+        return 0;
     }
 }

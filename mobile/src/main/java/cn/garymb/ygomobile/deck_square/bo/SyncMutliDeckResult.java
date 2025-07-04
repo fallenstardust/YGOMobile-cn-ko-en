@@ -1,18 +1,22 @@
 package cn.garymb.ygomobile.deck_square.bo;
 
+import org.minidns.record.A;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.SyncDecksResponse;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 
 public class SyncMutliDeckResult {
     boolean flag = false;
     String info = null;
-    public SyncDecksResponse pushResponse;
+    public PushDeckResponse pushResponse;
 
-    public List<MyDeckItem> toUpload;//用于记录已推送的卡组
-    public List<MyOnlineDeckDetail> download;
+    public List<MyDeckItem> syncUpload;//用于记录已推送的卡组
+    public List<MyDeckItem> newUpload;//用于记录第一次推送到云的卡组
+    public List<MyDeckItem> syncDownload;//用于记录已推送的卡组
+    public List<MyOnlineDeckDetail> newDownload;
     public List<DownloadResult> downloadResponse;
 
     public static class DownloadResult {
@@ -37,16 +41,20 @@ public class SyncMutliDeckResult {
     public SyncMutliDeckResult() {
         flag = true;
         downloadResponse = new ArrayList<>();
-        download = new ArrayList<>();
-        toUpload = new ArrayList<>();
+        newDownload = new ArrayList<>();
+        syncUpload = new ArrayList<>();
+        newUpload = new ArrayList<>();
+        syncDownload = new ArrayList<>();
     }
 
     public SyncMutliDeckResult(boolean flag, String info) {
         this.flag = flag;
         this.info = info;
         downloadResponse = new ArrayList<>();
-        download = new ArrayList<>();
-        toUpload = new ArrayList<>();
+        newDownload = new ArrayList<>();
+        syncUpload = new ArrayList<>();
+        newUpload = new ArrayList<>();
+        syncDownload = new ArrayList<>();
     }
 
     public boolean isFlag() {
@@ -63,5 +71,11 @@ public class SyncMutliDeckResult {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public String getMessage() {
+
+        String info = "sync decks: " + syncUpload.size() + ", push new:" + newUpload.size() + ", download " + newDownload.size();
+        return info;
     }
 }

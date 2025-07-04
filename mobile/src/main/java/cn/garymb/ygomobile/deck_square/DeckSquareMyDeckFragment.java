@@ -128,7 +128,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
         }).done((result) -> {
 
-            String info = "sync decks: upload " + result.toUpload.size() + ", download " + result.download.size();
+            String info = "sync decks: upload " + result.syncUpload.size() + ", download " + result.newDownload.size();
             YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
 
         });
@@ -216,7 +216,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
             LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
         }).done((result) -> {
-            String info = "sync decks: upload " + result.toUpload.size() + ", download " + result.download.size();
+            String info = "sync decks: upload " + result.syncUpload.size() + ", download " + result.newDownload.size();
             YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
 
         });
