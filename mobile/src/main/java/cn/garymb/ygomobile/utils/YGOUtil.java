@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -25,7 +26,12 @@ import com.ourygo.lib.duelassistant.util.Util;
 
 import org.jdeferred.android.AndroidDeferredManager;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.lite.R;
@@ -234,6 +240,29 @@ public class YGOUtil {
         float density = App.get().getResources().getDisplayMetrics().density;
         float dp = px / density;
         return dp;
+    }
+
+    /**
+     * 将时间戳转换为 ISO 8601 格式的时间字符串
+     */
+    @SuppressLint("SimpleDateFormat")
+    public static String convertMillisToIsoString(long timeMillis) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date(timeMillis));
+    }
+
+    // 方法1：使用SimpleDateFormat解析ISO 8601格式
+    public static long parseIsoDateToTimestamp(String isoDateString) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date date = sdf.parse(isoDateString);
+            return date.getTime();
+        } catch (ParseException e) {
+            LogUtil.e("parseIsoDateToTimestamp","解析失败: ", e);
+            return 0; // 解析失败返回0
+        }
     }
 }
 

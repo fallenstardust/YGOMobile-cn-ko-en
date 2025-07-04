@@ -568,7 +568,6 @@ public class DeckSquareApiUtil {
             return true;
         } catch (Exception e) {
             LogUtil.e(TAG, "Error downloading missing deck: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -581,7 +580,6 @@ public class DeckSquareApiUtil {
                 LogUtil.e(TAG, "Failed to get deck details for: " + onlineDeck.getDeckName());
                 return false;
             }
-
 
             // 保存在线卡组到本地
             String fileName = onlineDeck.getDeckName() + Constants.YDK_FILE_EX;
