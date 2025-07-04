@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.TAG;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -63,7 +62,6 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,7 +82,6 @@ import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
@@ -253,7 +250,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
-            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecksV2).fail((e) -> {
                 LogUtil.i(TAG, "sync deck fail" + e.getMessage());
             }).done((result) -> {
             });
@@ -277,6 +274,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 传入外部ydk文件的路径，临时在本页面中打开该ydk的内容，用于后续的保存
+     *
      * @param preLoadFilePath 外部ydk文件的路径
      */
     public void preLoadFile(String preLoadFilePath) {
