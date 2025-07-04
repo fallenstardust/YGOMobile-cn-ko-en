@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.TAG;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -62,6 +63,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +83,10 @@ import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -106,6 +112,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ShareUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -232,7 +239,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     } else {
                         YGOUtil.showTextToast(data != null ? data.getMessage() : "点赞失败");
                     }
+                    mDeckId = null;
                 });
+            } else {
+                ll_click_like.setVisibility(View.GONE);
             }
         });
         tv_deck.setOnClickListener(v -> {
@@ -241,6 +251,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         });
         //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
+        /** 自动同步 */
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+                LogUtil.i(TAG, "sync deck fail" + e.getMessage());
+            }).done((result) -> {
+            });
+        }
     }
 
 
@@ -896,9 +913,46 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setMessage(R.string.question_delete_deck);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
-
                         if (mDeckAdapater.getYdkFile() != null) {
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
+
+                            if (SharedPreferenceUtil.getServerToken() != null) {
+                                LoginToken loginToken = new LoginToken(
+                                        SharedPreferenceUtil.getServerUserId(),
+                                        SharedPreferenceUtil.getServerToken()
+                                );
+
+                                // 获取在线卡组列表（异步处理）
+                                VUiKit.defer().when(() -> {
+                                    return DeckSquareApiUtil.getUserDecks(loginToken);
+                                }).fail((e) -> {
+                                    LogUtil.e(TAG, "getUserDecks failed: " + e);
+                                }).done((result) -> {
+                                    if (result == null || result.getData() == null) {
+                                        return;
+                                    }
+
+                                    List<MyOnlineDeckDetail> onlineDecks = result.getData();
+                                    for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+                                        if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
+                                            // 删除在线卡组（异步处理）
+                                            VUiKit.defer().when(() -> {
+                                                PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                return deckResponse;
+                                            }).fail((deleteError) -> {
+                                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
+                                            }).done((deleteSuccess) -> {
+                                                if (deleteSuccess.isData()) {
+                                                    LogUtil.i(TAG, "Online deck deleted successfully");
+                                                    YGOUtil.showTextToast(getContext().getString(R.string.done));
+                                                }
+                                            });
+                                            break;
+                                        }
+                                    }
+                                });
+                            }
+
                             dlg.dismiss();
                             File file = getFirstYdk();
                             loadDeckFromFile(file);
@@ -1295,12 +1349,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }).done((deckData) -> {
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
-                    Log.w("seesee mDeckId", mDeckId);
                     deckData.getDeckYdk();
                     String fileFullName = deckData.getDeckName() + ".ydk";
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk());
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), Long.valueOf(deckData.getDeckUpdateDate()));
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);
@@ -1313,6 +1366,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         } else {
             loadDeckFromFile(deckFile.getPathFile());
+            ll_click_like.setVisibility(View.GONE);
         }
     }
 

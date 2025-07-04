@@ -81,7 +81,13 @@
                                 android:layout_marginStart="5dp"
                                 android:layout_marginEnd="5dp"
                                 android:layout_weight="1"
+                                android:textSize="10sp"
+                                android:maxLines="1"
                                 android:gravity="center"
+                                android:shadowColor="@color/black"
+                                android:shadowDx="1"
+                                android:shadowDy="1"
+                                android:shadowRadius="2"
                                 android:text="@string/like_deck_thumb"
                                 android:textColor="@color/white" />
                         </LinearLayout>

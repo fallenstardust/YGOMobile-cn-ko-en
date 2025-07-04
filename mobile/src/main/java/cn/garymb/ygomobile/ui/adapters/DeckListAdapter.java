@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,44 +12,40 @@ import android.widget.TextView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
-import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
-import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
+    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private final ImageLoader imageLoader;
     private final Context mContext;
-    private LimitList mLimitList;
     private final CardLoader mCardLoader;
     private final DeckLoader mDeckLoader;
+    private final boolean isSelect;
+    private final List<T> selectList;
+    private LimitList mLimitList;
     private DeckInfo deckInfo;
     private DeckFile deckFile;
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
-    private final boolean isSelect;
     private boolean isManySelect;//标志位，是否选中多个卡组
-    private final List<T> selectList;
-
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -77,39 +72,17 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         deckInfo = new DeckInfo();
         mLimitList = DataManager.get().getLimitManager().getTopLimit();
         mContext = context;
-
-        addChildClickViewIds(R.id.local_deck_upload_btn);
-        LogUtil.i(TAG, "DeckListAdapter constructor");
-        setOnItemChildClickListener((adapter, view, position) -> {
-
-            //判断是否登录，如果未登录，直接返回
-            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
-            if (loginToken == null) {
-                return;
-            }
-
-
-            //获得点击的卡组
-            DeckFile deckFile = (DeckFile) adapter.getData().get(position);
-            LogUtil.i(TAG, "deckFile " + deckFile.toString());
-            //上传卡组
-            VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.requestIdAndPushDeck(deckFile,loginToken);
-                return result;
-            }).fail(e -> {
-
-                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
-            }).done(pushDeckResponse -> {
-                if (pushDeckResponse.isData()) {
-                    YGOUtil.showTextToast("push success!");
-                } else {
-
-                    YGOUtil.showTextToast("卡组上传失败！");
-                }
-            });
-        });
     }
 
+    /**
+     * 将时间戳转换为 ISO 8601 格式的时间字符串
+     */
+    @SuppressLint("SimpleDateFormat")
+    public static String convertMillisToIsoString(long timeMillis) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CHINA);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date(timeMillis));
+    }
 
     @SuppressLint("ResourceType")
     @Override
@@ -149,6 +122,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
+        holder.file_time.setText(convertMillisToIsoString(deckFile.getDate()));
         if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
             //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
@@ -222,18 +196,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.item_deck_list.setBackgroundResource(Color.TRANSPARENT);
         }
-        //卡包展示、人机卡组不显示上传按钮图标
-        if (deckFile.getPathFile().getParent().endsWith(Constants.CORE_PACK_PATH)
-                || deckFile.getPathFile().getParent().endsWith(Constants.WINDBOT_DECK_PATH)
-                ||deckFile.getPathFile().getParent().endsWith("cacheDeck")) {
-            holder.local_deck_upload_btn.setVisibility(View.GONE);
-        } else {
-            holder.local_deck_upload_btn.setVisibility(View.VISIBLE);
-        }
-    }
-
-    public void setSelectPosition(int selectPosition) {
-        this.selectPosition = selectPosition;
     }
 
     public boolean isSelect() {
@@ -242,13 +204,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
 
     public boolean isManySelect() {
         return isManySelect;
-    }
-
-    public void addManySelect(T t) {
-        if (selectList.contains(t))
-            selectList.remove(t);
-        else
-            selectList.add(t);
     }
 
     /**
@@ -265,12 +220,23 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
     }
 
+    public void addManySelect(T t) {
+        if (selectList.contains(t))
+            selectList.remove(t);
+        else
+            selectList.add(t);
+    }
+
     public List<T> getSelectList() {
         return selectList;
     }
 
     public int getSelectPosition() {
         return selectPosition;
+    }
+
+    public void setSelectPosition(int selectPosition) {
+        this.selectPosition = selectPosition;
     }
 
     public void setOnItemSelectListener(OnItemSelectListener onItemSelectListener) {
@@ -293,10 +259,10 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     TextView main;
     TextView extra;
     TextView side;
+    TextView file_time;
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
-    Button local_deck_upload_btn;
 
     public DeckViewHolder(View view) {
         super(view);
@@ -308,10 +274,10 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
+        file_time =findView(R.id.file_time);
         ll_extra_n_side = findView(R.id.ll_extra_n_side);
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
         deck_info = findView(R.id.deck_info);
-        local_deck_upload_btn = findView(R.id.local_deck_upload_btn);
     }
 }
