@@ -87,12 +87,49 @@ public class DeckSquareFileUtil {
         return deckId;
     }
 
-    //查询卡组目录下的所有ydk文件，返回File[]
+    /**
+     * 查询卡组目录下的所有ydk文件（包含子文件夹）
+     *
+     * @return 包含所有ydk文件的File数组
+     */
     public static File[] getAllYdk() {
         File dir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
-        File[] files = dir.listFiles((file, s) -> s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX));
+        if (!dir.exists() || !dir.isDirectory()) {
+            return new File[0];
+        }
+        // 使用ArrayList存储结果，方便动态添加
+        ArrayList<File> ydkFiles = new ArrayList<>();
+        // 递归遍历目录和子目录
+        findYdkFiles(dir, ydkFiles);
+        // 将ArrayList转换为File数组
+        return ydkFiles.toArray(new File[0]);
+    }
 
-        return files;
+    /**
+     * 递归查找指定目录下的所有YDK文件
+     *
+     * @param dir      当前查找的目录
+     * @param ydkFiles 存储找到的YDK文件
+     */
+    private static void findYdkFiles(File dir, ArrayList<File> ydkFiles) {
+        // 获取目录下的所有文件和子目录
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return; // 目录不可访问或为空
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // 如果是子目录，递归查找
+                findYdkFiles(file, ydkFiles);
+            } else {
+                // 如果是文件，检查是否为YDK文件
+                String fileName = file.getName().toLowerCase(Locale.US);
+                if (fileName.endsWith(Constants.YDK_FILE_EX)) {
+                    ydkFiles.add(file);
+                }
+            }
+        }
     }
 
     //读取卡组目录下的所有ydk文件，解析ydk文件（包括从ydk文件内容中读取deckId），生成List<MyDeckItem>解析结果
@@ -170,12 +207,21 @@ public class DeckSquareFileUtil {
         return content;
     }
 
+    /**
+     * 保存文件到指定路径，并设置指定的最后修改时间
+     *
+     * @param path             保存路径
+     * @param fileName         文件名
+     * @param content          文件内容
+     * @param modificationTime 期望的最后修改时间（毫秒时间戳）
+     * @return 保存是否成功
+     */
     public static boolean saveFileToPath(String path, String fileName, String content, long modificationTime) {
         FileOutputStream fos = null;
         try {
             // 创建文件对象
-            File file = new File(path, fileName);
-
+            File file = new File(path);
+            fos = new FileOutputStream(file);
             // 创建文件输出流
             // 写入内容
             fos.write(content.getBytes());
@@ -186,6 +232,9 @@ public class DeckSquareFileUtil {
             boolean timeSet = file.setLastModified(modificationTime);
             if (!timeSet) {
                 LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
+            } else {
+
+                LogUtil.w(TAG, "设置文件修改时间成功: " + file.getPath());
             }
         } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);

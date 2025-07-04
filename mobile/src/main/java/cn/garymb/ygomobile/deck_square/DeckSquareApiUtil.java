@@ -250,7 +250,7 @@ public class DeckSquareApiUtil {
         pushSingleDeck.setDeck(deckData);
 
         String json = gson.toJson(pushSingleDeck);
-        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, json, headers);
         String responseBodyString = response.body().string();
 
         result = gson.fromJson(responseBodyString, PushDeckResponse.class);
@@ -281,7 +281,7 @@ public class DeckSquareApiUtil {
         pushMultiDeck.setDecks(deckDataList);
 
         String json = gson.toJson(pushMultiDeck);
-        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, json, headers);
         String responseBodyString = response.body().string();
 
         result = gson.fromJson(responseBodyString, SyncDecksResponse.class);
@@ -326,7 +326,7 @@ public class DeckSquareApiUtil {
         pushMultiDeck.setDecks(dataList);
 
         String json = gson.toJson(pushMultiDeck);
-        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, json, headers);
         String responseBodyString = response.body().string();
 
         result = gson.fromJson(responseBodyString, SyncDecksResponse.class);
@@ -347,7 +347,7 @@ public class DeckSquareApiUtil {
         String url = "http://rarnu.xyz:38383/api/mdpro3/deck/like/" + deckId;
         Map<String, String> headers = new HashMap<>();
         headers.put("ReqSource", "MDPro3");
-        Response response = OkhttpUtil.postJson(url, null, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, null, headers);
         String responseBodyString = response.body().string();
 
         Gson gson = new Gson();
@@ -382,7 +382,7 @@ public class DeckSquareApiUtil {
         String json = gson.toJson(pushData);
 
 
-        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, json, headers);
         String responseBodyString = response.body().string();
 
         result = gson.fromJson(responseBodyString, BasicResponse.class);
@@ -457,7 +457,7 @@ public class DeckSquareApiUtil {
 
         String json = gson.toJson(pushSingleDeck);
 
-        Response response = OkhttpUtil.postJson(url, json, headers, 1000);
+        Response response = OkhttpUtil.postJson(url, json, headers);
         String responseBodyString = response.body().string();
 
         // Convert JSON to Java object using Gson
@@ -524,11 +524,18 @@ public class DeckSquareApiUtil {
 
                     if (onlineUpdateDate > localUpdateDate) {
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
+
+                        LogUtil.w(TAG, "sync-download deck: " + localDeck.getDeckName());
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath(), onlineUpdateDate);
-                    } else {
+                    } else if (onlineUpdateDate == localUpdateDate) {
+
+                        LogUtil.w(TAG, "no need to sync deck: " + localDeck.getDeckName());
+                        //时间戳相同，不需要更新
+                    } else if (onlineUpdateDate < localUpdateDate) {
                         // 本地卡组更新时间更晚，上传本地卡组覆盖在线卡组
                         // uploadLocalDeck(localDeck, onlineDeck.getDeckId(), loginToken);
 
+                        LogUtil.w(TAG, "sync-upload deck: " + localDeck.getDeckName());
                         localDeck.setDeckId(onlineDeck.getDeckId());
                         toUploadDecks.add(localDeck);
                         result.toUpload.add(localDeck);
@@ -542,8 +549,10 @@ public class DeckSquareApiUtil {
 
         // 处理只存在于在线的卡组（即本地没有同名卡组）
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-            result.download.add(onlineDeck);
             if (!onlineDeckProcessed.get(onlineDeck.getDeckName())) {
+
+                result.download.add(onlineDeck);
+                LogUtil.w(TAG, "sync-download new deck: " + onlineDeck.getDeckName());
                 SyncMutliDeckResult.DownloadResult downloadResult = downloadMissingDeckToLocal(onlineDeck, convertToUnixTimestamp(onlineDeck.getDeckUpdateDate()));
                 result.downloadResponse.add(downloadResult);
             }
@@ -626,7 +635,8 @@ public class DeckSquareApiUtil {
 
             MyOnlineDeckDetail deckDetail = deckResponse.getData();
             String deckContent = deckDetail.getDeckYdk();
-
+            // 保存在线卡组到本地
+            String fileName = onlineDeck.getDeckName() + Constants.YDK_FILE_EX;
             // 保存在线卡组到本地
             boolean saved = DeckSquareFileUtil.saveFileToPath(localPath, onlineDeck.getDeckName(), deckContent, onlineUpdateDate);
             if (!saved) {
