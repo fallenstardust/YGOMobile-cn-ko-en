@@ -551,37 +551,26 @@ public class DeckSquareApiUtil {
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
             onlineDeckProcessed.put(onlineDeck.getDeckName(), false);
         }
-        // 用于标记本地卡组是否在在线有对应
-      /*  Map<String, Boolean> localDeckProcessed = new HashMap<>();
-        for (MyDeckItem localDeck : localDecks) {
-            String deckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
-            localDeckProcessed.put(deckName, false);
-        }*/
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
         List<MyDeckItem> newPushDecks = new ArrayList<>();
         // 遍历本地卡组，处理同名卡组的情况
         for (MyDeckItem localDeck : localDecks) {
-
             boolean foundOnlineDeck = false;
-
-            String localDeckName = localDeck.getDeckName();
-
+            String localDeckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
             for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-
-                if (localDeckName.equals(onlineDeck.getDeckName())) {
+                String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
+                if (localDeckName.equals(onLineDeckName)) {
                     // 标记该在线卡组已处理
-                    onlineDeckProcessed.put(onlineDeck.getDeckName(), true);
+                    onlineDeckProcessed.put(onLineDeckName, true);
                     // 标记该本地卡组已处理
                     foundOnlineDeck = true;
-
                     // 比对更新时间
                     long localUpdateDate = localDeck.getUpdateTimestamp();
-
                     long onlineUpdateDate = DeckSquareFileUtil.convertToUnixTimestamp(onlineDeck.getDeckUpdateDate());//todo 这里应该把2025-05-19T06:11:17转成毫秒，onlineDeck.getDeckUpdateDate();
-
+                    LogUtil.d("seesee 本地和在线时间差",String.valueOf(localUpdateDate - onlineUpdateDate));
                     if (onlineUpdateDate > localUpdateDate) {
                         // 在线卡组更新时间更晚，下载在线卡组覆盖本地卡组
-                        LogUtil.w(TAG, "sync-download deck: " + localDeck.getDeckName());
+                        LogUtil.w(TAG, "sync-download deck: " + localDeck.getDeckPath());
                         autoSyncResult.syncDownload.add(localDeck);
                         downloadOnlineDeck(onlineDeck, localDeck.getDeckPath(), onlineUpdateDate);
                     //} else if (onlineUpdateDate == localUpdateDate) {
@@ -621,8 +610,8 @@ public class DeckSquareApiUtil {
 
         // 处理只存在于在线的卡组（即本地没有同名卡组）
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-            if (!onlineDeckProcessed.get(onlineDeck.getDeckName())) {
-
+            String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
+            if (!onlineDeckProcessed.get(onLineDeckName)) {
                 autoSyncResult.newDownload.add(onlineDeck);
                 LogUtil.w(TAG, "sync-download new deck: " + onlineDeck.getDeckName());
                 SyncMutliDeckResult.DownloadResult downloadResult = downloadMissingDeckToLocal(onlineDeck, DeckSquareFileUtil.convertToUnixTimestamp(onlineDeck.getDeckUpdateDate()));
@@ -634,14 +623,7 @@ public class DeckSquareApiUtil {
 
     }
 
-    // 内部类用于传递同步结果
-    private static class SyncResult {
-        List<MyDeckItem> localDecks;
-        List<MyOnlineDeckDetail> onlineDecks;
-    }
-
-    private static SyncMutliDeckResult.DownloadResult downloadMissingDeckToLocal
-            (MyOnlineDeckDetail onlineDeck, Long onlineUpdateDate) {
+    private static SyncMutliDeckResult.DownloadResult downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck, Long onlineUpdateDate) {
         try {
             // 根据卡组ID查询在线卡组详情
             DownloadDeckResponse deckResponse = DeckSquareApiUtil.getDeckById(onlineDeck.getDeckId());
