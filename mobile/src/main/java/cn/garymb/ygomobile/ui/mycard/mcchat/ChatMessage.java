@@ -72,7 +72,7 @@ public class ChatMessage {
         this.avatar = getAvatarUrl(name);
     }
 
-    public String getAvatarUrl(String userName) {
+    public static String getAvatarUrl(String userName) {
         return "https://sapi.moecube.com:444/avatar/avatar/" + userName + "/100/ygomobile.png";
     }
 

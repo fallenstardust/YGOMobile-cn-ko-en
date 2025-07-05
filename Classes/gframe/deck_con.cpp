@@ -1,8 +1,7 @@
+#include <array>
 #include "config.h"
 #include "deck_con.h"
 #include "myfilesystem.h"
-#include "data_manager.h"
-#include "deck_manager.h"
 #include "image_manager.h"
 #include "game.h"
 #include "duelclient.h"
@@ -65,6 +64,14 @@ static inline void load_current_deck(irr::gui::IGUIComboBox* cbCategory, irr::gu
 	deckManager.LoadCurrentDeck(cbCategory, cbDeck);
 }
 
+DeckBuilder::DeckBuilder() {
+	std::random_device rd;
+	std::array<uint32_t, 8> seed{};
+	for (auto& x : seed)
+		x = rd();
+	std::seed_seq seq(seed.begin(), seed.end());
+	rnd.seed(seq);
+}
 void DeckBuilder::Initialize() {
 	mainGame->is_building = true;
 	mainGame->is_siding = false;
@@ -100,7 +107,6 @@ void DeckBuilder::Initialize() {
 		filterList = &deckManager._lfList.back();
 	}
 	ClearSearch();
-	rnd.reset((uint_fast32_t)std::time(nullptr));
 	mouse_pos.set(0, 0);
 	hovered_code = 0;
 	hovered_pos = 0;
@@ -211,7 +217,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
-				rnd.shuffle_vector(deckManager.current_deck.main);
+				std::shuffle(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), rnd);
 				break;
 			}
 			case BUTTON_SAVE_DECK: {

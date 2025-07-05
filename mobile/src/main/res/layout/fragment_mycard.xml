@@ -15,41 +15,12 @@
         android:padding="10dp">
 
         <LinearLayout
+            android:id="@+id/ll_head_login"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:id="@+id/ll_head_login"
             android:layout_gravity="right"
+            android:layout_weight="1"
             android:orientation="horizontal">
-
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/tv_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text=""
-                    android:textColor="@color/holo_green_bright"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/tv_dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_name"
-                    android:layout_marginTop="5dp"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:text=""
-                    android:textColor="@color/holo_orange_bright"
-                    android:textSize="10sp"
-                    android:visibility="gone" />
-            </FrameLayout>
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_head"
@@ -57,11 +28,37 @@
                 android:layout_height="40dp"
                 android:layout_marginLeft="@dimen/dp_10"
                 android:src="@drawable/avatar" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:text=""
+                android:textColor="@color/holo_green_bright"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_name"
+                android:layout_marginTop="5dp"
+                android:ellipsize="end"
+                android:lines="1"
+                android:text=""
+                android:textColor="@color/holo_orange_bright"
+                android:textSize="10sp"
+                android:visibility="gone" />
+
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:src="@drawable/ic_guide_right" />
+                android:src="@drawable/baseline_login_24" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -102,8 +99,8 @@
                 android:id="@+id/rl_chat"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
                 android:layout_gravity="bottom"
+                android:layout_weight="1"
                 android:background="@drawable/list_item_bg"
                 android:orientation="vertical"
                 android:padding="10dp">
@@ -121,19 +118,19 @@
                     android:id="@+id/pb_chat_loading"
                     android:layout_width="15dp"
                     android:layout_height="15dp"
+                    android:layout_centerVertical="true"
                     android:layout_marginLeft="10dp"
                     android:layout_marginTop="5dp"
-                    android:visibility="gone"
-                    android:layout_centerVertical="true"
-                    android:layout_toRightOf="@id/tv_message_s" />
+                    android:layout_toRightOf="@id/tv_message_s"
+                    android:visibility="gone" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_message"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
                     android:layout_marginLeft="@dimen/dp_10"
                     android:layout_toRightOf="@id/pb_chat_loading"
-                    android:layout_centerVertical="true"
                     android:ellipsize="end"
                     android:lines="1"
                     android:text="@string/login_mycard"

@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import static cn.garymb.ygomobile.Constants.DEBUG;
+import static cn.garymb.ygomobile.utils.YGOUtil.convertMillisToIsoString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
@@ -19,27 +22,30 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.hutool.poi.excel.cell.CellSetter;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
 
 public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, DeckViewHolder> {
+    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private final ImageLoader imageLoader;
     private final Context mContext;
-    private LimitList mLimitList;
     private final CardLoader mCardLoader;
     private final DeckLoader mDeckLoader;
+    private final boolean isSelect;
+    private final List<T> selectList;
+    private LimitList mLimitList;
     private DeckInfo deckInfo;
     private DeckFile deckFile;
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
-    private final boolean isSelect;
-    private boolean isManySelect;
-    private final List<T> selectList;
+    private boolean isManySelect;//标志位，是否选中多个卡组
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -76,7 +82,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         this.deckFile = (DeckFile) item;
         holder.deckName.setText(item.getName());
         //预读卡组信息
-        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile(), mLimitList);
+        this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile());
         //加载卡组第一张卡的图
         holder.cardImage.setVisibility(View.VISIBLE);
         imageLoader.bindImage(holder.cardImage, deckFile.getFirstCode(), ImageLoader.Type.middle);
@@ -106,7 +112,14 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {//卡包展示时不显示额外和副卡组数量文本
+        holder.file_time.setText(convertMillisToIsoString(deckFile.getDate()));
+        if (DEBUG) {
+            holder.ll_deck_date.setVisibility(View.VISIBLE);
+        } else {
+            holder.ll_deck_date.setVisibility(View.GONE);
+        }
+        if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
+            //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
@@ -180,10 +193,6 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
     }
 
-    public void setSelectPosition(int selectPosition) {
-        this.selectPosition = selectPosition;
-    }
-
     public boolean isSelect() {
         return isSelect;
     }
@@ -192,19 +201,25 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         return isManySelect;
     }
 
-    public void addManySelect(T t) {
-        if (selectList.contains(t))
-            selectList.remove(t);
-        else
-            selectList.add(t);
-    }
-
+    /**
+     * 内部维护了selectList，用于存储当前选中的卡组
+     * DeckListAdapter支持多选，传入false清除已选中的卡组，并更新adapter。传入true将标志位置1
+     *
+     * @param manySelect
+     */
     public void setManySelect(boolean manySelect) {
         isManySelect = manySelect;
         if (!isManySelect) {
             selectList.clear();
             notifyDataSetChanged();
         }
+    }
+
+    public void addManySelect(T t) {
+        if (selectList.contains(t))
+            selectList.remove(t);
+        else
+            selectList.add(t);
     }
 
     public List<T> getSelectList() {
@@ -215,6 +230,10 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         return selectPosition;
     }
 
+    public void setSelectPosition(int selectPosition) {
+        this.selectPosition = selectPosition;
+    }
+
     public void setOnItemSelectListener(OnItemSelectListener onItemSelectListener) {
         this.onItemSelectListener = onItemSelectListener;
     }
@@ -222,6 +241,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
     }
+
+
 }
 
 class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {
@@ -229,9 +250,12 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     ImageView prerelease_star;
     ImageView banned_mark;
     TextView deckName;
+    TextView deckId;
     TextView main;
     TextView extra;
     TextView side;
+    TextView file_time;
+    LinearLayout ll_deck_date;
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
@@ -242,9 +266,12 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         item_deck_list = findView(R.id.item_deck_list);
         cardImage = findView(R.id.card_image);
         deckName = findView(R.id.deck_name);
+        deckId = findView(R.id.onlie_deck_id);
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
+        ll_deck_date = findView(R.id.ll_deck_date);
+        file_time = findView(R.id.file_time);
         ll_extra_n_side = findView(R.id.ll_extra_n_side);
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);

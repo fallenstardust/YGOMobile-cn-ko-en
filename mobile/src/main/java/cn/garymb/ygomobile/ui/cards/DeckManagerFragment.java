@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
+import static cn.garymb.ygomobile.Constants.TAG;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -33,18 +34,19 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatSpinner;
-import androidx.appcompat.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerViewItemListener;
 
 import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
@@ -61,6 +63,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +78,15 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.deck_square.DeckManageDialog;
+import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
+import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
+import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -98,8 +110,10 @@ import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ShareUtil;
-import cn.garymb.ygomobile.utils.YGODialogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.CardManager;
@@ -109,7 +123,12 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
-public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
+/**
+ * 卡组编辑页面，在本页面中显示某个卡组的内容
+ * 注意，卡组编辑页面中的长按事件回调在ItemTouchHelperPlus中实现，而非在
+ * RecyclerViewItemListener.OnItemListener中
+ */
+public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
@@ -120,6 +139,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
     private HomeActivity activity;
+    private String mDeckId;
+    private LinearLayout ll_click_like;
+    private TextView tv_add_1;
 
     protected int screenWidth;
 
@@ -130,7 +152,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private BaseActivity mContext;
     long exitLasttime = 0;
 
-    private File mPreLoadFile;
+    private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private TextView tv_deck;
     private TextView tv_result_count;
@@ -149,6 +171,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         initView(layoutView);
+        //检查外部调用方是否传入了ydk文件路径，如果传入，则打开外部ydk文件
         preLoadFile();
         //event
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
@@ -196,20 +219,71 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
         layoutView.findViewById(R.id.btn_nav_list).setOnClickListener((v) -> doMenu(R.id.action_card_list));
-        tv_deck.setOnClickListener(v ->
-                YGODialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
+        //只有当加载的是具有id的deck时才显示点赞按钮
+        tv_add_1 = layoutView.findViewById(R.id.tv_add_1);
+        ll_click_like = layoutView.findViewById(R.id.ll_click_like);
+        ll_click_like.setOnClickListener(v -> {
+            if (mDeckId != null) {
+                VUiKit.defer().when(() -> {
+                    BasicResponse result = DeckSquareApiUtil.likeDeck(mDeckId);
+                    return result;
+                }).fail(e -> {
+                    LogUtil.i(TAG, "Like deck fail" + e.getMessage());
+                    YGOUtil.showTextToast("点赞失败");
+                }).done(data -> {
+                    if (data != null && data.getMessage() != null && data.getMessage().equals("true")) {
+                        // 显示点赞动画
+                        tv_add_1.setText("+1");
+                        ll_click_like.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out));
+                        ll_click_like.setVisibility(View.GONE);
+                    } else {
+                        YGOUtil.showTextToast(data != null ? data.getMessage() : "点赞失败");
+                    }
+                    mDeckId = null;
+                });
+            } else {
+                ll_click_like.setVisibility(View.GONE);
+            }
+        });
+        tv_deck.setOnClickListener(v -> {
+            new DeckManageDialog(this).show(
+                    getActivity().getSupportFragmentManager(), "pagerDialog");
+        });
+        //  YGODeckDialogUtil.dialogDeckSelect(getActivity(), AppsSettings.get().getLastDeckPath(), this));
         mContext = (BaseActivity) getActivity();
+        /** 自动同步 */
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+                LogUtil.i(TAG, "sync deck fail" + e.getMessage());
+            }).done((result) -> {
+            });
+        }
     }
 
+
+    /**
+     * 外部调用fragment时，如果通过setArguments(mBundle)方法设置了ydk文件路径，则直接打开该ydk文件
+     * 将mPreLoadFile设置为对应的File
+     */
     public void preLoadFile() {
-        String preLoadFile = "";
+        String preLoadFilePath = "";
         if (getArguments() != null) {
-            preLoadFile = getArguments().getString("setDeck");
+            preLoadFilePath = getArguments().getString("setDeck");
             getArguments().clear();
         }
+        preLoadFile(preLoadFilePath);
+
+    }
+
+    /**
+     * 传入外部ydk文件的路径，临时在本页面中打开该ydk的内容，用于后续的保存
+     * @param preLoadFilePath 外部ydk文件的路径
+     */
+    public void preLoadFile(String preLoadFilePath) {
+
         final File _file;
         //打开指定卡组
-        if (!TextUtils.isEmpty(preLoadFile) && (mPreLoadFile = new File(preLoadFile)).exists()) {
+        if (!TextUtils.isEmpty(preLoadFilePath) && (mPreLoadFile = new File(preLoadFilePath)).exists()) {
             //外面卡组
             _file = mPreLoadFile;
         } else {
@@ -304,6 +378,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     }
 
+    /**
+     * 在此处处理卡组中卡片的长按删除
+     *
+     * @param pos
+     */
     @Override
     public void onDragLongPress(int pos) {
         if (pos < 0) return;
@@ -371,7 +450,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
+
     //region load deck
+    //从文件file中读取deck
     private void loadDeckFromFile(File file) {
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
             setCurDeck(new DeckInfo(), false);
@@ -386,7 +467,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }
         }).done((rs) -> {
             dlg.dismiss();
-            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
+            //setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
+            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()));
         });
     }
 
@@ -434,7 +516,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     /**
-     * 设置当前卡组
+     * 用户选中某个卡组后，更新当前界面，显示已选中的卡组。包括更新界面显示（tv_deck）、更新AppsSettings、通知DeckAdapter
      */
     private void setCurDeck(DeckInfo deckInfo, boolean isPack) {
         if (deckInfo == null) {
@@ -773,8 +855,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 }
                 shareDeck();
                 break;
-            case R.id.action_save:
-                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
+            case R.id.action_save://如果是通过“预加载”打开ydk，则将ydk保存到
+                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {//代表通过预加载功能打开的ydk
                     //需要保存到deck文件夹
                     inputDeckName(mPreLoadFile, null, true);
                 } else {
@@ -831,9 +913,46 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setMessage(R.string.question_delete_deck);
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
-
                         if (mDeckAdapater.getYdkFile() != null) {
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
+
+                            if (SharedPreferenceUtil.getServerToken() != null) {
+                                LoginToken loginToken = new LoginToken(
+                                        SharedPreferenceUtil.getServerUserId(),
+                                        SharedPreferenceUtil.getServerToken()
+                                );
+
+                                // 获取在线卡组列表（异步处理）
+                                VUiKit.defer().when(() -> {
+                                    return DeckSquareApiUtil.getUserDecks(loginToken);
+                                }).fail((e) -> {
+                                    LogUtil.e(TAG, "getUserDecks failed: " + e);
+                                }).done((result) -> {
+                                    if (result == null || result.getData() == null) {
+                                        return;
+                                    }
+
+                                    List<MyOnlineDeckDetail> onlineDecks = result.getData();
+                                    for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+                                        if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
+                                            // 删除在线卡组（异步处理）
+                                            VUiKit.defer().when(() -> {
+                                                PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                return deckResponse;
+                                            }).fail((deleteError) -> {
+                                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
+                                            }).done((deleteSuccess) -> {
+                                                if (deleteSuccess.isData()) {
+                                                    LogUtil.i(TAG, "Online deck deleted successfully");
+                                                    YGOUtil.showTextToast(getContext().getString(R.string.done));
+                                                }
+                                            });
+                                            break;
+                                        }
+                                    }
+                                });
+                            }
+
                             dlg.dismiss();
                             File file = getFirstYdk();
                             loadDeckFromFile(file);
@@ -1013,6 +1132,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return null;
     }
 
+    //从存储卡组的文件夹中获取所有名字以.ydk结尾的文件，并将mPreLoadFile也加入到返回结果中
     private List<File> getYdkFiles() {
         File dir = new File(mSettings.getResourcePath(), Constants.CORE_DECK_PATH);
         File[] files = dir.listFiles((file, s) -> s.toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX));
@@ -1212,9 +1332,42 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         YGOUtil.showTextToast(R.string.done);
     }
 
+    //在卡组选择的dialog中点击某个卡组（来自本地或服务器）后，dialog通过本回调函数通知本页面。
+    //在本页面中根据卡组来源（本地或服务器）显示卡组内容
     @Override
     public void onDeckSelect(DeckFile deckFile) {
-        loadDeckFromFile(deckFile.getPathFile());
+        if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
+            VUiKit.defer().when(() -> {
+                DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(deckFile.getDeckId());
+                if (response != null) {
+                    return response.getData();
+                } else {
+                    return null;
+                }
+            }).fail((e) -> {
+                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+            }).done((deckData) -> {
+                if (deckData != null) {
+                    mDeckId = deckData.getDeckId();
+                    deckData.getDeckYdk();
+                    String fileFullName = deckData.getDeckName() + ".ydk";
+                    File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
+                    //将卡组存到cache缓存目录中
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), Long.valueOf(deckData.getDeckUpdateDate()));
+                    if (result) {//存储成功，使用预加载功能
+                        LogUtil.i(TAG, "square deck detail done");
+                        //File file = new File(dir, fileFullName);
+                        preLoadFile(dir.getPath() + "/" + fileFullName);
+                        tv_add_1.setText(R.string.like_deck_thumb);
+                        ll_click_like.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+
+        } else {
+            loadDeckFromFile(deckFile.getPathFile());
+            ll_click_like.setVisibility(View.GONE);
+        }
     }
 
     @Override

@@ -355,5 +355,22 @@
     <string name="tip_download_ex">Há novas cartas, venha jogar!</string>
     <string name="user_privacy_policy">Política de Privacidade do Usuário</string>
     <string name="about_user_privacy_policy">Explicação das permissões utilizadas pelo YGOMobile</string>
+    <string name="go_to">pasar a</string>
+    <string name="local_deck">meus decks</string>
+    <string name="in_public">Público</string>
+    <string name="in_personal_use">Em Uso Personal</string>
+    <string name="register">Registro</string>
+    <string name="sign_out">Sair</string>
+    <string name="input_user_name">Insira o Nome de Usuário</string>
+    <string name="input_pwd">Insira a Senha</string>
+    <string name="deck_square">Praça de Decks</string>
+    <string name="my_deck_online">Backup na Nuvem</string>
+    <string name="input_contributor_name">Insira o Nome do Compartilhador</string>
+    <string name="sort_by_time">Ordenar por Tempo</string>
+    <string name="sort_by_thumb">Na ordem recomendada</string>
+    <string name="account_warning">Por favor, preencha seu e - mail ou nome de usuário!</string>
+    <string name="pwd_warning">Por favor, insira sua senha!</string>
+    <string name="like_deck_thumb">Curtir o deck</string>
+    <string name="pre_view">Prévia</string>
 </resources>
 

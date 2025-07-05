@@ -23,7 +23,7 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1361;
+const unsigned short PRO_VERSION = 0x1362;
 
 namespace ygo {
 
@@ -59,14 +59,6 @@ void DuelInfo::Clear() {
 	time_limit = 0;
 	time_left[0] = 0;
 	time_left[1] = 0;
-}
-
-bool IsExtension(const wchar_t* filename, const wchar_t* extension) {
-	auto flen = std::wcslen(filename);
-	auto elen = std::wcslen(extension);
-	if (!elen || flen < elen)
-		return false;
-	return !mywcsncasecmp(filename + (flen - elen), extension, elen);
 }
 
 void Game::process(irr::SEvent &event) {
@@ -1639,7 +1631,7 @@ void Game::LoadExpansions() {
 				continue;
 			}
 			if (IsExtension(fname, L".conf")) {
-				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(uname);
+				auto reader = DataManager::FileSystem->createAndOpenFile(uname);
 				dataManager.LoadStrings(reader);
 				continue;
 			}
@@ -1720,7 +1712,7 @@ void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const w
 void Game::RefreshReplay() {
 	lstReplayList->clear();
 	FileSystem::TraversalDir(L"./replay", [this](const wchar_t* name, bool isdir) {
-		if (!isdir && IsExtension(name, L".yrp") && Replay::CheckReplay(name))
+		if (!isdir && IsExtension(name, L".yrp"))
 			lstReplayList->addItem(name);
 	});
 }

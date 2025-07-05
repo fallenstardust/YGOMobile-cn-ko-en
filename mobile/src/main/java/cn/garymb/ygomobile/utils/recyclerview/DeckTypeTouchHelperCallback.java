@@ -9,16 +9,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.YGODialogUtil;
+import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckTypeTouchHelperCallback extends ItemTouchHelper.Callback {
 
     private int dragFlags;
     private int swipeFlags;
     private RecyclerView recyclerView;
-    private final YGODialogUtil.OnDeckTypeListener onDeckTypeListener;
+    private final YGODeckDialogUtil.OnDeckTypeListener onDeckTypeListener;
 
-    public DeckTypeTouchHelperCallback(YGODialogUtil.OnDeckTypeListener onDeckTypeListener) {
+    public DeckTypeTouchHelperCallback(YGODeckDialogUtil.OnDeckTypeListener onDeckTypeListener) {
         this.onDeckTypeListener = onDeckTypeListener;
     }
 

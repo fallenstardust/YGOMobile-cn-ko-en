@@ -109,6 +109,14 @@ class DeckItemUtils {
         return deck;
     }
 
+
+    /**
+     * 将file内容更新为List<DeckItem>中的内容
+     * 删除file，之后将List<DeckItem>中的内容保存到file中
+     * @param items
+     * @param file 原有file
+     * @return 如果file为null，返回false
+     */
     public static boolean save(List<DeckItem> items, File file) {
         FileOutputStream outputStream = null;
         OutputStreamWriter writer = null;

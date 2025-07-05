@@ -37,7 +37,7 @@
     <string name="quit_tip">¿Deseas salir de la aplicación?</string>
     <string name="last_path">Directorio anterior</string>
     <string name="create_folder">Nueva carpeta</string>
-    <string name="intpu_name">Ingresar nombre del deck</string>
+    <string name="intpu_name">Nombre del deck</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
@@ -369,7 +369,24 @@
     <string name="replay_list">lista de reproducción</string>
     <string name="user_privacy_policy">Política de Privacidad del Usuario</string>
     <string name="about_user_privacy_policy">Explicación de los permisos utilizados por YGOMobile</string>
-    <string name="open">Abrir el Deck</string>
+    <string name="open">Abrir Deck</string>
     <string name="web_warn_save_deck">Abrir el Deck cerrará la página web que estás viendo actualmente. ¿Deseas cerrar la página web y abrir el Deck?</string>
+    <string name="go_to">Enviar a</string>
+    <string name="local_deck">Mis Decks</string>
+    <string name="in_public">Público</string>
+    <string name="in_personal_use">En Uso Personal</string>
+    <string name="register">Registro</string>
+    <string name="sign_out">Salir</string>
+    <string name="input_user_name">Nombre del Usuario</string>
+    <string name="input_pwd">Introduce la Contraseña</string>
+    <string name="deck_square">Plaza de Decks</string>
+    <string name="my_deck_online">Respaldo en la Nube</string>
+    <string name="input_contributor_name">Nombre del Compartidor</string>
+    <string name="sort_by_time">Ordenar por Tiempo</string>
+    <string name="sort_by_thumb">En el orden recomendado</string>
+    <string name="account_warning">Por favor, complete su correo electrónico o nombre de usuario!</string>
+    <string name="pwd_warning">Por favor, introduzca su contraseña!</string>
+    <string name="like_deck_thumb">Dar un me gusta al deck</string>
+    <string name="pre_view">Vista Previa</string>
 </resources>
 

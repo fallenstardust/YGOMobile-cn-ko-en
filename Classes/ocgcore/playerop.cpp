@@ -330,14 +330,12 @@ int32_t field::select_unselect_card(uint16_t step, uint8_t playerid, uint8_t can
 		return TRUE;
 	}
 }
-int32_t field::select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count, uint8_t forced) {
+int32_t field::select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count) {
 	if(step == 0) {
 		returns.ivalue[0] = -1;
 		if((playerid == 1) && (core.duel_options & DUEL_SIMPLE_AI)) {
 			if(core.select_chains.size() == 0)
 				returns.ivalue[0] = -1;
-			else if(forced)
-				returns.ivalue[0] = 0;
 			else {
 				bool act = true;
 				for(const auto& ch : core.current_chain)
@@ -354,7 +352,6 @@ int32_t field::select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count, 
 		pduel->write_buffer8(playerid);
 		pduel->write_buffer8((uint8_t)core.select_chains.size());
 		pduel->write_buffer8(spe_count);
-		pduel->write_buffer8(forced);
 		pduel->write_buffer32(pduel->game_field->core.hint_timing[playerid]);
 		pduel->write_buffer32(pduel->game_field->core.hint_timing[1 - playerid]);
 		std::sort(core.select_chains.begin(), core.select_chains.end(), chain::chain_operation_sort);
@@ -367,17 +364,24 @@ int32_t field::select_chain(uint16_t step, uint8_t playerid, uint8_t spe_count, 
 				pduel->write_buffer8(EDESC_RESET);
 			else
 				pduel->write_buffer8(0);
+			if(ch.flag & CHAIN_FORCED)
+				pduel->write_buffer8(1);
+			else
+				pduel->write_buffer8(0);
 			pduel->write_buffer32(pcard->data.code);
 			pduel->write_buffer32(pcard->get_info_location());
 			pduel->write_buffer32(peffect->description);
 		}
 		return FALSE;
 	} else {
-		if (returns.ivalue[0] == -1) {
-			if (!forced)
-				return TRUE;
-			pduel->write_buffer8(MSG_RETRY);
-			return FALSE;
+		if(returns.ivalue[0] == -1) {
+			for(const auto& ch : core.select_chains) {
+				if(ch.flag & CHAIN_FORCED) {
+					pduel->write_buffer8(MSG_RETRY);
+					return FALSE;
+				}
+			}
+			return TRUE;
 		}
 		if(returns.ivalue[0] < 0 || returns.ivalue[0] >= (int32_t)core.select_chains.size()) {
 			pduel->write_buffer8(MSG_RETRY);
@@ -633,8 +637,8 @@ int32_t field::select_counter(uint16_t step, uint8_t playerid, uint16_t countert
 static int32_t select_sum_check1(const uint32_t* oparam, int32_t size, int32_t index, int32_t acc, int32_t opmin) {
 	if(acc == 0 || index == size)
 		return FALSE;
-	int32_t o1 = oparam[index] & 0xffff;
-	int32_t o2 = oparam[index] >> 16;
+	int32_t o1, o2;
+	field::get_sum_params(oparam[index], o1, o2);
 	if(index == size - 1)
 		return (acc == o1 && acc + opmin > o1) || (o2 && acc == o2 && acc + opmin > o2);
 	return (acc > o1 && select_sum_check1(oparam, size, index + 1, acc - o1, std::min(o1, opmin)))
@@ -659,7 +663,7 @@ int32_t field::select_with_sum_limit(int16_t step, uint8_t playerid, int32_t acc
 		if(max < min)
 			max = min;
 		pduel->write_buffer8(playerid);
-		pduel->write_buffer32((uint32_t)acc & 0xffff);
+		pduel->write_buffer32(acc);
 		pduel->write_buffer8(min);
 		pduel->write_buffer8(max);
 		pduel->write_buffer8((uint8_t)core.must_select_cards.size());
@@ -711,9 +715,8 @@ int32_t field::select_with_sum_limit(int16_t step, uint8_t playerid, int32_t acc
 		} else {
 			int32_t sum = 0, mx = 0, mn = 0x7fffffff;
 			for(int32_t i = 0; i < mcount; ++i) {
-				uint32_t op = core.must_select_cards[i]->sum_param;
-				int32_t o1 = op & 0xffff;
-				int32_t o2 = op >> 16;
+				int32_t o1, o2;
+				field::get_sum_params(core.must_select_cards[i]->sum_param, o1, o2);
 				int32_t ms = (o2 && o2 < o1) ? o2 : o1;
 				sum += ms;
 				mx += std::max(o1, o2);
@@ -728,9 +731,8 @@ int32_t field::select_with_sum_limit(int16_t step, uint8_t playerid, int32_t acc
 					return FALSE;
 				}
 				c.insert(v);
-				uint32_t op = core.select_cards[v]->sum_param;
-				int32_t o1 = op & 0xffff;
-				int32_t o2 = op >> 16;
+				int32_t o1, o2;
+				field::get_sum_params(core.select_cards[v]->sum_param, o1, o2);
 				int32_t ms = (o2 && o2 < o1) ? o2 : o1;
 				sum += ms;
 				mx += std::max(o1, o2);
