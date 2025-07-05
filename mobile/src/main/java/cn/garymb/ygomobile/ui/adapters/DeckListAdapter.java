@@ -1,6 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
-import static cn.garymb.ygomobile.deck_square.DeckSquareFileUtil.convertToGMTDate;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -21,7 +21,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareListAdapter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
