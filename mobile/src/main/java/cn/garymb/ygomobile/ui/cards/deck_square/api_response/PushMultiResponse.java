@@ -5,6 +5,7 @@ public class PushMultiResponse {
 
     private Integer code;
     private String message;
+    //!!!!注意，本字段是integer，与PushSingleDeckResponse的不同！
     private Integer data;
 
     public Integer getCode() {

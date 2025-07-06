@@ -7,6 +7,8 @@ public class PushSingleDeckResponse {
 
     private Integer code;
     private String message;
+
+    //!!!!注意，本字段是boolean，与PushMultiDeckResponse的不同！
     private boolean data;//服务器的执行结果，true代表卡组上传成功。false代表卡组上传失败
 
     public Integer getCode() {
