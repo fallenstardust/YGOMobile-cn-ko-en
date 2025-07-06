@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -9,6 +11,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemLongClickListener;
@@ -52,6 +56,7 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
 //在dialog中卡组选择的Fragment，选中页面中某项后，在卡组编辑页面中显示卡片
 public class DeckSelectFragment extends Fragment {
@@ -416,25 +421,32 @@ public class DeckSelectFragment extends Fragment {
                 }
             });
             //todo
-//            ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//                @Override
-//                public void onDismiss(DialogInterface dialog) {
-//                    clearDeckSelect();
-//                }
-//            });
-//            ygoDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-//                @Override
-//                public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-//                    if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                        if (deckAdp.isManySelect()) {
-//                            clearDeckSelect();
-//                            return true;
-//                        }
-//
-//                    }
-//                    return false;
-//                }
-//            });
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new DeckTypeTouchHelperCallback(new YGODeckDialogUtil.OnDeckTypeListener() {
+                @Override
+                public void onDeckTypeListener(int positon) {
+                    File file = new File(typeList.get(positon).getPath());
+                    File[] files = file.listFiles();
+                    List<DeckFile> deckFileList = new ArrayList<>();
+                    if (files != null) {
+                        for (File file1 : files) {
+                            deckFileList.add(new DeckFile(file1));
+                        }
+                    }
+                    IOUtils.delete(file);
+                    YGOUtil.showTextToast(R.string.done);
+                    onDeckMenuListener.onDeckDel(deckFileList);
+                    typeAdp.remove(positon);
+                    if (typeAdp.getSelectPosition() == positon) {
+                        typeAdp.setSelectPosition(2);
+                        typeAdp.notifyItemChanged(2);
+                    }
+                    clearDeckSelect();
+                    deckList.clear();
+                    deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
+                    deckAdp.notifyDataSetChanged();
+                }
+            }));
+            itemTouchHelper.attachToRecyclerView(binding.rvType);
         }
         return binding.getRoot();
     }
