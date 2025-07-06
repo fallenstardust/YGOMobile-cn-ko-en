@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import android.os.Build;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +11,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +32,7 @@ import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
-    private static final String TAG = "seesee decksquareApiUtil";
+    private static final String TAG = "decksquareApiUtil";
     //private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     //    public static List<String> readLastLinesWithNIO(File file, int numLines) {
@@ -141,8 +147,6 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
-
-
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {
@@ -295,17 +299,23 @@ public class DeckSquareFileUtil {
     }
 
 
-    public static long convertToUnixTimestamp(String dateTimeStr) {
+    public static long convertToUnixTimestamp(String DateTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-            sdf.setLenient(false);
-            Date date = sdf.parse(dateTimeStr);
-            return date.getTime();
-        }catch(ParseException e){
+            //DateTime 格式为 ""yyyy-MM-dd'T'HH:mm:ss""
+            DateTimeFormatter formatter = null;
+            // 解析为本地时间，再关联到 UTC+8 时区
+            LocalDateTime localDateTime = null;
+            ZonedDateTime zonedDateTime = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+                localDateTime = LocalDateTime.parse(DateTime, formatter);
+                zonedDateTime = localDateTime.atZone(ZoneId.of("Asia/Shanghai"));
+                return zonedDateTime.toInstant().toEpochMilli();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
+            return 0;
         }
-
         return 0;
     }
 
@@ -317,7 +327,7 @@ public class DeckSquareFileUtil {
     public static String convertToGMTDate(long timestamp) {
         try {
             // 创建格式化器并设置时区为 GMT
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CHINA);
             sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
             // 格式化时间戳

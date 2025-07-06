@@ -251,7 +251,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
-            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecksV2).fail((e) -> {
+            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
                 LogUtil.i(TAG, "sync deck fail" + e.getMessage());
             }).done((result) -> {
             });
@@ -1349,7 +1349,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
                     deckData.getDeckYdk();
-                    String fileFullName = deckData.getDeckName() + ".ydk";
+                    String fileFullName = deckData.getDeckName() + YDK_FILE_EX;
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), convertToUnixTimestamp(deckData.getDeckUpdateDate()));
