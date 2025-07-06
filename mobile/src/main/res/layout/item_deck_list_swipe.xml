@@ -136,19 +136,31 @@
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
-                    <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:src="@drawable/baseline_more_time_24"/>
-                    <TextView
-                        android:id="@+id/file_time"
+
+                    <LinearLayout
+                        android:id="@+id/ll_deck_date"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textColor="@color/holo_blue_bright"
-                        android:textSize="7sp"
-                        tools:text="2025-07-03T19:47:26" />
+                        android:layout_height="match_parent"
+                        android:layout_gravity="bottom">
+
+                        <ImageView
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/baseline_more_time_24" />
+
+                        <TextView
+                            android:id="@+id/file_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:layout_gravity="center"
+                            android:textColor="@color/holo_blue_bright"
+                            android:textSize="7sp"
+                            tools:text="2025-07-03T19:47:26" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </LinearLayout>
 
