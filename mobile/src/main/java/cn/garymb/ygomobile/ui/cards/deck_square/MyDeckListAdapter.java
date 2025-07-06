@@ -15,7 +15,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -132,7 +132,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
 
             }
             VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
+                PushSingleDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
                 return result;
             }).fail(e -> {
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());

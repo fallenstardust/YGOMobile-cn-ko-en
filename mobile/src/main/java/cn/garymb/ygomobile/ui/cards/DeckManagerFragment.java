@@ -77,14 +77,6 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -98,6 +90,14 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
@@ -127,7 +127,7 @@ import ocgcore.enums.LimitType;
  * RecyclerViewItemListener.OnItemListener中
  */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
-    private static final String TAG = "DeckManagerFragment";
+    private static final String TAG = "seesee";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
@@ -251,9 +251,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
-            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+            VUiKit.defer().when(() -> {
+                return DeckSquareApiUtil.synchronizeDecksV2();
+            }).fail((e) -> {
                 LogUtil.i(TAG, "sync deck fail" + e.getMessage());
             }).done((result) -> {
+                LogUtil.i(TAG, "sync deck success");
             });
         }
     }
@@ -936,7 +939,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                         if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
                                             // 删除在线卡组（异步处理）
                                             VUiKit.defer().when(() -> {
-                                                PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                PushSingleDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
                                                 return deckResponse;
                                             }).fail((deleteError) -> {
                                                 LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);

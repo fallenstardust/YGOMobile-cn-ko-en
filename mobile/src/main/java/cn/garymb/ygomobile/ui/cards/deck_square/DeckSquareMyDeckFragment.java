@@ -14,10 +14,10 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
@@ -34,7 +34,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
 public class DeckSquareMyDeckFragment extends Fragment {
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private static final String TAG = "seesee";
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
     private String keyWord;
@@ -197,7 +197,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         /** 自动同步 */
         VUiKit.defer().when(() -> {
 
-            return DeckSquareApiUtil.synchronizeDecks();
+            return DeckSquareApiUtil.synchronizeDecksV2();
         }).fail((e) -> {
 
             YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);

@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -11,7 +9,6 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +37,7 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
@@ -389,7 +386,7 @@ public class DeckSelectFragment extends Fragment {
                                             if (onlineDeck.getDeckName().equals(deckFile.getName())) {
                                                 // 删除在线卡组（异步处理）
                                                 VUiKit.defer().when(() -> {
-                                                    PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                                    PushSingleDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
                                                     return deckResponse;
                                                 }).fail((deleteError) -> {
                                                     LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);

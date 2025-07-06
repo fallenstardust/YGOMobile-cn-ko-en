@@ -2,7 +2,7 @@ package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
 //将卡组上传后，返回的响应
 //对应接口http://rarnu.xyz:38383/api/mdpro3/sync/single
-public class PushDeckResponse {
+public class PushSingleDeckResponse {
 
 
     private Integer code;

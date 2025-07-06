@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 
 public class SyncMutliDeckResult {
     boolean flag = false;
     String info = null;
-    public PushDeckResponse pushResponse;
+    public PushMultiResponse pushResponse;
 
     public List<MyDeckItem> syncUpload;//用于记录已推送的卡组
     public List<MyDeckItem> newUpload;//用于记录第一次推送到云的卡组
