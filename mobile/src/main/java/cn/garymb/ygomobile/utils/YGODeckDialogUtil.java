@@ -498,7 +498,6 @@ public class YGODeckDialogUtil {
                                 deckFile.getPathFile().delete();
                                 deckList.remove(deckFile);
                             }
-                            YGOUtil.showTextToast(context.getString(R.string.done));
                             dialogPlus.dismiss();
                             onDeckMenuListener.onDeckDel(selectDeckList);
                             clearDeckSelect();
@@ -544,7 +543,7 @@ public class YGODeckDialogUtil {
                         }
                     }
                     IOUtils.delete(file);
-                    YGOUtil.showTextToast(context.getString(R.string.done));
+
                     onDeckMenuListener.onDeckDel(deckFileList);
                     typeAdp.remove(positon);
                     if (typeAdp.getSelectPosition() == positon) {

@@ -920,7 +920,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                             //统一调用批量删除在线卡组（这里只有1个）
                             List<DeckFile> deckFileList = new ArrayList<>();
                             deckFileList.add(new DeckFile(mDeckAdapater.getYdkFile()));
-                            DeckSquareApiUtil.deleteDecks(deckFileList);
+
+                            onDeckDel(deckFileList);
 
                             YGOUtil.showTextToast(R.string.done);
                             dlg.dismiss();
@@ -1361,6 +1362,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 return;
             }
         }
+        //删除在线的同名卡组们
+        DeckSquareApiUtil.deleteDecks(deckFileList);
+        YGOUtil.showTextToast(R.string.done);
     }
 
     @Override

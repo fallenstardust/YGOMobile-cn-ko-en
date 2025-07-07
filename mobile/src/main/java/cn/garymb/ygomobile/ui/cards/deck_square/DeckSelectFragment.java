@@ -371,8 +371,6 @@ public class DeckSelectFragment extends Fragment {
                             dialogPlus.dismiss();
                             onDeckMenuListener.onDeckDel(selectDeckList);
                             clearDeckSelect();
-                            DeckSquareApiUtil.deleteDecks(selectDeckList);
-                            YGOUtil.showTextToast(R.string.done);
                         }
                     });
                     dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
@@ -408,9 +406,6 @@ public class DeckSelectFragment extends Fragment {
                     deckList.clear();
                     deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
                     deckAdp.notifyDataSetChanged();
-                    //删除在线的同名卡组们
-                    DeckSquareApiUtil.deleteDecks(deckFileList);
-                    YGOUtil.showTextToast(R.string.done);
                 }
             }));
             itemTouchHelper.attachToRecyclerView(binding.rvType);
