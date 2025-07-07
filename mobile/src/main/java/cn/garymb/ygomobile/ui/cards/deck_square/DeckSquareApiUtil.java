@@ -15,7 +15,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckMultiIdResponse;
@@ -498,6 +497,9 @@ public class DeckSquareApiUtil {
                     SharedPreferenceUtil.getServerToken()
             );
 
+            // 创建一个局部变量来持有deckFileList的引用,因为有时候异步执行会导致获取不到传参的deckFileList
+            final List<DeckFile> localDeckFileList = new ArrayList<>(deckFileList);
+
             // 获取在线卡组列表（异步处理）
             VUiKit.defer().when(() -> {
                 return DeckSquareApiUtil.getUserDecks(loginToken);
@@ -507,10 +509,9 @@ public class DeckSquareApiUtil {
                 if (result == null || result.getData() == null) {
                     return;
                 }
-
                 List<MyOnlineDeckDetail> onlineDecks = result.getData();
                 for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                    for (DeckFile deckFile : deckFileList) {
+                    for (DeckFile deckFile : localDeckFileList) {
                         if (onlineDeck.getDeckName().equals(deckFile.getName())) {
                             // 删除在线卡组（异步处理）
                             VUiKit.defer().when(() -> {
@@ -526,7 +527,6 @@ public class DeckSquareApiUtil {
                             break;
                         }
                     }
-
                 }
             });
         }
