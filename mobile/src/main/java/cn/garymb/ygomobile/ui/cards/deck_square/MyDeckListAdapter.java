@@ -173,8 +173,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         helper.setText(R.id.deck_update_date, item.getUpdateDate());
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
-
-        if (item.getPublic()) {
+        boolean isPublic = item.getPublic();
+        if (isPublic) {
             helper.setText(R.id.change_show_or_hide, R.string.in_public);
             helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
             helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
@@ -183,7 +183,6 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
             helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
         }
-        LogUtil.i(TAG, code + " " + item.getDeckName());
         if (code != 0) {
             imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
         } else {
@@ -193,16 +192,16 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             deleteMyDeckOnLine(item);
         });
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
-            if (item.getPublic()) {
+            if (isPublic) {
                 helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
                 helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
                 helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
-                item.setPublic(false);
+                item.setPublic(!isPublic);
             } else {
                 helper.setText(R.id.change_show_or_hide, R.string.in_public);
                 helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
                 helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
-                item.setPublic(true);
+                item.setPublic(isPublic);
             }
             LogUtil.i(TAG, "current " + item.toString());
             changeDeckPublicState(item);
