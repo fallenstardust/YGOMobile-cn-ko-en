@@ -252,7 +252,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
             VUiKit.defer().when(() -> {
-                return DeckSquareApiUtil.synchronizeDecksV2();
+                return DeckSquareApiUtil.synchronizeDecks();
             }).fail((e) -> {
                 LogUtil.i(TAG, "sync deck fail" + e.getMessage());
             }).done((result) -> {

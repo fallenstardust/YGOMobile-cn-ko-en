@@ -197,7 +197,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         /** 自动同步 */
         VUiKit.defer().when(() -> {
 
-            return DeckSquareApiUtil.synchronizeDecksV2();
+            return DeckSquareApiUtil.synchronizeDecks();
         }).fail((e) -> {
 
             YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
@@ -207,6 +207,5 @@ public class DeckSquareMyDeckFragment extends Fragment {
             YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
 
         });
-        //DeckSquareApiUtil.synchronizeDecks();
     }
 }
