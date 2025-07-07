@@ -367,45 +367,12 @@ public class DeckSelectFragment extends Fragment {
                             for (DeckFile deckFile : selectDeckList) {
                                 deckFile.getPathFile().delete();
                                 deckList.remove(deckFile);
-
-                                if (SharedPreferenceUtil.getServerToken() != null) {
-                                    LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
-
-                                    // 获取在线卡组列表（异步处理）
-                                    VUiKit.defer().when(() -> {
-                                        return DeckSquareApiUtil.getUserDecks(loginToken);
-                                    }).fail((e) -> {
-                                        LogUtil.e(TAG, "getUserDecks failed: " + e);
-                                    }).done((result) -> {
-                                        if (result == null || result.getData() == null) {
-                                            return;
-                                        }
-
-                                        List<MyOnlineDeckDetail> onlineDecks = result.getData();
-                                        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                                            if (onlineDeck.getDeckName().equals(deckFile.getName())) {
-                                                // 删除在线卡组（异步处理）
-                                                VUiKit.defer().when(() -> {
-                                                    PushSingleDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                    return deckResponse;
-                                                }).fail((deleteError) -> {
-                                                    LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
-                                                }).done((deleteSuccess) -> {
-                                                    if (deleteSuccess.isData()) {
-                                                        YGOUtil.showTextToast(R.string.done);
-                                                        LogUtil.i(TAG, "Online deck deleted successfully");
-                                                    }
-                                                });
-                                                break;
-                                            }
-                                        }
-                                    });
-                                }
-
                             }
                             dialogPlus.dismiss();
                             onDeckMenuListener.onDeckDel(selectDeckList);
                             clearDeckSelect();
+                            DeckSquareApiUtil.deleteDecks(selectDeckList);
+                            YGOUtil.showTextToast(R.string.done);
                         }
                     });
                     dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
@@ -430,7 +397,7 @@ public class DeckSelectFragment extends Fragment {
                         }
                     }
                     IOUtils.delete(file);
-                    YGOUtil.showTextToast(R.string.done);
+
                     onDeckMenuListener.onDeckDel(deckFileList);
                     typeAdp.remove(positon);
                     if (typeAdp.getSelectPosition() == positon) {
@@ -441,6 +408,9 @@ public class DeckSelectFragment extends Fragment {
                     deckList.clear();
                     deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
                     deckAdp.notifyDataSetChanged();
+                    //删除在线的同名卡组们
+                    DeckSquareApiUtil.deleteDecks(deckFileList);
+                    YGOUtil.showTextToast(R.string.done);
                 }
             }));
             itemTouchHelper.attachToRecyclerView(binding.rvType);

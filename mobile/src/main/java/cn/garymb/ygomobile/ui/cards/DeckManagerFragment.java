@@ -917,44 +917,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setLeftButtonListener((dlg, rs) -> {
                         if (mDeckAdapater.getYdkFile() != null) {
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
+                            //统一调用批量删除在线卡组（这里只有1个）
+                            List<DeckFile> deckFileList = new ArrayList<>();
+                            deckFileList.add(new DeckFile(mDeckAdapater.getYdkFile()));
+                            DeckSquareApiUtil.deleteDecks(deckFileList);
 
-                            if (SharedPreferenceUtil.getServerToken() != null) {
-                                LoginToken loginToken = new LoginToken(
-                                        SharedPreferenceUtil.getServerUserId(),
-                                        SharedPreferenceUtil.getServerToken()
-                                );
-
-                                // 获取在线卡组列表（异步处理）
-                                VUiKit.defer().when(() -> {
-                                    return DeckSquareApiUtil.getUserDecks(loginToken);
-                                }).fail((e) -> {
-                                    LogUtil.e(TAG, "getUserDecks failed: " + e);
-                                }).done((result) -> {
-                                    if (result == null || result.getData() == null) {
-                                        return;
-                                    }
-
-                                    List<MyOnlineDeckDetail> onlineDecks = result.getData();
-                                    for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                                        if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
-                                            // 删除在线卡组（异步处理）
-                                            VUiKit.defer().when(() -> {
-                                                PushSingleDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                return deckResponse;
-                                            }).fail((deleteError) -> {
-                                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
-                                            }).done((deleteSuccess) -> {
-                                                if (deleteSuccess.isData()) {
-                                                    LogUtil.i(TAG, "Online deck deleted successfully");
-                                                    YGOUtil.showTextToast(getContext().getString(R.string.done));
-                                                }
-                                            });
-                                            break;
-                                        }
-                                    }
-                                });
-                            }
-
+                            YGOUtil.showTextToast(R.string.done);
                             dlg.dismiss();
                             File file = getFirstYdk();
                             loadDeckFromFile(file);

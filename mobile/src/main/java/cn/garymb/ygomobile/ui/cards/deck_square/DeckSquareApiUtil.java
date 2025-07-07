@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckMultiIdResponse;
@@ -33,6 +34,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckRespo
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.SyncMutliDeckResult;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
@@ -487,6 +489,47 @@ public class DeckSquareApiUtil {
 
         return result;
 
+    }
+
+    public static void deleteDecks(List<DeckFile> deckFileList) {
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            LoginToken loginToken = new LoginToken(
+                    SharedPreferenceUtil.getServerUserId(),
+                    SharedPreferenceUtil.getServerToken()
+            );
+
+            // 获取在线卡组列表（异步处理）
+            VUiKit.defer().when(() -> {
+                return DeckSquareApiUtil.getUserDecks(loginToken);
+            }).fail((e) -> {
+                LogUtil.e(TAG, "getUserDecks failed: " + e);
+            }).done((result) -> {
+                if (result == null || result.getData() == null) {
+                    return;
+                }
+
+                List<MyOnlineDeckDetail> onlineDecks = result.getData();
+                for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+                    for (DeckFile deckFile : deckFileList) {
+                        if (onlineDeck.getDeckName().equals(deckFile.getName())) {
+                            // 删除在线卡组（异步处理）
+                            VUiKit.defer().when(() -> {
+                                PushSingleDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
+                                return deckResponse;
+                            }).fail((deleteError) -> {
+                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
+                            }).done((deleteSuccess) -> {
+                                if (deleteSuccess.isData()) {
+                                    LogUtil.i(TAG, "Online deck deleted successfully");
+                                }
+                            });
+                            break;
+                        }
+                    }
+
+                }
+            });
+        }
     }
 
     public static PushSingleDeckResponse deleteDeck(String deckId, LoginToken loginToken) throws
