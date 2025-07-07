@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -8,15 +8,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import cn.garymb.ygomobile.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
@@ -33,7 +34,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
 public class DeckSquareMyDeckFragment extends Fragment {
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private static final String TAG = "seesee";
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
     private String keyWord;
@@ -57,7 +58,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
             GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
         }
-        //DeckSquareApiUtil.synchronizeDecks();
+
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
         deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
@@ -194,9 +195,17 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         });
         /** 自动同步 */
-        VUiKit.defer().when(() -> {return DeckSquareApiUtil.synchronizeDecks();}).fail((e) -> {
-            LogUtil.i(TAG, "Sync deck fail: " + e.getMessage());
-        }).done((result) -> {});
-        //DeckSquareApiUtil.synchronizeDecks();
+        VUiKit.defer().when(() -> {
+
+            return DeckSquareApiUtil.synchronizeDecks();
+        }).fail((e) -> {
+
+            YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
+            LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
+        }).done((result) -> {
+            String info = "sync decks: upload " + result.syncUpload.size() + ", download " + result.newDownload.size();
+            YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
+
+        });
     }
 }

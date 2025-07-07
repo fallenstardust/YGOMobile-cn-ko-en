@@ -1,9 +1,11 @@
-package cn.garymb.ygomobile.deck_square.api_response;
+package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
-public class DownloadDeckResponse {
-    private Integer code;
-    private String message;
-    private MyOnlineDeckDetail data;
+import java.util.List;
+
+public class MyDeckResponse {
+    public Integer code;
+    public String message;
+    public List<MyOnlineDeckDetail> data;
 
     public Integer getCode() {
         return code;
@@ -13,7 +15,6 @@ public class DownloadDeckResponse {
         this.code = code;
     }
 
-
     public String getMessage() {
         return message;
     }
@@ -22,11 +23,13 @@ public class DownloadDeckResponse {
         this.message = message;
     }
 
-    public MyOnlineDeckDetail getData() {
+    public List<MyOnlineDeckDetail> getData() {
         return data;
     }
 
-    public void setData(MyOnlineDeckDetail data) {
+    public void setData(List<MyOnlineDeckDetail> data) {
         this.data = data;
     }
+
+
 }

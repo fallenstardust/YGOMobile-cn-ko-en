@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
 
 import android.util.Log;
@@ -7,11 +7,9 @@ import android.widget.ImageView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
-import java.util.List;
-
-import cn.garymb.ygomobile.deck_square.api_response.GetSquareDeckCondition;
-import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.SquareDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.GetSquareDeckCondition;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.OnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square.api_response;
+package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
 public class PushDeckPublicState {
 

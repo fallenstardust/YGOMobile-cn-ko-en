@@ -1,23 +1,22 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square.bo;
 
 public class MyDeckItem {
     //0代表未推到服务器，3代表包含deckId，1代表服务器存在可下载到本地，2代表已同步
-    public int idUploaded;
+    private int idUploaded;
 
-    public int userId;
-    public String deckName;
+    private int userId;
+    private String deckName;
 
-    public String deckId;
+    private String deckId;
 
-    public String updateDate;
+    private String updateDate;
+    private long updateTimestamp;
 
-    public int deckSouce;//卡组来源，0代表来自本地，1代表来自服务器
+    private String deckPath;//本地卡组时，存储卡组路径
 
-    public String deckPath;//本地卡组时，存储卡组路径
+    private int deckCoverCard1;
 
-    public int deckCoverCard1;
-
-    public Boolean isPublic;
+    private Boolean isPublic;
 
     public int getIdUploaded() {
         return idUploaded;
@@ -59,12 +58,12 @@ public class MyDeckItem {
         this.updateDate = updateDate;
     }
 
-    public int getDeckSouce() {
-        return deckSouce;
+    public long getUpdateTimestamp() {
+        return updateTimestamp;
     }
 
-    public void setDeckSouce(int deckSouce) {
-        this.deckSouce = deckSouce;
+    public void setUpdateTimestamp(long updateTimestamp) {
+        this.updateTimestamp = updateTimestamp;
     }
 
     public int getDeckCoverCard1() {
@@ -100,7 +99,7 @@ public class MyDeckItem {
                 ", deckName='" + deckName + '\'' +
                 ", deckId='" + deckId + '\'' +
                 ", updateDate='" + updateDate + '\'' +
-                ", deckSouce=" + deckSouce +
+                ", updateTimestamp=" + updateTimestamp +
                 ", deckPath='" + deckPath + '\'' +
                 ", deckCoverCard1=" + deckCoverCard1 +
                 ", isPublic=" + isPublic +

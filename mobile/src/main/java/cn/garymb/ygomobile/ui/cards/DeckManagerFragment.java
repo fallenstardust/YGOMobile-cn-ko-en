@@ -2,9 +2,9 @@ package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
-import static cn.garymb.ygomobile.Constants.TAG;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToUnixTimestamp;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -63,7 +63,6 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,15 +77,6 @@ import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
-import cn.garymb.ygomobile.deck_square.DeckManageDialog;
-import cn.garymb.ygomobile.deck_square.DeckSquareApiUtil;
-import cn.garymb.ygomobile.deck_square.DeckSquareFileUtil;
-import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
-import cn.garymb.ygomobile.deck_square.api_response.DownloadDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
@@ -100,6 +90,14 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
@@ -129,7 +127,7 @@ import ocgcore.enums.LimitType;
  * RecyclerViewItemListener.OnItemListener中
  */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
-    private static final String TAG = "DeckManagerFragment";
+    private static final String TAG = "seesee";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
@@ -253,9 +251,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mContext = (BaseActivity) getActivity();
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
-            VUiKit.defer().when(DeckSquareApiUtil::synchronizeDecks).fail((e) -> {
+            VUiKit.defer().when(() -> {
+                return DeckSquareApiUtil.synchronizeDecks();
+            }).fail((e) -> {
                 LogUtil.i(TAG, "sync deck fail" + e.getMessage());
             }).done((result) -> {
+                LogUtil.i(TAG, "sync deck success");
             });
         }
     }
@@ -277,6 +278,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 传入外部ydk文件的路径，临时在本页面中打开该ydk的内容，用于后续的保存
+     *
      * @param preLoadFilePath 外部ydk文件的路径
      */
     public void preLoadFile(String preLoadFilePath) {
@@ -915,44 +917,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setLeftButtonListener((dlg, rs) -> {
                         if (mDeckAdapater.getYdkFile() != null) {
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
+                            //统一调用批量删除在线卡组（这里只有1个）
+                            List<DeckFile> deckFileList = new ArrayList<>();
+                            deckFileList.add(new DeckFile(mDeckAdapater.getYdkFile()));
 
-                            if (SharedPreferenceUtil.getServerToken() != null) {
-                                LoginToken loginToken = new LoginToken(
-                                        SharedPreferenceUtil.getServerUserId(),
-                                        SharedPreferenceUtil.getServerToken()
-                                );
+                            onDeckDel(deckFileList);
 
-                                // 获取在线卡组列表（异步处理）
-                                VUiKit.defer().when(() -> {
-                                    return DeckSquareApiUtil.getUserDecks(loginToken);
-                                }).fail((e) -> {
-                                    LogUtil.e(TAG, "getUserDecks failed: " + e);
-                                }).done((result) -> {
-                                    if (result == null || result.getData() == null) {
-                                        return;
-                                    }
-
-                                    List<MyOnlineDeckDetail> onlineDecks = result.getData();
-                                    for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                                        if (onlineDeck.getDeckName().equals(mDeckAdapater.getYdkFile().getName())) {
-                                            // 删除在线卡组（异步处理）
-                                            VUiKit.defer().when(() -> {
-                                                PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                return deckResponse;
-                                            }).fail((deleteError) -> {
-                                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
-                                            }).done((deleteSuccess) -> {
-                                                if (deleteSuccess.isData()) {
-                                                    LogUtil.i(TAG, "Online deck deleted successfully");
-                                                    YGOUtil.showTextToast(getContext().getString(R.string.done));
-                                                }
-                                            });
-                                            break;
-                                        }
-                                    }
-                                });
-                            }
-
+                            YGOUtil.showTextToast(R.string.done);
                             dlg.dismiss();
                             File file = getFirstYdk();
                             loadDeckFromFile(file);
@@ -1350,10 +1321,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
                     deckData.getDeckYdk();
-                    String fileFullName = deckData.getDeckName() + ".ydk";
+                    String fileFullName = deckData.getDeckName() + YDK_FILE_EX;
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), Long.valueOf(deckData.getDeckUpdateDate()));
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), convertToUnixTimestamp(deckData.getDeckUpdateDate()));
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);
@@ -1391,6 +1362,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 return;
             }
         }
+        //删除在线的同名卡组们
+        DeckSquareApiUtil.deleteDecks(deckFileList);
+        YGOUtil.showTextToast(R.string.done);
     }
 
     @Override

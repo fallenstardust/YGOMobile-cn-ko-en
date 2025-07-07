@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
-import static cn.garymb.ygomobile.Constants.DEBUG;
-import static cn.garymb.ygomobile.utils.YGOUtil.convertMillisToIsoString;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -22,13 +21,12 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.TextSelect;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareListAdapter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import cn.hutool.poi.excel.cell.CellSetter;
 import ocgcore.DataManager;
 import ocgcore.data.LimitList;
 
@@ -112,12 +110,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        holder.file_time.setText(convertMillisToIsoString(deckFile.getDate()));
-        if (DEBUG) {
-            holder.ll_deck_date.setVisibility(View.VISIBLE);
-        } else {
-            holder.ll_deck_date.setVisibility(View.GONE);
-        }
+        holder.file_time.setText(convertToGMTDate(deckFile.getDate()));
         if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
             //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
@@ -255,7 +248,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     TextView extra;
     TextView side;
     TextView file_time;
-    LinearLayout ll_deck_date;
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
@@ -270,7 +262,6 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         main = findView(R.id.count_main);
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
-        ll_deck_date = findView(R.id.ll_deck_date);
         file_time = findView(R.id.file_time);
         ll_extra_n_side = findView(R.id.ll_extra_n_side);
         prerelease_star = findView(R.id.prerelease_star);

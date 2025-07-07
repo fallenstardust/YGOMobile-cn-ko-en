@@ -32,7 +32,7 @@ public class DeckFile extends TextSelect {
         this.setName(name);
         this.fileFullName = null;
         this.path = path;
-        this.firstCode = -1;
+        this.firstCode = DeckUtil.getFirstCardCode(path.getAbsolutePath());
         setObject(this);
     }
 

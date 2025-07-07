@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import android.util.Log;
 import android.widget.ImageView;
@@ -11,11 +11,12 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.api_response.BasicResponse;
-import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.MyDeckResponse;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -74,7 +75,6 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
                 for (MyOnlineDeckDetail detail : serverDecks) {
                     MyDeckItem item = new MyDeckItem();
                     item.setDeckName(detail.getDeckName());
-                    item.setDeckSouce(1);
                     item.setDeckId(detail.getDeckId());
                     item.setUserId(detail.getUserId());
                     item.setDeckCoverCard1(detail.getDeckCoverCard1());
@@ -132,7 +132,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
 
             }
             VUiKit.defer().when(() -> {
-                PushDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
+                PushSingleDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
                 return result;
             }).fail(e -> {
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());

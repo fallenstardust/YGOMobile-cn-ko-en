@@ -1,11 +1,12 @@
-package cn.garymb.ygomobile.deck_square.api_response;
+package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
-import java.util.List;
+public class PushMultiResponse {
 
-public class MyDeckResponse {
-    public Integer code;
-    public String message;
-    public List<MyOnlineDeckDetail> data;
+
+    private Integer code;
+    private String message;
+    //!!!!注意，本字段是integer，与PushSingleDeckResponse的不同！
+    private Integer data;
 
     public Integer getCode() {
         return code;
@@ -23,13 +24,11 @@ public class MyDeckResponse {
         this.message = message;
     }
 
-    public List<MyOnlineDeckDetail> getData() {
+    public Integer getData() {
         return data;
     }
 
-    public void setData(List<MyOnlineDeckDetail> data) {
+    public void setData(Integer data) {
         this.data = data;
     }
-
-
 }

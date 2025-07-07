@@ -1,10 +1,9 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.api_response.OnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareBinding;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;

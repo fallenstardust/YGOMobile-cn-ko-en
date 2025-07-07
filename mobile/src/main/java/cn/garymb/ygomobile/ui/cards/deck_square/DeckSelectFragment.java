@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemLongClickListener;
@@ -34,9 +35,9 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
-import cn.garymb.ygomobile.deck_square.api_response.LoginToken;
-import cn.garymb.ygomobile.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.deck_square.api_response.PushDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
@@ -52,6 +53,7 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
 
 //在dialog中卡组选择的Fragment，选中页面中某项后，在卡组编辑页面中显示卡片
 public class DeckSelectFragment extends Fragment {
@@ -365,41 +367,6 @@ public class DeckSelectFragment extends Fragment {
                             for (DeckFile deckFile : selectDeckList) {
                                 deckFile.getPathFile().delete();
                                 deckList.remove(deckFile);
-
-                                if (SharedPreferenceUtil.getServerToken() != null) {
-                                    LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
-
-                                    // 获取在线卡组列表（异步处理）
-                                    VUiKit.defer().when(() -> {
-                                        return DeckSquareApiUtil.getUserDecks(loginToken);
-                                    }).fail((e) -> {
-                                        LogUtil.e(TAG, "getUserDecks failed: " + e);
-                                    }).done((result) -> {
-                                        if (result == null || result.getData() == null) {
-                                            return;
-                                        }
-
-                                        List<MyOnlineDeckDetail> onlineDecks = result.getData();
-                                        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                                            if (onlineDeck.getDeckName().equals(deckFile.getName())) {
-                                                // 删除在线卡组（异步处理）
-                                                VUiKit.defer().when(() -> {
-                                                    PushDeckResponse deckResponse = DeckSquareApiUtil.deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                                    return deckResponse;
-                                                }).fail((deleteError) -> {
-                                                    LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
-                                                }).done((deleteSuccess) -> {
-                                                    if (deleteSuccess.isData()) {
-                                                        YGOUtil.showTextToast(getContext().getString(R.string.done));
-                                                        LogUtil.i(TAG, "Online deck deleted successfully");
-                                                    }
-                                                });
-                                                break;
-                                            }
-                                        }
-                                    });
-                                }
-
                             }
                             dialogPlus.dismiss();
                             onDeckMenuListener.onDeckDel(selectDeckList);
@@ -416,25 +383,32 @@ public class DeckSelectFragment extends Fragment {
                 }
             });
             //todo
-//            ygoDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//                @Override
-//                public void onDismiss(DialogInterface dialog) {
-//                    clearDeckSelect();
-//                }
-//            });
-//            ygoDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-//                @Override
-//                public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-//                    if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                        if (deckAdp.isManySelect()) {
-//                            clearDeckSelect();
-//                            return true;
-//                        }
-//
-//                    }
-//                    return false;
-//                }
-//            });
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new DeckTypeTouchHelperCallback(new YGODeckDialogUtil.OnDeckTypeListener() {
+                @Override
+                public void onDeckTypeListener(int positon) {
+                    File file = new File(typeList.get(positon).getPath());
+                    File[] files = file.listFiles();
+                    List<DeckFile> deckFileList = new ArrayList<>();
+                    if (files != null) {
+                        for (File file1 : files) {
+                            deckFileList.add(new DeckFile(file1));
+                        }
+                    }
+                    IOUtils.delete(file);
+
+                    onDeckMenuListener.onDeckDel(deckFileList);
+                    typeAdp.remove(positon);
+                    if (typeAdp.getSelectPosition() == positon) {
+                        typeAdp.setSelectPosition(2);
+                        typeAdp.notifyItemChanged(2);
+                    }
+                    clearDeckSelect();
+                    deckList.clear();
+                    deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
+                    deckAdp.notifyDataSetChanged();
+                }
+            }));
+            itemTouchHelper.attachToRecyclerView(binding.rvType);
         }
         return binding.getRoot();
     }

@@ -1,13 +1,9 @@
-package cn.garymb.ygomobile.deck_square.api_response;
+package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
-//将卡组上传后，返回的响应
-//对应接口http://rarnu.xyz:38383/api/mdpro3/sync/single
-public class PushDeckResponse {
-
-
+public class DownloadDeckResponse {
     private Integer code;
     private String message;
-    private boolean data;//服务器的执行结果，true代表卡组上传成功。false代表卡组上传失败
+    private MyOnlineDeckDetail data;
 
     public Integer getCode() {
         return code;
@@ -17,6 +13,7 @@ public class PushDeckResponse {
         this.code = code;
     }
 
+
     public String getMessage() {
         return message;
     }
@@ -25,11 +22,11 @@ public class PushDeckResponse {
         this.message = message;
     }
 
-    public boolean isData() {
+    public MyOnlineDeckDetail getData() {
         return data;
     }
 
-    public void setData(boolean data) {
+    public void setData(MyOnlineDeckDetail data) {
         this.data = data;
     }
 }

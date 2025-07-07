@@ -20,14 +20,11 @@ import java.nio.charset.StandardCharsets;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
-import cn.garymb.ygomobile.deck_square.DeckSquareListAdapter;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
-import cn.garymb.ygomobile.utils.LogUtil;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
-import ocgcore.data.LimitList;
 
 public class DeckLoader {
     private static Boolean isChanged;

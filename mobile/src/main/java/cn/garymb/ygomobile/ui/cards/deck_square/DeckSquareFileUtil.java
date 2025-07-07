@@ -1,6 +1,6 @@
-package cn.garymb.ygomobile.deck_square;
+package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import androidx.annotation.Nullable;
+import android.os.Build;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,12 +9,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import ocgcore.CardManager;
@@ -23,7 +32,8 @@ import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private static final String TAG = "decksquareApiUtil";
+    //private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
     //    public static List<String> readLastLinesWithNIO(File file, int numLines) {
 //        try {
@@ -54,7 +64,7 @@ public class DeckSquareFileUtil {
 
             String line = null;
             while ((line = reader.readLine()) != null) {
-                LogUtil.i(TAG, line);
+               // LogUtil.i(TAG, line);
                 if (line.startsWith("###")) {//注意，先判断###，后判断##。因为###会包括##的情况
                     try {
                         String data = line.replace("#", "");
@@ -86,6 +96,7 @@ public class DeckSquareFileUtil {
 
     /**
      * 查询卡组目录下的所有ydk文件（包含子文件夹）
+     *
      * @return 包含所有ydk文件的File数组
      */
     public static File[] getAllYdk() {
@@ -103,7 +114,8 @@ public class DeckSquareFileUtil {
 
     /**
      * 递归查找指定目录下的所有YDK文件
-     * @param dir 当前查找的目录
+     *
+     * @param dir      当前查找的目录
      * @param ydkFiles 存储找到的YDK文件
      */
     private static void findYdkFiles(File dir, ArrayList<File> ydkFiles) {
@@ -134,15 +146,14 @@ public class DeckSquareFileUtil {
         for (File file : files) {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
-            item.deckName = file.getName();
-            item.setUpdateDate(String.valueOf(file.lastModified()));
-            item.setDeckSouce(0);
+            item.setDeckName(file.getName());
+            item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {
-                item.deckId = deckId;
-                item.idUploaded = 2;
+                item.setDeckId(deckId);
+                item.setIdUploaded(2);
             } else {
-                item.idUploaded = 0;
+                item.setIdUploaded(0);
             }
             result.add(item);
         }
@@ -201,37 +212,65 @@ public class DeckSquareFileUtil {
         return content;
     }
 
-    /**
-     * 保存文件到指定路径，并设置指定的最后修改时间
-     * @param path 保存路径
-     * @param fileName 文件名
-     * @param content 文件内容
-     * @param modificationTime 期望的最后修改时间（毫秒时间戳）
-     * @return 保存是否成功
-     */
-    public static boolean saveFileToPath(String path, String fileName, String content, long modificationTime) {
+    public static boolean saveFile(File file, String content, long modificationTime) {
+        FileOutputStream fos = null;
         try {
             // 创建文件对象
-            File file = new File(path, fileName);
-
+            fos = new FileOutputStream(file);
             // 创建文件输出流
-            try (FileOutputStream fos = new FileOutputStream(file)) {
-                // 写入内容
-                fos.write(content.getBytes());
-                fos.flush();
-            }
+            // 写入内容
+            fos.write(content.getBytes());
+            fos.flush();
+
 
             // 设置指定的最后修改时间
             boolean timeSet = file.setLastModified(modificationTime);
             if (!timeSet) {
                 LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
-            }
+            } else {
 
-            return true;
-        } catch (IOException e) {
+                LogUtil.w(TAG, "设置文件修改时间成功: " + file.getPath());
+            }
+        } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);
+            e.printStackTrace();
             return false;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                }
+            }
         }
+        return true;
+    }
+
+    /**
+     *
+     * @param fileFullPath 文件的完整路径
+     * @param content
+     * @param modificationTime
+     * @return
+     */
+    public static boolean saveFileToPath(String fileFullPath, String content, long modificationTime) {
+        File file = new File(fileFullPath);
+        return saveFile(file, content, modificationTime);
+    }
+
+    /**
+     * 保存文件到指定路径，并设置指定的最后修改时间
+     *
+     * @param fileParentPath   保存文件的父目录路径
+     * @param fileName         文件名
+     * @param content          文件内容
+     * @param modificationTime 最后修改时间（毫秒时间戳）
+     * @return 保存是否成功
+     */
+    public static boolean saveFileToPath(String fileParentPath, String fileName, String content, long modificationTime) {
+
+        File file = new File(fileParentPath, fileName);
+        return saveFile(file, content, modificationTime);
     }
 
 
@@ -258,4 +297,45 @@ public class DeckSquareFileUtil {
         }
         return cardList;
     }
+
+
+    public static long convertToUnixTimestamp(String DateTime) {
+        try {
+            //DateTime 格式为 ""yyyy-MM-dd'T'HH:mm:ss""
+            DateTimeFormatter formatter = null;
+            // 解析为本地时间，再关联到 UTC+8 时区
+            LocalDateTime localDateTime = null;
+            ZonedDateTime zonedDateTime = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+                localDateTime = LocalDateTime.parse(DateTime, formatter);
+                zonedDateTime = localDateTime.atZone(ZoneId.of("Asia/Shanghai"));
+                return zonedDateTime.toInstant().toEpochMilli();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+        return 0;
+    }
+
+    /**
+     * 将 Unix 时间戳转换为 GMT 格式的日期字符串
+     * @param timestamp 时间戳（毫秒）
+     * @return GMT 格式的日期字符串（例如：Thu, 04 Jul 2025 08:00:55 GMT）
+     */
+    public static String convertToGMTDate(long timestamp) {
+        try {
+            // 创建格式化器并设置时区为 GMT
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CHINA);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+            // 格式化时间戳
+            return sdf.format(new Date(timestamp));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

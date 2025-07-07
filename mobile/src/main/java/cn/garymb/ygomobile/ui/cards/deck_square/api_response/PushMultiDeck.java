@@ -1,10 +1,12 @@
-package cn.garymb.ygomobile.deck_square.api_response;
+package cn.garymb.ygomobile.ui.cards.deck_square.api_response;
 
-public class PushSingleDeck {
+import java.util.List;
 
+/*卡组同步请求类*/
+public class PushMultiDeck {
     private String deckContributor;
     private Integer userId;
-    private DeckData deck;
+    private List<DeckData> decks;
 
     public String getDeckContributor() {
         return deckContributor;
@@ -22,13 +24,17 @@ public class PushSingleDeck {
         this.userId = userId;
     }
 
-    public DeckData getDeck() {
-        return deck;
+    public List<DeckData> getDecks() {
+        return decks;
     }
 
-    public void setDeck(DeckData deck) {
-        this.deck = deck;
+
+    public void setDecks(List<DeckData> decks_) {
+        this.decks = decks_;
     }
+
+
+
 
     public static class DeckData {
         private String deckId;
@@ -39,7 +45,6 @@ public class PushSingleDeck {
         private Integer deckCase = 0;
         private Integer deckProtector = 0;
         private String deckYdk;
-        private boolean isDelete = false;
 
         public String getDeckId() {
             return deckId;
@@ -105,12 +110,5 @@ public class PushSingleDeck {
             this.deckYdk = deckYdk;
         }
 
-        public boolean isDelete() {
-            return isDelete;
-        }
-
-        public void setDelete(boolean delete) {
-            isDelete = delete;
-        }
     }
 }
