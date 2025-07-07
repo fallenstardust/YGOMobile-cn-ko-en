@@ -195,7 +195,7 @@ public class DeckSquareApiUtil {
 
         Gson gson = new Gson();
         PushSingleDeck pushSingleDeck = new PushSingleDeck();
-        pushSingleDeck.setDeckContributor(loginToken.getUserId().toString());
+        pushSingleDeck.setDeckContributor(SharedPreferenceUtil.getMyCardUserName());
         pushSingleDeck.setUserId(loginToken.getUserId());
         PushSingleDeck.DeckData deckData = new PushSingleDeck.DeckData();
 
@@ -240,7 +240,6 @@ public class DeckSquareApiUtil {
             data.setDeckName(myDeckItem.getDeckName());
             data.setDeckCoverCard1(myDeckItem.getDeckCoverCard1());
             data.setDeckId(deckIdList.get(i));
-
 
             decks.add(data);
         }
@@ -374,7 +373,7 @@ public class DeckSquareApiUtil {
 
         Gson gson = new Gson();
         PushMultiDeck pushMultiDeck = new PushMultiDeck();
-        pushMultiDeck.setDeckContributor(loginToken.getUserId().toString());
+        pushMultiDeck.setDeckContributor(SharedPreferenceUtil.getMyCardUserName());
         pushMultiDeck.setUserId(loginToken.getUserId());
         pushMultiDeck.setDecks(dataList);
 
