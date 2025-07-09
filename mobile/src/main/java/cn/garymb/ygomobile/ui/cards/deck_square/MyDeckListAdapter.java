@@ -157,12 +157,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
                 return;
             }
             VUiKit.defer().when(() -> {
-                BasicResponse result = DeckSquareApiUtil.setDeckPublic(item.getDeckId(), loginToken, !item.getPublic());
+                BasicResponse result = DeckSquareApiUtil.setDeckPublic(item.getDeckId(), loginToken, item.getPublic());
                 return result;
             }).fail(e -> {
-                LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
+                LogUtil.i(TAG, "切换显示失败" + e.getMessage());
             }).done(data -> {
-
+                LogUtil.i(TAG, "切换显示成功" + data.getMessage());
             });
         }
     }
@@ -173,8 +173,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         helper.setText(R.id.deck_update_date, item.getUpdateDate());
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
-        boolean isPublic = item.getPublic();
-        if (isPublic) {
+        if (item.getPublic()) {
             helper.setText(R.id.change_show_or_hide, R.string.in_public);
             helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
             helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
@@ -192,16 +191,16 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             deleteMyDeckOnLine(item);
         });
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
-            if (isPublic) {
+            if (item.getPublic()) {
                 helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
                 helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
                 helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
-                item.setPublic(!isPublic);
+                item.setPublic(false); // 关闭公开状态
             } else {
                 helper.setText(R.id.change_show_or_hide, R.string.in_public);
                 helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
                 helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
-                item.setPublic(isPublic);
+                item.setPublic(true); // 开启公开状态
             }
             LogUtil.i(TAG, "current " + item.toString());
             changeDeckPublicState(item);

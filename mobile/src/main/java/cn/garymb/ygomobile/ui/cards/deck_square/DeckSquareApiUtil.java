@@ -47,7 +47,7 @@ import okhttp3.Response;
 
 public class DeckSquareApiUtil {
 
-    private static final String TAG = "seesee";
+    private static final String TAG = "DeckSquareApiUtil";
 
 
     public static boolean needLogin() {
@@ -416,9 +416,7 @@ public class DeckSquareApiUtil {
      *
      * @param deckId
      */
-    public static BasicResponse setDeckPublic(String deckId, LoginToken loginToken,
-                                              boolean publicState) throws IOException {
-
+    public static BasicResponse setDeckPublic(String deckId, LoginToken loginToken, boolean publicState) throws IOException {
         BasicResponse result = null;
 
         String url = "http://rarnu.xyz:38383/api/mdpro3/deck/public";
