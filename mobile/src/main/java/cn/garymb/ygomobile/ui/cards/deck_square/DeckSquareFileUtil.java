@@ -23,6 +23,7 @@ import java.util.TimeZone;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -33,22 +34,22 @@ import ocgcore.data.Card;
 public class DeckSquareFileUtil {
     //
     private static final String TAG = "decksquareApiUtil";
-    //private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
 
-    //    public static List<String> readLastLinesWithNIO(File file, int numLines) {
-//        try {
-//            List<String> lines = Files.readAllLines(file);
-//            int fromIndex = Math.max(0, lines.size() - numLines);
-//            return lines.subList(fromIndex, lines.size());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return Collections.emptyList();
-//        }
-//    }
-//
-    // 使用示例
-//    Path logPath = Paths.get(context.getFilesDir().getAbsolutePath(), "log.txt");
-//    List<String> lastTwo = readLastLinesWithNIO(logPath, 2);
+    //将MyOnlineDeckDetail转MyDeckItem类型list，有时候会需要用到
+    public static List<MyDeckItem> toDeckItemList(List<MyOnlineDeckDetail> serverDecks) {
+        List<MyDeckItem> myOnlineDecks = new ArrayList<>();
+        for (MyOnlineDeckDetail detail : serverDecks) {
+            MyDeckItem item = new MyDeckItem();
+            item.setDeckName(detail.getDeckName());
+            item.setDeckId(detail.getDeckId());
+            item.setUserId(detail.getUserId());
+            item.setDeckCoverCard1(detail.getDeckCoverCard1());
+            item.setUpdateDate(detail.getDeckUpdateDate());
+            item.setPublic(detail.isPublic());
+            myOnlineDecks.add(item);
+        }
+        return myOnlineDecks;
+    }
 
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getId(File file) {
