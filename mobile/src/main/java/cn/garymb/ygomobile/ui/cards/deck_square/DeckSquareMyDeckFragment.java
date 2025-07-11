@@ -14,6 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import java.io.IOException;
+
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
@@ -196,16 +198,14 @@ public class DeckSquareMyDeckFragment extends Fragment {
         });
         /** 自动同步 */
         VUiKit.defer().when(() -> {
-
-            return DeckSquareApiUtil.synchronizeDecks();
+            try {
+                DeckSquareApiUtil.synchronizeDecks();
+            } catch (IOException e) {
+                return e;
+            }
+            return 0;
         }).fail((e) -> {
-
-            YGOUtil.showTextToast("Sync decks fail", Toast.LENGTH_LONG);
-            LogUtil.i(TAG, "Sync decks fail" + e.getMessage());
-        }).done((result) -> {
-            String info = "sync decks: upload " + result.syncUpload.size() + ", download " + result.newDownload.size();
-            YGOUtil.showTextToast(info, Toast.LENGTH_LONG);
-
-        });
+            YGOUtil.showTextToast("Sync decks failed: " + e);
+        }).done((result) -> {});
     }
 }

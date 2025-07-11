@@ -63,6 +63,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -95,9 +96,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
@@ -127,7 +126,7 @@ import ocgcore.enums.LimitType;
  * RecyclerViewItemListener.OnItemListener中
  */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
-    private static final String TAG = "seesee";
+    private static final String TAG = "DeckManagerFragment";
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
@@ -140,7 +139,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private String mDeckId;
     private LinearLayout ll_click_like;
     private TextView tv_add_1;
-
+    public static List<MyOnlineDeckDetail> originalData; // 保存原始数据
     protected int screenWidth;
 
     //region ui onCreate/onDestroy
@@ -165,7 +164,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+
         activity = (HomeActivity) getActivity();
+        originalData = new ArrayList<>();
+
         layoutView = inflater.inflate(R.layout.fragment_deck_cards, container, false);
         AnimationShake2(layoutView);
         initView(layoutView);
@@ -252,11 +254,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         /** 自动同步 */
         if (SharedPreferenceUtil.getServerToken() != null) {
             VUiKit.defer().when(() -> {
-                return DeckSquareApiUtil.synchronizeDecks();
+                try {
+                    DeckSquareApiUtil.synchronizeDecks();
+                } catch (IOException e) {
+                    return e;
+                }
+                return 0;
             }).fail((e) -> {
-                LogUtil.i(TAG, "sync deck fail" + e.getMessage());
+                YGOUtil.showTextToast("Sync decks failed: " + e);
             }).done((result) -> {
-                LogUtil.i(TAG, "sync deck success");
             });
         }
     }
@@ -1301,6 +1307,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             YGOUtil.showTextToast(e + "");
         }
         YGOUtil.showTextToast(R.string.done);
+    }
+
+    public static List<MyOnlineDeckDetail> getOriginalData() {
+        return originalData;
     }
 
     //在卡组选择的dialog中点击某个卡组（来自本地或服务器）后，dialog通过本回调函数通知本页面。

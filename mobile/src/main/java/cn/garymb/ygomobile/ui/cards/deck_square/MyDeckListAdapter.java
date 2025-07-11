@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.originalData;
+
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -26,90 +28,78 @@ import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 //提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
-public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHolder> {
+public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ImageLoader imageLoader;
-    private List<MyDeckItem> originalData; // 保存原始数据
 
     public MyDeckListAdapter(int layoutResId, YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         super(layoutResId);
-        originalData = new ArrayList<>();
         imageLoader = new ImageLoader();
         this.onDeckMenuListener = onDeckMenuListener;
         this.mDialogListener = mDialogListener;
     }
 
     public void loadData() {
-        List<MyDeckItem> myOnlineDecks = new ArrayList<>();
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
         if (loginToken == null) {
             return;
         }
+        if (originalData.isEmpty()){
+            final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
+            VUiKit.defer().when(() -> {
+                MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
+                if (result == null) return null;
+                else return result.getData();
+            }).fail((e) -> {
+                Log.e(TAG, e + "");
+                if (dialog_read_ex.isShowing()) {//关闭异常
+                    try {
+                        dialog_read_ex.dismiss();
+                    } catch (Exception ex) {
 
-        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
-        VUiKit.defer().when(() -> {
-
-            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
-
-            if (result == null) {
-                return null;
-            } else {
-                return result.getData();
-            }
-
-        }).fail((e) -> {
-            Log.e(TAG, e + "");
-            if (dialog_read_ex.isShowing()) {//关闭异常
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-
+                    }
                 }
-            }
-            LogUtil.i(TAG, "load mycard from server fail");
-
-        }).done((serverDecks) -> {
-            if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
-                for (MyOnlineDeckDetail detail : serverDecks) {
-                    MyDeckItem item = new MyDeckItem();
-                    item.setDeckName(detail.getDeckName());
-                    item.setDeckId(detail.getDeckId());
-                    item.setUserId(detail.getUserId());
-                    item.setDeckCoverCard1(detail.getDeckCoverCard1());
-                    item.setUpdateDate(detail.getDeckUpdateDate());
-                    item.setPublic(detail.isPublic());
-                    myOnlineDecks.add(item);
+                LogUtil.i(TAG, "load mycard from server failed:" + e);
+            }).done((serverDecks) -> {
+                if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
+                    originalData.clear();//虽然判断originalData是空的才会执行到这里，但还是写上保险
+                    originalData.addAll(serverDecks); // 保存原始数据
                 }
-            }
 
-            LogUtil.i(TAG, "load mycard from server done");
-            originalData.clear();
-            originalData.addAll(myOnlineDecks); // 保存原始数据
+                LogUtil.i(TAG, "load mycard from server done");
+
+                getData().clear();
+                addData(serverDecks);
+                notifyDataSetChanged();
+
+                if (dialog_read_ex.isShowing()) {
+                    try {
+                        dialog_read_ex.dismiss();
+                    } catch (Exception ex) {
+                    }
+                }
+            });
+        } else {
+            LogUtil.i(TAG, "load originalData done");
             getData().clear();
-            addData(myOnlineDecks);
+            addData(originalData);
             notifyDataSetChanged();
+        }
 
-            if (dialog_read_ex.isShowing()) {
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-                }
-            }
-        });
 
     }
 
     // 筛选函数
     public void filter(String keyword) {
-        List<MyDeckItem> filteredList = new ArrayList<>();
+        List<MyOnlineDeckDetail> filteredList = new ArrayList<>();
         if (keyword.isEmpty()) {
             // 如果关键词为空，则显示所有数据
             filteredList.addAll(originalData);
         } else {
             // 遍历原始数据，筛选出包含关键词的item
-            for (MyDeckItem item : originalData) {
+            for (MyOnlineDeckDetail item : originalData) {
                 if (item.getDeckName().contains(keyword)) {
                     filteredList.add(item);
                 }
@@ -121,10 +111,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
         notifyDataSetChanged();
     }
 
-    public List<MyDeckItem> getOriginalData(){
-        return this.originalData;
-    }
-    private void deleteMyDeckOnLine(MyDeckItem item) {
+    private void deleteMyDeckOnLine(MyOnlineDeckDetail item) {
         if (item != null) {
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
             if (loginToken == null) {
@@ -150,14 +137,14 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
      * 注意，更新卡组状态要过很久才生效（实测延迟偶尔达5s）
      * @param item
      */
-    private void changeDeckPublicState(MyDeckItem item) {
+    private void changeDeckPublicState(MyOnlineDeckDetail item) {
         if (item != null) {
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
             if (loginToken == null) {
                 return;
             }
             VUiKit.defer().when(() -> {
-                BasicResponse result = DeckSquareApiUtil.setDeckPublic(item.getDeckId(), loginToken, item.getPublic());
+                BasicResponse result = DeckSquareApiUtil.setDeckPublic(item.getDeckId(), loginToken, item.isPublic());
                 return result;
             }).fail(e -> {
                 LogUtil.i(TAG, "切换显示失败" + e.getMessage());
@@ -168,12 +155,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, MyDeckItem item) {
+    protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
         helper.setText(R.id.my_deck_name, item.getDeckName());
-        helper.setText(R.id.deck_update_date, item.getUpdateDate());
+        helper.setText(R.id.deck_update_date, item.getDeckUpdateDate());
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
-        if (item.getPublic()) {
+        if (item.isPublic()) {
             helper.setText(R.id.change_show_or_hide, R.string.in_public);
             helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
             helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
@@ -191,7 +178,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyDeckItem, BaseViewHold
             deleteMyDeckOnLine(item);
         });
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
-            if (item.getPublic()) {
+            if (item.isPublic()) {
                 helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
                 helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
                 helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
