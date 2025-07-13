@@ -51,7 +51,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
 
         ViewPager2 viewPager = view.findViewById(R.id.deck_view_pager);
         TabLayout tabLayout = view.findViewById(R.id.deck_manager_tab_layout);
-
+        viewPager.setUserInputEnabled(false);
         // Setup adapter
         ViewPagerAdapter adapter = new ViewPagerAdapter(this, mOnDeckMenuListener, this);
         viewPager.setAdapter(adapter);

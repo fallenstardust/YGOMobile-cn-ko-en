@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -16,6 +15,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckIdResponse;
@@ -72,7 +72,7 @@ public class DeckSquareApiUtil {
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
 
         if (serverToken == null || serverUserId == -1) {
-            YGOUtil.showTextToast("Please login first!");
+            YGOUtil.showTextToast(R.string.login_mycard);
             return null;
         }
         return new LoginToken(serverUserId, serverToken);
