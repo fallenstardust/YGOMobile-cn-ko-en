@@ -62,7 +62,7 @@ public class PushMultiDeck {
             this.deckName = deckName;
         }
 
-        public Integer getDeckCoverCard1(Integer firstCode) {
+        public Integer getDeckCoverCard1() {
             return deckCoverCard1;
         }
 
