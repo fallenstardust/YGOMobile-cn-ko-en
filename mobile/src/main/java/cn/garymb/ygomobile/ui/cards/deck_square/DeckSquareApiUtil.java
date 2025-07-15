@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -9,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +16,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckIdResponse;
@@ -72,7 +73,7 @@ public class DeckSquareApiUtil {
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
 
         if (serverToken == null || serverUserId == -1) {
-            YGOUtil.showTextToast("Please login first!");
+            YGOUtil.showTextToast(R.string.login_mycard);
             return null;
         }
         return new LoginToken(serverUserId, serverToken);
@@ -357,6 +358,7 @@ public class DeckSquareApiUtil {
             String deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
 
             data.setDeckYdk(deckContent);
+            LogUtil.w(TAG, "seesee syncMyDecks*要上传的 本地卡组: " + data.getDeckName()+"//"+data.getDeckId()+"//"+data.getDeckCoverCard1()+"//"+data.getDeckYdk());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -692,52 +694,56 @@ public class DeckSquareApiUtil {
 
         // 获取本地卡组列表
         List<MyDeckItem> localDecks = DeckSquareFileUtil.getMyDeckItem();
-
         // 获取在线卡组列表
-        VUiKit.defer().when(() -> {
-            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);//调用获取云备份卡组的接口方法
-            if (result == null) return null;
-             else return result.getData();
-        }).fail((e) -> {
-            LogUtil.e(TAG, "load mycard from server failed: " + e);
-        }).done((serverDecks) -> {
-            if (serverDecks != null) {//将服务端的卡组也放到OrignalData里,
-                DeckManagerFragment.getOriginalData().clear();
-                DeckManagerFragment.getOriginalData().addAll(serverDecks);
-            }
-        });
-        List<MyOnlineDeckDetail> onlineDecks = DeckManagerFragment.getOriginalData();
+        MyDeckResponse onlineDecksResponse = DeckSquareApiUtil.getUserDecks(loginToken);
+        if (onlineDecksResponse == null || onlineDecksResponse.getData() == null) {
+            LogUtil.e(TAG, "load my online decks failed!");
+            return;
+        }
+        List<MyOnlineDeckDetail> onlineDecks = onlineDecksResponse.getData();
 
-        //遍历本地卡组与云备份卡组，过滤出差异项
+        // 缓存原始在线卡组（使用副本避免后续修改影响缓存）
+        DeckManagerFragment.getOriginalData().clear();
+        DeckManagerFragment.getOriginalData().addAll(new ArrayList<>(onlineDecks));
+
+        // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
         List<MyDeckItem> newPushDecks = new ArrayList<>();
         List<MyOnlineDeckDetail> backupDownloadDecks = new ArrayList<>();
 
-        for (MyDeckItem localDeck : localDecks) {
-            //预处理每个本地卡组
+        // 1. 使用本地卡组的迭代器遍历（支持安全删除）
+        Iterator<MyDeckItem> localIterator = localDecks.iterator();
+        while (localIterator.hasNext()) {
+            MyDeckItem localDeck = localIterator.next();
+            // 预处理本地卡组
             String localDeckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
 
-            for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+            boolean isMatched = false;
+            // 2. 使用在线卡组的迭代器遍历（支持安全删除）
+            Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
+            while (onlineIterator.hasNext()) {
+                MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
+
                 if (localDeckName.equals(onLineDeckName)) {
-                    localDeck.setDeckId(onlineDeck.getDeckId());//为本地卡组添加同名云备份卡组的deckid
-
-                    // 将每个本地卡组作为数组元素添加入syncUploadDecks
-                    syncUploadDecks.add(localDeck);// 将匹配到的本地卡组放入待上传的list中
-
-                    localDecks.remove(localDeck);// 移除云备份已存在的本地卡组,最后剩下的就是本地独有的卡组
-                    onlineDecks.remove(onlineDeck);// 移除匹配到的云备份卡组，最后剩下的就是云备份独有的卡组
-
-                    break;
+                    // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
+                    localDeck.setDeckId(onlineDeck.getDeckId());
+                    syncUploadDecks.add(localDeck);
+                    localIterator.remove(); // 安全删除本地卡组（迭代器方法）
+                    onlineIterator.remove(); // 安全删除在线卡组（迭代器方法）
+                    isMatched = true;
+                    break; // 匹配后跳出内部循环
                 }
             }
+            // 若未匹配到在线卡组，该本地卡组会保留在localDecks中（后续作为新卡组上传）
         }
 
-        newPushDecks.addAll(localDecks);// 将剩下的本地卡组传入待新上传的list，与syncUploadDecks并不执行相同的上传接口
-        backupDownloadDecks.addAll(onlineDecks);// 将剩下的在线卡组传入待新下载的list
-
+        // 剩余的本地卡组都是新卡组（本地独有，需要上传）
+        newPushDecks.addAll(localDecks);
+        // 剩余的在线卡组都是新卡组（云端独有，需要下载）
+        backupDownloadDecks.addAll(onlineDecks);
 
         LogUtil.w(TAG, "seesee +要下载的 云备份卡组: " + backupDownloadDecks);
         for (MyOnlineDeckDetail onlineDeck : backupDownloadDecks) {
@@ -762,7 +768,6 @@ public class DeckSquareApiUtil {
             requestIdAndPushNewDecks(newPushDecks, loginToken);
             LogUtil.w(TAG, "seesee +要上传的 本地卡组: " + newPushDecks);
         }
-
     }
 
     private static SyncMutliDeckResult.DownloadResult downloadMissingDeckToLocal(MyOnlineDeckDetail onlineDeck, Long onlineUpdateDate) {

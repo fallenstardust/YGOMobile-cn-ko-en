@@ -261,7 +261,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 }
                 return 0;
             }).fail((e) -> {
-                YGOUtil.showTextToast("Sync decks failed: " + e);
+                LogUtil.e(TAG, "Sync decks failed: " + e);
+                //YGOUtil.showTextToast("Sync decks failed: " + e);
             }).done((result) -> {
             });
         }
