@@ -957,10 +957,7 @@ void field::shuffle(uint8_t playerid, uint8_t location) {
 		if(location == LOCATION_EXTRA)
 			s = s - (int32_t)player[playerid].extra_p_count;
 		if(s > 1) {
-			if (core.duel_options & DUEL_OLD_REPLAY)
-				pduel->random.shuffle_vector_old(svector, 0, s - 1);
-			else
-				pduel->random.shuffle_vector(svector, 0, s - 1);
+			pduel->random.shuffle_vector(svector, 0, s, pduel->rng_version);
 			reset_sequence(playerid, location);
 		}
 	}
@@ -2890,12 +2887,20 @@ int32_t field::check_tribute(card* pcard, int32_t min, int32_t max, group* mg, u
 		return FALSE;
 	return TRUE;
 }
+void field::get_sum_params(uint32_t sum_param, int32_t& op1, int32_t& op2) {
+	op1 = sum_param & 0xffff;
+	op2 = (sum_param >> 16) & 0xffff;
+	if(op2 & 0x8000) {
+		op1 = sum_param & 0x7fffffff;
+		op2 = 0;
+	}
+}
 int32_t field::check_with_sum_limit(const card_vector& mats, int32_t acc, int32_t index, int32_t count, int32_t min, int32_t max, int32_t opmin) {
 	if(count > max)
 		return FALSE;
 	while(index < (int32_t)mats.size()) {
-		int32_t op1 = mats[index]->sum_param & 0xffff;
-		int32_t op2 = (mats[index]->sum_param >> 16) & 0xffff;
+		int32_t op1, op2;
+		get_sum_params(mats[index]->sum_param, op1, op2);
 		if(((op1 == acc && acc + opmin > op1) || (op2 && op2 == acc && acc + opmin > op2)) && count >= min)
 			return TRUE;
 		++index;
@@ -2913,8 +2918,9 @@ int32_t field::check_with_sum_limit_m(const card_vector& mats, int32_t acc, int3
 		return check_with_sum_limit(mats, acc, index, 1, min, max, opmin);
 	if(index >= (int32_t)mats.size())
 		return FALSE;
-	int32_t op1 = mats[index]->sum_param & 0xffff;
-	int32_t op2 = (mats[index]->sum_param >> 16) & 0xffff;
+	int32_t op1;
+	int32_t op2;
+	get_sum_params(mats[index]->sum_param, op1, op2);
 	if(acc >= op1 && check_with_sum_limit_m(mats, acc - op1, index + 1, min, max, std::min(opmin, op1), must_count))
 		return TRUE;
 	if(op2 && acc >= op2 && check_with_sum_limit_m(mats, acc - op2, index + 1, min, max, std::min(opmin, op2), must_count))
@@ -2923,8 +2929,9 @@ int32_t field::check_with_sum_limit_m(const card_vector& mats, int32_t acc, int3
 }
 int32_t field::check_with_sum_greater_limit(const card_vector& mats, int32_t acc, int32_t index, int32_t opmin) {
 	while(index < (int32_t)mats.size()) {
-		int32_t op1 = mats[index]->sum_param & 0xffff;
-		int32_t op2 = (mats[index]->sum_param >> 16) & 0xffff;
+		int32_t op1;
+		int32_t op2;
+		get_sum_params(mats[index]->sum_param, op1, op2);
 		if((acc <= op1 && acc + opmin > op1) || (op2 && acc <= op2 && acc + opmin > op2))
 			return TRUE;
 		++index;
@@ -2942,8 +2949,9 @@ int32_t field::check_with_sum_greater_limit_m(const card_vector& mats, int32_t a
 		return check_with_sum_greater_limit(mats, acc, index, opmin);
 	if(index >= (int32_t)mats.size())
 		return FALSE;
-	int32_t op1 = mats[index]->sum_param & 0xffff;
-	int32_t op2 = (mats[index]->sum_param >> 16) & 0xffff;
+	int32_t op1;
+	int32_t op2;
+	get_sum_params(mats[index]->sum_param, op1, op2);
 	if(check_with_sum_greater_limit_m(mats, acc - op1, index + 1, std::min(opmin, op1), must_count))
 		return TRUE;
 	if(op2 && check_with_sum_greater_limit_m(mats, acc - op2, index + 1, std::min(opmin, op2), must_count))
@@ -3370,7 +3378,9 @@ int32_t field::is_player_can_send_to_deck(uint8_t playerid, card * pcard) {
 	}
 	return TRUE;
 }
-int32_t field::is_player_can_remove(uint8_t playerid, card * pcard, uint32_t reason) {
+int32_t field::is_player_can_remove(uint8_t playerid, card* pcard, uint32_t reason, effect* reason_effect) {
+	if(!reason_effect)
+		reason_effect = core.reason_effect;
 	effect_set eset;
 	filter_player_effect(playerid, EFFECT_CANNOT_REMOVE, &eset);
 	for(effect_set::size_type i = 0; i < eset.size(); ++i) {
@@ -3380,7 +3390,7 @@ int32_t field::is_player_can_remove(uint8_t playerid, card * pcard, uint32_t rea
 		pduel->lua->add_param(pcard, PARAM_TYPE_CARD);
 		pduel->lua->add_param(playerid, PARAM_TYPE_INT);
 		pduel->lua->add_param(reason, PARAM_TYPE_INT);
-		pduel->lua->add_param(core.reason_effect, PARAM_TYPE_EFFECT);
+		pduel->lua->add_param(reason_effect, PARAM_TYPE_EFFECT);
 		if(pduel->lua->check_condition(eset[i]->target, 5))
 			return FALSE;
 	}

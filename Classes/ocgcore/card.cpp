@@ -456,9 +456,9 @@ uint32_t card::get_another_code() {
 	return 0;
 }
 inline bool check_setcode(uint16_t setcode, uint32_t value) {
-	uint32_t settype = value & 0x0fffU;
-	uint32_t setsubtype = value & 0xf000U;
-	return (setcode & 0x0fffU) == settype && (setcode & 0xf000U & setsubtype) == setsubtype;
+	const uint32_t settype = value & 0x0fffU;
+	const uint32_t setsubtype = value & 0xf000U;
+	return (setcode & 0x0fffU) == settype && (setcode & setsubtype) == setsubtype;
 }
 int32_t card::is_set_card(uint32_t set_code) {
 	uint32_t code1 = get_code();
@@ -2280,12 +2280,13 @@ int32_t card::leave_field_redirect(uint32_t reason) {
 		return 0;
 	filter_effect(EFFECT_LEAVE_FIELD_REDIRECT, &es);
 	for(effect_set::size_type i = 0; i < es.size(); ++i) {
-		redirect = es[i]->get_value(this, 0);
+		effect* peffect = es[i];
+		redirect = peffect->get_value(this, 0);
 		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(es[i]->get_handler_player(), this))
 			redirects |= redirect;
 		else if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(es[i]->get_handler_player(), this))
 			redirects |= redirect;
-		else if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this, REASON_EFFECT))
+		else if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this, REASON_EFFECT | REASON_REDIRECT, peffect))
 			redirects |= redirect;
 	}
 	if(redirects & LOCATION_REMOVED)
@@ -2318,12 +2319,13 @@ int32_t card::destination_redirect(uint8_t destination, uint32_t reason) {
 	else
 		return 0;
 	for(effect_set::size_type i = 0; i < es.size(); ++i) {
-		redirect = es[i]->get_value(this, 0);
+		effect* peffect = es[i];
+		redirect = peffect->get_value(this, 0);
 		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(es[i]->get_handler_player(), this))
 			return redirect;
 		if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(es[i]->get_handler_player(), this))
 			return redirect;
-		if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this, REASON_EFFECT))
+		if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this, REASON_EFFECT | REASON_REDIRECT, peffect))
 			return redirect;
 		if((redirect & LOCATION_GRAVE) && !is_affected_by_effect(EFFECT_CANNOT_TO_GRAVE) && pduel->game_field->is_player_can_send_to_grave(es[i]->get_handler_player(), this))
 			return redirect;
@@ -3484,7 +3486,7 @@ int32_t card::is_special_summonable(uint8_t playerid, uint32_t summon_type, mate
 	effect_set eset;
 	filter_spsummon_procedure(playerid, &eset, summon_type, info);
 	pduel->game_field->restore_lp_cost();
-	return eset.size();
+	return !!eset.size();
 }
 int32_t card::is_can_be_special_summoned(effect* reason_effect, uint32_t sumtype, uint8_t sumpos, uint8_t sumplayer, uint8_t toplayer, uint8_t nocheck, uint8_t nolimit, uint32_t zone) {
 	if(reason_effect->get_handler() == this)

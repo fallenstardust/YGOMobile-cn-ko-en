@@ -36,6 +36,12 @@ struct Deck {
 	}
 };
 
+struct DeckArray {
+	std::vector<uint32_t> main;
+	std::vector<uint32_t> extra;
+	std::vector<uint32_t> side;
+};
+
 class DeckManager {
 public:
 	Deck current_deck;
@@ -50,7 +56,7 @@ public:
 	unsigned int CheckDeck(const Deck& deck, unsigned int lfhash, int rule);
 	bool LoadCurrentDeck(const wchar_t* file, bool is_packlist = false);
 	bool LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
-	bool SaveDeckBuffer(const int deckbuf[], const wchar_t* name);
+	bool LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist = false);
 
 	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist = false);
 	static uint32_t LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist = false);
@@ -59,11 +65,13 @@ public:
 	static void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	static FILE* OpenDeckFile(const wchar_t* file, const char* mode);
 	static irr::io::IReadFile* OpenDeckReader(const wchar_t* file);
-	static bool SaveDeck(Deck& deck, const wchar_t* file);
+	static bool SaveDeck(const Deck& deck, const wchar_t* file);
+	static void SaveDeck(const Deck& deck, std::stringstream& deckStream);
 	static bool DeleteDeck(const wchar_t* file);
 	static bool CreateCategory(const wchar_t* name);
 	static bool RenameCategory(const wchar_t* oldname, const wchar_t* newname);
 	static bool DeleteCategory(const wchar_t* name);
+	static bool SaveDeckArray(const DeckArray& deck, const wchar_t* name);
 	
 	int TypeCount(std::vector<code_pointer> list, unsigned int ctype);
 };

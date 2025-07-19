@@ -14,6 +14,7 @@
 #include "ocgapi.h"
 
 int32_t scriptlib::debug_message(lua_State *L) {
+	check_param_count(L, 1);
 	duel* pduel = interpreter::get_duel_info(L);
 	lua_getglobal(L, "tostring");
 	lua_pushvalue(L, -2);
@@ -166,8 +167,8 @@ int32_t scriptlib::debug_set_ai_name(lua_State *L) {
 	pduel->write_buffer8(MSG_AI_NAME);
 	const char* pstr = lua_tostring(L, 1);
 	int len = (int)std::strlen(pstr);
-	if(len > 100)
-		len = 100;
+	if(len > SIZE_AI_NAME -1)
+		len = SIZE_AI_NAME - 1;
 	pduel->write_buffer16(len);
 	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);
@@ -180,8 +181,8 @@ int32_t scriptlib::debug_show_hint(lua_State *L) {
 	pduel->write_buffer8(MSG_SHOW_HINT);
 	const char* pstr = lua_tostring(L, 1);
 	int len = (int)std::strlen(pstr);
-	if(len > 1024)
-		len = 1024;
+	if (len > SIZE_HINT_MSG - 1)
+		len = SIZE_HINT_MSG - 1;
 	pduel->write_buffer16(len);
 	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);
