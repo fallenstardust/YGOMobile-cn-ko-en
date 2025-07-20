@@ -446,6 +446,11 @@ object OYUtil {
         get() {
            return arrayListOf(
                CardBag(
+                   "TTP1",
+                   "",
+                   "TTP1"
+               ),
+               CardBag(
                    "AC04",
                    "",
                    "AC04"
