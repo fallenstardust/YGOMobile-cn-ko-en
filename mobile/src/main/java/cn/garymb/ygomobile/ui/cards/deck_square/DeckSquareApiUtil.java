@@ -711,7 +711,7 @@ public class DeckSquareApiUtil {
 
         // 缓存原始在线卡组（使用副本避免后续修改影响缓存）
         DeckManagerFragment.getOriginalData().clear();
-        DeckManagerFragment.getOriginalData().addAll(new ArrayList<>(onlineDecks));
+        DeckManagerFragment.getOriginalData().addAll(onlineDecks);
 
         // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
@@ -733,7 +733,7 @@ public class DeckSquareApiUtil {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
 
-                if (localDeckName.equals(onLineDeckName)) {
+                if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
                     // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
                     localDeck.setDeckId(onlineDeck.getDeckId());
                     syncUploadDecks.add(localDeck);
