@@ -1335,7 +1335,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     String fileFullName = deckData.getDeckName() + YDK_FILE_EX;
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), convertToUnixTimestamp(deckData.getDeckUpdateDate()));
+                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         //File file = new File(dir, fileFullName);

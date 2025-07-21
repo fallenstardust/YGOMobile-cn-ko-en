@@ -9,7 +9,8 @@ public class MyDeckItem {
 
     private String deckId;
 
-    private String updateDate;
+    private long updateDate;
+
     private long updateTimestamp;
 
     private String deckPath;//本地卡组时，存储卡组路径
@@ -50,11 +51,11 @@ public class MyDeckItem {
         this.deckId = deckId;
     }
 
-    public String getUpdateDate() {
+    public long getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDate(String updateDate) {
+    public void setUpdateDate(long updateDate) {
         this.updateDate = updateDate;
     }
 

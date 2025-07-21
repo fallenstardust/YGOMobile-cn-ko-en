@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.originalData;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.util.Log;
 import android.widget.ImageView;
@@ -157,7 +158,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
     @Override
     protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
         helper.setText(R.id.my_deck_name, item.getDeckName());
-        helper.setText(R.id.deck_update_date, item.getDeckUpdateDate());
+        helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
         if (item.isPublic()) {

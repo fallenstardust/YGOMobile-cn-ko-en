@@ -29,7 +29,7 @@ public class OkhttpUtil {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             // keep-alive and connection pool defaults
-            .connectionPool(new ConnectionPool(2, 20, TimeUnit.SECONDS))
+            .connectionPool(new ConnectionPool(2, 40, TimeUnit.SECONDS))
             .build();
 
 

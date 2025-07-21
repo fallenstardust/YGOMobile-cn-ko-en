@@ -13,8 +13,8 @@ public class MyOnlineDeckDetail implements Parcelable {
     private String deckName;
     private String deckRank;
     private String deckLike;
-    private String deckUploadDate;
-    private String deckUpdateDate;
+    private long deckUploadDate;
+    private long deckUpdateDate;
     private int deckCoverCard1;
     private int deckCoverCard2;
     private int deckCoverCard3;
@@ -27,14 +27,14 @@ public class MyOnlineDeckDetail implements Parcelable {
     private boolean isDelete;
 
 
-    protected MyOnlineDeckDetail(Parcel in) {
+    public MyOnlineDeckDetail(Parcel in) {
         deckId = in.readString();
         deckContributor = in.readString();
         deckName = in.readString();
         deckRank = in.readString();
         deckLike = in.readString();
-        deckUploadDate = in.readString();
-        deckUpdateDate = in.readString();
+        deckUploadDate = in.readLong();
+        deckUpdateDate = in.readLong();
         deckCoverCard1 = in.readInt();
         deckCoverCard2 = in.readInt();
         deckCoverCard3 = in.readInt();
@@ -71,8 +71,8 @@ public class MyOnlineDeckDetail implements Parcelable {
         dest.writeString(deckName);
         dest.writeString(deckRank);
         dest.writeString(deckLike);
-        dest.writeString(deckUploadDate);
-        dest.writeString(deckUpdateDate);
+        dest.writeLong(deckUploadDate);
+        dest.writeLong(deckUpdateDate);
         dest.writeInt(deckCoverCard1);
         dest.writeInt(deckCoverCard2);
         dest.writeInt(deckCoverCard3);
@@ -126,19 +126,19 @@ public class MyOnlineDeckDetail implements Parcelable {
         this.deckLike = deckLike;
     }
 
-    public String getDeckUploadDate() {
+    public long getDeckUploadDate() {
         return deckUploadDate;
     }
 
-    public void setDeckUploadDate(String deckUploadDate) {
+    public void setDeckUploadDate(long deckUploadDate) {
         this.deckUploadDate = deckUploadDate;
     }
 
-    public String getDeckUpdateDate() {
+    public long getDeckUpdateDate() {
         return deckUpdateDate;
     }
 
-    public void setDeckUpdateDate(String deckUpdateDate) {
+    public void setDeckUpdateDate(long deckUpdateDate) {
         this.deckUpdateDate = deckUpdateDate;
     }
 
