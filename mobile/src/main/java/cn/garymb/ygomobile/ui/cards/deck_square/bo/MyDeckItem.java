@@ -5,11 +5,12 @@ public class MyDeckItem {
     private int idUploaded;
 
     private int userId;
+
     private String deckName;
 
-    private String deckId;
+    private String deckType;
 
-    private long updateDate;
+    private String deckId;
 
     private long updateTimestamp;
 
@@ -43,20 +44,20 @@ public class MyDeckItem {
         this.deckName = deckName;
     }
 
+    public String getDeckType() {
+        return deckType;
+    }
+
+    public void setDeckType(String deckType) {
+        this.deckType = deckType;
+    }
+
     public String getDeckId() {
         return deckId;
     }
 
     public void setDeckId(String deckId) {
         this.deckId = deckId;
-    }
-
-    public long getUpdateDate() {
-        return updateDate;
-    }
-
-    public void setUpdateDate(long updateDate) {
-        this.updateDate = updateDate;
     }
 
     public long getUpdateTimestamp() {
@@ -98,8 +99,8 @@ public class MyDeckItem {
                 "idUploaded=" + idUploaded +
                 ", userId=" + userId +
                 ", deckName='" + deckName + '\'' +
+                ", deckType='" + deckType + '\'' +
                 ", deckId='" + deckId + '\'' +
-                ", updateDate='" + updateDate + '\'' +
                 ", updateTimestamp=" + updateTimestamp +
                 ", deckPath='" + deckPath + '\'' +
                 ", deckCoverCard1=" + deckCoverCard1 +

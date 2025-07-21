@@ -33,7 +33,7 @@ import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
-    private static final String TAG = "decksquareApiUtil";
+    private static final String TAG = "DeckSquareFileUtil";
 
     //将MyOnlineDeckDetail转MyDeckItem类型list，有时候会需要用到
     public static List<MyDeckItem> toDeckItemList(List<MyOnlineDeckDetail> serverDecks) {
@@ -44,7 +44,7 @@ public class DeckSquareFileUtil {
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
-            item.setUpdateDate(detail.getDeckUpdateDate());
+            item.setUpdateTimestamp(detail.getDeckUpdateDate());
             item.setPublic(detail.isPublic());
             myOnlineDecks.add(item);
         }
@@ -74,7 +74,7 @@ public class DeckSquareFileUtil {
                         }
                         // userId = Integer.parseInt(line.replaceAll("###", ""));
                     } catch (NumberFormatException e) {
-                        LogUtil.e(TAG, "integer" + line + "parse error" + e.toString());
+                        LogUtil.e(TAG, "getId(77): integer" + line + "parse error" + e.toString());
                     }
 
                 } else if (line.startsWith("##")) {
@@ -148,6 +148,7 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
+            item.setDeckType(file.getParentFile().getName());
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {

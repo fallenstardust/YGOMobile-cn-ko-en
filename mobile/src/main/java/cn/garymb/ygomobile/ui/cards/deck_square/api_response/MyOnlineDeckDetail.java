@@ -11,6 +11,7 @@ public class MyOnlineDeckDetail implements Parcelable {
     private String deckId;
     private String deckContributor;
     private String deckName;
+    private String deckType;
     private String deckRank;
     private String deckLike;
     private long deckUploadDate;
@@ -31,6 +32,7 @@ public class MyOnlineDeckDetail implements Parcelable {
         deckId = in.readString();
         deckContributor = in.readString();
         deckName = in.readString();
+        deckType = in.readString();
         deckRank = in.readString();
         deckLike = in.readString();
         deckUploadDate = in.readLong();
@@ -69,6 +71,7 @@ public class MyOnlineDeckDetail implements Parcelable {
         dest.writeString(deckId);
         dest.writeString(deckContributor);
         dest.writeString(deckName);
+        dest.writeString(deckType);
         dest.writeString(deckRank);
         dest.writeString(deckLike);
         dest.writeLong(deckUploadDate);
@@ -108,6 +111,14 @@ public class MyOnlineDeckDetail implements Parcelable {
 
     public void setDeckName(String deckName) {
         this.deckName = deckName;
+    }
+
+    public void setDeckType(String deckType) {
+        this.deckType = deckType;
+    }
+
+    public String getDeckType() {
+        return deckType;
     }
 
     public String getDeckRank() {

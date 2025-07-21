@@ -5,7 +5,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 
 public class SyncMutliDeckResult {
     boolean flag = false;
