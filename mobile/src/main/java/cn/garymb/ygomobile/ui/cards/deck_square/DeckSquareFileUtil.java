@@ -217,25 +217,40 @@ public class DeckSquareFileUtil {
     public static boolean saveFile(File file, String content, long modificationTime) {
         FileOutputStream fos = null;
         try {
-            // 创建文件对象
-            fos = new FileOutputStream(file);
-            // 创建文件输出流
-            // 写入内容
-            fos.write(content.getBytes());
-            fos.flush();
+            // 确保父目录存在
+            File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                boolean dirsCreated = parentDir.mkdirs(); // 创建所有缺失的父目录
+                if (!dirsCreated) {
+                    LogUtil.e(TAG, "无法创建文件目录: " + parentDir.getAbsolutePath());
+                    return false;
+                }
+            }
 
+            // 创建文件对象（如果文件不存在，会自动创建）
+            if (!file.exists()) {
+                boolean fileCreated = file.createNewFile();
+                if (!fileCreated) {
+                    LogUtil.e(TAG, "无法创建文件: " + file.getAbsolutePath());
+                    return false;
+                }
+            }
+
+            // 创建文件输出流
+            fos = new FileOutputStream(file);
+            // 写入内容
+            fos.write(content.getBytes(StandardCharsets.UTF_8)); // 使用 UTF-8 编码
+            fos.flush();
 
             // 设置指定的最后修改时间
             boolean timeSet = file.setLastModified(modificationTime);
             if (!timeSet) {
                 LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
             } else {
-
-                LogUtil.w(TAG, "设置文件修改时间成功: " + file.getPath());
+                LogUtil.d(TAG, "设置文件修改时间成功: " + file.getPath());
             }
         } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);
-            e.printStackTrace();
             return false;
         } finally {
             if (fos != null) {

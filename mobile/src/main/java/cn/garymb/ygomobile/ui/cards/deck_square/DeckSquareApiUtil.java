@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
+
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -757,12 +759,16 @@ public class DeckSquareApiUtil {
             }
 
             String fileFullPath = AppsSettings.get().getDeckDir() + "/" + fileName;
+            if (!onlineDeck.getDeckType().equals(CORE_DECK_PATH))
+                fileFullPath = AppsSettings.get().getDeckDir() + "/" + onlineDeck.getDeckType()+ "/" + fileName;
 
             // 保存在线卡组到本地
             boolean saved = DeckSquareFileUtil.saveFileToPath(fileFullPath, onlineDeck.getDeckYdk(), onlineDeck.getDeckUpdateDate());
-            if (!saved) LogUtil.e(TAG, "synchronizeDecks(761) 保存失败！的 云备份卡组: " + fileFullPath);
-
-            LogUtil.i(TAG, "synchronizeDecks(763) 保存成功√的 云备份卡组: " + fileFullPath);
+            if (!saved) {
+                LogUtil.e(TAG, "synchronizeDecks(761) 保存失败！的 云备份卡组: " + fileFullPath);
+            } else {
+                LogUtil.i(TAG, "synchronizeDecks(763) 保存成功√的 云备份卡组: " + fileFullPath);
+            }
         }
 
         // 上传本地卡组覆盖在线卡组

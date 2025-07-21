@@ -379,7 +379,7 @@
     <string name="register">注册萌卡</string>
     <string name="sign_out">切换账号</string>
     <string name="deck_square">卡组广场</string>
-    <string name="my_deck_online">云备份</string>
+    <string name="my_deck_online">在线备份</string>
     <string name="input_contributor_name">输入共享者名称</string>
     <string name="sort_by_time">按时间顺序</string>
     <string name="sort_by_thumb">按点赞顺序</string>
