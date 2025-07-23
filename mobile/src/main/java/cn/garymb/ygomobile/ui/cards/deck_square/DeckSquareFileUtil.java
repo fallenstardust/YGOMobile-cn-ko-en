@@ -148,7 +148,12 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
-            item.setDeckType(file.getParentFile().getName());
+            //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
+            if (file.getParentFile().getName().equals(Constants.CORE_DECK_PATH) && file.getParentFile().getParentFile().getName().equals(Constants.PREF_DEF_GAME_DIR)) {
+                item.setDeckType("");
+            } else {
+                item.setDeckType(file.getParentFile().getName());
+            }
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {

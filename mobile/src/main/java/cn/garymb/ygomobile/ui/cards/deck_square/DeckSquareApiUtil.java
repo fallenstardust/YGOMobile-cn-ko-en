@@ -365,7 +365,7 @@ public class DeckSquareApiUtil {
             String deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
 
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: " + data.getDeckType() +"//" + data.getDeckName()+"//"+data.getDeckId()+"//"+data.getDeckCoverCard1()+"//"+data.getDeckUpdateTime());
+            LogUtil.w(TAG, "syncMyDecks(368) *要上传的* 本地卡组: " + data.getDeckType() +"//" + data.getDeckName()+"//"+data.getDeckId()+"//"+data.getDeckCoverCard1()+"//"+data.getDeckUpdateTime());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -733,7 +733,7 @@ public class DeckSquareApiUtil {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
 
-                if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
+                if (localDeckName.equals(onLineDeckName)) {//TODO 上个版本不支持卡组分类字段，新版本安装后必然会出现在线备份没卡组分类的场合与本地有分类的进行比较 && localDeck.getDeckType().equals(onlineDeck.getDeckType())
                     // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
                     localDeck.setDeckId(onlineDeck.getDeckId());
                     syncUploadDecks.add(localDeck);
@@ -759,7 +759,7 @@ public class DeckSquareApiUtil {
             }
 
             String fileFullPath = AppsSettings.get().getDeckDir() + "/" + fileName;
-            if (!onlineDeck.getDeckType().equals(CORE_DECK_PATH))
+            if (!onlineDeck.getDeckType().equals(""))
                 fileFullPath = AppsSettings.get().getDeckDir() + "/" + onlineDeck.getDeckType()+ "/" + fileName;
 
             // 保存在线卡组到本地
