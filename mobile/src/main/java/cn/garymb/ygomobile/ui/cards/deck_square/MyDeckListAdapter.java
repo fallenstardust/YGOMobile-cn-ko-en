@@ -157,7 +157,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
 
     @Override
     protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
-        helper.setText(R.id.my_deck_name, item.getDeckName());
+        helper.setText(R.id.my_deck_name, item.getDeckType().equals("") ? item.getDeckName() : "-"+item.getDeckType()+ "-\n" + item.getDeckName());
         helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
