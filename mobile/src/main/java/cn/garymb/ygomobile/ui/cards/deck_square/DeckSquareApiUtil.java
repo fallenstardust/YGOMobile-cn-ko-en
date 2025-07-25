@@ -37,7 +37,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeck;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
-import cn.garymb.ygomobile.ui.cards.deck_square.bo.SyncMutliDeckResult;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
