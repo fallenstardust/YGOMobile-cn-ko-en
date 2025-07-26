@@ -36,7 +36,7 @@ import cn.garymb.ygomobile.utils.glide.GlideCompat;
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
 public class DeckSquareMyDeckFragment extends Fragment {
-    private static final String TAG = "seesee";
+    private static final String TAG = "DeckSquareMyDeckFragment";
     private FragmentDeckSquareMyDeckBinding binding;
     private MyDeckListAdapter deckListAdapter;
     private String keyWord;

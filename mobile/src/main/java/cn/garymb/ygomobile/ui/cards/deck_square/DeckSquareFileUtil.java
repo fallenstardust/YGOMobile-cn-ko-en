@@ -33,7 +33,7 @@ import ocgcore.data.Card;
 
 public class DeckSquareFileUtil {
     //
-    private static final String TAG = "decksquareApiUtil";
+    private static final String TAG = "DeckSquareFileUtil";
 
     //将MyOnlineDeckDetail转MyDeckItem类型list，有时候会需要用到
     public static List<MyDeckItem> toDeckItemList(List<MyOnlineDeckDetail> serverDecks) {
@@ -44,7 +44,7 @@ public class DeckSquareFileUtil {
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
-            item.setUpdateDate(detail.getDeckUpdateDate());
+            item.setUpdateTimestamp(detail.getDeckUpdateDate());
             item.setPublic(detail.isPublic());
             myOnlineDecks.add(item);
         }
@@ -74,7 +74,7 @@ public class DeckSquareFileUtil {
                         }
                         // userId = Integer.parseInt(line.replaceAll("###", ""));
                     } catch (NumberFormatException e) {
-                        LogUtil.e(TAG, "integer" + line + "parse error" + e.toString());
+                        LogUtil.e(TAG, "getId(77): integer" + line + "parse error" + e.toString());
                     }
 
                 } else if (line.startsWith("##")) {
@@ -148,6 +148,12 @@ public class DeckSquareFileUtil {
             String deckId = getId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
+            //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
+            if (file.getParentFile().getName().equals(Constants.CORE_DECK_PATH) && file.getParentFile().getParentFile().getName().equals(Constants.PREF_DEF_GAME_DIR)) {
+                item.setDeckType("");
+            } else {
+                item.setDeckType(file.getParentFile().getName());
+            }
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
             if (deckId != null) {
@@ -216,25 +222,40 @@ public class DeckSquareFileUtil {
     public static boolean saveFile(File file, String content, long modificationTime) {
         FileOutputStream fos = null;
         try {
-            // 创建文件对象
-            fos = new FileOutputStream(file);
-            // 创建文件输出流
-            // 写入内容
-            fos.write(content.getBytes());
-            fos.flush();
+            // 确保父目录存在
+            File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                boolean dirsCreated = parentDir.mkdirs(); // 创建所有缺失的父目录
+                if (!dirsCreated) {
+                    LogUtil.e(TAG, "无法创建文件目录: " + parentDir.getAbsolutePath());
+                    return false;
+                }
+            }
 
+            // 创建文件对象（如果文件不存在，会自动创建）
+            if (!file.exists()) {
+                boolean fileCreated = file.createNewFile();
+                if (!fileCreated) {
+                    LogUtil.e(TAG, "无法创建文件: " + file.getAbsolutePath());
+                    return false;
+                }
+            }
+
+            // 创建文件输出流
+            fos = new FileOutputStream(file);
+            // 写入内容
+            fos.write(content.getBytes(StandardCharsets.UTF_8)); // 使用 UTF-8 编码
+            fos.flush();
 
             // 设置指定的最后修改时间
             boolean timeSet = file.setLastModified(modificationTime);
             if (!timeSet) {
                 LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
             } else {
-
-                LogUtil.w(TAG, "设置文件修改时间成功: " + file.getPath());
+                LogUtil.d(TAG, "设置文件修改时间成功: " + file.getPath());
             }
         } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);
-            e.printStackTrace();
             return false;
         } finally {
             if (fos != null) {

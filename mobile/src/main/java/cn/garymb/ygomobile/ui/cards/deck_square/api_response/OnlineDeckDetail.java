@@ -16,7 +16,7 @@ public class OnlineDeckDetail implements Parcelable {
     private int deckCoverCard3;
     private int deckCase;
     private int deckProtector;
-    private String lastDate;
+    private long lastDate;
     private int userId;
 
 
@@ -30,7 +30,7 @@ public class OnlineDeckDetail implements Parcelable {
         deckCoverCard3 = in.readInt();
         deckCase = in.readInt();
         deckProtector = in.readInt();
-        lastDate = in.readString();
+        lastDate = in.readLong();
         userId = in.readInt();
     }
 
@@ -62,7 +62,7 @@ public class OnlineDeckDetail implements Parcelable {
         dest.writeInt(deckCoverCard3);
         dest.writeInt(deckCase);
         dest.writeInt(deckProtector);
-        dest.writeString(lastDate);
+        dest.writeLong(lastDate);
         dest.writeInt(userId);
     }
 
@@ -138,11 +138,9 @@ public class OnlineDeckDetail implements Parcelable {
         this.deckProtector = deckProtector;
     }
 
-    public String getLastDate() {
-        return lastDate;
-    }
+    public long getLastDate() {return lastDate;}
 
-    public void setLastDate(String lastDate) {
+    public void setLastDate(long lastDate) {
         this.lastDate = lastDate;
     }
 

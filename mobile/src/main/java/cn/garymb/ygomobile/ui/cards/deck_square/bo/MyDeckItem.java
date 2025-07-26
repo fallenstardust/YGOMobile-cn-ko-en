@@ -5,11 +5,13 @@ public class MyDeckItem {
     private int idUploaded;
 
     private int userId;
+
     private String deckName;
+
+    private String deckType;
 
     private String deckId;
 
-    private String updateDate;
     private long updateTimestamp;
 
     private String deckPath;//本地卡组时，存储卡组路径
@@ -42,20 +44,20 @@ public class MyDeckItem {
         this.deckName = deckName;
     }
 
+    public String getDeckType() {
+        return deckType;
+    }
+
+    public void setDeckType(String deckType) {
+        this.deckType = deckType;
+    }
+
     public String getDeckId() {
         return deckId;
     }
 
     public void setDeckId(String deckId) {
         this.deckId = deckId;
-    }
-
-    public String getUpdateDate() {
-        return updateDate;
-    }
-
-    public void setUpdateDate(String updateDate) {
-        this.updateDate = updateDate;
     }
 
     public long getUpdateTimestamp() {
@@ -97,8 +99,8 @@ public class MyDeckItem {
                 "idUploaded=" + idUploaded +
                 ", userId=" + userId +
                 ", deckName='" + deckName + '\'' +
+                ", deckType='" + deckType + '\'' +
                 ", deckId='" + deckId + '\'' +
-                ", updateDate='" + updateDate + '\'' +
                 ", updateTimestamp=" + updateTimestamp +
                 ", deckPath='" + deckPath + '\'' +
                 ", deckCoverCard1=" + deckCoverCard1 +

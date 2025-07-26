@@ -39,11 +39,13 @@ public class PushMultiDeck {
     public static class DeckData {
         private String deckId;
         private String deckName;
+        private String deckType;
         private Integer deckCoverCard1 = 0;
         private Integer deckCoverCard2 = 0;
         private Integer deckCoverCard3 = 0;
         private Integer deckCase = 0;
         private Integer deckProtector = 0;
+        private long timestamp = 0;
         private String deckYdk;
 
         public String getDeckId() {
@@ -60,6 +62,14 @@ public class PushMultiDeck {
 
         public void setDeckName(String deckName) {
             this.deckName = deckName;
+        }
+
+        public String getDeckType() {
+            return deckType;
+        }
+
+        public void setDeckType(String deckType) {
+            this.deckType = deckType;
         }
 
         public Integer getDeckCoverCard1() {
@@ -100,6 +110,14 @@ public class PushMultiDeck {
 
         public void setDeckProtector(Integer deckProtector) {
             this.deckProtector = deckProtector;
+        }
+
+        public long getDeckUpdateTime() {
+            return timestamp;
+        }
+
+        public void setDeckUpdateTime(long deckUpdateTime) {
+            this.timestamp = deckUpdateTime;
         }
 
         public String getDeckYdk() {

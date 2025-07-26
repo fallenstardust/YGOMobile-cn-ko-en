@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
 
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
+
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -73,7 +75,7 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
     protected void convert(BaseViewHolder helper, OnlineDeckDetail item) {
         helper.setText(R.id.deck_info_name, item.getDeckName());
         helper.setText(R.id.deck_contributor, item.getDeckContributor());
-        helper.setText(R.id.deck_last_date, item.getLastDate());
+        helper.setText(R.id.deck_last_date, convertToGMTDate(item.getLastDate()));
         helper.setText(R.id.like_count, item.getDeckLike()+"");
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
