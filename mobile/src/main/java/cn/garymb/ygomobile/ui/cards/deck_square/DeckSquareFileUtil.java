@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,6 +42,7 @@ public class DeckSquareFileUtil {
         for (MyOnlineDeckDetail detail : serverDecks) {
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(detail.getDeckName());
+            item.setDeckType(detail.getDeckType());
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
@@ -134,9 +136,56 @@ public class DeckSquareFileUtil {
                 // 如果是文件，检查是否为YDK文件
                 String fileName = file.getName().toLowerCase(Locale.US);
                 if (fileName.endsWith(Constants.YDK_FILE_EX)) {
+                    processYdkLineBreaks(file);
                     ydkFiles.add(file);
                 }
             }
+        }
+    }
+
+    /**
+     * 处理单个YDK文件中的换行符，将\n、\\n、/n替换为实际换行（\r\n）
+     * 确保文本中的换行标记能真实换行显示
+     */
+    private static void processYdkLineBreaks(File ydkFile) {
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+        try {
+            // 1. 读取文件原始内容（包含各种换行标记）
+            fis = new FileInputStream(ydkFile);
+            InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
+            StringBuilder contentBuilder = new StringBuilder();
+            char[] buffer = new char[1024];
+            int bytesRead;
+            while ((bytesRead = isr.read(buffer)) != -1) {
+                contentBuilder.append(buffer, 0, bytesRead);
+            }
+            String content = contentBuilder.toString();
+
+            // 先处理转义的\\n（文本中显示为"\n"的字符串）
+            content = content.replace("\\n", "\r\n");
+            // 处理错误的/n（斜杠+n）
+            content = content.replace("/n", "\r\n");
+            // 处理标准换行符\n（确保统一为Windows风格的\r\n）
+            // 先移除可能存在的重复\r，避免出现\r\r\n的情况
+            content = content.replace("\r", "");
+            // 再将所有\n替换为\r\n
+            content = content.replace("\n", "\r\n");
+
+            // 去除末尾可能多余的空行
+            content = content.trim() + "\r\n";
+
+            // 将处理后的内容写回文件
+            fos = new FileOutputStream(ydkFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+            osw.write(content);
+            osw.flush();
+
+        } catch (IOException e) {
+            LogUtil.e(TAG, "处理YDK文件换行符失败：" + ydkFile.getAbsolutePath(), e);
+        } finally {
+            IOUtils.close(fis);
+            IOUtils.close(fos);
         }
     }
 
