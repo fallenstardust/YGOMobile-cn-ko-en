@@ -639,7 +639,7 @@ public class DeckSquareApiUtil {
         backupDownloadDecks.addAll(onlineDecks);
 
         for (MyOnlineDeckDetail onlineDeck : backupDownloadDecks) {
-            LogUtil.w(TAG, "synchronizeDecks(750) +要下载的 云备份卡组: " + onlineDeck.getDeckType() + "//" + onlineDeck.getDeckName() + "//" + onlineDeck.getDeckUpdateDate());
+            LogUtil.w(TAG, "synchronizeDecks +要下载的 云备份卡组: " + onlineDeck.getDeckType() + "//" + onlineDeck.getDeckName() + "//" + onlineDeck.getDeckUpdateDate());
             // 确保文件名包含.ydk扩展名
             String fileName = onlineDeck.getDeckName();
             if (!fileName.toLowerCase().endsWith(Constants.YDK_FILE_EX)) {
@@ -653,9 +653,9 @@ public class DeckSquareApiUtil {
             // 保存在线卡组到本地
             boolean saved = DeckSquareFileUtil.saveFileToPath(fileFullPath, onlineDeck.getDeckYdk(), onlineDeck.getDeckUpdateDate());
             if (!saved) {
-                LogUtil.e(TAG, "synchronizeDecks(761) 保存失败！的 云备份卡组: " + fileFullPath);
+                LogUtil.e(TAG, "synchronizeDecks 保存失败！的 云备份卡组: " + fileFullPath);
             } else {
-                LogUtil.i(TAG, "synchronizeDecks(763) 保存成功√的 云备份卡组: " + fileFullPath);
+                LogUtil.i(TAG, "synchronizeDecks 保存成功√的 云备份卡组: " + fileFullPath);
             }
         }
 

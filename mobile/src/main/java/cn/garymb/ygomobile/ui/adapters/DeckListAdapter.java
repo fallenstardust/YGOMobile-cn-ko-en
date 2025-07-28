@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
+import static cn.garymb.ygomobile.Constants.DEBUG;
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.annotation.SuppressLint;
@@ -111,6 +112,11 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setTextColor(Color.RED);
         }
         holder.file_time.setText(convertToGMTDate(deckFile.getDate()));
+        if (DEBUG) {
+            holder.file_time.setVisibility(View.VISIBLE);
+        } else {
+            holder.file_time.setVisibility(View.GONE);
+        }
         if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
             //卡包展示时不显示额外和副卡组数量文本
             holder.ll_extra_n_side.setVisibility(View.GONE);
