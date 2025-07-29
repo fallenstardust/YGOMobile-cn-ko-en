@@ -8,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -205,7 +204,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
             return 0;
         }).fail((e) -> {
-            YGOUtil.showTextToast("Sync decks failed: " + e);
-        }).done((result) -> {});
+            LogUtil.e(TAG, "Sync decks failed: " + e);
+        }).done((result) -> {
+            YGOUtil.showTextToast(R.string.done);
+        });
     }
 }

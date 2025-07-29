@@ -157,7 +157,8 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
 
     @Override
     protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
-        helper.setText(R.id.my_deck_name, item.getDeckType().equals("") ? item.getDeckName() : "-"+item.getDeckType()+ "-\n" + item.getDeckName());
+        helper.setText(R.id.my_online_deck_type,item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-");
+        helper.setText(R.id.my_deck_name, item.getDeckName());
         helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
@@ -193,12 +194,13 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
             LogUtil.i(TAG, "current " + item.toString());
             changeDeckPublicState(item);
         });
-        helper.getView(R.id.ll_download).setOnClickListener(view -> {
+        helper.getView(R.id.ll_download).setOnLongClickListener(view -> {
             //TODO
             //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
             mDialogListener.onDismiss();
             onDeckMenuListener.onDeckSelect(deckFile);
+            return true;
         });
 
     }

@@ -22,8 +22,8 @@
         android:id="@+id/ll_switch_show"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
         android:layout_gravity="start"
+        android:layout_margin="5dp"
         android:background="@drawable/button_radius_n"
         android:orientation="horizontal">
 
@@ -61,45 +61,33 @@
         android:src="@drawable/ic_add_white" />
 
     <LinearLayout
-        android:id="@+id/btn_download"
+        android:id="@+id/ll_download"
         android:layout_width="75dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="18dp"
         android:layout_marginTop="15dp"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/ll_download"
+        <TextView
+            android:id="@+id/my_online_deck_type"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginLeft="1dp"
             android:layout_marginTop="75dp"
-            android:background="@drawable/button_radius_red"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginLeft="5dp"
-                android:src="@drawable/ic_file_download_black_24dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="1dp"
-                android:layout_marginRight="5dp"
-                android:lines="1"
-                android:text="@string/pre_view"
-                android:textSize="5sp" />
-        </LinearLayout>
+            android:layout_marginRight="1dp"
+            android:lines="1"
+            android:text="@string/category_name"
+            android:textSize="5sp" />
 
         <TextView
             android:id="@+id/my_deck_name"
             android:layout_width="57dp"
-            android:layout_height="18dp"
+            android:layout_height="19dp"
             android:layout_gravity="center"
+            android:layout_marginLeft="1dp"
             android:gravity="center"
+            android:ellipsize="end"
             android:text="deck_name"
             android:textColor="@color/white"
             android:textSize="7sp" />
@@ -110,6 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
+            android:layout_marginTop="1dp"
             android:lines="1"
             android:text="1900-02-03"
             android:textSize="6sp" />
