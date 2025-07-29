@@ -1,11 +1,11 @@
 #ifndef DECKMANAGER_H
 #define DECKMANAGER_H
 
-#include "config.h"
 #include <unordered_map>
 #include <vector>
 #include <sstream>
 #include "data_manager.h"
+#include "config.h"
 
 namespace ygo {
 	constexpr int DECK_MAX_SIZE = 60;
@@ -14,10 +14,13 @@ namespace ygo {
 	constexpr int SIDE_MAX_SIZE = 15;
 	constexpr int PACK_MAX_SIZE = 1000;
 
+	constexpr int MAINC_MAX = 250;	// the limit of card_state
+	constexpr int SIDEC_MAX = MAINC_MAX;
+
 struct LFList {
 	unsigned int hash{};
 	std::wstring listName;
-	std::unordered_map<unsigned int, int> content;
+	std::unordered_map<uint32_t, int> content;
 };
 struct Deck {
 	std::vector<code_pointer> main;
