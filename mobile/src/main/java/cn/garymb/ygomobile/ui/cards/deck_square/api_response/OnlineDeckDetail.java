@@ -151,4 +151,16 @@ public class OnlineDeckDetail implements Parcelable {
     public void setUserId(int userId) {
         this.userId = userId;
     }
+
+    public String toString(){
+        return "MyOnlineDeckDetail{" +
+                "deckName='" + deckName + '\'' +
+                ", deckId=" + deckId +
+                ", lastDate=" + lastDate +
+                ", deckContributor=" + deckContributor +
+                ", userId='" + userId + '\'' +
+                ", deckCoverCard1=" + deckCoverCard1 +
+                ", deckLike='" + deckLike + '\'' +
+                '}';
+    }
 }
