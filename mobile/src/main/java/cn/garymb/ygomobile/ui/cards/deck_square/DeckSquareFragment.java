@@ -18,10 +18,11 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareBinding;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckSquareFragment extends Fragment {
-
+    private static final String TAG = DeckSquareFragment.class.getSimpleName();
     private FragmentDeckSquareBinding binding;
     private DeckSquareListAdapter deckSquareListAdapter;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
@@ -245,6 +246,7 @@ public class DeckSquareFragment extends Fragment {
         // Set click listener in your adapter
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
+            LogUtil.v("seesee", item.toString());
             //调用
             mDialogListener.onDismiss();
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.SQUARE_DECK);
