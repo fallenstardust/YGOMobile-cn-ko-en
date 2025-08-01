@@ -18,10 +18,9 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -119,18 +118,14 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
                 return;
 
             }
-            VUiKit.defer().when(() -> {
-                PushSingleDeckResponse result = DeckSquareApiUtil.deleteDeck(item.getDeckId(), loginToken);
-                return result;
-            }).fail(e -> {
+            List<DeckFile> deleteList = new ArrayList<>();
+            deleteList.add(new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE));
+            try {
+                DeckSquareApiUtil.deleteDecks(deleteList);
+            }catch (Throwable e){
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
-            }).done(data -> {
-                if (data.isData()) {
-                    remove(item);
-                } else {
-                    YGOUtil.showTextToast("delete fail " + data.getMessage());
-                }
-            });
+            }
+            remove(item);
         }
     }
 

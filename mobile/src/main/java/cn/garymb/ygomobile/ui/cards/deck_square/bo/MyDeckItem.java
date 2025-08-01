@@ -20,6 +20,8 @@ public class MyDeckItem {
 
     private Boolean isPublic;
 
+    private Boolean isDelete;
+
     public int getIdUploaded() {
         return idUploaded;
     }
@@ -91,6 +93,14 @@ public class MyDeckItem {
 
     public void setPublic(Boolean aPublic) {
         isPublic = aPublic;
+    }
+
+    public Boolean isDelete() {
+        return isDelete;
+    }
+
+    public void setDelete(Boolean aDelete) {
+        isDelete = aDelete;
     }
 
     @Override

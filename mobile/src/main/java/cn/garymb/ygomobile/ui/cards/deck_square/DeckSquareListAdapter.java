@@ -85,13 +85,6 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
         } else {
             imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
         }
-        // ImageView imageview = helper.getView(R.id.ex_card_image);
-        //the function cn.garymb.ygomobile.loader.ImageLoader.bindT(...)
-        //cn.garymb.ygomobile.loader.ImageLoader.setDefaults(...)
-        //is a private function,so I copied the content of it to here
-        /* 如果查不到版本号，则不显示图片 */
-        /* 如果能查到版本号，则显示图片，利用glide的signature，将版本号和url作为signature，由glide判断是否使用缓存 */
-
 
     }
 }

@@ -153,7 +153,7 @@ public class OnlineDeckDetail implements Parcelable {
     }
 
     public String toString(){
-        return "MyOnlineDeckDetail{" +
+        return "preView_OnlineDeckDetail{" +
                 "deckName='" + deckName + '\'' +
                 ", deckId=" + deckId +
                 ", lastDate=" + lastDate +

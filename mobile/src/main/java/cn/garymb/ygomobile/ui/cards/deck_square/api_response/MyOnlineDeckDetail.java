@@ -232,4 +232,18 @@ public class MyOnlineDeckDetail implements Parcelable {
     public void setDelete(boolean delete) {
         isDelete = delete;
     }
+
+    public String toString(){
+        return "MyOnlineDeckDetail{" +
+                "deckName='" + deckName + '\'' +
+                ", deckId=" + deckId +
+                ", deckType=" + deckType +
+                ", deckContributor=" + deckContributor +
+                ", userId='" + userId + '\'' +
+                ", deckCoverCard1=" + deckCoverCard1 +
+                ", deckLike='" + deckLike + '\'' +
+                ", isPublic='" + isPublic + '\'' +
+                ", deckYdk='" + deckYdk + '\'' +
+                '}';
+    }
 }
