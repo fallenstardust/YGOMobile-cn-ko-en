@@ -47,7 +47,7 @@ public class PushMultiDeck {
         private Integer deckProtector = 0;
         private long timestamp = 0;
         private String deckYdk;
-        private boolean isDeleting = false;
+        private boolean isDelete = false;
 
         public String getDeckId() {
             return deckId;
@@ -129,9 +129,9 @@ public class PushMultiDeck {
             this.deckYdk = deckYdk;
         }
 
-        public boolean getDeleting() {return isDeleting;}
+        public boolean isDelete() {return isDelete;}
 
-        public void setDeleting(boolean isDeleting) {this.isDeleting = isDeleting;}
+        public void setDelete(boolean isDelete) {this.isDelete = isDelete;}
 
     }
 }

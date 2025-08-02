@@ -243,6 +243,7 @@ public class MyOnlineDeckDetail implements Parcelable {
                 ", deckCoverCard1=" + deckCoverCard1 +
                 ", deckLike='" + deckLike + '\'' +
                 ", isPublic='" + isPublic + '\'' +
+                ", isDelete='" + isDelete + '\'' +
                 ", deckYdk='" + deckYdk + '\'' +
                 '}';
     }
