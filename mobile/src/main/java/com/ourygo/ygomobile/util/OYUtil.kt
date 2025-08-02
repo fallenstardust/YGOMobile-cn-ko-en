@@ -44,7 +44,7 @@ import org.json.JSONObject
 import java.util.Calendar
 
 object OYUtil {
-    private const val URL_AIFAFIAN = "https://afdian.com/@ourygo"
+   private const val URL_AIFAFIAN = "https://afdian.com/a/ourygo"
 
     @JvmStatic
     fun initToolbar(activity: AppCompatActivity, toolbar: Toolbar, s: String?, isBack: Boolean) {
@@ -351,6 +351,7 @@ object OYUtil {
         return JSONObject(map).toString()
     }
 
+    @JvmStatic
     fun startAifadian(context: Context) {
         context.startActivity(IntentUtil.getUrlIntent(URL_AIFAFIAN))
     }

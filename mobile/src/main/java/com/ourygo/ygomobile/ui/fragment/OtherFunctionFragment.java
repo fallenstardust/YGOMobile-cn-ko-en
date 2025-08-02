@@ -193,7 +193,7 @@ public class OtherFunctionFragment extends BaseFragemnt implements OnMcUserListe
                     startActivity(new Intent(getActivity(), UiSettingActivity.class));
                     break;
                 case ID_AIFADIAN:
-                    startActivity(IntentUtil.getUrlIntent("https://afdian.net/@ourygo"));
+                    OYUtil.startAifadian(getActivity());
                     break;
                 case ID_ABOUT:
                     startActivity(new Intent(getActivity(), AboutActivity.class));
