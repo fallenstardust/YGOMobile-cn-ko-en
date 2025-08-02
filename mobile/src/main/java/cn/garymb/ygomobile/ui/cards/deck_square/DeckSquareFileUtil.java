@@ -48,6 +48,7 @@ public class DeckSquareFileUtil {
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
             item.setUpdateTimestamp(detail.getDeckUpdateDate());
             item.setPublic(detail.isPublic());
+            item.setDelete(detail.isDelete());
             myOnlineDecks.add(item);
         }
         return myOnlineDecks;

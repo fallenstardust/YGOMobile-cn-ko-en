@@ -1,12 +1,11 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import static cn.garymb.ygomobile.Constants.CORE_DECK_PATH;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.toDeckItemList;
 
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,12 +15,10 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckIdResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckMultiIdResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.GetSquareDeckCondition;
@@ -33,8 +30,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushDeckPublicState;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiDeck;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeck;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushSingleDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -175,52 +170,6 @@ public class DeckSquareApiUtil {
 
     }
 
-
-    /**
-     * 阻塞方法，将对应于deckId、deckName的卡组内容json推送到服务器。
-     * 如果在服务器存在deckId相同的记录，则更新卡组，deckName会覆盖服务器上的卡组名
-     * 如果在服务器存在deckName相同、deckId不同的记录，则更新失败
-     *
-     * @param deckfile
-     * @param loginToken
-     * @param deckId
-     * @return
-     * @throws IOException
-     */
-    private static PushSingleDeckResponse pushDeck(DeckFile deckfile, LoginToken loginToken, String deckId) throws IOException {
-        String deckContent = DeckSquareFileUtil.setDeckId(deckfile.getPath(), loginToken.getUserId(), deckId);
-
-        PushSingleDeckResponse result = null;
-        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
-        Map<String, String> headers = new HashMap<>();
-        headers.put("ReqSource", "YGOMobile");
-        headers.put("token", loginToken.getServerToken());
-
-
-        Gson gson = new Gson();
-        PushSingleDeck pushSingleDeck = new PushSingleDeck();
-        pushSingleDeck.setDeckContributor(SharedPreferenceUtil.getMyCardUserName());
-        pushSingleDeck.setUserId(loginToken.getUserId());
-        PushSingleDeck.DeckData deckData = new PushSingleDeck.DeckData();
-
-        deckData.setDeckId(deckId);
-        deckData.setDeckName(deckfile.getName());
-        deckData.setDeckType(deckfile.getTypeName());
-        deckData.setDeckCoverCard1(deckfile.getFirstCode());
-        deckData.setDelete(false);
-        deckData.setDeckYdk(deckContent);
-        pushSingleDeck.setDeck(deckData);
-
-        String json = gson.toJson(pushSingleDeck);
-        Response response = OkhttpUtil.postJson(url, json, headers);
-        String responseBodyString = response.body().string();
-
-        result = gson.fromJson(responseBodyString, PushSingleDeckResponse.class);
-        LogUtil.i(TAG, "push deck response:" + responseBodyString);
-
-        return result;
-    }
-
     /**
      * 阻塞方法，将对应于deckDataList、deckIdList的卡组内容json推送到服务器。
      * 如果在服务器存在deckId相同的记录，则更新卡组，deckName会覆盖服务器上的卡组名
@@ -249,49 +198,6 @@ public class DeckSquareApiUtil {
             decks.add(data);
         }
         return pushMultiDecks(decks, loginToken);
-
-    }
-
-
-    /**
-     * 阻塞方法，推送新卡组的内容时使用。首先从服务器请求一个新的卡组id，之后将卡组上传到服务器
-     * 首先调用服务端api获取卡组id，之后将卡组id设置到ydk中，之后调用服务器api将卡组上传
-     *
-     * @param deckFile
-     * @param loginToken
-     */
-    public static PushSingleDeckResponse requestIdAndPushNewDeck(DeckFile deckFile, LoginToken loginToken) throws IOException {
-
-        if (loginToken == null) {
-            return null;
-        }
-
-        String getDeckIdUrl = "http://rarnu.xyz:38383/api/mdpro3/deck/deckId";
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("ReqSource", "YGOMobile");
-        headers.put("token", loginToken.getServerToken());
-
-        Gson gson = new Gson();
-
-        DeckIdResponse deckIdResult = null;
-
-        Response response = OkhttpUtil.synchronousGet(getDeckIdUrl, null, headers);
-        String responseBodyString = response.body().string();
-        // Convert JSON to Java object using Gson
-        deckIdResult = gson.fromJson(responseBodyString, DeckIdResponse.class);
-        LogUtil.i(TAG, "deck id result:" + deckIdResult.toString());
-
-
-        if (deckIdResult == null) {
-            return null;
-        }
-        String deckId = deckIdResult.getDeckId();//从服务器获取
-        if (deckId == null) {
-            return null;
-        }
-
-        return pushDeck(deckFile, loginToken, deckId);
 
     }
 
@@ -337,6 +243,51 @@ public class DeckSquareApiUtil {
         }
 
         return pushDecks(deckDataList, loginToken, deckIdList);
+    }
+
+    public static PushMultiResponse deleteDecks(List<DeckFile> deckFileList) throws IOException {
+        if (SharedPreferenceUtil.getServerToken() != null) {
+            LoginToken loginToken = new LoginToken(
+                    SharedPreferenceUtil.getServerUserId(),
+                    SharedPreferenceUtil.getServerToken()
+            );
+
+            // 创建一个局部变量来持有deckFileList的引用,因为有时候异步执行会导致获取不到传参的deckFileList
+            final List<DeckFile> deleteDeckList = new ArrayList<>(deckFileList);
+
+            // 先判断缓存表是否正常获取到了
+            if (DeckManagerFragment.getOriginalData().isEmpty()) {
+                // 获取在线卡组列表（异步处理）
+                VUiKit.defer().when(() -> {
+                    return DeckSquareApiUtil.getUserDecks(loginToken);
+                }).fail((e) -> {
+                    LogUtil.e(TAG, "getUserDecks failed: " + e);
+                }).done((result) -> {
+                    if (result == null || result.getData() == null) {
+                        return;
+                    }
+
+                    DeckManagerFragment.getOriginalData().addAll(result.getData());
+                });
+            }
+
+            for (DeckFile deleteDeckFile : deleteDeckList) {
+                for (MyOnlineDeckDetail onlineDeckDetail : DeckManagerFragment.getOriginalData()) {
+                    if (deleteDeckFile.getFileName().equals(onlineDeckDetail.getDeckName()) && deleteDeckFile.getTypeName().equals(onlineDeckDetail.getDeckType())) {
+                        onlineDeckDetail.setDelete(true);// 将要删除的列表元素的isDelete值设置过
+                        //顺带设置一下
+                        deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
+                    }
+                }
+
+            }
+            try {
+                syncMyDecks(toDeckItemList(DeckManagerFragment.getOriginalData()),loginToken);
+            } catch (IOException e) {
+                LogUtil.e(TAG, "删除卡组失败：" + e);
+            }
+        }
+        return null;
     }
 
     /**
@@ -495,81 +446,6 @@ public class DeckSquareApiUtil {
 
         return result;
 
-    }
-
-    public static void deleteDecks(List<DeckFile> deckFileList) {
-        if (SharedPreferenceUtil.getServerToken() != null) {
-            LoginToken loginToken = new LoginToken(
-                    SharedPreferenceUtil.getServerUserId(),
-                    SharedPreferenceUtil.getServerToken()
-            );
-
-            // 创建一个局部变量来持有deckFileList的引用,因为有时候异步执行会导致获取不到传参的deckFileList
-            final List<DeckFile> localDeckFileList = new ArrayList<>(deckFileList);
-
-            // 获取在线卡组列表（异步处理）
-            VUiKit.defer().when(() -> {
-                return DeckSquareApiUtil.getUserDecks(loginToken);
-            }).fail((e) -> {
-                LogUtil.e(TAG, "getUserDecks failed: " + e);
-            }).done((result) -> {
-                if (result == null || result.getData() == null) {
-                    return;
-                }
-                List<MyOnlineDeckDetail> onlineDecks = result.getData();
-                for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-                    for (DeckFile deckFile : localDeckFileList) {
-                        if (onlineDeck.getDeckName().equals(deckFile.getName())) {
-                            // 删除在线卡组（异步处理）
-                            VUiKit.defer().when(() -> {
-                                PushSingleDeckResponse deckResponse = deleteDeck(onlineDeck.getDeckId(), loginToken);
-                                return deckResponse;
-                            }).fail((deleteError) -> {
-                                LogUtil.e(TAG, "Delete Online Deck failed: " + deleteError);
-                            }).done((deleteSuccess) -> {
-                                if (deleteSuccess.isData()) {
-                                    LogUtil.i(TAG, "Online deck deleted successfully");
-                                }
-                            });
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    public static PushSingleDeckResponse deleteDeck(String deckId, LoginToken loginToken) throws
-            IOException {
-        PushSingleDeckResponse result = null;
-        String url = "http://rarnu.xyz:38383/api/mdpro3/sync/single";
-        Map<String, String> headers = new HashMap<>();
-        headers.put("ReqSource", "YGOMobile");
-        headers.put("token", loginToken.getServerToken());
-
-
-        Gson gson = new Gson();
-
-        PushSingleDeck pushSingleDeck = new PushSingleDeck();
-        PushSingleDeck.DeckData deckData = new PushSingleDeck.DeckData();
-
-        deckData.setDeckId(deckId);
-        deckData.setDelete(true);
-        pushSingleDeck.setDeck(deckData);
-        pushSingleDeck.setUserId(loginToken.getUserId());
-
-
-        String json = gson.toJson(pushSingleDeck);
-
-        Response response = OkhttpUtil.postJson(url, json, headers);
-        String responseBodyString = response.body().string();
-
-        // Convert JSON to Java object using Gson
-        result = gson.fromJson(responseBodyString, PushSingleDeckResponse.class);
-        LogUtil.i(TAG, "push deck response:" + responseBodyString);
-
-
-        return result;
     }
 
     /**
