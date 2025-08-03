@@ -245,49 +245,50 @@ public class DeckSquareApiUtil {
         return pushDecks(deckDataList, loginToken, deckIdList);
     }
 
-    public static PushMultiResponse deleteDecks(List<DeckFile> deckFileList) throws IOException {
+    public static void deleteDecks(List<DeckFile> deckFileList) {
         if (SharedPreferenceUtil.getServerToken() != null) {
             LoginToken loginToken = new LoginToken(
                     SharedPreferenceUtil.getServerUserId(),
                     SharedPreferenceUtil.getServerToken()
             );
 
-            // 创建一个局部变量来持有deckFileList的引用,因为有时候异步执行会导致获取不到传参的deckFileList
+            // 创建局部变量持有引用
             final List<DeckFile> deleteDeckList = new ArrayList<>(deckFileList);
-
-            // 先判断缓存表是否正常获取到了
-            if (DeckManagerFragment.getOriginalData().isEmpty()) {
-                // 获取在线卡组列表（异步处理）
-                VUiKit.defer().when(() -> {
-                    return DeckSquareApiUtil.getUserDecks(loginToken);
-                }).fail((e) -> {
-                    LogUtil.e(TAG, "getUserDecks failed: " + e);
-                }).done((result) -> {
-                    if (result == null || result.getData() == null) {
-                        return;
-                    }
-
-                    DeckManagerFragment.getOriginalData().addAll(result.getData());
-                });
-            }
-
-            for (DeckFile deleteDeckFile : deleteDeckList) {
-                for (MyOnlineDeckDetail onlineDeckDetail : DeckManagerFragment.getOriginalData()) {
-                    if (deleteDeckFile.getFileName().equals(onlineDeckDetail.getDeckName()) && deleteDeckFile.getTypeName().equals(onlineDeckDetail.getDeckType())) {
-                        onlineDeckDetail.setDelete(true);// 将要删除的列表元素的isDelete值设置过
-                        //顺带设置一下
-                        deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
+            List<MyOnlineDeckDetail> onlineDecks = new ArrayList<>();
+            // 使用VUiKit避开UI线程进行网络请求
+            VUiKit.defer().when(() -> {
+                // 先判断缓存表是否需要更新
+                if (DeckManagerFragment.getOriginalData().isEmpty()) {
+                    // 同步获取在线卡组列表（在后台线程中可以安全执行网络操作）
+                    MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
+                    if (result != null && result.getData() != null) {
+                        DeckManagerFragment.getOriginalData().addAll(result.getData());
                     }
                 }
+                onlineDecks.addAll(DeckManagerFragment.getOriginalData());
+                // 处理删除标记
+                for (DeckFile deleteDeckFile : deleteDeckList) {
+                    for (MyOnlineDeckDetail onlineDeckDetail : onlineDecks) {
+                        if (deleteDeckFile.getName().equals(onlineDeckDetail.getDeckName()) && deleteDeckFile.getTypeName().equals(onlineDeckDetail.getDeckType())) {
 
-            }
-            try {
-                syncMyDecks(toDeckItemList(DeckManagerFragment.getOriginalData()),loginToken);
-            } catch (IOException e) {
+                            onlineDeckDetail.setDelete(true);
+
+                            deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
+                        }
+                    }
+                }
+                DeckManagerFragment.getOriginalData().clear();
+                DeckManagerFragment.getOriginalData().addAll(onlineDecks);
+                LogUtil.d(TAG,onlineDecks.toString());
+                // 执行同步操作（在UI线程不得不进行网络请求，须转在后台线程）
+                syncMyDecks(toDeckItemList(DeckManagerFragment.getOriginalData()), loginToken);//TODO 需要解决无法
+                return true;
+            }).fail((e) -> {
                 LogUtil.e(TAG, "删除卡组失败：" + e);
-            }
+            }).done((result) -> {
+                LogUtil.d(TAG, "卡组删除同步成功");
+            });
         }
-        return null;
     }
 
     /**
@@ -311,6 +312,7 @@ public class DeckSquareApiUtil {
             data.setDeckType(item.getDeckType());
             data.setDeckCoverCard1(item.getDeckCoverCard1());
             data.setDeckUpdateTime(item.getUpdateTimestamp());
+            data.setDelete(item.isDelete());
 
             String deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
 

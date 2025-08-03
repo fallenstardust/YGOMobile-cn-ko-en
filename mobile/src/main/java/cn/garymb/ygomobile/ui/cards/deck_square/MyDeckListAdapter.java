@@ -152,6 +152,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
 
     @Override
     protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
+        ImageView iv_box = helper.findView(R.id.iv_box);
+        if (item.isDelete()) {
+            iv_box.setColorFilter(YGOUtil.c(R.color.bottom_bg));
+        } else {
+            iv_box.clearColorFilter();
+        }
         helper.setText(R.id.my_online_deck_type,item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-");
         helper.setText(R.id.my_deck_name, item.getDeckName());
         helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
