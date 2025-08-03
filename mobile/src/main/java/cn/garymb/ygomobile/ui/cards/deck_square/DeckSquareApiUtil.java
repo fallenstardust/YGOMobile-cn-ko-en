@@ -317,7 +317,7 @@ public class DeckSquareApiUtil {
             String deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
 
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "syncMyDecks(368) *要上传的* 本地卡组: " + data.getDeckType() +"//" + data.getDeckName()+"//"+data.getDeckId()+"//"+data.getDeckCoverCard1()+"//"+data.getDeckUpdateTime());
+            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: " + data.getDeckType() +"//" + data.getDeckName()+"//"+data.getDeckId()+"//"+data.getDeckCoverCard1()+"//"+data.getDeckUpdateTime());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -492,7 +492,7 @@ public class DeckSquareApiUtil {
             String localDeckName = localDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
-
+            localDeck.setDelete(false);
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
