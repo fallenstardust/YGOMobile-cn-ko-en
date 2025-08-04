@@ -2,8 +2,13 @@ package cn.garymb.ygomobile.ui.cards.deck_square;
 
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.widget.ImageView;
+
+import androidx.core.content.ContextCompat;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
@@ -102,24 +107,60 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
 
     }
 
-    // 筛选函数
+    // 在适配器中添加成员变量保存当前搜索关键词
+    private String currentKeyword = "";
+
+    // 修改筛选函数，保存当前关键词
     public void filter(String keyword) {
+        currentKeyword = keyword; // 保存关键词
         List<MyOnlineDeckDetail> filteredList = new ArrayList<>();
         if (keyword.isEmpty()) {
-            // 如果关键词为空，则显示所有数据
             filteredList.addAll(DeckManagerFragment.getOriginalData());
         } else {
-            // 遍历原始数据，筛选出包含关键词的item
+            String lowerKeyword = keyword.toLowerCase(); // 转为小写，实现不区分大小写搜索
             for (MyOnlineDeckDetail item : DeckManagerFragment.getOriginalData()) {
-                if (item.getDeckName().contains(keyword) || item.getDeckType().contains(keyword)) {
+                if (item.getDeckName().toLowerCase().contains(lowerKeyword) ||
+                        item.getDeckType().toLowerCase().contains(lowerKeyword)) {
                     filteredList.add(item);
                 }
             }
         }
-        // 更新显示的数据
         getData().clear();
         addData(filteredList);
         notifyDataSetChanged();
+    }
+
+    /**
+     * 将文本中包含关键词的部分高亮显示
+     * @param text 原始文本
+     * @param keyword 关键词
+     * @return 处理后的SpannableString
+     */
+    private SpannableString getHighlightedText(String text, String keyword) {
+        if (text == null || keyword.isEmpty()) {
+            return new SpannableString(text == null ? "" : text);
+        }
+
+        SpannableString spannable = new SpannableString(text);
+        String lowerText = text.toLowerCase();
+        String lowerKeyword = keyword.toLowerCase();
+        int index = lowerText.indexOf(lowerKeyword);
+
+        // 循环查找所有匹配的关键词并设置高亮
+        while (index >= 0) {
+            int start = index;
+            int end = index + keyword.length();
+
+            // 设置高亮样式，可以自定义颜色和样式
+            spannable.setSpan(new ForegroundColorSpan(YGOUtil.c(R.color.holo_blue_bright)),
+                    start, end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+            // 查找下一个匹配
+            index = lowerText.indexOf(lowerKeyword, end);
+        }
+
+        return spannable;
     }
 
     private void deleteMyDeckOnLine(MyOnlineDeckDetail item) {
@@ -169,8 +210,12 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         } else {
             iv_box.clearColorFilter();
         }
-        helper.setText(R.id.my_online_deck_type,item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-");
-        helper.setText(R.id.my_deck_name, item.getDeckName());
+        // 处理卡组类型高亮, 需要判断卡组分类的内容
+        SpannableString highlightedType = getHighlightedText(item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-", currentKeyword);
+        helper.setText(R.id.my_online_deck_type, highlightedType);
+        // 处理卡组名称高亮
+        SpannableString highlightedName = getHighlightedText(item.getDeckName(), currentKeyword);
+        helper.setText(R.id.my_deck_name, highlightedName);
         helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
         ImageView cardImage = helper.getView(R.id.deck_info_image);
         long code = item.getDeckCoverCard1();
