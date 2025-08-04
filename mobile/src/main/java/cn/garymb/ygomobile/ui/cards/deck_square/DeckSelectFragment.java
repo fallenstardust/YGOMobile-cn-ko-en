@@ -485,7 +485,7 @@ public class DeckSelectFragment extends Fragment {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.rvResultList.setVisibility(View.GONE);
         } else {
-            resultList.addAll(getResultList(keyword, allDeckList));
+            resultList.addAll(resultListAdapter.getResultList(keyword, allDeckList));
             binding.rvResultList.setVisibility(View.VISIBLE);
             binding.llMainUi.setVisibility(View.GONE);
             resultListAdapter.notifyDataSetChanged();
@@ -500,21 +500,7 @@ public class DeckSelectFragment extends Fragment {
         return types;
     }
 
-    /**
-     * 从deckList中检索包含keyword的卡组
-     *
-     * @param keyword
-     * @param deckList
-     * @return
-     */
-    private List<DeckFile> getResultList(String keyword, List<DeckFile> deckList) {
-        List<DeckFile> resultList = new ArrayList<>();
-        for (int i = 0; i < deckList.size(); i++) {
-            if (deckList.get(i).getFileName().toLowerCase().contains(keyword.toLowerCase()))
-                resultList.add(deckList.get(i));
-        }
-        return resultList;
-    }
+
 
     private List<String> getStringTypeList(List<DeckType> deckTypeList) {
         List<String> typeList = new ArrayList<>();

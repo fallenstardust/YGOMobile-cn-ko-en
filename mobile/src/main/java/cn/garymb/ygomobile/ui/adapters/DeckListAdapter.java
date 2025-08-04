@@ -7,6 +7,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,6 +48,8 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private OnItemSelectListener onItemSelectListener;
     private int selectPosition;
     private boolean isManySelect;//标志位，是否选中多个卡组
+    // 在适配器中添加成员变量保存当前搜索关键词
+    private String currentKeyword = "";
 
     public DeckListAdapter(Context context, List<T> data, int select) {
         super(R.layout.item_deck_list_swipe, data);
@@ -79,7 +84,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         int position = holder.getAdapterPosition();
         //item是deckFile类型
         this.deckFile = (DeckFile) item;
-        holder.deckName.setText(item.getName());
+        holder.deckName.setText(getHighlightedText(item.getName(), currentKeyword));
         //预读卡组信息
         this.deckInfo = DeckLoader.readDeck(mCardLoader, deckFile.getPathFile());
         //加载卡组第一张卡的图
@@ -240,8 +245,56 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
     }
+    /**
+     * 从deckList中检索包含keyword的卡组
+     *
+     * @param keyword
+     * @param deckList
+     * @return
+     */
+    public List<DeckFile> getResultList(String keyword, List<DeckFile> deckList) {
+        currentKeyword = keyword;
+        List<DeckFile> resultList = new ArrayList<>();
+        for (int i = 0; i < deckList.size(); i++) {
+            if (deckList.get(i).getFileName().toLowerCase().contains(keyword.toLowerCase()))
+                resultList.add(deckList.get(i));
+        }
+        return resultList;
+    }
+    /**
+     * 将文本中包含关键词的部分高亮显示
+     * @param text 原始文本
+     * @param keyword 关键词
+     * @return 处理后的SpannableString
+     */
+    private SpannableString getHighlightedText(String text, String keyword) {
+        if (text == null || keyword.isEmpty()) {
+            return new SpannableString(text == null ? "" : text);
+        }
 
+        SpannableString spannable = new SpannableString(text);
+        String lowerText = text.toLowerCase();
+        String lowerKeyword = keyword.toLowerCase();
+        int index = lowerText.indexOf(lowerKeyword);
 
+        // 循环查找所有匹配的关键词并设置高亮
+        while (index >= 0) {
+            int start = index;
+            int end = index + keyword.length();
+
+            // 设置高亮样式，可以自定义颜色和样式
+            spannable.setSpan(
+                    new ForegroundColorSpan(YGOUtil.c(R.color.holo_blue_bright)),
+                    start, end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // 查找下一个匹配
+            index = lowerText.indexOf(lowerKeyword, end);
+        }
+
+        return spannable;
+    }
 }
 
 class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {
