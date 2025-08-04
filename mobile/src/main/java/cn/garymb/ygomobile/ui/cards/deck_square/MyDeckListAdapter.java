@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.originalData;
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.util.Log;
@@ -14,6 +13,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
@@ -46,7 +46,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         if (loginToken == null) {
             return;
         }
-        if (originalData.isEmpty()){
+        if (DeckManagerFragment.getOriginalData().isEmpty()){
             final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
             VUiKit.defer().when(() -> {
                 MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
@@ -63,9 +63,20 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
                 }
                 LogUtil.i(TAG, "load mycard from server failed:" + e);
             }).done((serverDecks) -> {
-                if (serverDecks != null) {//将服务端的卡组也放到LocalDecks中
-                    originalData.clear();//虽然判断originalData是空的才会执行到这里，但还是写上保险
-                    originalData.addAll(serverDecks); // 保存原始数据
+                if (serverDecks != null) {//将服务端的卡组也放到缓存中
+                    //根据deckType排序，提高观感
+                    serverDecks.sort((o1, o2) -> {
+                        String type1 = o1.getDeckType();
+                        String type2 = o2.getDeckType();
+
+                        if (type1 == null && type2 == null) return 0;
+                        if (type1 == null) return 1;
+                        if (type2 == null) return -1;
+                        return type1.compareTo(type2);
+                    });
+
+                    DeckManagerFragment.getOriginalData().clear();//虽然判断originalData是空的才会执行到这里，但还是写上保险
+                    DeckManagerFragment.getOriginalData().addAll(serverDecks); // 保存原始数据
                 }
 
                 LogUtil.i(TAG, "load mycard from server done");
@@ -84,7 +95,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         } else {
             LogUtil.i(TAG, "load originalData done");
             getData().clear();
-            addData(originalData);
+            addData(DeckManagerFragment.getOriginalData());
             notifyDataSetChanged();
         }
 
@@ -96,11 +107,11 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         List<MyOnlineDeckDetail> filteredList = new ArrayList<>();
         if (keyword.isEmpty()) {
             // 如果关键词为空，则显示所有数据
-            filteredList.addAll(originalData);
+            filteredList.addAll(DeckManagerFragment.getOriginalData());
         } else {
             // 遍历原始数据，筛选出包含关键词的item
-            for (MyOnlineDeckDetail item : originalData) {
-                if (item.getDeckName().contains(keyword)) {
+            for (MyOnlineDeckDetail item : DeckManagerFragment.getOriginalData()) {
+                if (item.getDeckName().contains(keyword) || item.getDeckType().contains(keyword)) {
                     filteredList.add(item);
                 }
             }
