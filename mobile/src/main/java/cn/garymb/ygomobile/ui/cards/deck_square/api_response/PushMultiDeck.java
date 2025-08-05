@@ -121,9 +121,7 @@ public class PushMultiDeck {
             this.timestamp = deckUpdateTime;
         }
 
-        public String getDeckYdk() {
-            return deckYdk;
-        }
+        public String getDeckYdk() {return deckYdk;}
 
         public void setDeckYdk(String deckYdk) {
             this.deckYdk = deckYdk;

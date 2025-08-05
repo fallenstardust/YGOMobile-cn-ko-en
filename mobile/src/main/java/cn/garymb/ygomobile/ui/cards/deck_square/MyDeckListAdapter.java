@@ -6,7 +6,10 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
@@ -205,47 +208,58 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
     @Override
     protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
         ImageView iv_box = helper.findView(R.id.iv_box);
+        ImageView deck_info_image = helper.findView(R.id.deck_info_image);
+        ImageView delete_my_online_deck_btn = helper.findView(R.id.delete_my_online_deck_btn);
+        LinearLayout ll_switch_show = helper.findView(R.id.ll_switch_show);
+        TextView change_show_or_hide = helper.findView(R.id.change_show_or_hide);
+        ImageView show_on_deck_square = helper.findView(R.id.show_on_deck_square);
+        long code = item.getDeckCoverCard1();
+
         if (item.isDelete()) {
+            deck_info_image.setColorFilter(YGOUtil.c(R.color.bottom_bg));
             iv_box.setColorFilter(YGOUtil.c(R.color.bottom_bg));
+            delete_my_online_deck_btn.setVisibility(View.GONE);
+            ll_switch_show.setVisibility(View.GONE);
         } else {
+            deck_info_image.clearColorFilter();
             iv_box.clearColorFilter();
+            delete_my_online_deck_btn.setVisibility(View.VISIBLE);
+            ll_switch_show.setVisibility(View.VISIBLE);
         }
         // 处理卡组类型高亮, 需要判断卡组分类的内容
-        SpannableString highlightedType = getHighlightedText(item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-", currentKeyword);
-        helper.setText(R.id.my_online_deck_type, highlightedType);
+        helper.setText(R.id.my_online_deck_type, getHighlightedText(item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-", currentKeyword));
         // 处理卡组名称高亮
-        SpannableString highlightedName = getHighlightedText(item.getDeckName(), currentKeyword);
-        helper.setText(R.id.my_deck_name, highlightedName);
+        helper.setText(R.id.my_deck_name, getHighlightedText(item.getDeckName(), currentKeyword));
+
         helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
-        ImageView cardImage = helper.getView(R.id.deck_info_image);
-        long code = item.getDeckCoverCard1();
+
         if (item.isPublic()) {
-            helper.setText(R.id.change_show_or_hide, R.string.in_public);
-            helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
-            helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
+            change_show_or_hide.setText(R.string.in_public);
+            show_on_deck_square.setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
+            ll_switch_show.setBackgroundResource(R.drawable.button_radius_red);
         } else {
-            helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
-            helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
-            helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
+            change_show_or_hide.setText(R.string.in_personal_use);
+            show_on_deck_square.setBackgroundResource(R.drawable.closed_eyes_24);
+            ll_switch_show.setBackgroundResource(R.drawable.button_radius_n);
         }
         if (code != 0) {
-            imageLoader.bindImage(cardImage, code, null, ImageLoader.Type.small);
+            imageLoader.bindImage(deck_info_image, code, null, ImageLoader.Type.small);
         } else {
-            imageLoader.bindImage(cardImage, -1, null, ImageLoader.Type.small);
+            imageLoader.bindImage(deck_info_image, -1, null, ImageLoader.Type.small);
         }
-        helper.getView(R.id.delete_my_online_deck_btn).setOnClickListener(view -> {
+        delete_my_online_deck_btn.setOnClickListener(view -> {
             deleteMyDeckOnLine(item);
         });
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
             if (item.isPublic()) {
-                helper.setText(R.id.change_show_or_hide, R.string.in_personal_use);
-                helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.closed_eyes_24);
-                helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_n);
+                change_show_or_hide.setText(R.string.in_personal_use);
+                show_on_deck_square.setBackgroundResource(R.drawable.closed_eyes_24);
+                ll_switch_show.setBackgroundResource(R.drawable.button_radius_n);
                 item.setPublic(false); // 关闭公开状态
             } else {
-                helper.setText(R.id.change_show_or_hide, R.string.in_public);
-                helper.getView(R.id.show_on_deck_square).setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
-                helper.getView(R.id.ll_switch_show).setBackgroundResource(R.drawable.button_radius_red);
+                change_show_or_hide.setText( R.string.in_public);
+                show_on_deck_square.setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
+                ll_switch_show.setBackgroundResource(R.drawable.button_radius_red);
                 item.setPublic(true); // 开启公开状态
             }
             LogUtil.i(TAG, "current " + item.toString());

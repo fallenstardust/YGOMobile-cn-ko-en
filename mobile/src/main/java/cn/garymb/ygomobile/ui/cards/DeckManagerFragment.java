@@ -1358,6 +1358,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return;
         String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
+            LogUtil.w(TAG, "要删除的卡组："+"\n卡组分类"+deckFile.getTypeName()+ "\n卡组名称："+deckFile.getFileName()+"\n卡组id"+deckFile.getDeckId());
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.originalData;
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.toDeckItemList;
 
 import android.widget.Toast;
@@ -260,7 +261,6 @@ public class DeckSquareApiUtil {
         /* 构造json */
         List<PushMultiDeck.DeckData> dataList = new ArrayList<>();
         for (MyDeckItem item : deckItems) {
-            LogUtil.v(TAG, "syncMyDecks item设定的删除状态？： "+item.isDelete());
             PushMultiDeck.DeckData data = new PushMultiDeck.DeckData();
             data.setDeckId(item.getDeckId());
             data.setDeckName(item.getDeckName());
@@ -275,7 +275,7 @@ public class DeckSquareApiUtil {
                 deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: \n是否删除？： " + data.isDelete() + "\n卡组分类："+data.getDeckType() +"\n卡组名称： " + data.getDeckName()+"\n封面id： "+data.getDeckCoverCard1()+"\n卡组内容： "+ data.getDeckYdk());
+            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: \n是否删除？： " + data.isDelete() + "\n卡组分类："+data.getDeckType() +"\n卡组名称： " + data.getDeckName()+"\n封面id： "+data.getDeckCoverCard1()+"\n卡组id： "+ data.getDeckId());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -440,7 +440,6 @@ public class DeckSquareApiUtil {
         // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
         List<MyDeckItem> newPushDecks = new ArrayList<>();
-        List<MyOnlineDeckDetail> backupDownloadDecks = new ArrayList<>();
 
         // 1. 使用本地卡组的迭代器遍历（支持安全删除）
         Iterator<MyDeckItem> localIterator = localDecks.iterator();
@@ -451,6 +450,7 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
+
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
@@ -469,13 +469,10 @@ public class DeckSquareApiUtil {
             // 若未匹配到在线卡组，该本地卡组会保留在localDecks中（后续作为新卡组上传）
         }
 
-        // 剩余的本地卡组都是新卡组（本地独有，需要上传）
-        newPushDecks.addAll(localDecks);
         // 剩余的在线卡组都是新卡组（云端独有，需要下载）
-        backupDownloadDecks.addAll(onlineDecks);
-
-        for (MyOnlineDeckDetail onlineDeck : backupDownloadDecks) {
-            LogUtil.w(TAG, "synchronizeDecks +要下载的 云备份卡组: " + onlineDeck.getDeckType() + "//" + onlineDeck.getDeckName() + "//" + onlineDeck.getDeckUpdateDate());
+        LogUtil.i(TAG,"看看剩余onlineDecks："+onlineDecks);
+        for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
+            LogUtil.d(TAG, "synchronizeDecks +要下载的 云备份卡组: \n卡组分类：" + onlineDeck.getDeckType() + "\n卡组名：" + onlineDeck.getDeckName() + "\n卡组id：" + onlineDeck.getDeckId());
             // 确保文件名包含.ydk扩展名
             String fileName = onlineDeck.getDeckName();
             if (!fileName.toLowerCase().endsWith(Constants.YDK_FILE_EX)) {
@@ -491,15 +488,19 @@ public class DeckSquareApiUtil {
             if (!saved) {
                 LogUtil.e(TAG, "synchronizeDecks 保存失败！的 云备份卡组: " + fileFullPath);
             } else {
-                LogUtil.i(TAG, "synchronizeDecks 保存成功√的 云备份卡组: " + fileFullPath);
+                LogUtil.d(TAG, "synchronizeDecks 保存成功√的 云备份卡组: " + fileFullPath);
             }
         }
 
         // 上传本地卡组覆盖在线卡组
         syncMyDecks(syncUploadDecks, loginToken);
+
+        // 剩余的本地卡组都是新卡组（本地独有，需要上传）
+        newPushDecks.addAll(localDecks);
+        LogUtil.w(TAG, "+上传新增的 本地卡组newPushDecks: " + newPushDecks);
         if (!newPushDecks.isEmpty()) {
-            requestIdAndPushNewDecks(newPushDecks, loginToken);
-            LogUtil.w(TAG, "seesee +要上传的 本地卡组: " + newPushDecks);
+            PushMultiResponse result = requestIdAndPushNewDecks(newPushDecks, loginToken);
+            LogUtil.w(TAG, "上传结果数："+ result.getData());
         }
     }
 
@@ -509,9 +510,6 @@ public class DeckSquareApiUtil {
                     SharedPreferenceUtil.getServerUserId(),
                     SharedPreferenceUtil.getServerToken()
             );
-
-            // 创建局部变量持有引用
-            final List<DeckFile> deleteDeckList = new ArrayList<>(deckFileList);
             // 使用VUiKit避开UI线程进行网络请求
             VUiKit.defer().when(() -> {
                 // 先判断缓存表是否需要更新
@@ -523,8 +521,8 @@ public class DeckSquareApiUtil {
                     }
                 }
                 // 处理删除标记
-                for (DeckFile deleteDeckFile : deleteDeckList) {
-                    for (MyOnlineDeckDetail onlineDeckDetail : DeckManagerFragment.getOriginalData()) {
+                for (DeckFile deleteDeckFile : deckFileList) {
+                    for (MyOnlineDeckDetail onlineDeckDetail : originalData) {
                         if (deleteDeckFile.getName().equals(onlineDeckDetail.getDeckName())
                                 && deleteDeckFile.getTypeName().equals(onlineDeckDetail.getDeckType())) {
 
@@ -534,9 +532,8 @@ public class DeckSquareApiUtil {
                         }
                     }
                 }
-                LogUtil.v(TAG,"deleteDecks：查看onlineDecks："+ DeckManagerFragment.getOriginalData().toString());
                 // 执行同步操作（在UI线程不得不进行网络请求，须转在后台线程）
-                syncMyDecks(toDeckItemList(DeckManagerFragment.getOriginalData()), loginToken);
+                syncMyDecks(toDeckItemList(originalData), loginToken);
                 return true;
             }).fail((e) -> {
                 LogUtil.e(TAG, "删除卡组失败! 原因：" + e);
