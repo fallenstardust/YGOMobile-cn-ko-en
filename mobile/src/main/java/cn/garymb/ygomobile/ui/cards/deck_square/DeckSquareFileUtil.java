@@ -73,7 +73,7 @@ public class DeckSquareFileUtil {
                     try {
                         String data = line.replace("#", "");
                         if (!data.isEmpty()) {
-                            userId = Integer.parseInt(data);
+                            deckId = data;
                         }
                         // userId = Integer.parseInt(line.replaceAll("###", ""));
                     } catch (NumberFormatException e) {
@@ -82,17 +82,15 @@ public class DeckSquareFileUtil {
 
                 } else if (line.startsWith("##")) {
                     line = line.replace("#", "");
-                    deckId = line;
+                    userId = Integer.parseInt(line);
 
                 }
 
             }
 
         } catch (IOException e) {
-
             LogUtil.e(TAG, "read 1", e);
         } finally {
-
             IOUtils.close(inputStream);
         }
         return deckId;
