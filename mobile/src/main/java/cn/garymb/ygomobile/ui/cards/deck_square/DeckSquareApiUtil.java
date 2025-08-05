@@ -304,7 +304,7 @@ public class DeckSquareApiUtil {
         String responseBodyString = response.body().string();
 
         result = gson.fromJson(responseBodyString, PushMultiResponse.class);
-        LogUtil.i(TAG, "pushMultiDecks response:" + responseBodyString);
+        LogUtil.i(TAG, "pushMultiDecks 上传多个卡组结果: " + responseBodyString);
 
         return result;
     }
@@ -440,7 +440,6 @@ public class DeckSquareApiUtil {
 
         // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
-        List<MyDeckItem> newPushDecks = new ArrayList<>();
 
         // 1. 使用本地卡组的迭代器遍历（支持安全删除）
         Iterator<MyDeckItem> localIterator = localDecks.iterator();
@@ -451,7 +450,7 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
-
+            LogUtil.e(TAG,"本地卡组名称："+localDeck.getDeckName()+"\n本地卡组分类："+localDeck.getDeckType()+"\n本地卡组ID："+localDeck.getDeckId());
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
@@ -470,8 +469,18 @@ public class DeckSquareApiUtil {
             // 若未匹配到在线卡组，该本地卡组会保留在localDecks中（后续作为新卡组上传）
         }
 
-        // 剩余的在线卡组都是新卡组（云端独有，需要下载）
-        LogUtil.i(TAG, "看看剩余onlineDecks：" + onlineDecks);
+        // 上传本地卡组覆盖在线卡组
+        syncMyDecks(syncUploadDecks, loginToken);
+
+        // 剩余的本地卡组都是新增卡组（本地独有，需要上传）
+        LogUtil.w(TAG, "+上传新增的 本地卡组: " + localDecks);
+        if (!localDecks.isEmpty()) {
+            PushMultiResponse result = requestIdAndPushNewDecks(localDecks, loginToken);
+            LogUtil.w(TAG, "上传结果数：" + result.getData());
+        }
+
+        // 剩余的在线卡组都是云端独有，需要下载
+        LogUtil.i(TAG, "剩余onlineDecks：" + onlineDecks);
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
             LogUtil.d(TAG, "synchronizeDecks +要下载的 云备份卡组: \n卡组分类：" + onlineDeck.getDeckType() + "\n卡组名：" + onlineDeck.getDeckName() + "\n卡组id：" + onlineDeck.getDeckId());
             // 确保文件名包含.ydk扩展名
@@ -491,17 +500,6 @@ public class DeckSquareApiUtil {
             } else {
                 LogUtil.d(TAG, "synchronizeDecks 保存成功√的 云备份卡组: " + fileFullPath);
             }
-        }
-
-        // 上传本地卡组覆盖在线卡组
-        syncMyDecks(syncUploadDecks, loginToken);
-
-        // 剩余的本地卡组都是新卡组（本地独有，需要上传）
-        newPushDecks.addAll(localDecks);
-        LogUtil.w(TAG, "+上传新增的 本地卡组newPushDecks: " + newPushDecks);
-        if (!newPushDecks.isEmpty()) {
-            PushMultiResponse result = requestIdAndPushNewDecks(newPushDecks, loginToken);
-            LogUtil.w(TAG, "上传结果数：" + result.getData());
         }
     }
 
