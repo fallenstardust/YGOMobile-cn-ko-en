@@ -72,17 +72,6 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
                 LogUtil.i(TAG, "load mycard from server failed:" + e);
             }).done((serverDecks) -> {
                 if (serverDecks != null) {//将服务端的卡组也放到缓存中
-                    //根据deckType排序，提高观感
-                    serverDecks.sort((o1, o2) -> {
-                        String type1 = o1.getDeckType();
-                        String type2 = o2.getDeckType();
-
-                        if (type1 == null && type2 == null) return 0;
-                        if (type1 == null) return 1;
-                        if (type2 == null) return -1;
-                        return type1.compareTo(type2);
-                    });
-
                     DeckManagerFragment.getOriginalData().clear();//虽然判断originalData是空的才会执行到这里，但还是写上保险
                     DeckManagerFragment.getOriginalData().addAll(serverDecks); // 保存原始数据
                 }

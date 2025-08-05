@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.getOriginalData;
 import static cn.garymb.ygomobile.ui.cards.DeckManagerFragment.originalData;
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.toDeckItemList;
 
@@ -240,7 +241,7 @@ public class DeckSquareApiUtil {
         if (deckIdList == null) {
             return null;
         } else {
-            LogUtil.i(TAG,"requestIdAndPushNewDecks deckIdList"+ deckIdList);
+            LogUtil.i(TAG, "requestIdAndPushNewDecks deckIdList" + deckIdList);
         }
 
         return pushDecks(deckDataList, loginToken, deckIdList);
@@ -275,7 +276,7 @@ public class DeckSquareApiUtil {
                 deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: \n是否删除？： " + data.isDelete() + "\n卡组分类："+data.getDeckType() +"\n卡组名称： " + data.getDeckName()+"\n封面id： "+data.getDeckCoverCard1()+"\n卡组id： "+ data.getDeckId());
+            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: \n是否删除？： " + data.isDelete() + "\n卡组分类：" + data.getDeckType() + "\n卡组名称： " + data.getDeckName() + "\n封面id： " + data.getDeckCoverCard1() + "\n卡组id： " + data.getDeckId());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -470,7 +471,7 @@ public class DeckSquareApiUtil {
         }
 
         // 剩余的在线卡组都是新卡组（云端独有，需要下载）
-        LogUtil.i(TAG,"看看剩余onlineDecks："+onlineDecks);
+        LogUtil.i(TAG, "看看剩余onlineDecks：" + onlineDecks);
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
             LogUtil.d(TAG, "synchronizeDecks +要下载的 云备份卡组: \n卡组分类：" + onlineDeck.getDeckType() + "\n卡组名：" + onlineDeck.getDeckName() + "\n卡组id：" + onlineDeck.getDeckId());
             // 确保文件名包含.ydk扩展名
@@ -481,7 +482,7 @@ public class DeckSquareApiUtil {
 
             String fileFullPath = AppsSettings.get().getDeckDir() + "/" + fileName;
             if (!onlineDeck.getDeckType().equals(""))
-                fileFullPath = AppsSettings.get().getDeckDir() + "/" + onlineDeck.getDeckType()+ "/" + fileName;
+                fileFullPath = AppsSettings.get().getDeckDir() + "/" + onlineDeck.getDeckType() + "/" + fileName;
 
             // 保存在线卡组到本地
             boolean saved = DeckSquareFileUtil.saveFileToPath(fileFullPath, onlineDeck.getDeckYdk(), onlineDeck.getDeckUpdateDate());
@@ -500,7 +501,7 @@ public class DeckSquareApiUtil {
         LogUtil.w(TAG, "+上传新增的 本地卡组newPushDecks: " + newPushDecks);
         if (!newPushDecks.isEmpty()) {
             PushMultiResponse result = requestIdAndPushNewDecks(newPushDecks, loginToken);
-            LogUtil.w(TAG, "上传结果数："+ result.getData());
+            LogUtil.w(TAG, "上传结果数：" + result.getData());
         }
     }
 

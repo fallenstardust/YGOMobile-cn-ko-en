@@ -24,6 +24,16 @@ public class MyDeckResponse {
     }
 
     public List<MyOnlineDeckDetail> getData() {
+        //根据deckType排序，提高观感
+        data.sort((o1, o2) -> {
+            String type1 = o1.getDeckType();
+            String type2 = o2.getDeckType();
+
+            if (type1 == null && type2 == null) return 0;
+            if (type1 == null) return 1;
+            if (type2 == null) return -1;
+            return type1.compareTo(type2);
+        });
         return data;
     }
 
