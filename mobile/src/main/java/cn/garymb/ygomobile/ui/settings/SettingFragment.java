@@ -655,9 +655,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
                         mSettings.getSoundPath(), false);*/
 
-                //复制原目录文件
+                /*复制原目录文件
                 if (new File(ORI_DECK).list() != null)
-                    FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);
+                    FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);*/
                 if (new File(ORI_REPLAY).list() != null)
                     FileUtils.copyDir(ORI_REPLAY, mSettings.getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
                 if (new File(ORI_PICS).list() != null)
