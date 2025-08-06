@@ -143,7 +143,7 @@ public class DeckSquareFileUtil {
     }
 
     /**
-     * 处理单个YDK文件中的换行符，将\n、\\n、/n替换为实际换行（\r\n）
+     * 处理单个YDK文件中的换行符，将\n、\\n、/n、\\r\\n替换为实际换行（\r\n）
      * 确保文本中的换行标记能真实换行显示
      */
     private static void processYdkLineBreaks(File ydkFile) {
@@ -159,20 +159,7 @@ public class DeckSquareFileUtil {
             while ((bytesRead = isr.read(buffer)) != -1) {
                 contentBuilder.append(buffer, 0, bytesRead);
             }
-            String content = contentBuilder.toString();
-
-            // 先处理转义的\\n（文本中显示为"\n"的字符串）
-            content = content.replace("\\n", "\r\n");
-            // 处理错误的/n（斜杠+n）
-            content = content.replace("/n", "\r\n");
-            // 处理标准换行符\n（确保统一为Windows风格的\r\n）
-            // 先移除可能存在的重复\r，避免出现\r\r\n的情况
-            content = content.replace("\r", "");
-            // 再将所有\n替换为\r\n
-            content = content.replace("\n", "\r\n");
-
-            // 去除末尾可能多余的空行
-            content = content.trim() + "\r\n";
+            String content = processYdkLineBreaks(contentBuilder.toString());
 
             // 将处理后的内容写回文件
             fos = new FileOutputStream(ydkFile);
@@ -186,6 +173,33 @@ public class DeckSquareFileUtil {
             IOUtils.close(fis);
             IOUtils.close(fos);
         }
+    }
+
+    /**
+     * 处理文本中的换行符，将\n、\\n、/n、\\r\\n替换为实际换行（\r\n）
+     * 确保文本中的换行标记能真实换行显示
+     * @param content 需要处理的原始文本内容
+     * @return 处理后的文本内容
+     */
+    private static String processYdkLineBreaks(String content) {
+        if (content == null) {
+            return null;
+        }
+
+        // 先处理转义的\\r\\n（文本中显示为"\r\n"的字符串）
+        content = content.replace("\\r\\n", "\r\n");
+        // 处理转义的\\n（文本中显示为"\n"的字符串）
+        content = content.replace("\\n", "\r\n");
+        // 处理错误的/n（斜杠+n）
+        content = content.replace("/n", "\r\n");
+        // 处理标准换行符\n（确保统一为Windows风格的\r\n）
+        // 先移除可能存在的重复\r，避免出现\r\r\n的情况
+        content = content.replace("\r", "");
+        // 再将所有\n替换为\r\n
+        content = content.replace("\n", "\r\n");
+
+        // 去除末尾可能多余的空行，然后添加一个标准换行
+        return content.trim() + "\r\n";
     }
 
     //读取卡组目录下的所有ydk文件，解析ydk文件（包括从ydk文件内容中读取deckId），生成List<MyDeckItem>解析结果
@@ -292,6 +306,7 @@ public class DeckSquareFileUtil {
             // 创建文件输出流
             fos = new FileOutputStream(file);
             // 写入内容
+            content = processYdkLineBreaks(content);
             fos.write(content.getBytes(StandardCharsets.UTF_8)); // 使用 UTF-8 编码
             fos.flush();
 
