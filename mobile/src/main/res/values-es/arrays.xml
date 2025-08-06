@@ -10,21 +10,22 @@
         <item>1</item>
     </string-array>
     <string-array name="tips" tools:ignore="InconsistentArrays">
-        <item>Sé cortés con tus oponentes y disfruta del juego.</item>
-        <item>¿Ha disminuido la precisión de un toque cuando juegas? Siga los pasos:「My」→「Optimizar si su resolución no es 16:9」.</item>
-        <item>Puedes deslizar hacia la izquierda cada lista de servidores en la página de inicio para encontrar「Eliminar」.</item>
-        <item>Intente tocar la bola inferior derecha para obtener más funciones.</item>
-        <item>Puedes iniciar 「YGOPro」 → 「Modo IA」 para jugar vs la IA Local.</item>
-        <item>¿Por qué las cartas no tienen imágenes? Por favor toque en 「Restablecer Recursos」.</item>
-        <item>Construye tu propio deck y el corazón de las cartas te recompensará</item>
-        <item>¿Has visto la bola en la parte inferior derecha de cada lista de servidores? Intenta hacer clic en ella.</item>
-        <item>Las cartas oficiales y las de pre-lanzamiento son diferentes; tenga en cuenta después de parchearlas.</item>
-        <item>Antes de reportar algún error, debes tener a mano capturas de pantalla y repeticiones.</item>
-        <item>Si no sabes cómo usar YGOMobile, intenta tocar en todas partes.</item>
-        <item>Se necesita mucho tiempo y esfuerzo para mantener la aplicación. Le agradeceríamos que pudiera hacer una donación utilizando la marca en la parte superior derecha:)</item>
-        <item>Los errores de reproducción suelen deberse a diferencias de script entre el servidor y el cliente, y todavía no existe una solución adecuada. Utilice la reproducción en la nube siempre que sea posible.</item>
-        <item>Para ser más fuerte, debes usar y comprender el deck, no solo copiarlo, intenta construir tu propio estilo.</item>
-        <item>Ya seas un principiante o un duelista recurrente, no es muy difícil si estás dispuesto a aprender.</item>
-        <item>Para eliminar una carta en el Editor de Decks, solo debes mantenerla presionada.</item>
+        <item>La comunidad de Yu-Gi-Oh! es pequeña, valora a quienes juegan contigo</item>
+        <item>¿Toques imprecisos en el duelo? Ve a Menú→Configuración→Modo inmersivo√</item>
+        <item>Desliza hacia la izquierda en cada servidor para ver "Eliminar"</item>
+        <item>Prueba tocando el "Menú de funciones" flotante para más opciones</item>
+        <item>¿Quieres jugar contra IA sin internet? "Menú"→"Un jugador"→"Modo IA"</item>
+        <item>¿Faltan imágenes de cartas? Toca "Menú"→"Restablecer recursos"</item>
+        <item>Armar tus propios decks es más divertido y facilita mejores robos</item>
+        <item>¿Ves la gema en cada servidor? ¡Tócala!</item>
+        <item>Las cartas pre-lanzadas y oficiales tienen códigos distintos, ten cuidado</item>
+        <item>Antes de reportar un error, prepara capturas y grabaciones</item>
+        <item>¿No sabes actualizar? Ve a "Menú"→"Configuración"→"Buscar actualizaciones"</item>
+        <item>¿Necesitas ayuda? Toca "Menú"→"Tutorial" para instrucciones</item>
+        <item>Mantener la app requiere esfuerzo, considera apoyarnos en "Aifadian"</item>
+        <item>Si hay errores en repeticiones, elimínalas, aún no hay solución T.T</item>
+        <item>Copiar decks fuertes no te hará mejor, tu esfuerzo sí dará frutos</item>
+        <item>Novatos o veteranos, con práctica cualquiera puede volverse experto</item>
+        <item>En modo vertical, mantén presionada una carta para eliminarla</item>
     </string-array>
 </resources>
