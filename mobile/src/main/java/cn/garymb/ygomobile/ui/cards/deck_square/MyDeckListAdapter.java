@@ -163,7 +163,10 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
 
             }
             List<DeckFile> deleteList = new ArrayList<>();
-            deleteList.add(new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE));
+            DeckFile deleteDeckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
+            deleteDeckFile.setTypeName(item.getDeckType());
+            deleteDeckFile.setName(item.getDeckName());
+            deleteList.add(deleteDeckFile);
             try {
                 DeckSquareApiUtil.deleteDecks(deleteList);
             }catch (Throwable e){
