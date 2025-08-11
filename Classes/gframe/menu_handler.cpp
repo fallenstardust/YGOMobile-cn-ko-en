@@ -456,10 +456,10 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				char arg2[32];
 				arg2[0]=0;
 				if(mainGame->chkBotHand->isChecked())
-					snprintf(arg2, sizeof arg2, " Hand=1");
+					mysnprintf(arg2, " Hand=1");
 				char arg3[32];
-				snprintf(arg3, sizeof arg3, " Port=%d", mainGame->gameConf.serverport);
-				snprintf(args, sizeof args, "%s%s%s", arg1, arg2, arg3);
+				mysnprintf(arg3, " Port=%d", mainGame->gameConf.serverport);
+				mysnprintf(args, "%s%s%s", arg1, arg2, arg3);
                 irr::android::runWindbot(mainGame->appMain, args);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);

@@ -2087,16 +2087,16 @@ void Game::AddDebugMsg(const char* msg) {
         fullMsg += "";
     }
     fullMsg += message;
-    if (enable_log & 0x1) {
-        wchar_t wbuf[1024];
+	if (enable_log & 0x1) {
+		wchar_t wbuf[1024];
         BufferIO::DecodeUTF8(fullMsg.c_str(), wbuf);
-        AddChatMsg(wbuf, 9);
-    }
-    if (enable_log & 0x2) {
-        char msgbuf[1040];
-        std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", fullMsg.c_str());
-        ErrorLog(msgbuf);
-    }
+		AddChatMsg(wbuf, 9);
+	}
+	if (enable_log & 0x2) {
+		char msgbuf[1040];
+        mysnprintf(msgbuf, "[Script Error]: %s", fullMsg.c_str());
+		ErrorLog(msgbuf);
+	}
 }
 void Game::ErrorLog(const char* msg) {
 	std::fprintf(stderr, "%s\n", msg);
