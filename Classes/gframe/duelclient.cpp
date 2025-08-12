@@ -4242,4 +4242,258 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 		}
 	}
 }
+
+#ifdef _IRR_ANDROID_PLATFORM_
+bool DuelClient::LookupSRV(char* hostname, HostResult* result) {
+    const std::string dnsServer = "8.8.8.8";
+    const int dnsPort = 53;
+    const int timeoutSec = 3;
+    
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        return false;
+    }
+    
+    struct timeval tv;
+    tv.tv_sec = timeoutSec;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    
+    struct sockaddr_in serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(dnsPort);
+    inet_pton(AF_INET, dnsServer.c_str(), &serverAddr.sin_addr);
+    
+    std::vector<uint8_t> query;
+    
+    struct {
+        uint16_t id;
+        uint16_t flags;
+        uint16_t qdcount;
+        uint16_t ancount;
+        uint16_t nscount;
+        uint16_t arcount;
+    } header;
+    
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint16_t> dis(0, 0xFFFF);
+    
+    header.id = dis(gen);
+    header.flags = htons(0x0100);
+    header.qdcount = htons(1);
+    header.ancount = 0;
+    header.nscount = 0;
+    header.arcount = 0;
+    
+    query.insert(query.end(), reinterpret_cast<uint8_t*>(&header), 
+               reinterpret_cast<uint8_t*>(&header) + sizeof(header));
+    
+    std::string domain(hostname);
+    size_t start = 0;
+    while (true) {
+        size_t dot = domain.find('.', start);
+        if (dot == std::string::npos) {
+            if (start < domain.length()) {
+                uint8_t len = domain.length() - start;
+                query.push_back(len);
+                query.insert(query.end(), domain.begin() + start, domain.end());
+            }
+            break;
+        }
+        
+        uint8_t len = dot - start;
+        query.push_back(len);
+        query.insert(query.end(), domain.begin() + start, domain.begin() + dot);
+        start = dot + 1;
+    }
+    
+    query.push_back(0);
+    
+    uint16_t qtype = htons(33);
+    uint16_t qclass = htons(1);
+    query.insert(query.end(), reinterpret_cast<uint8_t*>(&qtype), 
+               reinterpret_cast<uint8_t*>(&qtype) + 2);
+    query.insert(query.end(), reinterpret_cast<uint8_t*>(&qclass), 
+               reinterpret_cast<uint8_t*>(&qclass) + 2);
+    
+    if (sendto(sock, query.data(), query.size(), 0, 
+               (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        close(sock);
+        return false;
+    }
+    
+    uint8_t response[1024];
+    socklen_t addrLen = sizeof(serverAddr);
+    ssize_t bytesReceived = recvfrom(sock, response, sizeof(response), 0, (struct sockaddr*)&serverAddr, &addrLen);
+    close(sock);
+    
+    if (bytesReceived <= 0) {
+        return false;
+    }
+    
+    size_t offset = 0;
+    
+    if (bytesReceived < 12) return false;
+    offset += 12;
+    
+    for (int i = 0; i < ntohs(header.qdcount) && offset < bytesReceived; i++) {
+        while (offset < bytesReceived && response[offset] != 0) {
+            if ((response[offset] & 0xC0) == 0xC0) {
+                offset += 2;
+                break;
+            }
+            uint8_t len = response[offset++];
+            offset += len;
+        }
+        offset += 5;
+    }
+    
+    std::vector<SRVRecord> records;
+    uint16_t ancount = ntohs(*reinterpret_cast<uint16_t*>(response + 6));
+    
+    for (int i = 0; i < ancount && offset < bytesReceived; i++) {
+        if ((response[offset] & 0xC0) == 0xC0) {
+            offset += 2;
+        } else {
+            while (offset < bytesReceived && response[offset] != 0) {
+                uint8_t len = response[offset++];
+                offset += len;
+            }
+            offset++;
+        }
+        
+        if (offset + 10 > bytesReceived) break;
+        
+        uint16_t type = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+        offset += 2;
+        uint16_t class_ = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+        offset += 2;
+        uint32_t ttl = ntohl(*reinterpret_cast<uint32_t*>(response + offset));
+        offset += 4;
+        uint16_t rdlength = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+        offset += 2;
+        
+        if (type == 33 && class_ == 1 && rdlength >= 6) {
+            SRVRecord record;
+            record.priority = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+            offset += 2;
+            record.weight = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+            offset += 2;
+            record.port = ntohs(*reinterpret_cast<uint16_t*>(response + offset));
+            offset += 2;
+            
+            size_t nameOffset = offset;
+            record.target = readDNSName(response, bytesReceived, &nameOffset);
+            offset += rdlength - 6;
+            
+            records.push_back(record);
+        } else {
+            offset += rdlength;
+        }
+    }
+    
+    if (records.empty())
+        return false;
+    
+    auto selected = std::min_element(records.begin(), records.end(),
+        [](const SRVRecord& a, const SRVRecord& b) {
+            return a.priority < b.priority;
+        });
+    
+	char host[100];
+	strncpy(host, selected->target.c_str(), sizeof(host));
+    unsigned int ip = LookupHost(host);
+    if (ip == 0)
+        return false;
+    
+    result->host = ip;
+    result->port = selected->port;
+    
+    return true;
+}
+
+std::string DuelClient::readDNSName(const uint8_t* data, size_t dataLen, size_t* offset) {
+    std::string name;
+    size_t pos = *offset;
+    int jumps = 0;
+    const int maxJumps = 5;
+    
+    while (pos < dataLen && jumps < maxJumps) {
+        uint8_t len = data[pos++];
+        
+        if (len == 0) break;
+        
+        if ((len & 0xC0) == 0xC0) {
+            if (pos >= dataLen) break;
+            uint8_t next = data[pos++];
+            size_t newPos = ((len & 0x3F) << 8) | next;
+            
+            if (newPos >= dataLen) break;
+            jumps++;
+            pos = newPos;
+            continue;
+        }
+        
+        if (pos + len > dataLen) break;
+        name.append(reinterpret_cast<const char*>(data + pos), len);
+        pos += len;
+        name.append(".");
+    }
+    
+    *offset = pos;
+    if (!name.empty() && name.back() == '.') {
+        name.pop_back();
+    }
+    return name;
+}
+
+unsigned int DuelClient::LookupHost(char *host) {
+	unsigned int remote_addr = htonl(inet_addr(host));
+	if(remote_addr == -1) {
+		struct evutil_addrinfo hints;
+		struct evutil_addrinfo *answer = NULL;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = EVUTIL_AI_ADDRCONFIG;
+		int status = evutil_getaddrinfo(host, NULL, &hints, &answer);
+		if (status != 0) {
+			return 0;
+		}
+		sockaddr_in * sin = ((struct sockaddr_in *)answer->ai_addr);
+		char ip[20];
+		evutil_inet_ntop(AF_INET, &(sin->sin_addr), ip, 20);
+		remote_addr = htonl(inet_addr(ip));
+		evutil_freeaddrinfo(answer);
+	}
+	return remote_addr;
+}
+HostResult DuelClient::ParseHost(wchar_t* pstr, wchar_t* portstr) {
+	HostResult result;
+	char hostname[100];
+	char port[6];
+	BufferIO::EncodeUTF8(pstr, hostname);
+	BufferIO::EncodeUTF8(portstr, port);
+	unsigned int remote_port = std::wcstol(portstr, nullptr, 10);
+	unsigned int tryAddress = htonl(inet_addr(hostname));
+	if(tryAddress != -1) {
+		result.host = tryAddress;
+		result.port = remote_port == 0 ? 7911 : remote_port;
+		return result;
+	}
+
+	char srvHostname[114];
+	sprintf(srvHostname, "_ygopro._tcp.%s", hostname);
+	if(remote_port == 0 && LookupSRV(srvHostname, &result)) {
+		return result;
+	}
+
+	result.host = LookupHost(hostname);
+	result.port = remote_port == 0 ? 7911 : remote_port;
+	return result;
+}
+#endif
 }
